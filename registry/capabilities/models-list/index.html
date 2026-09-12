@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -262,34 +262,33 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">capability</td>
+        <td class="px-3 py-2 font-mono text-heading">vendor</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only models declaring this capability word.</td>
+        <td class="px-3 py-2 text-body">Only this vendor.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">One model, by canonical id or alias.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">vendor</td>
+        <td class="px-3 py-2 font-mono text-heading">capability</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only this vendor.</td>
+        <td class="px-3 py-2 text-body">Only models declaring this capability word.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `models.list`: optional narrowing. Everything empty lists everything.&quot;,
+  &quot;title&quot;: &quot;ModelsFilter&quot;,
   &quot;properties&quot;: {
-    &quot;capability&quot;: {
-      &quot;description&quot;: &quot;Only models declaring this capability word.&quot;,
+    &quot;vendor&quot;: {
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Only this vendor.&quot;
     },
     &quot;id&quot;: {
       &quot;description&quot;: &quot;One model, by canonical id or alias.&quot;,
@@ -298,15 +297,16 @@
         &quot;null&quot;
       ]
     },
-    &quot;vendor&quot;: {
-      &quot;description&quot;: &quot;Only this vendor.&quot;,
+    &quot;capability&quot;: {
+      &quot;description&quot;: &quot;Only models declaring this capability word.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
     }
   },
-  &quot;title&quot;: &quot;ModelsFilter&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `models.list`: optional narrowing. Everything empty lists everything.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -316,11 +316,6 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">count</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many models matched.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -336,170 +331,30 @@ the ordinary case.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The vendors, declaration order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">count</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many models matched.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;Inference&quot;: {
-      &quot;description&quot;: &quot;Where a vendor&#39;s inference runs.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;remote&quot;,
-          &quot;description&quot;: &quot;An API over the network.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;local&quot;,
-          &quot;description&quot;: &quot;A runtime on this machine.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ModelEntry&quot;: {
-      &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;One model: the canonical reference this repository uses, the vendor&#39;s own name for\nit, and its typed capabilities. Capability words are data the catalogue declares —\nconsumers compare against a requirement list, never against a hardcoded name.&quot;,
-      &quot;properties&quot;: {
-        &quot;aliases&quot;: {
-          &quot;description&quot;: &quot;Other names that resolve to this model. Aliases live here and nowhere else.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;capabilities&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;Typed capability words: `text`, `vision`, `tools`, `structured_output`,\n`reasoning`, `streaming`, `embeddings` — the declared vocabulary, open for a\ncatalogue to extend without a code change.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;context_window&quot;: {
-          &quot;description&quot;: &quot;The context window, tokens.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The canonical id, unique in the catalogue: what sessions, configuration and\nrouting name. Stable even when a vendor renames.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;native_id&quot;: {
-          &quot;description&quot;: &quot;The vendor&#39;s own identifier, verbatim.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;note&quot;: {
-          &quot;description&quot;: &quot;One line a person needs when choosing; never pricing — a price the tool cannot\nverify is a fact it must not state (nothing here fabricates cost data).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ModelStatus&quot;,
-          &quot;default&quot;: &quot;available&quot;,
-          &quot;description&quot;: &quot;The lifecycle standing.&quot;
-        },
-        &quot;vendor&quot;: {
-          &quot;description&quot;: &quot;The vendor that serves it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;vendor&quot;,
-        &quot;native_id&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ModelStatus&quot;: {
-      &quot;description&quot;: &quot;A model&#39;s lifecycle standing, as the catalogue declares it.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;available&quot;,
-          &quot;description&quot;: &quot;Generally available.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;preview&quot;,
-          &quot;description&quot;: &quot;Usable, expected to change.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;deprecated&quot;,
-          &quot;description&quot;: &quot;Still served, no longer chosen by routing unless named explicitly.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;retired&quot;,
-          &quot;description&quot;: &quot;Gone; kept so an old record&#39;s reference still resolves to a row with a story.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;VendorView&quot;: {
-      &quot;description&quot;: &quot;One vendor with whether its credential is configured — presence of the named\nenvironment variable and nothing more. No value is read.&quot;,
-      &quot;properties&quot;: {
-        &quot;credential_configured&quot;: {
-          &quot;description&quot;: &quot;Whether the named credential variable is set in this process&#39;s environment.\n`None` when the vendor names no variable.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;credential_env&quot;: {
-          &quot;description&quot;: &quot;The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The vendor id, unique in the catalogue.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;inference&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Inference&quot;,
-          &quot;default&quot;: &quot;remote&quot;,
-          &quot;description&quot;: &quot;Where inference runs: `remote` (an API over the network) or `local` (a runtime\non this machine). Typed here so routing&#39;s `local_only` is data, not a name test.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The human name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `models.list`.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many models matched.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;The catalogue&#39;s own findings: duplicate names, undeclared vendors. Empty is\nthe ordinary case.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The catalogue&#39;s own findings: duplicate names, undeclared vendors. Empty is\nthe ordinary case.&quot;
     },
     &quot;models&quot;: {
-      &quot;description&quot;: &quot;The matching models, declaration order — which is routing&#39;s preference order.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ModelEntry&quot;
       },
+      &quot;description&quot;: &quot;The matching models, declaration order — which is routing&#39;s preference order.&quot;,
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;vendors&quot;: {
@@ -508,15 +363,160 @@ the ordinary case.</td>
         &quot;$ref&quot;: &quot;#/$defs/VendorView&quot;
       },
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;count&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many models matched.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0
     }
   },
+  &quot;title&quot;: &quot;ModelsReport&quot;,
   &quot;required&quot;: [
     &quot;count&quot;,
     &quot;vendors&quot;,
     &quot;models&quot;
   ],
-  &quot;title&quot;: &quot;ModelsReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;$defs&quot;: {
+    &quot;VendorView&quot;: {
+      &quot;properties&quot;: {
+        &quot;credential_configured&quot;: {
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Whether the named credential variable is set in this process&#39;s environment.\n`None` when the vendor names no variable.&quot;
+        },
+        &quot;inference&quot;: {
+          &quot;description&quot;: &quot;Where inference runs: `remote` (an API over the network) or `local` (a runtime\non this machine). Typed here so routing&#39;s `local_only` is data, not a name test.&quot;,
+          &quot;default&quot;: &quot;remote&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Inference&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The human name.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The vendor id, unique in the catalogue.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;credential_env&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One vendor with whether its credential is configured — presence of the named\nenvironment variable and nothing more. No value is read.&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;
+      ]
+    },
+    &quot;Inference&quot;: {
+      &quot;description&quot;: &quot;Where a vendor&#39;s inference runs.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;remote&quot;,
+          &quot;description&quot;: &quot;An API over the network.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;local&quot;,
+          &quot;description&quot;: &quot;A runtime on this machine.&quot;
+        }
+      ]
+    },
+    &quot;ModelStatus&quot;: {
+      &quot;description&quot;: &quot;A model&#39;s lifecycle standing, as the catalogue declares it.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Generally available.&quot;,
+          &quot;const&quot;: &quot;available&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;preview&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Usable, expected to change.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Still served, no longer chosen by routing unless named explicitly.&quot;,
+          &quot;const&quot;: &quot;deprecated&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Gone; kept so an old record&#39;s reference still resolves to a row with a story.&quot;,
+          &quot;const&quot;: &quot;retired&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ModelEntry&quot;: {
+      &quot;description&quot;: &quot;One model: the canonical reference this repository uses, the vendor&#39;s own name for\nit, and its typed capabilities. Capability words are data the catalogue declares —\nconsumers compare against a requirement list, never against a hardcoded name.&quot;,
+      &quot;properties&quot;: {
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ModelStatus&quot;,
+          &quot;default&quot;: &quot;available&quot;,
+          &quot;description&quot;: &quot;The lifecycle standing.&quot;
+        },
+        &quot;context_window&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The context window, tokens.&quot;
+        },
+        &quot;native_id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The vendor&#39;s own identifier, verbatim.&quot;
+        },
+        &quot;aliases&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Other names that resolve to this model. Aliases live here and nowhere else.&quot;
+        },
+        &quot;capabilities&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;default&quot;: [],
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Typed capability words: `text`, `vision`, `tools`, `structured_output`,\n`reasoning`, `streaming`, `embeddings` — the declared vocabulary, open for a\ncatalogue to extend without a code change.&quot;
+        },
+        &quot;vendor&quot;: {
+          &quot;description&quot;: &quot;The vendor that serves it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The canonical id, unique in the catalogue: what sessions, configuration and\nrouting name. Stable even when a vendor renames.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;note&quot;: {
+          &quot;description&quot;: &quot;One line a person needs when choosing; never pricing — a price the tool cannot\nverify is a fact it must not state (nothing here fabricates cost data).&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;vendor&quot;,
+        &quot;native_id&quot;
+      ],
+      &quot;additionalProperties&quot;: false
+    }
+  },
+  &quot;description&quot;: &quot;The answer of `models.list`.&quot;
 }</pre></div>
   </details>
 </div>
@@ -547,7 +547,7 @@ the ordinary case.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::models</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ModelsFilter</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ModelsReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/models.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/models.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/models.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/models.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -572,7 +572,7 @@ the ordinary case.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,9 +261,9 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -273,6 +273,16 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">warnings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many findings are warnings: a public record that does not meet its floor.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">valid</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">True when nothing is an error. Warnings do not make it false.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">counts</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -288,62 +298,111 @@ identity, a file name that disagrees with its id.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The findings, errors first, then by file.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">valid</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">True when nothing is an error. Warnings do not make it false.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">warnings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many findings are warnings: a public record that does not meet its floor.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;ValidationReport&quot;,
+  &quot;description&quot;: &quot;What the catalogue&#39;s own validation found.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;valid&quot;,
+    &quot;errors&quot;,
+    &quot;warnings&quot;,
+    &quot;counts&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;warnings&quot;: {
+      &quot;description&quot;: &quot;How many findings are warnings: a public record that does not meet its floor.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;valid&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;True when nothing is an error. Warnings do not make it false.&quot;
+    },
+    &quot;counts&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Counts&quot;,
+      &quot;description&quot;: &quot;The counts the catalogue reached.&quot;
+    },
+    &quot;errors&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many findings are errors: a reference that resolves to nothing, a duplicate\nidentity, a file name that disagrees with its id.&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;The findings, errors first, then by file.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Finding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
   &quot;$defs&quot;: {
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;const&quot;: &quot;info&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;
+        }
+      ]
+    },
     &quot;Counts&quot;: {
-      &quot;description&quot;: &quot;How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down.&quot;,
       &quot;properties&quot;: {
+        &quot;audiences&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Public audiences.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;moments&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Public moments.&quot;
+        },
         &quot;areas&quot;: {
           &quot;description&quot;: &quot;Public areas.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;audiences&quot;: {
-          &quot;description&quot;: &quot;Public audiences.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
         &quot;examples&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
           &quot;description&quot;: &quot;Concrete situations across the public moments.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;moments&quot;: {
-          &quot;description&quot;: &quot;Public moments.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;moments_all&quot;: {
           &quot;description&quot;: &quot;Moments of every status, drafts included.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
         },
         &quot;signals&quot;: {
-          &quot;description&quot;: &quot;Signals across the public moments: the size of the questionnaire.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Signals across the public moments: the size of the questionnaire.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         }
       },
+      &quot;description&quot;: &quot;How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down.&quot;,
       &quot;required&quot;: [
         &quot;moments&quot;,
         &quot;moments_all&quot;,
@@ -355,25 +414,30 @@ identity, a file name that disagrees with its id.</td>
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Finding&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;path&quot;,
+        &quot;message&quot;
+      ],
       &quot;description&quot;: &quot;One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching.&quot;,
       &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A short category: `unknown_reference`, `duplicate_identity`, `missing_content`, ...&quot;,
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The repository-relative file the finding is in.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;did_you_mean&quot;: {
-          &quot;description&quot;: &quot;The nearest existing name, when the value looks like a typo of one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;severity&quot;: {
+          &quot;description&quot;: &quot;`error` or `warning`.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;
         },
-        &quot;field&quot;: {
-          &quot;description&quot;: &quot;The front-matter key the finding is about, when one key owns it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;
+        },
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A short category: `unknown_reference`, `duplicate_identity`, `missing_content`, ...&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The record&#39;s identity, when one record owns the finding.&quot;,
@@ -382,87 +446,23 @@ identity, a file name that disagrees with its id.</td>
             &quot;null&quot;
           ]
         },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;did_you_mean&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The nearest existing name, when the value looks like a typo of one.&quot;
         },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The repository-relative file the finding is in.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;`error` or `warning`.&quot;
+        &quot;field&quot;: {
+          &quot;description&quot;: &quot;The front-matter key the finding is about, when one key owns it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;path&quot;,
-        &quot;message&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      }
     }
-  },
-  &quot;description&quot;: &quot;What the catalogue&#39;s own validation found.&quot;,
-  &quot;properties&quot;: {
-    &quot;counts&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Counts&quot;,
-      &quot;description&quot;: &quot;The counts the catalogue reached.&quot;
-    },
-    &quot;errors&quot;: {
-      &quot;description&quot;: &quot;How many findings are errors: a reference that resolves to nothing, a duplicate\nidentity, a file name that disagrees with its id.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;The findings, errors first, then by file.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Finding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;valid&quot;: {
-      &quot;description&quot;: &quot;True when nothing is an error. Warnings do not make it false.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;warnings&quot;: {
-      &quot;description&quot;: &quot;How many findings are warnings: a public record that does not meet its floor.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;valid&quot;,
-    &quot;errors&quot;,
-    &quot;warnings&quot;,
-    &quot;counts&quot;,
-    &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;ValidationReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -493,7 +493,7 @@ identity, a file name that disagrees with its id.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::why</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ValidationReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/why.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/why.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/why.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/why.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -518,7 +518,7 @@ identity, a file name that disagrees with its id.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

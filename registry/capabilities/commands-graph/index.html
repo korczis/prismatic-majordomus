@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,9 +261,9 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -273,144 +273,381 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">errors</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many findings are errors; a projection refuses to write while this is not zero.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">graph</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The graph.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">errors</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many findings are errors; a projection refuses to write while this is not zero.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;CapabilityId&quot;: {
-      &quot;description&quot;: &quot;A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `&lt;kind&gt;.&lt;identity&gt;` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind&#39;s identity rule produced it.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+  &quot;required&quot;: [
+    &quot;graph&quot;,
+    &quot;errors&quot;
+  ],
+  &quot;title&quot;: &quot;CommandGraphReport&quot;,
+  &quot;properties&quot;: {
+    &quot;graph&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/CommandGraph&quot;,
+      &quot;description&quot;: &quot;The graph.&quot;
     },
-    &quot;CommandArgument&quot;: {
-      &quot;description&quot;: &quot;One argument of a command, as the declaration gives it plus what can be inferred.&quot;,
+    &quot;errors&quot;: {
+      &quot;description&quot;: &quot;How many findings are errors; a projection refuses to write while this is not zero.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    }
+  },
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The whole graph, with what its build found.&quot;,
+  &quot;$defs&quot;: {
+    &quot;CommandDiagnostic&quot;: {
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One thing the build found.&quot;,
       &quot;properties&quot;: {
-        &quot;defaults&quot;: {
-          &quot;description&quot;: &quot;The defaults, as the declaration renders them.&quot;,
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;
+        },
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A stable code, for a gate to match on.&quot;
+        },
+        &quot;commands&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The nodes it is about.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/CommandId&quot;
+          }
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;What to do about it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;severity&quot;: {
+          &quot;description&quot;: &quot;How bad.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/CommandDiagnosticSeverity&quot;
+        }
+      }
+    },
+    &quot;CommandProjections&quot;: {
+      &quot;description&quot;: &quot;Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph.&quot;,
+      &quot;properties&quot;: {
+        &quot;withheld&quot;: {
+          &quot;description&quot;: &quot;Why a machine surface does not carry it, when one does not.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;cli&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The command line, as typed.&quot;
+        },
+        &quot;cockpit&quot;: {
+          &quot;description&quot;: &quot;The Cockpit address, when the surface carries it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;http&quot;: {
+          &quot;description&quot;: &quot;The HTTP route, when the capability behind it declares one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;mcp&quot;: {
+          &quot;description&quot;: &quot;The MCP tool name, when the capability behind it declares one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;workflow&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The generated workflow bridge&#39;s recipe name.&quot;
+        },
+        &quot;docs&quot;: {
+          &quot;description&quot;: &quot;The page on the site. Every command has one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;docs&quot;
+      ]
+    },
+    &quot;CommandRequirement&quot;: {
+      &quot;description&quot;: &quot;One thing a command needs before it can run.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A git repository.&quot;,
+          &quot;const&quot;: &quot;repository&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The `.ai/` layer, initialised.&quot;,
+          &quot;const&quot;: &quot;layer&quot;
+        },
+        {
+          &quot;const&quot;: &quot;task&quot;,
+          &quot;description&quot;: &quot;An active task record.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The Rust executable, built.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;executable&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The workflow runner, installed.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;workflow_runner&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;rust_toolchain&quot;,
+          &quot;description&quot;: &quot;A cargo workspace and a toolchain to build it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;site&quot;,
+          &quot;description&quot;: &quot;The site sources and its generator.&quot;
+        }
+      ]
+    },
+    &quot;CapabilityId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `&lt;kind&gt;.&lt;identity&gt;` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind&#39;s identity rule produced it.&quot;
+    },
+    &quot;CommandGraph&quot;: {
+      &quot;description&quot;: &quot;The whole graph.&quot;,
+      &quot;properties&quot;: {
+        &quot;commands&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/CommandNode&quot;
+          },
+          &quot;description&quot;: &quot;Every command, in a deterministic order: origin, then path.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;schema&quot;: {
+          &quot;description&quot;: &quot;The schema of this document.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;diagnostics&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/CommandDiagnostic&quot;
+          },
+          &quot;description&quot;: &quot;What the build found.&quot;
+        },
+        &quot;fingerprint&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A hash of the semantic content: the identity a cache and a generated projection\nkey on. Nothing that varies between two runs over the same tree is in it.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;schema&quot;,
+        &quot;fingerprint&quot;,
+        &quot;commands&quot;,
+        &quot;diagnostics&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;CommandValueChoice&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;Its help, when the declaration carries one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;value&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The value as typed.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One value an argument accepts, from the declaration.&quot;,
+      &quot;required&quot;: [
+        &quot;value&quot;
+      ]
+    },
+    &quot;CommandNode&quot;: {
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The canonical identity.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/CommandId&quot;
+        },
+        &quot;effect&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CommandEffect&quot;,
+          &quot;description&quot;: &quot;What it changes.&quot;
+        },
+        &quot;stability&quot;: {
+          &quot;description&quot;: &quot;Where it stands.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Stability&quot;
+        },
+        &quot;tags&quot;: {
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Free tags.&quot;
         },
-        &quot;global&quot;: {
-          &quot;description&quot;: &quot;Accepted by every command under the one that declares it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;availability&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CommandAvailability&quot;,
+          &quot;description&quot;: &quot;Where it means anything.&quot;
         },
-        &quot;help&quot;: {
-          &quot;description&quot;: &quot;The help text, one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;invocation&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The command line a person types, rendered once here.&quot;
         },
-        &quot;long&quot;: {
-          &quot;description&quot;: &quot;`--long`, without the dashes.&quot;,
+        &quot;summary&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line.&quot;
+        },
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;The longer description, when the declaration carries one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The argument&#39;s id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;interactivity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CommandInteractivity&quot;,
+          &quot;description&quot;: &quot;How it behaves towards a terminal.&quot;
         },
-        &quot;positional&quot;: {
-          &quot;description&quot;: &quot;Given by position rather than by flag.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;projections&quot;: {
+          &quot;description&quot;: &quot;Where it appears.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/CommandProjections&quot;
         },
-        &quot;required&quot;: {
-          &quot;description&quot;: &quot;Must be given.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;origin&quot;: {
+          &quot;description&quot;: &quot;Which program runs it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/CommandOrigin&quot;
         },
-        &quot;secrecy&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandSecrecy&quot;,
-          &quot;description&quot;: &quot;How openly the value may be handled.&quot;
+        &quot;entrypoint&quot;: {
+          &quot;description&quot;: &quot;Is this command an entry point of its group — the one a newcomer is offered?&quot;,
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ]
         },
-        &quot;short&quot;: {
-          &quot;description&quot;: &quot;`-s`, without the dash.&quot;,
-          &quot;maxLength&quot;: 1,
-          &quot;minLength&quot;: 1,
+        &quot;group&quot;: {
+          &quot;description&quot;: &quot;The group a person finds it under, when the declaration has groups.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;source&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandValueSource&quot;,
-          &quot;description&quot;: &quot;Where further values come from.&quot;
-        },
-        &quot;takes_value&quot;: {
-          &quot;description&quot;: &quot;Takes a value at all; a flag does not.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;value_name&quot;: {
-          &quot;description&quot;: &quot;The placeholder, `PATH`.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;values&quot;: {
-          &quot;description&quot;: &quot;The values the declaration carries, each with its help.&quot;,
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/CommandValueChoice&quot;
+            &quot;type&quot;: &quot;string&quot;
           },
+          &quot;description&quot;: &quot;The words after the program&#39;s own name.&quot;
+        },
+        &quot;provenance&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CommandProvenance&quot;,
+          &quot;description&quot;: &quot;Where it came from.&quot;
+        },
+        &quot;runnable&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Can it be run on its own, or does it only group the commands under it?&quot;
+        },
+        &quot;arguments&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/CommandArgument&quot;
+          },
+          &quot;description&quot;: &quot;The arguments, in declaration order.&quot;,
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;variadic&quot;: {
-          &quot;description&quot;: &quot;Takes any number of values.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;deprecation&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/CommandDeprecation&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Whether this is still the name to use.&quot;
+        },
+        &quot;aliases&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Other names that resolve to this node, declared once here and honoured by every\nprojection that has a use for one.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;execution&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CommandExecution&quot;,
+          &quot;description&quot;: &quot;How it is run.&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One command, from whichever program offers it.&quot;,
       &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;positional&quot;,
-        &quot;takes_value&quot;,
-        &quot;required&quot;,
-        &quot;variadic&quot;,
-        &quot;global&quot;,
-        &quot;help&quot;,
-        &quot;source&quot;,
-        &quot;secrecy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+        &quot;id&quot;,
+        &quot;origin&quot;,
+        &quot;path&quot;,
+        &quot;invocation&quot;,
+        &quot;summary&quot;,
+        &quot;runnable&quot;,
+        &quot;arguments&quot;,
+        &quot;execution&quot;,
+        &quot;effect&quot;,
+        &quot;interactivity&quot;,
+        &quot;stability&quot;,
+        &quot;availability&quot;,
+        &quot;provenance&quot;,
+        &quot;projections&quot;
+      ]
     },
-    &quot;CommandAvailability&quot;: {
-      &quot;description&quot;: &quot;Where a command means anything, and why not when it does not.\n\nDerived from the repository environment rather than declared per command, so that a\nprojection reads a field instead of re-deciding. The reason is carried because the\nanswer a person needs is never `false`.&quot;,
-      &quot;properties&quot;: {
-        &quot;available&quot;: {
-          &quot;description&quot;: &quot;Can it be run here, now?&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+    &quot;CommandSecrecy&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Ordinary: may be logged, completed, shown.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;public&quot;
         },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why not, in one line, when it cannot.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        {
+          &quot;description&quot;: &quot;A path or an identifier that names something private. Shown, never logged.&quot;,
+          &quot;const&quot;: &quot;sensitive&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;requires&quot;: {
-          &quot;description&quot;: &quot;What it needs, whether or not that is satisfied here.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/CommandRequirement&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;secret&quot;,
+          &quot;description&quot;: &quot;A credential. Never completed, never logged, never cached.&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;available&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;How openly a value may be handled.&quot;
     },
     &quot;CommandDeprecation&quot;: {
-      &quot;description&quot;: &quot;A command that is no longer the name to use.&quot;,
       &quot;properties&quot;: {
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;Why, in one line.&quot;,
@@ -431,663 +668,119 @@
       &quot;required&quot;: [
         &quot;reason&quot;
       ],
+      &quot;description&quot;: &quot;A command that is no longer the name to use.&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;CommandDiagnostic&quot;: {
-      &quot;description&quot;: &quot;One thing the build found.&quot;,
+    &quot;CommandArgument&quot;: {
       &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable code, for a gate to match on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;help&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The help text, one line.&quot;
         },
-        &quot;commands&quot;: {
-          &quot;description&quot;: &quot;The nodes it is about.&quot;,
+        &quot;source&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CommandValueSource&quot;,
+          &quot;description&quot;: &quot;Where further values come from.&quot;
+        },
+        &quot;values&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/CommandId&quot;
+            &quot;$ref&quot;: &quot;#/$defs/CommandValueChoice&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;description&quot;: &quot;The values the declaration carries, each with its help.&quot;
         },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;required&quot;: {
+          &quot;description&quot;: &quot;Must be given.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;What to do about it.&quot;,
+        &quot;short&quot;: {
+          &quot;description&quot;: &quot;`-s`, without the dash.&quot;,
+          &quot;maxLength&quot;: 1,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;minLength&quot;: 1
         },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandDiagnosticSeverity&quot;,
-          &quot;description&quot;: &quot;How bad.&quot;
+        &quot;defaults&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The defaults, as the declaration renders them.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;long&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;`--long`, without the dashes.&quot;
+        },
+        &quot;takes_value&quot;: {
+          &quot;description&quot;: &quot;Takes a value at all; a flag does not.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The argument&#39;s id.&quot;
+        },
+        &quot;variadic&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Takes any number of values.&quot;
+        },
+        &quot;positional&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Given by position rather than by flag.&quot;
+        },
+        &quot;secrecy&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CommandSecrecy&quot;,
+          &quot;description&quot;: &quot;How openly the value may be handled.&quot;
+        },
+        &quot;global&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Accepted by every command under the one that declares it.&quot;
+        },
+        &quot;value_name&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The placeholder, `PATH`.&quot;
         }
       },
+      &quot;description&quot;: &quot;One argument of a command, as the declaration gives it plus what can be inferred.&quot;,
       &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;message&quot;
+        &quot;name&quot;,
+        &quot;positional&quot;,
+        &quot;takes_value&quot;,
+        &quot;required&quot;,
+        &quot;variadic&quot;,
+        &quot;global&quot;,
+        &quot;help&quot;,
+        &quot;source&quot;,
+        &quot;secrecy&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;CommandDiagnosticSeverity&quot;: {
-      &quot;description&quot;: &quot;How bad a finding is.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The graph is wrong and a projection built from it would be wrong.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Worth saying; the graph stands.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;A fact a reader may want.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;CommandEffect&quot;: {
-      &quot;description&quot;: &quot;What running a command changes. The one thing a surface policy is allowed to ask.\n\nThe order is the order of increasing consequence, and it is the order the derived\nexposure policy reads: a surface declares the strongest effect it will carry, and\nevery node at or below it is projected there. Nothing configures a surface per\ncommand.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;read_only&quot;,
-          &quot;description&quot;: &quot;Reads and answers. Changes nothing anywhere.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;local_mutation&quot;,
-          &quot;description&quot;: &quot;Writes only where the repository keeps a checkout&#39;s own state — the process&#39;s\nmemory, `.ai/local/`, a build directory. Nothing a commit would carry.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;repository_mutation&quot;,
-          &quot;description&quot;: &quot;Writes tracked files: generated artifacts, the worktree, git itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;network_mutation&quot;,
-          &quot;description&quot;: &quot;Reaches the network with an effect on the far side: a push, a deploy, a release.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;destructive&quot;,
-          &quot;description&quot;: &quot;Removes something a person would have to reconstruct.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;CommandExecution&quot;: {
-      &quot;description&quot;: &quot;How a command is actually run: the program and the words before the caller&#39;s own.\n\nThis is what forbids a cycle. A projection renders an invocation from the execution\ndescriptor, so a generated bridge always spells the *canonical* program — never the\nsurface it is a bridge for.&quot;,
-      &quot;properties&quot;: {
-        &quot;argv&quot;: {
-          &quot;description&quot;: &quot;The words that precede the caller&#39;s arguments, the program&#39;s own name excluded.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;origin&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandOrigin&quot;,
-          &quot;description&quot;: &quot;Which program.&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;origin&quot;,
         &quot;argv&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;CommandGraph&quot;: {
-      &quot;description&quot;: &quot;The whole graph.&quot;,
+      &quot;description&quot;: &quot;How a command is actually run: the program and the words before the caller&#39;s own.\n\nThis is what forbids a cycle. A projection renders an invocation from the execution\ndescriptor, so a generated bridge always spells the *canonical* program — never the\nsurface it is a bridge for.&quot;,
       &quot;properties&quot;: {
-        &quot;commands&quot;: {
-          &quot;description&quot;: &quot;Every command, in a deterministic order: origin, then path.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/CommandNode&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;diagnostics&quot;: {
-          &quot;description&quot;: &quot;What the build found.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/CommandDiagnostic&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;fingerprint&quot;: {
-          &quot;description&quot;: &quot;A hash of the semantic content: the identity a cache and a generated projection\nkey on. Nothing that varies between two runs over the same tree is in it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;schema&quot;: {
-          &quot;description&quot;: &quot;The schema of this document.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;schema&quot;,
-        &quot;fingerprint&quot;,
-        &quot;commands&quot;,
-        &quot;diagnostics&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;CommandId&quot;: {
-      &quot;description&quot;: &quot;The canonical identity of one command.\n\nConstructed from the origin and the command path, never written by hand, so that a\nprojection cannot invent one and a rename of a display string cannot change one.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;CommandInteractivity&quot;: {
-      &quot;description&quot;: &quot;How a command behaves towards the caller&#39;s terminal and the caller&#39;s patience.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;non_interactive&quot;,
-          &quot;description&quot;: &quot;Runs, answers, exits. Safe to call from a machine surface.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;interactive&quot;,
-          &quot;description&quot;: &quot;Asks the person something, or reads the body of a record from a terminal. A\nmachine surface that offered it would hang.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;long_running&quot;,
-          &quot;description&quot;: &quot;Serves until it is stopped. A request/response surface cannot carry it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;CommandNode&quot;: {
-      &quot;description&quot;: &quot;One command, from whichever program offers it.&quot;,
-      &quot;properties&quot;: {
-        &quot;aliases&quot;: {
-          &quot;description&quot;: &quot;Other names that resolve to this node, declared once here and honoured by every\nprojection that has a use for one.&quot;,
+        &quot;argv&quot;: {
+          &quot;description&quot;: &quot;The words that precede the caller&#39;s arguments, the program&#39;s own name excluded.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;arguments&quot;: {
-          &quot;description&quot;: &quot;The arguments, in declaration order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/CommandArgument&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;availability&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandAvailability&quot;,
-          &quot;description&quot;: &quot;Where it means anything.&quot;
-        },
-        &quot;deprecation&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/CommandDeprecation&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Whether this is still the name to use.&quot;
-        },
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;The longer description, when the declaration carries one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;effect&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandEffect&quot;,
-          &quot;description&quot;: &quot;What it changes.&quot;
-        },
-        &quot;entrypoint&quot;: {
-          &quot;description&quot;: &quot;Is this command an entry point of its group — the one a newcomer is offered?&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;execution&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandExecution&quot;,
-          &quot;description&quot;: &quot;How it is run.&quot;
-        },
-        &quot;group&quot;: {
-          &quot;description&quot;: &quot;The group a person finds it under, when the declaration has groups.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandId&quot;,
-          &quot;description&quot;: &quot;The canonical identity.&quot;
-        },
-        &quot;interactivity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandInteractivity&quot;,
-          &quot;description&quot;: &quot;How it behaves towards a terminal.&quot;
-        },
-        &quot;invocation&quot;: {
-          &quot;description&quot;: &quot;The command line a person types, rendered once here.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          }
         },
         &quot;origin&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandOrigin&quot;,
-          &quot;description&quot;: &quot;Which program runs it.&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The words after the program&#39;s own name.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;projections&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandProjections&quot;,
-          &quot;description&quot;: &quot;Where it appears.&quot;
-        },
-        &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CommandProvenance&quot;,
-          &quot;description&quot;: &quot;Where it came from.&quot;
-        },
-        &quot;runnable&quot;: {
-          &quot;description&quot;: &quot;Can it be run on its own, or does it only group the commands under it?&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;stability&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Stability&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;tags&quot;: {
-          &quot;description&quot;: &quot;Free tags.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;description&quot;: &quot;Which program.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/CommandOrigin&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;origin&quot;,
-        &quot;path&quot;,
-        &quot;invocation&quot;,
-        &quot;summary&quot;,
-        &quot;runnable&quot;,
-        &quot;arguments&quot;,
-        &quot;execution&quot;,
-        &quot;effect&quot;,
-        &quot;interactivity&quot;,
-        &quot;stability&quot;,
-        &quot;availability&quot;,
-        &quot;provenance&quot;,
-        &quot;projections&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;CommandOrigin&quot;: {
-      &quot;description&quot;: &quot;Which program runs a command. Part of the identity, because the three are different\nprograms that share one name on the path.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;executable&quot;,
-          &quot;description&quot;: &quot;The Rust executable, `apps/majordomus-cli`: the read-only interfaces, generation,\nintrospection, the servers. Declared by clap.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;tool&quot;,
-          &quot;description&quot;: &quot;The shell tool, `bin/majordomus`: the task lifecycle. Declared by the shipped\ncommand registry and dispatched by the tool itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;workflow&quot;,
-          &quot;description&quot;: &quot;A workflow the repository declares for a person to run — a `just` recipe that is\nnot a generated bridge. Declared by the justfile and read from the runner&#39;s dump.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;CommandProjections&quot;: {
-      &quot;description&quot;: &quot;Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph.&quot;,
-      &quot;properties&quot;: {
-        &quot;cli&quot;: {
-          &quot;description&quot;: &quot;The command line, as typed.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;cockpit&quot;: {
-          &quot;description&quot;: &quot;The Cockpit address, when the surface carries it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;docs&quot;: {
-          &quot;description&quot;: &quot;The page on the site. Every command has one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;http&quot;: {
-          &quot;description&quot;: &quot;The HTTP route, when the capability behind it declares one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;mcp&quot;: {
-          &quot;description&quot;: &quot;The MCP tool name, when the capability behind it declares one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;withheld&quot;: {
-          &quot;description&quot;: &quot;Why a machine surface does not carry it, when one does not.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;workflow&quot;: {
-          &quot;description&quot;: &quot;The generated workflow bridge&#39;s recipe name.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;docs&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;CommandProvenance&quot;: {
-      &quot;description&quot;: &quot;Where a node came from, in enough detail to open the file.&quot;,
-      &quot;properties&quot;: {
-        &quot;capability&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/CapabilityId&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The capability this command runs, when it runs one.&quot;
-        },
-        &quot;declared_in&quot;: {
-          &quot;description&quot;: &quot;The repository-relative file that declares it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;read_by&quot;: {
-          &quot;description&quot;: &quot;The command that reads that declaration, when a reader wants to reproduce it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;declared_in&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;CommandRequirement&quot;: {
-      &quot;description&quot;: &quot;One thing a command needs before it can run.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;repository&quot;,
-          &quot;description&quot;: &quot;A git repository.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;layer&quot;,
-          &quot;description&quot;: &quot;The `.ai/` layer, initialised.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;task&quot;,
-          &quot;description&quot;: &quot;An active task record.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;executable&quot;,
-          &quot;description&quot;: &quot;The Rust executable, built.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;workflow_runner&quot;,
-          &quot;description&quot;: &quot;The workflow runner, installed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;rust_toolchain&quot;,
-          &quot;description&quot;: &quot;A cargo workspace and a toolchain to build it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;site&quot;,
-          &quot;description&quot;: &quot;The site sources and its generator.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;CommandSecrecy&quot;: {
-      &quot;description&quot;: &quot;How openly a value may be handled.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;public&quot;,
-          &quot;description&quot;: &quot;Ordinary: may be logged, completed, shown.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;sensitive&quot;,
-          &quot;description&quot;: &quot;A path or an identifier that names something private. Shown, never logged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;secret&quot;,
-          &quot;description&quot;: &quot;A credential. Never completed, never logged, never cached.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;CommandValueChoice&quot;: {
-      &quot;description&quot;: &quot;One value an argument accepts, from the declaration.&quot;,
-      &quot;properties&quot;: {
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;Its help, when the declaration carries one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;value&quot;: {
-          &quot;description&quot;: &quot;The value as typed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;value&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;CommandValueSource&quot;: {
-      &quot;description&quot;: &quot;Where a value for an argument comes from, when something in this repository knows the\nset.\n\nThis is the completion contract, and it is a property of the *argument*, not of a shell\nscript: the same source answers a shell&#39;s TAB, a generated form&#39;s select and a machine\nsurface&#39;s enumeration of what it will accept. Inference from the declaration comes\nfirst — a value-enum argument carries its own values, a `PATH` placeholder is a path —\nand only what cannot be inferred is annotated beside the command.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Nothing here knows the set; the caller types a value.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;free&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The declaration carries the values; they are on the argument.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;enumerated&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A path in the filesystem.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;path&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A path inside the repository.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;repository_path&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A capability id, from the registry.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;capability&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A command id, from this graph.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;command&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A rule id, from the effective rule set.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;rule&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;An object kind, from the index.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;object_kind&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A git branch in this repository.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;branch&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A graph id, from the graph registry.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;graph&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A moment id, from the why catalogue.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;moment&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A shell name, from the shells the activation supports.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;shell&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A secret. Never enumerated, never cached, never suggested.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;secret&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        }
-      ]
     },
     &quot;Stability&quot;: {
       &quot;description&quot;: &quot;Where a capability stands, in the repository&#39;s own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise.&quot;,
@@ -1099,46 +792,353 @@
         },
         {
           &quot;const&quot;: &quot;behaviorally_verified&quot;,
-          &quot;description&quot;: &quot;Implemented and proved by a behavioural test.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Implemented and proved by a behavioural test.&quot;
         },
         {
-          &quot;const&quot;: &quot;experimental&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Implemented, executable, and expected to change.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;experimental&quot;
         },
         {
-          &quot;const&quot;: &quot;planned&quot;,
           &quot;description&quot;: &quot;Specified and not implemented: listed, never executable.&quot;,
+          &quot;const&quot;: &quot;planned&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unsupported&quot;,
-          &quot;description&quot;: &quot;Considered and refused: listed with the reason, never executable.&quot;,
+          &quot;description&quot;: &quot;Considered and refused: listed with the reason, never executable.&quot;
+        }
+      ]
+    },
+    &quot;CommandInteractivity&quot;: {
+      &quot;description&quot;: &quot;How a command behaves towards the caller&#39;s terminal and the caller&#39;s patience.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Runs, answers, exits. Safe to call from a machine surface.&quot;,
+          &quot;const&quot;: &quot;non_interactive&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Asks the person something, or reads the body of a record from a terminal. A\nmachine surface that offered it would hang.&quot;,
+          &quot;const&quot;: &quot;interactive&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Serves until it is stopped. A request/response surface cannot carry it.&quot;,
+          &quot;const&quot;: &quot;long_running&quot;
+        }
+      ]
+    },
+    &quot;CommandValueSource&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;free&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;description&quot;: &quot;Nothing here knows the set; the caller types a value.&quot;
+        },
+        {
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;enumerated&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;description&quot;: &quot;The declaration carries the values; they are on the argument.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;description&quot;: &quot;A path in the filesystem.&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;path&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;A path inside the repository.&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;repository_path&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ]
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;A capability id, from the registry.&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;capability&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ]
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;command&quot;
+            }
+          },
+          &quot;description&quot;: &quot;A command id, from this graph.&quot;
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;rule&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;description&quot;: &quot;A rule id, from the effective rule set.&quot;
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;object_kind&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;An object kind, from the index.&quot;
+        },
+        {
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;branch&quot;
+            }
+          },
+          &quot;description&quot;: &quot;A git branch in this repository.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;A graph id, from the graph registry.&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;graph&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        },
+        {
+          &quot;description&quot;: &quot;A moment id, from the why catalogue.&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;moment&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;A shell name, from the shells the activation supports.&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;shell&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        },
+        {
+          &quot;description&quot;: &quot;A secret. Never enumerated, never cached, never suggested.&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;secret&quot;
+            }
+          }
+        }
+      ],
+      &quot;description&quot;: &quot;Where a value for an argument comes from, when something in this repository knows the\nset.\n\nThis is the completion contract, and it is a property of the *argument*, not of a shell\nscript: the same source answers a shell&#39;s TAB, a generated form&#39;s select and a machine\nsurface&#39;s enumeration of what it will accept. Inference from the declaration comes\nfirst — a value-enum argument carries its own values, a `PATH` placeholder is a path —\nand only what cannot be inferred is annotated beside the command.&quot;
+    },
+    &quot;CommandAvailability&quot;: {
+      &quot;description&quot;: &quot;Where a command means anything, and why not when it does not.\n\nDerived from the repository environment rather than declared per command, so that a\nprojection reads a field instead of re-deciding. The reason is carried because the\nanswer a person needs is never `false`.&quot;,
+      &quot;required&quot;: [
+        &quot;available&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;available&quot;: {
+          &quot;description&quot;: &quot;Can it be run here, now?&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Why not, in one line, when it cannot.&quot;
+        },
+        &quot;requires&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/CommandRequirement&quot;
+          },
+          &quot;description&quot;: &quot;What it needs, whether or not that is satisfied here.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;CommandEffect&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Reads and answers. Changes nothing anywhere.&quot;,
+          &quot;const&quot;: &quot;read_only&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;local_mutation&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Writes only where the repository keeps a checkout&#39;s own state — the process&#39;s\nmemory, `.ai/local/`, a build directory. Nothing a commit would carry.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;repository_mutation&quot;,
+          &quot;description&quot;: &quot;Writes tracked files: generated artifacts, the worktree, git itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Reaches the network with an effect on the far side: a push, a deploy, a release.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;network_mutation&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Removes something a person would have to reconstruct.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;destructive&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;What running a command changes. The one thing a surface policy is allowed to ask.\n\nThe order is the order of increasing consequence, and it is the order the derived\nexposure policy reads: a surface declares the strongest effect it will carry, and\nevery node at or below it is projected there. Nothing configures a surface per\ncommand.&quot;
+    },
+    &quot;CommandDiagnosticSeverity&quot;: {
+      &quot;description&quot;: &quot;How bad a finding is.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The graph is wrong and a projection built from it would be wrong.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Worth saying; the graph stands.&quot;,
+          &quot;const&quot;: &quot;warning&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A fact a reader may want.&quot;,
+          &quot;const&quot;: &quot;info&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
-    }
-  },
-  &quot;description&quot;: &quot;The whole graph, with what its build found.&quot;,
-  &quot;properties&quot;: {
-    &quot;errors&quot;: {
-      &quot;description&quot;: &quot;How many findings are errors; a projection refuses to write while this is not zero.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
     },
-    &quot;graph&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/CommandGraph&quot;,
-      &quot;description&quot;: &quot;The graph.&quot;
+    &quot;CommandId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The canonical identity of one command.\n\nConstructed from the origin and the command path, never written by hand, so that a\nprojection cannot invent one and a rename of a display string cannot change one.&quot;
+    },
+    &quot;CommandProvenance&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Where a node came from, in enough detail to open the file.&quot;,
+      &quot;required&quot;: [
+        &quot;declared_in&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;read_by&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The command that reads that declaration, when a reader wants to reproduce it.&quot;
+        },
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability this command runs, when it runs one.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/CapabilityId&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
+        },
+        &quot;declared_in&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The repository-relative file that declares it.&quot;
+        }
+      }
+    },
+    &quot;CommandOrigin&quot;: {
+      &quot;description&quot;: &quot;Which program runs a command. Part of the identity, because the three are different\nprograms that share one name on the path.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;executable&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The Rust executable, `apps/majordomus-cli`: the read-only interfaces, generation,\nintrospection, the servers. Declared by clap.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The shell tool, `bin/majordomus`: the task lifecycle. Declared by the shipped\ncommand registry and dispatched by the tool itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;tool&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A workflow the repository declares for a person to run — a `just` recipe that is\nnot a generated bridge. Declared by the justfile and read from the runner&#39;s dump.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;workflow&quot;
+        }
+      ]
     }
-  },
-  &quot;required&quot;: [
-    &quot;graph&quot;,
-    &quot;errors&quot;
-  ],
-  &quot;title&quot;: &quot;CommandGraphReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -1169,7 +1169,7 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::commands</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CommandGraphReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/commands.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/commands.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/commands.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/commands.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -1194,7 +1194,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

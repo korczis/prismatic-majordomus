@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -282,15 +282,15 @@ assert_eq!(
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">crate_output</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">A file holding `cargo test`&#39;s output, for the crate&#39;s own integration tests.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">origin</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Where the run happened: `local` (the default), `ci` or `release`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">crate_output</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">A file holding `cargo test`&#39;s output, for the crate&#39;s own integration tests.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">suite</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -301,9 +301,16 @@ assert_eq!(
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, stamps each result with the provenance the run did not carry, and merges it.\nBoth reports are optional and may be given together; an absent origin is `local`.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\&quot;{\&quot;suite\&quot;: \&quot;tmp/report.tsv\&quot;}\&quot;#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\&quot;tmp/report.tsv\&quot;));\nassert!(input.crate_output.is_none() &amp;&amp; input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&amp;input).unwrap(),\n    r#\&quot;{\&quot;suite\&quot;:\&quot;tmp/report.tsv\&quot;}\&quot;#\n);\n```&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;EvidenceRecordInput&quot;,
   &quot;properties&quot;: {
+    &quot;origin&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Where the run happened: `local` (the default), `ci` or `release`.&quot;
+    },
     &quot;crate_output&quot;: {
       &quot;description&quot;: &quot;A file holding `cargo test`&#39;s output, for the crate&#39;s own integration tests.&quot;,
       &quot;type&quot;: [
@@ -311,23 +318,16 @@ assert_eq!(
         &quot;null&quot;
       ]
     },
-    &quot;origin&quot;: {
-      &quot;description&quot;: &quot;Where the run happened: `local` (the default), `ci` or `release`.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
     &quot;suite&quot;: {
-      &quot;description&quot;: &quot;The runner&#39;s TSV report: `MJ_TEST_REPORT=&lt;file&gt; bash test/run.sh`.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;The runner&#39;s TSV report: `MJ_TEST_REPORT=&lt;file&gt; bash test/run.sh`.&quot;
     }
   },
-  &quot;title&quot;: &quot;EvidenceRecordInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, stamps each result with the provenance the run did not carry, and merges it.\nBoth reports are optional and may be given together; an absent origin is `local`.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\&quot;{\&quot;suite\&quot;: \&quot;tmp/report.tsv\&quot;}\&quot;#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\&quot;tmp/report.tsv\&quot;));\nassert!(input.crate_output.is_none() &amp;&amp; input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&amp;input).unwrap(),\n    r#\&quot;{\&quot;suite\&quot;:\&quot;tmp/report.tsv\&quot;}\&quot;#\n);\n```&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -361,74 +361,75 @@ assert_eq!(json[&quot;working_tree&quot;], &quot;clean&quot;);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">commit</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">recorded</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The commit they were recorded against.</td>
+        <td class="px-3 py-2 text-body">How many executions were written.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">ledger</td>
+        <td class="px-3 py-2 font-mono text-heading">working_tree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where the ledger was written.</td>
+        <td class="px-3 py-2 text-body">The tree&#39;s state at the time.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">passed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many of them passed.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">recorded</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">ledger</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many executions were written.</td>
+        <td class="px-3 py-2 text-body">Where the ledger was written.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">unknown</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Results the run named that no runner in this repository owns.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">working_tree</td>
+        <td class="px-3 py-2 font-mono text-heading">commit</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The tree&#39;s state at the time.</td>
+        <td class="px-3 py-2 text-body">The commit they were recorded against.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \&quot;06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\&quot;.to_string(),\n    working_tree: \&quot;clean\&quot;.to_string(),\n    unknown: vec![\&quot;docs/CLAIMS.yaml\&quot;.to_string()],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\&quot;.ai/repo/\&quot;));\n\nlet json = serde_json::to_value(&amp;report).unwrap();\nassert_eq!(json[\&quot;unknown\&quot;].as_array().unwrap().len(), 1);\nassert_eq!(json[\&quot;working_tree\&quot;], \&quot;clean\&quot;);\n```&quot;,
   &quot;properties&quot;: {
-    &quot;commit&quot;: {
-      &quot;description&quot;: &quot;The commit they were recorded against.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;recorded&quot;: {
+      &quot;description&quot;: &quot;How many executions were written.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;working_tree&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The tree&#39;s state at the time.&quot;
+    },
+    &quot;passed&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many of them passed.&quot;,
+      &quot;minimum&quot;: 0
     },
     &quot;ledger&quot;: {
       &quot;description&quot;: &quot;Where the ledger was written.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;passed&quot;: {
-      &quot;description&quot;: &quot;How many of them passed.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;recorded&quot;: {
-      &quot;description&quot;: &quot;How many executions were written.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;unknown&quot;: {
-      &quot;description&quot;: &quot;Results the run named that no runner in this repository owns.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Results the run named that no runner in this repository owns.&quot;
     },
-    &quot;working_tree&quot;: {
-      &quot;description&quot;: &quot;The tree&#39;s state at the time.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;commit&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The commit they were recorded against.&quot;
     }
   },
+  &quot;title&quot;: &quot;RecordReport&quot;,
+  &quot;description&quot;: &quot;What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \&quot;06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\&quot;.to_string(),\n    working_tree: \&quot;clean\&quot;.to_string(),\n    unknown: vec![\&quot;docs/CLAIMS.yaml\&quot;.to_string()],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\&quot;.ai/repo/\&quot;));\n\nlet json = serde_json::to_value(&amp;report).unwrap();\nassert_eq!(json[\&quot;unknown\&quot;].as_array().unwrap().len(), 1);\nassert_eq!(json[\&quot;working_tree\&quot;], \&quot;clean\&quot;);\n```&quot;,
   &quot;required&quot;: [
     &quot;recorded&quot;,
     &quot;passed&quot;,
@@ -437,7 +438,6 @@ assert_eq!(json[&quot;working_tree&quot;], &quot;clean&quot;);
     &quot;unknown&quot;,
     &quot;ledger&quot;
   ],
-  &quot;title&quot;: &quot;RecordReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -472,7 +472,7 @@ assert_eq!(json[&quot;working_tree&quot;], &quot;clean&quot;);
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::evidence</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EvidenceRecordInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RecordReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -497,7 +497,7 @@ assert_eq!(json[&quot;working_tree&quot;], &quot;clean&quot;);
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

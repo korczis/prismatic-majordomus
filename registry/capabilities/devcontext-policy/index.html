@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -262,8 +262,8 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -274,16 +274,6 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">bytes_per_token</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Bytes per estimated token.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">default_budget_tokens</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The default ceiling in estimated tokens.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">default_floor</td>
         <td class="px-3 py-2 font-mono text-xs text-body">number</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -294,15 +284,15 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The default depth limit.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">edges</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every edge kind the composed graph has, followed or refused.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">graph</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The graph the relations are read from.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">bytes_per_token</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Bytes per estimated token.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -314,6 +304,16 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The selectors, and which of them infer.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">edges</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every edge kind the composed graph has, followed or refused.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">default_budget_tokens</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The default ceiling in estimated tokens.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tiers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -323,63 +323,100 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;CompilerPolicy&quot;,
+  &quot;description&quot;: &quot;The compiler&#39;s own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
+    &quot;Tier&quot;: {
+      &quot;description&quot;: &quot;Where an entry sits in the order the budget spends in.\n\nThe order is this repository&#39;s own: `lib/context.sh` assembles its sections \&quot;in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\&quot; These six tiers are that\nsentence, applied to objects instead of to sections.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;task&quot;,
+          &quot;description&quot;: &quot;What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped.&quot;,
+          &quot;const&quot;: &quot;governance&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;source&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The code and the cases the work touches.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;decision&quot;,
+          &quot;description&quot;: &quot;The architectural decisions already in force over it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What a previous session left: handovers, session records, curated knowledge.&quot;,
+          &quot;const&quot;: &quot;knowledge&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;history&quot;,
+          &quot;description&quot;: &quot;Supporting evidence: use cases, claims, features, and the rest of the layer.&quot;
+        }
+      ]
+    },
     &quot;EdgeRule&quot;: {
       &quot;description&quot;: &quot;One edge of the composed graph, and what the compiler does with it.&quot;,
-      &quot;properties&quot;: {
-        &quot;edge&quot;: {
-          &quot;description&quot;: &quot;The edge kind, as the composed graph names it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;forward&quot;: {
-          &quot;description&quot;: &quot;The relevance multiplier when followed source to target; absent when refused.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: [
-            &quot;number&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;means&quot;: {
-          &quot;description&quot;: &quot;What the graph asserts by it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why the target is context for the source, or why the edge is refused.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;refused&quot;: {
-          &quot;description&quot;: &quot;True when the compiler will not follow it in either direction.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;reverse&quot;: {
-          &quot;description&quot;: &quot;The multiplier when followed target to source; absent when refused.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: [
-            &quot;number&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
       &quot;required&quot;: [
         &quot;edge&quot;,
         &quot;means&quot;,
         &quot;reason&quot;,
         &quot;refused&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Selector&quot;: {
-      &quot;description&quot;: &quot;What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;seed&quot;,
-          &quot;description&quot;: &quot;Named in the request.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;forward&quot;: {
+          &quot;type&quot;: [
+            &quot;number&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The relevance multiplier when followed source to target; absent when refused.&quot;,
+          &quot;format&quot;: &quot;double&quot;
+        },
+        &quot;edge&quot;: {
+          &quot;description&quot;: &quot;The edge kind, as the composed graph names it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;refused&quot;: {
+          &quot;description&quot;: &quot;True when the compiler will not follow it in either direction.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why the target is context for the source, or why the edge is refused.&quot;
+        },
+        &quot;means&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What the graph asserts by it.&quot;
+        },
+        &quot;reverse&quot;: {
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: [
+            &quot;number&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The multiplier when followed target to source; absent when refused.&quot;
+        }
+      }
+    },
+    &quot;Selector&quot;: {
+      &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;relation&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;seed&quot;,
+          &quot;description&quot;: &quot;Named in the request.&quot;
+        },
+        {
           &quot;description&quot;: &quot;Reached along a typed edge of the composed graph.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;relation&quot;
         },
         {
           &quot;const&quot;: &quot;scope_path&quot;,
@@ -387,83 +424,41 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;contract&quot;,
           &quot;description&quot;: &quot;A directory contract that reaches one of those paths.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;contract&quot;
         },
         {
-          &quot;const&quot;: &quot;governance&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A rule or policy the layer applies to everything.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;governance&quot;
         },
         {
           &quot;const&quot;: &quot;session_state&quot;,
-          &quot;description&quot;: &quot;A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint.&quot;
         },
         {
-          &quot;const&quot;: &quot;intent_match&quot;,
           &quot;description&quot;: &quot;Inferred: the words of the intent occur in the object&#39;s own words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;intent_match&quot;
         }
-      ]
-    },
-    &quot;SelectorRule&quot;: {
-      &quot;description&quot;: &quot;One selector, and whether what it produces was declared or inferred.&quot;,
-      &quot;properties&quot;: {
-        &quot;declared&quot;: {
-          &quot;description&quot;: &quot;Declared by the repository, or inferred by the compiler.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;selector&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Selector&quot;,
-          &quot;description&quot;: &quot;The selector.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;selector&quot;,
-        &quot;declared&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Tier&quot;: {
-      &quot;description&quot;: &quot;Where an entry sits in the order the budget spends in.\n\nThe order is this repository&#39;s own: `lib/context.sh` assembles its sections \&quot;in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\&quot; These six tiers are that\nsentence, applied to objects instead of to sections.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;task&quot;,
-          &quot;description&quot;: &quot;What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;governance&quot;,
-          &quot;description&quot;: &quot;What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;source&quot;,
-          &quot;description&quot;: &quot;The code and the cases the work touches.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;decision&quot;,
-          &quot;description&quot;: &quot;The architectural decisions already in force over it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;knowledge&quot;,
-          &quot;description&quot;: &quot;What a previous session left: handovers, session records, curated knowledge.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;history&quot;,
-          &quot;description&quot;: &quot;Supporting evidence: use cases, claims, features, and the rest of the layer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      &quot;description&quot;: &quot;What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.&quot;
     },
     &quot;TierRule&quot;: {
-      &quot;description&quot;: &quot;One tier, as the policy reports it.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
+        &quot;position&quot;: {
+          &quot;description&quot;: &quot;Its position in the order the budget spends in; 1 is spent first.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;tier&quot;: {
+          &quot;description&quot;: &quot;The tier.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Tier&quot;
+        },
         &quot;kinds&quot;: {
           &quot;description&quot;: &quot;The kinds of object that land in it.&quot;,
           &quot;items&quot;: {
@@ -474,67 +469,61 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
         &quot;meaning&quot;: {
           &quot;description&quot;: &quot;What it is for.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;position&quot;: {
-          &quot;description&quot;: &quot;Its position in the order the budget spends in; 1 is spent first.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;tier&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Tier&quot;,
-          &quot;description&quot;: &quot;The tier.&quot;
         }
       },
+      &quot;description&quot;: &quot;One tier, as the policy reports it.&quot;,
       &quot;required&quot;: [
         &quot;tier&quot;,
         &quot;position&quot;,
         &quot;meaning&quot;,
         &quot;kinds&quot;
+      ]
+    },
+    &quot;SelectorRule&quot;: {
+      &quot;properties&quot;: {
+        &quot;selector&quot;: {
+          &quot;description&quot;: &quot;The selector.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Selector&quot;
+        },
+        &quot;declared&quot;: {
+          &quot;description&quot;: &quot;Declared by the repository, or inferred by the compiler.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;selector&quot;,
+        &quot;declared&quot;
       ],
+      &quot;description&quot;: &quot;One selector, and whether what it produces was declared or inferred.&quot;,
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;The compiler&#39;s own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.&quot;,
   &quot;properties&quot;: {
-    &quot;bytes_per_token&quot;: {
-      &quot;description&quot;: &quot;Bytes per estimated token.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;default_budget_tokens&quot;: {
-      &quot;description&quot;: &quot;The default ceiling in estimated tokens.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;default_floor&quot;: {
-      &quot;description&quot;: &quot;The default relevance floor.&quot;,
       &quot;format&quot;: &quot;double&quot;,
+      &quot;description&quot;: &quot;The default relevance floor.&quot;,
       &quot;type&quot;: &quot;number&quot;
     },
     &quot;default_max_depth&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
       &quot;description&quot;: &quot;The default depth limit.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;edges&quot;: {
-      &quot;description&quot;: &quot;Every edge kind the composed graph has, followed or refused.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/EdgeRule&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;minimum&quot;: 0
     },
     &quot;graph&quot;: {
       &quot;description&quot;: &quot;The graph the relations are read from.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
+    &quot;bytes_per_token&quot;: {
+      &quot;description&quot;: &quot;Bytes per estimated token.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint64&quot;
+    },
     &quot;schema&quot;: {
-      &quot;description&quot;: &quot;The format of this answer.&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
       &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;The format of this answer.&quot;,
       &quot;type&quot;: &quot;integer&quot;
     },
     &quot;selectors&quot;: {
@@ -544,12 +533,25 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
       },
       &quot;type&quot;: &quot;array&quot;
     },
+    &quot;edges&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EdgeRule&quot;
+      },
+      &quot;description&quot;: &quot;Every edge kind the composed graph has, followed or refused.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;default_budget_tokens&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;The default ceiling in estimated tokens.&quot;
+    },
     &quot;tiers&quot;: {
-      &quot;description&quot;: &quot;The tiers, in the order the budget spends in.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/TierRule&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;description&quot;: &quot;The tiers, in the order the budget spends in.&quot;
     }
   },
   &quot;required&quot;: [
@@ -562,9 +564,7 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
     &quot;default_max_depth&quot;,
     &quot;default_floor&quot;,
     &quot;bytes_per_token&quot;
-  ],
-  &quot;title&quot;: &quot;CompilerPolicy&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -595,7 +595,7 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devcontext</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CompilerPolicy</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -620,7 +620,7 @@ from an answer.</p><div class="mt-3 overflow-x-auto rounded-base border border-d
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

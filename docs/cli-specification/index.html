@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -833,14 +833,8 @@ absent is exactly what would let a second <code>start</code> overwrite it.</p>
 <span class="giallo-l"><span>The extraction boundary and the session schema landed; the compiler&#39;s discovery stage is next.</span></span>
 <span class="giallo-l"><span>EOF</span></span>
 <span class="giallo-l"><span>.ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md</span></span></code></pre><h2 id="majordomus-evidence"><a class="zola-anchor" href="#majordomus-evidence" aria-label="Anchor link for: majordomus-evidence"><code>majordomus evidence</code></a></h2>
-<p>Record evidence against the active task: one obligation it declared, discharged, or one
-validation gate of the CI model that has reported.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus evidence --covers &lt;token&gt; [--type &lt;kind&gt;] (--command &lt;cmd&gt; | --artifact &lt;ref&gt;) [--result &lt;r&gt;] [--json]</span></span>
-<span class="giallo-l"><span>majordomus evidence --gate &lt;id&gt; --exit &lt;status&gt; [--command &lt;cmd&gt;] [--result &lt;r&gt;] [--json]</span></span></code></pre>
-<p>The two forms record different kinds of fact and are never one invocation. An obligation is
-a promise the task made; a gate is what the validation pipeline said about the tree. A line
-claiming to be both would be readable as neither, so passing <code>--covers</code> and <code>--gate</code>
-together exits <code>2</code>.</p>
+<p>Record that one obligation the active task declared has been discharged.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus evidence --covers &lt;token&gt; [--type &lt;kind&gt;] (--command &lt;cmd&gt; | --artifact &lt;ref&gt;) [--result &lt;r&gt;] [--json]</span></span></code></pre>
 <p>A task's <code>scope</code> says where a worker may write; its <code>requires</code> says what the worker owes
 before the outcome <code>completed</code> is available. The tokens are declared in
 <code>share/obligations.yaml</code> — implementation, tests, docs, generated, rules, commit, push,
@@ -874,40 +868,7 @@ record here.</p>
 <code>majordomus.obligation-closure</code>, so a stale evidence is visible before someone builds on
 it; only an outcome of <code>completed</code> is refused. A worker reporting <code>blocked</code> is being honest,
 and refusing that would teach them to claim <code>completed</code> instead.</p>
-<h3 id="recording-a-gate"><a class="zola-anchor" href="#recording-a-gate" aria-label="Anchor link for: recording-a-gate">Recording a gate</a></h3>
-<p><code>--gate</code> names a gate of <code>.ai/repo/ci/gates.yaml</code>, this repository's CI model, and <code>--exit</code>
-the status it reported; <code>0</code> is a pass. A gate the model does not declare exits <code>2</code>, as does
-an <code>--exit</code> that is not a number.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus evidence --gate rust-check --exit 0 --command &#39;scripts/rust-check --ci&#39;</span></span></code></pre>
-<p><strong>Writes:</strong> a <code>task.gate</code> line in the ledger, carrying the gate, its exit status and the hash
-of the files that select it. Those files are derived from the model rather than declared:
-the union of the paths of every class that names the gate, and everything for a gate every
-plan selects, because a gate every plan selects is a gate any change can invalidate. Change
-one of them and the run stops discharging the gate — committed or not, since the change set
-a task is judged over includes its working tree.</p>
-<p><code>check</code> and <code>finish</code> evaluate every gate the task's own change set selects, through the
-doctrine <code>majordomus.completion-gates</code>, and report each in one vocabulary:</p>
-<div class="overflow-x-auto" tabindex="0">
-<table tabindex="0"><thead><tr><th>status</th><th>meaning</th></tr></thead><tbody>
-<tr><td><code>pass</code></td><td>it ran over these inputs and exited <code>0</code></td></tr>
-<tr><td><code>fail</code></td><td>it ran over these inputs and did not</td></tr>
-<tr><td><code>stale</code></td><td>it ran, and the files that select it have changed since</td></tr>
-<tr><td><code>blocked</code></td><td>something it cannot run without has not passed</td></tr>
-<tr><td><code>queued</code></td><td>the plan selects it and no run has ever reported</td></tr>
-<tr><td><code>exempt</code></td><td>nothing this change did can make it true or false</td></tr>
-<tr><td><code>unknown</code></td><td>it cannot be judged here at all — no model, no reader</td></tr>
-</tbody></table>
-</div>
-<p>Only <code>fail</code>, <code>stale</code> and <code>blocked</code> refuse the outcome <code>completed</code>. <code>queued</code> is reported by
-name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
-that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
-branch-breaking defects overnight because they looked identical
-(<code>majordomus.never-reported-is-not-green</code>).</p>
-<p>The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the nineteen questions of the done invariant with the source that answered each
-— is one document, <code>gates.completion</code>, read the same way by the command line, the HTTP API,
-MCP and the Cockpit:</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus-cli run gates.completion --input &#39;{}&#39; --format json | jq &#39;.output.questions&#39;</span></span></code></pre><h2 id="majordomus-checkpoint"><a class="zola-anchor" href="#majordomus-checkpoint" aria-label="Anchor link for: majordomus-checkpoint"><code>majordomus checkpoint</code></a></h2>
+<h2 id="majordomus-checkpoint"><a class="zola-anchor" href="#majordomus-checkpoint" aria-label="Anchor link for: majordomus-checkpoint"><code>majordomus checkpoint</code></a></h2>
 <p>Record compact progress inside an active task. Append-only; the body arrives on stdin.</p>
 <p>A checkpoint is not a small handover. A handover is a deliberate continuation package
 written when a worker stops; a checkpoint is what was true a moment ago, short enough that
@@ -1925,7 +1886,7 @@ are inert until the first <code>start</code>.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -284,6 +284,7 @@ assert_eq!(narrow.checkouts, Checkouts::This);
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;$defs&quot;: {
     &quot;Checkouts&quot;: {
       &quot;description&quot;: &quot;Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository&#39;s checkouts are read from git&#39;s registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \&quot;this\&quot;);\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \&quot;repository\&quot;);\nassert_eq!(Checkouts::default(), Checkouts::Repository, \&quot;the wide answer is what a caller who says nothing has always got\&quot;);\n```&quot;,
@@ -294,24 +295,23 @@ assert_eq!(narrow.checkouts, Checkouts::This);
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;this&quot;,
           &quot;description&quot;: &quot;This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one.&quot;,
+          &quot;const&quot;: &quot;this&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
   },
-  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;What to ask of `server.status`: how wide the answer is.\n\nOne field, because the standing of a server is not something a caller filters — it is\nsomething a caller wants for one checkout or for all of them, and the difference is\nforty round trips on a machine with forty worktrees.\n\n```\nuse majordomus_cli::capability::builtin::server::{Checkouts, ServerStatusInput};\n// the field is optional on every surface, and its absence is the wide answer\nlet asked_nothing: ServerStatusInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert_eq!(asked_nothing.checkouts, Checkouts::Repository);\nlet narrow: ServerStatusInput = serde_json::from_str(r#\&quot;{\&quot;checkouts\&quot;:\&quot;this\&quot;}\&quot;#).unwrap();\nassert_eq!(narrow.checkouts, Checkouts::This);\n```&quot;,
   &quot;properties&quot;: {
     &quot;checkouts&quot;: {
+      &quot;description&quot;: &quot;Which checkouts the answer covers. Absent means `repository`.&quot;,
       &quot;$ref&quot;: &quot;#/$defs/Checkouts&quot;,
-      &quot;default&quot;: &quot;repository&quot;,
-      &quot;description&quot;: &quot;Which checkouts the answer covers. Absent means `repository`.&quot;
+      &quot;default&quot;: &quot;repository&quot;
     }
   },
-  &quot;title&quot;: &quot;ServerStatusInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;ServerStatusInput&quot;
 }</pre></div>
   </details>
 </div>
@@ -329,20 +329,16 @@ assert_eq!(serde_json::from_str::&lt;ServerStatus&gt;(&amp;text).unwrap(), statu
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checkout_id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">This checkout&#39;s identity: what this process answers as `repository_id`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">desired</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What this executable would serve, and what `standing` is measured against.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">git</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The git repository this checkout belongs to; absent where git cannot be asked.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">this_process</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The lease this process holds, when it is the server; absent when the question was
+answered by a process that serves nothing.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">servers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -355,20 +351,153 @@ assert_eq!(serde_json::from_str::&lt;ServerStatus&gt;(&amp;text).unwrap(), statu
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Where this checkout&#39;s server stands.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">this_process</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The lease this process holds, when it is the server; absent when the question was
-answered by a process that serves nothing.</td>
+        <td class="px-3 py-2 font-mono text-heading">checkout_id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">This checkout&#39;s identity: what this process answers as `repository_id`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">desired</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What this executable would serve, and what `standing` is measured against.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;git&quot;: {
+      &quot;description&quot;: &quot;The git repository this checkout belongs to; absent where git cannot be asked.&quot;,
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/GitIdentity&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ]
+    },
+    &quot;this_process&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/LeaseView&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The lease this process holds, when it is the server; absent when the question was\nanswered by a process that serves nothing.&quot;
+    },
+    &quot;servers&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ServerView&quot;
+      },
+      &quot;description&quot;: &quot;Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked.&quot;
+    },
+    &quot;standing&quot;: {
+      &quot;description&quot;: &quot;Where this checkout&#39;s server stands.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;
+    },
+    &quot;checkout_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;This checkout&#39;s identity: what this process answers as `repository_id`.&quot;
+    },
+    &quot;desired&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Desired&quot;,
+      &quot;description&quot;: &quot;What this executable would serve, and what `standing` is measured against.&quot;
+    }
+  },
+  &quot;description&quot;: &quot;The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \&quot;c\&quot;.into(), git: None,\n    desired: Desired { host: \&quot;127.0.0.1\&quot;.into(), port: 8741, version: \&quot;1.0.0\&quot;.into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&amp;status).unwrap();\nassert_eq!(serde_json::from_str::&lt;ServerStatus&gt;(&amp;text).unwrap(), status);\n```&quot;,
+  &quot;required&quot;: [
+    &quot;checkout_id&quot;,
+    &quot;desired&quot;,
+    &quot;standing&quot;,
+    &quot;servers&quot;
+  ],
   &quot;$defs&quot;: {
+    &quot;LeaseView&quot;: {
+      &quot;description&quot;: &quot;A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server&#39;s own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\&quot;http://127.0.0.1:8741\&quot;.into()),\n    started_at: \&quot;2026-09-10T00:00:00Z\&quot;.into(), executable: None, version: Some(\&quot;1.0.0\&quot;.into()) };\nlet v = serde_json::to_value(&amp;view).unwrap();\nassert_eq!(v[\&quot;pid\&quot;], 7);\nassert!(v.get(\&quot;token\&quot;).is_none() &amp;&amp; v.get(\&quot;root\&quot;).is_none());\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;pid&quot;,
+        &quot;started_at&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;The address, once bound.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;started_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When the server took the lease, RFC 3339.&quot;
+        },
+        &quot;pid&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The server&#39;s process id. Informational: nothing decides liveness from it.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;version&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The executable&#39;s version; absent for a server too old to have written one.&quot;
+        },
+        &quot;executable&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/ExecutableIdentity&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The executable the server was started from, when it could be located.&quot;
+        }
+      }
+    },
+    &quot;GitIdentity&quot;: {
+      &quot;properties&quot;: {
+        &quot;linked&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether this checkout is a linked work tree rather than the primary one.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Its digest: the same for every checkout of one repository, different across\nrepositories, and never a path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;common_dir&quot;: {
+          &quot;description&quot;: &quot;The git directory every work tree of the repository shares, canonical.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;description&quot;: &quot;The git repository a checkout belongs to, as distinct from the checkout itself.\n\n[`identity`] names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository&#39;s identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\&quot;repo\&quot;);\nstd::fs::create_dir_all(&amp;root).unwrap();\nlet git = |args: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root).args(args).status().unwrap().success());\ngit(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;, \&quot;.\&quot;]);\ngit(&amp;[\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;, \&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;--allow-empty\&quot;, \&quot;-m\&quot;, \&quot;init\&quot;]);\nlet wt = dir.path().join(\&quot;repo-wt\&quot;);\ngit(&amp;[\&quot;worktree\&quot;, \&quot;add\&quot;, \&quot;-q\&quot;, \&quot;-b\&quot;, \&quot;feature/x\&quot;, wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&amp;root).expect(\&quot;a work tree\&quot;);\nlet linked: GitIdentity = git_identity(&amp;wt).expect(\&quot;a linked work tree\&quot;);\nassert_eq!(primary.id, linked.id, \&quot;one repository\&quot;);\nassert_ne!(identity(&amp;root), identity(&amp;wt), \&quot;two checkouts\&quot;);\nassert!(!primary.linked &amp;&amp; linked.linked);\nassert!(!primary.id.contains(&#39;/&#39;), \&quot;a digest, never a path\&quot;);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;common_dir&quot;,
+        &quot;id&quot;,
+        &quot;linked&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;Desired&quot;: {
       &quot;description&quot;: &quot;What this executable would want a server of this checkout to be: the address it would\nbind, the version and the executable it would serve from. What `standing` is measured\nagainst.\n\n```\nuse majordomus_cli::capability::builtin::server::Desired;\nlet d = Desired { host: \&quot;127.0.0.1\&quot;.into(), port: 8741, version: \&quot;1.0.0\&quot;.into(), executable: None };\nlet v = serde_json::to_value(&amp;d).unwrap();\nassert_eq!(v[\&quot;port\&quot;], 8741);\nassert!(v.get(\&quot;executable\&quot;).is_none(), \&quot;an executable that cannot be located is not written as null\&quot;);\n```&quot;,
       &quot;properties&quot;: {
+        &quot;port&quot;: {
+          &quot;format&quot;: &quot;uint16&quot;,
+          &quot;maximum&quot;: 65535,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The port it asks for first.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;host&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The interface the shared server binds by default.&quot;
+        },
         &quot;executable&quot;: {
           &quot;anyOf&quot;: [
             {
@@ -380,121 +509,15 @@ answered by a process that serves nothing.</td>
           ],
           &quot;description&quot;: &quot;This executable, when it can be located.&quot;
         },
-        &quot;host&quot;: {
-          &quot;description&quot;: &quot;The interface the shared server binds by default.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;port&quot;: {
-          &quot;description&quot;: &quot;The port it asks for first.&quot;,
-          &quot;format&quot;: &quot;uint16&quot;,
-          &quot;maximum&quot;: 65535,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
         &quot;version&quot;: {
-          &quot;description&quot;: &quot;This executable&#39;s version.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;This executable&#39;s version.&quot;
         }
       },
       &quot;required&quot;: [
         &quot;host&quot;,
         &quot;port&quot;,
         &quot;version&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ExecutableIdentity&quot;: {
-      &quot;description&quot;: &quot;The identity of the file an executable was started from: where it is, and the mtime\nand size of the file at that path. A server outlives its own binary — a rebuild replaces\nthe file under a process that keeps serving the code it loaded hours ago — and nothing\nabout the process itself says so. This is what makes that visible.\n\n```\nuse majordomus_cli::lease::ExecutableIdentity;\nlet recorded = ExecutableIdentity { path: \&quot;/opt/majordomus\&quot;.into(), mtime: 1_700_000_000, size: 42 };\nlet text = serde_json::to_string(&amp;recorded).unwrap();\nassert_eq!(serde_json::from_str::&lt;ExecutableIdentity&gt;(&amp;text).unwrap(), recorded);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;mtime&quot;: {
-          &quot;description&quot;: &quot;The file&#39;s modification time, seconds since the epoch.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The path the process was started from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;size&quot;: {
-          &quot;description&quot;: &quot;The file&#39;s size in bytes.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;mtime&quot;,
-        &quot;size&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;GitIdentity&quot;: {
-      &quot;description&quot;: &quot;The git repository a checkout belongs to, as distinct from the checkout itself.\n\n[`identity`] names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository&#39;s identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\&quot;repo\&quot;);\nstd::fs::create_dir_all(&amp;root).unwrap();\nlet git = |args: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root).args(args).status().unwrap().success());\ngit(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;, \&quot;.\&quot;]);\ngit(&amp;[\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;, \&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;--allow-empty\&quot;, \&quot;-m\&quot;, \&quot;init\&quot;]);\nlet wt = dir.path().join(\&quot;repo-wt\&quot;);\ngit(&amp;[\&quot;worktree\&quot;, \&quot;add\&quot;, \&quot;-q\&quot;, \&quot;-b\&quot;, \&quot;feature/x\&quot;, wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&amp;root).expect(\&quot;a work tree\&quot;);\nlet linked: GitIdentity = git_identity(&amp;wt).expect(\&quot;a linked work tree\&quot;);\nassert_eq!(primary.id, linked.id, \&quot;one repository\&quot;);\nassert_ne!(identity(&amp;root), identity(&amp;wt), \&quot;two checkouts\&quot;);\nassert!(!primary.linked &amp;&amp; linked.linked);\nassert!(!primary.id.contains(&#39;/&#39;), \&quot;a digest, never a path\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;common_dir&quot;: {
-          &quot;description&quot;: &quot;The git directory every work tree of the repository shares, canonical.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;Its digest: the same for every checkout of one repository, different across\nrepositories, and never a path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;linked&quot;: {
-          &quot;description&quot;: &quot;Whether this checkout is a linked work tree rather than the primary one.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;common_dir&quot;,
-        &quot;id&quot;,
-        &quot;linked&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;LeaseView&quot;: {
-      &quot;description&quot;: &quot;A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server&#39;s own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\&quot;http://127.0.0.1:8741\&quot;.into()),\n    started_at: \&quot;2026-09-10T00:00:00Z\&quot;.into(), executable: None, version: Some(\&quot;1.0.0\&quot;.into()) };\nlet v = serde_json::to_value(&amp;view).unwrap();\nassert_eq!(v[\&quot;pid\&quot;], 7);\nassert!(v.get(\&quot;token\&quot;).is_none() &amp;&amp; v.get(\&quot;root\&quot;).is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;executable&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/ExecutableIdentity&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The executable the server was started from, when it could be located.&quot;
-        },
-        &quot;pid&quot;: {
-          &quot;description&quot;: &quot;The server&#39;s process id. Informational: nothing decides liveness from it.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When the server took the lease, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;url&quot;: {
-          &quot;description&quot;: &quot;The address, once bound.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;The executable&#39;s version; absent for a server too old to have written one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;pid&quot;,
-        &quot;started_at&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
@@ -507,19 +530,19 @@ answered by a process that serves nothing.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;starting&quot;,
           &quot;description&quot;: &quot;A lease without an address, young enough that its owner is still binding.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;starting&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;ready&quot;,
-          &quot;description&quot;: &quot;The server the lease names answers for this checkout, from the code on disk, at\nthis executable&#39;s version.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The server the lease names answers for this checkout, from the code on disk, at\nthis executable&#39;s version.&quot;
         },
         {
-          &quot;const&quot;: &quot;outdated&quot;,
           &quot;description&quot;: &quot;The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday&#39;s.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;outdated&quot;
         },
         {
           &quot;const&quot;: &quot;stale&quot;,
@@ -528,46 +551,45 @@ answered by a process that serves nothing.</td>
         }
       ]
     },
-    &quot;ServerView&quot;: {
-      &quot;description&quot;: &quot;One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \&quot;/r\&quot;.into(), branch: Some(\&quot;master\&quot;.into()), checkout_id: \&quot;c\&quot;.into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&amp;view).unwrap();\nassert_eq!(v[\&quot;standing\&quot;], \&quot;absent\&quot;);\nassert!(v.get(\&quot;lease\&quot;).is_none() &amp;&amp; v.get(\&quot;peers\&quot;).is_none(), \&quot;what there is not is not written\&quot;);\n```&quot;,
+    &quot;ExecutableIdentity&quot;: {
       &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out there, when git names one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;size&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The file&#39;s size in bytes.&quot;,
+          &quot;minimum&quot;: 0
         },
-        &quot;checkout_id&quot;: {
-          &quot;description&quot;: &quot;The checkout&#39;s identity: what its server answers as `repository_id`.&quot;,
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The path the process was started from.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;lease&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/LeaseView&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The lease, when the file holds one.&quot;
-        },
-        &quot;peers&quot;: {
-          &quot;description&quot;: &quot;How many peers the server reports attached, when it answers.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;mtime&quot;: {
+          &quot;description&quot;: &quot;The file&#39;s modification time, seconds since the epoch.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;mtime&quot;,
+        &quot;size&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The identity of the file an executable was started from: where it is, and the mtime\nand size of the file at that path. A server outlives its own binary — a rebuild replaces\nthe file under a process that keeps serving the code it loaded hours ago — and nothing\nabout the process itself says so. This is what makes that visible.\n\n```\nuse majordomus_cli::lease::ExecutableIdentity;\nlet recorded = ExecutableIdentity { path: \&quot;/opt/majordomus\&quot;.into(), mtime: 1_700_000_000, size: 42 };\nlet text = serde_json::to_string(&amp;recorded).unwrap();\nassert_eq!(serde_json::from_str::&lt;ExecutableIdentity&gt;(&amp;text).unwrap(), recorded);\n```&quot;
+    },
+    &quot;ServerView&quot;: {
+      &quot;properties&quot;: {
         &quot;primary&quot;: {
           &quot;description&quot;: &quot;Whether this is the primary checkout rather than a linked worktree.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why, when the standing is not `ready`: what the lease held, or what answered.&quot;,
+        &quot;checkout_id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The checkout&#39;s identity: what its server answers as `repository_id`.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out there, when git names one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
@@ -581,9 +603,36 @@ answered by a process that serves nothing.</td>
           &quot;description&quot;: &quot;Whether this is the checkout the answering process serves.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
+        &quot;reason&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Why, when the standing is not `ready`: what the lease held, or what answered.&quot;
+        },
+        &quot;lease&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/LeaseView&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The lease, when the file holds one.&quot;
+        },
         &quot;worktree&quot;: {
           &quot;description&quot;: &quot;The checkout, absolute and canonical.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;peers&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;How many peers the server reports attached, when it answers.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
         }
       },
       &quot;required&quot;: [
@@ -593,59 +642,10 @@ answered by a process that serves nothing.</td>
         &quot;this_checkout&quot;,
         &quot;standing&quot;
       ],
+      &quot;description&quot;: &quot;One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \&quot;/r\&quot;.into(), branch: Some(\&quot;master\&quot;.into()), checkout_id: \&quot;c\&quot;.into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&amp;view).unwrap();\nassert_eq!(v[\&quot;standing\&quot;], \&quot;absent\&quot;);\nassert!(v.get(\&quot;lease\&quot;).is_none() &amp;&amp; v.get(\&quot;peers\&quot;).is_none(), \&quot;what there is not is not written\&quot;);\n```&quot;,
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \&quot;c\&quot;.into(), git: None,\n    desired: Desired { host: \&quot;127.0.0.1\&quot;.into(), port: 8741, version: \&quot;1.0.0\&quot;.into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&amp;status).unwrap();\nassert_eq!(serde_json::from_str::&lt;ServerStatus&gt;(&amp;text).unwrap(), status);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;checkout_id&quot;: {
-      &quot;description&quot;: &quot;This checkout&#39;s identity: what this process answers as `repository_id`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;desired&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Desired&quot;,
-      &quot;description&quot;: &quot;What this executable would serve, and what `standing` is measured against.&quot;
-    },
-    &quot;git&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/GitIdentity&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The git repository this checkout belongs to; absent where git cannot be asked.&quot;
-    },
-    &quot;servers&quot;: {
-      &quot;description&quot;: &quot;Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ServerView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;standing&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
-      &quot;description&quot;: &quot;Where this checkout&#39;s server stands.&quot;
-    },
-    &quot;this_process&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/LeaseView&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The lease this process holds, when it is the server; absent when the question was\nanswered by a process that serves nothing.&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;checkout_id&quot;,
-    &quot;desired&quot;,
-    &quot;standing&quot;,
-    &quot;servers&quot;
-  ],
   &quot;title&quot;: &quot;ServerStatus&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -678,7 +678,7 @@ answered by a process that serves nothing.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::server</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ServerStatusInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ServerStatus</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/server.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/server.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/server.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/server.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -703,7 +703,7 @@ answered by a process that serves nothing.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,10 +261,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -290,19 +290,6 @@ assert_eq!(fresh.findings.len(), 1, &quot;absence is reported, not implied&quot;
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">branch</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The branch, or `DETACHED`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">closed</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">True when the task declares obligations and every one of them is discharged and
-current — that is, when `majordomus.obligation-closure` would not refuse
-`finish --outcome completed`. False when anything is owed, stale or undeclared, and
-false when there is no task: nothing that does not exist is closed.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -315,10 +302,11 @@ the ordinary case.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The commit this checkout is on.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">obligations</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Every obligation the task declared, in the order it declared them.</td>
+        <td class="px-3 py-2 font-mono text-heading">worktree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The worktree this answer is about. Every reading below is scoped to it, and to no
+other checkout of the same repository.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -326,72 +314,154 @@ the ordinary case.</td>
         <td class="px-3 py-2 text-body">Whether this checkout has a task to report about at all. False in a clone that has
 never run the lifecycle, which is not a fault and is not &quot;nothing owed&quot;.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tallies</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-heading">closed</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many obligations stand where, by state word. Absent states are absent rather
-than zero, so a reader never has to know the vocabulary to read the tallies.</td>
+        <td class="px-3 py-2 text-body">True when the task declares obligations and every one of them is discharged and
+current — that is, when `majordomus.obligation-closure` would not refuse
+`finish --outcome completed`. False when anything is owed, stale or undeclared, and
+false when there is no task: nothing that does not exist is closed.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">task</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The active task, or `None`. Its `requires` is the list the entries below expand.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">branch</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The branch, or `DETACHED`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">obligations</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Every obligation the task declared, in the order it declared them.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tallies</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many obligations stand where, by state word. Absent states are absent rather
+than zero, so a reader never has to know the vocabulary to read the tallies.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">working_tree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">`clean` or `dirty`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">worktree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The worktree this answer is about. Every reading below is scoped to it, and to no
-other checkout of the same repository.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;What this checkout&#39;s active task owes, and how much of it is still true.\n\nA clone that has never run the lifecycle answers this too, and answers it as absence:\n`present` false, no task, and a finding saying so. \&quot;Nothing owed\&quot; and \&quot;nothing to owe\nit\&quot; are different facts, and a served instance must not report the second as the first.\n\n```\nuse majordomus_cli::capability::builtin::obligations::Closure;\nlet fresh: Closure = serde_json::from_str(\n    r#\&quot;{\&quot;present\&quot;:false,\&quot;worktree\&quot;:\&quot;/srv/clone\&quot;,\&quot;branch\&quot;:\&quot;master\&quot;,\&quot;closed\&quot;:false,\n        \&quot;tallies\&quot;:{},\n        \&quot;findings\&quot;:[\&quot;no active task in this checkout (.ai/local/state/current.yaml); nothing owes anything here\&quot;]}\&quot;#,\n)\n.unwrap();\nassert!(!fresh.present &amp;&amp; !fresh.closed, \&quot;nothing that does not exist is closed\&quot;);\nassert!(fresh.task.is_none() &amp;&amp; fresh.obligations.is_empty());\nassert_eq!(fresh.findings.len(), 1, \&quot;absence is reported, not implied\&quot;);\n```&quot;,
+  &quot;required&quot;: [
+    &quot;present&quot;,
+    &quot;worktree&quot;,
+    &quot;branch&quot;,
+    &quot;closed&quot;,
+    &quot;tallies&quot;
+  ],
+  &quot;title&quot;: &quot;Closure&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;findings&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;What a reader should know before trusting any of the above: an unreadable\nvocabulary, a ledger that could not be read, a task that declares nothing. Empty is\nthe ordinary case.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;head&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The commit this checkout is on.&quot;
+    },
+    &quot;worktree&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The worktree this answer is about. Every reading below is scoped to it, and to no\nother checkout of the same repository.&quot;
+    },
+    &quot;present&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether this checkout has a task to report about at all. False in a clone that has\nnever run the lifecycle, which is not a fault and is not \&quot;nothing owed\&quot;.&quot;
+    },
+    &quot;closed&quot;: {
+      &quot;description&quot;: &quot;True when the task declares obligations and every one of them is discharged and\ncurrent — that is, when `majordomus.obligation-closure` would not refuse\n`finish --outcome completed`. False when anything is owed, stale or undeclared, and\nfalse when there is no task: nothing that does not exist is closed.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;task&quot;: {
+      &quot;description&quot;: &quot;The active task, or `None`. Its `requires` is the list the entries below expand.&quot;,
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ]
+    },
+    &quot;branch&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The branch, or `DETACHED`.&quot;
+    },
+    &quot;obligations&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every obligation the task declared, in the order it declared them.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ObligationClosure&quot;
+      }
+    },
+    &quot;tallies&quot;: {
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 0
+      },
+      &quot;description&quot;: &quot;How many obligations stand where, by state word. Absent states are absent rather\nthan zero, so a reader never has to know the vocabulary to read the tallies.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;working_tree&quot;: {
+      &quot;description&quot;: &quot;`clean` or `dirty`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
   &quot;$defs&quot;: {
     &quot;ActiveTask&quot;: {
       &quot;description&quot;: &quot;The active task of this checkout, when there is one.&quot;,
       &quot;properties&quot;: {
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it started at.&quot;,
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;What is being worked on.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The task id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;started_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it started.&quot;
         },
         &quot;outcome&quot;: {
           &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;head&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The commit it started at.&quot;
+        },
         &quot;profile&quot;: {
-          &quot;description&quot;: &quot;The execution profile it runs under.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The execution profile it runs under.&quot;
         },
         &quot;requires&quot;: {
           &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
         &quot;scope&quot;: {
           &quot;description&quot;: &quot;The paths it claims.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When it started.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;What is being worked on.&quot;,
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The task id.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
@@ -403,8 +473,98 @@ other checkout of the same repository.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;ObligationClosure&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;remote&quot;,
+        &quot;state&quot;,
+        &quot;detail&quot;,
+        &quot;reproduce&quot;
+      ],
+      &quot;description&quot;: &quot;One obligation the task declared, joined with what the vocabulary says about it and\nwith the evidence that does or does not discharge it.\n\nThe vocabulary&#39;s fields are repeated here on purpose: a client asking what this task\nowes gets the token&#39;s title, its summary and the command that would discharge it in the\nsame answer, and needs no second call to render a report.\n\n```\nuse majordomus_cli::capability::builtin::obligations::{ObligationClosure, ObligationState};\nlet owed: ObligationClosure = serde_json::from_str(\n    r#\&quot;{\&quot;id\&quot;:\&quot;pages\&quot;,\&quot;title\&quot;:\&quot;The published site serves this commit\&quot;,\&quot;remote\&quot;:true,\n        \&quot;state\&quot;:\&quot;owed\&quot;,\&quot;detail\&quot;:\&quot;owed, and no evidence was recorded\&quot;,\n        \&quot;reproduce\&quot;:\&quot;majordomus evidence --covers pages --command &#39;scripts/pages verify&#39;\&quot;}\&quot;#,\n)\n.unwrap();\nassert_eq!(owed.state, ObligationState::Owed);\nassert!(owed.evidence.is_none() &amp;&amp; owed.staleness.is_none(), \&quot;nothing to label\&quot;);\nassert!(owed.reproduce.starts_with(\&quot;majordomus evidence\&quot;), \&quot;a finding carries its repair\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The token, as the task&#39;s `requires` names it.&quot;
+        },
+        &quot;inputs_hash_now&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What the token&#39;s inputs hash to in this tree now — the other half of \&quot;stale against\nwhat\&quot;. `None` for a token that declares no inputs, and `None` when git could not be\nasked which files they select.&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that would discharge it. Every finding here carries the way to act on\nit, as `project.finding-carries-reproduce` asks.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;remote&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;From the vocabulary: whether the fact is remote.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ObligationState&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;From the vocabulary.&quot;
+        },
+        &quot;evidence&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Evidence&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The line that discharged it, or `None`.&quot;
+        },
+        &quot;staleness&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Divergence&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;How far the evidence is from this checkout, in the repository&#39;s one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit&#39;s label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator&#39;s behaviour, and it is reproduced rather than tightened here.&quot;
+        },
+        &quot;inputs_files&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;How many tracked files that hash was taken over. Reported because the shell&#39;s\nselection and this one are not always the same set — see the module header — and a\ncount is the cheapest way for a reader to see it rather than be told it.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;One line: what this obligation&#39;s standing actually is, in the words the validator\nuses when it refuses.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;inputs&quot;: {
+          &quot;description&quot;: &quot;From the vocabulary: the pathspecs the evidence is hashed over.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;From the vocabulary; the token itself when it declares none.&quot;
+        },
+        &quot;discharged_by&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;From the vocabulary: the command that produces the evidence.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;Divergence&quot;: {
-      &quot;description&quot;: &quot;How far a record&#39;s recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool&#39;s, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;exact&quot;,
@@ -418,42 +578,43 @@ other checkout of the same repository.</td>
         },
         {
           &quot;const&quot;: &quot;diverged&quot;,
-          &quot;description&quot;: &quot;The recorded commit is not an ancestor: history was rewritten. Trust git, not this.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The recorded commit is not an ancestor: history was rewritten. Trust git, not this.&quot;
         },
         {
-          &quot;const&quot;: &quot;different_context&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Another branch or another worktree. This record is not about your work.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;different_context&quot;
         },
         {
           &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;Git could not answer, so this process says so rather than guessing `exact`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Git could not answer, so this process says so rather than guessing `exact`.&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;How far a record&#39;s recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool&#39;s, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.&quot;
     },
     &quot;Evidence&quot;: {
       &quot;description&quot;: &quot;The `task.evidence` line that discharged an obligation, as the ledger holds it.\n\nNothing older is consulted: evidence is superseded by evidence, and the ledger keeps\nthe history for a reader that wants it.\n```\nuse majordomus_cli::capability::builtin::obligations::Evidence;\nlet e: Evidence = serde_json::from_str(\n    r#\&quot;{\&quot;recorded_at\&quot;:\&quot;2026-09-09T21:01:00Z\&quot;,\&quot;head\&quot;:\&quot;f00ba7\&quot;,\&quot;branch\&quot;:\&quot;master\&quot;,\n        \&quot;kind\&quot;:\&quot;ci\&quot;,\&quot;command\&quot;:\&quot;scripts/ci/reference-check\&quot;,\&quot;inputs_hash\&quot;:\&quot;7f68b9\&quot;}\&quot;#,\n)\n.unwrap();\nassert_eq!(e.head, \&quot;f00ba7\&quot;, \&quot;the envelope&#39;s commit is what a remote fact is judged against\&quot;);\nassert!(e.artifact.is_empty(), \&quot;one of command and artifact; narrative is not evidence\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;artifact&quot;: {
-          &quot;description&quot;: &quot;The reference it points at, such as a published URL.&quot;,
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The episode that recorded it, when one was open.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;inputs_hash&quot;: {
+          &quot;description&quot;: &quot;The hash of the token&#39;s declared inputs at the moment it was taken. Empty for a\ntoken that declares none.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it was recorded on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;command&quot;: {
-          &quot;description&quot;: &quot;The command that produced it. Narrative is not evidence, so one of this and\n`artifact` is always present.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch it was recorded on.&quot;
         },
         &quot;head&quot;: {
           &quot;description&quot;: &quot;The commit the ledger&#39;s envelope stamped on it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;inputs_hash&quot;: {
-          &quot;description&quot;: &quot;The hash of the token&#39;s declared inputs at the moment it was taken. Empty for a\ntoken that declares none.&quot;,
+        &quot;artifact&quot;: {
+          &quot;description&quot;: &quot;The reference it points at, such as a published URL.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;kind&quot;: {
@@ -464,109 +625,18 @@ other checkout of the same repository.</td>
           &quot;description&quot;: &quot;When the line was appended.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;command&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The command that produced it. Narrative is not evidence, so one of this and\n`artifact` is always present.&quot;
+        },
         &quot;result&quot;: {
           &quot;description&quot;: &quot;What the command said, when its output was the point.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The episode that recorded it, when one was open.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
         &quot;recorded_at&quot;,
         &quot;head&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ObligationClosure&quot;: {
-      &quot;description&quot;: &quot;One obligation the task declared, joined with what the vocabulary says about it and\nwith the evidence that does or does not discharge it.\n\nThe vocabulary&#39;s fields are repeated here on purpose: a client asking what this task\nowes gets the token&#39;s title, its summary and the command that would discharge it in the\nsame answer, and needs no second call to render a report.\n\n```\nuse majordomus_cli::capability::builtin::obligations::{ObligationClosure, ObligationState};\nlet owed: ObligationClosure = serde_json::from_str(\n    r#\&quot;{\&quot;id\&quot;:\&quot;pages\&quot;,\&quot;title\&quot;:\&quot;The published site serves this commit\&quot;,\&quot;remote\&quot;:true,\n        \&quot;state\&quot;:\&quot;owed\&quot;,\&quot;detail\&quot;:\&quot;owed, and no evidence was recorded\&quot;,\n        \&quot;reproduce\&quot;:\&quot;majordomus evidence --covers pages --command &#39;scripts/pages verify&#39;\&quot;}\&quot;#,\n)\n.unwrap();\nassert_eq!(owed.state, ObligationState::Owed);\nassert!(owed.evidence.is_none() &amp;&amp; owed.staleness.is_none(), \&quot;nothing to label\&quot;);\nassert!(owed.reproduce.starts_with(\&quot;majordomus evidence\&quot;), \&quot;a finding carries its repair\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;One line: what this obligation&#39;s standing actually is, in the words the validator\nuses when it refuses.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;discharged_by&quot;: {
-          &quot;description&quot;: &quot;From the vocabulary: the command that produces the evidence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;evidence&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Evidence&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The line that discharged it, or `None`.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The token, as the task&#39;s `requires` names it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;inputs&quot;: {
-          &quot;description&quot;: &quot;From the vocabulary: the pathspecs the evidence is hashed over.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;inputs_files&quot;: {
-          &quot;description&quot;: &quot;How many tracked files that hash was taken over. Reported because the shell&#39;s\nselection and this one are not always the same set — see the module header — and a\ncount is the cheapest way for a reader to see it rather than be told it.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;inputs_hash_now&quot;: {
-          &quot;description&quot;: &quot;What the token&#39;s inputs hash to in this tree now — the other half of \&quot;stale against\nwhat\&quot;. `None` for a token that declares no inputs, and `None` when git could not be\nasked which files they select.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remote&quot;: {
-          &quot;description&quot;: &quot;From the vocabulary: whether the fact is remote.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The command that would discharge it. Every finding here carries the way to act on\nit, as `project.finding-carries-reproduce` asks.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;staleness&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Divergence&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;How far the evidence is from this checkout, in the repository&#39;s one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit&#39;s label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator&#39;s behaviour, and it is reproduced rather than tightened here.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ObligationState&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;From the vocabulary.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;From the vocabulary; the token itself when it declares none.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;remote&quot;,
-        &quot;state&quot;,
-        &quot;detail&quot;,
-        &quot;reproduce&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
@@ -595,77 +665,7 @@ other checkout of the same repository.</td>
         }
       ]
     }
-  },
-  &quot;description&quot;: &quot;What this checkout&#39;s active task owes, and how much of it is still true.\n\nA clone that has never run the lifecycle answers this too, and answers it as absence:\n`present` false, no task, and a finding saying so. \&quot;Nothing owed\&quot; and \&quot;nothing to owe\nit\&quot; are different facts, and a served instance must not report the second as the first.\n\n```\nuse majordomus_cli::capability::builtin::obligations::Closure;\nlet fresh: Closure = serde_json::from_str(\n    r#\&quot;{\&quot;present\&quot;:false,\&quot;worktree\&quot;:\&quot;/srv/clone\&quot;,\&quot;branch\&quot;:\&quot;master\&quot;,\&quot;closed\&quot;:false,\n        \&quot;tallies\&quot;:{},\n        \&quot;findings\&quot;:[\&quot;no active task in this checkout (.ai/local/state/current.yaml); nothing owes anything here\&quot;]}\&quot;#,\n)\n.unwrap();\nassert!(!fresh.present &amp;&amp; !fresh.closed, \&quot;nothing that does not exist is closed\&quot;);\nassert!(fresh.task.is_none() &amp;&amp; fresh.obligations.is_empty());\nassert_eq!(fresh.findings.len(), 1, \&quot;absence is reported, not implied\&quot;);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;branch&quot;: {
-      &quot;description&quot;: &quot;The branch, or `DETACHED`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;closed&quot;: {
-      &quot;description&quot;: &quot;True when the task declares obligations and every one of them is discharged and\ncurrent — that is, when `majordomus.obligation-closure` would not refuse\n`finish --outcome completed`. False when anything is owed, stale or undeclared, and\nfalse when there is no task: nothing that does not exist is closed.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;What a reader should know before trusting any of the above: an unreadable\nvocabulary, a ledger that could not be read, a task that declares nothing. Empty is\nthe ordinary case.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;head&quot;: {
-      &quot;description&quot;: &quot;The commit this checkout is on.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;obligations&quot;: {
-      &quot;description&quot;: &quot;Every obligation the task declared, in the order it declared them.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ObligationClosure&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;present&quot;: {
-      &quot;description&quot;: &quot;Whether this checkout has a task to report about at all. False in a clone that has\nnever run the lifecycle, which is not a fault and is not \&quot;nothing owed\&quot;.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;tallies&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
-      },
-      &quot;description&quot;: &quot;How many obligations stand where, by state word. Absent states are absent rather\nthan zero, so a reader never has to know the vocabulary to read the tallies.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;task&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The active task, or `None`. Its `requires` is the list the entries below expand.&quot;
-    },
-    &quot;working_tree&quot;: {
-      &quot;description&quot;: &quot;`clean` or `dirty`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;worktree&quot;: {
-      &quot;description&quot;: &quot;The worktree this answer is about. Every reading below is scoped to it, and to no\nother checkout of the same repository.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;present&quot;,
-    &quot;worktree&quot;,
-    &quot;branch&quot;,
-    &quot;closed&quot;,
-    &quot;tallies&quot;
-  ],
-  &quot;title&quot;: &quot;Closure&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -696,7 +696,7 @@ other checkout of the same repository.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::obligations</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Closure</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/obligations.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/obligations.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/obligations.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/obligations.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -721,7 +721,7 @@ other checkout of the same repository.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

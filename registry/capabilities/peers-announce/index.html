@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -262,6 +262,12 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">scope</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Repository-relative paths the peer expects to touch. Informational: other peers
+read it to avoid a collision; nothing here enforces it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claim</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -279,20 +285,20 @@ single session announcing about itself wants.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">One line, in the peer&#39;s words: the task, the question, the intent.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">scope</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Repository-relative paths the peer expects to touch. Informational: other peers
-read it to avoid a collision; nothing here enforces it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `peers.announce`: what the calling peer is working on.&quot;,
   &quot;properties&quot;: {
+    &quot;scope&quot;: {
+      &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.&quot;,
+      &quot;default&quot;: [],
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
     &quot;claim&quot;: {
       &quot;description&quot;: &quot;Which of this peer&#39;s claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer&#39;s one unnamed claim, which is what a\nsingle session announcing about itself wants.&quot;,
       &quot;type&quot;: [
@@ -303,21 +309,15 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
     &quot;intent&quot;: {
       &quot;description&quot;: &quot;One line, in the peer&#39;s words: the task, the question, the intent.&quot;,
       &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;scope&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
     }
   },
   &quot;required&quot;: [
     &quot;intent&quot;
   ],
   &quot;title&quot;: &quot;AnnounceInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The input of `peers.announce`: what the calling peer is working on.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -334,13 +334,6 @@ than all of them. Derived from `claims` and never a second account of it: a peer
 holding one claim reports the same thing in both, which is what every peer that does
 not name its claims reports.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">attached</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the session is still attached. A peer that announced something and then
-went away is kept and listed with `attached: false`: what it said it was working on
-outlives the connection that said it, because the work does.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">checkout</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -349,17 +342,6 @@ outlives the connection that said it, because the work does.</td>
 The board itself never sets it — a board does not know where it is — and it is
 stamped by the reader that gathered this peer, which is the one thing that knows
 which checkout&#39;s server it asked.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">claims</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Every claim this peer holds, in name order, the unnamed one first. Empty for a peer
-that has announced nothing.
-
-One connection may be doing several things at once — a session that fans work out to
-subagents shares its MCP session with all of them — and before this field the board
-could hold only the last thing said, so each announcement silently erased the one
-before it and the other peers stopped seeing the rest of the scope.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">client</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -376,16 +358,6 @@ before it and the other peers stopped seeing the rest of the scope.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">`p1`, `p2`, ...</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">last_seen_seconds_ago</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Seconds since its last message.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">overlaps</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Every other peer whose claimed scope meets this one. Empty is the ordinary case.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">released</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -398,26 +370,115 @@ occasionally what was meant and is otherwise a mistake nobody would ever see, so
 is said here, at the moment it happens, rather than left to be discovered in a
 collision later. Empty is the ordinary case.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">attached</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the session is still attached. A peer that announced something and then
+went away is kept and listed with `attached: false`: what it said it was working on
+outlives the connection that said it, because the work does.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">claims</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Every claim this peer holds, in name order, the unnamed one first. Empty for a peer
+that has announced nothing.
+
+One connection may be doing several things at once — a session that fans work out to
+subagents shares its MCP session with all of them — and before this field the board
+could hold only the last thing said, so each announcement silently erased the one
+before it and the other peers stopped seeing the rest of the scope.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">overlaps</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Every other peer whose claimed scope meets this one. Empty is the ordinary case.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">transport</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How it is attached.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">last_seen_seconds_ago</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Seconds since its last message.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;Announced&quot;,
   &quot;$defs&quot;: {
-    &quot;Announcement&quot;: {
-      &quot;description&quot;: &quot;One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had.&quot;,
-      &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When it was announced, RFC 3339, UTC.&quot;,
+    &quot;Transport&quot;: {
+      &quot;description&quot;: &quot;How a peer reached the server.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The owner&#39;s own client, on the process&#39;s stdin and stdout.&quot;,
+          &quot;const&quot;: &quot;stdio&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;One line: the task or intent, in the peer&#39;s words.&quot;,
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;http&quot;,
+          &quot;description&quot;: &quot;MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly.&quot;
+        }
+      ]
+    },
+    &quot;ClientInfo&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;title&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;`clientInfo.title`, when the client sends one.&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;`clientInfo.version`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;description&quot;: &quot;What a client said about itself in `initialize`.&quot;,
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;version&quot;
+      ]
+    },
+    &quot;OverlapPath&quot;: {
+      &quot;properties&quot;: {
+        &quot;yours&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;
+        },
+        &quot;theirs&quot;: {
+          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
+      &quot;required&quot;: [
+        &quot;yours&quot;,
+        &quot;theirs&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Announcement&quot;: {
+      &quot;required&quot;: [
+        &quot;intent&quot;,
+        &quot;scope&quot;,
+        &quot;at&quot;
+      ],
+      &quot;description&quot;: &quot;One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;intent&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line: the task or intent, in the peer&#39;s words.&quot;
         },
         &quot;name&quot;: {
           &quot;description&quot;: &quot;What this claim is called, when the peer named it. Absent for a peer&#39;s unnamed claim.&quot;,
@@ -427,51 +488,38 @@ collision later. Empty is the ordinary case.</td>
           ]
         },
         &quot;scope&quot;: {
-          &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch; informational, never enforced here.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;intent&quot;,
-        &quot;scope&quot;,
-        &quot;at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ClientInfo&quot;: {
-      &quot;description&quot;: &quot;What a client said about itself in `initialize`.&quot;,
-      &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch; informational, never enforced here.&quot;
         },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;`clientInfo.title`, when the client sends one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;`clientInfo.version`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it was announced, RFC 3339, UTC.&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;version&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
     },
     &quot;Overlap&quot;: {
+      &quot;required&quot;: [
+        &quot;peer&quot;,
+        &quot;attached&quot;,
+        &quot;intent&quot;,
+        &quot;paths&quot;
+      ],
       &quot;description&quot;: &quot;Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch.&quot;,
       &quot;properties&quot;: {
         &quot;attached&quot;: {
           &quot;description&quot;: &quot;Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What it said it was doing.&quot;
+        },
+        &quot;peer&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
+          &quot;description&quot;: &quot;The other peer.&quot;
         },
         &quot;checkout&quot;: {
           &quot;anyOf&quot;: [
@@ -484,65 +532,34 @@ collision later. Empty is the ordinary case.</td>
           ],
           &quot;description&quot;: &quot;Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \&quot;p1 is on\nyour ground\&quot; into something a reader can act on when `p1` is not on this board.&quot;
         },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What it said it was doing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;paths&quot;: {
           &quot;description&quot;: &quot;The claims that meet: one line per pair, `yours` and `theirs`.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/OverlapPath&quot;
           },
           &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;peer&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
-          &quot;description&quot;: &quot;The other peer.&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;peer&quot;,
-        &quot;attached&quot;,
-        &quot;intent&quot;,
-        &quot;paths&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;OverlapPath&quot;: {
-      &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
-      &quot;properties&quot;: {
-        &quot;theirs&quot;: {
-          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;yours&quot;: {
-          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;yours&quot;,
-        &quot;theirs&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;PeerCheckout&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;Which checkout of the repository a peer is attached to.\n\nA board is one process&#39;s memory and a server serves one checkout, so a peer read from\na sibling checkout&#39;s server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker&#39;s identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server&#39;s by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \&quot;b8293f11\&quot;.into(),\n    worktree: \&quot;/repo-wt/feature/x\&quot;.into(),\n    branch: Some(\&quot;feature/x\&quot;.into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&amp;c).unwrap();\nassert_eq!(v[\&quot;branch\&quot;], \&quot;feature/x\&quot;);\nassert_eq!(v[\&quot;this_checkout\&quot;], false);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
         &quot;id&quot;: {
-          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;
         },
         &quot;this_checkout&quot;: {
           &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;
         },
         &quot;worktree&quot;: {
           &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
@@ -553,29 +570,14 @@ collision later. Empty is the ordinary case.</td>
         &quot;id&quot;,
         &quot;worktree&quot;,
         &quot;this_checkout&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;PeerId&quot;: {
-      &quot;description&quot;: &quot;A peer&#39;s identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;Transport&quot;: {
-      &quot;description&quot;: &quot;How a peer reached the server.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;stdio&quot;,
-          &quot;description&quot;: &quot;The owner&#39;s own client, on the process&#39;s stdin and stdout.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;http&quot;,
-          &quot;description&quot;: &quot;MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;A peer&#39;s identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.&quot;
     }
   },
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;What `announce` answers: the peer as recorded, and who else is on that ground.&quot;,
   &quot;properties&quot;: {
     &quot;announcement&quot;: {
@@ -589,11 +591,8 @@ collision later. Empty is the ordinary case.</td>
       ],
       &quot;description&quot;: &quot;The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.&quot;
     },
-    &quot;attached&quot;: {
-      &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
     &quot;checkout&quot;: {
+      &quot;description&quot;: &quot;Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout&#39;s server it asked.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/PeerCheckout&quot;
@@ -601,51 +600,54 @@ collision later. Empty is the ordinary case.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout&#39;s server it asked.&quot;
-    },
-    &quot;claims&quot;: {
-      &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Announcement&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      ]
     },
     &quot;client&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ClientInfo&quot;,
-      &quot;description&quot;: &quot;The client behind it.&quot;
+      &quot;description&quot;: &quot;The client behind it.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ClientInfo&quot;
     },
     &quot;connected_at&quot;: {
       &quot;description&quot;: &quot;When it attached, RFC 3339, UTC.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;id&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
-      &quot;description&quot;: &quot;`p1`, `p2`, ...&quot;
-    },
-    &quot;last_seen_seconds_ago&quot;: {
-      &quot;description&quot;: &quot;Seconds since its last message.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;overlaps&quot;: {
-      &quot;description&quot;: &quot;Every other peer whose claimed scope meets this one. Empty is the ordinary case.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Overlap&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;description&quot;: &quot;`p1`, `p2`, ...&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;
     },
     &quot;released&quot;: {
-      &quot;description&quot;: &quot;Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;description&quot;: &quot;Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case.&quot;
+    },
+    &quot;attached&quot;: {
+      &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;claims&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Announcement&quot;
+      },
+      &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;
+    },
+    &quot;overlaps&quot;: {
+      &quot;description&quot;: &quot;Every other peer whose claimed scope meets this one. Empty is the ordinary case.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Overlap&quot;
+      }
     },
     &quot;transport&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Transport&quot;,
-      &quot;description&quot;: &quot;How it is attached.&quot;
+      &quot;description&quot;: &quot;How it is attached.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Transport&quot;
+    },
+    &quot;last_seen_seconds_ago&quot;: {
+      &quot;description&quot;: &quot;Seconds since its last message.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;type&quot;: &quot;integer&quot;
     }
   },
   &quot;required&quot;: [
@@ -655,9 +657,7 @@ collision later. Empty is the ordinary case.</td>
     &quot;connected_at&quot;,
     &quot;last_seen_seconds_ago&quot;,
     &quot;attached&quot;
-  ],
-  &quot;title&quot;: &quot;Announced&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -688,7 +688,7 @@ collision later. Empty is the ordinary case.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::peers</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">AnnounceInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Announced</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -720,7 +720,7 @@ collision later. Empty is the ordinary case.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

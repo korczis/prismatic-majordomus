@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -276,20 +276,20 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `capabilities.list`: optional filters by kind and by projection.&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
     &quot;exposure&quot;: {
       &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only capabilities exposed through this projection: `mcp`, `http` or `cli`.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Only capabilities exposed through this projection: `mcp`, `http` or `cli`.&quot;
     },
     &quot;kind&quot;: {
-      &quot;default&quot;: null,
       &quot;description&quot;: &quot;Only capabilities of this kind: `query`, `command` or `resource`.&quot;,
+      &quot;default&quot;: null,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
@@ -307,15 +307,15 @@ registry counted.</p><div class="mt-3 overflow-x-auto rounded-base border border
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The matching capabilities, by id, without their schemas.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">count</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many capabilities matched the filters.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The matching capabilities, by id, without their schemas.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">summary</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -326,33 +326,38 @@ registry counted.</p><div class="mt-3 overflow-x-auto rounded-base border border
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;count&quot;,
+    &quot;summary&quot;,
+    &quot;capabilities&quot;
+  ],
   &quot;$defs&quot;: {
     &quot;BenchmarkPolicy&quot;: {
       &quot;description&quot;: &quot;Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;Timed directly and through every exposure; coverage fails without a case.&quot;,
+          &quot;required&quot;: [
+            &quot;policy&quot;
+          ],
           &quot;properties&quot;: {
             &quot;policy&quot;: {
               &quot;const&quot;: &quot;required&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;required&quot;: [
-            &quot;policy&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Timed directly and through every exposure; coverage fails without a case.&quot;
         },
         {
           &quot;description&quot;: &quot;Not timed, for the typed reason; coverage reports it as waived, never as covered.&quot;,
           &quot;properties&quot;: {
+            &quot;reason&quot;: {
+              &quot;description&quot;: &quot;Why.&quot;,
+              &quot;$ref&quot;: &quot;#/$defs/WaiverReason&quot;
+            },
             &quot;policy&quot;: {
               &quot;const&quot;: &quot;waived&quot;,
               &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;reason&quot;: {
-              &quot;$ref&quot;: &quot;#/$defs/WaiverReason&quot;,
-              &quot;description&quot;: &quot;Why.&quot;
             }
           },
           &quot;required&quot;: [
@@ -363,242 +368,113 @@ registry counted.</p><div class="mt-3 overflow-x-auto rounded-base border border
         }
       ]
     },
-    &quot;CachePolicy&quot;: {
-      &quot;description&quot;: &quot;Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry.&quot;,
+    &quot;WaiverReason&quot;: {
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A resource: read, never executed; nothing to time but `objects.get`, which is.&quot;,
+          &quot;const&quot;: &quot;not_executable&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;destructive&quot;,
+          &quot;description&quot;: &quot;The capability changes something outside this process and cannot be run in a loop.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The capability talks to something the benchmark host cannot provide.&quot;,
+          &quot;const&quot;: &quot;external_dependency&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;transient_state&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The capability starts, or answers about, work that exists only while it is running.\nA benchmark host cannot stage an execution to read, and running the operation in a\nloop would measure the work rather than the operation.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry&#39;s own\nreason for resources and is never written by hand.&quot;
+    },
+    &quot;McpExposure&quot;: {
+      &quot;properties&quot;: {
+        &quot;resource&quot;: {
+          &quot;description&quot;: &quot;As a readable resource.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/McpResource&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
+        },
+        &quot;tool&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;As a tool with this name (`[a-z0-9_]+`).&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;How, if at all, a capability appears to an MCP client.&quot;
+    },
+    &quot;ModuleId&quot;: {
+      &quot;description&quot;: &quot;A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject&#39;s module is its kind.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;CapabilityId&quot;: {
+      &quot;description&quot;: &quot;A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `&lt;kind&gt;.&lt;identity&gt;` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind&#39;s identity rule produced it.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;CachePolicy&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;required&quot;: [
+            &quot;policy&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
           &quot;description&quot;: &quot;Every call runs the handler.&quot;,
           &quot;properties&quot;: {
             &quot;policy&quot;: {
               &quot;const&quot;: &quot;disabled&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          },
-          &quot;required&quot;: [
-            &quot;policy&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
+          }
         },
         {
           &quot;description&quot;: &quot;Results are kept in this process&#39;s memory, bounded, for equal inputs.&quot;,
-          &quot;properties&quot;: {
-            &quot;max_entries&quot;: {
-              &quot;description&quot;: &quot;The most entries kept for this capability; the oldest is evicted first.&quot;,
-              &quot;format&quot;: &quot;uint&quot;,
-              &quot;minimum&quot;: 0,
-              &quot;type&quot;: &quot;integer&quot;
-            },
-            &quot;policy&quot;: {
-              &quot;const&quot;: &quot;process&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;ttl_seconds&quot;: {
-              &quot;description&quot;: &quot;Seconds an entry stays valid; `None` for the life of the process.&quot;,
-              &quot;format&quot;: &quot;uint64&quot;,
-              &quot;minimum&quot;: 0,
-              &quot;type&quot;: [
-                &quot;integer&quot;,
-                &quot;null&quot;
-              ]
-            }
-          },
+          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;policy&quot;,
             &quot;max_entries&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;
-        }
-      ]
-    },
-    &quot;CapabilityId&quot;: {
-      &quot;description&quot;: &quot;A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `&lt;kind&gt;.&lt;identity&gt;` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind&#39;s identity rule produced it.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;CapabilityKind&quot;: {
-      &quot;description&quot;: &quot;What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process&#39;s\nown memory, and something that is read. A command may also write the repository&#39;s own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;query&quot;,
-          &quot;description&quot;: &quot;Executable and read-only: a typed handler, an input schema, an output schema.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;command&quot;,
-          &quot;description&quot;: &quot;Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process&#39;s\nown memory (a peer announcing itself); one that writes the repository&#39;s tracked\nrecords says so on its execution policy, which is where a projection reads it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;resource&quot;,
-          &quot;description&quot;: &quot;Declarative content the repository holds: read as it is, never executed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;CapabilityProvenance&quot;: {
-      &quot;description&quot;: &quot;Where a capability came from. Never an absolute path.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Written in Rust, in the named module of this executable.\nWritten in Rust, composed in `builtin.rs`.&quot;,
           &quot;properties&quot;: {
-            &quot;module&quot;: {
-              &quot;description&quot;: &quot;The Rust module the descriptor was composed in.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;source&quot;: {
-              &quot;const&quot;: &quot;builtin&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;source&quot;,
-            &quot;module&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Read from the repository&#39;s layer.&quot;,
-          &quot;properties&quot;: {
-            &quot;directory&quot;: {
-              &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;media_type&quot;: {
-              &quot;description&quot;: &quot;IANA media type of the object&#39;s content.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;member&quot;: {
-              &quot;description&quot;: &quot;For one member of a collection file, its key path in the file (`claims.3`).&quot;,
+            &quot;ttl_seconds&quot;: {
+              &quot;description&quot;: &quot;Seconds an entry stays valid; `None` for the life of the process.&quot;,
+              &quot;format&quot;: &quot;uint64&quot;,
               &quot;type&quot;: [
-                &quot;string&quot;,
+                &quot;integer&quot;,
                 &quot;null&quot;
-              ]
+              ],
+              &quot;minimum&quot;: 0
             },
-            &quot;path&quot;: {
-              &quot;description&quot;: &quot;Repository-relative path.&quot;,
-              &quot;type&quot;: &quot;string&quot;
+            &quot;policy&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;process&quot;
             },
-            &quot;section&quot;: {
-              &quot;description&quot;: &quot;The manifest section the path falls under, when it falls under one.&quot;,
-              &quot;type&quot;: [
-                &quot;string&quot;,
-                &quot;null&quot;
-              ]
-            },
-            &quot;source&quot;: {
-              &quot;const&quot;: &quot;declarative&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;source_class&quot;: {
-              &quot;description&quot;: &quot;The `sources.yaml` class that discovered the file.&quot;,
-              &quot;type&quot;: &quot;string&quot;
+            &quot;max_entries&quot;: {
+              &quot;description&quot;: &quot;The most entries kept for this capability; the oldest is evicted first.&quot;,
+              &quot;type&quot;: &quot;integer&quot;,
+              &quot;minimum&quot;: 0,
+              &quot;format&quot;: &quot;uint&quot;
             }
-          },
-          &quot;required&quot;: [
-            &quot;source&quot;,
-            &quot;path&quot;,
-            &quot;directory&quot;,
-            &quot;source_class&quot;,
-            &quot;media_type&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
+          }
         }
-      ]
-    },
-    &quot;CapabilitySummary&quot;: {
-      &quot;description&quot;: &quot;One capability as a listing shows it: everything the descriptor says except its two\nschemas, which `capabilities.describe` answers for one capability. A listing of a\nrepository&#39;s registry runs to hundreds of entries; their schemas would be megabytes\nof the same object view repeated.&quot;,
-      &quot;properties&quot;: {
-        &quot;benchmark&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/BenchmarkPolicy&quot;,
-          &quot;description&quot;: &quot;Whether it is a benchmark target.&quot;
-        },
-        &quot;cache&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CachePolicy&quot;,
-          &quot;description&quot;: &quot;Whether the executor keeps its results.&quot;
-        },
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;The one-paragraph description.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;exposure&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Exposure&quot;,
-          &quot;description&quot;: &quot;Where it is projected.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CapabilityId&quot;,
-          &quot;description&quot;: &quot;The canonical identity.&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CapabilityKind&quot;,
-          &quot;description&quot;: &quot;Query, command or resource.&quot;
-        },
-        &quot;module&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ModuleId&quot;,
-          &quot;description&quot;: &quot;The module that composes it.&quot;
-        },
-        &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CapabilityProvenance&quot;,
-          &quot;description&quot;: &quot;Where it came from.&quot;
-        },
-        &quot;stability&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Stability&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        },
-        &quot;tags&quot;: {
-          &quot;description&quot;: &quot;Free tags.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The short name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;module&quot;,
-        &quot;kind&quot;,
-        &quot;title&quot;,
-        &quot;description&quot;,
-        &quot;provenance&quot;,
-        &quot;exposure&quot;,
-        &quot;stability&quot;,
-        &quot;benchmark&quot;,
-        &quot;cache&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;CliExposure&quot;: {
-      &quot;description&quot;: &quot;How a capability appears on the command line: the words after `majordomus`.&quot;,
-      &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The words after `majordomus`, e.g. `[\&quot;capabilities\&quot;, \&quot;list\&quot;]`.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry.&quot;
     },
     &quot;Exposure&quot;: {
       &quot;description&quot;: &quot;The projections a capability declares. Absence is explicit: `None` means not exposed\nthere, and nothing infers an exposure a descriptor did not declare.&quot;,
       &quot;properties&quot;: {
-        &quot;cli&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/CliExposure&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The command-line projection, when declared.&quot;
-        },
         &quot;http&quot;: {
           &quot;anyOf&quot;: [
             {
@@ -620,139 +496,129 @@ registry counted.</p><div class="mt-3 overflow-x-auto rounded-base border border
             }
           ],
           &quot;description&quot;: &quot;The MCP projection, when declared.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;HttpExposure&quot;: {
-      &quot;description&quot;: &quot;How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`].&quot;,
-      &quot;properties&quot;: {
-        &quot;method&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/HttpMethod&quot;,
-          &quot;description&quot;: &quot;The method.&quot;
         },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The absolute path, under [`HttpExposure::PREFIX`].&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;method&quot;,
-        &quot;path&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;HttpMethod&quot;: {
-      &quot;description&quot;: &quot;The HTTP methods a capability may be bound to.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;GET&quot;,
-          &quot;description&quot;: &quot;Read-only; the input is bound from the query string.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;POST&quot;,
-          &quot;description&quot;: &quot;The input is bound from the JSON body. Every mutating capability uses it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;McpExposure&quot;: {
-      &quot;description&quot;: &quot;How, if at all, a capability appears to an MCP client.&quot;,
-      &quot;properties&quot;: {
-        &quot;resource&quot;: {
+        &quot;cli&quot;: {
+          &quot;description&quot;: &quot;The command-line projection, when declared.&quot;,
           &quot;anyOf&quot;: [
             {
-              &quot;$ref&quot;: &quot;#/$defs/McpResource&quot;
+              &quot;$ref&quot;: &quot;#/$defs/CliExposure&quot;
             },
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;As a readable resource.&quot;
-        },
-        &quot;tool&quot;: {
-          &quot;description&quot;: &quot;As a tool with this name (`[a-z0-9_]+`).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
           ]
         }
       },
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;McpResource&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;An MCP resource: its URI and the short name a client lists.&quot;,
       &quot;properties&quot;: {
         &quot;name&quot;: {
-          &quot;description&quot;: &quot;The short name a client lists; the identity for a declarative object.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The short name a client lists; the identity for a declarative object.&quot;
         },
         &quot;uri&quot;: {
-          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`, or `majordomus://repository`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`, or `majordomus://repository`.&quot;
         }
       },
       &quot;required&quot;: [
         &quot;uri&quot;,
         &quot;name&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ModuleId&quot;: {
-      &quot;description&quot;: &quot;A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject&#39;s module is its kind.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;Stability&quot;: {
-      &quot;description&quot;: &quot;Where a capability stands, in the repository&#39;s own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;implemented&quot;,
-          &quot;description&quot;: &quot;Implemented, and no behavioural test names it yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;behaviorally_verified&quot;,
-          &quot;description&quot;: &quot;Implemented and proved by a behavioural test.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;experimental&quot;,
-          &quot;description&quot;: &quot;Implemented, executable, and expected to change.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;planned&quot;,
-          &quot;description&quot;: &quot;Specified and not implemented: listed, never executable.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unsupported&quot;,
-          &quot;description&quot;: &quot;Considered and refused: listed with the reason, never executable.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
     },
+    &quot;CliExposure&quot;: {
+      &quot;properties&quot;: {
+        &quot;path&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The words after `majordomus`, e.g. `[\&quot;capabilities\&quot;, \&quot;list\&quot;]`.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;
+      ],
+      &quot;description&quot;: &quot;How a capability appears on the command line: the words after `majordomus`.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;CapabilitySummary&quot;: {
+      &quot;description&quot;: &quot;One capability as a listing shows it: everything the descriptor says except its two\nschemas, which `capabilities.describe` answers for one capability. A listing of a\nrepository&#39;s registry runs to hundreds of entries; their schemas would be megabytes\nof the same object view repeated.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;module&quot;,
+        &quot;kind&quot;,
+        &quot;title&quot;,
+        &quot;description&quot;,
+        &quot;provenance&quot;,
+        &quot;exposure&quot;,
+        &quot;stability&quot;,
+        &quot;benchmark&quot;,
+        &quot;cache&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;module&quot;: {
+          &quot;description&quot;: &quot;The module that composes it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ModuleId&quot;
+        },
+        &quot;benchmark&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BenchmarkPolicy&quot;,
+          &quot;description&quot;: &quot;Whether it is a benchmark target.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CapabilityId&quot;,
+          &quot;description&quot;: &quot;The canonical identity.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The short name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;tags&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Free tags.&quot;
+        },
+        &quot;description&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The one-paragraph description.&quot;
+        },
+        &quot;provenance&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CapabilityProvenance&quot;,
+          &quot;description&quot;: &quot;Where it came from.&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CapabilityKind&quot;,
+          &quot;description&quot;: &quot;Query, command or resource.&quot;
+        },
+        &quot;exposure&quot;: {
+          &quot;description&quot;: &quot;Where it is projected.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Exposure&quot;
+        },
+        &quot;cache&quot;: {
+          &quot;description&quot;: &quot;Whether the executor keeps its results.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/CachePolicy&quot;
+        },
+        &quot;stability&quot;: {
+          &quot;description&quot;: &quot;Where it stands.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Stability&quot;
+        }
+      }
+    },
     &quot;Summary&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;The registry counted: by source, kind, stability and projection.&quot;,
       &quot;properties&quot;: {
-        &quot;benchmark_required&quot;: {
-          &quot;description&quot;: &quot;Executables whose benchmark policy is required.&quot;,
+        &quot;cached&quot;: {
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;benchmark_waived&quot;: {
-          &quot;description&quot;: &quot;Executables waived from benchmarking for a typed reason.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;builtin&quot;: {
-          &quot;description&quot;: &quot;Composed in Rust.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Executables the executor caches.&quot;
         },
         &quot;by_kind&quot;: {
           &quot;additionalProperties&quot;: {
@@ -763,61 +629,73 @@ registry counted.</p><div class="mt-3 overflow-x-auto rounded-base border border
           &quot;description&quot;: &quot;By kind (`query`, `resource`).&quot;,
           &quot;type&quot;: &quot;object&quot;
         },
-        &quot;by_stability&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;description&quot;: &quot;By stability.&quot;,
-          &quot;type&quot;: &quot;object&quot;
+        &quot;mcp_tools&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;With an MCP tool exposure.&quot;
         },
-        &quot;cached&quot;: {
-          &quot;description&quot;: &quot;Executables the executor caches.&quot;,
+        &quot;builtin&quot;: {
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Composed in Rust.&quot;
+        },
+        &quot;by_stability&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;minimum&quot;: 0
+          },
+          &quot;description&quot;: &quot;By stability.&quot;
         },
         &quot;cli_commands&quot;: {
           &quot;description&quot;: &quot;With a CLI exposure.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;format&quot;: &quot;uint&quot;
         },
         &quot;declarative&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;description&quot;: &quot;Read from the layer.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;format&quot;: &quot;uint&quot;
         },
-        &quot;http_routes&quot;: {
-          &quot;description&quot;: &quot;With an HTTP exposure.&quot;,
+        &quot;modules&quot;: {
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Modules: composed, derived, and one per declarative kind.&quot;
+        },
+        &quot;total&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Every capability.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;benchmark_required&quot;: {
+          &quot;description&quot;: &quot;Executables whose benchmark policy is required.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;mcp_resources&quot;: {
-          &quot;description&quot;: &quot;With an MCP resource exposure.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;description&quot;: &quot;With an MCP resource exposure.&quot;
         },
-        &quot;mcp_tools&quot;: {
-          &quot;description&quot;: &quot;With an MCP tool exposure.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;http_routes&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;description&quot;: &quot;With an HTTP exposure.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
         },
-        &quot;modules&quot;: {
-          &quot;description&quot;: &quot;Modules: composed, derived, and one per declarative kind.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;benchmark_waived&quot;: {
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;total&quot;: {
-          &quot;description&quot;: &quot;Every capability.&quot;,
+          &quot;description&quot;: &quot;Executables waived from benchmarking for a typed reason.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         }
       },
@@ -835,62 +713,184 @@ registry counted.</p><div class="mt-3 overflow-x-auto rounded-base border border
         &quot;benchmark_required&quot;,
         &quot;benchmark_waived&quot;,
         &quot;cached&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
-    &quot;WaiverReason&quot;: {
-      &quot;description&quot;: &quot;Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry&#39;s own\nreason for resources and is never written by hand.&quot;,
+    &quot;CapabilityProvenance&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;not_executable&quot;,
-          &quot;description&quot;: &quot;A resource: read, never executed; nothing to time but `objects.get`, which is.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;module&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;The Rust module the descriptor was composed in.&quot;
+            },
+            &quot;source&quot;: {
+              &quot;const&quot;: &quot;builtin&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;source&quot;,
+            &quot;module&quot;
+          ],
+          &quot;description&quot;: &quot;Written in Rust, in the named module of this executable.\nWritten in Rust, composed in `builtin.rs`.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Read from the repository&#39;s layer.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;source_class&quot;: {
+              &quot;description&quot;: &quot;The `sources.yaml` class that discovered the file.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;member&quot;: {
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ],
+              &quot;description&quot;: &quot;For one member of a collection file, its key path in the file (`claims.3`).&quot;
+            },
+            &quot;directory&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root.&quot;
+            },
+            &quot;media_type&quot;: {
+              &quot;description&quot;: &quot;IANA media type of the object&#39;s content.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;path&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;Repository-relative path.&quot;
+            },
+            &quot;section&quot;: {
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ],
+              &quot;description&quot;: &quot;The manifest section the path falls under, when it falls under one.&quot;
+            },
+            &quot;source&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;declarative&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;source&quot;,
+            &quot;path&quot;,
+            &quot;directory&quot;,
+            &quot;source_class&quot;,
+            &quot;media_type&quot;
+          ]
+        }
+      ],
+      &quot;description&quot;: &quot;Where a capability came from. Never an absolute path.&quot;
+    },
+    &quot;Stability&quot;: {
+      &quot;description&quot;: &quot;Where a capability stands, in the repository&#39;s own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Implemented, and no behavioural test names it yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;implemented&quot;
+        },
+        {
+          &quot;const&quot;: &quot;behaviorally_verified&quot;,
+          &quot;description&quot;: &quot;Implemented and proved by a behavioural test.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;destructive&quot;,
-          &quot;description&quot;: &quot;The capability changes something outside this process and cannot be run in a loop.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Implemented, executable, and expected to change.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;experimental&quot;
         },
         {
-          &quot;const&quot;: &quot;external_dependency&quot;,
-          &quot;description&quot;: &quot;The capability talks to something the benchmark host cannot provide.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;planned&quot;,
+          &quot;description&quot;: &quot;Specified and not implemented: listed, never executable.&quot;
         },
         {
-          &quot;const&quot;: &quot;transient_state&quot;,
-          &quot;description&quot;: &quot;The capability starts, or answers about, work that exists only while it is running.\nA benchmark host cannot stage an execution to read, and running the operation in a\nloop would measure the work rather than the operation.&quot;,
+          &quot;description&quot;: &quot;Considered and refused: listed with the reason, never executable.&quot;,
+          &quot;const&quot;: &quot;unsupported&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
+    },
+    &quot;HttpMethod&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Read-only; the input is bound from the query string.&quot;,
+          &quot;const&quot;: &quot;GET&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The input is bound from the JSON body. Every mutating capability uses it.&quot;,
+          &quot;const&quot;: &quot;POST&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The HTTP methods a capability may be bound to.&quot;
+    },
+    &quot;CapabilityKind&quot;: {
+      &quot;description&quot;: &quot;What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process&#39;s\nown memory, and something that is read. A command may also write the repository&#39;s own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;query&quot;,
+          &quot;description&quot;: &quot;Executable and read-only: a typed handler, an input schema, an output schema.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;command&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process&#39;s\nown memory (a peer announcing itself); one that writes the repository&#39;s tracked\nrecords says so on its execution policy, which is where a projection reads it.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Declarative content the repository holds: read as it is, never executed.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;resource&quot;
+        }
+      ]
+    },
+    &quot;HttpExposure&quot;: {
+      &quot;description&quot;: &quot;How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`].&quot;,
+      &quot;properties&quot;: {
+        &quot;method&quot;: {
+          &quot;description&quot;: &quot;The method.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/HttpMethod&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The absolute path, under [`HttpExposure::PREFIX`].&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;method&quot;,
+        &quot;path&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;The answer of `capabilities.list`: the matching capabilities, summarised, and the\nregistry counted.&quot;,
   &quot;properties&quot;: {
+    &quot;count&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many capabilities matched the filters.&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    },
     &quot;capabilities&quot;: {
-      &quot;description&quot;: &quot;The matching capabilities, by id, without their schemas.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/CapabilitySummary&quot;
       },
+      &quot;description&quot;: &quot;The matching capabilities, by id, without their schemas.&quot;,
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many capabilities matched the filters.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;summary&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Summary&quot;,
-      &quot;description&quot;: &quot;The whole registry, counted by kind, stability and projection.&quot;
+      &quot;description&quot;: &quot;The whole registry, counted by kind, stability and projection.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Summary&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;count&quot;,
-    &quot;summary&quot;,
-    &quot;capabilities&quot;
-  ],
   &quot;title&quot;: &quot;CapabilityList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The answer of `capabilities.list`: the matching capabilities, summarised, and the\nregistry counted.&quot;
 }</pre></div>
   </details>
 </div>
@@ -921,7 +921,7 @@ registry counted.</p><div class="mt-3 overflow-x-auto rounded-base border border
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::capabilities</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">CapabilitiesInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CapabilityList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -961,7 +961,7 @@ registry counted.</p><div class="mt-3 overflow-x-auto rounded-base border border
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,10 +261,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -274,6 +274,41 @@ the types that implement it.</p><div class="mt-3 overflow-x-auto rounded-base bo
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">max_replay</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many retained events a scoped connection replays before going live.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">heartbeat_seconds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many seconds of quiet before the server pings.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">protocol_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The version of the event protocol this server speaks.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">subscription</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How the subscription is expressed, and what a reconnect sends.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">limits</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What the store keeps, so a client knows what it may ask for.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">stream_types</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The stream&#39;s own control messages.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">stream_schema</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The JSON Schema of a control message, derived from the Rust type.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">event_schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -284,183 +319,20 @@ the types that implement it.</p><div class="mt-3 overflow-x-auto rounded-base bo
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The event types a client may receive, from the one enum that defines them.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">heartbeat_seconds</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">websocket</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many seconds of quiet before the server pings.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">limits</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the store keeps, so a client knows what it may ask for.</td>
+        <td class="px-3 py-2 text-body">Where the live channel is: a path on this same server, not a second daemon.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">max_connections</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many live channels this process serves at once.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">max_replay</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many retained events a scoped connection replays before going live.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">protocol_version</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The version of the event protocol this server speaks.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">stream_schema</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The JSON Schema of a control message, derived from the Rust type.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">stream_types</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The stream&#39;s own control messages.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">subscription</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How the subscription is expressed, and what a reconnect sends.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">websocket</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where the live channel is: a path on this same server, not a second daemon.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;LimitsView&quot;: {
-      &quot;description&quot;: &quot;What this process&#39;s execution store keeps.&quot;,
-      &quot;properties&quot;: {
-        &quot;max_events&quot;: {
-          &quot;description&quot;: &quot;How many events are retained per execution.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;max_executions&quot;: {
-          &quot;description&quot;: &quot;How many executions are remembered.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;max_log_chars&quot;: {
-          &quot;description&quot;: &quot;The longest a single log line may be.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;max_running&quot;: {
-          &quot;description&quot;: &quot;How many executions run at once.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;max_subscriber_queue&quot;: {
-          &quot;description&quot;: &quot;How far a live channel may fall behind before it is told to resynchronise.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;max_executions&quot;,
-        &quot;max_events&quot;,
-        &quot;max_log_chars&quot;,
-        &quot;max_running&quot;,
-        &quot;max_subscriber_queue&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ParameterView&quot;: {
-      &quot;description&quot;: &quot;One query parameter of the live channel.&quot;,
-      &quot;properties&quot;: {
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;What it does.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;Its name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;required&quot;: {
-          &quot;description&quot;: &quot;Whether it must be given.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;description&quot;,
-        &quot;required&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `executions.protocol`: the live channel&#39;s whole contract, derived from\nthe types that implement it.&quot;,
-  &quot;properties&quot;: {
-    &quot;event_schema&quot;: {
-      &quot;description&quot;: &quot;The JSON Schema of an event, derived from the Rust type.&quot;
-    },
-    &quot;event_types&quot;: {
-      &quot;description&quot;: &quot;The event types a client may receive, from the one enum that defines them.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;heartbeat_seconds&quot;: {
-      &quot;description&quot;: &quot;How many seconds of quiet before the server pings.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;limits&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/LimitsView&quot;,
-      &quot;description&quot;: &quot;What the store keeps, so a client knows what it may ask for.&quot;
-    },
-    &quot;max_connections&quot;: {
-      &quot;description&quot;: &quot;How many live channels this process serves at once.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;max_replay&quot;: {
-      &quot;description&quot;: &quot;How many retained events a scoped connection replays before going live.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;protocol_version&quot;: {
-      &quot;description&quot;: &quot;The version of the event protocol this server speaks.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;stream_schema&quot;: {
-      &quot;description&quot;: &quot;The JSON Schema of a control message, derived from the Rust type.&quot;
-    },
-    &quot;stream_types&quot;: {
-      &quot;description&quot;: &quot;The stream&#39;s own control messages.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;subscription&quot;: {
-      &quot;description&quot;: &quot;How the subscription is expressed, and what a reconnect sends.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ParameterView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;websocket&quot;: {
-      &quot;description&quot;: &quot;Where the live channel is: a path on this same server, not a second daemon.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    }
-  },
   &quot;required&quot;: [
     &quot;protocol_version&quot;,
     &quot;websocket&quot;,
@@ -474,8 +346,136 @@ the types that implement it.</p><div class="mt-3 overflow-x-auto rounded-base bo
     &quot;stream_schema&quot;,
     &quot;limits&quot;
   ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The answer of `executions.protocol`: the live channel&#39;s whole contract, derived from\nthe types that implement it.&quot;,
   &quot;title&quot;: &quot;ProtocolReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;properties&quot;: {
+    &quot;max_replay&quot;: {
+      &quot;description&quot;: &quot;How many retained events a scoped connection replays before going live.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;heartbeat_seconds&quot;: {
+      &quot;description&quot;: &quot;How many seconds of quiet before the server pings.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;protocol_version&quot;: {
+      &quot;description&quot;: &quot;The version of the event protocol this server speaks.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;subscription&quot;: {
+      &quot;description&quot;: &quot;How the subscription is expressed, and what a reconnect sends.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ParameterView&quot;
+      }
+    },
+    &quot;limits&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/LimitsView&quot;,
+      &quot;description&quot;: &quot;What the store keeps, so a client knows what it may ask for.&quot;
+    },
+    &quot;stream_types&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The stream&#39;s own control messages.&quot;
+    },
+    &quot;stream_schema&quot;: {
+      &quot;description&quot;: &quot;The JSON Schema of a control message, derived from the Rust type.&quot;
+    },
+    &quot;event_schema&quot;: {
+      &quot;description&quot;: &quot;The JSON Schema of an event, derived from the Rust type.&quot;
+    },
+    &quot;event_types&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The event types a client may receive, from the one enum that defines them.&quot;
+    },
+    &quot;websocket&quot;: {
+      &quot;description&quot;: &quot;Where the live channel is: a path on this same server, not a second daemon.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;max_connections&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many live channels this process serves at once.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0
+    }
+  },
+  &quot;$defs&quot;: {
+    &quot;LimitsView&quot;: {
+      &quot;required&quot;: [
+        &quot;max_executions&quot;,
+        &quot;max_events&quot;,
+        &quot;max_log_chars&quot;,
+        &quot;max_running&quot;,
+        &quot;max_subscriber_queue&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;What this process&#39;s execution store keeps.&quot;,
+      &quot;properties&quot;: {
+        &quot;max_log_chars&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The longest a single log line may be.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_events&quot;: {
+          &quot;description&quot;: &quot;How many events are retained per execution.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_executions&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many executions are remembered.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_running&quot;: {
+          &quot;description&quot;: &quot;How many executions run at once.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_subscriber_queue&quot;: {
+          &quot;description&quot;: &quot;How far a live channel may fall behind before it is told to resynchronise.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      }
+    },
+    &quot;ParameterView&quot;: {
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;Its name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;What it does.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;required&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether it must be given.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One query parameter of the live channel.&quot;,
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;description&quot;,
+        &quot;required&quot;
+      ]
+    }
+  }
 }</pre></div>
   </details>
 </div>
@@ -506,7 +506,7 @@ the types that implement it.</p><div class="mt-3 overflow-x-auto rounded-base bo
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProtocolReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -531,7 +531,7 @@ the types that implement it.</p><div class="mt-3 overflow-x-auto rounded-base bo
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

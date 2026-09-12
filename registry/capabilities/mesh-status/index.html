@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -262,8 +262,8 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -273,6 +273,21 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">refusals</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Refused datagrams, by reason.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">trust_policy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The trust policy in force.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tallies</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The registry&#39;s tallies.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">active</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -283,239 +298,28 @@
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">This node, when the mesh has an identity.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">providers</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every provider, canonical order (by id).</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">reason</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Why not, when it is not: no declaration, disabled, no identity, stopped.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">refusals</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">providers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Refused datagrams, by reason.</td>
+        <td class="px-3 py-2 text-body">Every provider, canonical order (by id).</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">started_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">When the mesh started, RFC 3339.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tallies</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The registry&#39;s tallies.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">trust_policy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The trust policy in force.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;The whole mesh, as every surface reports it.&quot;,
   &quot;$defs&quot;: {
-    &quot;InstanceId&quot;: {
-      &quot;description&quot;: &quot;One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \&quot;the same\nnode came back\&quot; from \&quot;the same process is still there\&quot;.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;MeshProviderState&quot;: {
-      &quot;description&quot;: &quot;The provider&#39;s health, as every surface reports it.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;running&quot;,
-          &quot;description&quot;: &quot;Threads up, socket bound (where the provider has one).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;The provider could not start or died; `ProviderStatus::detail` says why. One\nprovider failing never stops another — failure isolation is the contract.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stopped&quot;,
-          &quot;description&quot;: &quot;Stopped by the manager.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;NodeId&quot;: {
-      &quot;description&quot;: &quot;The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;ProviderStatus&quot;: {
-      &quot;description&quot;: &quot;One provider&#39;s status: state, why, and its counters.&quot;,
-      &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;Why, when `Failed`; what it watches, when `Running`.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;received&quot;: {
-          &quot;description&quot;: &quot;Datagrams heard and handed to the manager.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;sent&quot;: {
-          &quot;description&quot;: &quot;Advertisements transmitted.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/MeshProviderState&quot;,
-          &quot;description&quot;: &quot;The state.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;state&quot;,
-        &quot;sent&quot;,
-        &quot;received&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PublicIdentity&quot;: {
-      &quot;description&quot;: &quot;What everyone may know about this node: the id, the public key, a display name and\nthis run&#39;s instance. Everything an advertisement carries; nothing that signs.&quot;,
-      &quot;properties&quot;: {
-        &quot;display_name&quot;: {
-          &quot;description&quot;: &quot;A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;instance_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
-          &quot;description&quot;: &quot;This run of the node.&quot;
-        },
-        &quot;node_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/NodeId&quot;,
-          &quot;description&quot;: &quot;The node id: a digest of the public key.&quot;
-        },
-        &quot;public_key&quot;: {
-          &quot;description&quot;: &quot;The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;node_id&quot;,
-        &quot;public_key&quot;,
-        &quot;display_name&quot;,
-        &quot;instance_id&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Refusals&quot;: {
-      &quot;description&quot;: &quot;Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty.&quot;,
-      &quot;properties&quot;: {
-        &quot;bounds&quot;: {
-          &quot;description&quot;: &quot;Out-of-bounds fields.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;malformed&quot;: {
-          &quot;description&quot;: &quot;Not an envelope.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;oversized&quot;: {
-          &quot;description&quot;: &quot;Longer than the datagram bound.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;self_heard&quot;: {
-          &quot;description&quot;: &quot;This node&#39;s own datagrams, heard back and skipped.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;signature&quot;: {
-          &quot;description&quot;: &quot;A signature that does not verify.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;stale&quot;: {
-          &quot;description&quot;: &quot;Outside the clock-skew window.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;A protocol version this executable does not read.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;oversized&quot;,
-        &quot;malformed&quot;,
-        &quot;version&quot;,
-        &quot;bounds&quot;,
-        &quot;stale&quot;,
-        &quot;signature&quot;,
-        &quot;self_heard&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;Tallies&quot;: {
-      &quot;description&quot;: &quot;The registry&#39;s tallies, for status and health.&quot;,
-      &quot;properties&quot;: {
-        &quot;accepted&quot;: {
-          &quot;description&quot;: &quot;Observations accepted since start.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;evicted&quot;: {
-          &quot;description&quot;: &quot;Records evicted for space since start.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;expired&quot;: {
-          &quot;description&quot;: &quot;Records expired out since start.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;nodes&quot;: {
-          &quot;description&quot;: &quot;Records held.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;present&quot;: {
-          &quot;description&quot;: &quot;Of which present.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;replayed&quot;: {
-          &quot;description&quot;: &quot;Replayed datagrams dropped since start.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;trusted&quot;: {
-          &quot;description&quot;: &quot;Of which trusted.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;nodes&quot;,
         &quot;trusted&quot;,
@@ -525,14 +329,225 @@
         &quot;expired&quot;,
         &quot;evicted&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;expired&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Records expired out since start.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;nodes&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Records held.&quot;
+        },
+        &quot;accepted&quot;: {
+          &quot;description&quot;: &quot;Observations accepted since start.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;evicted&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Records evicted for space since start.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;present&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Of which present.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;replayed&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Replayed datagrams dropped since start.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;trusted&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Of which trusted.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;The registry&#39;s tallies, for status and health.&quot;
+    },
+    &quot;InstanceId&quot;: {
+      &quot;description&quot;: &quot;One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \&quot;the same\nnode came back\&quot; from \&quot;the same process is still there\&quot;.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;MeshProviderState&quot;: {
+      &quot;description&quot;: &quot;The provider&#39;s health, as every surface reports it.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Threads up, socket bound (where the provider has one).&quot;,
+          &quot;const&quot;: &quot;running&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The provider could not start or died; `ProviderStatus::detail` says why. One\nprovider failing never stops another — failure isolation is the contract.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stopped&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Stopped by the manager.&quot;
+        }
+      ]
+    },
+    &quot;NodeId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key.&quot;
+    },
+    &quot;ProviderStatus&quot;: {
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;sent&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;Advertisements transmitted.&quot;
+        },
+        &quot;received&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Datagrams heard and handed to the manager.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshProviderState&quot;,
+          &quot;description&quot;: &quot;The state.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;Why, when `Failed`; what it watches, when `Running`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;description&quot;: &quot;One provider&#39;s status: state, why, and its counters.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;state&quot;,
+        &quot;sent&quot;,
+        &quot;received&quot;
+      ]
+    },
+    &quot;PublicIdentity&quot;: {
+      &quot;properties&quot;: {
+        &quot;display_name&quot;: {
+          &quot;description&quot;: &quot;A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;instance_id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
+          &quot;description&quot;: &quot;This run of the node.&quot;
+        },
+        &quot;public_key&quot;: {
+          &quot;description&quot;: &quot;The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;node_id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/NodeId&quot;,
+          &quot;description&quot;: &quot;The node id: a digest of the public key.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;What everyone may know about this node: the id, the public key, a display name and\nthis run&#39;s instance. Everything an advertisement carries; nothing that signs.&quot;,
+      &quot;required&quot;: [
+        &quot;node_id&quot;,
+        &quot;public_key&quot;,
+        &quot;display_name&quot;,
+        &quot;instance_id&quot;
+      ]
+    },
+    &quot;Refusals&quot;: {
+      &quot;description&quot;: &quot;Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty.&quot;,
+      &quot;properties&quot;: {
+        &quot;bounds&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Out-of-bounds fields.&quot;
+        },
+        &quot;malformed&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;Not an envelope.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;oversized&quot;: {
+          &quot;description&quot;: &quot;Longer than the datagram bound.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;stale&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Outside the clock-skew window.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;signature&quot;: {
+          &quot;description&quot;: &quot;A signature that does not verify.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;A protocol version this executable does not read.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;self_heard&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;This node&#39;s own datagrams, heard back and skipped.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;oversized&quot;,
+        &quot;malformed&quot;,
+        &quot;version&quot;,
+        &quot;bounds&quot;,
+        &quot;stale&quot;,
+        &quot;signature&quot;,
+        &quot;self_heard&quot;
+      ]
     }
   },
-  &quot;description&quot;: &quot;The whole mesh, as every surface reports it.&quot;,
   &quot;properties&quot;: {
+    &quot;refusals&quot;: {
+      &quot;description&quot;: &quot;Refused datagrams, by reason.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Refusals&quot;
+    },
+    &quot;trust_policy&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The trust policy in force.&quot;
+    },
+    &quot;tallies&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Tallies&quot;,
+      &quot;description&quot;: &quot;The registry&#39;s tallies.&quot;
+    },
     &quot;active&quot;: {
-      &quot;description&quot;: &quot;Whether the mesh is running in this process.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the mesh is running in this process.&quot;
     },
     &quot;identity&quot;: {
       &quot;anyOf&quot;: [
@@ -545,13 +560,6 @@
       ],
       &quot;description&quot;: &quot;This node, when the mesh has an identity.&quot;
     },
-    &quot;providers&quot;: {
-      &quot;description&quot;: &quot;Every provider, canonical order (by id).&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ProviderStatus&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
     &quot;reason&quot;: {
       &quot;description&quot;: &quot;Why not, when it is not: no declaration, disabled, no identity, stopped.&quot;,
       &quot;type&quot;: [
@@ -559,23 +567,15 @@
         &quot;null&quot;
       ]
     },
-    &quot;refusals&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Refusals&quot;,
-      &quot;description&quot;: &quot;Refused datagrams, by reason.&quot;
+    &quot;providers&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ProviderStatus&quot;
+      },
+      &quot;description&quot;: &quot;Every provider, canonical order (by id).&quot;,
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;started_at&quot;: {
       &quot;description&quot;: &quot;When the mesh started, RFC 3339.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;tallies&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Tallies&quot;,
-      &quot;description&quot;: &quot;The registry&#39;s tallies.&quot;
-    },
-    &quot;trust_policy&quot;: {
-      &quot;description&quot;: &quot;The trust policy in force.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
@@ -620,7 +620,7 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">MeshStatus</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -645,7 +645,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

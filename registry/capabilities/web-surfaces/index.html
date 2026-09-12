@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,10 +261,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -273,16 +273,22 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">public</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The ids offered to a person, which is what the home page lists.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">surfaces</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every resolved surface, in route-precedence order: the order a router consults
+them in, so the first whose mount owns a path is the one that answers it.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">What validation says about the topology as it stands. Empty is the healthy answer;
 a finding here is the same one `majordomus web validate` reports, with its remedy.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">public</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The ids offered to a person, which is what the home page lists.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">published</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -294,73 +300,93 @@ a finding here is the same one `majordomus web validate` reports, with its remed
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The ids a process answers for, in the same order. A surface published and not
 served is absent here.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">surfaces</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every resolved surface, in route-precedence order: the order a router consults
-them in, so the first whose mount owns a path is the one that answers it.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;surfaces&quot;,
+    &quot;served&quot;,
+    &quot;published&quot;,
+    &quot;public&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;description&quot;: &quot;The web surfaces of this repository, as the process that answers resolved them.&quot;,
+  &quot;properties&quot;: {
+    &quot;public&quot;: {
+      &quot;description&quot;: &quot;The ids offered to a person, which is what the home page lists.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;surfaces&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every resolved surface, in route-precedence order: the order a router consults\nthem in, so the first whose mount owns a path is the one that answers it.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Surface&quot;
+      }
+    },
+    &quot;findings&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;What validation says about the topology as it stands. Empty is the healthy answer;\na finding here is the same one `majordomus web validate` reports, with its remedy.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/SurfaceFinding&quot;
+      }
+    },
+    &quot;published&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The ids a publication holds, in the same order.&quot;
+    },
+    &quot;served&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The ids a process answers for, in the same order. A surface published and not\nserved is absent here.&quot;
+    }
+  },
+  &quot;title&quot;: &quot;SurfaceReport&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;Feature&quot;: {
-      &quot;description&quot;: &quot;A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;mcp&quot;,
-          &quot;description&quot;: &quot;This process answers MCP over HTTP.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cockpit&quot;,
-          &quot;description&quot;: &quot;This process serves the Cockpit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Mount&quot;: {
-      &quot;description&quot;: &quot;An absolute mount path, without a trailing slash.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;Provenance&quot;: {
-      &quot;description&quot;: &quot;Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\&quot;why is this mounted here?\&quot; without anybody reading the discovery code.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;Read from the capability registry: the routes the executable already declares once.&quot;,
-          &quot;properties&quot;: {
-            &quot;source&quot;: {
-              &quot;const&quot;: &quot;registry&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
           &quot;required&quot;: [
             &quot;source&quot;
           ],
+          &quot;description&quot;: &quot;Read from the capability registry: the routes the executable already declares once.&quot;,
+          &quot;properties&quot;: {
+            &quot;source&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;registry&quot;
+            }
+          },
           &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;description&quot;: &quot;Read from a producer&#39;s own declaration beside its output (`surface.json`).&quot;,
-          &quot;properties&quot;: {
-            &quot;path&quot;: {
-              &quot;description&quot;: &quot;The declaration file, repository-relative.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;source&quot;: {
-              &quot;const&quot;: &quot;producer-declaration&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
           &quot;required&quot;: [
             &quot;source&quot;,
             &quot;path&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Read from a producer&#39;s own declaration beside its output (`surface.json`).&quot;,
+          &quot;properties&quot;: {
+            &quot;path&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;The declaration file, repository-relative.&quot;
+            },
+            &quot;source&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;producer-declaration&quot;
+            }
+          }
         },
         {
-          &quot;description&quot;: &quot;Inferred from a file or directory being where the convention says it is.&quot;,
           &quot;properties&quot;: {
             &quot;path&quot;: {
               &quot;description&quot;: &quot;What was found, repository-relative.&quot;,
@@ -375,28 +401,28 @@ them in, so the first whose mount owns a path is the one that answers it.</td>
             &quot;source&quot;,
             &quot;path&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Inferred from a file or directory being where the convention says it is.&quot;
         },
         {
-          &quot;description&quot;: &quot;Inferred from the site generator&#39;s own configuration.&quot;,
-          &quot;properties&quot;: {
-            &quot;path&quot;: {
-              &quot;description&quot;: &quot;The configuration file, repository-relative.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;source&quot;: {
-              &quot;const&quot;: &quot;site-config&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
           &quot;required&quot;: [
             &quot;source&quot;,
             &quot;path&quot;
           ],
+          &quot;description&quot;: &quot;Inferred from the site generator&#39;s own configuration.&quot;,
+          &quot;properties&quot;: {
+            &quot;path&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;The configuration file, repository-relative.&quot;
+            },
+            &quot;source&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;site-config&quot;
+            }
+          },
           &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;description&quot;: &quot;The model&#39;s documented default for a value nobody stated.&quot;,
           &quot;properties&quot;: {
             &quot;source&quot;: {
               &quot;const&quot;: &quot;default&quot;,
@@ -406,75 +432,17 @@ them in, so the first whose mount owns a path is the one that answers it.</td>
           &quot;required&quot;: [
             &quot;source&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;The model&#39;s documented default for a value nobody stated.&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\&quot;why is this mounted here?\&quot; without anybody reading the discovery code.&quot;
     },
     &quot;Surface&quot;: {
-      &quot;description&quot;: &quot;One resolved surface: everything a consumer needs, with the provenance of what it could\nbe surprised by.&quot;,
       &quot;properties&quot;: {
-        &quot;artifact&quot;: {
-          &quot;description&quot;: &quot;The generated directory, repository-relative, for a static surface.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;availability&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SurfaceAvailability&quot;,
-          &quot;description&quot;: &quot;Where the surface&#39;s files go and who answers for it.&quot;
-        },
-        &quot;built_from&quot;: {
-          &quot;description&quot;: &quot;The revision the artifact was built from, when its producer recorded one: what\nmakes a stale build a finding rather than a surprise.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;category&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SurfaceCategory&quot;,
-          &quot;description&quot;: &quot;What it is for, which is how a listing groups it.&quot;
-        },
-        &quot;feature&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Feature&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The runtime capability it needs; absent when the process always has it.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;Identity, unique across the topology; the selector `--only` and `--exclude` use it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;index&quot;: {
-          &quot;description&quot;: &quot;The file served for the mount itself, when the surface has one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SurfaceKind&quot;,
-          &quot;description&quot;: &quot;How it answers.&quot;
-        },
         &quot;mount&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Mount&quot;,
           &quot;description&quot;: &quot;Where it answers.&quot;
-        },
-        &quot;producer&quot;: {
-          &quot;description&quot;: &quot;What produced it: a command, a module, or the generator that writes the directory.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;provenance&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Provenance&quot;
-          },
-          &quot;description&quot;: &quot;Where each interesting value came from, by field name.&quot;,
-          &quot;type&quot;: &quot;object&quot;
         },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;One line: what a reader sees in a listing.&quot;,
@@ -483,8 +451,68 @@ them in, so the first whose mount owns a path is the one that answers it.</td>
         &quot;visibility&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/SurfaceVisibility&quot;,
           &quot;description&quot;: &quot;Whether a person is shown it.&quot;
+        },
+        &quot;category&quot;: {
+          &quot;description&quot;: &quot;What it is for, which is how a listing groups it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/SurfaceCategory&quot;
+        },
+        &quot;built_from&quot;: {
+          &quot;description&quot;: &quot;The revision the artifact was built from, when its producer recorded one: what\nmakes a stale build a finding rather than a surprise.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Identity, unique across the topology; the selector `--only` and `--exclude` use it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/SurfaceKind&quot;,
+          &quot;description&quot;: &quot;How it answers.&quot;
+        },
+        &quot;artifact&quot;: {
+          &quot;description&quot;: &quot;The generated directory, repository-relative, for a static surface.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;provenance&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Where each interesting value came from, by field name.&quot;,
+          &quot;additionalProperties&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Provenance&quot;
+          }
+        },
+        &quot;availability&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/SurfaceAvailability&quot;,
+          &quot;description&quot;: &quot;Where the surface&#39;s files go and who answers for it.&quot;
+        },
+        &quot;index&quot;: {
+          &quot;description&quot;: &quot;The file served for the mount itself, when the surface has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;feature&quot;: {
+          &quot;description&quot;: &quot;The runtime capability it needs; absent when the process always has it.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Feature&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
+        },
+        &quot;producer&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What produced it: a command, a module, or the generator that writes the directory.&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
@@ -496,25 +524,127 @@ them in, so the first whose mount owns a path is the one that answers it.</td>
         &quot;availability&quot;,
         &quot;provenance&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;One resolved surface: everything a consumer needs, with the provenance of what it could\nbe surprised by.&quot;
+    },
+    &quot;SurfaceFinding&quot;: {
+      &quot;properties&quot;: {
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;What to do about it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/SurfaceFindingSeverity&quot;,
+          &quot;description&quot;: &quot;How much it matters.&quot;
+        },
+        &quot;surface&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The surface it is about.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;rule&quot;: {
+          &quot;description&quot;: &quot;The rule that produced it, stable enough to grep for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;rule&quot;,
+        &quot;surface&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;description&quot;: &quot;One thing wrong with a topology, said so a person can fix it without reading this file.&quot;
     },
     &quot;SurfaceAvailability&quot;: {
       &quot;description&quot;: &quot;Whether a surface is part of the static publication, served only while a process runs,\nor both.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;both&quot;,
-          &quot;description&quot;: &quot;Served by the running executable and published as files.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Served by the running executable and published as files.&quot;
         },
         {
-          &quot;const&quot;: &quot;served-only&quot;,
           &quot;description&quot;: &quot;Answered by the running executable and never published: a route the process\ncomputes, or a build made for this server&#39;s own mount rather than for deployment.&quot;,
+          &quot;const&quot;: &quot;served-only&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;published-only&quot;,
-          &quot;description&quot;: &quot;Published as files; the running executable serves it from the same directory.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Published as files; the running executable serves it from the same directory.&quot;
+        }
+      ]
+    },
+    &quot;SurfaceKind&quot;: {
+      &quot;description&quot;: &quot;How a surface answers a request.\n\nOnly what this repository serves: a directory of generated files, a path the executable\nanswers itself, and a redirect. A new *kind* is a new behaviour, never a new name for\nthe same behaviour with different data.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A generated directory, mounted under its prefix and served from disk.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;static-directory&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A path the executable answers itself, from its own registry or handlers.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;native-route&quot;
+        },
+        {
+          &quot;const&quot;: &quot;redirect&quot;,
+          &quot;description&quot;: &quot;A path that answers with a redirect to another one.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Mount&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;An absolute mount path, without a trailing slash.&quot;
+    },
+    &quot;SurfaceFindingSeverity&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Worth reading; serving is still coherent.&quot;,
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The topology may not be served or published in this state.&quot;,
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How much a finding matters.&quot;
+    },
+    &quot;SurfaceVisibility&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Listed for a person: it appears on the home page.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;public&quot;
+        },
+        {
+          &quot;const&quot;: &quot;internal&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it.&quot;
+    },
+    &quot;Feature&quot;: {
+      &quot;description&quot;: &quot;A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;mcp&quot;,
+          &quot;description&quot;: &quot;This process answers MCP over HTTP.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cockpit&quot;,
+          &quot;description&quot;: &quot;This process serves the Cockpit.&quot;
         }
       ]
     },
@@ -532,153 +662,23 @@ them in, so the first whose mount owns a path is the one that answers it.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;api&quot;,
           &quot;description&quot;: &quot;A machine-readable surface of the capability registry.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;api&quot;
         },
         {
-          &quot;const&quot;: &quot;protocol&quot;,
           &quot;description&quot;: &quot;A wire protocol another program speaks.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;protocol&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;report&quot;,
-          &quot;description&quot;: &quot;Generated evidence of a run: a test report, a benchmark report.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;SurfaceFinding&quot;: {
-      &quot;description&quot;: &quot;One thing wrong with a topology, said so a person can fix it without reading this file.&quot;,
-      &quot;properties&quot;: {
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;What to do about it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;rule&quot;: {
-          &quot;description&quot;: &quot;The rule that produced it, stable enough to grep for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SurfaceFindingSeverity&quot;,
-          &quot;description&quot;: &quot;How much it matters.&quot;
-        },
-        &quot;surface&quot;: {
-          &quot;description&quot;: &quot;The surface it is about.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;rule&quot;,
-        &quot;surface&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SurfaceFindingSeverity&quot;: {
-      &quot;description&quot;: &quot;How much a finding matters.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Worth reading; serving is still coherent.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The topology may not be served or published in this state.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;SurfaceKind&quot;: {
-      &quot;description&quot;: &quot;How a surface answers a request.\n\nOnly what this repository serves: a directory of generated files, a path the executable\nanswers itself, and a redirect. A new *kind* is a new behaviour, never a new name for\nthe same behaviour with different data.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;static-directory&quot;,
-          &quot;description&quot;: &quot;A generated directory, mounted under its prefix and served from disk.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;native-route&quot;,
-          &quot;description&quot;: &quot;A path the executable answers itself, from its own registry or handlers.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;redirect&quot;,
-          &quot;description&quot;: &quot;A path that answers with a redirect to another one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;SurfaceVisibility&quot;: {
-      &quot;description&quot;: &quot;Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;public&quot;,
-          &quot;description&quot;: &quot;Listed for a person: it appears on the home page.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;internal&quot;,
-          &quot;description&quot;: &quot;Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Generated evidence of a run: a test report, a benchmark report.&quot;
         }
       ]
     }
-  },
-  &quot;description&quot;: &quot;The web surfaces of this repository, as the process that answers resolved them.&quot;,
-  &quot;properties&quot;: {
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;What validation says about the topology as it stands. Empty is the healthy answer;\na finding here is the same one `majordomus web validate` reports, with its remedy.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/SurfaceFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;public&quot;: {
-      &quot;description&quot;: &quot;The ids offered to a person, which is what the home page lists.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;published&quot;: {
-      &quot;description&quot;: &quot;The ids a publication holds, in the same order.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;served&quot;: {
-      &quot;description&quot;: &quot;The ids a process answers for, in the same order. A surface published and not\nserved is absent here.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;surfaces&quot;: {
-      &quot;description&quot;: &quot;Every resolved surface, in route-precedence order: the order a router consults\nthem in, so the first whose mount owns a path is the one that answers it.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Surface&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;surfaces&quot;,
-    &quot;served&quot;,
-    &quot;published&quot;,
-    &quot;public&quot;,
-    &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;SurfaceReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -709,7 +709,7 @@ them in, so the first whose mount owns a path is the one that answers it.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::web</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">SurfaceReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/web.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/web.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/web.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/web.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -734,7 +734,7 @@ them in, so the first whose mount owns a path is the one that answers it.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

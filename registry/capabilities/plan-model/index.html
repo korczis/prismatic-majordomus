@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,10 +261,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -273,110 +273,121 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">milestone_edges</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The milestone dependency graph, sorted.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">edges</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The issue dependency graph, sorted.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every finding, in derivation order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">issues</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every issue, in id order.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">milestone_edges</td>
+        <td class="px-3 py-2 font-mono text-heading">project</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The plan&#39;s header, with the active milestone derived.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">waves</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The milestone dependency graph, sorted.</td>
+        <td class="px-3 py-2 text-body">The execution waves, lowest first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every finding, in derivation order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">milestones</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every milestone, in id order.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">project</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The plan&#39;s header, with the active milestone derived.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">statuses</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The declared status vocabularies.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">waves</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The execution waves, lowest first.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;Plan&quot;,
+  &quot;properties&quot;: {
+    &quot;milestone_edges&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PlanEdge&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The milestone dependency graph, sorted.&quot;
+    },
+    &quot;edges&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PlanEdge&quot;
+      },
+      &quot;description&quot;: &quot;The issue dependency graph, sorted.&quot;
+    },
+    &quot;issues&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PlanIssue&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every issue, in id order.&quot;
+    },
+    &quot;project&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/PlanProject&quot;,
+      &quot;description&quot;: &quot;The plan&#39;s header, with the active milestone derived.&quot;
+    },
+    &quot;waves&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PlanWave&quot;
+      },
+      &quot;description&quot;: &quot;The execution waves, lowest first.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every finding, in derivation order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PlanFinding&quot;
+      }
+    },
+    &quot;milestones&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PlanMilestone&quot;
+      },
+      &quot;description&quot;: &quot;Every milestone, in id order.&quot;
+    },
+    &quot;statuses&quot;: {
+      &quot;description&quot;: &quot;The declared status vocabularies.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/PlanVocabulary&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;project&quot;,
+    &quot;statuses&quot;,
+    &quot;milestones&quot;,
+    &quot;issues&quot;,
+    &quot;waves&quot;,
+    &quot;edges&quot;,
+    &quot;milestone_edges&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The whole derived plan: what every plan capability answers out of.&quot;,
   &quot;$defs&quot;: {
-    &quot;PlanCounts&quot;: {
-      &quot;description&quot;: &quot;A milestone&#39;s issues counted: the two denominators, then one entry per declared status.&quot;,
-      &quot;properties&quot;: {
-        &quot;by_status&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint32&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;description&quot;: &quot;One entry per declared issue status, keyed by the vocabulary.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;required&quot;: {
-          &quot;description&quot;: &quot;The denominator the milestone&#39;s own status derivation uses: total less cancelled, so\nno surface prints \&quot;n of total\&quot; for a milestone the engine calls DONE.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;total&quot;: {
-          &quot;description&quot;: &quot;Every issue naming this milestone.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;total&quot;,
-        &quot;required&quot;,
-        &quot;by_status&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PlanEdge&quot;: {
-      &quot;description&quot;: &quot;One dependency edge, `from` before `to`.&quot;,
-      &quot;properties&quot;: {
-        &quot;from&quot;: {
-          &quot;description&quot;: &quot;The record that must be real first.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;to&quot;: {
-          &quot;description&quot;: &quot;The record that waits for it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;from&quot;,
-        &quot;to&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;PlanFinding&quot;: {
       &quot;description&quot;: &quot;One validation finding, in the shape `project.finding-carries-reproduce` asks for.&quot;,
       &quot;properties&quot;: {
         &quot;code&quot;: {
           &quot;description&quot;: &quot;The stable code a reader greps for (`unknown_dependency`, `scope_conflict`, …).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;level&quot;: {
-          &quot;description&quot;: &quot;`FAIL` or `WARN`. A failure means the model is invalid.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;message&quot;: {
@@ -386,6 +397,10 @@
         &quot;subject&quot;: {
           &quot;description&quot;: &quot;The record the finding is about, or `graph` when it is about the whole graph.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;level&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`FAIL` or `WARN`. A failure means the model is invalid.&quot;
         }
       },
       &quot;required&quot;: [
@@ -396,104 +411,26 @@
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;PlanIssue&quot;: {
-      &quot;description&quot;: &quot;One issue, as its record declares it and as the graph derives it.&quot;,
+    &quot;PlanEdge&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;blocked_by&quot;: {
-          &quot;description&quot;: &quot;The dependencies that are not DONE, plus `milestone:&lt;id&gt;` when the milestone gate\nholds the whole outcome back.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;to&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The record that waits for it.&quot;
         },
-        &quot;completed_at&quot;: {
-          &quot;description&quot;: &quot;When completion was recorded.&quot;,
+        &quot;from&quot;: {
+          &quot;description&quot;: &quot;The record that must be real first.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;dependents&quot;: {
-          &quot;description&quot;: &quot;The issues that depend on this one.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;depends_on&quot;: {
-          &quot;description&quot;: &quot;Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;evidence_have&quot;: {
-          &quot;description&quot;: &quot;Evidence entries attached.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;evidence_need&quot;: {
-          &quot;description&quot;: &quot;Evidence tokens the record requires before it may be DONE.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity, which is also the file name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;milestone&quot;: {
-          &quot;description&quot;: &quot;The milestone it belongs to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;objective&quot;: {
-          &quot;description&quot;: &quot;One line: what the issue is for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;parallel_safe&quot;: {
-          &quot;description&quot;: &quot;Whether it may run beside another issue of its wave.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;priority&quot;: {
-          &quot;description&quot;: &quot;`p0` … `p3`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;profile&quot;: {
-          &quot;description&quot;: &quot;The execution profile the issue is worked under.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The paths it touches; two issues of one wave that share a path are serialised.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;slug&quot;: {
-          &quot;description&quot;: &quot;The slug, when the record carries one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When execution began, when it did.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;One line naming the outcome.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;verified_at&quot;: {
-          &quot;description&quot;: &quot;When implementation was declared complete.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;wave&quot;: {
-          &quot;description&quot;: &quot;The execution wave: one past the longest path to it through the dependency graph.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;from&quot;,
+        &quot;to&quot;
+      ],
+      &quot;description&quot;: &quot;One dependency edge, `from` before `to`.&quot;
+    },
+    &quot;PlanIssue&quot;: {
+      &quot;description&quot;: &quot;One issue, as its record declares it and as the graph derives it.&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;milestone&quot;,
@@ -515,58 +452,251 @@
         &quot;verified_at&quot;,
         &quot;completed_at&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PlanMilestone&quot;: {
-      &quot;description&quot;: &quot;One milestone, as its record declares it and as the two graphs derive it.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
         &quot;blocked_by&quot;: {
-          &quot;description&quot;: &quot;Those of them that are not DONE. Non-empty means the gate holds every issue of this\nmilestone back, whatever the issue graph says.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
+          &quot;description&quot;: &quot;The dependencies that are not DONE, plus `milestone:&lt;id&gt;` when the milestone gate\nholds the whole outcome back.&quot;,
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;claims&quot;: {
-          &quot;description&quot;: &quot;The claims of the repository this outcome makes true.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;verified_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When implementation was declared complete.&quot;
         },
-        &quot;counts&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PlanCounts&quot;,
-          &quot;description&quot;: &quot;Its issues, counted by derived status.&quot;
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line naming the outcome.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;dependents&quot;: {
-          &quot;description&quot;: &quot;The milestones that require it.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The issues that depend on this one.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;evidence_need&quot;: {
+          &quot;description&quot;: &quot;Evidence tokens the record requires before it may be DONE.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;parallel_safe&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether it may run beside another issue of its wave.&quot;
+        },
+        &quot;depends_on&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;milestone&quot;: {
+          &quot;description&quot;: &quot;The milestone it belongs to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;description&quot;: &quot;The execution profile the issue is worked under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;description&quot;: &quot;One line: what the issue is for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;priority&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`p0` … `p3`.&quot;
+        },
+        &quot;completed_at&quot;: {
+          &quot;description&quot;: &quot;When completion was recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The identity, which is also the file name.&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;When execution began, when it did.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;slug&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The slug, when the record carries one.&quot;
+        },
+        &quot;wave&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;description&quot;: &quot;The execution wave: one past the longest path to it through the dependency graph.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;evidence_have&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Evidence entries attached.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;scope&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The paths it touches; two issues of one wave that share a path are serialised.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        }
+      }
+    },
+    &quot;PlanVocabulary&quot;: {
+      &quot;description&quot;: &quot;The status vocabularies, so a reader never has to know which statuses exist.&quot;,
+      &quot;required&quot;: [
+        &quot;issue&quot;,
+        &quot;milestone&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue statuses, in derivation order.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;depends_on&quot;: {
-          &quot;description&quot;: &quot;The milestones it requires.&quot;,
+        &quot;milestone&quot;: {
+          &quot;description&quot;: &quot;The milestone statuses, in derivation order.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
+        }
+      }
+    },
+    &quot;PlanWave&quot;: {
+      &quot;properties&quot;: {
+        &quot;wave&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The layer, from zero.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
+        },
+        &quot;issues&quot;: {
+          &quot;description&quot;: &quot;The issues in it, in id order.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;description&quot;: &quot;One execution wave: the issues the graph allows to run at the same time.&quot;,
+      &quot;required&quot;: [
+        &quot;wave&quot;,
+        &quot;issues&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;PlanCounts&quot;: {
+      &quot;required&quot;: [
+        &quot;total&quot;,
+        &quot;required&quot;,
+        &quot;by_status&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;by_status&quot;: {
+          &quot;description&quot;: &quot;One entry per declared issue status, keyed by the vocabulary.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint32&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          }
+        },
+        &quot;total&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Every issue naming this milestone.&quot;
+        },
+        &quot;required&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The denominator the milestone&#39;s own status derivation uses: total less cancelled, so\nno surface prints \&quot;n of total\&quot; for a milestone the engine calls DONE.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A milestone&#39;s issues counted: the two denominators, then one entry per declared status.&quot;
+    },
+    &quot;PlanMilestone&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One milestone, as its record declares it and as the two graphs derive it.&quot;,
+      &quot;properties&quot;: {
+        &quot;rank&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Its layer in the milestone graph: what orders the roadmap.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line naming the outcome.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The identity, which is also the file name; a stable slug, never a version.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;blocked_by&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Those of them that are not DONE. Non-empty means the gate holds every issue of this\nmilestone back, whatever the issue graph says.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;slug&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The slug, when the record carries one.&quot;
+        },
         &quot;issues&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;Its issues, in id order.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
-        &quot;order&quot;: {
-          &quot;description&quot;: &quot;Tie-break inside one rank; the roadmap is ordered by rank first.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;dependents&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The milestones that require it.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;counts&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PlanCounts&quot;,
+          &quot;description&quot;: &quot;Its issues, counted by derived status.&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The release the milestone belongs to, when it declares one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;claims&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The claims of the repository this outcome makes true.&quot;
+        },
+        &quot;depends_on&quot;: {
+          &quot;description&quot;: &quot;The milestones it requires.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;status&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The derived status.&quot;
         },
         &quot;outcome&quot;: {
           &quot;description&quot;: &quot;One line: what is true once the milestone is real.&quot;,
@@ -576,27 +706,10 @@
           &quot;description&quot;: &quot;`p0` … `p3`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;rank&quot;: {
-          &quot;description&quot;: &quot;Its layer in the milestone graph: what orders the roadmap.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
+        &quot;order&quot;: {
+          &quot;format&quot;: &quot;int64&quot;,
+          &quot;description&quot;: &quot;Tie-break inside one rank; the roadmap is ordered by rank first.&quot;,
           &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;slug&quot;: {
-          &quot;description&quot;: &quot;The slug, when the record carries one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;The derived status.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;One line naming the outcome.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;The release the milestone belongs to, when it declares one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -615,150 +728,37 @@
         &quot;counts&quot;,
         &quot;issues&quot;,
         &quot;outcome&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;PlanProject&quot;: {
-      &quot;description&quot;: &quot;The plan&#39;s header: what this repository is, plus the one field nobody authors.&quot;,
-      &quot;properties&quot;: {
-        &quot;active_milestone&quot;: {
-          &quot;description&quot;: &quot;The milestone a worker is executing now: the lowest-ranked unblocked milestone that\nis ACTIVE, else the lowest-ranked unblocked one not finished. Derived on every read,\nstored nowhere, and never authored — the plan cannot nominate a milestone whose\nprerequisites are not real.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;default_branch&quot;: {
-          &quot;description&quot;: &quot;The branch the plan is executed on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The project&#39;s name, from `project.yaml`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;repository&quot;: {
-          &quot;description&quot;: &quot;The repository it belongs to, `owner/name`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;name&quot;,
         &quot;repository&quot;,
         &quot;default_branch&quot;,
         &quot;active_milestone&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PlanVocabulary&quot;: {
-      &quot;description&quot;: &quot;The status vocabularies, so a reader never has to know which statuses exist.&quot;,
+      &quot;description&quot;: &quot;The plan&#39;s header: what this repository is, plus the one field nobody authors.&quot;,
       &quot;properties&quot;: {
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue statuses, in derivation order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;default_branch&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch the plan is executed on.&quot;
         },
-        &quot;milestone&quot;: {
-          &quot;description&quot;: &quot;The milestone statuses, in derivation order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;repository&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The repository it belongs to, `owner/name`.&quot;
+        },
+        &quot;active_milestone&quot;: {
+          &quot;description&quot;: &quot;The milestone a worker is executing now: the lowest-ranked unblocked milestone that\nis ACTIVE, else the lowest-ranked unblocked one not finished. Derived on every read,\nstored nowhere, and never authored — the plan cannot nominate a milestone whose\nprerequisites are not real.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The project&#39;s name, from `project.yaml`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;issue&quot;,
-        &quot;milestone&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PlanWave&quot;: {
-      &quot;description&quot;: &quot;One execution wave: the issues the graph allows to run at the same time.&quot;,
-      &quot;properties&quot;: {
-        &quot;issues&quot;: {
-          &quot;description&quot;: &quot;The issues in it, in id order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;wave&quot;: {
-          &quot;description&quot;: &quot;The layer, from zero.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;wave&quot;,
-        &quot;issues&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     }
-  },
-  &quot;description&quot;: &quot;The whole derived plan: what every plan capability answers out of.&quot;,
-  &quot;properties&quot;: {
-    &quot;edges&quot;: {
-      &quot;description&quot;: &quot;The issue dependency graph, sorted.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PlanEdge&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every finding, in derivation order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PlanFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;issues&quot;: {
-      &quot;description&quot;: &quot;Every issue, in id order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PlanIssue&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;milestone_edges&quot;: {
-      &quot;description&quot;: &quot;The milestone dependency graph, sorted.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PlanEdge&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;milestones&quot;: {
-      &quot;description&quot;: &quot;Every milestone, in id order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PlanMilestone&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;project&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/PlanProject&quot;,
-      &quot;description&quot;: &quot;The plan&#39;s header, with the active milestone derived.&quot;
-    },
-    &quot;statuses&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/PlanVocabulary&quot;,
-      &quot;description&quot;: &quot;The declared status vocabularies.&quot;
-    },
-    &quot;waves&quot;: {
-      &quot;description&quot;: &quot;The execution waves, lowest first.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PlanWave&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;project&quot;,
-    &quot;statuses&quot;,
-    &quot;milestones&quot;,
-    &quot;issues&quot;,
-    &quot;waves&quot;,
-    &quot;edges&quot;,
-    &quot;milestone_edges&quot;,
-    &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;Plan&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -789,7 +789,7 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::plan</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Plan</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -814,7 +814,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

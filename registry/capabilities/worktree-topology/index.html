@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,10 +261,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -274,6 +274,11 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">trunk</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The trunk.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">branches</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -283,21 +288,6 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The container every linked work tree belongs under.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Everything wrong with the topology, work trees first, then repository-wide.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">observed_from</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The work tree the call was answered from.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">repository</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The repository.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -309,15 +299,25 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The counts.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">trunk</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The trunk.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">valid</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">No error-level diagnostic stands.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">repository</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The repository.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">observed_from</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The work tree the call was answered from.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Everything wrong with the topology, work trees first, then repository-wide.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">worktrees</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -328,27 +328,467 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;repository&quot;,
+    &quot;container&quot;,
+    &quot;trunk&quot;,
+    &quot;observed_from&quot;,
+    &quot;worktrees&quot;,
+    &quot;branches&quot;,
+    &quot;diagnostics&quot;,
+    &quot;tallies&quot;,
+    &quot;valid&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;trunk&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/TrunkView&quot;,
+      &quot;description&quot;: &quot;The trunk.&quot;
+    },
+    &quot;branches&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every local branch, by name.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BranchState&quot;
+      }
+    },
+    &quot;container&quot;: {
+      &quot;description&quot;: &quot;The container every linked work tree belongs under.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ContainerView&quot;
+    },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;tallies&quot;: {
+      &quot;description&quot;: &quot;The counts.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/TopologyTallies&quot;
+    },
+    &quot;valid&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;No error-level diagnostic stands.&quot;
+    },
+    &quot;repository&quot;: {
+      &quot;description&quot;: &quot;The repository.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/RepositoryView&quot;
+    },
+    &quot;observed_from&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The work tree the call was answered from.&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Everything wrong with the topology, work trees first, then repository-wide.&quot;
+    },
+    &quot;worktrees&quot;: {
+      &quot;description&quot;: &quot;Every registered work tree, primary first.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/WorktreeState&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;title&quot;: &quot;RepositoryTopology&quot;,
   &quot;$defs&quot;: {
-    &quot;BranchState&quot;: {
-      &quot;description&quot;: &quot;One local branch, with or without a work tree.&quot;,
+    &quot;WorktreeState&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;cleanup_eligible&quot;: {
-          &quot;description&quot;: &quot;Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically.&quot;,
+        &quot;upstream&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/UpstreamState&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The branch&#39;s upstream and its distance from it.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The branch checked out here, short. Absent when detached.&quot;
+        },
+        &quot;label&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The name it is shown under: the branch, or `detached/&lt;short commit&gt;`.&quot;
+        },
+        &quot;current&quot;: {
+          &quot;description&quot;: &quot;The call came from inside this work tree.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;expected_path&quot;: {
-          &quot;description&quot;: &quot;Where its work tree belongs.&quot;,
+        &quot;exists&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The directory git registered still exists on disk.&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue this branch provably names: a path component of the branch equal to an\nissue id of `.ai/repo/project/issues/`, or beginning with it and a hyphen. Nothing\nis inferred from similarity.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it points at.&quot;,
+        &quot;expected_path&quot;: {
+          &quot;description&quot;: &quot;Where this branch&#39;s work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;diagnostics&quot;: {
+          &quot;description&quot;: &quot;What is wrong with this work tree, if anything.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Primary or linked.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/WorktreeKind&quot;
+        },
+        &quot;locked&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Locked, with git&#39;s reason; an empty string when it recorded none.&quot;
+        },
+        &quot;detached&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;HEAD is detached here.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Absolute, as git holds it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue this branch provably names.&quot;,
+        &quot;dirty&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Uncommitted work here. Absent when it was not asked for: it costs one subprocess per\nwork tree, and a topology check does not need it.&quot;
+        },
+        &quot;head&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The commit checked out here.&quot;
+        },
+        &quot;standing&quot;: {
+          &quot;description&quot;: &quot;Where it stands against the topology.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Standing&quot;
+        },
+        &quot;prunable&quot;: {
+          &quot;description&quot;: &quot;Prunable, with git&#39;s reason.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;description&quot;: &quot;One work tree, as the topology sees it.&quot;,
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;kind&quot;,
+        &quot;standing&quot;,
+        &quot;label&quot;,
+        &quot;detached&quot;,
+        &quot;exists&quot;,
+        &quot;current&quot;,
+        &quot;diagnostics&quot;
+      ]
+    },
+    &quot;TopologyDiagnostic&quot;: {
+      &quot;properties&quot;: {
+        &quot;expected&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Where the work tree belongs.&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The command that addresses it.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How serious it is.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The branch involved.&quot;
+        },
+        &quot;code&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DiagnosticCode&quot;,
+          &quot;description&quot;: &quot;The stable code.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The work tree involved.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;severity&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;description&quot;: &quot;One thing wrong with, or worth knowing about, the topology.&quot;
+    },
+    &quot;TopologyTallies&quot;: {
+      &quot;description&quot;: &quot;How many work trees and branches are in each state.&quot;,
+      &quot;required&quot;: [
+        &quot;worktrees&quot;,
+        &quot;canonical&quot;,
+        &quot;misplaced&quot;,
+        &quot;detached&quot;,
+        &quot;ephemeral&quot;,
+        &quot;missing&quot;,
+        &quot;locked&quot;,
+        &quot;dirty&quot;,
+        &quot;branches&quot;,
+        &quot;branches_without_worktree&quot;,
+        &quot;cleanup_eligible&quot;,
+        &quot;errors&quot;,
+        &quot;warnings&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;errors&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Error-level diagnostics.&quot;
+        },
+        &quot;locked&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Work trees git reports as locked.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;warnings&quot;: {
+          &quot;description&quot;: &quot;Warning-level diagnostics.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;canonical&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Linked work trees at their canonical path.&quot;
+        },
+        &quot;misplaced&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Linked work trees somewhere else.&quot;
+        },
+        &quot;missing&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Registrations whose directory is gone.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;branches&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Local branches.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;detached&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Linked work trees without a branch.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;ephemeral&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Scratch checkouts of a session.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;worktrees&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Every registered work tree, primary included.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;branches_without_worktree&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Local branches with no work tree.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;cleanup_eligible&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Branches eligible for cleanup.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;dirty&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Work trees with uncommitted work, when it was asked for.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      }
+    },
+    &quot;DirtyState&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;in_progress&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;
+        },
+        &quot;untracked&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;
+        },
+        &quot;unstaged&quot;: {
+          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;clean&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;
+        },
+        &quot;staged&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Entries with a change in the index.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;conflicted&quot;: {
+          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        }
+      },
+      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
+      &quot;required&quot;: [
+        &quot;staged&quot;,
+        &quot;unstaged&quot;,
+        &quot;untracked&quot;,
+        &quot;conflicted&quot;,
+        &quot;clean&quot;
+      ]
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;info&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TrunkSource&quot;: {
+      &quot;description&quot;: &quot;Where the trunk was learned from, in the order it is looked for.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;`refs/remotes/&lt;remote&gt;/HEAD`: what the remote calls its default branch.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;remote_head&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;default_branch_config&quot;,
+          &quot;description&quot;: &quot;`init.defaultBranch` in the git configuration, and that branch exists locally.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;conventional_name&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Exactly one of `main` and `master` exists locally.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;primary_checkout&quot;,
+          &quot;description&quot;: &quot;The branch the primary checkout holds, because nothing else said.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Nothing said; the trunk is unknown and every check that needs it says so.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unknown&quot;
+        }
+      ]
+    },
+    &quot;RepositoryView&quot;: {
+      &quot;description&quot;: &quot;The repository&#39;s identity, as the topology reports it.&quot;,
+      &quot;required&quot;: [
+        &quot;primary_worktree&quot;,
+        &quot;git_common_dir&quot;,
+        &quot;name&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;primary_worktree&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The primary checkout: what the container is named after.&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The primary checkout&#39;s directory name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;git_common_dir&quot;: {
+          &quot;description&quot;: &quot;The common git directory: the repository&#39;s identity.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BranchState&quot;: {
+      &quot;description&quot;: &quot;One local branch, with or without a work tree.&quot;,
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;head&quot;,
+        &quot;trunk&quot;,
+        &quot;cleanup_eligible&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;expected_path&quot;: {
+          &quot;description&quot;: &quot;Where its work tree belongs.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
@@ -361,15 +801,8 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
             &quot;null&quot;
           ]
         },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The branch, short.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;trunk&quot;: {
-          &quot;description&quot;: &quot;This branch is the trunk.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
         &quot;upstream&quot;: {
+          &quot;description&quot;: &quot;The upstream and its distance.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/UpstreamState&quot;
@@ -377,95 +810,113 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;The upstream and its distance.&quot;
+          ]
         },
-        &quot;worktree&quot;: {
-          &quot;description&quot;: &quot;Where it is checked out, when it is.&quot;,
+        &quot;head&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The commit it points at.&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue this branch provably names.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;head&quot;,
-        &quot;trunk&quot;,
-        &quot;cleanup_eligible&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ContainerView&quot;: {
-      &quot;description&quot;: &quot;The container, as the topology reports it.&quot;,
-      &quot;properties&quot;: {
-        &quot;exists&quot;: {
-          &quot;description&quot;: &quot;It exists on disk. Created by the first worktree that needs it.&quot;,
+        },
+        &quot;cleanup_eligible&quot;: {
+          &quot;description&quot;: &quot;Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The derived path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch, short.&quot;
         },
-        &quot;suffix&quot;: {
-          &quot;description&quot;: &quot;The suffix it was derived with.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;trunk&quot;: {
+          &quot;description&quot;: &quot;This branch is the trunk.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;worktree&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Where it is checked out, when it is.&quot;
+        }
+      }
+    },
+    &quot;TrunkView&quot;: {
+      &quot;required&quot;: [
+        &quot;source&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;How it was decided.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TrunkSource&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch, when known.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;checked_out_at&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Where it is checked out.&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;suffix&quot;,
-        &quot;exists&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;The trunk, as the topology reports it.&quot;
     },
     &quot;DiagnosticCode&quot;: {
-      &quot;description&quot;: &quot;The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;worktree.path_mismatch&quot;,
-          &quot;description&quot;: &quot;A linked work tree is not at its branch&#39;s canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A linked work tree is not at its branch&#39;s canonical path.&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.container_occupied&quot;,
-          &quot;description&quot;: &quot;A linked work tree occupies the container path itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree occupies the container path itself.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;worktree.nested&quot;,
-          &quot;description&quot;: &quot;A linked work tree sits inside the primary checkout or inside another work tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A linked work tree sits inside the primary checkout or inside another work tree.&quot;
         },
         {
-          &quot;const&quot;: &quot;worktree.destination_conflict&quot;,
           &quot;description&quot;: &quot;The canonical path of a branch is occupied by something that is not its work tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.destination_conflict&quot;
         },
         {
-          &quot;const&quot;: &quot;worktree.missing&quot;,
           &quot;description&quot;: &quot;A registered work tree&#39;s directory does not exist.&quot;,
+          &quot;const&quot;: &quot;worktree.missing&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.stale_registration&quot;,
-          &quot;description&quot;: &quot;Git reports the registration as prunable.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Git reports the registration as prunable.&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.branch_already_checked_out&quot;,
-          &quot;description&quot;: &quot;A branch is checked out somewhere other than its canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A branch is checked out somewhere other than its canonical path.&quot;
         },
         {
-          &quot;const&quot;: &quot;worktree.detached&quot;,
           &quot;description&quot;: &quot;A linked work tree has no branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.detached&quot;
         },
         {
-          &quot;const&quot;: &quot;worktree.ephemeral&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A linked work tree is a session&#39;s scratch checkout: under the temporary directory or\nunder the primary checkout&#39;s `.claude/worktrees/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;worktree.ephemeral&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.primary_on_non_trunk&quot;,
@@ -473,19 +924,19 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;worktree.trunk_in_linked_worktree&quot;,
           &quot;description&quot;: &quot;The trunk is checked out in a linked work tree rather than the primary checkout.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.trunk_in_linked_worktree&quot;
         },
         {
-          &quot;const&quot;: &quot;worktree.path_escape&quot;,
           &quot;description&quot;: &quot;A derived path would leave the container. Cannot happen for a valid branch name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.path_escape&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.invalid_branch_name&quot;,
-          &quot;description&quot;: &quot;A branch name git accepted that this executable cannot derive a path for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A branch name git accepted that this executable cannot derive a path for.&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.locked&quot;,
@@ -503,107 +954,91 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;worktree.case_collision&quot;,
           &quot;description&quot;: &quot;Two branch names map to one directory on a case-insensitive filesystem.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.case_collision&quot;
         },
         {
-          &quot;const&quot;: &quot;worktree.cross_device&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A move crossed devices and was made by copy, repair and verification.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;worktree.cross_device&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state.&quot;
     },
-    &quot;DirtyState&quot;: {
-      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
+    &quot;UpstreamState&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;clean&quot;: {
-          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;,
+        &quot;behind&quot;: {
+          &quot;description&quot;: &quot;Commits upstream that this branch lacks.&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;ahead&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Commits here that the upstream lacks.&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0
+        },
+        &quot;gone&quot;: {
+          &quot;description&quot;: &quot;The upstream ref no longer exists.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;conflicted&quot;: {
-          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;in_progress&quot;: {
-          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;staged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;unstaged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;untracked&quot;: {
-          &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;staged&quot;,
-        &quot;unstaged&quot;,
-        &quot;untracked&quot;,
-        &quot;conflicted&quot;,
-        &quot;clean&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RepositoryView&quot;: {
-      &quot;description&quot;: &quot;The repository&#39;s identity, as the topology reports it.&quot;,
-      &quot;properties&quot;: {
-        &quot;git_common_dir&quot;: {
-          &quot;description&quot;: &quot;The common git directory: the repository&#39;s identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;name&quot;: {
-          &quot;description&quot;: &quot;The primary checkout&#39;s directory name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;primary_worktree&quot;: {
-          &quot;description&quot;: &quot;The primary checkout: what the container is named after.&quot;,
+          &quot;description&quot;: &quot;The upstream ref, short (`origin/master`).&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;description&quot;: &quot;A branch&#39;s upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.&quot;,
       &quot;required&quot;: [
-        &quot;primary_worktree&quot;,
-        &quot;git_common_dir&quot;,
-        &quot;name&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+        &quot;name&quot;,
+        &quot;gone&quot;
+      ]
     },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+    &quot;WorktreeKind&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;primary&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The main work tree. It hosts the trunk, is never moved and is never removed.&quot;
         },
         {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree. Belongs at its branch&#39;s canonical path.&quot;,
+          &quot;const&quot;: &quot;linked&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether a work tree is the repository&#39;s own checkout or one linked to it.&quot;
+    },
+    &quot;ContainerView&quot;: {
+      &quot;properties&quot;: {
+        &quot;exists&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;It exists on disk. Created by the first worktree that needs it.&quot;
         },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The derived path.&quot;
+        },
+        &quot;suffix&quot;: {
+          &quot;description&quot;: &quot;The suffix it was derived with.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      },
+      &quot;description&quot;: &quot;The container, as the topology reports it.&quot;,
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;suffix&quot;,
+        &quot;exists&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;Standing&quot;: {
       &quot;description&quot;: &quot;Where a work tree stands against the topology.&quot;,
@@ -615,8 +1050,8 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
         },
         {
           &quot;const&quot;: &quot;canonical&quot;,
-          &quot;description&quot;: &quot;A linked work tree at exactly its branch&#39;s canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree at exactly its branch&#39;s canonical path.&quot;
         },
         {
           &quot;const&quot;: &quot;misplaced&quot;,
@@ -624,9 +1059,9 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;detached&quot;,
-          &quot;description&quot;: &quot;A linked work tree with no branch. It has no canonical path and is never moved.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A linked work tree with no branch. It has no canonical path and is never moved.&quot;
         },
         {
           &quot;const&quot;: &quot;ephemeral&quot;,
@@ -634,450 +1069,15 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;missing&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A registration whose directory is gone. Repair drops it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;missing&quot;
         }
       ]
-    },
-    &quot;TopologyDiagnostic&quot;: {
-      &quot;description&quot;: &quot;One thing wrong with, or worth knowing about, the topology.&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch involved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;code&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DiagnosticCode&quot;,
-          &quot;description&quot;: &quot;The stable code.&quot;
-        },
-        &quot;expected&quot;: {
-          &quot;description&quot;: &quot;Where the work tree belongs.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The work tree involved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;The command that addresses it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How serious it is.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;severity&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TopologyTallies&quot;: {
-      &quot;description&quot;: &quot;How many work trees and branches are in each state.&quot;,
-      &quot;properties&quot;: {
-        &quot;branches&quot;: {
-          &quot;description&quot;: &quot;Local branches.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;branches_without_worktree&quot;: {
-          &quot;description&quot;: &quot;Local branches with no work tree.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;canonical&quot;: {
-          &quot;description&quot;: &quot;Linked work trees at their canonical path.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;cleanup_eligible&quot;: {
-          &quot;description&quot;: &quot;Branches eligible for cleanup.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;detached&quot;: {
-          &quot;description&quot;: &quot;Linked work trees without a branch.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;dirty&quot;: {
-          &quot;description&quot;: &quot;Work trees with uncommitted work, when it was asked for.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;ephemeral&quot;: {
-          &quot;description&quot;: &quot;Scratch checkouts of a session.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;errors&quot;: {
-          &quot;description&quot;: &quot;Error-level diagnostics.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;locked&quot;: {
-          &quot;description&quot;: &quot;Work trees git reports as locked.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;misplaced&quot;: {
-          &quot;description&quot;: &quot;Linked work trees somewhere else.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;missing&quot;: {
-          &quot;description&quot;: &quot;Registrations whose directory is gone.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;warnings&quot;: {
-          &quot;description&quot;: &quot;Warning-level diagnostics.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;worktrees&quot;: {
-          &quot;description&quot;: &quot;Every registered work tree, primary included.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;worktrees&quot;,
-        &quot;canonical&quot;,
-        &quot;misplaced&quot;,
-        &quot;detached&quot;,
-        &quot;ephemeral&quot;,
-        &quot;missing&quot;,
-        &quot;locked&quot;,
-        &quot;dirty&quot;,
-        &quot;branches&quot;,
-        &quot;branches_without_worktree&quot;,
-        &quot;cleanup_eligible&quot;,
-        &quot;errors&quot;,
-        &quot;warnings&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TrunkSource&quot;: {
-      &quot;description&quot;: &quot;Where the trunk was learned from, in the order it is looked for.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;remote_head&quot;,
-          &quot;description&quot;: &quot;`refs/remotes/&lt;remote&gt;/HEAD`: what the remote calls its default branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;default_branch_config&quot;,
-          &quot;description&quot;: &quot;`init.defaultBranch` in the git configuration, and that branch exists locally.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;conventional_name&quot;,
-          &quot;description&quot;: &quot;Exactly one of `main` and `master` exists locally.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;primary_checkout&quot;,
-          &quot;description&quot;: &quot;The branch the primary checkout holds, because nothing else said.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;Nothing said; the trunk is unknown and every check that needs it says so.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;TrunkView&quot;: {
-      &quot;description&quot;: &quot;The trunk, as the topology reports it.&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch, when known.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;checked_out_at&quot;: {
-          &quot;description&quot;: &quot;Where it is checked out.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;source&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TrunkSource&quot;,
-          &quot;description&quot;: &quot;How it was decided.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;source&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;UpstreamState&quot;: {
-      &quot;description&quot;: &quot;A branch&#39;s upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.&quot;,
-      &quot;properties&quot;: {
-        &quot;ahead&quot;: {
-          &quot;description&quot;: &quot;Commits here that the upstream lacks.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;behind&quot;: {
-          &quot;description&quot;: &quot;Commits upstream that this branch lacks.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;gone&quot;: {
-          &quot;description&quot;: &quot;The upstream ref no longer exists.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The upstream ref, short (`origin/master`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;gone&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;WorktreeKind&quot;: {
-      &quot;description&quot;: &quot;Whether a work tree is the repository&#39;s own checkout or one linked to it.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;primary&quot;,
-          &quot;description&quot;: &quot;The main work tree. It hosts the trunk, is never moved and is never removed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;linked&quot;,
-          &quot;description&quot;: &quot;A linked work tree. Belongs at its branch&#39;s canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;WorktreeState&quot;: {
-      &quot;description&quot;: &quot;One work tree, as the topology sees it.&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out here, short. Absent when detached.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;current&quot;: {
-          &quot;description&quot;: &quot;The call came from inside this work tree.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;detached&quot;: {
-          &quot;description&quot;: &quot;HEAD is detached here.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;diagnostics&quot;: {
-          &quot;description&quot;: &quot;What is wrong with this work tree, if anything.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;dirty&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Uncommitted work here. Absent when it was not asked for: it costs one subprocess per\nwork tree, and a topology check does not need it.&quot;
-        },
-        &quot;exists&quot;: {
-          &quot;description&quot;: &quot;The directory git registered still exists on disk.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;expected_path&quot;: {
-          &quot;description&quot;: &quot;Where this branch&#39;s work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit checked out here.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue this branch provably names: a path component of the branch equal to an\nissue id of `.ai/repo/project/issues/`, or beginning with it and a hyphen. Nothing\nis inferred from similarity.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/WorktreeKind&quot;,
-          &quot;description&quot;: &quot;Primary or linked.&quot;
-        },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name it is shown under: the branch, or `detached/&lt;short commit&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;locked&quot;: {
-          &quot;description&quot;: &quot;Locked, with git&#39;s reason; an empty string when it recorded none.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Absolute, as git holds it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;prunable&quot;: {
-          &quot;description&quot;: &quot;Prunable, with git&#39;s reason.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Standing&quot;,
-          &quot;description&quot;: &quot;Where it stands against the topology.&quot;
-        },
-        &quot;upstream&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/UpstreamState&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The branch&#39;s upstream and its distance from it.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;kind&quot;,
-        &quot;standing&quot;,
-        &quot;label&quot;,
-        &quot;detached&quot;,
-        &quot;exists&quot;,
-        &quot;current&quot;,
-        &quot;diagnostics&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;The whole topology: what `worktree list`, the MCP resource, the HTTP route and the\nCockpit all read.&quot;,
-  &quot;properties&quot;: {
-    &quot;branches&quot;: {
-      &quot;description&quot;: &quot;Every local branch, by name.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/BranchState&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;container&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ContainerView&quot;,
-      &quot;description&quot;: &quot;The container every linked work tree belongs under.&quot;
-    },
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;Everything wrong with the topology, work trees first, then repository-wide.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;observed_from&quot;: {
-      &quot;description&quot;: &quot;The work tree the call was answered from.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;repository&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/RepositoryView&quot;,
-      &quot;description&quot;: &quot;The repository.&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;tallies&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/TopologyTallies&quot;,
-      &quot;description&quot;: &quot;The counts.&quot;
-    },
-    &quot;trunk&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/TrunkView&quot;,
-      &quot;description&quot;: &quot;The trunk.&quot;
-    },
-    &quot;valid&quot;: {
-      &quot;description&quot;: &quot;No error-level diagnostic stands.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;worktrees&quot;: {
-      &quot;description&quot;: &quot;Every registered work tree, primary first.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/WorktreeState&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;repository&quot;,
-    &quot;container&quot;,
-    &quot;trunk&quot;,
-    &quot;observed_from&quot;,
-    &quot;worktrees&quot;,
-    &quot;branches&quot;,
-    &quot;diagnostics&quot;,
-    &quot;tallies&quot;,
-    &quot;valid&quot;
-  ],
-  &quot;title&quot;: &quot;RepositoryTopology&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The whole topology: what `worktree list`, the MCP resource, the HTTP route and the\nCockpit all read.&quot;
 }</pre></div>
   </details>
 </div>
@@ -1108,7 +1108,7 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::worktree</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RepositoryTopology</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -1140,7 +1140,7 @@ Cockpit all read.</p><div class="mt-3 overflow-x-auto rounded-base border border
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

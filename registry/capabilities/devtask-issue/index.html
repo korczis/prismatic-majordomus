@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -280,7 +280,6 @@ never refused and never answered with empty strings that read as authored.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;Which issue to read as a development task.&quot;,
   &quot;properties&quot;: {
     &quot;git&quot;: {
@@ -295,11 +294,12 @@ never refused and never answered with empty strings that read as authored.</td>
       &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;title&quot;: &quot;DevTaskInput&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;required&quot;: [
     &quot;issue&quot;
   ],
-  &quot;title&quot;: &quot;DevTaskInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -309,10 +309,30 @@ happened to it, where its external projection stands, and whether a worker may s
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The issue id, as asked for.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">record</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Repository-relative path of the canonical record, when there is one.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">attestation</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How much of the answer was authored and how much a machine worked out.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">synchronisation</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where the external projection stands.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Everything wrong with its records.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">declaration</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -326,20 +346,10 @@ happened to it, where its external projection stands, and whether a worker may s
 every canonical field `unknown`: a typo that read as &quot;nothing has been authored&quot; is
 the one answer this must never give.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Everything wrong with its records.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">execution</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">What happened locally.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">issue</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The issue id, as asked for.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">position</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -350,99 +360,76 @@ the one answer this must never give.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Whether it can be worked on, and what is in the way.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">record</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Repository-relative path of the canonical record, when there is one.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">synchronisation</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where the external projection stands.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;issue&quot;: {
+      &quot;description&quot;: &quot;The issue id, as asked for.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;record&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Repository-relative path of the canonical record, when there is one.&quot;
+    },
+    &quot;attestation&quot;: {
+      &quot;description&quot;: &quot;How much of the answer was authored and how much a machine worked out.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/AttestationTally&quot;
+    },
+    &quot;synchronisation&quot;: {
+      &quot;description&quot;: &quot;Where the external projection stands.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/DevTaskSynchronisation&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/DevTaskDiagnostic&quot;
+      },
+      &quot;description&quot;: &quot;Everything wrong with its records.&quot;
+    },
+    &quot;declaration&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DevTaskDeclaration&quot;,
+      &quot;description&quot;: &quot;What a person authored.&quot;
+    },
+    &quot;declared&quot;: {
+      &quot;description&quot;: &quot;Whether the canonical model declares it. False is answered rather than refused, with\nevery canonical field `unknown`: a typo that read as \&quot;nothing has been authored\&quot; is\nthe one answer this must never give.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;execution&quot;: {
+      &quot;description&quot;: &quot;What happened locally.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/DevTaskExecution&quot;
+    },
+    &quot;position&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DevTaskPosition&quot;,
+      &quot;description&quot;: &quot;Where the plan graph puts it.&quot;
+    },
+    &quot;readiness&quot;: {
+      &quot;description&quot;: &quot;Whether it can be worked on, and what is in the way.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ReadinessVerdict&quot;
+    }
+  },
+  &quot;description&quot;: &quot;One issue as an executable development task: what was authored, where it sits, what has\nhappened to it, where its external projection stands, and whether a worker may start it.&quot;,
+  &quot;required&quot;: [
+    &quot;issue&quot;,
+    &quot;declared&quot;,
+    &quot;declaration&quot;,
+    &quot;position&quot;,
+    &quot;execution&quot;,
+    &quot;synchronisation&quot;,
+    &quot;readiness&quot;,
+    &quot;diagnostics&quot;,
+    &quot;attestation&quot;
+  ],
   &quot;$defs&quot;: {
-    &quot;AttestationTally&quot;: {
-      &quot;description&quot;: &quot;How much of one answer was authored, and how much a machine worked out.\n\nNot decoration: it is the measurement that makes the provenance discipline checkable\nfrom outside. A task whose declaration is mostly `unknown` is a placeholder however\ncomplete its derived half looks, and this is the number that says so.&quot;,
-      &quot;properties&quot;: {
-        &quot;derived&quot;: {
-          &quot;description&quot;: &quot;Fields worked out by a rule that cannot be wrong about a readable repository.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;explicit&quot;: {
-          &quot;description&quot;: &quot;Fields a person authored in the canonical record.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;inferred&quot;: {
-          &quot;description&quot;: &quot;Fields worked out by a rule that can be wrong.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;unknown&quot;: {
-          &quot;description&quot;: &quot;Fields not available at all.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;explicit&quot;,
-        &quot;derived&quot;,
-        &quot;inferred&quot;,
-        &quot;unknown&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;AttestedCount&quot;: {
-      &quot;description&quot;: &quot;A count with its provenance. Separate from [`AttestedText`] because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back.&quot;,
-      &quot;properties&quot;: {
-        &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;,
-          &quot;description&quot;: &quot;Where it came from.&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why the provenance is what it is, when that is worth a sentence.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;The one place a reader goes to check it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;value&quot;: {
-          &quot;description&quot;: &quot;The number, absent exactly when the provenance is `unknown`.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;provenance&quot;,
-        &quot;source&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;AttestedList&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;A list with its provenance. The distinction a bare `Vec` cannot make is the one that\nmatters here: `depends_on: []` in the record is an authored empty list, and a record with\nno `depends_on` key is unknown. Both are empty; only one is a statement.&quot;,
       &quot;properties&quot;: {
-        &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;,
-          &quot;description&quot;: &quot;Where they came from.&quot;
-        },
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;Why the provenance is what it is, when that is worth a sentence.&quot;,
           &quot;type&quot;: [
@@ -454,30 +441,39 @@ the one answer this must never give.</td>
           &quot;description&quot;: &quot;The one place a reader goes to check them.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;provenance&quot;: {
+          &quot;description&quot;: &quot;Where they came from.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;
+        },
         &quot;values&quot;: {
           &quot;description&quot;: &quot;The items, in the order the record or the derivation produced them. Empty for an\nauthored empty list and for an unknown field alike; `provenance` tells them apart.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         }
       },
       &quot;required&quot;: [
         &quot;values&quot;,
         &quot;provenance&quot;,
         &quot;source&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;AttestedText&quot;: {
-      &quot;description&quot;: &quot;One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and [`AttestedText::is_consistent`] states, is\nthat a value is present exactly when the provenance is not [`FieldProvenance::Unknown`].\nWithout it the shape can express \&quot;unknown, and here is the value\&quot;, which is the defect\nthis whole module exists to prevent.&quot;,
       &quot;properties&quot;: {
-        &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;,
-          &quot;description&quot;: &quot;Where it came from.&quot;
-        },
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;Why the provenance is what it is, when that is worth a sentence: always for\n`unknown` and for `inferred`, and omitted otherwise.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;provenance&quot;: {
+          &quot;description&quot;: &quot;Where it came from.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;
+        },
+        &quot;value&quot;: {
+          &quot;description&quot;: &quot;The value, absent exactly when the provenance is `unknown`.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
@@ -486,9 +482,36 @@ the one answer this must never give.</td>
         &quot;source&quot;: {
           &quot;description&quot;: &quot;The one place a reader goes to check it: a repository-relative path with the key it\nwas read from, a capability id, or a command. Never a machine path.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;provenance&quot;,
+        &quot;source&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and [`AttestedText::is_consistent`] states, is\nthat a value is present exactly when the provenance is not [`FieldProvenance::Unknown`].\nWithout it the shape can express \&quot;unknown, and here is the value\&quot;, which is the defect\nthis whole module exists to prevent.&quot;
+    },
+    &quot;AttestedCount&quot;: {
+      &quot;properties&quot;: {
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The one place a reader goes to check it.&quot;
         },
         &quot;value&quot;: {
-          &quot;description&quot;: &quot;The value, absent exactly when the provenance is `unknown`.&quot;,
+          &quot;description&quot;: &quot;The number, absent exactly when the provenance is `unknown`.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;provenance&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;,
+          &quot;description&quot;: &quot;Where it came from.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why the provenance is what it is, when that is worth a sentence.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
@@ -499,173 +522,10 @@ the one answer this must never give.</td>
         &quot;provenance&quot;,
         &quot;source&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Blocker&quot;: {
-      &quot;description&quot;: &quot;One thing standing between a task and being startable, with what to do about it.&quot;,
-      &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one line a person can act on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/BlockerKind&quot;,
-          &quot;description&quot;: &quot;What kind of thing it is.&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;The thing: an issue id, a milestone id, an evidence token.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;subject&quot;,
-        &quot;detail&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;BlockerKind&quot;: {
-      &quot;description&quot;: &quot;What kind of thing is holding a task back. The five are the five the canonical model can\nactually produce; there is no `other`.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;issue&quot;,
-          &quot;description&quot;: &quot;An issue this one depends on that is not `DONE`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;milestone&quot;,
-          &quot;description&quot;: &quot;The milestone gate: an outcome this one&#39;s milestone requires is not `DONE`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;evidence&quot;,
-          &quot;description&quot;: &quot;A required evidence token the record does not carry, with completion recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;reference&quot;,
-          &quot;description&quot;: &quot;A dependency that resolves to nothing: the model has no such issue.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cycle&quot;,
-          &quot;description&quot;: &quot;A dependency cycle this task is in or downstream of, so it can never become ready.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A count with its provenance. Separate from [`AttestedText`] because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back.&quot;
     },
     &quot;DevTaskDeclaration&quot;: {
-      &quot;description&quot;: &quot;What a person authored in the canonical record. Every field is [`FieldProvenance::Explicit`]\nor [`FieldProvenance::Unknown`] and nothing else: a value here was written down, or it\ndoes not exist.&quot;,
-      &quot;properties&quot;: {
-        &quot;acceptance_criteria&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;What must be true before it is finished.&quot;
-        },
-        &quot;cancelled&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;Whether it was withdrawn.&quot;
-        },
-        &quot;completed_at&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;When completion was recorded.&quot;
-        },
-        &quot;completion&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;What the author says about how far it got. Authored prose, never a status: the\nstatus is derived, and this is the one field where a person may disagree with it.&quot;
-        },
-        &quot;created_at&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;When the record was created.&quot;
-        },
-        &quot;current_state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;Where the repository stands before it.&quot;
-        },
-        &quot;depends_on&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The issues it declares a dependency on, exactly as declared — including one that\ndoes not exist, which is a diagnostic and not a silent omission.&quot;
-        },
-        &quot;desired_state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;Where the repository stands once it is real.&quot;
-        },
-        &quot;evidence_commits&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The commits the record&#39;s own evidence entries name. Authored, and therefore a\ndifferent fact from the commits git finds on the branches — which are in\n[`DevTaskExecution::commits`] and are derived.&quot;
-        },
-        &quot;evidence_present&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The evidence tokens it actually carries.&quot;
-        },
-        &quot;evidence_required&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The evidence tokens it requires before it may be complete.&quot;
-        },
-        &quot;milestone&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;The milestone it belongs to.&quot;
-        },
-        &quot;non_scope&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The paths it deliberately does not touch.&quot;
-        },
-        &quot;objective&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;What the issue is for.&quot;
-        },
-        &quot;owner&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;Who owns it.&quot;
-        },
-        &quot;parallel_safe&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;Whether it may run beside another issue of its wave.&quot;
-        },
-        &quot;priority&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;`p0` … `p3`.&quot;
-        },
-        &quot;profile&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;The execution profile it is worked under.&quot;
-        },
-        &quot;risk&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;What could go wrong.&quot;
-        },
-        &quot;scope&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The paths it may touch.&quot;
-        },
-        &quot;slug&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;The slug.&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;When execution began.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;One line naming the outcome.&quot;
-        },
-        &quot;updated_at&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;When it last moved.&quot;
-        },
-        &quot;validation&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The commands that check it.&quot;
-        },
-        &quot;verified_at&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;When implementation was declared finished.&quot;
-        },
-        &quot;why&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;Why it is worth doing.&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;title&quot;,
         &quot;objective&quot;,
@@ -695,128 +555,122 @@ the one answer this must never give.</td>
         &quot;evidence_present&quot;,
         &quot;evidence_commits&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DevTaskDiagnostic&quot;: {
-      &quot;description&quot;: &quot;One thing wrong with this task&#39;s records, in the shape `project.finding-carries-reproduce`\nasks for.&quot;,
+      &quot;description&quot;: &quot;What a person authored in the canonical record. Every field is [`FieldProvenance::Explicit`]\nor [`FieldProvenance::Unknown`] and nothing else: a value here was written down, or it\ndoes not exist.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;The stable code a reader greps for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;depends_on&quot;: {
+          &quot;description&quot;: &quot;The issues it declares a dependency on, exactly as declared — including one that\ndoes not exist, which is a diagnostic and not a silent omission.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;
         },
-        &quot;level&quot;: {
-          &quot;description&quot;: &quot;`FAIL` or `WARN`, as the plan&#39;s own finding levels.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The one command that shows it again.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;level&quot;,
-        &quot;code&quot;,
-        &quot;message&quot;,
-        &quot;reproduce&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DevTaskExecution&quot;: {
-      &quot;description&quot;: &quot;Local execution state: what actually happened in this checkout&#39;s git history and session\nrecords. Derived where the relation was declared, inferred where it was not, and the\nfields say which.&quot;,
-      &quot;properties&quot;: {
-        &quot;branches&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The branches whose name carries this issue&#39;s id, local first.&quot;
-        },
-        &quot;commits&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
-          &quot;description&quot;: &quot;How many distinct commits those branches hold that the trunk did not.&quot;
-        },
-        &quot;commits_complete&quot;: {
+        &quot;cancelled&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;True when every branch&#39;s commits could be derived. False when one reached the trunk\nwithout a merge commit of its own, so part of the work cannot be told from the\ntrunk&#39;s — reported rather than counted as zero.&quot;
+          &quot;description&quot;: &quot;Whether it was withdrawn.&quot;
         },
-        &quot;git_consulted&quot;: {
-          &quot;description&quot;: &quot;Whether git was consulted at all. False makes every git-derived field below\n`unknown` rather than empty, which is the difference between \&quot;nothing realised this\&quot;\nand \&quot;nobody looked\&quot;.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;merged_branches&quot;: {
+        &quot;evidence_commits&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;Of those, the ones that reached the trunk.&quot;
+          &quot;description&quot;: &quot;The commits the record&#39;s own evidence entries name. Authored, and therefore a\ndifferent fact from the commits git finds on the branches — which are in\n[`DevTaskExecution::commits`] and are derived.&quot;
         },
-        &quot;sessions&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The session records whose own `issues` key names this issue. Derived: the key is\nworked out from the episode&#39;s ledger events, not authored and not guessed.&quot;
-        },
-        &quot;sessions_by_branch&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one.&quot;
-        },
-        &quot;trunk&quot;: {
+        &quot;milestone&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;The trunk every branch was measured against.&quot;
+          &quot;description&quot;: &quot;The milestone it belongs to.&quot;
+        },
+        &quot;desired_state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Where the repository stands once it is real.&quot;
+        },
+        &quot;non_scope&quot;: {
+          &quot;description&quot;: &quot;The paths it deliberately does not touch.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The paths it may touch.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;
+        },
+        &quot;slug&quot;: {
+          &quot;description&quot;: &quot;The slug.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;
+        },
+        &quot;evidence_present&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The evidence tokens it actually carries.&quot;
+        },
+        &quot;evidence_required&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The evidence tokens it requires before it may be complete.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;One line naming the outcome.&quot;
+        },
+        &quot;parallel_safe&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Whether it may run beside another issue of its wave.&quot;
+        },
+        &quot;validation&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The commands that check it.&quot;
+        },
+        &quot;why&quot;: {
+          &quot;description&quot;: &quot;Why it is worth doing.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;
+        },
+        &quot;completed_at&quot;: {
+          &quot;description&quot;: &quot;When completion was recorded.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;
+        },
+        &quot;priority&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;`p0` … `p3`.&quot;
+        },
+        &quot;acceptance_criteria&quot;: {
+          &quot;description&quot;: &quot;What must be true before it is finished.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;
+        },
+        &quot;created_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When the record was created.&quot;
+        },
+        &quot;current_state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Where the repository stands before it.&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;description&quot;: &quot;What the issue is for.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;
+        },
+        &quot;owner&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Who owns it.&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;description&quot;: &quot;The execution profile it is worked under.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;
+        },
+        &quot;risk&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;What could go wrong.&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When execution began.&quot;
+        },
+        &quot;updated_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When it last moved.&quot;
+        },
+        &quot;completion&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;What the author says about how far it got. Authored prose, never a status: the\nstatus is derived, and this is the one field where a person may disagree with it.&quot;
+        },
+        &quot;verified_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When implementation was declared finished.&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;git_consulted&quot;,
-        &quot;branches&quot;,
-        &quot;merged_branches&quot;,
-        &quot;commits&quot;,
-        &quot;trunk&quot;,
-        &quot;commits_complete&quot;,
-        &quot;sessions&quot;,
-        &quot;sessions_by_branch&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
     },
     &quot;DevTaskPosition&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;Where the task sits in the plan graph. Every field is derived; nothing here is authored,\nand nothing here is stored anywhere.&quot;,
-      &quot;properties&quot;: {
-        &quot;blocked_by&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The dependencies that are not `DONE`, plus the milestone gate when it applies.&quot;
-        },
-        &quot;dependents&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The issues that wait on this one.&quot;
-        },
-        &quot;evidence_have&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
-          &quot;description&quot;: &quot;How many evidence tokens it carries.&quot;
-        },
-        &quot;evidence_need&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
-          &quot;description&quot;: &quot;How many it needs.&quot;
-        },
-        &quot;milestone_blocked_by&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
-          &quot;description&quot;: &quot;The outcomes that milestone still waits on.&quot;
-        },
-        &quot;milestone_rank&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
-          &quot;description&quot;: &quot;The milestone&#39;s layer in the milestone graph.&quot;
-        },
-        &quot;milestone_status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;The status of the milestone it belongs to.&quot;
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;The canonical status, from the one derivation of it.&quot;
-        },
-        &quot;transitive_dependents&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
-          &quot;description&quot;: &quot;Every issue that waits on it, directly or through another. The measure of what\nfinishing it unblocks.&quot;
-        },
-        &quot;wave&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
-          &quot;description&quot;: &quot;The execution wave: one past the longest path to it. Unknown when a cycle prevents\nit from ever having one.&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;status&quot;,
         &quot;wave&quot;,
@@ -829,14 +683,224 @@ the one answer this must never give.</td>
         &quot;evidence_have&quot;,
         &quot;evidence_need&quot;
       ],
+      &quot;properties&quot;: {
+        &quot;dependents&quot;: {
+          &quot;description&quot;: &quot;The issues that wait on this one.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;
+        },
+        &quot;milestone_rank&quot;: {
+          &quot;description&quot;: &quot;The milestone&#39;s layer in the milestone graph.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;
+        },
+        &quot;evidence_need&quot;: {
+          &quot;description&quot;: &quot;How many it needs.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;The canonical status, from the one derivation of it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;
+        },
+        &quot;wave&quot;: {
+          &quot;description&quot;: &quot;The execution wave: one past the longest path to it. Unknown when a cycle prevents\nit from ever having one.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;
+        },
+        &quot;evidence_have&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
+          &quot;description&quot;: &quot;How many evidence tokens it carries.&quot;
+        },
+        &quot;transitive_dependents&quot;: {
+          &quot;description&quot;: &quot;Every issue that waits on it, directly or through another. The measure of what\nfinishing it unblocks.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;
+        },
+        &quot;blocked_by&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The dependencies that are not `DONE`, plus the milestone gate when it applies.&quot;
+        },
+        &quot;milestone_blocked_by&quot;: {
+          &quot;description&quot;: &quot;The outcomes that milestone still waits on.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;
+        },
+        &quot;milestone_status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The status of the milestone it belongs to.&quot;
+        }
+      }
+    },
+    &quot;Blocker&quot;: {
+      &quot;properties&quot;: {
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one line a person can act on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlockerKind&quot;,
+          &quot;description&quot;: &quot;What kind of thing it is.&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The thing: an issue id, a milestone id, an evidence token.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;subject&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;description&quot;: &quot;One thing standing between a task and being startable, with what to do about it.&quot;
+    },
+    &quot;DevTaskDiagnostic&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One thing wrong with this task&#39;s records, in the shape `project.finding-carries-reproduce`\nasks for.&quot;,
+      &quot;properties&quot;: {
+        &quot;level&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`FAIL` or `WARN`, as the plan&#39;s own finding levels.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;The stable code a reader greps for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The one command that shows it again.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;level&quot;,
+        &quot;code&quot;,
+        &quot;message&quot;,
+        &quot;reproduce&quot;
+      ]
+    },
+    &quot;AttestationTally&quot;: {
+      &quot;required&quot;: [
+        &quot;explicit&quot;,
+        &quot;derived&quot;,
+        &quot;inferred&quot;,
+        &quot;unknown&quot;
+      ],
+      &quot;description&quot;: &quot;How much of one answer was authored, and how much a machine worked out.\n\nNot decoration: it is the measurement that makes the provenance discipline checkable\nfrom outside. A task whose declaration is mostly `unknown` is a placeholder however\ncomplete its derived half looks, and this is the number that says so.&quot;,
+      &quot;properties&quot;: {
+        &quot;unknown&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Fields not available at all.&quot;
+        },
+        &quot;inferred&quot;: {
+          &quot;description&quot;: &quot;Fields worked out by a rule that can be wrong.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;derived&quot;: {
+          &quot;description&quot;: &quot;Fields worked out by a rule that cannot be wrong about a readable repository.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;explicit&quot;: {
+          &quot;description&quot;: &quot;Fields a person authored in the canonical record.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        }
+      },
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;DevTaskSynchronisation&quot;: {
-      &quot;description&quot;: &quot;The external projection. Nothing here is ever written by this executable, and the fields\nthat only the adapter can answer say so rather than reading as empty.&quot;,
+    &quot;DevTaskExecution&quot;: {
+      &quot;required&quot;: [
+        &quot;git_consulted&quot;,
+        &quot;branches&quot;,
+        &quot;merged_branches&quot;,
+        &quot;commits&quot;,
+        &quot;trunk&quot;,
+        &quot;commits_complete&quot;,
+        &quot;sessions&quot;,
+        &quot;sessions_by_branch&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Local execution state: what actually happened in this checkout&#39;s git history and session\nrecords. Derived where the relation was declared, inferred where it was not, and the\nfields say which.&quot;,
       &quot;properties&quot;: {
-        &quot;adapter&quot;: {
-          &quot;description&quot;: &quot;The adapter that owns the projection. The one thing that can answer the live state.&quot;,
+        &quot;git_consulted&quot;: {
+          &quot;description&quot;: &quot;Whether git was consulted at all. False makes every git-derived field below\n`unknown` rather than empty, which is the difference between \&quot;nothing realised this\&quot;\nand \&quot;nobody looked\&quot;.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;sessions&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The session records whose own `issues` key names this issue. Derived: the key is\nworked out from the episode&#39;s ledger events, not authored and not guessed.&quot;
+        },
+        &quot;commits&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
+          &quot;description&quot;: &quot;How many distinct commits those branches hold that the trunk did not.&quot;
+        },
+        &quot;sessions_by_branch&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one.&quot;
+        },
+        &quot;trunk&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The trunk every branch was measured against.&quot;
+        },
+        &quot;commits_complete&quot;: {
+          &quot;description&quot;: &quot;True when every branch&#39;s commits could be derived. False when one reached the trunk\nwithout a merge commit of its own, so part of the work cannot be told from the\ntrunk&#39;s — reported rather than counted as zero.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;
+        },
+        &quot;merged_branches&quot;: {
+          &quot;description&quot;: &quot;Of those, the ones that reached the trunk.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;
+        },
+        &quot;branches&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The branches whose name carries this issue&#39;s id, local first.&quot;
+        }
+      }
+    },
+    &quot;BlockerKind&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An issue this one depends on that is not `DONE`.&quot;,
+          &quot;const&quot;: &quot;issue&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The milestone gate: an outcome this one&#39;s milestone requires is not `DONE`.&quot;,
+          &quot;const&quot;: &quot;milestone&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A required evidence token the record does not carry, with completion recorded.&quot;,
+          &quot;const&quot;: &quot;evidence&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A dependency that resolves to nothing: the model has no such issue.&quot;,
+          &quot;const&quot;: &quot;reference&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cycle&quot;,
+          &quot;description&quot;: &quot;A dependency cycle this task is in or downstream of, so it can never become ready.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;What kind of thing is holding a task back. The five are the five the canonical model can\nactually produce; there is no `other`.&quot;
+    },
+    &quot;DevTaskSynchronisation&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;The reconciliation state of the external record. Always `unknown` from here: it is a\nnetwork fact, and this executable makes none. The reason names the command.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;
+        },
+        &quot;repository&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The repository the projection targets, from `project.yaml`.&quot;
         },
         &quot;external_id&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
@@ -849,17 +913,13 @@ the one answer this must never give.</td>
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;repository&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;The repository the projection targets, from `project.yaml`.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
-          &quot;description&quot;: &quot;The reconciliation state of the external record. Always `unknown` from here: it is a\nnetwork fact, and this executable makes none. The reason names the command.&quot;
+        &quot;adapter&quot;: {
+          &quot;description&quot;: &quot;The adapter that owns the projection. The one thing that can answer the live state.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;writable&quot;: {
-          &quot;description&quot;: &quot;Whether this executable may write any of it. Always false; stated as a field so that\na client need not know the rule to respect it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether this executable may write any of it. Always false; stated as a field so that\na client need not know the rule to respect it.&quot;
         }
       },
       &quot;required&quot;: [
@@ -870,19 +930,19 @@ the one answer this must never give.</td>
         &quot;reconcile_with&quot;,
         &quot;writable&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;The external projection. Nothing here is ever written by this executable, and the fields\nthat only the adapter can answer say so rather than reading as empty.&quot;
     },
     &quot;FieldProvenance&quot;: {
       &quot;description&quot;: &quot;Where a value came from, and therefore how much weight a reader may put on it.\n\nThe four words are not degrees of confidence, they are four different relations to the\nrepository, and the distinction that matters most is the first from the last two: a\nperson wrote it, or a machine worked it out.\n\n```\nuse majordomus_cli::devtask::{AttestedText, FieldProvenance};\n\n// a value the record itself carried\nlet title = AttestedText::explicit(\&quot;Ship it\&quot;, \&quot;.ai/repo/project/issues/I0001.yaml#title\&quot;);\nassert_eq!(title.provenance, FieldProvenance::Explicit);\n\n// a key the record does not have is unknown, and unknown carries no value\nlet missing = AttestedText::unknown(\n    \&quot;.ai/repo/project/issues/I0001.yaml#objective\&quot;,\n    \&quot;the record declares no `objective`\&quot;,\n);\nassert_eq!(missing.provenance, FieldProvenance::Unknown);\nassert!(missing.value.is_none());\n```&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;explicit&quot;,
-          &quot;description&quot;: &quot;A person authored it, in the canonical record, under this key. The strongest thing\nthat can be said about a value, and the only one that survives a rewrite of every\nderivation in this repository.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A person authored it, in the canonical record, under this key. The strongest thing\nthat can be said about a value, and the only one that survives a rewrite of every\nderivation in this repository.&quot;
         },
         {
-          &quot;const&quot;: &quot;derived&quot;,
           &quot;description&quot;: &quot;A machine worked it out from records or from git, by a rule that cannot be wrong\nabout a repository it can read: an issue&#39;s dependents are the issues that name it.\nRe-derived on every call and stored nowhere.&quot;,
+          &quot;const&quot;: &quot;derived&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -891,43 +951,44 @@ the one answer this must never give.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;unknown&quot;,
           &quot;description&quot;: &quot;Not available. Either the record does not carry the key, or the fact lives outside\nwhat this process may read — a live GitHub state, for one — and the field says which\nin its `reason`. An unknown field never carries a value.&quot;,
+          &quot;const&quot;: &quot;unknown&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;ReadinessVerdict&quot;: {
-      &quot;description&quot;: &quot;The readiness verdict, with everything it was derived from beside it.&quot;,
       &quot;properties&quot;: {
-        &quot;blockers&quot;: {
-          &quot;description&quot;: &quot;Everything standing in the way, each with what to do about it.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Blocker&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
         &quot;canonical_status&quot;: {
-          &quot;description&quot;: &quot;The canonical status it refines, so the two can never be read apart.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The canonical status it refines, so the two can never be read apart.&quot;
         },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why it is in that state, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;terminal&quot;: {
+          &quot;description&quot;: &quot;Is there nothing further to do?&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;startable&quot;: {
           &quot;description&quot;: &quot;May a worker pick it up right now?&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TaskReadiness&quot;,
-          &quot;description&quot;: &quot;Where the task stands, as work.&quot;
+          &quot;description&quot;: &quot;Where the task stands, as work.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TaskReadiness&quot;
         },
-        &quot;terminal&quot;: {
-          &quot;description&quot;: &quot;Is there nothing further to do?&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;blockers&quot;: {
+          &quot;description&quot;: &quot;Everything standing in the way, each with what to do about it.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Blocker&quot;
+          }
+        },
+        &quot;reason&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why it is in that state, in one line.&quot;
         }
       },
+      &quot;description&quot;: &quot;The readiness verdict, with everything it was derived from beside it.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;state&quot;,
         &quot;canonical_status&quot;,
@@ -935,16 +996,15 @@ the one answer this must never give.</td>
         &quot;startable&quot;,
         &quot;terminal&quot;,
         &quot;blockers&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;TaskReadiness&quot;: {
       &quot;description&quot;: &quot;Where a development task stands, as work.\n\n```\nuse majordomus_cli::devtask::TaskReadiness;\n\n// every state names the canonical status it refines, and refines only one\nassert_eq!(TaskReadiness::Ready.canonical(), \&quot;READY\&quot;);\nassert_eq!(TaskReadiness::Waiting.canonical(), \&quot;BLOCKED\&quot;);\nassert_eq!(TaskReadiness::Blocked.canonical(), \&quot;BLOCKED\&quot;);\nassert_eq!(TaskReadiness::Review.canonical(), \&quot;VERIFY\&quot;);\nassert_eq!(TaskReadiness::CompletionBlocked.canonical(), \&quot;VERIFY\&quot;);\n\n// and one state is the absence of a record rather than a status of one\nassert!(TaskReadiness::Undeclared.canonical().is_empty());\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;ready&quot;,
           &quot;description&quot;: &quot;Nothing holds it back and nobody has started it. Canonical `READY`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ready&quot;
         },
         {
           &quot;const&quot;: &quot;blocked&quot;,
@@ -952,9 +1012,9 @@ the one answer this must never give.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;waiting&quot;,
-          &quot;description&quot;: &quot;Every issue dependency is satisfied; the milestone gate holds it. Canonical\n`BLOCKED`, and a distinct situation because it is resolved in another milestone.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Every issue dependency is satisfied; the milestone gate holds it. Canonical\n`BLOCKED`, and a distinct situation because it is resolved in another milestone.&quot;
         },
         {
           &quot;const&quot;: &quot;in_progress&quot;,
@@ -967,9 +1027,9 @@ the one answer this must never give.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;completion_blocked&quot;,
-          &quot;description&quot;: &quot;Completion *was* recorded and the evidence the record itself requires is not all\nthere, so the plan refuses to call it `DONE`. Canonical `VERIFY`, and the case the\n`evidence_missing` finding is about.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Completion *was* recorded and the evidence the record itself requires is not all\nthere, so the plan refuses to call it `DONE`. Canonical `VERIFY`, and the case the\n`evidence_missing` finding is about.&quot;
         },
         {
           &quot;const&quot;: &quot;complete&quot;,
@@ -978,77 +1038,17 @@ the one answer this must never give.</td>
         },
         {
           &quot;const&quot;: &quot;cancelled&quot;,
-          &quot;description&quot;: &quot;Withdrawn. Canonical `CANCELLED`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Withdrawn. Canonical `CANCELLED`.&quot;
         },
         {
-          &quot;const&quot;: &quot;undeclared&quot;,
           &quot;description&quot;: &quot;The canonical model does not declare this id. Not a status: the absence of a record.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;undeclared&quot;
         }
       ]
     }
   },
-  &quot;description&quot;: &quot;One issue as an executable development task: what was authored, where it sits, what has\nhappened to it, where its external projection stands, and whether a worker may start it.&quot;,
-  &quot;properties&quot;: {
-    &quot;attestation&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/AttestationTally&quot;,
-      &quot;description&quot;: &quot;How much of the answer was authored and how much a machine worked out.&quot;
-    },
-    &quot;declaration&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/DevTaskDeclaration&quot;,
-      &quot;description&quot;: &quot;What a person authored.&quot;
-    },
-    &quot;declared&quot;: {
-      &quot;description&quot;: &quot;Whether the canonical model declares it. False is answered rather than refused, with\nevery canonical field `unknown`: a typo that read as \&quot;nothing has been authored\&quot; is\nthe one answer this must never give.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;Everything wrong with its records.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/DevTaskDiagnostic&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;execution&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/DevTaskExecution&quot;,
-      &quot;description&quot;: &quot;What happened locally.&quot;
-    },
-    &quot;issue&quot;: {
-      &quot;description&quot;: &quot;The issue id, as asked for.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;position&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/DevTaskPosition&quot;,
-      &quot;description&quot;: &quot;Where the plan graph puts it.&quot;
-    },
-    &quot;readiness&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ReadinessVerdict&quot;,
-      &quot;description&quot;: &quot;Whether it can be worked on, and what is in the way.&quot;
-    },
-    &quot;record&quot;: {
-      &quot;description&quot;: &quot;Repository-relative path of the canonical record, when there is one.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;synchronisation&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/DevTaskSynchronisation&quot;,
-      &quot;description&quot;: &quot;Where the external projection stands.&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;issue&quot;,
-    &quot;declared&quot;,
-    &quot;declaration&quot;,
-    &quot;position&quot;,
-    &quot;execution&quot;,
-    &quot;synchronisation&quot;,
-    &quot;readiness&quot;,
-    &quot;diagnostics&quot;,
-    &quot;attestation&quot;
-  ],
   &quot;title&quot;: &quot;DevTask&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -1081,7 +1081,7 @@ the one answer this must never give.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devtask</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DevTaskInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">DevTask</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devtask.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devtask.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devtask.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devtask.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -1106,7 +1106,7 @@ the one answer this must never give.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

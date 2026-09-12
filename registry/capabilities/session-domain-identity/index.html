@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -262,9 +262,9 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -288,6 +288,13 @@ assert_eq!(subjects, [&quot;repository&quot;, &quot;checkout&quot;, &quot;episod
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What a reader should know before comparing any two of these. Empty is not the good
+case here — the conflation is a property of the stores, not of this checkout — so
+the standing note is always present.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">checkout</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -300,25 +307,51 @@ exposure rule `continuity.state` follows and for the same reason (ADR 0014).</td
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">One entry per subject, in the order a reader meets them: repository, checkout,
 episode, provider session.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What a reader should know before comparing any two of these. Empty is not the good
-case here — the conflation is a property of the stores, not of this checkout — so
-the standing note is always present.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;IdentityReport&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;checkout&quot;,
+    &quot;facets&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;description&quot;: &quot;The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec&lt;&amp;str&gt; = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\&quot;repository\&quot;, \&quot;checkout\&quot;, \&quot;episode\&quot;, \&quot;provider_session\&quot;]);\n```&quot;,
   &quot;$defs&quot;: {
+    &quot;RecordedSpelling&quot;: {
+      &quot;description&quot;: &quot;One store&#39;s spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \&quot;mj_git_repo_id (lib/common.sh)\&quot;.into(),\n    value: \&quot;/src/repo/.git\&quot;.into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \&quot;local\&quot;);\nassert!(local.value.starts_with(&#39;/&#39;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;spelling&quot;: {
+          &quot;description&quot;: &quot;Which half of the layer wrote it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Spelling&quot;
+        },
+        &quot;writer&quot;: {
+          &quot;description&quot;: &quot;The writer, named so a reader can go and look at it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;value&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The value, as this checkout would have it written. Empty when nothing has written\none here yet, which is a fresh clone and not a fault.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;spelling&quot;,
+        &quot;writer&quot;
+      ]
+    },
     &quot;IdentityFacet&quot;: {
-      &quot;description&quot;: &quot;One identity of this checkout, as this executable computes it and as each store spells\nit. What `session.identity` answers, and the direct projection of the audit&#39;s table.\n\n```\nuse majordomus_cli::session::{identities, IdentityFacet};\n\nlet dir = tempfile::tempdir().unwrap();\nlet facets: Vec&lt;IdentityFacet&gt; = identities(dir.path());\nlet repository = facets.iter().find(|f| f.subject == \&quot;repository\&quot;).expect(\&quot;a facet\&quot;);\nassert!(repository.spellings.len() &gt;= 2, \&quot;one word, two writers, two values\&quot;);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;subject&quot;,
+        &quot;note&quot;
+      ],
       &quot;properties&quot;: {
         &quot;canonical&quot;: {
-          &quot;description&quot;: &quot;The canonical value this executable computes, when it can compute one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The canonical value this executable computes, when it can compute one.&quot;
         },
         &quot;note&quot;: {
           &quot;description&quot;: &quot;Why the subject needs its own type, in one line, for a reader meeting it in a\nprojection rather than in this module.&quot;,
@@ -336,83 +369,50 @@ the standing note is always present.</td>
           &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;subject&quot;,
-        &quot;note&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RecordedSpelling&quot;: {
-      &quot;description&quot;: &quot;One store&#39;s spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \&quot;mj_git_repo_id (lib/common.sh)\&quot;.into(),\n    value: \&quot;/src/repo/.git\&quot;.into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \&quot;local\&quot;);\nassert!(local.value.starts_with(&#39;/&#39;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;spelling&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Spelling&quot;,
-          &quot;description&quot;: &quot;Which half of the layer wrote it.&quot;
-        },
-        &quot;value&quot;: {
-          &quot;description&quot;: &quot;The value, as this checkout would have it written. Empty when nothing has written\none here yet, which is a fresh clone and not a fault.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;writer&quot;: {
-          &quot;description&quot;: &quot;The writer, named so a reader can go and look at it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;spelling&quot;,
-        &quot;writer&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One identity of this checkout, as this executable computes it and as each store spells\nit. What `session.identity` answers, and the direct projection of the audit&#39;s table.\n\n```\nuse majordomus_cli::session::{identities, IdentityFacet};\n\nlet dir = tempfile::tempdir().unwrap();\nlet facets: Vec&lt;IdentityFacet&gt; = identities(dir.path());\nlet repository = facets.iter().find(|f| f.subject == \&quot;repository\&quot;).expect(\&quot;a facet\&quot;);\nassert!(repository.spellings.len() &gt;= 2, \&quot;one word, two writers, two values\&quot;);\n```&quot;
     },
     &quot;Spelling&quot;: {
       &quot;description&quot;: &quot;Which store a recorded identity was read from, kept beside the value.\n\nThe point is not to choose between `mj_git_repo_id` and `mj_repository_id`, or between\n`worktree:` and `worktree_id:`. It is to stop pretending they are one value. A reader\nthat knows a string is the *local* spelling can compare it with other local spellings\nand can refuse to compare it with a shared one, which is precisely the comparison that\nproduced \&quot;these two records are about different repositories\&quot; for records of the same\nrepository written four minutes apart.\n\n```\nuse majordomus_cli::session::Spelling;\n// the two halves are different answers to one question, and are never compared\nassert_ne!(Spelling::Local, Spelling::Shared);\nassert_eq!(Spelling::Canonical.as_str(), \&quot;canonical\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;local&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The local half&#39;s spelling: a path, in `.ai/local/state/`. It names this disk and is\nnever published.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;local&quot;
         },
         {
-          &quot;const&quot;: &quot;shared&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The shared half&#39;s spelling: a remote URL or a digest, in `.ai/repo/sessions/`. It\nnames the repository and travels with a clone (ADR 0014).&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;shared&quot;
         },
         {
-          &quot;const&quot;: &quot;canonical&quot;,
           &quot;description&quot;: &quot;This executable&#39;s own canonical digest, computed rather than read.&quot;,
+          &quot;const&quot;: &quot;canonical&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
   },
-  &quot;description&quot;: &quot;The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec&lt;&amp;str&gt; = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\&quot;repository\&quot;, \&quot;checkout\&quot;, \&quot;episode\&quot;, \&quot;provider_session\&quot;]);\n```&quot;,
   &quot;properties&quot;: {
-    &quot;checkout&quot;: {
-      &quot;description&quot;: &quot;The checkout this answer is about. An absolute path, because this capability is\nserved to the worker in front of this checkout and never published — the same\nexposure rule `continuity.state` follows and for the same reason (ADR 0014).&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;facets&quot;: {
-      &quot;description&quot;: &quot;One entry per subject, in the order a reader meets them: repository, checkout,\nepisode, provider session.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/IdentityFacet&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
     &quot;findings&quot;: {
-      &quot;description&quot;: &quot;What a reader should know before comparing any two of these. Empty is not the good\ncase here — the conflation is a property of the stores, not of this checkout — so\nthe standing note is always present.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;What a reader should know before comparing any two of these. Empty is not the good\ncase here — the conflation is a property of the stores, not of this checkout — so\nthe standing note is always present.&quot;
+    },
+    &quot;checkout&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The checkout this answer is about. An absolute path, because this capability is\nserved to the worker in front of this checkout and never published — the same\nexposure rule `continuity.state` follows and for the same reason (ADR 0014).&quot;
+    },
+    &quot;facets&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;One entry per subject, in the order a reader meets them: repository, checkout,\nepisode, provider session.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/IdentityFacet&quot;
+      }
     }
-  },
-  &quot;required&quot;: [
-    &quot;checkout&quot;,
-    &quot;facets&quot;,
-    &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;IdentityReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -443,7 +443,7 @@ the standing note is always present.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::session_domain</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">IdentityReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/session_domain.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/session_domain.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/session_domain.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/session_domain.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -468,7 +468,7 @@ the standing note is always present.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

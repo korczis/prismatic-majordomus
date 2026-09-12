@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,10 +261,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -273,78 +273,32 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">error</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Why the identity did not load, when it did not.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">identity</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The public identity, when the file exists and loads. The signing key is not
 here, not in any projection, and not in any log.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">present</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the file exists.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">path</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Where the identity file lives (or would).</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">present</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the file exists.</td>
+        <td class="px-3 py-2 font-mono text-heading">error</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Why the identity did not load, when it did not.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;InstanceId&quot;: {
-      &quot;description&quot;: &quot;One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \&quot;the same\nnode came back\&quot; from \&quot;the same process is still there\&quot;.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;NodeId&quot;: {
-      &quot;description&quot;: &quot;The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;PublicIdentity&quot;: {
-      &quot;description&quot;: &quot;What everyone may know about this node: the id, the public key, a display name and\nthis run&#39;s instance. Everything an advertisement carries; nothing that signs.&quot;,
-      &quot;properties&quot;: {
-        &quot;display_name&quot;: {
-          &quot;description&quot;: &quot;A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;instance_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
-          &quot;description&quot;: &quot;This run of the node.&quot;
-        },
-        &quot;node_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/NodeId&quot;,
-          &quot;description&quot;: &quot;The node id: a digest of the public key.&quot;
-        },
-        &quot;public_key&quot;: {
-          &quot;description&quot;: &quot;The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;node_id&quot;,
-        &quot;public_key&quot;,
-        &quot;display_name&quot;,
-        &quot;instance_id&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `mesh.identity`: this machine&#39;s node identity, public half only.&quot;,
   &quot;properties&quot;: {
-    &quot;error&quot;: {
-      &quot;description&quot;: &quot;Why the identity did not load, when it did not.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
     &quot;identity&quot;: {
       &quot;anyOf&quot;: [
         {
@@ -356,6 +310,10 @@ here, not in any projection, and not in any log.</td>
       ],
       &quot;description&quot;: &quot;The public identity, when the file exists and loads. The signing key is not\nhere, not in any projection, and not in any log.&quot;
     },
+    &quot;present&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the file exists.&quot;
+    },
     &quot;path&quot;: {
       &quot;description&quot;: &quot;Where the identity file lives (or would).&quot;,
       &quot;type&quot;: [
@@ -363,14 +321,56 @@ here, not in any projection, and not in any log.</td>
         &quot;null&quot;
       ]
     },
-    &quot;present&quot;: {
-      &quot;description&quot;: &quot;Whether the file exists.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+    &quot;error&quot;: {
+      &quot;description&quot;: &quot;Why the identity did not load, when it did not.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     }
   },
+  &quot;description&quot;: &quot;The answer of `mesh.identity`: this machine&#39;s node identity, public half only.&quot;,
   &quot;required&quot;: [
     &quot;present&quot;
   ],
+  &quot;$defs&quot;: {
+    &quot;PublicIdentity&quot;: {
+      &quot;required&quot;: [
+        &quot;node_id&quot;,
+        &quot;public_key&quot;,
+        &quot;display_name&quot;,
+        &quot;instance_id&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;instance_id&quot;: {
+          &quot;description&quot;: &quot;This run of the node.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;
+        },
+        &quot;public_key&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof.&quot;
+        },
+        &quot;display_name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust.&quot;
+        },
+        &quot;node_id&quot;: {
+          &quot;description&quot;: &quot;The node id: a digest of the public key.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/NodeId&quot;
+        }
+      },
+      &quot;description&quot;: &quot;What everyone may know about this node: the id, the public key, a display name and\nthis run&#39;s instance. Everything an advertisement carries; nothing that signs.&quot;
+    },
+    &quot;InstanceId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \&quot;the same\nnode came back\&quot; from \&quot;the same process is still there\&quot;.&quot;
+    },
+    &quot;NodeId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key.&quot;
+    }
+  },
   &quot;title&quot;: &quot;MeshIdentityReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -403,7 +403,7 @@ here, not in any projection, and not in any log.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">MeshIdentityReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -428,7 +428,7 @@ here, not in any projection, and not in any log.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

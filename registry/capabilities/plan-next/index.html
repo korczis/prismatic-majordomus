@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -272,18 +272,18 @@ active milestone with the rest of the plan as the fallback.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which part of the plan to answer about.&quot;,
   &quot;properties&quot;: {
     &quot;milestone&quot;: {
-      &quot;description&quot;: &quot;Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback.&quot;
     }
   },
   &quot;title&quot;: &quot;PlanMilestoneFilter&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which part of the plan to answer about.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -293,11 +293,6 @@ active milestone with the rest of the plan as the fallback.</td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">active_milestone</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The milestone the search started in.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">issue</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -307,6 +302,11 @@ active milestone with the rest of the plan as the fallback.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Why there is none, when there is none: what to run to see what is in the way.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">active_milestone</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The milestone the search started in.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -315,102 +315,7 @@ active milestone with the rest of the plan as the fallback.</td>
   &quot;$defs&quot;: {
     &quot;PlanIssue&quot;: {
       &quot;description&quot;: &quot;One issue, as its record declares it and as the graph derives it.&quot;,
-      &quot;properties&quot;: {
-        &quot;blocked_by&quot;: {
-          &quot;description&quot;: &quot;The dependencies that are not DONE, plus `milestone:&lt;id&gt;` when the milestone gate\nholds the whole outcome back.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;completed_at&quot;: {
-          &quot;description&quot;: &quot;When completion was recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;dependents&quot;: {
-          &quot;description&quot;: &quot;The issues that depend on this one.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;depends_on&quot;: {
-          &quot;description&quot;: &quot;Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;evidence_have&quot;: {
-          &quot;description&quot;: &quot;Evidence entries attached.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;evidence_need&quot;: {
-          &quot;description&quot;: &quot;Evidence tokens the record requires before it may be DONE.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity, which is also the file name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;milestone&quot;: {
-          &quot;description&quot;: &quot;The milestone it belongs to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;objective&quot;: {
-          &quot;description&quot;: &quot;One line: what the issue is for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;parallel_safe&quot;: {
-          &quot;description&quot;: &quot;Whether it may run beside another issue of its wave.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;priority&quot;: {
-          &quot;description&quot;: &quot;`p0` … `p3`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;profile&quot;: {
-          &quot;description&quot;: &quot;The execution profile the issue is worked under.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The paths it touches; two issues of one wave that share a path are serialised.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;slug&quot;: {
-          &quot;description&quot;: &quot;The slug, when the record carries one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When execution began, when it did.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;One line naming the outcome.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;verified_at&quot;: {
-          &quot;description&quot;: &quot;When implementation was declared complete.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;wave&quot;: {
-          &quot;description&quot;: &quot;The execution wave: one past the longest path to it through the dependency graph.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;milestone&quot;,
@@ -432,15 +337,107 @@ active milestone with the rest of the plan as the fallback.</td>
         &quot;verified_at&quot;,
         &quot;completed_at&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;properties&quot;: {
+        &quot;scope&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The paths it touches; two issues of one wave that share a path are serialised.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;wave&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The execution wave: one past the longest path to it through the dependency graph.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;profile&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The execution profile the issue is worked under.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The identity, which is also the file name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;milestone&quot;: {
+          &quot;description&quot;: &quot;The milestone it belongs to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;evidence_need&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Evidence tokens the record requires before it may be DONE.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
+        },
+        &quot;priority&quot;: {
+          &quot;description&quot;: &quot;`p0` … `p3`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;blocked_by&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The dependencies that are not DONE, plus `milestone:&lt;id&gt;` when the milestone gate\nholds the whole outcome back.&quot;
+        },
+        &quot;completed_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When completion was recorded.&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When execution began, when it did.&quot;
+        },
+        &quot;dependents&quot;: {
+          &quot;description&quot;: &quot;The issues that depend on this one.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;parallel_safe&quot;: {
+          &quot;description&quot;: &quot;Whether it may run beside another issue of its wave.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;slug&quot;: {
+          &quot;description&quot;: &quot;The slug, when the record carries one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;evidence_have&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Evidence entries attached.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;description&quot;: &quot;One line: what the issue is for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line naming the outcome.&quot;
+        },
+        &quot;verified_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When implementation was declared complete.&quot;
+        },
+        &quot;depends_on&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        }
+      }
     }
   },
   &quot;description&quot;: &quot;The one issue a worker should take now.&quot;,
+  &quot;title&quot;: &quot;PlanNextIssue&quot;,
   &quot;properties&quot;: {
-    &quot;active_milestone&quot;: {
-      &quot;description&quot;: &quot;The milestone the search started in.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;issue&quot;: {
       &quot;anyOf&quot;: [
         {
@@ -453,17 +450,20 @@ active milestone with the rest of the plan as the fallback.</td>
       &quot;description&quot;: &quot;The issue, when the plan has one that is executable.&quot;
     },
     &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why there is none, when there is none: what to run to see what is in the way.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Why there is none, when there is none: what to run to see what is in the way.&quot;
+    },
+    &quot;active_milestone&quot;: {
+      &quot;description&quot;: &quot;The milestone the search started in.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
   &quot;required&quot;: [
     &quot;active_milestone&quot;
   ],
-  &quot;title&quot;: &quot;PlanNextIssue&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -495,7 +495,7 @@ active milestone with the rest of the plan as the fallback.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::plan</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">PlanMilestoneFilter</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">PlanNextIssue</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -520,7 +520,7 @@ active milestone with the rest of the plan as the fallback.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
