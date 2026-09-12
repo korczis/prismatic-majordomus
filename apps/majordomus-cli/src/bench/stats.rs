@@ -62,6 +62,9 @@ impl Statistics {
             .iter()
             .map(|d| d.as_nanos() as f64 / 1000.0)
             .collect();
+        // Ascending by value, and deliberately not the canonical order: the percentiles
+        // below index into this vector by rank, so the sequence is the statistic's own
+        // definition and nothing renders it.
         us.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         let n = us.len();
         let pct = |p: f64| -> f64 {

@@ -52,7 +52,7 @@ echo
 
 clean=""; dirty=""; skipped=""
 printf '%-6s %-10s %-8s %s\n' PR MERGES AHEAD BRANCH
-for pr in $(gh pr list --state open --limit 100 --json number -q '.[].number' 2>/dev/null | sort -n); do
+for pr in $(gh pr list --state open --limit 100 --json number -q '.[].number' 2>/dev/null | LC_ALL=C sort -n); do
   br="$(gh pr view "$pr" --json headRefName -q .headRefName 2>/dev/null)" || continue
   git fetch origin "$br" --quiet 2>/dev/null || { printf '%-6s %-10s %-8s %s\n' "$pr" "nofetch" "-" "$br"; continue; }
   head="$(git rev-parse FETCH_HEAD)"
