@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d2614769afba26208e87">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -254,7 +254,31 @@ conservative and relative; the exact evidence is the counters.</p>
 <p>The policy declares a budget for the commands the hooks pay for: <code>benchmark.budget.doctor_ms</code>
 and <code>benchmark.budget.watch_ms</code>. Each command reports its own wall time against its budget
 at the end of its run, <code>INFO</code> under and <code>WARN</code> over, and never lets it change the exit code.
-A budget is set after a run, not before; changing one is a policy edit with a run behind it.</p>
+A budget is set after a run, not before, and the run is written into the policy beside the
+number: how many samples, on what machine and in what state, and the median, p90 and max
+they produced. A budget whose justification is not written beside it is the next number
+nobody can defend.</p>
+<p>Three rules make one of these answerable rather than merely present.</p>
+<p><strong>From the p90 with headroom, never from the median.</strong> A budget met half the time is a
+warning that fires half the time, and a warning that is usually noise is a warning nobody
+reads. How much headroom is itself a measurement: the run-to-run spread of <code>doctor</code> on one
+developer machine, at a fixed corpus, is close to 4x, because wall time there is mostly the
+host's concurrency. That is why the budget these keys carry refuses a gross structural
+change — an index build on doctor's path, a validator that walks the whole tree several
+times over — and nothing subtler. The instrument for anything subtler is <code>majordomus bench</code>, which takes a distribution rather than one sample and compares it against a
+baseline under the <code>regression</code> fractions.</p>
+<p><strong>The whole command, not a phase.</strong> <code>MJ_TIMING=1</code> names about forty phases inside <code>doctor</code>,
+but there is one budget key per command because there is one reader of it
+(<code>mj_report_budget</code> in <code>lib/doctor.sh</code>); nothing prints a budget cell against a phase, so a
+per-phase key would be a number with no reader. What the phases are for is the coherence
+check a whole-command budget has to survive: <strong>an aggregate below the sum of the parts it
+contains is wrong on the file's own evidence, before anyone measures anything.</strong> The 3000 ms
+this pair carried from 2026-09-05 to 2026-09-12 failed exactly that test — the four dearest
+phases alone cost four times it.</p>
+<p><strong>Two subjects, measured separately.</strong> <code>.ai/repo/policy.yaml</code> judges these commands over
+this repository's corpus; <code>share/skeleton/policy.yaml</code> judges them over a repository on the
+day it adopts Majordomus. <code>majordomus bench doctor</code> measures the second, because it runs its
+target in a disposable repository, and it is what moves the skeleton's pair.</p>
 <h2 id="policy"><a class="zola-anchor" href="#policy" aria-label="Anchor link for: policy">Policy</a></h2>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">enchmark</span><span class="z-l-6 z-d-9">:</span></span>
 <span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">amples</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> warm samples per target</span></span>
@@ -264,8 +288,8 @@ A budget is set after a run, not before; changing one is a policy edit with a ru
 <span class="giallo-l"><span class="z-l-4 z-d-1">    p</span><span class="z-l-4 z-d-1">95</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0.5</span></span>
 <span class="giallo-l"><span class="z-l-4 z-d-1">    p</span><span class="z-l-4 z-d-1">99</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0.6</span></span>
 <span class="giallo-l"><span class="z-l-4 z-d-1">  b</span><span class="z-l-4 z-d-1">udget</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> reported by doctor and watch, WARN never exit</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">    d</span><span class="z-l-4 z-d-1">octor_ms</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 3000</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">    w</span><span class="z-l-4 z-d-1">atch_ms</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 3000</span></span></code></pre>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    d</span><span class="z-l-4 z-d-1">octor_ms</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 100000</span><span class="z-l-10 z-l-i z-d-4 z-d-i">    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> measured; the policy records the twenty runs behind each</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    w</span><span class="z-l-4 z-d-1">atch_ms</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 60000</span></span></code></pre>
 <p>Every key is read with <code>mj_pol_req</code>: declared or refused, no reader-side default.</p>
 <h2 id="working-on-performance"><a class="zola-anchor" href="#working-on-performance" aria-label="Anchor link for: working-on-performance">Working on performance</a></h2>
 <ol>
@@ -348,7 +372,7 @@ dashboard.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3407ca2d406e09de04648cc4ecb38631756c65a6" class="font-mono underline">3407ca2</a> · inputs <span class="font-mono">44e332acf6bd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/be8b66672e798876109bfb1a5ce313efca27f507" class="font-mono underline">be8b666</a> · inputs <span class="font-mono">cb2387cb2c02</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

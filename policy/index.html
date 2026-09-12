@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d2614769afba26208e87">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -295,8 +295,36 @@ benchmark:
     p95: 0.5
     p99: 0.6
   budget:
-    doctor_ms: 3000
-    watch_ms: 3000
+    # doctor and watch report their own wall time against these, INFO under and WARN over,
+    # never as the exit code. These are the values a repository starts with, so they judge
+    # the corpus it starts with: the vendored rule baseline and whatever `init` seeded, and
+    # nothing of your own yet. Re-derive them once your own catalogue has grown — with a
+    # run, and write the run beside the number, as .ai/repo/policy.yaml of the Majordomus
+    # repository itself does.
+    #
+    # THE MEASUREMENT (2026-09-12). `majordomus bench doctor watch`, which is the instrument
+    # that moves these two keys: it runs each command in a disposable repository prepared by
+    # that command&#39;s fixture, which is exactly a repository that has just adopted Majordomus.
+    # Run b-20260912T095542Z-7502 at 3407ca2d4, Darwin arm64, bash 5.3.15, 10 warm samples
+    # after 2 warm-ups plus one cold run:
+    #
+    #   command  mode    n    min    p50    p90    max
+    #   doctor   warm   10  10948  13683  15668  15879
+    #   doctor   cold    1  14032  14032  14032  14032
+    #   watch    warm   10  10441  13740  15376  16830
+    #   watch    cold    1  14035  14035  14035  14035
+    #
+    # Each is the warm p90 times 1.5, to the nearest 10 s, and above the slowest run of its
+    # own sample. They come out equal because on a fresh corpus the two commands cost the
+    # same (p50 13683 against 13740): watch skips little when there is little to skip. On a
+    # grown repository they diverge — measured as pairs on one host, watch runs about 0.57
+    # of doctor — which is why the pair is declared per repository and not once here.
+    #
+    # These were 3000 from 2026-09-05 until 2026-09-12, which was never measured on any
+    # corpus. The consequence was not subtle: the first `majordomus doctor` a new adopter
+    # ever ran printed a WARN it could do nothing about, and so did every one after it.
+    doctor_ms: 20000
+    watch_ms: 20000
     enter_ms: 750                        # a `cd` into a checkout whose runtime is already up
     enter_cold_ms: 1000                  # the one that starts a server — and returns, never waits
 
@@ -399,7 +427,7 @@ projections:
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3407ca2d406e09de04648cc4ecb38631756c65a6" class="font-mono underline">3407ca2</a> · inputs <span class="font-mono">44e332acf6bd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/be8b66672e798876109bfb1a5ce313efca27f507" class="font-mono underline">be8b666</a> · inputs <span class="font-mono">cb2387cb2c02</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

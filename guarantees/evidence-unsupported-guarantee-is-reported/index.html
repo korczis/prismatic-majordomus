@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d2614769afba26208e87">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -164,7 +164,7 @@
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 <span class="text-sm text-body">Deterministic and blocking. Implemented, and a behavioural test proves it.</span></p>
-    <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt so existing debt is known rather than blocking. The gate is advisory while the baseline is non-empty and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.</p>
+    <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt, which records the state per claim rather than a list of names. Two things fail: a guarantee the baseline recorded as supported that no longer is, and a supported guarantee that left the matrix. A claim the baseline never knew, with no recorded run, is new debt — named and counted, never a regression — because a ratchet that fired on growth taxed writing claims down. The gate is advisory while the baseline carries unsupported lines and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
 <p><code>majordomus evidence show --check</code> exits 10 when any claim declaring <code>status: guaranteed</code>
 is in a state the recorded evidence does not support, and names each one with the reason
@@ -190,12 +190,26 @@ with a second opinion about what is proven would be a second model of proof. It 
 tallies for the whole matrix, not only the failures, so a reader sees the shape of the
 evidence and when it was last recorded. Without a build it exits 12 and says so rather than
 passing quietly.</p>
-<p>The ratchet is the one this repository already uses for <code>pipefail-check</code> and
-<code>liveness-check</code>. A claim in the baseline is known debt and does not fail; a claim that is
-not in it is a regression and does; a baseline line that is now supported is reported as
-stale so the list tightens instead of rotting. The baseline is written by
-<code>scripts/evidence-check --baseline</code> and never by hand, and it shrinks in one direction
-only — by recording a run that proves a claim, never by adding a line.</p>
+<p>The ratchet is not membership of a list of names. It was, and that was the defect rather
+than the strictness: the baseline names the guarantees that were unsupported on the day it
+was written, so a claim written after that day is absent from it for the only reason a
+claim can be absent from a snapshot of the past — it did not exist yet. Under membership
+every newly merged guarantee was reported as having lost evidence it had never had, and
+reddened the trunk for every branch that merged afterwards. A ratchet whose alarm fires on
+growth rather than on regression measures the wrong thing.</p>
+<p>So the baseline records the state per claim — a <code>+</code> line for a guarantee a run supported, a
+bare line for one no run supported — and two things fail the gate. <strong>Lost</strong>: a claim the
+baseline recorded as supported, and the evidence no longer supports; it had a proof and
+does not now, and membership could never see this, because a claim losing its proof joins
+the unsupported set exactly as a new claim does. <strong>Withdrawn</strong>: a supported guarantee that
+is no longer a guaranteed claim of the matrix at all; nothing became unproven, the
+denominator simply shrank, which is how a ratchet rots without ever going red.</p>
+<p>A guaranteed claim the baseline never knew, arriving with no recorded run, is reported and
+counted as new debt and does not fail — refusing it is the broken behaviour above. It is
+admitted by <code>scripts/evidence-check --baseline</code>, in its own commit, with the reason. A
+baseline line that is now supported is reported so the list tightens instead of rotting.
+The file is written by <code>--baseline</code> and never by hand, and its unsupported half shrinks in
+one direction only — by recording a run that proves a claim, never by adding a line.</p>
 <p>The gate is declared in <code>.ai/repo/ci/gates.yaml</code> under the <code>structure</code> job with
 <code>always: true</code>, and the <code>evidence</code> change class routes the ledger, the baseline, the gate,
 the matrix, the claim pages and <code>docs/EVIDENCE.md</code> to it.</p>
@@ -204,7 +218,8 @@ the matrix, the claim pages and <code>docs/EVIDENCE.md</code> to it.</p>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> evidence</span><span class="z-l-8 z-d-8"> show</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-findings</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-format</span><span class="z-l-8 z-d-8"> json</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the findings alone, with reasons</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the ratcheted verdict, with the tallies</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-strict</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every unsupported guarantee fails</span></span>
-<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-baseline</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> rewrite the baseline from what is found now</span></span></code></pre>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-baseline</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> rewrite the baseline from what is found now</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-repo</span><span class="z-l-8 z-d-8"> PATH</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> judge that repository instead of this one</span></span></code></pre>
 <p>Filtering never narrows the tallies: an answer showing one claim still reports how much of
 the matrix was examined, so a filtered read cannot misreport coverage.</p>
 <h2 id="what-it-does-not-cover"><a class="zola-anchor" href="#what-it-does-not-cover" aria-label="Anchor link for: what-it-does-not-cover">What it does not cover</a></h2>
@@ -212,9 +227,10 @@ the matrix was examined, so a filtered read cannot misreport coverage.</p>
 exists to refuse. The ledger starts empty, so on the day the gate arrived every guaranteed
 claim was <code>not_run</code> — true, and as a blocking gate it would have meant nothing could be
 merged by anybody until a full suite run had been recorded. Every one of those claims is in
-the baseline, so what the gate refuses right now is a regression against that list, not an
-unproven guarantee. <code>--strict</code> ignores the baseline and fails on all of them; it is the end
-state, reachable when the baseline is empty, and CI switches to it then.</p>
+the baseline, so what the gate refuses right now is a guarantee that lost its proof or left
+the matrix, not an unproven guarantee. New unproven guarantees are named and counted and do
+not fail. <code>--strict</code> ignores the baseline and fails on all of them; it is the end state,
+reachable when the baseline's unsupported half is empty, and CI switches to it then.</p>
 <p>The gate does not run anything. It reads what was recorded, so a claim proven by a run
 nobody recorded is indistinguishable from one nobody ran, and the remedy for a finding is
 to run the named command and record it — or to fix what broke.</p>
@@ -334,7 +350,7 @@ direction — which is how a check that nobody can honour becomes a check nobody
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3407ca2d406e09de04648cc4ecb38631756c65a6" class="font-mono underline">3407ca2</a> · inputs <span class="font-mono">44e332acf6bd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/be8b66672e798876109bfb1a5ce313efca27f507" class="font-mono underline">be8b666</a> · inputs <span class="font-mono">cb2387cb2c02</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d2614769afba26208e87">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -820,812 +820,890 @@
   </section><section id="diagnose" class="mt-14 scroll-mt-24" x-data="whyDiagnosis()">
     <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Diagnose your week</h2>
     <p class="mt-2 max-w-3xl text-base text-body">Which of these happened to you this week?</p>
-    <p class="mt-2 max-w-3xl text-body">Every line below is a signal one of the moments declares. Tick what you recognise; the profile that appears is counted from the metadata of the moments you picked, not scored by anything.</p>
+    <p class="mt-2 max-w-3xl text-body">Every line below is a signal one of the moments declares, filed under the part of operations its moment belongs to. Open the areas you recognise and tick what happened; the profile that appears is counted from the metadata of the moments you picked, not scored by anything.</p>
     <noscript><p class="mt-3 max-w-3xl rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-body">This questionnaire needs JavaScript to add up. The same answer, without it: <code class="font-mono text-heading">majordomus why diagnose --signal &lt;id&gt;</code>, or read the moments below.</p></noscript>
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <fieldset class="min-w-0">
-        <legend class="sr-only">Signals you recognise</legend>
-        <ul class="space-y-1.5">
-          <li>
-            <label for="sig-same-paragraph-again" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-same-paragraph-again" type="checkbox" value="same-paragraph-again" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">I typed the same explanation of this repository into a fresh session again this week.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-architecture-in-chat" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-architecture-in-chat" type="checkbox" value="architecture-in-chat" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Important architectural context exists mainly in previous conversations.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-warm-up-cost" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-warm-up-cost" type="checkbox" value="warm-up-cost" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A new session needs a warm-up period before it is useful, every time.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-same-subsystem-twice" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-same-subsystem-twice" type="checkbox" value="same-subsystem-twice" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Two workers changed the same subsystem this week without either knowing about the other.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-named-owner" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-named-owner" type="checkbox" value="no-named-owner" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody could name the owner of a piece of work that was already under way.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-worktrees-same-defect" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-worktrees-same-defect" type="checkbox" value="worktrees-same-defect" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">More than one worktree or branch existed for one unresolved defect.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-never-chose-the-model" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-never-chose-the-model" type="checkbox" value="never-chose-the-model" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody chose the model or the effort for the last task; it was whatever the previous task left set.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-three-paragraphs-for-a-rename" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-three-paragraphs-for-a-rename" type="checkbox" value="three-paragraphs-for-a-rename" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A trivial change came back with several paragraphs of explanation nobody needed.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-cheap-mode" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-cheap-mode" type="checkbox" value="no-cheap-mode" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">There is no agreed cheap mode for routine work, so everything runs at the expensive one.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-done-was-a-sentence" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-done-was-a-sentence" type="checkbox" value="done-was-a-sentence" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Work was accepted this week on the strength of a worker saying it was finished.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-red-the-next-morning" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-red-the-next-morning" type="checkbox" value="red-the-next-morning" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Something merged as complete turned out to be broken, and the breakage was visible all along.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-which-tests-ran" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-which-tests-ran" type="checkbox" value="which-tests-ran" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody can say which verification actually ran for the last change that was accepted.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-provider-files-disagree" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-provider-files-disagree" type="checkbox" value="provider-files-disagree" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The instruction files for two different assistants say different things about this repository.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-edited-in-place" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-edited-in-place" type="checkbox" value="edited-in-place" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Somebody added a rule by editing a provider file directly, and only that one.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-which-file-is-true" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-which-file-is-true" type="checkbox" value="which-file-is-true" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody can say which of the instruction files is the current one.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-reopened-this-week" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-reopened-this-week" type="checkbox" value="reopened-this-week" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A question the team had already settled was reopened this week by someone who could not have known.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-constraint-looks-arbitrary" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-constraint-looks-arbitrary" type="checkbox" value="constraint-looks-arbitrary" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Code carries a constraint that looks arbitrary because the reason for it is written nowhere.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-reason-in-chat" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-reason-in-chat" type="checkbox" value="reason-in-chat" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The reason behind a significant choice exists only in a conversation.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-stale-in-progress" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-stale-in-progress" type="checkbox" value="stale-in-progress" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Something is marked in progress that nobody has touched for weeks.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-branch-behind" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-branch-behind" type="checkbox" value="branch-behind" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A branch for active work is far behind the trunk and nobody noticed.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-finish-restart-delete" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-finish-restart-delete" type="checkbox" value="finish-restart-delete" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody can say whether an old piece of work should be finished, restarted or deleted.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-grep-the-logs" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-grep-the-logs" type="checkbox" value="grep-the-logs" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Answering &quot;what happened overnight&quot; meant reading or grepping conversation logs.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-structured-events" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-structured-events" type="checkbox" value="no-structured-events" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">There is no structured record of what was started, decided or accepted — only prose.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-git-log-says-wip" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-git-log-says-wip" type="checkbox" value="git-log-says-wip" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The git history is the only machine-readable trace, and it says &quot;wip&quot;.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-readme-nobody-read" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-readme-nobody-read" type="checkbox" value="readme-nobody-read" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A rule that governs a directory sits in a README that no session loaded.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-review-points-at-a-file" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-review-points-at-a-file" type="checkbox" value="review-points-at-a-file" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A review comment this week consisted of pointing at a document the author had not been given.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-root-file-is-a-corpus" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-root-file-is-a-corpus" type="checkbox" value="root-file-is-a-corpus" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The always-loaded instruction file has grown into a rule corpus that every session pays for.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-copies-disagree" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-copies-disagree" type="checkbox" value="copies-disagree" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">More than one document describes the plan, and they do not agree.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-status-is-typed" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-status-is-typed" type="checkbox" value="status-is-typed" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Status is a field somebody typed rather than something derived from what happened.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-started-out-of-order" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-started-out-of-order" type="checkbox" value="started-out-of-order" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Work started on something whose prerequisite was not finished.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-rediscovered" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-rediscovered" type="checkbox" value="rediscovered" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Something non-obvious about this codebase was worked out from scratch that had been worked out before.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-place-to-put-it" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-place-to-put-it" type="checkbox" value="no-place-to-put-it" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A worker learned something worth keeping and there was nowhere obvious to put it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-findings-in-chat" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-findings-in-chat" type="checkbox" value="findings-in-chat" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Useful findings from a session exist only inside that session.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-file-keeps-growing" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-file-keeps-growing" type="checkbox" value="file-keeps-growing" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The always-loaded instruction file only ever grows, and nobody removes anything from it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-paying-for-everything" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-paying-for-everything" type="checkbox" value="paying-for-everything" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Every session loads rules for parts of the repository it will never touch.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-nobody-reads-it-all" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-nobody-reads-it-all" type="checkbox" value="nobody-reads-it-all" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody, human or machine, is confident they have read the whole instruction file.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-change-reverted" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-change-reverted" type="checkbox" value="change-reverted" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A change made this week was removed by another worker who thought it was a mistake.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-unexplained-edit" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-unexplained-edit" type="checkbox" value="unexplained-edit" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Workers regularly encounter edits in their path that nothing explains.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-ping-pong" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-ping-pong" type="checkbox" value="ping-pong" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The same line has been changed back and forth by different sessions.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-many-worktrees" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-many-worktrees" type="checkbox" value="many-worktrees" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">There are more worktrees or branches than anyone can account for.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-safe-to-delete" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-safe-to-delete" type="checkbox" value="safe-to-delete" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody can say whether a given branch or worktree still holds anything worth keeping.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-created-and-forgotten" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-created-and-forgotten" type="checkbox" value="created-and-forgotten" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Workers create isolated checkouts routinely and nothing records what for.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-more-produced-than-merged" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-more-produced-than-merged" type="checkbox" value="more-produced-than-merged" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Far more work was produced this week than was integrated, and the gap is not tracked anywhere.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-done-but-unmerged" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-done-but-unmerged" type="checkbox" value="done-but-unmerged" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Something reported as finished is sitting on a branch that nobody has looked at.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-landed-signal" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-landed-signal" type="checkbox" value="no-landed-signal" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nothing distinguishes &quot;the worker finished&quot; from &quot;the change is in the trunk&quot;.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-files-changing-underneath" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-files-changing-underneath" type="checkbox" value="files-changing-underneath" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Files changed under a session while it was working, and nothing said why.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-two-windows-one-repo" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-two-windows-one-repo" type="checkbox" value="two-windows-one-repo" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">More than one assistant window is pointed at the same working directory.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-conflicting-uncommitted" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-conflicting-uncommitted" type="checkbox" value="conflicting-uncommitted" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The working tree holds uncommitted changes from more than one piece of work.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-updated-one-copy" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-updated-one-copy" type="checkbox" value="updated-one-copy" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A rule or setting was changed in one place this month and a stale copy of it is still being used.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-staleness-signal" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-staleness-signal" type="checkbox" value="no-staleness-signal" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nothing reports when a generated file no longer matches what it was generated from.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-regenerate-by-memory" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-regenerate-by-memory" type="checkbox" value="regenerate-by-memory" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Regenerating the derived files depends on somebody remembering to.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-believed-enforced" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-believed-enforced" type="checkbox" value="believed-enforced" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A rule is described as enforced and nobody has watched it stop anything.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-hook-exists-unwired" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-hook-exists-unwired" type="checkbox" value="hook-exists-unwired" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A check script exists on disk and nothing is known to invoke it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-exit-code-swallowed" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-exit-code-swallowed" type="checkbox" value="exit-code-swallowed" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A gate runs and its exit code is discarded by whatever runs it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-answer-is-a-log" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-answer-is-a-log" type="checkbox" value="answer-is-a-log" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The answer to &quot;why is it built this way&quot; is a conversation log.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-adr" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-adr" type="checkbox" value="no-adr" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Significant choices are made without any durable record of the alternative that was rejected.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-cannot-find-it" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-cannot-find-it" type="checkbox" value="cannot-find-it" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A decision is known to have been made and nobody can find where.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-written-and-ignored" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-written-and-ignored" type="checkbox" value="written-and-ignored" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A decision is written down somewhere and the code does the opposite.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-adr-nobody-reads" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-adr-nobody-reads" type="checkbox" value="adr-nobody-reads" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The architecture decisions are recorded and no session has ever loaded one.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-link-to-code" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-link-to-code" type="checkbox" value="no-link-to-code" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nothing connects a decision to the files it constrains.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-ticket" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-ticket" type="checkbox" value="no-ticket" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A significant change landed this month that no issue or plan item asked for.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-scope-decided-after" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-scope-decided-after" type="checkbox" value="scope-decided-after" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">What a piece of work was allowed to touch was decided while it was being reviewed.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-cannot-say-why" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-cannot-say-why" type="checkbox" value="cannot-say-why" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody can say what problem a recent change was meant to solve.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-closed-not-proven" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-closed-not-proven" type="checkbox" value="closed-not-proven" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Something was closed as done without anything checking its acceptance criteria.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-tracker-vs-repo" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-tracker-vs-repo" type="checkbox" value="tracker-vs-repo" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The tracker and the repository disagree about what is finished.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-evidence-is-prose" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-evidence-is-prose" type="checkbox" value="evidence-is-prose" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The evidence recorded for a completed item is a sentence somebody wrote.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-ask-four-people" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-ask-four-people" type="checkbox" value="ask-four-people" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Answering &quot;how far along is this&quot; requires asking several people.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-percentage-invented" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-percentage-invented" type="checkbox" value="percentage-invented" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Progress is reported as a percentage that nobody can show the arithmetic for.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-derivable-state" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-derivable-state" type="checkbox" value="no-derivable-state" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The repository cannot say what is finished without a person interpreting it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-claim-no-test" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-claim-no-test" type="checkbox" value="claim-no-test" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The documentation states a capability and no test would fail if it disappeared.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-cannot-name-the-test" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-cannot-name-the-test" type="checkbox" value="cannot-name-the-test" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody can name the test that proves a given documented behaviour.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-aspirational-prose" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-aspirational-prose" type="checkbox" value="aspirational-prose" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Documentation describes intended behaviour alongside actual behaviour, with nothing marking which is which.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-hand-written-spec" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-hand-written-spec" type="checkbox" value="hand-written-spec" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">An interface specification is maintained by hand alongside the code that implements it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-spec-behind" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-spec-behind" type="checkbox" value="spec-behind" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A published contract describes a version of the interface that no longer exists.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-two-places-to-edit" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-two-places-to-edit" type="checkbox" value="two-places-to-edit" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Adding an operation means editing both the implementation and a separate registry or document.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-example-fails" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-example-fails" type="checkbox" value="example-fails" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A command copied from the documentation failed this month.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-examples-never-run" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-examples-never-run" type="checkbox" value="examples-never-run" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The examples in the documentation are not executed by anything.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-flag-renamed" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-flag-renamed" type="checkbox" value="flag-renamed" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">An option was renamed and the places that show it were updated by hand, or not at all.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-forgot-to-regenerate" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-forgot-to-regenerate" type="checkbox" value="forgot-to-regenerate" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A change landed without regenerating the files derived from it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-green-but-stale" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-green-but-stale" type="checkbox" value="green-but-stale" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The pipeline is green and a committed generated file is out of date.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-regeneration-is-manual" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-regeneration-is-manual" type="checkbox" value="regeneration-is-manual" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Regenerating derived files is a step somebody has to remember.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-cheap-by-default" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-cheap-by-default" type="checkbox" value="cheap-by-default" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Everything runs on the cheap setting, including work whose consequences outlive the session.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-escalation-path" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-escalation-path" type="checkbox" value="no-escalation-path" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">There is no defined point at which a blocked worker should escalate rather than continue.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-structural-choice-by-accident" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-structural-choice-by-accident" type="checkbox" value="structural-choice-by-accident" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A structural choice was made by whichever session happened to be open.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-chosen-by-habit" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-chosen-by-habit" type="checkbox" value="chosen-by-habit" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Which assistant is used for which work is decided by habit, not by a stated rule.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-record-of-choice" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-record-of-choice" type="checkbox" value="no-record-of-choice" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nothing records which model or provider produced a given piece of work.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-cannot-compare" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-cannot-compare" type="checkbox" value="cannot-compare" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Two providers have been used for months and nobody can compare how they did.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-bill-by-account" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-bill-by-account" type="checkbox" value="bill-by-account" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Consumption is known per account or per month and not per piece of work.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-accepted-denominator" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-accepted-denominator" type="checkbox" value="no-accepted-denominator" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody can say what fraction of what was produced was actually accepted.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-justify-the-spend" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-justify-the-spend" type="checkbox" value="justify-the-spend" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Justifying the spend means telling a story rather than showing a ratio.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-cannot-reproduce-again" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-cannot-reproduce-again" type="checkbox" value="cannot-reproduce-again" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A failure was reproduced once and could not be reproduced afterwards.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-evidence-in-the-window" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-evidence-in-the-window" type="checkbox" value="evidence-in-the-window" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The evidence for a bug exists only in a session window.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-starts-from-a-report" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-starts-from-a-report" type="checkbox" value="starts-from-a-report" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Debugging restarts from somebody&#39;&#39;s description rather than from a recorded observation.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-same-thing-thrice" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-same-thing-thrice" type="checkbox" value="same-thing-thrice" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The same behaviour is explained in more than one document, in different words.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-which-is-current" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-which-is-current" type="checkbox" value="which-is-current" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A reader cannot tell which of several explanations is the current one.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-update-all-copies" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-update-all-copies" type="checkbox" value="update-all-copies" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Changing a behaviour means remembering to update several documents.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-page-ahead-of-code" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-page-ahead-of-code" type="checkbox" value="page-ahead-of-code" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A public page describes a capability the code does not fully have.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-no-status-on-claims" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-no-status-on-claims" type="checkbox" value="no-status-on-claims" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nothing on a public page distinguishes what is guaranteed from what is intended.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-written-separately" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-written-separately" type="checkbox" value="written-separately" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Public material is written separately from the code and reconciled by nobody.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-ask-a-regular" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-ask-a-regular" type="checkbox" value="ask-a-regular" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Getting productive in this repository requires asking somebody who already knows it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-conventions-undocumented" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-conventions-undocumented" type="checkbox" value="conventions-undocumented" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">What is conventional here is not written down anywhere a newcomer would find.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-every-arrival-pays" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-every-arrival-pays" type="checkbox" value="every-arrival-pays" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Every new person or worker repeats the same discovery.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-plausible-and-wrong" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-plausible-and-wrong" type="checkbox" value="plausible-and-wrong" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Contributions arrive that are fluent, plausible and wrong in a project-specific way.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-same-review-comment" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-same-review-comment" type="checkbox" value="same-review-comment" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The same review comment is written repeatedly to different contributors.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-review-is-the-gate" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-review-is-the-gate" type="checkbox" value="review-is-the-gate" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The only mechanism transmitting the project&#39;&#39;s conventions is review.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-tried-before" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-tried-before" type="checkbox" value="tried-before" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">An approach was attempted that somebody had already attempted and abandoned.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-negatives-unrecorded" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-negatives-unrecorded" type="checkbox" value="negatives-unrecorded" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Abandoned experiments leave no record of why they were abandoned.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-branch-graveyard" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-branch-graveyard" type="checkbox" value="branch-graveyard" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">There are more discarded branches than anyone can characterise.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-number-without-conditions" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-number-without-conditions" type="checkbox" value="number-without-conditions" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A measurement is quoted without the conditions that produced it.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-cannot-repeat" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-cannot-repeat" type="checkbox" value="cannot-repeat" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A result could not be repeated and nobody can say what differed.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-baseline-by-hand" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-baseline-by-hand" type="checkbox" value="baseline-by-hand" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">A performance baseline was written by hand rather than produced by a run.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-only-a-commit" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-only-a-commit" type="checkbox" value="only-a-commit" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">The whole record of a change is its commit message.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-which-policy-applied" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-which-policy-applied" type="checkbox" value="which-policy-applied" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Nobody can say which version of the rules was in force when a change was made.</span>
-            </label>
-          </li>
-          <li>
-            <label for="sig-human-author-machine-work" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
-              <input id="sig-human-author-machine-work" type="checkbox" value="human-author-machine-work" x-model="picked"
-                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
-              <span class="min-w-0 break-words text-body">Work produced by a worker is attributed to whoever pressed the button.</span>
-            </label>
-          </li>
-        </ul>
+    <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]"><fieldset class="min-w-0 space-y-3">
+        <legend class="sr-only">Signals you recognise, grouped by the part of operations they belong to</legend>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="context" open>
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Context and continuity</span>
+            <span class="font-mono text-xs text-body-subtle">4 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('context') > 0" x-text="ticked('context') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-same-paragraph-again" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-same-paragraph-again" type="checkbox" value="same-paragraph-again" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">I typed the same explanation of this repository into a fresh session again this week.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-architecture-in-chat" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-architecture-in-chat" type="checkbox" value="architecture-in-chat" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Important architectural context exists mainly in previous conversations.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-warm-up-cost" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-warm-up-cost" type="checkbox" value="warm-up-cost" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A new session needs a warm-up period before it is useful, every time.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-rediscovered" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-rediscovered" type="checkbox" value="rediscovered" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Something non-obvious about this codebase was worked out from scratch that had been worked out before.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-place-to-put-it" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-place-to-put-it" type="checkbox" value="no-place-to-put-it" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A worker learned something worth keeping and there was nowhere obvious to put it.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-findings-in-chat" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-findings-in-chat" type="checkbox" value="findings-in-chat" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Useful findings from a session exist only inside that session.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-file-keeps-growing" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-file-keeps-growing" type="checkbox" value="file-keeps-growing" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The always-loaded instruction file only ever grows, and nobody removes anything from it.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-paying-for-everything" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-paying-for-everything" type="checkbox" value="paying-for-everything" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Every session loads rules for parts of the repository it will never touch.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-nobody-reads-it-all" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-nobody-reads-it-all" type="checkbox" value="nobody-reads-it-all" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody, human or machine, is confident they have read the whole instruction file.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-ask-a-regular" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-ask-a-regular" type="checkbox" value="ask-a-regular" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Getting productive in this repository requires asking somebody who already knows it.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-conventions-undocumented" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-conventions-undocumented" type="checkbox" value="conventions-undocumented" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">What is conventional here is not written down anywhere a newcomer would find.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-every-arrival-pays" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-every-arrival-pays" type="checkbox" value="every-arrival-pays" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Every new person or worker repeats the same discovery.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="coordination">
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Coordination and ownership</span>
+            <span class="font-mono text-xs text-body-subtle">5 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('coordination') > 0" x-text="ticked('coordination') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-same-subsystem-twice" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-same-subsystem-twice" type="checkbox" value="same-subsystem-twice" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Two workers changed the same subsystem this week without either knowing about the other.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-named-owner" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-named-owner" type="checkbox" value="no-named-owner" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody could name the owner of a piece of work that was already under way.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-worktrees-same-defect" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-worktrees-same-defect" type="checkbox" value="worktrees-same-defect" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">More than one worktree or branch existed for one unresolved defect.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-change-reverted" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-change-reverted" type="checkbox" value="change-reverted" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A change made this week was removed by another worker who thought it was a mistake.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-unexplained-edit" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-unexplained-edit" type="checkbox" value="unexplained-edit" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Workers regularly encounter edits in their path that nothing explains.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-ping-pong" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-ping-pong" type="checkbox" value="ping-pong" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The same line has been changed back and forth by different sessions.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-many-worktrees" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-many-worktrees" type="checkbox" value="many-worktrees" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">There are more worktrees or branches than anyone can account for.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-safe-to-delete" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-safe-to-delete" type="checkbox" value="safe-to-delete" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody can say whether a given branch or worktree still holds anything worth keeping.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-created-and-forgotten" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-created-and-forgotten" type="checkbox" value="created-and-forgotten" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Workers create isolated checkouts routinely and nothing records what for.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-more-produced-than-merged" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-more-produced-than-merged" type="checkbox" value="more-produced-than-merged" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Far more work was produced this week than was integrated, and the gap is not tracked anywhere.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-done-but-unmerged" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-done-but-unmerged" type="checkbox" value="done-but-unmerged" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Something reported as finished is sitting on a branch that nobody has looked at.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-landed-signal" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-landed-signal" type="checkbox" value="no-landed-signal" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nothing distinguishes &quot;the worker finished&quot; from &quot;the change is in the trunk&quot;.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-files-changing-underneath" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-files-changing-underneath" type="checkbox" value="files-changing-underneath" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Files changed under a session while it was working, and nothing said why.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-two-windows-one-repo" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-two-windows-one-repo" type="checkbox" value="two-windows-one-repo" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">More than one assistant window is pointed at the same working directory.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-conflicting-uncommitted" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-conflicting-uncommitted" type="checkbox" value="conflicting-uncommitted" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The working tree holds uncommitted changes from more than one piece of work.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="governance">
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Rules and governance</span>
+            <span class="font-mono text-xs text-body-subtle">5 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('governance') > 0" x-text="ticked('governance') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-provider-files-disagree" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-provider-files-disagree" type="checkbox" value="provider-files-disagree" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The instruction files for two different assistants say different things about this repository.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-edited-in-place" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-edited-in-place" type="checkbox" value="edited-in-place" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Somebody added a rule by editing a provider file directly, and only that one.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-which-file-is-true" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-which-file-is-true" type="checkbox" value="which-file-is-true" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody can say which of the instruction files is the current one.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-readme-nobody-read" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-readme-nobody-read" type="checkbox" value="readme-nobody-read" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A rule that governs a directory sits in a README that no session loaded.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-review-points-at-a-file" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-review-points-at-a-file" type="checkbox" value="review-points-at-a-file" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A review comment this week consisted of pointing at a document the author had not been given.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-root-file-is-a-corpus" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-root-file-is-a-corpus" type="checkbox" value="root-file-is-a-corpus" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The always-loaded instruction file has grown into a rule corpus that every session pays for.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-updated-one-copy" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-updated-one-copy" type="checkbox" value="updated-one-copy" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A rule or setting was changed in one place this month and a stale copy of it is still being used.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-staleness-signal" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-staleness-signal" type="checkbox" value="no-staleness-signal" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nothing reports when a generated file no longer matches what it was generated from.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-regenerate-by-memory" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-regenerate-by-memory" type="checkbox" value="regenerate-by-memory" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Regenerating the derived files depends on somebody remembering to.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-believed-enforced" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-believed-enforced" type="checkbox" value="believed-enforced" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A rule is described as enforced and nobody has watched it stop anything.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-hook-exists-unwired" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-hook-exists-unwired" type="checkbox" value="hook-exists-unwired" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A check script exists on disk and nothing is known to invoke it.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-exit-code-swallowed" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-exit-code-swallowed" type="checkbox" value="exit-code-swallowed" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A gate runs and its exit code is discarded by whatever runs it.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-plausible-and-wrong" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-plausible-and-wrong" type="checkbox" value="plausible-and-wrong" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Contributions arrive that are fluent, plausible and wrong in a project-specific way.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-same-review-comment" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-same-review-comment" type="checkbox" value="same-review-comment" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The same review comment is written repeatedly to different contributors.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-review-is-the-gate" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-review-is-the-gate" type="checkbox" value="review-is-the-gate" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The only mechanism transmitting the project&#39;&#39;s conventions is review.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="decisions">
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Decisions</span>
+            <span class="font-mono text-xs text-body-subtle">4 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('decisions') > 0" x-text="ticked('decisions') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-reopened-this-week" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-reopened-this-week" type="checkbox" value="reopened-this-week" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A question the team had already settled was reopened this week by someone who could not have known.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-constraint-looks-arbitrary" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-constraint-looks-arbitrary" type="checkbox" value="constraint-looks-arbitrary" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Code carries a constraint that looks arbitrary because the reason for it is written nowhere.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-reason-in-chat" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-reason-in-chat" type="checkbox" value="reason-in-chat" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The reason behind a significant choice exists only in a conversation.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-answer-is-a-log" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-answer-is-a-log" type="checkbox" value="answer-is-a-log" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The answer to &quot;why is it built this way&quot; is a conversation log.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-adr" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-adr" type="checkbox" value="no-adr" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Significant choices are made without any durable record of the alternative that was rejected.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-cannot-find-it" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-cannot-find-it" type="checkbox" value="cannot-find-it" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A decision is known to have been made and nobody can find where.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-written-and-ignored" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-written-and-ignored" type="checkbox" value="written-and-ignored" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A decision is written down somewhere and the code does the opposite.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-adr-nobody-reads" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-adr-nobody-reads" type="checkbox" value="adr-nobody-reads" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The architecture decisions are recorded and no session has ever loaded one.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-link-to-code" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-link-to-code" type="checkbox" value="no-link-to-code" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nothing connects a decision to the files it constrains.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-tried-before" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-tried-before" type="checkbox" value="tried-before" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">An approach was attempted that somebody had already attempted and abandoned.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-negatives-unrecorded" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-negatives-unrecorded" type="checkbox" value="negatives-unrecorded" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Abandoned experiments leave no record of why they were abandoned.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-branch-graveyard" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-branch-graveyard" type="checkbox" value="branch-graveyard" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">There are more discarded branches than anyone can characterise.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="work-tracking">
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Work and its state</span>
+            <span class="font-mono text-xs text-body-subtle">5 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('work-tracking') > 0" x-text="ticked('work-tracking') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-stale-in-progress" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-stale-in-progress" type="checkbox" value="stale-in-progress" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Something is marked in progress that nobody has touched for weeks.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-branch-behind" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-branch-behind" type="checkbox" value="branch-behind" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A branch for active work is far behind the trunk and nobody noticed.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-finish-restart-delete" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-finish-restart-delete" type="checkbox" value="finish-restart-delete" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody can say whether an old piece of work should be finished, restarted or deleted.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-copies-disagree" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-copies-disagree" type="checkbox" value="copies-disagree" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">More than one document describes the plan, and they do not agree.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-status-is-typed" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-status-is-typed" type="checkbox" value="status-is-typed" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Status is a field somebody typed rather than something derived from what happened.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-started-out-of-order" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-started-out-of-order" type="checkbox" value="started-out-of-order" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Work started on something whose prerequisite was not finished.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-ticket" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-ticket" type="checkbox" value="no-ticket" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A significant change landed this month that no issue or plan item asked for.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-scope-decided-after" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-scope-decided-after" type="checkbox" value="scope-decided-after" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">What a piece of work was allowed to touch was decided while it was being reviewed.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-cannot-say-why" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-cannot-say-why" type="checkbox" value="cannot-say-why" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody can say what problem a recent change was meant to solve.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-closed-not-proven" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-closed-not-proven" type="checkbox" value="closed-not-proven" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Something was closed as done without anything checking its acceptance criteria.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-tracker-vs-repo" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-tracker-vs-repo" type="checkbox" value="tracker-vs-repo" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The tracker and the repository disagree about what is finished.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-evidence-is-prose" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-evidence-is-prose" type="checkbox" value="evidence-is-prose" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The evidence recorded for a completed item is a sentence somebody wrote.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-ask-four-people" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-ask-four-people" type="checkbox" value="ask-four-people" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Answering &quot;how far along is this&quot; requires asking several people.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-percentage-invented" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-percentage-invented" type="checkbox" value="percentage-invented" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Progress is reported as a percentage that nobody can show the arithmetic for.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-derivable-state" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-derivable-state" type="checkbox" value="no-derivable-state" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The repository cannot say what is finished without a person interpreting it.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="verification">
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Verification and evidence</span>
+            <span class="font-mono text-xs text-body-subtle">4 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('verification') > 0" x-text="ticked('verification') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-done-was-a-sentence" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-done-was-a-sentence" type="checkbox" value="done-was-a-sentence" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Work was accepted this week on the strength of a worker saying it was finished.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-red-the-next-morning" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-red-the-next-morning" type="checkbox" value="red-the-next-morning" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Something merged as complete turned out to be broken, and the breakage was visible all along.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-which-tests-ran" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-which-tests-ran" type="checkbox" value="which-tests-ran" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody can say which verification actually ran for the last change that was accepted.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-claim-no-test" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-claim-no-test" type="checkbox" value="claim-no-test" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The documentation states a capability and no test would fail if it disappeared.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-cannot-name-the-test" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-cannot-name-the-test" type="checkbox" value="cannot-name-the-test" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody can name the test that proves a given documented behaviour.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-aspirational-prose" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-aspirational-prose" type="checkbox" value="aspirational-prose" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Documentation describes intended behaviour alongside actual behaviour, with nothing marking which is which.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-hand-written-spec" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-hand-written-spec" type="checkbox" value="hand-written-spec" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">An interface specification is maintained by hand alongside the code that implements it.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-spec-behind" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-spec-behind" type="checkbox" value="spec-behind" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A published contract describes a version of the interface that no longer exists.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-two-places-to-edit" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-two-places-to-edit" type="checkbox" value="two-places-to-edit" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Adding an operation means editing both the implementation and a separate registry or document.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-forgot-to-regenerate" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-forgot-to-regenerate" type="checkbox" value="forgot-to-regenerate" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A change landed without regenerating the files derived from it.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-green-but-stale" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-green-but-stale" type="checkbox" value="green-but-stale" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The pipeline is green and a committed generated file is out of date.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-regeneration-is-manual" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-regeneration-is-manual" type="checkbox" value="regeneration-is-manual" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Regenerating derived files is a step somebody has to remember.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="observability">
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Observability</span>
+            <span class="font-mono text-xs text-body-subtle">4 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('observability') > 0" x-text="ticked('observability') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-grep-the-logs" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-grep-the-logs" type="checkbox" value="grep-the-logs" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Answering &quot;what happened overnight&quot; meant reading or grepping conversation logs.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-structured-events" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-structured-events" type="checkbox" value="no-structured-events" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">There is no structured record of what was started, decided or accepted — only prose.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-git-log-says-wip" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-git-log-says-wip" type="checkbox" value="git-log-says-wip" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The git history is the only machine-readable trace, and it says &quot;wip&quot;.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-cannot-reproduce-again" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-cannot-reproduce-again" type="checkbox" value="cannot-reproduce-again" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A failure was reproduced once and could not be reproduced afterwards.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-evidence-in-the-window" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-evidence-in-the-window" type="checkbox" value="evidence-in-the-window" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The evidence for a bug exists only in a session window.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-starts-from-a-report" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-starts-from-a-report" type="checkbox" value="starts-from-a-report" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Debugging restarts from somebody&#39;&#39;s description rather than from a recorded observation.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-number-without-conditions" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-number-without-conditions" type="checkbox" value="number-without-conditions" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A measurement is quoted without the conditions that produced it.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-cannot-repeat" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-cannot-repeat" type="checkbox" value="cannot-repeat" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A result could not be repeated and nobody can say what differed.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-baseline-by-hand" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-baseline-by-hand" type="checkbox" value="baseline-by-hand" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A performance baseline was written by hand rather than produced by a run.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-only-a-commit" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-only-a-commit" type="checkbox" value="only-a-commit" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The whole record of a change is its commit message.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-which-policy-applied" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-which-policy-applied" type="checkbox" value="which-policy-applied" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody can say which version of the rules was in force when a change was made.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-human-author-machine-work" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-human-author-machine-work" type="checkbox" value="human-author-machine-work" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Work produced by a worker is attributed to whoever pressed the button.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="cost">
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Model, effort and cost</span>
+            <span class="font-mono text-xs text-body-subtle">4 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('cost') > 0" x-text="ticked('cost') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-never-chose-the-model" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-never-chose-the-model" type="checkbox" value="never-chose-the-model" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody chose the model or the effort for the last task; it was whatever the previous task left set.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-three-paragraphs-for-a-rename" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-three-paragraphs-for-a-rename" type="checkbox" value="three-paragraphs-for-a-rename" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A trivial change came back with several paragraphs of explanation nobody needed.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-cheap-mode" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-cheap-mode" type="checkbox" value="no-cheap-mode" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">There is no agreed cheap mode for routine work, so everything runs at the expensive one.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-cheap-by-default" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-cheap-by-default" type="checkbox" value="cheap-by-default" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Everything runs on the cheap setting, including work whose consequences outlive the session.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-escalation-path" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-escalation-path" type="checkbox" value="no-escalation-path" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">There is no defined point at which a blocked worker should escalate rather than continue.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-structural-choice-by-accident" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-structural-choice-by-accident" type="checkbox" value="structural-choice-by-accident" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A structural choice was made by whichever session happened to be open.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-chosen-by-habit" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-chosen-by-habit" type="checkbox" value="chosen-by-habit" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Which assistant is used for which work is decided by habit, not by a stated rule.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-record-of-choice" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-record-of-choice" type="checkbox" value="no-record-of-choice" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nothing records which model or provider produced a given piece of work.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-cannot-compare" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-cannot-compare" type="checkbox" value="cannot-compare" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Two providers have been used for months and nobody can compare how they did.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-bill-by-account" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-bill-by-account" type="checkbox" value="bill-by-account" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Consumption is known per account or per month and not per piece of work.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-accepted-denominator" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-accepted-denominator" type="checkbox" value="no-accepted-denominator" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nobody can say what fraction of what was produced was actually accepted.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-justify-the-spend" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-justify-the-spend" type="checkbox" value="justify-the-spend" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Justifying the spend means telling a story rather than showing a ratio.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
+        <details class="rounded-base border border-default bg-neutral-primary-soft" data-signal-group="documentation">
+          <summary class="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base p-3 hover:bg-neutral-secondary-medium">
+            <span class="text-sm font-semibold text-heading">Documentation and drift</span>
+            <span class="font-mono text-xs text-body-subtle">3 moments</span>
+            <span class="ms-auto font-mono text-xs text-fg-brand" x-show="ticked('documentation') > 0" x-text="ticked('documentation') + ' ticked'"></span>
+          </summary>
+          <ul class="space-y-1.5 border-t border-default p-3">
+            <li>
+              <label for="sig-example-fails" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-example-fails" type="checkbox" value="example-fails" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A command copied from the documentation failed this month.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-examples-never-run" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-examples-never-run" type="checkbox" value="examples-never-run" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The examples in the documentation are not executed by anything.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-flag-renamed" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-flag-renamed" type="checkbox" value="flag-renamed" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">An option was renamed and the places that show it were updated by hand, or not at all.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-same-thing-thrice" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-same-thing-thrice" type="checkbox" value="same-thing-thrice" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">The same behaviour is explained in more than one document, in different words.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-which-is-current" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-which-is-current" type="checkbox" value="which-is-current" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A reader cannot tell which of several explanations is the current one.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-update-all-copies" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-update-all-copies" type="checkbox" value="update-all-copies" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Changing a behaviour means remembering to update several documents.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-page-ahead-of-code" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-page-ahead-of-code" type="checkbox" value="page-ahead-of-code" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">A public page describes a capability the code does not fully have.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-no-status-on-claims" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-no-status-on-claims" type="checkbox" value="no-status-on-claims" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Nothing on a public page distinguishes what is guaranteed from what is intended.</span>
+              </label>
+            </li>
+            <li>
+              <label for="sig-written-separately" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+                <input id="sig-written-separately" type="checkbox" value="written-separately" x-model="picked"
+                       class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+                <span class="min-w-0 break-words text-body">Public material is written separately from the code and reconciled by nobody.</span>
+              </label>
+            </li>
+          </ul>
+        </details>
       </fieldset>
 
       <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start" aria-live="polite">
@@ -2703,7 +2781,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3407ca2d406e09de04648cc4ecb38631756c65a6" class="font-mono underline">3407ca2</a> · inputs <span class="font-mono">44e332acf6bd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/be8b66672e798876109bfb1a5ce313efca27f507" class="font-mono underline">be8b666</a> · inputs <span class="font-mono">cb2387cb2c02</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
@@ -2727,6 +2805,11 @@ function whyDiagnosis() {
     init() { this.$watch('picked', v => { try { localStorage.setItem('why.picked', JSON.stringify(v)); } catch (e) {} }); },
     get matched() { return [...new Set(this.picked.map(s => owner[s]).filter(Boolean))]; },
     label(id) { return labels[id] || id; },
+    // how many ticked lines fall in one group, by the same rule the groups were built with:
+    // a signal's group is the first area of the moment that declares it
+    ticked(area) {
+      return this.picked.filter((s) => ((byId[owner[s]] || {}).areas || [])[0] === area).length;
+    },
     hook(id) { return (byId[id] || {}).hook || id; },
     // counting, not scoring: a value's number is how many of the matched moments name it,
     // and every row carries the moments it came from

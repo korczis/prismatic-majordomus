@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d2614769afba26208e87">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -460,7 +460,8 @@ proven would be a second model of proof.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> report; 0 clean, 10 with regressions</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-json</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the report, from the capability itself</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-strict</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every unsupported guarantee fails; the baseline is ignored</span></span>
-<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-baseline</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> rewrite the baseline from what is found now</span></span></code></pre>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-baseline</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> rewrite the baseline from what is found now</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-repo</span><span class="z-l-8 z-d-8"> PATH</span><span class="z-l-10 z-l-i z-d-4 z-d-i">  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> judge that repository instead of this one</span></span></code></pre>
 <p>Only <code>guaranteed</code> claims are judged. <code>advisory</code> states that enforcement is not observable
 from outside, <code>planned</code> that nothing implements it, and <code>rejected</code> that nothing will;
 demanding a current proof of those would be demanding proof of a thing the claim already
@@ -471,14 +472,33 @@ says is not there. A <code>guaranteed</code> claim in any of the three passing s
 the day the gate arrives every guaranteed claim is <code>not_run</code> — true, and as a blocking gate
 it would mean nothing could be merged by anybody until a full suite run had been recorded.
 So the debt that existed at that moment is written to
-<a href="../.ai/repo/evidence-baseline.txt"><code>.ai/repo/evidence-baseline.txt</code></a> by
-<code>--baseline</code>, never by hand, and the ratchet is the one this repository already uses for
-<code>pipefail-check</code> and <code>liveness-check</code>: a claim in the baseline is known debt and does not
-fail; a claim that is not in it is a regression and does; a baseline line that is now
-supported is reported as stale so the list tightens instead of rotting.</p>
-<p>It tightens in one direction only. The baseline shrinks by recording a run that proves a
-claim and rewriting it — never by adding a line. <code>--strict</code> is the end state, and CI
-switches to it when the baseline is empty.</p>
+<a href="../.ai/repo/evidence-baseline.txt"><code>.ai/repo/evidence-baseline.txt</code></a> by <code>--baseline</code>,
+never by hand.</p>
+<p><strong>What the ratchet refuses is not membership of that list.</strong> It was, and that was a defect
+rather than a strictness: a claim written after the baseline is absent from it for the only
+reason a claim can be absent from a snapshot of the past — it did not exist yet — and the
+gate reported every such claim as having "lost the evidence that supported them", evidence
+it had never had. Every newly merged guarantee reddened the trunk for every branch that
+merged after it. A ratchet whose alarm fires on growth rather than on regression measures
+the wrong thing: it taxes writing claims down, which is what the matrix exists to reward.</p>
+<p>So the baseline records the <em>state per claim</em> — both halves, a <code>+</code> line for a guarantee a
+run supported and a bare line for one no run supported — and two things are refused:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>refused</th><th>what it is</th><th>why membership could not see it</th></tr></thead><tbody>
+<tr><td><strong>lost</strong></td><td>a claim the baseline recorded as supported, and the evidence no longer supports</td><td>a claim losing its proof joins the unsupported set in exactly the way a newly written claim does</td></tr>
+<tr><td><strong>withdrawn</strong></td><td>a supported guarantee that is no longer a guaranteed claim of the matrix at all</td><td>nothing became unproven; the denominator shrank, which is how a ratchet rots without ever going red</td></tr>
+</tbody></table>
+</div>
+<p>And one thing is deliberately not refused: a guaranteed claim the baseline never knew,
+arriving with no recorded run. That is new debt — reported, counted, and not a regression —
+because refusing it is the broken behaviour above. It is admitted to the baseline by
+<code>--baseline</code>, in its own commit, with the reason, and the ratchet holds it from then on.
+The limit is stated rather than hidden: a claim promoted from <code>advisory</code> to <code>guaranteed</code>
+without a run is new debt too, and is also only reported.</p>
+<p>It still tightens in one direction only. The unsupported half shrinks by recording a run
+that proves a claim and rewriting the file — never by adding a line. <code>--strict</code> refuses
+every unsupported guarantee; it is the end state, and CI switches to it when the
+unsupported half is empty.</p>
 <p>The gate is named in <a href="../.ai/repo/ci/gates.yaml"><code>.ai/repo/ci/gates.yaml</code></a> as
 <code>evidence-check</code>, in the <code>structure</code> job, with <code>always: true</code> — so the verdict arrives on
 every push rather than when somebody remembers to run it, which is the other half of
@@ -537,7 +557,9 @@ passed against this commit. Whether the test tests the claim is a question for r
 <tr><td><code> `x` names no test</code></td><td>an argument to <code>evidence proves</code> that is neither an identity nor a test path</td><td>give <code>suite:&lt;case&gt;</code>, <code>crate:&lt;binary&gt;</code>, or the path</td></tr>
 <tr><td><code>evidence-check: no majordomus executable</code> (exit 12)</td><td>the gate could not find a build</td><td>build the crate, or set <code>MAJORDOMUS_BIN</code></td></tr>
 <tr><td><code>evidence-check: … is absent; run scripts/evidence-check --baseline</code> (exit 12)</td><td>the ratchet has no baseline</td><td>write one, in its own commit, with the reason</td></tr>
-<tr><td><code>evidence-check: N guaranteed claim(s) lost the evidence that supported them</code> (exit 10)</td><td>a regression against the baseline</td><td>run the named test and record it, or fix what broke</td></tr>
+<tr><td><code>evidence-check: N guaranteed claim(s) lost the evidence that supported them</code> (exit 10)</td><td>a claim the baseline recorded as supported no longer is</td><td>run the named test and record it, or fix what broke</td></tr>
+<tr><td><code>evidence-check: N supported guarantee(s) left the matrix</code> (exit 10)</td><td>a proven guarantee was deleted or renamed, so the repository proves fewer than the baseline records</td><td>restore the claim, or rewrite the baseline in its own commit saying why the guarantee went away</td></tr>
+<tr><td><code>evidence-check: N guaranteed claim(s) the baseline does not know</code></td><td>new debt: a claim written after the baseline, with no recorded run — reported, never fatal</td><td>record a run, or <code>scripts/evidence-check --baseline</code> in its own commit</td></tr>
 <tr><td><code>evidence-check: N baseline line(s) now supported — tighten the baseline</code></td><td>debt was paid and the list did not follow</td><td><code>scripts/evidence-check --baseline</code>, in its own commit</td></tr>
 </tbody></table>
 </div>
@@ -634,7 +656,7 @@ passed against this commit. Whether the test tests the claim is a question for r
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3407ca2d406e09de04648cc4ecb38631756c65a6" class="font-mono underline">3407ca2</a> · inputs <span class="font-mono">44e332acf6bd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/be8b66672e798876109bfb1a5ce313efca27f507" class="font-mono underline">be8b666</a> · inputs <span class="font-mono">cb2387cb2c02</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

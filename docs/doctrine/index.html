@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d2614769afba26208e87">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -448,7 +448,15 @@ is reported and refuses; it is not silently ignored.</p>
 <p>A refusal names the doctrines responsible:</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>finish: refused, 1 unmet</span></span>
 <span class="giallo-l"><span>blocking doctrines:</span></span>
-<span class="giallo-l"><span>- majordomus.blocker-resolution</span></span></code></pre><h2 id="reading-it-from-the-command-line"><a class="zola-anchor" href="#reading-it-from-the-command-line" aria-label="Anchor link for: reading-it-from-the-command-line">Reading it from the command line</a></h2>
+<span class="giallo-l"><span>- majordomus.blocker-resolution</span></span></code></pre>
+<p>One line of the contract is not about the repository at all. <code>publication_current</code> asks
+whether what the public is being served is still a projection of the trunk — a question no
+gate in the CI model can be selected for, because no change to any file can answer it. The
+doctrine <code>majordomus.publication-currency</code> runs the gates the CI model marks <code>at-finish</code>,
+live, at the moment of the claim, and refuses <code>completed</code> while one of them says the
+publication is owed. It is run and never recorded: evidence whose subject can change while
+the tree stands still has no hash to expire against.</p>
+<h2 id="reading-it-from-the-command-line"><a class="zola-anchor" href="#reading-it-from-the-command-line" aria-label="Anchor link for: reading-it-from-the-command-line">Reading it from the command line</a></h2>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> doctrine</span><span class="z-l-8 z-d-8"> status</span><span class="z-l-10 z-l-i z-d-4 z-d-i">        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> derived counts: declared, blocking, advisory, unwired</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> doctrine</span><span class="z-l-8 z-d-8"> list</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> id, class, validator, the commands that enforce it</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> doctrine</span><span class="z-l-8 z-d-8"> show</span><span class="z-l-16 z-d-16"> &lt;</span><span class="z-l-8 z-d-8">i</span><span>d</span><span class="z-l-16 z-d-16">&gt;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the full record, including claims and test</span></span>
@@ -577,7 +585,7 @@ a check. <code>doctor</code> traces the invocation instead.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3407ca2d406e09de04648cc4ecb38631756c65a6" class="font-mono underline">3407ca2</a> · inputs <span class="font-mono">44e332acf6bd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/be8b66672e798876109bfb1a5ce313efca27f507" class="font-mono underline">be8b666</a> · inputs <span class="font-mono">cb2387cb2c02</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

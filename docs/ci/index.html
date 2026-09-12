@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d2614769afba26208e87">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -248,6 +248,22 @@ master carried the defects overnight with every check apparently green, because 
 never reported and a run that reported green look identical in the interface. The gates were
 not weakened: they run in full every night and on request, which is more often than they
 were completing. <code>ci</code> still needs their jobs and still turns red when one of them does.</p>
+<p>A fourth cuts across all of them, and it is the one distinction that takes a gate out of CI
+planning altogether. A gate the model marks <code>at-finish: true</code> measures a <strong>deployment</strong>
+rather than a tree: which commit GitHub Pages is serving, whether that commit is still on
+master, whether anything has landed since. No edit to any file can make that question come
+out differently, so no path class can select it — and being in no class is not the defect
+here that it was for <code>version-surface</code>, it is the honest consequence of what the gate
+measures. <code>pages-live</code> carries it.</p>
+<p>Which leaves the question owned by nobody. A full plan does ask it, and a full plan runs on
+a push to master — <em>before</em> the publication it would judge. The moment it is worth asking is
+when a worker says the work is done, so that is who asks: <code>majordomus finish</code> runs every
+<code>at-finish</code> gate live and refuses the outcome <code>completed</code> while one of them reports the
+published site is behind the trunk. The doctrine is <code>majordomus.publication-currency</code> and
+the repository turns it on with <code>publication_current</code> in <code>verification.finish_requires</code>; a
+gate that could not reach its subject — no network, no published branch — is reported
+unverified by name and refuses nothing, because a session that could not measure the site is
+not evidence that the site is stale.</p>
 <p>To force full validation of a pull request, add the label <code>ci:full</code>; the <code>labeled</code> event
 re-plans it. To see why a gate ran or did not, read the <code>plan</code> job's summary or the
 <code>ci-plan</code> artifact, or run the planner on the same diff locally.</p>
@@ -557,7 +573,7 @@ fixtures.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3407ca2d406e09de04648cc4ecb38631756c65a6" class="font-mono underline">3407ca2</a> · inputs <span class="font-mono">44e332acf6bd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/be8b66672e798876109bfb1a5ce313efca27f507" class="font-mono underline">be8b666</a> · inputs <span class="font-mono">cb2387cb2c02</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
