@@ -480,11 +480,35 @@ mj_validate_ai_layout() {
   return 0
 }
 
+# Three directories were checked here as one class, and they are two classes.
+#
+# The prompts section is **tracked**: the manifest names it, the layer is incomplete
+# without it, and no command creates it on demand. Absence is a finding.
+#
+# The two record stores are **checkout-local** — under .ai/local/, which .gitignore
+# excludes — and they are created on demand, by their own writers and by `majordomus
+# update`, which does create both (measured: `create .ai/local/state/handovers/`). So every
+# new worktree was born with two findings that named a remedy for a cause that did not
+# exist, and every worker in it read them on every run. Two standing warnings that no
+# action clears are not a signal; they teach a reader to skim the report.
+#
+# The signal is not lost, because it was never here. The condition that matters is that
+# episodes have opened in this checkout and the writers have stopped, and
+# `mj_validate_lifecycle` already reports exactly that — conditioned on there having been
+# activity to judge, which is the half this check had no way of knowing. What is left here
+# is absence, reported as absence, in the same words doctor already uses for a local store
+# nothing has written to yet.
 mj_validate_layout() {
-  local d
-  for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_PROMPTS_DIR"; do
-    if [ -d "$d" ]; then mj_doctrine_ok layout "$(mj_rel "$d")" "present"
-    else mj_doctrine_fail layout "$(mj_rel "$d")" "missing; the command that writes it will create it, but update installs it" "majordomus update"; fi
+  local d n
+  if [ -d "$MJ_PROMPTS_DIR" ]; then mj_doctrine_ok layout "$(mj_rel "$MJ_PROMPTS_DIR")" "present"
+  else mj_doctrine_fail layout "$(mj_rel "$MJ_PROMPTS_DIR")" "missing; the manifest names it and no command creates it on demand" "majordomus update"; fi
+  for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints"; do
+    if [ -d "$d" ]; then
+      n="$(find "$d" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+      mj_doctrine_ok layout "$(mj_rel "$d")" "present, $n record(s)"
+    else
+      mj_doctrine_ok layout "$(mj_rel "$d")" "absent: nothing has been written to this checkout-local store; its writer and majordomus update both create it"
+    fi
   done
   return 0
 }
