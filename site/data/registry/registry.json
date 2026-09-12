@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "1c21f6f010f3d76071634eac161038e06703bb576ffe08d6cc33d42156eeed5a",
+    "fingerprint": "3cc469840aafd3fb500ff3c428be7cab069fe5ff2979d79d140d7b9b5ce8ee5e",
     "summary": {
-      "total": 1417,
+      "total": 1419,
       "builtin": 108,
-      "declarative": 1309,
+      "declarative": 1311,
       "by_kind": {
         "command": 6,
         "query": 102,
-        "resource": 1309
+        "resource": 1311
       },
       "by_stability": {
         "behaviorally_verified": 95,
         "experimental": 7,
-        "implemented": 1315
+        "implemented": 1317
       },
       "mcp_tools": 105,
-      "mcp_resources": 1348,
+      "mcp_resources": 1350,
       "http_routes": 107,
       "cli_commands": 48,
       "modules": 64,
@@ -38655,7 +38655,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 49,
+        "capabilities": 50,
         "capability_ids": []
       },
       {
@@ -39298,7 +39298,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 194,
+        "capabilities": 195,
         "capability_ids": []
       },
       {
@@ -39378,7 +39378,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5a6bd20743468c10270af1a949f13360d74b61b8464483937297ae466bdf22c4",
+    "fingerprint": "1ae0b05da477c9c8f87ab49dc581996ee1957495247df648f4bb3334f26cb492",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -39401,7 +39401,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 49,
+      "adr": 50,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -39427,7 +39427,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 194,
+      "test": 195,
       "use-case": 45,
       "workspace": 1
     },
@@ -40231,6 +40231,23 @@
         "tags": [
           "coordination",
           "governance"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0055",
+        "kind": "adr",
+        "identity": "adr-0055",
+        "title": "Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts",
+        "description": "Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts",
+        "path": ".ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9618,
+        "tags": [
+          "operations",
+          "safety",
+          "worktrees",
+          "ci"
         ]
       },
       {
@@ -43089,7 +43106,7 @@
         "title": "Backlog",
         "path": "docs/BACKLOG.md",
         "source_class": "document",
-        "bytes": 8697
+        "bytes": 11663
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -45426,7 +45443,7 @@
         "identity": "bin/majordomus-cli",
         "path": "bin/majordomus-cli",
         "source_class": "entrypoint",
-        "bytes": 3223
+        "bytes": 3632
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-env",
@@ -45738,7 +45755,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 13954
+        "bytes": 18471
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -50048,15 +50065,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.accumulation-is-measured@1",
+        "uri": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "rule",
-        "identity": "project.accumulation-is-measured@1",
+        "identity": "project.accumulation-is-measured@2",
         "title": "Everything that accumulates is measured, bounded and reaped by a committed command",
-        "description": "Open pull requests, linked worktrees, local branches and running servers all grow on their own and none of them shrinks on its own; each is measured by one committed command, carries a threshold that makes growth loud, and is reduced by a command that is safe to run unattended — never by a name match against a process list and never by deleting a worktree whose work is not published.",
-        "path": ".ai/repo/rules/project/accumulation-is-measured.v1.md",
+        "description": "Open pull requests, linked worktrees, local branches, running servers and the disk their build output holds all grow on their own and none of them shrinks on its own; each is measured by one committed command, carries a threshold that makes growth loud, and is reduced by a command that is safe to run unattended — never by a name match against a process list, never by deleting a worktree whose work is not published, and never by a predicate whose missing input becomes a verdict.",
+        "path": ".ai/repo/rules/project/accumulation-is-measured.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5404,
+        "bytes": 10463,
         "tags": [
           "operations",
           "git",
@@ -50064,7 +50081,8 @@
           "safety",
           "agents",
           "coordination",
-          "ci"
+          "ci",
+          "disk"
         ]
       },
       {
@@ -52050,7 +52068,7 @@
         "identity": "test/cases/131_backlog_hygiene.sh",
         "path": "test/cases/131_backlog_hygiene.sh",
         "source_class": "case",
-        "bytes": 5157
+        "bytes": 6951
       },
       {
         "uri": "majordomus://test/test/cases/131_completion_gates.sh",
@@ -52419,6 +52437,14 @@
         "path": "test/cases/273_navigation_is_declared_once.sh",
         "source_class": "case",
         "bytes": 8955
+      },
+      {
+        "uri": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "test",
+        "identity": "test/cases/276_disk_is_bounded.sh",
+        "path": "test/cases/276_disk_is_bounded.sh",
+        "source_class": "case",
+        "bytes": 12587
       },
       {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -53704,7 +53730,7 @@
       "identity": [
         "id"
       ],
-      "objects": 49
+      "objects": 50
     },
     {
       "name": "application",
@@ -53969,7 +53995,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 194
+      "objects": 195
     },
     {
       "name": "use-case",

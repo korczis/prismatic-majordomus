@@ -11,6 +11,9 @@
 #
 #   - `scripts/reap-orphans` exists, is executable, and matches processes by predicate —
 #     a `pkill`/`killall` by name would kill the servers live peers are attached to
+#   - the same reaper still deletes only build directories, still holds all three conditions
+#     for reclaiming one, and still refuses when liveness cannot be measured
+#   - every path that starts a build asks the one shared free-space check before it does
 #   - `.gitattributes` declares `merge=derived` and the driver it names is committed and
 #     executable, and a recipe installs it (the declaration and its installer are one
 #     relation; checking only one side is how this class of defect survives)
@@ -39,9 +42,11 @@ findings=0
 fail() { printf 'FAIL backlog-check  %s\n' "$*"; findings=$((findings+1)); }
 ok()   { printf 'OK   backlog-check  %s\n' "$*"; }
 
-RULE=".ai/repo/rules/project/accumulation-is-measured.v1.md"
+RULE=".ai/repo/rules/project/accumulation-is-measured.v2.md"
 REAPER="scripts/reap-orphans"
 CASE="test/cases/131_backlog_hygiene.sh"
+DISK_CASE="test/cases/276_disk_is_bounded.sh"
+SPACE_LIB="lib/rust_bin.sh"
 
 # 1. the reaper exists and is safe by construction
 if [ ! -f "$REAPER" ]; then
@@ -58,6 +63,63 @@ else
   for predicate in 'ESTABLISHED' 'ppid' 'MIN_AGE'; do
     grep -q "$predicate" "$REAPER" || fail "$REAPER no longer tests '$predicate': its safety rests on all three"
   done
+fi
+
+# 1b. the fifth quantity: the reaper reclaims build output, and only build output.
+# The conditions are read out of the script rather than exercised here — a CI runner has no
+# worktrees to classify — but their absence is exactly what would turn this reaper into a
+# worktree reaper, which is the one thing it must never become (ADR 0055).
+if [ -x "$REAPER" ]; then
+  # it removes target directories and nothing else. Every `rm -rf` in it must be over the
+  # build directory it resolved; a removal of "$wt" would be a worktree reaper.
+  removals="$(grep -nE '^[^#]*rm -rf' "$REAPER" | grep -vE 'rm -rf "\$target"|rm -f ' || true)"
+  if [ -n "$removals" ]; then
+    fail "$REAPER removes something other than a resolved build directory:"
+    echo "$removals" | head -5 | sed 's/^/       /'
+  else
+    ok "the reaper removes build directories and never a worktree"
+  fi
+  for predicate in 'merge-base --is-ancestor' 'ps -Ao command=' '\-d cwd' 'status --porcelain'; do
+    grep -qE "$predicate" "$REAPER" \
+      || fail "$REAPER no longer tests '$predicate': merged, not live and idle are all three required"
+  done
+  grep -q 'no-optional-locks' "$REAPER" \
+    || fail "$REAPER reads a worktree's status without --no-optional-locks: a status sweep that refreshes an index fakes liveness for every tree it touches"
+  grep -q 'nothing is reclaimed' "$REAPER" \
+    || fail "$REAPER no longer refuses when its inputs cannot be read: a sweep that cannot tell the living from the dead must reclaim nothing (project.destructive-sweeps-fail-closed)"
+  grep -q 'CACHEDIR_SIG\|is_cargo_target' "$REAPER" \
+    || fail "$REAPER no longer proves that what it removes is a cargo build directory"
+  [ -f "$DISK_CASE" ] && ok "the disk behavioural case is present" || fail "$DISK_CASE is missing"
+fi
+
+# 1c. the bound: every path that starts a build asks the one shared check first.
+# Discovered, not listed: a hand-kept list of build sites falls behind the first time one is
+# added, which is how a one-sided relation survives here (docs/DYNAMICITY.md).
+if [ ! -f "$SPACE_LIB" ]; then
+  fail "$SPACE_LIB is missing: the free-space floor has no home"
+elif ! grep -q 'mj_rust_space_check' "$SPACE_LIB"; then
+  fail "$SPACE_LIB no longer defines mj_rust_space_check: a build has no bound on the disk it may consume"
+else
+  ok "the free-space floor is defined once, in $SPACE_LIB"
+  # the number carries its measurement, not just a value (the doctor_ms defect)
+  grep -qE 'MJ_MIN_FREE_MB_DEFAULT=[0-9]+' "$SPACE_LIB" \
+    || fail "$SPACE_LIB states no floor"
+  grep -qiE 'measured|KiB|GiB' "$SPACE_LIB" \
+    || fail "$SPACE_LIB states a floor with no measurement written beside it"
+  unbounded=""
+  for f in bin/majordomus-cli scripts/derive; do
+    [ -f "$f" ] || continue
+    grep -qE '^[^#]*cargo build' "$f" || continue
+    grep -q 'mj_rust_space_check' "$f" || unbounded="$unbounded $f"
+  done
+  if [ -f .just/build.just ] && ! grep -q 'mj_rust_space_check' .just/build.just; then
+    unbounded="$unbounded .just/build.just"
+  fi
+  if [ -n "$unbounded" ]; then
+    fail "these start a build without asking whether there is room for it:$unbounded"
+  else
+    ok "every path that starts a build is bounded on free space first"
+  fi
 fi
 
 # 2. the merge policy's two halves agree — the declaration and its installer

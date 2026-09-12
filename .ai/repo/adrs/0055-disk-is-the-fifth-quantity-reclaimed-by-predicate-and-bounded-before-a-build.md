@@ -1,0 +1,168 @@
+---
+schema: adr/v1
+id: adr-0055
+kind: adr
+title: Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts
+status: proposed
+date: 2026-09-12
+tags:
+  - operations
+  - safety
+  - worktrees
+  - ci
+provenance:
+  origin: authored
+related:
+  - rule:project.accumulation-is-measured
+  - rule:project.destructive-sweeps-fail-closed
+  - rule:project.reclaim-only-what-you-own
+  - rule:project.every-wait-is-bounded
+  - rule:project.worktree-topology
+  - test:test/cases/276_disk_is_bounded.sh
+  - test:test/cases/131_backlog_hygiene.sh
+---
+
+# 55. Disk is the fifth self-accumulating quantity
+
+## Context
+
+`project.accumulation-is-measured` names four quantities that grow because nothing decided
+that they should: open pull requests, linked worktrees, local branches, running servers.
+Each has a measuring command, a threshold and a reducing command.
+
+On 2026-09-12 this machine reached **zero bytes free** on a 926GiB volume. Every session
+running on it died at once — not gracefully, but with the harness unable to write its own
+task files, which reads to each session like its tooling breaking rather than like a full
+disk. Two sessions announced the measurement on the peer board within seconds of each
+other, both correctly refusing to delete anything they had not created, because there was
+nothing on this machine authorised to.
+
+The cause was measured immediately afterwards. `~/dev/prismatic-majordomus-wt` held 180GB,
+of which ~145GB was `apps/majordomus-cli/target` in worktrees **whose branches were already
+merged into `origin/master`**. `feature/canonical-versioning` had landed as PR #242 hours
+earlier and was still holding 32GiB. Nobody was ever going to reclaim any of it by hand: a
+worktree's build directory is the one artefact of a finished piece of work that no step of
+finishing it removes.
+
+So disk is the fifth quantity, and it has the same shape as the other four — invisible from
+where a person looks, growing from every normal action, shrinking from none — except that it
+accumulates faster than all of them and its cliff is steeper. A backlog of pull requests
+degrades throughput. A full volume ends every session on the machine simultaneously, in a
+state where the diagnosis (`df`) cannot be run.
+
+Two rules already govern the space around it and neither covers it:
+
+- `project.reclaim-only-what-you-own` forbids a *worker* from removing another worktree's
+  build output, after a session did exactly that twice in one day and made a colleague's
+  executable vanish mid-run. It closes with "disk pressure is reported, not resolved by
+  taking somebody else's tools", and leaves who *may* resolve it unnamed.
+- `project.destructive-sweeps-fail-closed` exists because of an earlier attempt at this
+  sweep: a script that cleaned `target/` by `now - mtime`, where three unreadable `stat`
+  calls became an age of ~496938 hours and three *active* worktrees were cleaned as the
+  stalest candidates in the set.
+
+## Decision
+
+**Disk is added to `project.accumulation-is-measured` as its fifth quantity** (rule version
+2), measured and reduced by the reaper that already bounds the fourth, and bounded on the
+demand side before a build starts.
+
+### It removes `target/` and never a worktree
+
+The whole design rests on this. Build output is regenerable; a worktree holds authored files
+that may exist nowhere else — 66 uncommitted source files in one worktree and 68 in another
+were found in a sweep on 2026-09-09, with no reflog and no remote. A false positive in this
+reaper costs somebody a rebuild and cannot cost a byte of source. This is the boundary that
+keeps the reaper safe to run unattended, and it is not to be relaxed into a worktree reaper
+later.
+
+### Three conditions, all required, none of them an announcement
+
+1. **merged** — the worktree's tip is an ancestor of `origin/master`.
+2. **not live** — no process names that path and no process is standing in it, read from
+   `ps -Ao command=` and from every process's working directory.
+3. **idle** — `git status` is empty.
+
+Condition 2 is the one that carries the design. Merged-ness alone would have been a
+disaster, and the instance was on the machine the morning this was written:
+`feature/entities-are-routable` held 11.8GB, its session had not committed yet, so its tip
+was exactly where the merge left it and `merge-base` reported it fully merged — while a live
+peer was working in it.
+
+The peer board is deliberately **not** one of the signals. An announcement belongs to a
+*connection*, and `CLAUDE.md` states that a worker that reconnects keeps its work while
+losing its place on the board — which is precisely the window a reaper runs in. `ps` and the
+working directory are what the machine knows without anybody having told it anything.
+
+An mtime is deliberately not a signal either. It is the predicate the earlier incident used,
+`find -newermt` silently matches nothing on macOS, and a status sweep rewrites index mtimes
+and fakes liveness for every tree it touches — which is also why the idle check reads status
+with `--no-optional-locks`, so that this reaper does not fake liveness for the next reader.
+
+### It fails closed, and the refusal is total rather than per-candidate
+
+`project.destructive-sweeps-fail-closed` requires a predicate whose input could not be read
+to be false. Liveness is different in kind from the per-candidate inputs: if `ps` or the
+working-directory reading comes back empty, the sweep cannot tell the living from the dead
+*for anybody*, so it reclaims nothing at all and says so, rather than proceeding over
+candidates it cannot classify. The same holds when `origin/master` cannot be resolved.
+Per-candidate unreadable inputs — a size that would not measure, a working tree git could
+not read, a directory carrying no mark of cargo's — exclude that candidate and are counted
+in the report's `skipped` line.
+
+### The primary checkout is excluded by name, not by predicate
+
+It sits on master, it is clean more often than not, and it holds the executable other
+checkouts borrow through `MAJORDOMUS_BIN`. A predicate would reclaim it on a quiet
+afternoon. `project.reclaim-only-what-you-own` gets its missing half here: a *worker* still
+reclaims only its own, and the named exception is one committed command that classifies
+every candidate before it acts.
+
+### A build is bounded on free space the way a wait is bounded on time
+
+`project.every-wait-is-bounded`: a wait without a timeout is a hang with a nicer name. A
+build with no bound on the disk it may consume is the same shape and ended the same way.
+
+A `df` in `doctor` or in the entry banner would help the *next* person and could not have
+helped anyone who was stuck, because when the volume filled nobody could run anything at
+all. What helps is a refusal to start: `mj_rust_space_check` in `lib/rust_bin.sh`, called by
+the three places that start a build on a worker's behalf — the launcher, `scripts/derive`,
+and `just build` / `build-release`.
+
+The floor is **5120MB**, and it is measured rather than chosen: a full `cargo build --locked`
+of `apps/majordomus-cli` into an empty `target/` with a warm sccache wrote 2,566,652 KiB
+(2.45GiB) on 2026-09-12. The floor is two of those — enough for the build that is starting to
+finish, and for the release or test artifacts the same session usually adds on top. The
+measurement is written beside the number in `lib/rust_bin.sh`; a threshold with no
+justification next to it is a defect this repository has already paid for once.
+
+The bound's failure behaviour is deliberately the *opposite* of the sweep's. A deleting
+predicate that cannot measure its input must be false. A bound that cannot measure its input
+must not refuse: making every build on a machine whose `df` is unreadable impossible stops
+all work to prevent a hypothetical. So an unmeasurable free space says so on stderr and lets
+the build run, and only a measured-and-below refuses. `MAJORDOMUS_MIN_FREE_MB=0` lifts it.
+
+### Why the reaper and the bound are one change
+
+They are the two sides of one quantity and neither is sufficient alone: a reaper alone lets
+a single build consume the last gigabytes between two runs, and a bound alone leaves 140GB
+of landed build output on the disk forever while refusing to let anyone work. They share the
+measurement (`df` on the volume the build writes to), the doctrine (this rule), the gate and
+the case. Splitting them would produce two half-mechanisms with one story between them.
+
+## Consequences
+
+- `scripts/reap-orphans` has two subjects and two separate consents: `--kill` for servers,
+  `--reclaim` for build output. A caller already running `--kill` does not start deleting a
+  hundred gigabytes it never agreed to.
+- The dry run on this machine on 2026-09-12 classified 34 build directories: 24 reclaimable
+  at 140.3GB, 10 kept (2 as this checkout's own, 5 unmerged, 2 with uncommitted work, 1 with
+  a live worker in it), 0 skipped for want of a readable input.
+- A build can now refuse to start. That is the point, and it is a behaviour change for every
+  caller of `bin/majordomus-cli`, `scripts/derive` and `just build` on a machine under 5GB.
+- `scripts/ci/backlog-check` gains the fifth quantity's structural findings: the reaper still
+  removes only build directories, still holds all three conditions, and still refuses when
+  liveness is unmeasurable.
+- Not decided here: whether the reaper should run on a timer. It is safe to run unattended by
+  construction, but nothing on this machine schedules anything yet, and a scheduler is a
+  sixth quantity of its own.
