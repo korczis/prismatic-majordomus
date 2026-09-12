@@ -15,6 +15,10 @@
     a problem falls under (the areas), then the questionnaire, then every moment with the
     filters. Each of the three ways in shows the same objects; only the grouping differs. -#}
 {%- set catalogue = load_data(path="data/registry/why.json") -%}
+{#- The heading is the one the homepage's own `recognise` chapter uses. It was typed here a
+    second time, so the two could disagree the moment anyone edited one — and one of them was
+    dated ("this week"). One file states it. -#}
+{%- set marketing = load_data(path="data/marketing.toml") -%}
 {%- set public = [m for m in catalogue.moments if m.status == "stable"] -%}
 {%- set audiences = [a for a in catalogue.audiences if a.count > 0] -%}
 {%- set areas = [a for a in catalogue.areas if a.count > 0] -%}
@@ -23,7 +27,7 @@
 <div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
   {% include "partials/breadcrumb.html" %}
   <p class="mt-4 font-mono text-xs uppercase tracking-widest text-fg-brand">why · {{ public | length }} operational failure modes</p>
-  <h1 class="mt-2 break-words text-3xl font-extrabold tracking-tight text-heading sm:text-4xl lg:text-5xl">You need this if, this week, you have…</h1>
+  <h1 class="mt-2 break-words text-3xl font-extrabold tracking-tight text-heading sm:text-4xl lg:text-5xl">{{ marketing.recognise.title }}</h1>
   <p class="mt-4 max-w-3xl break-words text-lg leading-relaxed text-body">{{ section.description }}</p>
   <p class="mt-3 max-w-3xl text-base font-medium text-heading">None of these are model problems. They are operations problems, and operations is what Majordomus does.</p>
   <nav aria-label="Ways into the catalogue" class="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

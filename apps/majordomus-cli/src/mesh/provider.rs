@@ -122,6 +122,14 @@ pub struct ProviderStatus {
     pub received: u64,
 }
 
+/// A provider id is unique in a mesh, so it is both what a reader looks for and the
+/// identity that makes the status list total.
+impl crate::order::Ordered for ProviderStatus {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// The counters a provider's threads share with its status.
 #[derive(Default)]
 pub struct Counters {

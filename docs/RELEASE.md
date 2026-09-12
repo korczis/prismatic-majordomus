@@ -142,11 +142,13 @@ writer.
 One section per release record, newest first by the date the record carries, with the
 unreleased work leading:
 
-```text
-   release record  ──►  version, tag, date, commit, artifacts
-   adr objects     ──►  the decisions dated inside this release's window
-   git log A..B    ──►  the changes, as conventional commits
-   issue·milestone ──►  the records those commits name, resolved against the layer
+```mermaid
+flowchart LR
+  record["release record"] --> meta["version, tag, date,<br>commit, artifacts"]
+  adr["adr objects"] --> decisions["the decisions dated inside<br>this release's window"]
+  log["git log A..B"] --> changes["the changes, as<br>conventional commits"]
+  refs["issue · milestone"] --> resolved["the records those commits name,<br>resolved against the layer"]
+  meta & decisions & changes & resolved --> section["one changelog section"]
 ```
 
 The window of a release is the same interval said in the two vocabularies its two sources
@@ -218,10 +220,12 @@ any change at all, each with its `kind`, the `heading` it is shown under, the `r
 by, and its own `changes` — and the groups are already in rank order when the document is
 composed:
 
-```text
-  section.groups[]  →  { kind: "feat", heading: "Added",   rank: 0, changes: [...] }
-                       { kind: "fix",  heading: "Fixed",   rank: 1, changes: [...] }
-                       { kind: "docs", heading: "Documentation", rank: 4, changes: [...] }
+```json
+{ "groups": [
+  { "kind": "feat", "heading": "Added",         "rank": 0, "changes": ["…"] },
+  { "kind": "fix",  "heading": "Fixed",         "rank": 1, "changes": ["…"] },
+  { "kind": "docs", "heading": "Documentation", "rank": 4, "changes": ["…"] }
+] }
 ```
 
 That order used to exist in exactly one place a projection could not reach: `ChangeKind::rank()`,
@@ -243,12 +247,13 @@ own `repository`, which the compiler passes in as `CARGO_PKG_REPOSITORY`. None o
 literal, so a fork or a move carries every link with it and nothing has to be told where the
 project now lives:
 
-```text
-  section  ──►  notes_url    the published release, from the record's own notes_url
-                compare_url  the range against the previous tag
-                tree_url     the tree at that tag
-  change   ──►  url          the commit
-  decision ──►  url          the ADR file that states the decision
+```mermaid
+flowchart LR
+  section["section"] --> notes["notes_url<br>the published release, from<br>the record's own notes_url"]
+  section --> compare["compare_url<br>the range against<br>the previous tag"]
+  section --> tree["tree_url<br>the tree at that tag"]
+  change["change"] --> curl["url<br>the commit"]
+  decision["decision"] --> durl["url<br>the ADR file that<br>states the decision"]
 ```
 
 `forge()` in `changelog.rs` recognises one shape — `https://github.com/<owner>/<repo>` — and
@@ -319,8 +324,9 @@ that is argued. What was missing was not a single source — it was a single wri
 `VersionPlan` that `release analyze`, the HTTP route, the MCP tool and the gate read, and
 applies it:
 
-```text
-  plan  →  validate  →  apply(plan)
+```mermaid
+flowchart LR
+  plan["plan"] --> validate["validate"] --> apply["apply(plan)"]
 ```
 
 With no argument the version becomes the measured minimum: the baseline raised by what the

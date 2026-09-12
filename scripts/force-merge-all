@@ -107,7 +107,6 @@ if [ "$DRY_RUN" = 1 ]; then
 fi
 
 g() { git -C "$WT" -c rerere.enabled=false "$@"; }
-clean=0; biased=0; forced=0; skipped=0; ancestor=0
 
 printf '%s\n' "$BRANCHES" | while IFS= read -r b; do
   [ -n "$b" ] || continue

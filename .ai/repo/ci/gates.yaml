@@ -154,7 +154,7 @@ gates:
   - id: rule-proof
     job: structure
     runs: scripts/ci/rule-proof-check
-    summary: every rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, and a named case that was renamed or deleted fails outright
+    summary: every blocking rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, a named case that was renamed or deleted fails outright, and the verdict names the population it is not about (claims are the claim-proof gate)
 
   # The commit policy over the history (rule project.conventional-commits). Needs the
   # executable, because the judge is the executable's — the gate chooses a range and
@@ -175,16 +175,18 @@ gates:
     runs: scripts/ci/lease-reader-check
     summary: the shared server's lease is parsed by the one typed reader the executable owns; a second parser anywhere but documentation and the tests is refused
 
-  # A promise names a proof a machine can follow: a rule declared blocking with a validator
-  # or a Verification path that runs, a guaranteed claim whose test names the claim back.
-  # File reads only — the rule front matter and docs/CLAIMS.yaml — so it belongs beside the
-  # other structure checks and needs no build. The debt is ratcheted in
-  # .ai/repo/enforcement-baseline.txt; the gate fails on a new promise, not on the known ones.
-  - id: enforcement
+  # A claim marked guaranteed names a test, and the test names the claim back. The other end
+  # of the promise — a rule declared blocking that names no proof — is the `rule-proof` gate
+  # above and is not measured here; this gate carried a weaker duplicate of it until the two
+  # verdicts were read as contradicting each other. File reads only (docs/CLAIMS.yaml and the
+  # tests it names), so it belongs beside the other structure checks and needs no build. The
+  # debt is ratcheted in .ai/repo/claim-proof-baseline.txt; the gate fails on a new claim, not
+  # on the known ones.
+  - id: claim-proof
     job: structure
     always: true
-    runs: scripts/ci/enforcement-check
-    summary: a rule declared blocking and a claim marked guaranteed each name something that runs; both halves state their denominator, and neither set may grow
+    runs: scripts/ci/claim-proof-check
+    summary: a claim marked guaranteed names a test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and the set may not grow
 
   - id: rust-quality
     job: structure
@@ -385,6 +387,23 @@ gates:
   # the two the release script reads, nor that they still agree. Until this gate, the second
   # question was asked only when a tag was cut, so a half-applied bump lived on the default
   # branch until somebody tried to publish. File reads only; it belongs in the structure job.
+  # Box art in a published document: a picture nothing can render, link, theme, diff against
+  # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
+  # job; the ratchet is meant to reach zero.
+  - id: diagram-check
+    job: structure
+    runs: scripts/ci/diagram-check
+    summary: no architectural relationship in a published document is typed in box art — every one is a mermaid block, with literal terminal output, file listings and quoted file content exempt by declaration
+
+  # The site's navigation is one declaration — site/data/nav.toml — and the navbar and the
+  # footer are projections of it. Both halves of that have failed here: the footer rendered
+  # five links it typed itself while the file's own header said otherwise, and two routes sat
+  # in two groups under two labels. File reads only, so it belongs in the structure job.
+  - id: nav-check
+    job: structure
+    runs: scripts/ci/nav-check
+    summary: the site's navigation is declared once in site/data/nav.toml — no href is written twice, the primary navigation stays small, every template that renders navigation reads nav.groups and types no route the declaration does not carry, and the call to action resolves
+
   - id: release-check
     job: structure
     runs: scripts/ci/release-check
@@ -398,7 +417,7 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/rust-check, scripts/rust-coverage, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
     gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, version-surface, release-check]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
@@ -420,8 +439,8 @@ classes:
   # class, so both apply, and the vendored package under share/ is selected here too —
   # `share` does not name it and a doctrine's proof can go stale exactly like a rule's.
   - id: governance
-    paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, apps/majordomus-cli/src/rules/**]
-    gates: [rule-proof, english-only, finding-reproduce, shell-suite, rust-integration]
+    paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/claim-proof-check, .ai/repo/claim-proof-baseline.txt, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, test/cases/230_verdict_states_its_subject.sh, apps/majordomus-cli/src/rules/**]
+    gates: [rule-proof, claim-proof, english-only, finding-reproduce, shell-suite, rust-integration]
 
   # the commit policy: the subsystem that judges a message, the gate that reads the history
   # through it, the hook that refuses with it, and the baseline of the commits that predate
@@ -483,12 +502,12 @@ classes:
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
     paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, diagram-check]
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
     paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design, nav-check]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and

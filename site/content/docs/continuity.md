@@ -322,26 +322,32 @@ about to build. That is the one moment at which a continuation record reaches a 
 without the worker asking for it, and it is the difference between a record that is written
 automatically and one that is also read.
 
-```
-provider fires SessionStart
-        |
-        +--> session opens (or the open one is kept)
-        +--> the working context is frozen
-        +--> the briefing goes to stdout: the episode, the resolved handover with its
-        |    divergence label AND its freshness, the blockers, and — only when the record
-        |    is still current — the one section to act on
-        v
-   work happens
-        |
-provider fires PreCompact
-        +--> a derived checkpoint, because the conversation is about to stop holding it
-        |
-provider fires SessionEnd
-        +--> a derived checkpoint, for the same reason: the close is the other moment at
-        |    which what the episode knows stops being reachable
-        +--> a derived handover
-        +--> the episode closes into its envelope of references
-```
+<pre class="mermaid">
+flowchart TD
+  ss["provider fires SessionStart"]
+  opens["session opens (or the open one is kept)"]
+  frozen["the working context is frozen"]
+  brief["the briefing goes to stdout: the episode, the resolved&lt;br&gt;handover with its divergence label AND its freshness,&lt;br&gt;the blockers, and — only when the record is still&lt;br&gt;current — the one section to act on"]
+  work["work happens"]
+  pc["provider fires PreCompact"]
+  cp1["a derived checkpoint, because the conversation&lt;br&gt;is about to stop holding it"]
+  se["provider fires SessionEnd"]
+  cp2["a derived checkpoint, for the same reason: the close&lt;br&gt;is the other moment at which what the episode knows&lt;br&gt;stops being reachable"]
+  ho["a derived handover"]
+  env["the episode closes into its envelope of references"]
+
+  ss --&gt; opens
+  ss --&gt; frozen
+  ss --&gt; brief
+  ss --&gt; work
+  work --&gt; pc
+  pc --&gt; cp1
+  pc --&gt; se
+  se --&gt; cp2
+  se --&gt; ho
+  se --&gt; env
+</pre>
+
 
 Every one of those arrows fires whether or not a task is open and whatever outcome the last
 task reached, and each event writes a `provider.event.received` line to the ledger *before*
@@ -457,66 +463,28 @@ disk, so nothing can compose its record.
 Everything above is one path, and it is worth seeing whole. Every box is a thing that
 exists; the labels on the arrows are what has to be true for the next box to be reached.
 
-```text
-  a person runs a command                a provider starts a conversation
-  or opens an editor                     (Claude Code: SessionStart)
-            |                                          |
-            +--------------------+---------------------+
-                                 v
-                    ENTRY  bin/majordomus, .envrc, or the hook shim
-                                 |
-                                 v
-                    RUNTIME ENSURED   `serve ensure`: one shared server per
-                                 |    checkout, started if none answers, never built
-                                 v
-                    CLIENT ATTACHED   MCP over stdio or HTTP; the peer board
-                                 |    is what the other workers can see
-                                 v
-                    EPISODE OPENED    keyed by the provider session, not by the
-                                 |    checkout: `state/sessions-open/<provider session>.yaml`
-                                 |    and the pointer aimed at it. `--if-open keep`
-                                 |    returns this provider session's episode and no other.
-                                 v
-                    FRESHNESS VALIDATED   the resolved handover and checkpoint carry two
-                                 |        independent labels: divergence (where their commit
-                                 |        sits) and freshness (how old they are). A stale
-                                 |        record is shown as history; its `Next Action` is
-                                 |        not quoted as the thing to do now.  [ADR 0052]
-                                 v
-                    CONTEXT PROJECTED   the briefing, within `session.briefing_budget_lines`,
-                                 |      frozen into `local/session-contexts/` as the working
-                                 |      context — what this episode was told, never rewritten
-                                 v
-                    WORK AND EVENTS    every command appends one ledger line, stamped with
-                                 |     the episode that wrote it. A line with no episode
-                                 |     belongs to none: work outside a session is attributed
-                                 |     to nobody rather than to whoever was open nearby.
-                                 v
-                    CHECKPOINTS        written by hand, and derived on PreCompact — the
-                                 |     moment the conversation stops being a place anything
-                                 |     is kept. An artefact of the episode: no task required.
-                                 v
-                    CLOSE AND HANDOVER   SessionEnd closes the episode and, when work is
-                                 |       still open, writes the continuation record. The
-                                 |       envelope's reference lists are computed from the
-                                 |       ledger at close, never accumulated during the episode.
-                                 v
-                    .ai/repo/sessions/<stamp>--<episode>--<branch>--<head>--<digest>.md
-                                 |     TRACKED. The only half of this that survives a clone:
-                                 |     everything under .ai/local/ names this machine and
-                                 |     travels nowhere.
-                                 v
-                    A FUTURE RESUME    locally, the next episode's briefing resolves the
-                                       records of this worktree and branch; elsewhere, a
-                                       clone receives the closed records and reads them as
-                                       history, because a record is evidence and never
-                                       authority.
+<pre class="mermaid">
+flowchart TD
+  cmd["a person runs a command&lt;br&gt;or opens an editor"]
+  conv["a provider starts a conversation&lt;br&gt;(Claude Code: SessionStart)"]
+  entry["ENTRY&lt;br&gt;bin/majordomus, .envrc, or the hook shim"]
+  runtime["RUNTIME ENSURED&lt;br&gt;serve ensure: one shared server per checkout,&lt;br&gt;started if none answers, never built"]
+  client["CLIENT ATTACHED&lt;br&gt;MCP over stdio or HTTP; the peer board is what&lt;br&gt;the other workers can see"]
+  episode["EPISODE OPENED&lt;br&gt;keyed by the provider session, not by the checkout:&lt;br&gt;state/sessions-open/&amp;lt;provider session&amp;gt;.yaml and the pointer&lt;br&gt;aimed at it. --if-open keep returns this provider&lt;br&gt;session's episode and no other."]
+  fresh["FRESHNESS VALIDATED&lt;br&gt;the resolved handover and checkpoint carry two independent&lt;br&gt;labels: divergence (where their commit sits) and freshness&lt;br&gt;(how old they are). A stale record is shown as history;&lt;br&gt;its Next Action is not quoted as the thing to do now.&lt;br&gt;[ADR 0052]"]
+  context["CONTEXT PROJECTED&lt;br&gt;the briefing, within session.briefing_budget_lines, frozen&lt;br&gt;into local/session-contexts/ as the working context —&lt;br&gt;what this episode was told, never rewritten"]
+  events["WORK AND EVENTS&lt;br&gt;every command appends one ledger line, stamped with the&lt;br&gt;episode that wrote it. A line with no episode belongs to&lt;br&gt;none: work outside a session is attributed to nobody&lt;br&gt;rather than to whoever was open nearby."]
+  checkpoints["CHECKPOINTS&lt;br&gt;written by hand, and derived on PreCompact — the moment&lt;br&gt;the conversation stops being a place anything is kept.&lt;br&gt;An artefact of the episode: no task required."]
+  closing["CLOSE AND HANDOVER&lt;br&gt;SessionEnd closes the episode and, when work is still open,&lt;br&gt;writes the continuation record. The envelope's reference&lt;br&gt;lists are computed from the ledger at close, never&lt;br&gt;accumulated during the episode."]
+  record[".ai/repo/sessions/&amp;lt;stamp&amp;gt;--&amp;lt;episode&amp;gt;--&amp;lt;branch&amp;gt;--&amp;lt;head&amp;gt;--&amp;lt;digest&amp;gt;.md&lt;br&gt;TRACKED. The only half of this that survives a clone:&lt;br&gt;everything under .ai/local/ names this machine and&lt;br&gt;travels nowhere."]
+  resume["A FUTURE RESUME&lt;br&gt;locally, the next episode's briefing resolves the records of&lt;br&gt;this worktree and branch; elsewhere, a clone receives the&lt;br&gt;closed records and reads them as history, because a record&lt;br&gt;is evidence and never authority."]
+  watching["and, beside the path, watching it:&lt;br&gt;lifecycle.episodes · lifecycle.recovery · lifecycle.runtime&lt;br&gt;lifecycle.providers · lifecycle.closed · continuity.state&lt;br&gt;projected together on the Cockpit's /cockpit/continuity"]
 
-  and, beside the path, watching it:
-                    lifecycle.episodes · lifecycle.recovery · lifecycle.runtime
-                    lifecycle.providers · lifecycle.closed · continuity.state
-                    projected together on the Cockpit's /cockpit/continuity
-```
+  cmd &amp; conv --&gt; entry
+  entry --&gt; runtime --&gt; client --&gt; episode --&gt; fresh --&gt; context
+  context --&gt; events --&gt; checkpoints --&gt; closing --&gt; record --&gt; resume
+</pre>
+
 
 One box in that path is marked, because it is the newest and the one this repository most
 recently did without: **freshness validated** is a step, not a property of the record.
@@ -530,30 +498,29 @@ document and no site page may carry a briefing, a working context or an open epi
 
 ## Where the lifecycle puts each piece
 
-```
-majordomus start "<task>" --scope <paths> [--profile <name>]
-        |                                  names any prior record for this branch
-        v
-majordomus context                         the briefing, within budget
-        |
-        v
-   work happens (Majordomus is not involved)
-        |
-        +---> majordomus checkpoint        progress, often, short
-        +---> majordomus decision add      what was decided and why
-        +---> majordomus question add      what is unresolved, and it now blocks
-        |
-        v
-majordomus check                           scope, state, blockers, store integrity
-        |
-        +-- not finished --> majordomus handover   ---> the next session runs context
-        |
-        v
-majordomus finish --outcome <...> --verify-command "<cmd>"
-        |
-        v
-majordomus history                         the lifecycle, reconstructable
-```
+<pre class="mermaid">
+flowchart TD
+  st["majordomus start #quot;&amp;lt;task&amp;gt;#quot; --scope &amp;lt;paths&amp;gt; [--profile &amp;lt;name&amp;gt;]&lt;br&gt;names any prior record for this branch"]
+  ctx["majordomus context&lt;br&gt;the briefing, within budget"]
+  work["work happens (Majordomus is not involved)"]
+  cp["majordomus checkpoint&lt;br&gt;progress, often, short"]
+  dec["majordomus decision add&lt;br&gt;what was decided and why"]
+  qq["majordomus question add&lt;br&gt;what is unresolved, and it now blocks"]
+  ck["majordomus check&lt;br&gt;scope, state, blockers, store integrity"]
+  ho["majordomus handover"]
+  nxt["the next session runs context"]
+  fin["majordomus finish --outcome &amp;lt;...&amp;gt; --verify-command #quot;&amp;lt;cmd&amp;gt;#quot;"]
+  hist["majordomus history&lt;br&gt;the lifecycle, reconstructable"]
+
+  st --&gt; ctx --&gt; work
+  work --&gt; cp
+  work --&gt; dec
+  work --&gt; qq
+  work --&gt; ck
+  ck --&gt;|"not finished"| ho --&gt; nxt
+  ck --&gt; fin --&gt; hist
+</pre>
+
 
 ## What this does not do
 

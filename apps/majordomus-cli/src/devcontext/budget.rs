@@ -119,7 +119,7 @@ pub fn spend(
                 None => d.selector.as_str().to_string(),
             })
             .collect();
-        ways.sort();
+        crate::order::canonical_strings(&mut ways);
         ways.dedup();
         deduplicated.push(Deduplicated {
             kept: c.uri.clone(),
@@ -395,19 +395,9 @@ pub fn spend(
         });
     }
 
-    excluded.sort_by(|a, b| {
-        a.tier
-            .cmp(&b.tier)
-            .then(a.reason.cmp(&b.reason))
-            .then(a.uri.cmp(&b.uri))
-    });
-    deduplicated.sort_by(|a, b| a.key.cmp(&b.key).then(a.kept.cmp(&b.kept)));
-    conflicts.sort_by(|a, b| {
-        a.kind
-            .cmp(&b.kind)
-            .then(a.current.cmp(&b.current))
-            .then(a.against.cmp(&b.against))
-    });
+    crate::order::canonical(&mut excluded);
+    crate::order::canonical(&mut deduplicated);
+    crate::order::canonical(&mut conflicts);
 
     let tiers = Tier::ORDER
         .iter()

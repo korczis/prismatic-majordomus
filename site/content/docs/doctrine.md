@@ -129,11 +129,24 @@ the doctrine registry cannot see is not the same as what nothing enforces, and a
 that reports one while the reader hears the other is the defect
 `project.a-verdict-states-its-subject` exists to stop.
 
-`scripts/ci/enforcement-check` is what decides the difference: a blocking rule must carry
-either an `x-majordomus` block or a `# Verification` path that exists and runs, and the
-handful that carry neither are ratcheted in `.ai/repo/enforcement-baseline.txt` so the set
-can shrink and cannot grow. It is answered by wiring the enforcement, never by changing the
-rule's class — moving a promise is not keeping it.
+`scripts/ci/rule-proof-check` is what decides the difference, and it is the only reader of
+that population: a blocking rule must name, in its `x-majordomus` block, a validator the
+dispatcher calls, a test that proves it, or a `reviewed_because:` saying why nothing
+executable can express it. The rules that name none are ratcheted in
+`.ai/repo/rule-proof-baseline.txt` so the set can shrink and cannot grow. It is answered by
+wiring the enforcement, never by changing the rule's class — moving a promise is not keeping
+it.
+
+The other end of the same idea is a claim, not a rule, and it has its own gate:
+`scripts/ci/claim-proof-check` refuses a claim marked `status: guaranteed` in
+`docs/CLAIMS.yaml` whose named test does not contain the claim's id, so the link reads from
+both ends rather than only from the claim's. The two gates are separate readers of separate
+populations and each says so on every run. They were one script, and the rule half of it
+accepted any `x-majordomus` block as proof — including a `reviewed_because:`, which declares
+that a *person* enforces the rule. It announced those exemptions as promises that had gained
+a proof. A second inventory of a property another gate owns does not stay a harmless
+duplicate; it drifts, and then the two verdicts disagree about the thing this repository
+exists to assert.
 
 ### Resolution
 

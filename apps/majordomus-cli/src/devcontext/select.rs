@@ -983,7 +983,7 @@ fn intent(
             continue;
         }
         let mut named: Vec<&str> = hits.iter().map(|s| s.as_str()).collect();
-        named.sort();
+        crate::order::canonical_strings(&mut named);
         let d = Discovery {
             selector: Selector::IntentMatch,
             reason: format!(
