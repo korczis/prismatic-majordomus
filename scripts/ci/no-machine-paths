@@ -1,41 +1,90 @@
 #!/usr/bin/env bash
 # no-machine-paths — refuses a tree that names the machine it was written on.
 #
-# One definition, three callers: scripts/ci/core-check runs it as a gate,
-# test/cases/58_home_path_gate.sh runs it against fixtures to prove it can fail, and a
-# person runs it directly. The pattern lived in three places before this script existed,
-# which is the shape project.no-machine-paths itself argues against.
+# One pattern, two corpora, three callers. scripts/ci/core-check runs it over every tracked
+# file; scripts/site-check runs it with --dir over the built site, which nothing tracks and
+# which is where a route nobody anticipated would put a path; test/cases/58_home_path_gate.sh
+# drives both against fixtures, to prove each can fail and each refuses when it cannot look.
+# The pattern used to be written twice, once here and once in site-check, as two copies of
+# one expression too narrow to see a capitalised or numbered account name.
 #
-# Usage: no-machine-paths [<repository>]     (default: this repository)
-# Exit:  0 clean, 1 with every match printed as <file>:<line>:<text>.
+# Usage: no-machine-paths [<repository>]     every tracked file outside test/ (default: this one)
+#        no-machine-paths --dir <directory>  every file under a directory, tracked or not
+# Exit:  0 clean, saying how many files were examined;
+#        1 with every match printed as <file>:<line>:<match>;
+#        12 when the subject could not be examined in full — no repository, no directory,
+#           nothing in it, or a read that failed — naming what was not examined. "Found
+#           nothing" and "could not look" are different answers, and only one is a pass.
 set -eu
-root="${1:-$(cd "$(dirname "$0")/../.." && pwd)}"
+set -o pipefail
 
-# `/Users/<name>/` and `/home/<name>/dev/`, the two shapes a developer checkout takes.
-# Deliberately not broadened to every `/home/<name>/`: `docs/CLI.md` documents a command
-# whose sample output is `repository   /home/dev/app`, and a gate that fires on the
-# documentation of its own tool is a gate somebody switches off.
-PATTERN='/Users/[a-z]+/|/home/[a-z]+/dev/'
+# A home directory is `/Users/<name>` on macOS or `/home/<name>` on Linux, whatever follows.
+# <name> is the POSIX portable filename set — letters of either case, digits, dot, underscore
+# and hyphen — so a capitalised, numbered, dotted or hyphenated account is caught, while the
+# prose that documents this gate is not: `/Users/<name>/`, a bracket expression, `$HOME` and a
+# bare `/home/` put no portable character straight after the slash. It errs toward a miss for
+# an account name outside that set (a space, a non-ASCII letter), and toward a catch for the
+# shared directory macOS keeps beside its accounts, which is still this machine's.
+#
+# The leading class keeps a URL path out: in `example.com/home/index` a host character comes
+# before the slash, where a filesystem path has a line start, a quote, a space, a `=` or the
+# third slash of a file URL.
+PATTERN='(^|[^A-Za-z0-9._~%-])/(Users|home)/[A-Za-z0-9._-]+'
 
-# Everything tracked, except the two places the pattern is legitimately written down:
-# the fixtures that prove this gate fails, and the gates that quote the pattern.
-hits="$(git -C "$root" grep -n -I -E "$PATTERN" -- \
-          . ':!test/**' ':!scripts/ci/no-machine-paths' ':!scripts/ci/core-check' \
-          ':!scripts/site-check' 2>/dev/null || true)"
+err="$(mktemp "${TMPDIR:-/tmp}/mj-no-machine-paths.XXXXXX")"
+trap 'rm -f "$err"' EXIT
+said() { sed -n '1,3p' "$err" | tr '\n' ' ' | sed 's/ *$//'; }
+unusable() {
+  printf 'no-machine-paths: %s was not examined in full, so it is not reported clean: %s\n' \
+    "$1" "$2" >&2
+  exit 12
+}
 
-[ -z "$hits" ] || {
-  cat >&2 <<'WHY'
-a committed file names a home directory, so this repository does not read the same
-anywhere else. Two different faults share this message:
+if [ "${1:-}" = --dir ]; then
+  [ $# -eq 2 ] || { echo "usage: no-machine-paths --dir <directory>" >&2; exit 2; }
+  subject="$2"; population="file(s) under $subject"
+  [ -d "$subject" ] || unusable "$subject" "there is no directory there"
+  rc=0; listing="$(find "$subject" -type f 2>"$err")" || rc=$?
+  [ "$rc" = 0 ] || unusable "$subject" "find could not walk all of it (exit $rc): $(said)"
+  total="$(printf '%s' "$listing" | awk 'END { print NR }')"
+  [ "$total" != 0 ] || unusable "$subject" "it holds no file, and an empty output is not a clean one"
+  # -a: a path embedded in an image's or a font's metadata is as published as one in a page
+  rc=0; hits="$(grep -rnoaE -e "$PATTERN" "$subject" 2>"$err")" || rc=$?
+else
+  subject="${1:-$(cd "$(dirname "$0")/../.." && pwd)}"; population="tracked file(s) outside test/"
+  # test/ holds the fixtures that prove this gate fails; nothing else is exempt, this script
+  # included, because the pattern above is written so that it cannot match itself
+  rc=0; listing="$(git -C "$subject" ls-files -- . ':!test/**' 2>"$err")" || rc=$?
+  [ "$rc" = 0 ] || unusable "$subject" "git could not list what it tracks (exit $rc): $(said)"
+  total="$(printf '%s' "$listing" | awk 'END { print NR }')"
+  [ "$total" != 0 ] || unusable "$subject" "it tracks no file outside test/"
+  rc=0
+  hits="$(git -C "$subject" grep -n -I -o -E -e "$PATTERN" -- . ':!test/**' 2>"$err")" || rc=$?
+fi
 
-  - an authored document (.ai/, docs/, site/content-src/, README.md): write what the
-    path means — "a developer's working directory" — rather than an example of one;
-  - a generated artifact (share/, docs/generated/, site/data/, site/content/): the
-    generator wrote its own location into its output. Do not edit the file; find the
-    path helper that fell back to an absolute path. `derive-check` cannot see this,
-    because it regenerates in the same checkout and gets the same answer back.
+# grep's 1 is "no line matched"; anything above it is a read that failed, and a failed read
+# with nothing printed has not answered the question
+case "$rc" in
+  0) [ -n "$hits" ] || unusable "$subject" "grep reported a match and printed none" ;;
+  1) printf 'no-machine-paths: OK — none of %s %s names a home directory\n' "$total" "$population"
+     exit 0 ;;
+  *) [ -n "$hits" ] || unusable "$subject" "grep could not read all of it (exit $rc): $(said)" ;;
+esac
+
+cat >&2 <<'WHY'
+a file names a home directory, so what it says does not read the same anywhere else. Two
+different faults share this message:
+
+  - an authored document (.ai/, docs/, site/content-src/, README.md, a doc comment in the
+    crate): write what the path means — "a developer's working directory" — or a path no
+    account owns, rather than an example of one;
+  - a generated artifact (share/, docs/generated/, site/data/, site/content/, the built
+    site): the generator wrote a location into its output. Do not edit the file; find the
+    declaration it projects, or the path helper that fell back to an absolute path.
+    `derive-check` cannot see this, because it regenerates in the same checkout and gets
+    the same answer back.
 
 WHY
-  printf '%s\n' "$hits" >&2
-  exit 1
-}
+printf '%s\n' "$hits" >&2
+[ "$rc" = 0 ] || printf 'and the read was incomplete (exit %s): %s\n' "$rc" "$(said)" >&2
+exit 1

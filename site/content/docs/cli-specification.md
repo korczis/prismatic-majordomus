@@ -503,7 +503,7 @@ $ majordomus context
 # a projection of durable state, not a source of truth: validate every line against git
 
 ## GIT
-repository   /home/dev/app
+repository   /srv/app
 branch       main
 head         3f2a9c1e4b7d8a05c1119f2b6e0d7a3c8e5f1b42
 working_tree dirty

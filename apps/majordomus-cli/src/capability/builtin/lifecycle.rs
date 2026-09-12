@@ -686,7 +686,7 @@ pub struct Recovery {
 ///
 /// let view = |served: &str, repo: &str, agree: bool| -> RuntimeView {
 ///     serde_json::from_value(json!({
-///         "root": "/Users/x/repo",
+///         "root": "/srv/repo",
 ///         "served_head": served, "served_branch": "master", "served_working_tree": "clean",
 ///         "repository_head": repo, "repository_branch": "master",
 ///         "repository_working_tree": "clean",
