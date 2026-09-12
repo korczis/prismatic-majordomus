@@ -249,10 +249,10 @@ pub fn overview(ctx: &Context) -> Page {
                     row(vec![
                         cell(mono(kind)),
                         text_cell(count.to_string()),
-                        cell(link(
-                            format!("/cockpit/objects?kind={}", percent_encode(kind)),
-                            "browse",
-                        )),
+                        // the kind's own address, from the function the router resolves
+                        // with — not `?kind=`, which still answers and is the spelling
+                        // this page was written against before a kind had an address
+                        cell(link(crate::entity::kind_route(kind), "browse")),
                     ])
                 })
                 .collect(),
@@ -5092,6 +5092,310 @@ pub fn design(ctx: &Context) -> Page {
     )
     .subtitle("What every surface of this tool is rendered with, from the one declaration this executable carries.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Design", None)])
+}
+
+// --------------------------------------------------------------------- entities
+
+/// One kind's index: every object of it, at the kind's own address.
+///
+/// Not a page per kind. The kind is a path segment, the listing is `objects.list` narrowed
+/// by it, and a kind the layer stops holding stops having an index — which is the whole
+/// reason a kind never appears in this file by name.
+pub fn objects_of_kind(ctx: &Context, kind: &str, query: &[(String, String)]) -> Page {
+    let kinds: crate::capability::builtin::entity::KindList =
+        match ask(ctx, "entity.kinds", json!({})) {
+            Ok(k) => k,
+            Err(e) => return failed(Area::Objects, "Objects", e),
+        };
+    let Some(entry) = kinds.kinds.iter().find(|k| k.kind == kind) else {
+        return Page::new(
+            Area::Objects,
+            "No such kind",
+            el("div")
+                .child(alert(
+                    "fail",
+                    format!(
+                        "This layer holds no kind '{kind}'. The kinds it holds are listed under Objects."
+                    ),
+                ))
+                .child(link("/cockpit/objects", "Every object")),
+        )
+        .status(404);
+    };
+
+    let list: ObjectList = match ask(ctx, "objects.list", json!({ "kind": kind })) {
+        Ok(l) => l,
+        Err(e) => return failed(Area::Objects, "Objects", e),
+    };
+    let needle = query
+        .iter()
+        .find(|(k, _)| k == "q")
+        .map(|(_, v)| v.to_lowercase())
+        .filter(|v| !v.is_empty());
+    let matching: Vec<&ObjectSummary> = list
+        .objects
+        .iter()
+        .filter(|o| {
+            needle.as_deref().is_none_or(|n| {
+                o.identity.to_lowercase().contains(n)
+                    || o.title
+                        .as_deref()
+                        .unwrap_or_default()
+                        .to_lowercase()
+                        .contains(n)
+                    || o.path.to_lowercase().contains(n)
+            })
+        })
+        .collect();
+    let base = crate::entity::kind_route(kind);
+    let window = Window::new(asked_page(query), PER_PAGE, matching.len());
+    let rows: Vec<El> = matching[window.range()]
+        .iter()
+        .map(|o| {
+            row(vec![
+                id_cell(crate::entity::route(&o.kind, &o.identity), &o.identity),
+                text_cell(o.title.clone().unwrap_or_default()),
+                cell(mono(&o.path)),
+            ])
+        })
+        .collect();
+
+    let filters = el("form")
+        .class("mj-filters")
+        .attr("method", "get")
+        .attr("action", &base)
+        .attr("role", "search")
+        .child(
+            el("label")
+                .class("mj-field")
+                .child(el("span").class("mj-field-label").text("Filter"))
+                .child(
+                    el("input")
+                        .class("mj-input")
+                        .attr("type", "search")
+                        .attr("name", "q")
+                        .attr("value", needle.clone().unwrap_or_default())
+                        .attr("placeholder", "identity, title or path"),
+                ),
+        )
+        .child(
+            el("button")
+                .class("mj-button")
+                .attr("type", "submit")
+                .text("Apply"),
+        )
+        .child(link(&base, "Clear").class("mj-link mj-clear"))
+        .child(link("/cockpit/objects", "Every kind").class("mj-link mj-clear"));
+
+    Page::new(
+        Area::Objects,
+        kind.to_string(),
+        el("div").child(filters).child(if rows.is_empty() {
+            nothing("No object matches.")
+        } else {
+            el("div")
+                .child(table(&["Identity", "Title", "Source"], rows))
+                .child(pagination(window, |n| {
+                    href_with(&base, query, &[("page", Some(&n.to_string()))])
+                }))
+        }),
+    )
+    .subtitle(format!(
+        "{} of the {} object(s) of kind {kind}. Each has an address of its own, derived from its identity.",
+        matching.len(),
+        entry.count
+    ))
+    .trail(vec![
+        ("Cockpit", Some("/cockpit")),
+        ("Objects", Some("/cockpit/objects")),
+        (kind, None),
+    ])
+}
+
+/// One entity: what it is, what it is joined to, what can be said about what it names, and
+/// where else it is answered.
+///
+/// The order of the sections is the order a governance object is read in: what it is, then
+/// whether to believe it, then what it is joined to, then where it came from, and the file
+/// itself last. Raw Markdown first would be the page a directory listing already gives.
+pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
+    use crate::capability::builtin::entity::{EntityView, EvidenceState};
+    let view: EntityView = match ask(ctx, "entity.show", json!({ "kind": kind, "slug": slug })) {
+        Ok(v) => v,
+        Err(e) => {
+            return Page::new(
+                Area::Objects,
+                "No such entity",
+                el("div")
+                    .child(alert("fail", e))
+                    .child(link(
+                        crate::entity::kind_route(kind),
+                        format!("Every {kind}"),
+                    ))
+                    .child(link("/cockpit/objects", "Every object")),
+            )
+            .status(404)
+        }
+    };
+
+    let generated = view.content.contains(generate::HEADER)
+        || view.provenance.path.starts_with(generate::OUT_DIR);
+    let identity_card = card(
+        "What it is",
+        facts(vec![
+            ("Kind", Node::Element(link(&view.kind_route, &view.kind))),
+            ("Identity", Node::Element(mono(&view.identity))),
+            ("URI", Node::Element(mono(&view.uri))),
+            ("Source", Node::Element(mono(&view.provenance.path))),
+            (
+                "Provenance",
+                Node::Element(if generated {
+                    badge("generated", "generated")
+                } else {
+                    badge("declared", "declared")
+                }),
+            ),
+        ]),
+    );
+
+    // the state is the word the capability answered with; this page may not round it up
+    let ev = &view.evidence;
+    let mut evidence_body = el("div").child(
+        el("p")
+            .class("mj-lede")
+            .child(word_badge(match ev.state {
+                EvidenceState::Unclaimed => "unclaimed",
+                EvidenceState::Dangling => "dangling",
+                EvidenceState::Resolved => "resolved",
+            }))
+            .child(el("span").text(format!(" {}", ev.meaning))),
+    );
+    if !ev.artifacts.is_empty() {
+        evidence_body = evidence_body.child(table(
+            &["Named under", "Artefact", "In the tree"],
+            ev.artifacts
+                .iter()
+                .map(|a| {
+                    row(vec![
+                        cell(mono(&a.field)),
+                        cell(mono(&a.path)),
+                        cell(if a.present {
+                            badge("present", "yes")
+                        } else {
+                            badge("fail", "no")
+                        }),
+                    ])
+                })
+                .collect(),
+        ));
+    }
+    if let Some(p) = &ev.proof {
+        evidence_body = evidence_body.child(
+            el("p")
+                .class("mj-note")
+                .text(format!(
+                    "Whether any of it ever ran is a different question, and {} answers it: ",
+                    p.capability
+                ))
+                .child(mono(&p.address)),
+        );
+    }
+
+    let edge_rows = |outgoing: bool| -> Vec<El> {
+        view.relations
+            .iter()
+            .filter(|e| (e.direction == crate::entity::Direction::Outgoing) == outgoing)
+            .map(|e| {
+                row(vec![
+                    cell(mono(&e.edge)),
+                    cell(mono(&e.kind)),
+                    match &e.route {
+                        Some(r) => id_cell(r.clone(), &e.label),
+                        None => text_cell(&e.label),
+                    },
+                    if e.external {
+                        cell(badge("external", "outside the layer"))
+                    } else {
+                        text_cell("")
+                    },
+                ])
+            })
+            .collect()
+    };
+    let references = edge_rows(true);
+    let referenced_by = edge_rows(false);
+    let relations_card = card(
+        "What it is joined to",
+        el("div")
+            .child(el("h3").class("mj-subheading").text("References"))
+            .child(if references.is_empty() {
+                nothing("This entity declares no reference.")
+            } else {
+                table(&["Relation", "Kind", "Target", ""], references)
+            })
+            .child(el("h3").class("mj-subheading").text("Referenced by"))
+            .child(if referenced_by.is_empty() {
+                nothing("Nothing in this layer names it. Backlinks are derived, never declared.")
+            } else {
+                table(&["Relation", "Kind", "Declared by", ""], referenced_by)
+            }),
+    );
+
+    let surfaces_card = card(
+        "Where else it is answered",
+        table(
+            &["Surface", "Address", "What it gives"],
+            view.surfaces
+                .iter()
+                .map(|s| {
+                    row(vec![
+                        cell(mono(&s.surface)),
+                        cell(mono(&s.address)),
+                        text_cell(&s.detail),
+                    ])
+                })
+                .collect(),
+        ),
+    );
+
+    let metadata = match &view.metadata {
+        Value::Null => card("Front matter", nothing("This object carries none.")),
+        m => card(
+            "Front matter",
+            pre(serde_json::to_string_pretty(m).unwrap_or_default()),
+        ),
+    };
+
+    Page::new(
+        Area::Objects,
+        view.identity.clone(),
+        el("div")
+            .class("mj-grid")
+            .child(identity_card)
+            .when(generated, |d| {
+                d.child(alert(
+                    "info",
+                    "This file is generated. Editing it is pointless: the generator overwrites it, and `majordomus generate --check` fails while it differs.",
+                ))
+            })
+            .child(card("What can be said about it", evidence_body))
+            .child(relations_card)
+            .child(surfaces_card)
+            .child(metadata)
+            .child(details("The file as it is", pre(&view.content))),
+    )
+    .subtitle(
+        view.title
+            .clone()
+            .or_else(|| view.description.clone())
+            .unwrap_or_else(|| format!("An object of kind {}", view.kind)),
+    )
+    .trail(vec![
+        ("Cockpit", Some("/cockpit")),
+        ("Objects", Some("/cockpit/objects")),
+        (&view.kind, Some(&view.kind_route)),
+        (&view.identity, None),
+    ])
 }
 
 #[cfg(test)]

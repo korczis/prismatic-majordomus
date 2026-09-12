@@ -1,0 +1,77 @@
++++
+title = "Nothing a client leaves behind locks another client out"
+description = "Nothing a client leaves behind locks another client out"
+weight = 123
+[extra]
+kind = "rule"
+slug = "project-shared-server-resilience-1"
+identity = "project.shared-server-resilience@1"
+status = "active"
+source = ".ai/repo/rules/project/shared-server-resilience.v1.md"
++++
+{% raw %}
+
+## Rationale
+
+The shared server is the one process several clients depend on, and its only shared state
+is one lease file under the checkout-local half of the layer. Anything that file can
+contain after a crash, a kill or a copy of the checkout is a way for one client to lock
+the others out, and a repository whose local half refuses writes would otherwise turn
+every client away. The design refuses a daemon; what it owes in return is that the process
+a client started never fails to serve that client because of what another process left
+behind.
+
+## Required behaviour
+
+Under `apps/majordomus-cli/`:
+
+- The election reads the lease on every attempt and classifies it. A server that answers
+  for this root is attached to. A lease whose server does not answer, a file that is not a
+  lease document, an empty file, and a lease whose owner published no URL within the bind
+  grace are each taken over, and the log names which it was. A lease without a URL that is
+  younger than the grace is waited for. The attempt is bounded by time, never by a count
+  of rounds.
+- When the lease cannot be created, joined or replaced, or the shared server cannot start,
+  `majordomus mcp` serves its client alone, as `--standalone` does, and logs `cannot use
+  the shared server` with the path and the reason. The layer's own errors (no manifest,
+  `--strict` refusing a degraded index) still exit with their codes: degrading applies to
+  sharing, never to the layer.
+- A bridge whose server is gone elects again on its next message; when it can neither
+  serve nor attach, the same degrade applies before any error reaches the client.
+- `SIGTERM`, `SIGINT` and `SIGHUP` remove the lease before the process dies of the signal.
+  `kill -9` cannot be caught; the stale lease it leaves falls under the first point.
+- A server whose owner has left ends with its last attached session; an HTTP session that
+  never says goodbye expires at the idle timeout, so the server never outlives its clients
+  by more than that timeout.
+- A server whose lease has been taken over stops acting as the checkout's server, and says
+  so before anybody has to ask twice. Its index answers `leaseholder: false`; the probe
+  every reader of a remembered address goes through refuses it; a new `initialize` is
+  refused with the reason and where the current server is; and its own health report says
+  that what it describes is another process. The sessions it already had continue, and the
+  process ends with them — a client mid-answer does not lose its server because somebody
+  rebuilt the executable. What it must never do is take on a client that could have had
+  the real one: that client gets a peer board, an execution history and a generation of the
+  layer no other client of the checkout can see, with nothing in any answer saying so.
+- A bind to an address that is not loopback is served with a warning naming what it
+  exposes.
+- A bridged session and a restarted server answer byte for byte what a local session
+  answers.
+
+Every point above is proved by a named case in `tests/mcp_shared.rs`, in
+`tests/lease_lost.rs` or in `test/cases/90_mcp_shared_server.sh`, and a change to any of
+them lands with its case.
+
+## Failure behaviour
+
+CI fails: `cargo test` runs `tests/mcp_shared.rs` in the `rust` job, and `test/run.sh`
+runs case 90 in the `test` and `pages` jobs. A reviewer refuses a change to the lease, the
+election, the bridge's failover or the signal handling that does not come with its case,
+and a claim page for `mcp-lease-resilience` whose test no longer names the behaviour.
+
+## Verification
+
+`RUSTFLAGS='' cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_shared`,
+`RUSTFLAGS='' cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test lease_lost`,
+`bash test/run.sh 90_mcp_shared_server`, `scripts/rust-check`, and the claim
+`mcp-lease-resilience` in `docs/CLAIMS.yaml`.
+{% endraw %}

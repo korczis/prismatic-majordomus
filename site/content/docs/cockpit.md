@@ -64,7 +64,9 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/executions` | what this process has run and is running, with the counts beside it; follows the live channel and updates itself | `executions.list` |
 | `/cockpit/executions/<id>` | one execution: its state, steps, progress, diagnostics, live output, output or error, and the input as it was stored; a stable URL a reload restores from | `executions.get`, `executions.events` |
 | `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
-| `/cockpit/object?uri=` | one object: front matter, provenance, content as it is | `objects.get` |
+| `/cockpit/objects/<kind>` | one kind's index, at the kind's own address | `entity.kinds`, `objects.list` |
+| `/cockpit/objects/<kind>/<slug>` | one entity: what it is, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
+| `/cockpit/object?uri=` | the address an object had before it had one of its own; still resolves, so no published link breaks | `objects.get` |
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
@@ -81,6 +83,14 @@ pages still render, say so, and remain fully usable.
 
 Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
 a page can be sent to somebody.
+
+Neither the kind nor the entity in the last three rows is named in the router. The address
+of an object is derived from its kind and its identity — `majordomus://rule/project.x@1`
+becomes `/cockpit/objects/rule/project-x-1` — so a file added under `.ai/` gets an index
+row, a page, and its place in every other page's backlinks without an edit anywhere in the
+Cockpit. Two identities of one kind that reduce to one address would be a collision rather
+than a tie-break; `majordomus entity kinds` reports every one and `scripts/ci/entity-check`
+refuses the tree while one exists. The rule is `project.entities-are-routable`.
 
 ## How a listing of the whole layer is read
 

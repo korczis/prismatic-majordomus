@@ -466,12 +466,24 @@
           <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ m.write_once.title }}</summary>
           <div class="border-t border-default px-4 py-4">
             <p class="text-sm leading-relaxed text-body">{{ m.write_once.lead }}</p>
+            {#- A kind is a link when the site publishes a page per object of it, plain text
+                when it does not. Which is which is site/data/publication.toml, declared once
+                for every kind the index holds and checked both ways by scripts/ci/entity-check,
+                so a kind cannot quietly stop being published and this list cannot quietly stop
+                naming one. It lived in a full-bleed section of its own until the homepage went
+                to nine sections; the behaviour moved into this disclosure with the list. -#}
+            {%- set pubkinds = load_data(path="data/generated/entities.json") -%}
             <ul class="mt-4 flex flex-wrap gap-2">
               {%- for kind, n in model.telemetry.by_kind %}
+              {%- set published = [k for k in pubkinds.kinds if k.kind == kind] %}
+              {%- if published | length > 0 %}
+              <li><a href="{{ get_url(path=published[0].route, trailing_slash=true) }}" class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1 hover:bg-neutral-secondary-medium"><code class="font-mono text-sm text-fg-brand">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></a></li>
+              {%- else %}
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></li>
+              {%- endif %}
               {%- endfor %}
             </ul>
-            <p class="mt-4 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. Nothing registers anything. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
+            <p class="mt-4 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. Nothing registers anything. Each object has an address derived from its kind and its identity, the same one on the command line, over HTTP, over MCP and in the Cockpit; the kinds linked above publish a page per object here too. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
           </div>
         </details>
       </div>

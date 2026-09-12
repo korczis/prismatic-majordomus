@@ -43,6 +43,8 @@ tags:
     description: "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved."
   - name: distribution
     description: "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own."
+  - name: entity
+    description: "Every object of the layer as an addressable, cross-linked node: its route, its outgoing references, the references that resolve to it, the surfaces that answer for it, and what can be said about its enforcement without running anything. Nothing here enumerates kinds, entities or routes — an object of the index has a route because it is an object."
   - name: environment
     description: "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
   - name: evidence
@@ -2121,6 +2123,131 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_install_status
       x-majordomus-cli: distribution status
+  "/api/v1/entity":
+    get:
+      operationId: entity.show
+      summary: Read one entity
+      description: "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names."
+      tags:
+        - entity
+      parameters:
+        - name: uri
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "`majordomus://<kind>/<identity>`. Either this, or `kind` and `slug` together."
+          examples:
+            first-object:
+              value: majordomus://adr/adr-0001
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The kind, when addressing by route."
+        - name: slug
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The last segment of the entity's route, when addressing by route."
+      responses:
+        "200":
+          description: "Read one entity: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/EntityView"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: entity.show
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::entity
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_entity
+      x-majordomus-cli: entity show
+  "/api/v1/entity/kinds":
+    get:
+      operationId: entity.kinds
+      summary: "Every kind, and whether every object of it is addressable"
+      description: "The kinds the layer holds, each with the route of its index and how many objects it carries, and every route collision there is. A collision is the only way an object of the index can fail to have an address of its own; the healthy answer is none."
+      tags:
+        - entity
+      parameters: []
+      responses:
+        "200":
+          description: "Every kind, and whether every object of it is addressable: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KindList"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: entity.kinds
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::entity
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_kinds
+      x-majordomus-cli: entity kinds
   "/api/v1/environment":
     get:
       operationId: environment.status
@@ -8749,6 +8876,23 @@ components:
         - claim
         - status
       description: "One claim the feature names, with the status the matrix gives it."
+    ClaimedArtifact:
+      type: object
+      properties:
+        field:
+          type: string
+          description: "The front matter key it was named under (`x-majordomus.tests`, `test`, ...)."
+        path:
+          type: string
+          description: The repository-relative path as named.
+        present:
+          type: boolean
+          description: Whether the tree holds it.
+      required:
+        - field
+        - path
+        - present
+      description: "One executable artefact an object names, and whether the tree holds it.\n\n`field` is kept beside the path because the same object can name artefacts under several\nkeys, and a reader fixing a dangling one needs to know which line of the front matter to\nlook at rather than which file is missing.\n\n```\nuse majordomus_cli::capability::builtin::entity::ClaimedArtifact;\n\nlet a = ClaimedArtifact {\n    field: \"x-majordomus.tests\".into(),\n    path: \"test/cases/277_entities_are_routable.sh\".into(),\n    present: true,\n};\nlet wire = serde_json::to_value(&a).unwrap();\nassert_eq!(wire[\"field\"], serde_json::json!(\"x-majordomus.tests\"));\nassert_eq!(wire[\"present\"], serde_json::json!(true));\n```"
     Classification:
       type: object
       properties:
@@ -11801,6 +11945,193 @@ components:
         - reason
         - local
       description: "One contract in a directory's effective chain, in the order it is applied."
+    EntityEdge:
+      type: object
+      properties:
+        direction:
+          "$ref": "#/components/schemas/RelationDirection"
+          description: Which way it runs from the entity that was asked for.
+        edge:
+          type: string
+          description: "The relationship, in the graph's vocabulary (`depends_on`, `put_in_force`, ...)."
+        field:
+          type: string
+          description: The front matter key the reference was declared under.
+        uri:
+          type:
+            - string
+            - "null"
+          description: "The object at the other end: its URI when the layer holds it."
+        kind:
+          type: string
+          description: "Its kind — of the layer, or the external vocabulary (`file`, `test`, `command`)."
+        label:
+          type: string
+          description: "What to show: the identity of an object, or the name of something outside."
+        title:
+          type:
+            - string
+            - "null"
+          description: "Its title, when it is an object that has one."
+        route:
+          type:
+            - string
+            - "null"
+          description: "Its entity route, when it has one; absent for something outside the layer."
+        external:
+          type: boolean
+          description: True when the other end is not an object of this index.
+      required:
+        - direction
+        - edge
+        - field
+        - kind
+        - label
+        - external
+      description: "One edge, as an entity page reads it.\n\nEverything a reader needs about the other end is here — what to show, what kind of thing\nit is, and the address to send them to — so the page renders a relation without going\nback to the index for it. `route` is `None` exactly when `external` is true: a `file`, a\n`test` or a `command` is named by the layer and is not an object of it, so there is no\nentity page to link to and the template shows plain text instead of a dead link.\n\n```\nuse majordomus_cli::entity::{Direction, Edge};\nuse majordomus_cli::order::Ordered;\n\nlet edge = Edge {\n    direction: Direction::Incoming,\n    edge: \"depends_on\".into(),\n    field: \"depends_on\".into(),\n    uri: Some(\"majordomus://rule/project.x@1\".into()),\n    kind: \"rule\".into(),\n    label: \"project.x@1\".into(),\n    title: Some(\"A rule\".into()),\n    route: Some(\"/cockpit/objects/rule/project-x-1\".into()),\n    external: false,\n};\n\n// the relation is the group and the direction ranks inside it; see the `Ordered` impl\nlet key = edge.order_key();\nassert_eq!(key.group, Some(\"depends_on\"));\nassert_eq!(key.rank, Direction::Incoming as i64);\nassert_eq!(key.identity, \"majordomus://rule/project.x@1\");\n```"
+    EntityEvidence:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/EntityEvidenceState"
+          description: "The state, which is never rounded up."
+        meaning:
+          type: string
+          description: "That state in one sentence, for a reader."
+        artifacts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClaimedArtifact"
+          description: "Every artefact named, with whether the tree holds it."
+        proof:
+          anyOf:
+            - "$ref": "#/components/schemas/EntityProofRef"
+            - type: "null"
+          description: "The capability that can say more, when this kind has one."
+      required:
+        - state
+        - meaning
+      description: "What can be said about an object's enforcement without running anything.\n\n`meaning` travels with `state` so that every surface shows the same sentence about it:\na badge alone invites each renderer to write its own gloss, and the gloss is where a\n\"resolved\" quietly becomes a \"passing\". A kind that names no artefact is `Unclaimed`\nwith an empty `artifacts`, which is an answer and not an omission.\n\n```\nuse majordomus_cli::capability::builtin::entity::{Evidence, EvidenceState};\n\nlet e = Evidence {\n    state: EvidenceState::Unclaimed,\n    meaning: \"This object names no executable artefact.\".into(),\n    artifacts: Vec::new(),\n    proof: None,\n};\n\n// the empty collections are omitted from the wire, so absence reads as absence\nlet wire = serde_json::to_value(&e).unwrap();\nassert_eq!(wire[\"state\"], serde_json::json!(\"unclaimed\"));\nassert!(wire.get(\"artifacts\").is_none());\nassert!(wire.get(\"proof\").is_none());\n```"
+    EntityEvidenceState:
+      oneOf:
+        - type: string
+          const: unclaimed
+          description: "The object names no executable artefact. Most kinds name none, and that is not a\ndefect: a prompt is not enforced by anything."
+        - type: string
+          const: dangling
+          description: "It names artefacts and at least one of them is not in the tree. A claim that points\nat nothing is worse than no claim, because it reads as enforcement."
+        - type: string
+          const: resolved
+          description: "Every artefact it names is in the tree. This says the claim resolves — never that it\npassed. Whether it ever ran is a different question, and `proof` is where it is\nasked."
+      description: "What this repository can say about the executable artefacts an object names, and only\nthat. The word is chosen so that no reader can mistake it for a run.\n\nThe three states are ordered by how much they permit a reader to conclude, and the\nstrongest of them still concludes nothing about a run: `Resolved` means the files an\nobject points at exist. `proof` on [`Evidence`] is where \"did it ever pass\" is asked.\n\n```\nuse majordomus_cli::capability::builtin::entity::EvidenceState;\n\n// the wire spellings, which the Cockpit badge and the site template both read\nfor (state, word) in [\n    (EvidenceState::Unclaimed, \"unclaimed\"),\n    (EvidenceState::Dangling, \"dangling\"),\n    (EvidenceState::Resolved, \"resolved\"),\n] {\n    assert_eq!(serde_json::to_value(state).unwrap(), serde_json::json!(word));\n}\n```"
+    EntityProofRef:
+      type: object
+      properties:
+        capability:
+          type: string
+          description: The capability that answers it.
+        title:
+          type: string
+          description: Its title.
+        address:
+          type: string
+          description: How to ask it here.
+      required:
+        - capability
+        - title
+        - address
+      description: "Where a fuller answer about this entity's enforcement lives.\n\nA pointer, never an answer. This module states what it can see in the tree and then\nnames the capability that can say more, so that an entity page does not grow a second,\nweaker implementation of proof beside the one that already exists.\n\n```\nuse majordomus_cli::capability::builtin::entity::ProofRef;\n\nlet p = ProofRef {\n    capability: \"rule.proves\".into(),\n    title: \"What proves a rule\".into(),\n    address: \"majordomus rule proves project.entities-are-routable@1\".into(),\n};\nassert_eq!(\n    serde_json::to_value(&p).unwrap()[\"capability\"],\n    serde_json::json!(\"rule.proves\")\n);\n```"
+    EntitySurface:
+      type: object
+      properties:
+        surface:
+          type: string
+          description: "Which surface: `mcp`, `http`, `cli`, `cockpit`, `site`."
+        address:
+          type: string
+          description: "The address on it: a URI, a route, a command line."
+        detail:
+          type: string
+          description: What a reader does with it.
+      required:
+        - surface
+        - address
+        - detail
+      description: "One place this entity can be reached, and how.\n\nA row of the \"where else this is answered\" table on an entity page. `surface` is the\ninterface's own name, so a reader who works on the command line and a reader who works\nover MCP each find their own line rather than a route they have to translate.\n\n```\nuse majordomus_cli::entity::Surface;\n\nlet s = Surface {\n    surface: \"mcp\".into(),\n    address: \"majordomus://rule/project.x@1\".into(),\n    detail: \"the file as read\".into(),\n};\nassert_eq!(\n    serde_json::to_value(&s).unwrap()[\"surface\"],\n    serde_json::json!(\"mcp\")\n);\n```"
+    EntityView:
+      type: object
+      properties:
+        uri:
+          type: string
+          description: "`majordomus://<kind>/<identity>`."
+        id:
+          type: string
+          description: "The capability id, `<kind>.<identity>`."
+        kind:
+          type: string
+          description: The kind.
+        identity:
+          type: string
+          description: The identity within the kind.
+        slug:
+          type: string
+          description: "The last segment of its route, derived from the identity."
+        route:
+          type: string
+          description: Its route in the Cockpit.
+        kind_route:
+          type: string
+          description: "The route of its kind's index."
+        title:
+          type:
+            - string
+            - "null"
+          description: "The title, when the kind's title rule found one."
+        description:
+          type:
+            - string
+            - "null"
+          description: "The one-line description, when the kind holds one."
+        provenance:
+          "$ref": "#/components/schemas/ObjectProvenance"
+          description: Where it came from.
+        metadata:
+          description: "The parsed front matter or YAML, keys in the file's order."
+        media_type:
+          type: string
+          description: "IANA media type of `content`."
+        content:
+          type: string
+          description: The file as read.
+        relations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EntityEdge"
+          description: "The references it declares, and the references that resolve to it."
+        surfaces:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EntitySurface"
+          description: Every surface that answers for it.
+        evidence:
+          "$ref": "#/components/schemas/EntityEvidence"
+          description: What can be said about its enforcement without running anything.
+      required:
+        - uri
+        - id
+        - kind
+        - identity
+        - slug
+        - route
+        - kind_route
+        - provenance
+        - metadata
+        - media_type
+        - content
+        - relations
+        - surfaces
+        - evidence
+      description: "One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.\n\nThe whole answer in one value, because it is one question: every surface that shows an\nentity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity\nshow` — renders this and composes nothing of its own. A field a reader sees on one\nsurface and not another would be a surface holding an opinion, which is what ADR 0004\nforecloses.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityView;\n\n// it round-trips through the wire shape every projection reads it as\nlet view: EntityView = serde_json::from_value(serde_json::json!({\n    \"uri\": \"majordomus://adr/adr-0056\",\n    \"id\": \"adr.adr-0056\",\n    \"kind\": \"adr\",\n    \"identity\": \"adr-0056\",\n    \"slug\": \"adr-0056\",\n    \"route\": \"/cockpit/objects/adr/adr-0056\",\n    \"kind_route\": \"/cockpit/objects/adr\",\n    \"title\": \"Every object of the layer has a derived address\",\n    \"provenance\": { \"path\": \"x.md\", \"directory\": \"x\", \"source_class\": \"adr\", \"bytes\": 0 },\n    \"metadata\": {},\n    \"media_type\": \"text/markdown\",\n    \"content\": \"\",\n    \"relations\": [],\n    \"surfaces\": [],\n    \"evidence\": { \"state\": \"unclaimed\", \"meaning\": \"nothing named\" },\n}))\n.unwrap();\n\nassert_eq!(view.route, \"/cockpit/objects/adr/adr-0056\");\n// the kind's index is the entity's route with the last segment removed\nassert!(view.route.starts_with(&view.kind_route));\n```"
     EntryProvenance:
       type: object
       properties:
@@ -14723,6 +15054,58 @@ components:
         - kind
         - count
       description: How many valid objects of one kind the layer holds.
+    KindEntry:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: The kind.
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many objects of it the index holds.
+        route:
+          type: string
+          description: Where its index is served.
+        example:
+          anyOf:
+            - "$ref": "#/components/schemas/ObjectSummary"
+            - type: "null"
+          description: "One of its objects, so a reader has somewhere to go."
+      required:
+        - kind
+        - count
+        - route
+      description: "One kind of the layer, with its address and how many objects it holds.\n\n`example` carries one of the kind's objects so that a catalogue of kinds is somewhere a\nreader can go from rather than a list of words: a kind with a count and no way in is a\ndead row. It is `None` only for a kind the index holds no object of.\n\n```\nuse majordomus_cli::capability::builtin::entity::KindEntry;\n\nlet e: KindEntry = serde_json::from_value(serde_json::json!({\n    \"kind\": \"adr\",\n    \"count\": 52,\n    \"route\": \"/cockpit/objects/adr\",\n}))\n.unwrap();\n\nassert_eq!(e.kind, \"adr\");\n// the route is the kind's, derived — never a per-kind entry in a table of routes\nassert_eq!(e.route, majordomus_cli::entity::kind_route(&e.kind));\nassert!(e.example.is_none());\n```"
+    KindList:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many kinds.
+        kinds:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KindEntry"
+          description: "The kinds, in the index's order."
+        routable:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many objects have a route. Every object does, unless it is in `collisions`."
+        collisions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RouteCollision"
+          description: "Two objects of one kind whose identities reduce to one route, which is the only way\nan object can fail to be addressable. Empty is the healthy answer and the only one\n`scripts/ci/entity-check` accepts."
+      required:
+        - count
+        - kinds
+        - routable
+      description: "Every kind of the layer, each with its route, and every route collision there is.\n\nThe two numbers are what `scripts/ci/entity-check` compares: the objects the index holds\nagainst the objects that have an address. They are reported together, in one answer, so\nthat the gate asks one question instead of joining two lists and deciding for itself\nwhat the difference means.\n\n```\nuse majordomus_cli::capability::builtin::entity::KindList;\n\nlet healthy: KindList = serde_json::from_value(serde_json::json!({\n    \"count\": 1,\n    \"kinds\": [{ \"kind\": \"adr\", \"count\": 52, \"route\": \"/cockpit/objects/adr\" }],\n    \"routable\": 52,\n}))\n.unwrap();\n\nlet held: usize = healthy.kinds.iter().map(|k| k.count).sum();\n// every object addressable, and no collision: the only state the gate accepts\nassert_eq!(held, healthy.routable);\nassert!(healthy.collisions.is_empty());\n```"
     KindRef:
       type: object
       properties:
@@ -18561,6 +18944,15 @@ components:
       required:
         - envelope
       description: "The input of `mesh.register`: one signed envelope, exactly as the wire carries it."
+    RelationDirection:
+      oneOf:
+        - type: string
+          const: outgoing
+          description: This entity declared the reference.
+        - type: string
+          const: incoming
+          description: "Another entity named this one. Never declared: derived by reading every other\nobject's references and keeping the ones that resolve here."
+      description: "Which way a relation runs from the entity being read.\n\nThe direction is a property of the *reading*, not of the relation: one edge in\n[`graph::RELATIONS`] is outgoing on the page of the object that declared it and incoming\non the page of the object it names. Nothing in the layer writes `Incoming` down.\n\n```\nuse majordomus_cli::entity::Direction;\n\n// the wire spelling, which every surface shows and the site template reads\nassert_eq!(\n    serde_json::to_string(&Direction::Outgoing).unwrap(),\n    \"\\\"outgoing\\\"\"\n);\nassert_eq!(\n    serde_json::to_string(&Direction::Incoming).unwrap(),\n    \"\\\"incoming\\\"\"\n);\n// declared before derived, which is the order an entity page renders the two sections\nassert!((Direction::Outgoing as u8) < (Direction::Incoming as u8));\n```"
     ReleaseArtifactView:
       type: object
       properties:
@@ -19815,6 +20207,35 @@ components:
     Route:
       type: string
       description: "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
+    RouteCollision:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: The kind they share.
+        slug:
+          type: string
+          description: The slug they both reduce to; empty when an identity reduces to nothing.
+        identities:
+          type: array
+          items:
+            type: string
+          description: "The identities that collide, in index order."
+        paths:
+          type: array
+          items:
+            type: string
+          description: The files that declared them.
+        correction:
+          type: string
+          description: What to do about it.
+      required:
+        - kind
+        - slug
+        - identities
+        - paths
+        - correction
+      description: "Two objects of one kind whose identities reduce to the same route.\n\nCarries both identities and both files, because the reader who has to fix it needs to\nknow which two things collided and where they are written — a count would tell them\nonly that the tree is refused. `correction` is the sentence [`collisions`] wrote about\nthis particular pair.\n\n```\n# use majordomus_cli::{Object, Provenance};\n# fn object(kind: &str, identity: &str) -> Object {\n#     Object { kind: kind.into(), identity: identity.into(),\n#         uri: format!(\"majordomus://{kind}/{identity}\"), title: None, description: None,\n#         metadata: serde_json::json!({}), body: String::new(), content: String::new(),\n#         media_type: \"text/markdown\",\n#         provenance: Provenance { path: format!(\"{identity}.md\"), directory: \"x\".into(),\n#             source_class: kind.into(), section: None, bytes: 0, member: None } }\n# }\nuse majordomus_cli::entity::{collisions, Collision};\n\n// `a.b` and `a-b` are two identities and one slug\nlet objects = vec![object(\"rule\", \"a.b\"), object(\"rule\", \"a-b\")];\nlet found: Vec<Collision> = collisions(&objects);\n\nassert_eq!(found.len(), 1);\nassert_eq!(found[0].kind, \"rule\");\nassert_eq!(found[0].slug, \"a-b\");\nassert_eq!(found[0].identities, [\"a.b\", \"a-b\"]);\nassert!(!found[0].correction.is_empty());\n```"
     RoutingDecision:
       type: object
       properties:

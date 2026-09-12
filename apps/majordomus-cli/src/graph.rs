@@ -442,11 +442,21 @@ fn capability_route(id: &str) -> String {
     )
 }
 
+/// Where the Cockpit shows an object of the index: its entity route, derived from its kind
+/// and identity, which is the one address it has on every surface.
 fn object_route(uri: &str) -> String {
-    format!(
-        "/cockpit/object?uri={}",
-        crate::http::router::percent_encode(uri)
-    )
+    match uri
+        .strip_prefix("majordomus://")
+        .and_then(|r| r.split_once('/'))
+    {
+        Some((kind, identity)) => crate::entity::route(kind, identity),
+        // a URI a query projects (`majordomus://repository`) is not an object and has no
+        // entity page; the reader that has always answered for it still does
+        None => format!(
+            "/cockpit/object?uri={}",
+            crate::http::router::percent_encode(uri)
+        ),
+    }
 }
 
 /// The registry as a graph: every module, every capability it composes, the file the
@@ -1083,25 +1093,25 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
 /// table asks a contributor to restate a relation the layer implies, and nothing in it
 /// matches on a title or a substring: every reference resolves through a stable identity,
 /// a declared id or a repository-relative path.
-struct Relation {
+pub(crate) struct Relation {
     /// The kinds that declare the field; empty means any kind that carries it.
-    kinds: &'static [&'static str],
+    pub(crate) kinds: &'static [&'static str],
     /// The front matter key.
-    field: &'static str,
+    pub(crate) field: &'static str,
     /// The edge the reference asserts.
-    edge: &'static str,
+    pub(crate) edge: &'static str,
     /// How the reference names its target.
-    target: Target,
+    pub(crate) target: Target,
     /// True when the edge runs from the thing named towards the object that named it.
     /// Two kinds sometimes declare one relationship from both ends — an application names
     /// the use cases that serve it and each of those names the application — and one
     /// relationship deserves one edge in one direction rather than two half-truths.
-    inverted: bool,
+    pub(crate) inverted: bool,
 }
 
 /// How a reference names what it points at.
 #[derive(Clone, Copy)]
-enum Target {
+pub(crate) enum Target {
     /// An object of one kind, by identity; a versioned identity resolves by its stem.
     Object(&'static str),
     /// An architecture decision, by the `id` it declares rather than by its file name.
@@ -1122,11 +1132,11 @@ enum Target {
 /// The layer writes a reference that points at nothing on purpose as `-`: a claim with no
 /// implementation yet says so rather than omitting the field. That is an absence, not a
 /// reference, and neither an edge nor a finding follows from it.
-fn is_absence(reference: &str) -> bool {
+pub(crate) fn is_absence(reference: &str) -> bool {
     reference == "-"
 }
 
-const RELATIONS: &[Relation] = &[
+pub(crate) const RELATIONS: &[Relation] = &[
     Relation {
         kinds: &["rule"],
         field: "depends_on",
@@ -1328,7 +1338,7 @@ pub fn unresolved_relations(registry: &CapabilityRegistry, objects: &[Object]) -
 }
 
 /// What a reference resolved to.
-enum Outcome {
+pub(crate) enum Outcome {
     /// A node of the graph, by id.
     Node(String),
     /// Something outside the layer, drawn as an external node.
@@ -1339,7 +1349,7 @@ enum Outcome {
 
 /// The index read once into the lookups every reference needs, so that resolving three
 /// hundred references does not walk eight hundred objects three hundred times.
-struct Resolver<'a> {
+pub(crate) struct Resolver<'a> {
     registry: &'a CapabilityRegistry,
     by_kind_identity: BTreeMap<(&'a str, &'a str), &'a Object>,
     by_kind_stem: BTreeMap<(&'a str, &'a str), &'a Object>,
@@ -1349,7 +1359,7 @@ struct Resolver<'a> {
 }
 
 impl<'a> Resolver<'a> {
-    fn new(registry: &'a CapabilityRegistry, objects: &'a [Object]) -> Self {
+    pub(crate) fn new(registry: &'a CapabilityRegistry, objects: &'a [Object]) -> Self {
         let mut by_kind_identity = BTreeMap::new();
         let mut by_kind_stem = BTreeMap::new();
         let mut by_path = BTreeMap::new();
@@ -1387,7 +1397,7 @@ impl<'a> Resolver<'a> {
             .copied()
     }
 
-    fn resolve(&self, rel: &Relation, reference: &str) -> Outcome {
+    pub(crate) fn resolve(&self, rel: &Relation, reference: &str) -> Outcome {
         match rel.target {
             Target::Object(kind) => match self.object(kind, reference) {
                 Some(o) => Outcome::Node(o.uri.clone()),
@@ -1495,7 +1505,7 @@ fn metadata_string(metadata: &Value, key: &str) -> Option<String> {
 /// A list-of-strings field of an object's parsed front matter; empty when absent or of
 /// another shape. A single string is read as a list of one, because the layer's YAML
 /// subset writes both.
-fn metadata_strings(metadata: &Value, key: &str) -> Vec<String> {
+pub(crate) fn metadata_strings(metadata: &Value, key: &str) -> Vec<String> {
     match metadata.get(key) {
         Some(Value::Array(a)) => a
             .iter()

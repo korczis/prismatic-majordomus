@@ -1,0 +1,188 @@
+# Where each kind of the layer's index is published on this site.
+#
+# The repository indexes every file under `.ai/` as an object of some kind — `majordomus
+# entity kinds` lists them — and every object has an address in the Cockpit because it is an
+# object. The public site is a different question: some kinds have an editorial section
+# written for them, some are published as entity pages from the objects themselves, and some
+# are not published at all. Until this file existed, that knowledge was implicit in twenty
+# lines of `scripts/generate-site-data` and a kind could be added to the layer and reach no
+# public page with nothing saying so.
+#
+# `scripts/ci/entity-check` reads this file and `majordomus entity kinds` and refuses both
+# directions: a kind of the index that is not declared here, and a kind declared here that
+# the index does not hold. A one-way check is the defect class this repository keeps finding
+# in itself, so this one is written both ways from the start.
+#
+# fields:
+#   kind         the kind, as `share/kinds.yaml` declares it and the index reports it
+#   projection   entity  — one page per object, generated from the objects by the entity
+#                          projection into `route`; the page's body is the object's own file
+#                section — an editorial section already publishes this kind at `route`;
+#                          nothing here generates it, and the check only asserts the route
+#                          resolves
+#                none    — not published, with `reason` saying why
+#   route        the public index of the kind, for `entity` and `section`
+#   title        the section heading, for `entity`
+#   description  the section's one-line summary, for `entity`
+#   weight       where the section sorts among the site's sections, for `entity`
+#   reason       why a kind is not published, for `none`
+#
+# A kind published as `entity` must not also have an editorial section: two pages for one
+# object is the duplication this whole subsystem exists to remove.
+
+# ---------------------------------------------------------------- generated from the objects
+
+[[kinds]]
+kind = "adr"
+projection = "entity"
+route = "/adrs/"
+title = "Decisions"
+description = "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file."
+weight = 45
+
+[[kinds]]
+kind = "rule"
+projection = "entity"
+route = "/rules/"
+title = "Rules"
+description = "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph."
+weight = 46
+
+# ---------------------------------------------------------------- an editorial section already publishes it
+
+[[kinds]]
+kind = "application"
+projection = "section"
+route = "/applications/"
+
+[[kinds]]
+kind = "area"
+projection = "section"
+route = "/why/"
+
+[[kinds]]
+kind = "audience"
+projection = "section"
+route = "/why/"
+
+[[kinds]]
+kind = "claim"
+projection = "section"
+route = "/guarantees/"
+
+[[kinds]]
+kind = "command"
+projection = "section"
+route = "/commands/"
+
+[[kinds]]
+kind = "context"
+projection = "section"
+route = "/context/"
+
+[[kinds]]
+kind = "feature"
+projection = "section"
+route = "/features/"
+
+[[kinds]]
+kind = "issue"
+projection = "section"
+route = "/plan/"
+
+[[kinds]]
+kind = "milestone"
+projection = "section"
+route = "/plan/"
+
+[[kinds]]
+kind = "moment"
+projection = "section"
+route = "/why/"
+
+[[kinds]]
+kind = "policy"
+projection = "section"
+route = "/policy/"
+
+[[kinds]]
+kind = "profile"
+projection = "section"
+route = "/profiles/"
+
+[[kinds]]
+kind = "release-record"
+projection = "section"
+route = "/changelog/"
+
+[[kinds]]
+kind = "session"
+projection = "section"
+route = "/sessions/"
+
+[[kinds]]
+kind = "skill"
+projection = "section"
+route = "/skills/"
+
+[[kinds]]
+kind = "taxonomy"
+projection = "section"
+route = "/why/"
+
+[[kinds]]
+kind = "use-case"
+projection = "section"
+route = "/use-cases/"
+
+# ---------------------------------------------------------------- not published
+
+[[kinds]]
+kind = "deployment"
+projection = "none"
+reason = "A deployment object carries the target a release is published to. Its rendered artifacts are in the repository and its state is on the Cockpit; a public page would say only what /docs/install/ already says."
+
+[[kinds]]
+kind = "distribution-model"
+projection = "none"
+reason = "The distribution model is the input the release matrix, the installer and /docs/install/ are all generated from. The generated pages are the publication; the model behind them is not a second one."
+
+[[kinds]]
+kind = "document"
+projection = "none"
+reason = "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent."
+
+[[kinds]]
+kind = "implementation"
+projection = "none"
+reason = "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is."
+
+[[kinds]]
+kind = "knowledge"
+projection = "none"
+reason = "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product."
+
+[[kinds]]
+kind = "mesh-declaration"
+projection = "none"
+reason = "The mesh declaration is one checkout's identity on the local network. It is operational state of an installation, not a fact about the product."
+
+[[kinds]]
+kind = "prompt"
+projection = "none"
+reason = "A prompt is an input to a provider, rendered with the repository's own state. Published on its own it would read as documentation of something a visitor cannot run."
+
+[[kinds]]
+kind = "scope"
+projection = "none"
+reason = "The scope declares which paths of this checkout the tool reads. It is a fact about this repository's layout, and /context/ is where a visitor is told about layout."
+
+[[kinds]]
+kind = "test"
+projection = "none"
+reason = "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in."
+
+[[kinds]]
+kind = "workspace"
+projection = "none"
+reason = "A workspace records an external place work is done (a ChatGPT project, an issue tracker). It names accounts and surfaces of the people working here, not of the product."

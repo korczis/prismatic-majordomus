@@ -42,6 +42,17 @@ const PAGES: &[&str] = &[
     "/cockpit/objects?page=2",
     "/cockpit/graphs/registry",
     "/cockpit/search?q=scope",
+    // The two route shapes an entity's own address adds: a kind's index and one object of
+    // it. They are the newest arms of the dispatcher and the only ones that resolve an
+    // identity out of the index per request, so they are exactly what the sweeps below are
+    // for — a page rendered from the layer must still cost no rebuild of anything canonical
+    // and must still leave `.git/index` alone. Named here rather than only in
+    // `a_capability_the_repository_adds_reaches_every_cockpit_surface`, because that test
+    // proves the entity page answers and these sweeps prove what answering it costs. The
+    // slug is `project.alpha@1`, the one rule of the base fixture, reduced by
+    // `entity::slug`; that test writes a rule of its own and so cannot be named here.
+    "/cockpit/objects/rule",
+    "/cockpit/objects/rule/project-alpha-1",
 ];
 
 fn html(s: &Served, target: &str) -> (u16, String) {
@@ -138,9 +149,36 @@ fn a_capability_the_repository_adds_reaches_every_cockpit_surface() {
     assert_eq!(status, 200);
     assert!(object.contains("project.cockpit-probe@1"), "{object}");
     assert!(
-        object.contains("/cockpit/objects?kind=rule"),
+        object.contains("/cockpit/objects/rule"),
         "the navigation offers the kind"
     );
+
+    // 3b. an address of its own, derived from its identity, and its kind's index —
+    // neither written in the router, both answering because the index holds the object
+    let route = "/cockpit/objects/rule/project-cockpit-probe-1";
+    let (status, entity) = html(&s, route);
+    assert_eq!(status, 200, "the entity route answers: {route}");
+    assert!(
+        entity.contains("A rule added after the Cockpit was written"),
+        "{entity}"
+    );
+    assert!(
+        entity.contains("What it is joined to"),
+        "the entity page carries its relations"
+    );
+    let (status, index) = html(&s, "/cockpit/objects/rule");
+    assert_eq!(status, 200);
+    assert!(index.contains(route), "the kind index links to the entity");
+    // an address the layer does not serve is a 404, never an empty page
+    assert_eq!(html(&s, "/cockpit/objects/rule/no-such-rule").0, 404);
+    assert_eq!(html(&s, "/cockpit/objects/no-such-kind").0, 404);
+
+    // 3c. and the same entity, by the same identity, through the typed API
+    let (status, api) = s.get(&format!("/api/v1/entity?uri={}", urlencode(uri)));
+    assert_eq!(status, 200);
+    assert_eq!(api["uri"], uri);
+    assert_eq!(api["route"], route);
+    assert_eq!(api["slug"], "project-cockpit-probe-1");
 
     // 4. the search
     let (status, found) = html(&s, "/cockpit/search?q=cockpit-probe");
