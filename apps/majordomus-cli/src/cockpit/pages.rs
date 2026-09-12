@@ -2583,7 +2583,7 @@ pub fn mesh(ctx: &Context) -> Page {
         Err(e) => return failed(Area::Mesh, "Mesh", e),
     };
 
-    let mut this_node = facts(vec![(
+    let this_node = facts(vec![(
         "Mesh",
         Node::Element(word_badge(if status.active {
             "active"
@@ -2591,10 +2591,14 @@ pub fn mesh(ctx: &Context) -> Page {
             "inactive"
         })),
     )]);
-    if let Some(reason) = &status.reason {
-        this_node = this_node.child(el("p").class("mj-prose").text(reason));
-    }
     let mut overview = el("div").child(this_node);
+    // Beside the list rather than inside it. `.mj-facts` is a grid whose first column is
+    // `max-content`, so a paragraph placed among its rows becomes a grid item that sizes
+    // that column to the whole sentence: the card then overflows a 320px viewport, which is
+    // what the Cockpit probe measured. A `<p>` is also not a child a `<dl>` may have.
+    if let Some(reason) = &status.reason {
+        overview = overview.child(el("p").class("mj-prose").text(reason));
+    }
     if let Some(identity) = &status.identity {
         overview = overview.child(facts(vec![
             ("Node", Node::Element(mono(identity.node_id.to_string()))),

@@ -19,7 +19,7 @@
 //! kinds the compiler will not follow at all. `is_a` is refused because every object of a
 //! kind hangs off one node and following it would select the whole layer; `composes` and
 //! `projects` are refused because they describe this executable's own wiring rather than
-//! the repository being worked on. [`policy`] projects the table so that a caller can read
+//! the repository being worked on. `policy` projects the table so that a caller can read
 //! the decision instead of inferring it from the answer.
 //!
 //! The two tables are complementary and not overlapping, and that is the invariant worth

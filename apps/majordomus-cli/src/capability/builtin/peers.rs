@@ -131,7 +131,7 @@ pub struct PeerList {
     /// One entry per checkout the answer covers, reached or not.
     pub boards: Vec<BoardView>,
     /// Whether every board the answer covers was read. `false` when a checkout's server
-    /// could not be asked, and [`BoardView::reason`] says which and why — so that "nobody
+    /// could not be asked, and `BoardView::reason` says which and why — so that "nobody
     /// else is here" is never reported when the truth is "I could not ask".
     pub complete: bool,
 }

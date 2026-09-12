@@ -41,7 +41,7 @@
 //!
 //! Nothing here is built when a [`crate::capability::Context`] is composed. The compiler
 //! runs inside its handler, over values already in memory, for the reason
-//! [`crate::plan`](crate::plan) states about the plan: "`App::load` has a stated budget and
+//! [`crate::plan`] states about the plan: "`App::load` has a stated budget and
 //! 200 project records have no business inside it." Deriving the composed graph over this
 //! repository is milliseconds; building the index is seconds, and it is built once per
 //! process. The answer carries the index fingerprint, so an answer is valid exactly as long
