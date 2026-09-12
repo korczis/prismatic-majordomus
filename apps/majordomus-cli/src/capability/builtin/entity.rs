@@ -16,6 +16,30 @@
 //! Nothing here enumerates kinds, entities or routes. A file added under `.ai/` becomes an
 //! object, an object has a route, and this capability answers for it — which is the whole
 //! of `project.entities-are-routable`.
+//!
+//! One entity is asked for either way a caller already holds it — the URI the layer indexes
+//! it by, or the address a reader was given — and the two name the same object:
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::entity::{EntityInput, EvidenceState};
+//!
+//! let by_uri: EntityInput =
+//!     serde_json::from_value(serde_json::json!({ "uri": "majordomus://rule/project.x@1" }))
+//!         .unwrap();
+//! assert_eq!(by_uri.uri.as_deref(), Some("majordomus://rule/project.x@1"));
+//!
+//! let by_route: EntityInput =
+//!     serde_json::from_value(serde_json::json!({ "kind": "rule", "slug": "project-x-1" }))
+//!         .unwrap();
+//! assert_eq!(by_route.kind.as_deref(), Some("rule"));
+//!
+//! // a key nobody declared is an error, not a silently ignored field
+//! assert!(serde_json::from_value::<EntityInput>(serde_json::json!({ "url": "x" })).is_err());
+//!
+//! // and what the answer may say about enforcement is a state, never a run
+//! let unclaimed = serde_json::to_value(EvidenceState::Unclaimed).unwrap();
+//! assert_eq!(unclaimed, serde_json::json!("unclaimed"));
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -34,6 +58,25 @@ use super::{get, mcp, ObjectSummary};
 // ---------------------------------------------------------------- input
 
 /// Which entity: by URI, or by the address it is served at.
+///
+/// Two spellings of one question, because two kinds of caller ask it: MCP and the API hold
+/// the `majordomus://` URI the index is keyed by, and the Cockpit's router has a `kind` and
+/// a `slug` out of a path. Nothing converts one form into the other at the edge — the
+/// capability resolves either, so neither caller has to know the other's spelling.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::EntityInput;
+///
+/// let by_route: EntityInput =
+///     serde_json::from_value(serde_json::json!({ "kind": "adr", "slug": "adr-0056" }))
+///         .unwrap();
+/// assert_eq!(by_route.kind.as_deref(), Some("adr"));
+/// assert_eq!(by_route.slug.as_deref(), Some("adr-0056"));
+/// assert_eq!(by_route.uri, None);
+///
+/// // absent is a shape, not an error: which fields are required is the handler's question
+/// assert_eq!(EntityInput::default().kind, None);
+/// ```
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct EntityInput {
@@ -70,6 +113,23 @@ impl BenchmarkCases for EntityInput {
 
 /// What this repository can say about the executable artefacts an object names, and only
 /// that. The word is chosen so that no reader can mistake it for a run.
+///
+/// The three states are ordered by how much they permit a reader to conclude, and the
+/// strongest of them still concludes nothing about a run: `Resolved` means the files an
+/// object points at exist. `proof` on [`Evidence`] is where "did it ever pass" is asked.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::EvidenceState;
+///
+/// // the wire spellings, which the Cockpit badge and the site template both read
+/// for (state, word) in [
+///     (EvidenceState::Unclaimed, "unclaimed"),
+///     (EvidenceState::Dangling, "dangling"),
+///     (EvidenceState::Resolved, "resolved"),
+/// ] {
+///     assert_eq!(serde_json::to_value(state).unwrap(), serde_json::json!(word));
+/// }
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "EntityEvidenceState")]
@@ -87,6 +147,23 @@ pub enum EvidenceState {
 }
 
 /// One executable artefact an object names, and whether the tree holds it.
+///
+/// `field` is kept beside the path because the same object can name artefacts under several
+/// keys, and a reader fixing a dangling one needs to know which line of the front matter to
+/// look at rather than which file is missing.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::ClaimedArtifact;
+///
+/// let a = ClaimedArtifact {
+///     field: "x-majordomus.tests".into(),
+///     path: "test/cases/277_entities_are_routable.sh".into(),
+///     present: true,
+/// };
+/// let wire = serde_json::to_value(&a).unwrap();
+/// assert_eq!(wire["field"], serde_json::json!("x-majordomus.tests"));
+/// assert_eq!(wire["present"], serde_json::json!(true));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ClaimedArtifact {
     /// The front matter key it was named under (`x-majordomus.tests`, `test`, ...).
@@ -98,6 +175,24 @@ pub struct ClaimedArtifact {
 }
 
 /// Where a fuller answer about this entity's enforcement lives.
+///
+/// A pointer, never an answer. This module states what it can see in the tree and then
+/// names the capability that can say more, so that an entity page does not grow a second,
+/// weaker implementation of proof beside the one that already exists.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::ProofRef;
+///
+/// let p = ProofRef {
+///     capability: "rule.proves".into(),
+///     title: "What proves a rule".into(),
+///     address: "majordomus rule proves project.entities-are-routable@1".into(),
+/// };
+/// assert_eq!(
+///     serde_json::to_value(&p).unwrap()["capability"],
+///     serde_json::json!("rule.proves")
+/// );
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EntityProofRef")]
 pub struct ProofRef {
@@ -110,6 +205,28 @@ pub struct ProofRef {
 }
 
 /// What can be said about an object's enforcement without running anything.
+///
+/// `meaning` travels with `state` so that every surface shows the same sentence about it:
+/// a badge alone invites each renderer to write its own gloss, and the gloss is where a
+/// "resolved" quietly becomes a "passing". A kind that names no artefact is `Unclaimed`
+/// with an empty `artifacts`, which is an answer and not an omission.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::{Evidence, EvidenceState};
+///
+/// let e = Evidence {
+///     state: EvidenceState::Unclaimed,
+///     meaning: "This object names no executable artefact.".into(),
+///     artifacts: Vec::new(),
+///     proof: None,
+/// };
+///
+/// // the empty collections are omitted from the wire, so absence reads as absence
+/// let wire = serde_json::to_value(&e).unwrap();
+/// assert_eq!(wire["state"], serde_json::json!("unclaimed"));
+/// assert!(wire.get("artifacts").is_none());
+/// assert!(wire.get("proof").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EntityEvidence")]
 pub struct Evidence {
@@ -227,6 +344,40 @@ fn evidence(ctx: &Context, o: &Object) -> Evidence {
 
 /// One object of the layer as an addressable node: what it is, where it is served, what it
 /// is joined to, and what can be said about its enforcement.
+///
+/// The whole answer in one value, because it is one question: every surface that shows an
+/// entity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity
+/// show` — renders this and composes nothing of its own. A field a reader sees on one
+/// surface and not another would be a surface holding an opinion, which is what ADR 0004
+/// forecloses.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::EntityView;
+///
+/// // it round-trips through the wire shape every projection reads it as
+/// let view: EntityView = serde_json::from_value(serde_json::json!({
+///     "uri": "majordomus://adr/adr-0056",
+///     "id": "adr.adr-0056",
+///     "kind": "adr",
+///     "identity": "adr-0056",
+///     "slug": "adr-0056",
+///     "route": "/cockpit/objects/adr/adr-0056",
+///     "kind_route": "/cockpit/objects/adr",
+///     "title": "Every object of the layer has a derived address",
+///     "provenance": { "path": "x.md", "directory": "x", "source_class": "adr", "bytes": 0 },
+///     "metadata": {},
+///     "media_type": "text/markdown",
+///     "content": "",
+///     "relations": [],
+///     "surfaces": [],
+///     "evidence": { "state": "unclaimed", "meaning": "nothing named" },
+/// }))
+/// .unwrap();
+///
+/// assert_eq!(view.route, "/cockpit/objects/adr/adr-0056");
+/// // the kind's index is the entity's route with the last segment removed
+/// assert!(view.route.starts_with(&view.kind_route));
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct EntityView {
     /// `majordomus://<kind>/<identity>`.
@@ -309,6 +460,26 @@ fn objects_entity(ctx: &Context, input: EntityInput) -> Result<EntityView, Capab
 // ---------------------------------------------------------------- kinds
 
 /// One kind of the layer, with its address and how many objects it holds.
+///
+/// `example` carries one of the kind's objects so that a catalogue of kinds is somewhere a
+/// reader can go from rather than a list of words: a kind with a count and no way in is a
+/// dead row. It is `None` only for a kind the index holds no object of.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::KindEntry;
+///
+/// let e: KindEntry = serde_json::from_value(serde_json::json!({
+///     "kind": "adr",
+///     "count": 52,
+///     "route": "/cockpit/objects/adr",
+/// }))
+/// .unwrap();
+///
+/// assert_eq!(e.kind, "adr");
+/// // the route is the kind's, derived — never a per-kind entry in a table of routes
+/// assert_eq!(e.route, majordomus_cli::entity::kind_route(&e.kind));
+/// assert!(e.example.is_none());
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct KindEntry {
     /// The kind.
@@ -323,6 +494,27 @@ pub struct KindEntry {
 }
 
 /// Every kind of the layer, each with its route, and every route collision there is.
+///
+/// The two numbers are what `scripts/ci/entity-check` compares: the objects the index holds
+/// against the objects that have an address. They are reported together, in one answer, so
+/// that the gate asks one question instead of joining two lists and deciding for itself
+/// what the difference means.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::KindList;
+///
+/// let healthy: KindList = serde_json::from_value(serde_json::json!({
+///     "count": 1,
+///     "kinds": [{ "kind": "adr", "count": 52, "route": "/cockpit/objects/adr" }],
+///     "routable": 52,
+/// }))
+/// .unwrap();
+///
+/// let held: usize = healthy.kinds.iter().map(|k| k.count).sum();
+/// // every object addressable, and no collision: the only state the gate accepts
+/// assert_eq!(held, healthy.routable);
+/// assert!(healthy.collisions.is_empty());
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct KindList {
     /// How many kinds.
@@ -365,7 +557,40 @@ fn objects_kinds(ctx: &Context, _: super::Empty) -> Result<KindList, CapabilityE
     })
 }
 
-/// The module.
+/// The canonical declaration of the `entity` module: the two capabilities that answer for
+/// an object and for the catalogue of kinds, with every projection each is exposed through.
+///
+/// This is the only place either capability is written down. The MCP tool, the HTTP route,
+/// the command-line path, the generated OpenAPI and the Cockpit's page are all read from
+/// here, which is why adding a surface to `entity.show` is an edit to this function and
+/// never to a transport registry or a documentation table (ADR 0004).
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity;
+///
+/// let m = entity::module();
+/// assert_eq!(m.id.as_str(), "entity");
+///
+/// // both capabilities are namespaced by the module id, with no second spelling of it
+/// let ids: Vec<String> = m
+///     .capabilities
+///     .iter()
+///     .map(|c| c.capability.id.to_string())
+///     .collect();
+/// assert!(ids.iter().any(|id| id == "entity.show"));
+/// assert!(ids.iter().any(|id| id == "entity.kinds"));
+///
+/// // and each declares where it is answered, rather than being registered elsewhere
+/// let show = m
+///     .capabilities
+///     .iter()
+///     .find(|c| c.capability.id.to_string() == "entity.show")
+///     .expect("entity.show is declared here");
+/// assert_eq!(
+///     show.capability.exposure.http.as_ref().map(|h| h.path.as_str()),
+///     Some("/api/v1/entity")
+/// );
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "entity",
