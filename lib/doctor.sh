@@ -345,21 +345,89 @@ mj_report_clone() {
   # Work that exists on one disk. A branch whose commits reach no remote is not backed up,
   # is invisible to every other session, and cannot be folded by whoever is integrating —
   # fifteen commits over sixty-eight files sat in exactly that state for three days.
-  local unpushed="" b n
+  #
+  # The count alone is not the answer, and saying only a count sent a session to the edge of
+  # pushing another session's orphaned branch to rescue nothing. Three questions, not one:
+  #
+  #   1. does the commit exist on no remote AT ALL — `<b> --not --remotes`. Not
+  #      `@{upstream}..<b>`, which counts whatever the ref gained however it gained it: a
+  #      local `Merge remote-tracking branch 'origin/master'` makes that form report every
+  #      commit master brought, all of them already pushed. It read 22 for
+  #      fix/the-order-ratchet-is-paid-not-moved on 2026-09-12; the ref-set question read 1.
+  #   2. of those, how many are not merges. A merge commit of already-pushed history is a
+  #      gesture, not work: re-merging costs a command. Two branches that afternoon held
+  #      exactly one unique commit each and it was that merge.
+  #   3. of the non-merges, how many touch a path a person wrote. int/entities-are-routable's
+  #      single unique non-merge commit was `chore(derive): regenerate the derived artifacts`
+  #      over docs/generated/, site/content/ and two status files — regenerable by
+  #      definition. Losing it costs a 160–350 s derive, not work.
+  #
+  # Only (3) is exposure, and only (3) warns. The rest is reported as measured and explicitly
+  # not at risk, because two permanent warnings teach a reader to scroll past the output.
+  #
+  # What counts as generated is NOT decided here. lib/changed.sh reads the five declarations
+  # that already say it — scope.yaml's out.generated, the policy targets, the record stores,
+  # and .gitattributes' `merge=derived` block written by scripts/gitattributes out of
+  # docs/generated/artifacts.json and scripts/generate-site-data. A second hand-kept copy of
+  # that set is its own defect.
+  local risk="" safe="" nrisk=0 nsafe=0 b
   while read -r b; do
     [ -n "$b" ] || continue
-    n="$(git -C "$MJ_ROOT" rev-list --count "$b" --not --remotes 2>/dev/null || echo 0)"
-    [ "$n" -gt 0 ] 2>/dev/null && unpushed="$unpushed $b($n)"
+    mj_unpushed_classify "$b"
+    [ "$MJ_UNPUSHED_ALL" -gt 0 ] || continue
+    if [ "$MJ_UNPUSHED_AUTHORED" -gt 0 ]; then
+      nrisk=$((nrisk + 1))
+      [ "$nrisk" -le 4 ] && risk="$risk $b($MJ_UNPUSHED_AUTHORED authored of $MJ_UNPUSHED_NOMERGE non-merge of $MJ_UNPUSHED_ALL on no remote)"
+    else
+      nsafe=$((nsafe + 1))
+      [ "$nsafe" -le 4 ] && safe="$safe $b($MJ_UNPUSHED_ALL on no remote, $MJ_UNPUSHED_NOMERGE non-merge, 0 authored)"
+    fi
   done <<EOF
 $(git -C "$MJ_ROOT" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
 EOF
-  if [ -n "$unpushed" ]; then
+  if [ "$nrisk" -gt 0 ]; then
     mj_warn clone "unpushed" \
-      "commits on no remote:${unpushed} — work on one disk is invisible to every other session and cannot be integrated" \
+      "$nrisk branch(es) hold authored commits that exist on no remote:${risk}$( [ "$nrisk" -gt 4 ] && printf ' …' ) — authored source on one disk is invisible to every other session and cannot be integrated$( [ "$nsafe" -gt 0 ] && printf '; a further %s branch(es) hold only merges or regenerable output and are not at risk' "$nsafe" )" \
       "git push -u origin <branch>"
+  elif [ "$nsafe" -gt 0 ]; then
+    mj_ok clone "unpushed" \
+      "every authored commit is on a remote; $nsafe branch(es) hold commits that exist on no remote and not one touches an authored path — a merge of pushed history or declared-derived output, regenerable and not at risk:${safe}$( [ "$nsafe" -gt 4 ] && printf ' …' )"
   else
     mj_ok clone "unpushed" "every local commit is on a remote"
   fi
+}
+
+# How much of branch $1's history exists on no remote, and what kind of work it is.
+# Sets MJ_UNPUSHED_ALL ≥ MJ_UNPUSHED_NOMERGE ≥ MJ_UNPUSHED_AUTHORED. The two cheap counts
+# are asked of every branch; the file-level question is asked only of a branch that has
+# unique commits at all, which on this repository is three branches of a hundred and fifty.
+mj_unpushed_classify() {
+  local b="$1" c
+  MJ_UNPUSHED_ALL=0; MJ_UNPUSHED_NOMERGE=0; MJ_UNPUSHED_AUTHORED=0
+  MJ_UNPUSHED_ALL="$(git -C "$MJ_ROOT" rev-list --count "$b" --not --remotes 2>/dev/null || echo 0)"
+  [ "$MJ_UNPUSHED_ALL" -gt 0 ] 2>/dev/null || { MJ_UNPUSHED_ALL=0; return 0; }
+  while read -r c; do
+    [ -n "$c" ] || continue
+    MJ_UNPUSHED_NOMERGE=$((MJ_UNPUSHED_NOMERGE + 1))
+    mj_unpushed_commit_is_authored "$c" && MJ_UNPUSHED_AUTHORED=$((MJ_UNPUSHED_AUTHORED + 1))
+  done <<EOF
+$(git -C "$MJ_ROOT" rev-list --no-merges "$b" --not --remotes 2>/dev/null)
+EOF
+  return 0
+}
+
+# Does commit $1 touch a path no generator owns? 0 yes — this is a person's work. A separate
+# function and not a nested loop: two heredocs collected for one compound command is the kind
+# of shell that works until someone edits it.
+mj_unpushed_commit_is_authored() {
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    mj_changed_is_derived "$f" || return 0
+  done <<EOF
+$(git -C "$MJ_ROOT" show --pretty=format: --name-only "$1" 2>/dev/null)
+EOF
+  return 1
 }
 
 # a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order
@@ -480,11 +548,34 @@ mj_validate_ai_layout() {
   return 0
 }
 
+# The directories the layout contract names. Two of them are not the same kind of thing as
+# the third, and reporting all three alike produced two warnings on every run in every
+# worktree, for everyone, permanently — which is how a reader learns to skip WARN output.
+#
+#   .ai/repo/prompts is tracked content. Its absence means the installation is incomplete:
+#   nothing creates it on demand, every prompt surface reads it, and `update` installs it.
+#   That is a finding.
+#
+#   .ai/local/state/{handovers,checkpoints} are gitignored and machine-local, so a fresh
+#   clone and every linked worktree start without them — and `lib/update.sh` creates them
+#   only when someone runs `majordomus update` in that checkout, which nobody does per
+#   worktree. Their absence has no consequence: every writer mkdir -p's its own store, as
+#   the old message itself conceded ("the command that writes it will create it"). And the
+#   question worth asking about them is already asked, with a denominator, by
+#   doctrine_lifecycle_activity: `N episode(s) have opened here and no <store> record exists`.
+#   A second, weaker copy of a check that already exists is the defect this repository
+#   spends its time removing — the same reason the derived merge driver is not checked in
+#   mj_report_clone. So doctor states what it measured and does not call it a finding.
+#
+# doctor does not create them either: a diagnostic that mutates cannot be trusted to report
+# on what it just changed, and `update` is where installation belongs.
 mj_validate_layout() {
   local d
-  for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_PROMPTS_DIR"; do
+  if [ -d "$MJ_PROMPTS_DIR" ]; then mj_doctrine_ok layout "$(mj_rel "$MJ_PROMPTS_DIR")" "present"
+  else mj_doctrine_fail layout "$(mj_rel "$MJ_PROMPTS_DIR")" "missing; it is tracked content that nothing creates on demand, and update installs it" "majordomus update"; fi
+  for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints"; do
     if [ -d "$d" ]; then mj_doctrine_ok layout "$(mj_rel "$d")" "present"
-    else mj_doctrine_fail layout "$(mj_rel "$d")" "missing; the command that writes it will create it, but update installs it" "majordomus update"; fi
+    else mj_doctrine_ok layout "$(mj_rel "$d")" "absent — machine-local and gitignored, created by the first writer; whether a record is owed here is judged by lifecycle/$(basename "$d") against the episode count"; fi
   done
   return 0
 }

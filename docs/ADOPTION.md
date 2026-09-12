@@ -25,7 +25,9 @@ the details and not in the shape.
 
 ```
 FAIL bootstrap   README.md — does not name AGENTS.md; a reader cannot find the agent bootstrap
-WARN clone       unpushed — commits on no remote: main(1)
+WARN clone       unpushed — 1 branch(es) hold authored commits that exist on no remote:
+                 main(1 authored of 1 non-merge of 1 on no remote) — authored source on one
+                 disk is invisible to every other session and cannot be integrated
 INFO doctrine    vendor evidence — v0.5.0 is a packaged distribution, so the tests, claims
                  and CI each rule cites are not here to read
 INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
