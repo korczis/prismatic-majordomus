@@ -248,3 +248,82 @@ mj_validate_completion_gates() {
   fi
   return 0
 }
+
+# ---------------------------------------------------------------- the publication validator
+# Dispatched by finish through majordomus.publication-currency.
+#
+# Every other gate in the model measures a tree, which is why the path classes can select
+# it: change the file, run the gate. A gate marked `at-finish: true` measures a deployment —
+# which commit the public is being served, and whether it is still on the trunk — and no
+# change to any file can make that come out differently. So no class names it, a full plan
+# is the only thing that ever asked it, and a full plan runs on a push to master, which is
+# before the publication it would judge. `finish` is where the question is worth asking.
+#
+# Run, not recorded. mj_gate_record hashes the files a gate was run over so the run expires
+# when they change; that mechanism cannot hold this verdict, because its subject is not in
+# the tree. A publication check from ten minutes ago describes a site that may have been
+# superseded since, with every file untouched. There is no hash to expire against, so the
+# gate is run live at the moment of the claim.
+#
+# Three outcomes, and the third is the one that matters: 0 passes, 10 refuses, and anything
+# else is a verdict that could not be reached — no network, no published branch, no hosting
+# API — which is reported by name and refuses nothing. A session on a train is not evidence
+# that the site is stale, and a requirement that cannot be met offline is waived within a
+# week. Silence is not green, and it is not red either.
+mj_validate_publication_currency() {
+  local id gates g runs out rc
+
+  if ! mj_load_current; then
+    mj_doctrine_skip gate "-" "no active task; nothing claims to be finished"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  id="$(mj_cur id)"
+
+  mj_finish_selected || {
+    mj_doctrine_skip gate "$id" "not in verification.finish_requires"
+    MJ_DOCTRINE_SKIPPED=1; return 0; }
+
+  # An outcome other than completed refuses nothing: a task reporting itself blocked is
+  # being honest, and refusing that teaches a worker to claim completed instead.
+  if [ "${MJ_FINISH_OUTCOME:-}" != completed ]; then
+    mj_doctrine_skip gate "$id" "skipped for outcome ${MJ_FINISH_OUTCOME:-none}"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+
+  if ! mj_gate_model_load; then
+    mj_doctrine_skip gate "$id" "this repository declares no readable CI model at .ai/repo/ci/gates.yaml, so no publication gate can be found (unknown, never a pass)"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+
+  # The model says which gates measure a deployment. Nothing is named here: a repository
+  # that publishes nothing marks none, and this requirement then has nothing to run.
+  gates="$(sed -n 's/^gates\.\([0-9]*\)\.at-finish=true$/\1/p' "$MJ_GATE_FLAT" \
+           | while IFS= read -r i; do mj_yget "$MJ_GATE_FLAT" "gates.$i.id"; printf '\n'; done | sed '/^$/d')"
+  if [ -z "$gates" ]; then
+    mj_doctrine_skip gate "$id" "no gate in this repository's CI model is marked at-finish, so nothing here measures a publication" "grep -n at-finish .ai/repo/ci/gates.yaml"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+
+  for g in $gates; do
+    runs="$(mj_gate_field "$g" runs)"
+    if [ -z "$runs" ]; then
+      mj_doctrine_fail gate "$g" "the CI model marks it at-finish and declares no command to run it" ".ai/repo/ci/gates.yaml"
+      continue
+    fi
+    # `|| rc=$?` and not `&& rc=0 || rc=$?`: the second form assigns from the wrong
+    # command when the assignment itself is the one that succeeded, and this exit status
+    # is the whole verdict. The gate is executed as a file, so its own shebang applies —
+    # `sh -c "<path>"` execs it, it does not interpret it.
+    rc=0; out="$( cd "$MJ_ROOT" && sh -c "$runs" 2>&1 )" || rc=$?
+    case "$rc" in
+      0)  mj_doctrine_ok gate "$g" "$(printf '%s' "$out" | sed -n '$p' | cut -c1-160)" ;;
+      10) mj_doctrine_fail gate "$g" \
+            "the published site is not a projection of the trunk: $(printf '%s' "$out" | grep -E '^(FAIL|fail)' | head -n 1 | cut -c1-200)" \
+            "$runs" ;;
+      *)  mj_doctrine_skip gate "$g" \
+            "could not be reached (exit $rc), so the publication is unverified and never a pass: $(printf '%s' "$out" | sed -n '$p' | cut -c1-160)" \
+            "$runs" ;;
+    esac
+  done
+  return 0
+}
