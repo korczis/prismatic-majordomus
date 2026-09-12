@@ -6,7 +6,7 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "62f4f98ff40d5c71fb87e57a21210b739bb4546995a0871c5a811a501ac78952",
+    "fingerprint": "c04185e8da76c6d331c49794e2b68d151a136d592fbab26812a8f41cc3821362",
     "summary": {
       "total": 1440,
       "builtin": 110,
@@ -18525,8 +18525,8 @@
                     "description": "The question, as a person would ask it."
                   },
                   "source": {
-                    "$ref": "#/$defs/QuestionSource",
-                    "description": "What answers it."
+                    "type": "string",
+                    "description": "What answers it, as the policy states it."
                   },
                   "remediation": {
                     "type": "string",
@@ -18540,128 +18540,7 @@
                   "source",
                   "remediation"
                 ],
-                "description": "One question of the policy, as declared."
-              },
-              "QuestionSource": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "obligation"
-                      },
-                      "name": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "name"
-                    ],
-                    "description": "A token of `share/obligations.yaml`, judged by `obligations.closure`."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "gates"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "description": "The aggregate of every gate the change selects."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "gate"
-                      },
-                      "name": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "name"
-                    ],
-                    "description": "One gate of the CI model, by id."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "change-test-path"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "description": "The change set itself: whether a test path is among the touched files."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "release-impact"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "description": "The structural version analysis, `release.analysis`."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "task-issue"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "description": "The task record's `issue` field, resolved against the plan."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "session-handover"
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "description": "A continuation record for this task."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "elsewhere"
-                      },
-                      "name": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "name"
-                    ],
-                    "description": "Nothing reachable from the report; the command that answers it."
-                  }
-                ],
-                "description": "Where a question's answer is taken from.\n\n```\nuse majordomus_cli::gates::QuestionSource;\nassert_eq!(QuestionSource::parse(\"obligation:tests\").unwrap(), QuestionSource::Obligation(\"tests\".into()));\nassert_eq!(QuestionSource::parse(\"gate:release-check\").unwrap(), QuestionSource::Gate(\"release-check\".into()));\nassert_eq!(QuestionSource::parse(\"gates\").unwrap(), QuestionSource::Gates);\nassert_eq!(QuestionSource::parse(\"release:impact\").unwrap(), QuestionSource::ReleaseImpact);\nassert!(QuestionSource::parse(\"magic\").is_err(), \"a source nothing answers is refused\");\nassert_eq!(QuestionSource::Elsewhere(\"x y\".into()).to_string(), \"elsewhere:x y\");\n```"
+                "description": "One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`release:impact`), never as a structure: every projection — the report, the site's\ndataset written with or without the executable, the bootstrap fragment — then states the\nsame bytes for the same question, and a reader compares the two by eye. [`Self::kind`]\nparses it; [`CompletionPolicy::parse`] has already refused a text nothing answers."
               }
             }
           }
@@ -40411,7 +40290,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5edc6d152e9d71369aaf95533021f2d92d7de793f30d192f4b2186c3101ad84a",
+    "fingerprint": "472fc098fe770b22a68bd91053a7743f8fdc3afba14f2801d64fdcf406d01f14",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

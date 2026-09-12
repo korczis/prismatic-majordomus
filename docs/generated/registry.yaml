@@ -13332,8 +13332,8 @@ capabilities:
                 type: string
                 description: "The question, as a person would ask it."
               source:
-                "$ref": "#/$defs/QuestionSource"
-                description: What answers it.
+                type: string
+                description: "What answers it, as the policy states it."
               remediation:
                 type: string
                 description: "What would settle it, as a command."
@@ -13343,83 +13343,7 @@ capabilities:
               - question
               - source
               - remediation
-            description: "One question of the policy, as declared."
-          QuestionSource:
-            oneOf:
-              - type: object
-                properties:
-                  kind:
-                    type: string
-                    const: obligation
-                  name:
-                    type: string
-                required:
-                  - kind
-                  - name
-                description: "A token of `share/obligations.yaml`, judged by `obligations.closure`."
-              - type: object
-                properties:
-                  kind:
-                    type: string
-                    const: gates
-                required:
-                  - kind
-                description: The aggregate of every gate the change selects.
-              - type: object
-                properties:
-                  kind:
-                    type: string
-                    const: gate
-                  name:
-                    type: string
-                required:
-                  - kind
-                  - name
-                description: "One gate of the CI model, by id."
-              - type: object
-                properties:
-                  kind:
-                    type: string
-                    const: change-test-path
-                required:
-                  - kind
-                description: "The change set itself: whether a test path is among the touched files."
-              - type: object
-                properties:
-                  kind:
-                    type: string
-                    const: release-impact
-                required:
-                  - kind
-                description: "The structural version analysis, `release.analysis`."
-              - type: object
-                properties:
-                  kind:
-                    type: string
-                    const: task-issue
-                required:
-                  - kind
-                description: "The task record's `issue` field, resolved against the plan."
-              - type: object
-                properties:
-                  kind:
-                    type: string
-                    const: session-handover
-                required:
-                  - kind
-                description: A continuation record for this task.
-              - type: object
-                properties:
-                  kind:
-                    type: string
-                    const: elsewhere
-                  name:
-                    type: string
-                required:
-                  - kind
-                  - name
-                description: Nothing reachable from the report; the command that answers it.
-            description: "Where a question's answer is taken from.\n\n```\nuse majordomus_cli::gates::QuestionSource;\nassert_eq!(QuestionSource::parse(\"obligation:tests\").unwrap(), QuestionSource::Obligation(\"tests\".into()));\nassert_eq!(QuestionSource::parse(\"gate:release-check\").unwrap(), QuestionSource::Gate(\"release-check\".into()));\nassert_eq!(QuestionSource::parse(\"gates\").unwrap(), QuestionSource::Gates);\nassert_eq!(QuestionSource::parse(\"release:impact\").unwrap(), QuestionSource::ReleaseImpact);\nassert!(QuestionSource::parse(\"magic\").is_err(), \"a source nothing answers is refused\");\nassert_eq!(QuestionSource::Elsewhere(\"x y\".into()).to_string(), \"elsewhere:x y\");\n```"
+            description: "One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`release:impact`), never as a structure: every projection — the report, the site's\ndataset written with or without the executable, the bootstrap fragment — then states the\nsame bytes for the same question, and a reader compares the two by eye. [`Self::kind`]\nparses it; [`CompletionPolicy::parse`] has already refused a text nothing answers."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::gates
