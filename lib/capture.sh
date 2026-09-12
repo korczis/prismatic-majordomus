@@ -1465,6 +1465,14 @@ mj_capture_session_start() {
   # an argument rather than as a variable the briefing reaches for: two files sharing a name
   # is a data flow no reader — and no shellcheck — can follow.
   local server; server="$(mj_capture_ensure_server "$provider")"
+  # The mesh, on the same line block as the server it lives in: a declaration that says
+  # `enabled: true` and a server whose mesh is not active is the drift this repository
+  # paid for on 2026-09-12 (ADR 0059), and the briefing is where a worker is told before
+  # its first tool call. Absent declaration, absent line: a repository with no mesh must
+  # not grow a line about not having one.
+  local mesh; mesh="$(mj_capture_mesh_line "$server")"
+  [ -n "$mesh" ] && server="$server
+Mesh: $mesh"
   [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
   mj_derive_briefing "$server" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
   return 0
@@ -1497,6 +1505,37 @@ mj_capture_ensure_server() {
   line="$("$bin" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" \
     || mj_session_context_log "$provider start event: the server did not converge: $line"
   printf '%s\n' "${line:-not ensured: serve ensure said nothing}"
+}
+
+# One line about the mesh for the briefing, when the repository declares one: `active` with
+# what the server sees, `off, as declared`, or — the line this exists for — DECLARED ENABLED
+# BUT NOT ACTIVE with the server's reason. Empty when nothing is declared, when no server
+# was ensured, or when the executable could not answer: this is a hook, and a hook that
+# fails loudly at the wrong moment is a session nobody can open.
+#
+# The answer comes from the executable's own `mesh doctor`, which asks the running server
+# (the mesh lives in its memory) and reads the declaration from the index: no request
+# leaves this file (SECURITY.md's one declared request stays the one in context.sh).
+mj_capture_mesh_line() {
+  local server="$1" bin share out decl
+  case "$server" in ready\ http://*) ;; *) return 0 ;; esac
+  decl="$(mj_git ls-files -- .ai/repo/mesh 2>/dev/null | grep -E '^\.ai/repo/mesh/[^/]+\.ya?ml$' | head -n 1)"
+  [ -n "$decl" ] || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"; [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_ROOT")"; [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  out="$("$bin" mesh doctor --repo "$MJ_ROOT" --format json 2>/dev/null)" || true
+  [ -n "$out" ] || return 0
+  printf '%s' "$out" | jq -r '
+    (.checks[] | select(.check == "declaration") | .detail) as $decl
+    | (.checks[] | select(.check == "runtime")) as $rt
+    | (.checks[] | select(.check == "trust")) as $tr
+    | if ($decl | test("enabled=true") | not) then "off, as declared"
+      elif $rt.ok then "active — " + ($rt.detail | sub("^active as [0-9a-f]+ since [^:]+: "; ""))
+        + (if $tr.ok then "" else "; TRUST: " + $tr.detail end)
+      else "DECLARED ENABLED BUT NOT ACTIVE — " + $rt.detail end' 2>/dev/null
+  return 0
 }
 
 # A compaction discards the conversation and keeps working. Nothing about the episode ends,
