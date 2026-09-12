@@ -168,15 +168,16 @@
   </nav>
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/BACKLOG.md" class="font-mono underline">docs/BACKLOG.md</a> — the same Markdown GitHub shows.</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>The four quantities in this repository that grow on their own, the commands that measure
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>The five quantities in this repository that grow on their own, the commands that measure
 them, and the commands that reduce them. Behaviour as implemented and tested; where this
 document and the scripts disagree, the document is wrong and changes in the same commit.
 The rule is <code>project.accumulation-is-measured</code>; the gate is <code>scripts/ci/backlog-check</code>; the
-behavioural case is <code>test/cases/131_backlog_hygiene.sh</code>.</p>
+behavioural cases are <code>test/cases/131_backlog_hygiene.sh</code> and
+<code>test/cases/276_disk_is_bounded.sh</code>.</p>
 <h2 id="the-finding-this-exists-because-of"><a class="zola-anchor" href="#the-finding-this-exists-because-of" aria-label="Anchor link for: the-finding-this-exists-because-of">The finding this exists because of</a></h2>
 <p>On 2026-09-11 the operator reported one symptom — <em>worktrees, processes and branches keep
 piling up and nothing is being deployed</em> — and measurement found four separate quantities
-at once:</p>
+at once (the fifth, disk, filled the volume the next day and has its own section below):</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>Quantity</th><th>Measured</th><th>Of which</th></tr></thead><tbody>
 <tr><td>open pull requests</td><td>16</td><td>15 merged cleanly on any developer's machine</td></tr>
@@ -217,6 +218,7 @@ expensive way this measurement can be wrong. <code>scripts/land</code> uses the 
 <tr><td>pull requests</td><td><code>scripts/land</code></td><td><code>scripts/land --run</code></td></tr>
 <tr><td>worktrees, branches</td><td><code>majordomus worktree</code></td><td><code>majordomus worktree</code> cleanup, by hand for dirty ones</td></tr>
 <tr><td>abandoned servers</td><td><code>scripts/reap-orphans</code></td><td><code>scripts/reap-orphans --kill</code></td></tr>
+<tr><td>build output on disk</td><td><code>scripts/reap-orphans --targets</code></td><td><code>scripts/reap-orphans --reclaim</code></td></tr>
 <tr><td>the whole gate</td><td><code>scripts/ci/backlog-check</code></td><td><code>scripts/ci/backlog-check --remote</code></td></tr>
 </tbody></table>
 </div>
@@ -247,6 +249,37 @@ process is reaped only when all four hold, each re-checked immediately before th
 </ul>
 <p>Dry-run by default; <code>--kill</code> acts. A server that acquires a client between the scan and the
 signal is skipped.</p>
+<h3 id="build-output-and-the-floor-under-a-build"><a class="zola-anchor" href="#build-output-and-the-floor-under-a-build" aria-label="Anchor link for: build-output-and-the-floor-under-a-build">Build output, and the floor under a build</a></h3>
+<p>On 2026-09-12 this machine reached <strong>zero bytes free</strong> on a 926GiB volume. Every session on
+it died in the same minute — not gracefully, but with the harness unable to write its own
+task files, which reads to each session like broken tooling rather than like a full disk,
+and <code>df</code> could not be run either. <code>~/dev/prismatic-majordomus-wt</code> held 180GB, of which
+~145GB was <code>apps/majordomus-cli/target</code> in worktrees <strong>whose branches were already merged</strong>.
+One had landed hours before and still held 32GiB. Nothing in finishing a piece of work
+removes the build directory it produced, so nothing ever would have.</p>
+<p>The same reaper answers it, with a second subject and a second consent (<code>--reclaim</code>, never
+<code>--kill</code>). <strong>It removes <code>target/</code> and never a worktree</strong>: a false positive costs somebody a
+rebuild and cannot cost a byte of source. A build directory is reclaimed only when all four
+hold — merged into <code>origin/master</code>, nobody working in that worktree, <code>git status</code> empty, and
+the directory provably cargo's own and inside that worktree. The primary checkout is
+excluded by name rather than by predicate, because every other checkout borrows its
+executable.</p>
+<p>Liveness is read from the machine (<code>ps</code>, and every process's working directory) and never
+from the peer board: an announcement belongs to a <em>connection</em>, and a worker that reconnects
+keeps its work while losing its place on the board — exactly the window a reaper runs in.
+Merged-ness alone would have been a disaster, and the instance was on the machine that
+morning: a worktree holding 11.8GB with a live peer in it read as fully merged, because the
+session working in it had not committed yet and its tip was still where the merge left it.
+An mtime is never a predicate here (it is the one whose missing input becomes an extreme
+value, and it cleaned three <em>active</em> worktrees once), and the reaper refuses as a whole —
+reclaiming nothing, not everything — when liveness or <code>origin/master</code> cannot be read.</p>
+<p>The other half is a bound rather than a warning. A <code>df</code> in <code>doctor</code> helps the next person
+and cannot help the person already stuck. <code>mj_rust_space_check</code> in <code>lib/rust_bin.sh</code> refuses
+to <em>start</em> a build below <strong>5120MB</strong> free, and the three paths that start one — the launcher,
+<code>scripts/derive</code>, <code>just build</code> — all ask it. The floor is measured: a full <code>cargo build --locked</code> of the crate into an empty <code>target/</code> wrote 2.45GiB, and the floor is two of those.
+<code>MAJORDOMUS_MIN_FREE_MB=0</code> lifts it. A bound whose own input cannot be measured says so and
+lets the build run — the deliberate opposite of the sweep, because refusing every build on a
+machine whose <code>df</code> is unreadable stops all work to prevent a hypothetical.</p>
 <h3 id="the-derived-trees-that-were-never-declared"><a class="zola-anchor" href="#the-derived-trees-that-were-never-declared" aria-label="Anchor link for: the-derived-trees-that-were-never-declared">The derived trees that were never declared</a></h3>
 <p><code>merge=derived</code> only helps a path that is marked. <code>scripts/generate-site-data</code> deletes and
 regenerates fourteen whole sections under <code>site/content/</code> on every run — its <code>rm -rf "$CONTENT_ROOT/..."</code> lines are the list — and on 2026-09-11 <strong>thirteen of the fourteen were
@@ -352,7 +385,7 @@ more than <code>MJ_BACKLOG_MAX</code> (default 10) pull requests are landable an
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/f22f34dde0378af20aa81fa626d530d9d196d586" class="font-mono underline">f22f34d</a> · inputs <span class="font-mono">0514c5699c4f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3407ca2d406e09de04648cc4ecb38631756c65a6" class="font-mono underline">3407ca2</a> · inputs <span class="font-mono">44e332acf6bd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
