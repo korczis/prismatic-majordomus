@@ -17827,6 +17827,11 @@
                   "description": "True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.",
                   "default": false
                 },
+                "at-finish": {
+                  "type": "boolean",
+                  "description": "True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \"is what the public is being served still a projection of\nthe trunk\" has no answer a commit can give, and its moment is when a session\nclaims to be done.",
+                  "default": false
+                },
                 "implies": {
                   "type": "array",
                   "items": {

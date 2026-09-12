@@ -3,7 +3,10 @@ title = "How this site is derived"
 description = "The website is a projection of the repository, built the way the tool asks projects to build their own instructions."
 template = "architecture.html"
 +++
+{% raw %}
 ## Ownership
+
+<div class="overflow-x-auto" tabindex="0">
 
 | layer | owns | lives in |
 |---|---|---|
@@ -16,20 +19,16 @@ template = "architecture.html"
 | presentation | Zola templates, Flowbite components, Tailwind utilities, Alpine enhancements | `site/templates/**`, `site/tailwind.css` |
 | output | the static site | `site/public/**` |
 
+</div>
+
+
 ## Pipeline
 
-```
-share/skeleton + docs + README + CLAIMS.yaml
-        │  scripts/generate-site-data
-        ▼
-site/data/generated/*.json  +  site/content/docs/*.md
-        │  zola build
-        ▼
-site/public/          ← Tailwind + Flowbite CSS, Flowbite JS, Alpine
-        │  GitHub Actions (pages.yml)
-        ▼
-GitHub Pages
-```
+The pipeline is drawn at the foot of this page rather than typed here. It is rendered from
+`site/data/generated/diagrams.json`, which the generator writes from the inputs it actually
+read, so a canonical file added to the derivation appears in the picture without anyone
+redrawing it. The block that used to sit here was a second, hand-maintained copy of that
+same diagram, and the two already named different things.
 
 ## Sync guarantee
 
@@ -38,3 +37,4 @@ GitHub Pages
 ## What is never edited by hand
 
 `site/data/generated/**`, `site/content/docs/**`, `site/static/app.css`, `site/static/js/**`, `site/public/**`. Change the canonical file; rebuild.
+{% endraw %}

@@ -25,7 +25,7 @@ MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 # doctor is healthy only with the hooks wired and the budget out of the way, as case 83 does;
 # the hooks name this tree's executable and are installed after the commits, so that git
 # never runs whatever `majordomus` is on PATH
-sed -i.bak 's/^    doctor_ms: 3000$/    doctor_ms: 600000/; s/^    watch_ms: 3000$/    watch_ms: 600000/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
+sed -i.bak 's/^    doctor_ms: .*$/    doctor_ms: 600000/; s/^    watch_ms: .*$/    watch_ms: 600000/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
 "$MJ" update >/dev/null
 [ -f .ai/repo/scope.yaml ] || { echo "    init seeded no .ai/repo/scope.yaml"; exit 1; }
 grep -q '^  scope: repo/scope.yaml$' .ai/manifest.yaml || { echo "    the seeded manifest names no scope section"; exit 1; }

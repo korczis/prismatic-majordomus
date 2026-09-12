@@ -74,6 +74,13 @@ pub struct GateDecl {
     /// True when only a plan that asks for it selects it: its runner cannot be had on
     /// demand, so planning it on every push is planning a verdict that never arrives.
     pub on_demand: bool,
+    #[serde(default, rename = "at-finish")]
+    /// True when the gate measures the deployment rather than the tree, so no change to
+    /// any file can select it and the path classes can never reach it. `finish` asks it
+    /// instead: the question "is what the public is being served still a projection of
+    /// the trunk" has no answer a commit can give, and its moment is when a session
+    /// claims to be done.
+    pub at_finish: bool,
     #[serde(default)]
     /// Gates that are selected whenever this one is.
     pub implies: Vec<String>,

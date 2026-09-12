@@ -113,7 +113,36 @@ conservative and relative; the exact evidence is the counters.
 The policy declares a budget for the commands the hooks pay for: `benchmark.budget.doctor_ms`
 and `benchmark.budget.watch_ms`. Each command reports its own wall time against its budget
 at the end of its run, `INFO` under and `WARN` over, and never lets it change the exit code.
-A budget is set after a run, not before; changing one is a policy edit with a run behind it.
+A budget is set after a run, not before, and the run is written into the policy beside the
+number: how many samples, on what machine and in what state, and the median, p90 and max
+they produced. A budget whose justification is not written beside it is the next number
+nobody can defend.
+
+Three rules make one of these answerable rather than merely present.
+
+**From the p90 with headroom, never from the median.** A budget met half the time is a
+warning that fires half the time, and a warning that is usually noise is a warning nobody
+reads. How much headroom is itself a measurement: the run-to-run spread of `doctor` on one
+developer machine, at a fixed corpus, is close to 4x, because wall time there is mostly the
+host's concurrency. That is why the budget these keys carry refuses a gross structural
+change — an index build on doctor's path, a validator that walks the whole tree several
+times over — and nothing subtler. The instrument for anything subtler is `majordomus
+bench`, which takes a distribution rather than one sample and compares it against a
+baseline under the `regression` fractions.
+
+**The whole command, not a phase.** `MJ_TIMING=1` names about forty phases inside `doctor`,
+but there is one budget key per command because there is one reader of it
+(`mj_report_budget` in `lib/doctor.sh`); nothing prints a budget cell against a phase, so a
+per-phase key would be a number with no reader. What the phases are for is the coherence
+check a whole-command budget has to survive: **an aggregate below the sum of the parts it
+contains is wrong on the file's own evidence, before anyone measures anything.** The 3000 ms
+this pair carried from 2026-09-05 to 2026-09-12 failed exactly that test — the four dearest
+phases alone cost four times it.
+
+**Two subjects, measured separately.** `.ai/repo/policy.yaml` judges these commands over
+this repository's corpus; `share/skeleton/policy.yaml` judges them over a repository on the
+day it adopts Majordomus. `majordomus bench doctor` measures the second, because it runs its
+target in a disposable repository, and it is what moves the skeleton's pair.
 
 ## Policy
 
@@ -126,8 +155,8 @@ benchmark:
     p95: 0.5
     p99: 0.6
   budget:                # reported by doctor and watch, WARN never exit
-    doctor_ms: 3000
-    watch_ms: 3000
+    doctor_ms: 100000    # measured; the policy records the twenty runs behind each
+    watch_ms: 60000
 ```
 
 Every key is read with `mj_pol_req`: declared or refused, no reader-side default.

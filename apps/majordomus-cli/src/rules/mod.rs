@@ -951,9 +951,7 @@ fn gate_runs_exactly(gate: &str, path: &str, commands: &[(String, String)]) -> b
 ///
 /// `None` when git could not answer, which the caller must not read as "nothing changed".
 fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
-    let out = std::process::Command::new("git")
-        .arg("-C")
-        .arg(root)
+    let out = crate::git::read_only(root)
         .args(["diff", "--name-only", commit, "--"])
         .output()
         .ok()?;

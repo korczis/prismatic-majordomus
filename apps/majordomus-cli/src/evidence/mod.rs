@@ -1176,12 +1176,7 @@ fn claims_of(index: &Index) -> Vec<IndexedClaim> {
 /// an unanswerable comparison is why [`ProofState`] has to be able to say it does not know.
 fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
     let git = |args: &[&str]| -> Option<Vec<String>> {
-        let out = std::process::Command::new("git")
-            .arg("-C")
-            .arg(root)
-            .args(args)
-            .output()
-            .ok()?;
+        let out = crate::git::read_only(root).args(args).output().ok()?;
         if !out.status.success() {
             return None;
         }
