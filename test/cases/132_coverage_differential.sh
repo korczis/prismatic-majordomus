@@ -82,3 +82,24 @@ echo "# a note appended by 132" >> "$W/README.md"
 git -C "$W" add README.md >/dev/null
 expect_exit 0 cov "$BASE"
 expect_grep "no changed crate source lines"
+
+# ------------------------------- 6. the script's own exit vocabulary is 0/10/12/13, never cargo's
+#
+# scripts/rust-coverage declares four exits, and scripts/ci/coverage-differential delegates
+# its own to them. cargo llvm-cov exits 101 when a test fails; under `set -e` that status
+# escaped the script, so the gate answered with cargo's error instead of a verdict. The
+# guard keeps the vocabulary closed: an export that is missing or unreadable is exit 12,
+# "the measurement could not be trusted", and never 101.
+grep -q 'exit 12' "$ROOT/scripts/rust-coverage" \
+  || { echo "    rust-coverage no longer declares exit 12"; exit 1; }
+grep -q 'cov_status=\$?' "$ROOT/scripts/rust-coverage" \
+  || { echo "    the cargo llvm-cov call is unguarded again: a failing suite exits 101"; exit 1; }
+
+# ------------------------------- 7. the changed-line read refuses rather than reading nothing
+#
+# The changed lines arrive through `git diff | awk`. Without pipefail a failing git reports
+# the pipeline as awk's success, the file comes out empty, and the gate then answers "every
+# changed line is covered" about a diff it never read. A pass that means "could not ask" is
+# the defect project.a-verdict-states-its-subject refuses.
+grep -q 'set -o pipefail' "$ROOT/scripts/rust-coverage" \
+  || { echo "    rust-coverage pipes under set -e without pipefail: an unread diff passes"; exit 1; }
