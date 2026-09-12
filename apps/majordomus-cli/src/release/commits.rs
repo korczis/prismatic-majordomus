@@ -16,7 +16,7 @@
 use std::path::Path;
 use std::process::Command;
 
-use super::model::{Change, ChangeKind, Reference};
+use super::model::{Change, Reference};
 use crate::model::Object;
 
 /// The separator between a commit's fields, and between commits. Chosen because git will
@@ -81,6 +81,49 @@ pub fn in_range(root: &Path, range: &str, objects: &[Object]) -> Vec<Change> {
         .collect()
 }
 
+/// Every word in `text` shaped like a record id of this repository: `I` and four digits,
+/// `M` and three.
+///
+/// The shape alone, with nothing resolved. Both halves of the question read it: the
+/// changelog asks which candidates the layer *holds*, and the commit validator asks which
+/// it does *not* — and a repository that scanned for one direction and not the other is how
+/// a commit came to name a record nobody had, with nothing to say so. One scan, two callers,
+/// no way for the two to disagree about what counts as an id.
+///
+/// ```
+/// use majordomus_cli::release::commits::record_candidates;
+/// assert_eq!(record_candidates("done under I1305 for M000"), vec!["I1305", "M000"]);
+/// // a word that merely starts with the letter is never a candidate
+/// assert!(record_candidates("Interesting M1 and I12345 are not ids").is_empty());
+/// // and each is offered once, in the order it was written
+/// assert_eq!(record_candidates("I1305 again I1305"), vec!["I1305"]);
+/// ```
+pub fn record_candidates(text: &str) -> Vec<String> {
+    let mut words: Vec<String> = Vec::new();
+    let mut word = String::new();
+    for ch in text.chars() {
+        if ch.is_ascii_alphanumeric() {
+            word.push(ch);
+        } else if !word.is_empty() {
+            words.push(std::mem::take(&mut word));
+        }
+    }
+    if !word.is_empty() {
+        words.push(word);
+    }
+    let mut out: Vec<String> = Vec::new();
+    for c in words {
+        let looks_like = (c.starts_with('I')
+            && c.len() == 5
+            && c[1..].chars().all(|d| d.is_ascii_digit()))
+            || (c.starts_with('M') && c.len() == 4 && c[1..].chars().all(|d| d.is_ascii_digit()));
+        if looks_like && !out.contains(&c) {
+            out.push(c);
+        }
+    }
+    out
+}
+
 /// The records a commit's own text names, resolved against what the layer holds.
 ///
 /// The reference is inferred from the text — `I1305`, `M000` — and then *looked up*. An id
@@ -98,24 +141,8 @@ pub fn in_range(root: &Path, range: &str, objects: &[Object]) -> Vec<Change> {
 pub fn references(text: &str, objects: &[Object]) -> Vec<Reference> {
     let mut out: Vec<Reference> = Vec::new();
     let mut seen: Vec<String> = Vec::new();
-    let mut word = String::new();
-    let mut candidates: Vec<String> = Vec::new();
-    for ch in text.chars() {
-        if ch.is_ascii_alphanumeric() {
-            word.push(ch);
-        } else if !word.is_empty() {
-            candidates.push(std::mem::take(&mut word));
-        }
-    }
-    if !word.is_empty() {
-        candidates.push(word);
-    }
-    for c in candidates {
-        let looks_like = (c.starts_with('I')
-            && c.len() == 5
-            && c[1..].chars().all(|d| d.is_ascii_digit()))
-            || (c.starts_with('M') && c.len() == 4 && c[1..].chars().all(|d| d.is_ascii_digit()));
-        if !looks_like || seen.contains(&c) {
+    for c in record_candidates(text) {
+        if seen.contains(&c) {
             continue;
         }
         let kind = if c.starts_with('I') {
@@ -146,52 +173,22 @@ pub fn references(text: &str, objects: &[Object]) -> Vec<Reference> {
 }
 
 /// One commit, as a change.
+///
+/// The grammar is [`crate::commit::Header`]'s, not a second one: the changelog and the
+/// commit validator read the same parse and disagree only about what to *do* with a header
+/// that is not conventional. Here that is not a failure — a commit nobody spelled
+/// conventionally still happened, and a changelog that dropped it would lie about what the
+/// release contains.
 pub fn parse(commit: &str, subject: &str, body: &str) -> Change {
     let breaking_trailer = body
         .lines()
         .any(|l| l.starts_with("BREAKING CHANGE:") || l.starts_with("BREAKING-CHANGE:"));
-
-    // `type(scope)!: subject`, with the scope and the `!` both optional.
-    let Some((head, rest)) = subject.split_once(": ") else {
-        return Change {
-            kind: ChangeKind::Other,
-            scope: None,
-            subject: subject.trim().to_string(),
-            breaking: breaking_trailer,
-            commit: commit.to_string(),
-            url: None,
-            references: Vec::new(),
-        };
-    };
-    let head = head.trim();
-    let bang = head.ends_with('!');
-    let head = head.trim_end_matches('!');
-    let (word, scope) = match head.split_once('(') {
-        Some((w, s)) => (w, s.strip_suffix(')').map(|s| s.to_string())),
-        None => (head, None),
-    };
-    let kind = ChangeKind::parse(word);
-    // A type word this does not know is not a reason to hide it. `wip(site): halfway
-    // through` rendered as `halfway through` under "Other" tells a reader less than the
-    // author wrote; the word stays, and so does a head that was never a type at all
-    // (`Revert: the thing that broke` is carried whole, as its author typed it) — the same
-    // refusal to lie by omission the module makes for a subject with no colon in it.
-    if kind == ChangeKind::Other {
-        return Change {
-            kind,
-            scope,
-            subject: format!("{word}: {}", rest.trim()),
-            breaking: bang || breaking_trailer,
-            commit: commit.to_string(),
-            url: None,
-            references: Vec::new(),
-        };
-    }
+    let header = crate::commit::CommitHeader::parse(subject);
     Change {
-        kind,
-        scope,
-        subject: rest.trim().to_string(),
-        breaking: bang || breaking_trailer,
+        kind: header.kind,
+        scope: header.scope,
+        subject: header.subject,
+        breaking: header.breaking || breaking_trailer,
         commit: commit.to_string(),
         url: None,
         references: Vec::new(),
@@ -201,6 +198,7 @@ pub fn parse(commit: &str, subject: &str, body: &str) -> Change {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::release::ChangeKind;
 
     fn object(kind: &str, id: &str, title: &str) -> Object {
         // Only the three fields the resolution reads carry meaning; the rest is what an

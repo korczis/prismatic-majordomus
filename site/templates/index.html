@@ -11,7 +11,29 @@
     This template names no feature, no module, no command, no provider and no number: adding a
     file under .ai/repo/features/ is what changes the evidence on this page (ADR 23), and
     editing the two data files is what changes the argument. A claim that outruns the dataset
-    beside it is a defect in the prose, not in the dataset. -#}
+    beside it is a defect in the prose, not in the dataset.
+
+    # What this page is for, and what it is not
+
+    A landing page earns one screen: what this is, who it is for, proof it works, one command
+    to try it, and links. It had grown to twenty-two full-bleed sections and 42,229px at
+    320px — a hundred and thirty phone screens — because every argument and every matrix had
+    been given a section of its own here as well as a page of its own elsewhere. Four of the
+    largest were verbatim duplicates of `/features/`, which renders the same datasets under
+    the same headings: "The product, composed" (the same product-graph.json, the same rings),
+    "One registry, every interface" (the same surfaces grid), the providers list (richer
+    there) and the feature cards (every feature, not only the featured ones). Those are gone
+    from here, not moved: the page they were copied from was already the canonical one.
+
+    What stayed is what only this page can do — the positioning, the pain, the core idea, one
+    render of the execution model, the one argument that separates this from a linter, and the
+    command. Two lists the page must carry in full for a test to pass — the resolved rules and
+    the featured features — are carried in full and shown compactly; the rules sit behind a
+    disclosure with their counts derived in front of it, because seventy-seven cards were a
+    fifth of the document's height and the count is the argument, not the enumeration.
+
+    The long-form argument that has no page of its own is at the foot, one disclosure per
+    topic, so no sentence of manifesto.toml stopped being rendered by this change. -#}
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set dist = load_data(path="data/registry/distribution.json") -%}
@@ -76,6 +98,13 @@
         </div>
       </figure>
       <p class="mt-3 text-sm text-body-subtle">{{ m.hero.console_caption }}</p>
+      {#- the surfaces the matrix columns stand for, and the way into the full matrix and the
+          registry behind it. The grid itself lives on /features/, which renders the same
+          five tiles from the same dataset; here they are the column legend, nothing more. -#}
+      <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+        <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ m.hero.cta_secondary }} &rarr;</a>
+        <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry itself &rarr;</a>
+      </p>
     </div>
   </div>
 </section>
@@ -89,9 +118,10 @@
   </div>
 </section>
 
-{#- 3. the problem — prompt-driven development, and what it costs as the repository grows.
-    Beside the argument, the featured moments of the Why catalogue: situations from the
-    repository's own catalogue, not claims written here. -#}
+{#- 3. the problem — prompt-driven development, and what it costs as the repository grows;
+    then the featured moments of the Why catalogue beside it, which are situations from the
+    repository's own catalogue rather than claims written here. These were two sections when
+    each had a full-bleed band to itself; they are one question and read better as one. -#}
 <section class="border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="01" kicker={x.problem.kicker} title={x.problem.title} lead={x.problem.lead} /> }}
@@ -114,19 +144,17 @@
         <p class="mt-5 text-base leading-relaxed text-body">{{ x.problem.closing }}</p>
       </div>
     </div>
+    <div class="mt-10 rounded-base border border-brand-subtle bg-brand-softer p-5 sm:p-6">
+      <h3 class="text-xl font-bold tracking-tight text-fg-brand-strong sm:text-2xl"><a href="{{ get_url(path="/why/", trailing_slash=true) }}" class="hover:underline">{{ m.recognise.title }}</a></h3>
+      <div class="mt-5">{% include "partials/why-cards.html" %}</div>
+      <p class="mt-5 max-w-3xl text-base font-medium text-fg-brand-strong">{{ m.recognise.closing }}</p>
+    </div>
   </div>
 </section>
 
-{#- 3b. recognition — the featured moments of the Why catalogue; situations, not claims -#}
-<section class="border-b border-default bg-brand-softer">
-  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
-    <h2 class="text-2xl font-bold tracking-tight text-fg-brand-strong sm:text-3xl"><a href="{{ get_url(path="/why/", trailing_slash=true) }}" class="hover:underline">{{ m.recognise.title }}</a></h2>
-    <div class="mt-6">{% include "partials/why-cards.html" %}</div>
-    <p class="mt-6 max-w-3xl text-base font-medium text-fg-brand-strong">{{ m.recognise.closing }}</p>
-  </div>
-</section>
-
-{#- 4. the core idea — an intent against an implementation assumption, side by side -#}
+{#- 4. the core idea — an intent against an implementation assumption, side by side; then the
+    compilation argument that follows from it, which was a band of its own for a hundred
+    words and is a block here. -#}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="02" kicker={x.core.kicker} title={x.core.title} lead={x.core.lead} /> }}
@@ -142,215 +170,40 @@
       </figure>
     </div>
     <p class="mt-8 max-w-3xl border-s-4 border-brand ps-4 text-lg font-semibold leading-snug text-heading sm:text-xl">{{ x.core.question }}</p>
-    <div class="mt-8 rounded-base border border-default bg-neutral-primary p-6 sm:p-8">
-      <h3 class="text-xl font-bold tracking-tight text-heading sm:text-2xl">{{ x.core.primary_title }}</h3>
-      <p class="mt-3 max-w-3xl text-base leading-relaxed text-body">{{ x.core.primary_lead }}</p>
+    <div class="mt-8 grid gap-5 lg:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-6">
+        <h3 class="text-xl font-bold tracking-tight text-heading sm:text-2xl">{{ x.core.primary_title }}</h3>
+        <p class="mt-3 text-base leading-relaxed text-body">{{ x.core.primary_lead }}</p>
+      </div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-6">
+        <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ x.compiled.kicker }}</p>
+        <h3 class="mt-1 text-xl font-bold tracking-tight text-heading sm:text-2xl">{{ x.compiled.title }}</h3>
+        <p class="mt-3 text-base leading-relaxed text-body">{{ x.compiled.lead }}</p>
+        <p class="mt-4 text-lg font-bold leading-snug tracking-tight text-fg-brand-strong">{{ x.compiled.closing }}</p>
+        <p class="mt-4 text-sm"><a href="{{ get_url(path="/context/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What a worker is actually handed when it opens this repository &rarr;</a></p>
+      </div>
     </div>
   </div>
 </section>
 
-{#- 5. the pipeline — the execution model, as a stepper that advances until a reader takes it
-    over. Without JavaScript every stage and every one of its parts is on the page; the script
-    only decides which one is emphasised. -#}
+{#- 5. the execution model — one render of `pipeline.stages`, not two.
+
+    This was two full-bleed sections: a six-panel Alpine stepper that printed every stage
+    twice (once as a button carrying name, summary and note, once as a panel carrying name,
+    verb, items and note), and, eight sections further down, a Mermaid flowchart of the same
+    list. Three renders of six stages, 3,682px at 320px, for six stages' worth of facts.
+
+    The diagram stays — it is a render of `pipeline.stages` plus `loop.back_edge`, converted
+    from hand-typed box art, and a stage added to the list is a stage in the drawing without
+    anyone redrawing it. Beside it each stage appears once, with everything the stepper's two
+    halves carried between them: the verb, the summary, the parts, and the honest mark of how
+    much of it exists here today. No JavaScript decides what is visible, so there is nothing
+    to pause and nothing that hides a stage from a reader who has scripts turned off. -#}
 <section id="loop" class="scroll-mt-20 border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="03" kicker={x.pipeline.kicker} title={x.pipeline.title} lead={x.pipeline.lead} /> }}
-    {#- The stepper owns its colours entirely in the binding: a utility named in the static class
-        as well would win or lose by stylesheet order rather than by state, and the active stage
-        would be indistinguishable from the rest. Without JavaScript no branch is applied, every
-        panel is on the page, and the section reads as six stages in order — which is why no panel
-        carries a static `hidden` and why x-cloak is absent. It advances on its own only when the
-        reader has not asked for reduced motion, and a control stops it either way (WCAG 2.2.2). -#}
-    <div x-data="{ active: 0, paused: false, n: {{ x.pipeline.stages | length }}, motion: true, tick() { if (!this.paused) { this.active = (this.active + 1) % this.n } } , start() { this.motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches; this.paused = !this.motion; setInterval(() => this.tick(), 3800) } }" x-init="start()">
-      <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {%- for s in x.pipeline.stages %}
-        <li class="min-w-0">
-          <button type="button" x-on:click="active = {{ loop.index0 }}; paused = true"
-            :aria-pressed="active === {{ loop.index0 }} ? 'true' : 'false'" aria-controls="stage-{{ s.id }}"
-            :class="active === {{ loop.index0 }} ? 'ring-2 ring-brand shadow-xs' : ''"
-            class="flex h-full w-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 text-start hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">
-            <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ loop.index }} / {{ x.pipeline.stages | length }}</span>
-            <span class="mt-1 text-base font-semibold tracking-tight text-heading">{{ s.name }}</span>
-            <span class="mt-2 text-sm leading-relaxed text-body">{{ s.summary }}</span>
-            <span class="mt-2 font-mono text-xs text-body-subtle">{{ s.note }}</span>
-            <span aria-hidden="true" class="mt-4 h-1 w-full rounded-base bg-neutral-tertiary"></span>
-          </button>
-        </li>
-        {%- endfor %}
-      </ol>
-      <div class="mt-6 grid gap-3 lg:min-h-[23rem]">
-        {%- for s in x.pipeline.stages %}
-        <section id="stage-{{ s.id }}" aria-label="{{ s.name }}" :class="active === {{ loop.index0 }} ? '' : 'hidden'" class="rounded-base border border-brand-subtle bg-brand-softer p-5 sm:p-6">
-          <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">stage {{ loop.index }} &middot; {{ s.verb }}</p>
-          <h3 class="mt-1 text-xl font-bold tracking-tight text-fg-brand-strong sm:text-2xl">{{ s.name }}</h3>
-          <ul class="mt-4 flex flex-wrap gap-2">
-            {%- for i in s.items %}
-            <li class="rounded-base border border-default bg-neutral-primary px-3 py-1.5 font-mono text-xs text-heading">{{ i }}</li>
-            {%- endfor %}
-          </ul>
-          <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">in this repository today: {{ s.note }}</p>
-        </section>
-        {%- endfor %}
-      </div>
-      <div x-cloak class="mt-4 flex flex-wrap items-center gap-3">
-        <button type="button" x-on:click="paused = !paused" class="inline-flex items-center gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">
-          <span x-text="paused ? 'Play the stages' : 'Pause the stages'">Pause the stages</span>
-        </button>
-        <span class="font-mono text-xs text-body-subtle" x-text="(active + 1) + ' / ' + n"></span>
-      </div>
-      <p class="mt-4 text-sm text-body-subtle">{{ x.pipeline.caption }}</p>
-    </div>
-  </div>
-</section>
-
-{#- 6. context is compiled -#}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="04" kicker={x.compiled.kicker} title={x.compiled.title} lead={x.compiled.lead} /> }}
-    <p class="max-w-3xl text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">{{ x.compiled.closing }}</p>
-    <p class="mt-6 text-sm"><a href="{{ get_url(path="/context/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What a worker is actually handed when it opens this repository &rarr;</a></p>
-  </div>
-</section>
-
-{#- 7. governance is executable — the argument, then the rules the public features actually
-    rest on: the dataset's own `rules`, resolved and deduplicated by the executable. This page
-    does not work out which rules the product rests on; it renders the answer. -#}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="05" kicker={x.governance.kicker} title={x.governance.title} lead={x.governance.lead} /> }}
-    <p class="mb-8 max-w-3xl text-base leading-relaxed text-body">{{ x.governance.closing }}</p>
-    {#- the route of a rule is the doctrine dataset's, joined by id: this page does not know
-        how a rule id becomes a slug -#}
-    {%- set doctrines = load_data(path="data/generated/doctrines.json") -%}
-    <ul class="grid gap-3 md:grid-cols-2">
-      {%- for r in model.rules %}
-      {%- set d = [dx for dx in doctrines.doctrines if dx.id == r.id] -%}
-      <li class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft p-4">
-        {{ <doctrine_class class={r.class} /> }}
-        {%- if d | length %}<a href="{{ get_url(path="/doctrines/" ~ d[0].slug ~ "/", trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ r.title }}</a>
-        {%- else %}<span class="min-w-0 text-sm text-heading">{{ r.title }}</span>{% endif -%}
-      </li>
-      {%- endfor %}
-    </ul>
-    <p class="mt-6 text-sm"><a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every rule, with the validator that decides it and the test that proves it &rarr;</a></p>
-  </div>
-</section>
-
-{#- 8. the intent graph — the shape of the provenance an intent carries. The relations are the
-    model's; the targets are deliberately unnamed, because a record with invented ids on a
-    landing page is exactly the claim this project refuses to make. -#}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="06" kicker={x.graph.kicker} title={x.graph.title} lead={x.graph.lead} /> }}
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10">
-      <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
-        <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">the relations an intent would carry — the shape of the record, not one written here</figcaption>
-        <ul class="divide-y divide-default">
-          {%- for rel, what in {"originated_from": "the session that raised it", "governed_by": "the doctrines, rules and policies that applied", "constrained_by": "the decisions it may not contradict", "related_to": "the issue and the milestone it projects onto", "realized_by": "the commits that changed the system", "verified_by": "the tests and the runtime checks", "exposed_through": "the interfaces it reached", "proven_by": "the evidence bundle"} %}
-          <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5">
-            <code class="font-mono text-xs text-fg-brand">{{ rel }}</code>
-            <span class="min-w-0 text-sm text-body">{{ what }}</span>
-          </li>
-          {%- endfor %}
-        </ul>
-      </figure>
-      <div class="min-w-0">
-        <p class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Instead of</p>
-        <p class="mt-2 text-lg font-medium text-heading">{{ x.graph.bad_question }}</p>
-        <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary" tabindex="0"><pre class="m-0 p-4 font-mono text-sm text-body"><code>{{ x.graph.bad_answer }}</code></pre></div>
-        <p class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">An answerable history says</p>
-        <p class="mt-2 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base leading-relaxed text-heading">{{ x.graph.good_answer }}</p>
-        <p class="mt-5 text-sm"><a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What this repository already records, and what reads it back &rarr;</a></p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{#- 9. issues and milestones as projections -#}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="07" kicker={x.projections.kicker} title={x.projections.title} lead={x.projections.lead} /> }}
-    <ul class="grid gap-3 md:grid-cols-2">
-      {%- for d in x.projections.detects %}
-      <li class="flex gap-3 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">{{ d.text }}</span></li>
-      {%- endfor %}
-    </ul>
-    <p class="mt-6 max-w-3xl text-base leading-relaxed text-body">{{ x.projections.closing }}</p>
-    <p class="mt-4 text-sm"><a href="{{ get_url(path="/plan/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The work graph this repository keeps, issue by issue and milestone by milestone &rarr;</a></p>
-  </div>
-</section>
-
-{#- 10. claims must match reality — the argument, and the count of claims this repository
-    holds, taken from the index rather than written here -#}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="08" kicker={x.claims.kicker} title={x.claims.title} lead={x.claims.lead} /> }}
-    <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
-      <div class="rounded-base border border-brand-subtle bg-brand-softer p-5 sm:p-6">
-        <p class="font-mono text-xs uppercase tracking-wide text-fg-brand">claims in this repository's index</p>
-        <p class="mt-2 font-mono text-4xl font-bold text-fg-brand-strong">{{ model.telemetry.by_kind.claim }}</p>
-        <p class="mt-3 text-sm leading-relaxed text-heading">Each is an entry naming the source, the implementation and the test that settle it. A claim whose evidence no longer resolves fails the build before the site can be published.</p>
-        <p class="mt-4 text-sm"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Read the guarantees &rarr;</a></p>
-      </div>
-      <div class="min-w-0">
-        <p class="text-base leading-relaxed text-body">{{ x.claims.closing }}</p>
-        <div class="mt-4 overflow-x-auto rounded-base border border-default bg-neutral-primary" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>CLAIM DRIFT
-
-  claim                  automatic peer cooperation
-  observed               manual registration required
-  confidence             high</code></pre></div>
-        <p class="mt-3 text-sm text-body-subtle">The shape of the finding, not a finding. Comparing a claim&rsquo;s wording to the behaviour it describes is still a person&rsquo;s job here; what the build does enforce is that every claim&rsquo;s evidence resolves.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{#- 11. opposition -#}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="09" kicker={x.opposition.kicker} title={x.opposition.title} lead={x.opposition.lead} /> }}
-    <ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {%- for q in x.opposition.questions %}
-      <li class="flex gap-3 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">{{ q.text }}</span></li>
-      {%- endfor %}
-    </ul>
-  </div>
-</section>
-
-{#- 12. completion — the argument, then the repository's own finish contract and a real
-    transcript of it from the README -#}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="10" kicker={x.completion.kicker} title={x.completion.title} lead={x.completion.lead} /> }}
-    <p class="mb-8 max-w-3xl text-base leading-relaxed text-body">{{ m.contract.caption }}</p>
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start">
-      <div class="min-w-0">
-        <ol class="divide-y divide-default rounded-base border border-default bg-neutral-primary">
-          {%- for c in readme.finish_checks %}
-          <li class="flex items-baseline gap-3 px-4 py-2 font-mono text-xs text-body"><span class="text-body-subtle">{{ loop.index }}</span><span class="text-heading">{{ c }}</span></li>
-          {%- endfor %}
-        </ol>
-        <p class="mt-3 text-sm text-body-subtle">Work leaves as <span class="font-medium text-heading">completed</span> only when every line passes. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The full contract, argument by argument &rarr;</a></p>
-      </div>
-      <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
-        <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
-        <div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
-      </figure>
-    </div>
-  </div>
-</section>
-
-{#- 13. the control loop -#}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="11" kicker={x.loop.kicker} title={x.loop.title} lead={x.loop.lead} /> }}
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10">
-      {#- The loop is a render of the stages declared in data/manifesto.toml, not a second
-          copy of them: the nodes are `pipeline.stages` in order and the one edge that closes
-          the loop is `loop.back_edge`. Add a stage to the list and it appears here. This was
-          box art until it was found by scripts/ci/diagram-check — which could not see it,
-          because it read markdown fences only and this is an HTML block. -#}
-      <figure class="m-0 min-w-0 rounded-base border border-default bg-neutral-primary-soft">
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-10">
+      <figure class="m-0 min-w-0 self-start rounded-base border border-default bg-neutral-primary-soft">
         <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 min-w-[14rem] bg-transparent font-mono text-xs text-heading [&_svg]:mx-auto [&_svg]:block">flowchart TD
 {%- for s in x.pipeline.stages %}
     {{ s.id }}["{{ s.name | upper }}"]
@@ -362,158 +215,146 @@
         <figcaption class="border-t border-default px-4 py-2 font-mono text-xs text-body-subtle">{{ x.loop.diagram_caption }}</figcaption>
       </figure>
       <div class="min-w-0">
-        <h3 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">{{ x.loop.votes_title }}</h3>
-        <ul class="mt-3 flex flex-wrap gap-2">
-          {%- for v in ["the repository", "the tests", "the runtime", "governance", "evidence"] %}
-          <li class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading">{{ v }}</li>
+        <ol class="grid gap-3 sm:grid-cols-2">
+          {%- for s in x.pipeline.stages %}
+          <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
+            <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ loop.index }} / {{ x.pipeline.stages | length }} &middot; {{ s.verb }}</span>
+            <span class="mt-1 text-base font-semibold tracking-tight text-heading">{{ s.name }}</span>
+            <span class="mt-1 text-sm leading-relaxed text-body">{{ s.summary }}</span>
+            {#- the stage's parts as one line rather than a stack of chips: six stages of five
+                or six chips each wrapped to thirty-odd rows on a phone, which cost more height
+                than every other part of this section together and said nothing more -#}
+            <span class="mt-2 font-mono text-xs leading-relaxed text-body">{{ s.items | join(sep=" · ") }}</span>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: {{ s.note }}</span>
+          </li>
           {%- endfor %}
-        </ul>
-        <p class="mt-5 text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">{{ x.loop.closing }}</p>
+        </ol>
+        <div class="mt-5 rounded-base border border-brand-subtle bg-brand-softer p-5">
+          <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ x.loop.kicker }}</p>
+          <h3 class="mt-1 text-lg font-bold leading-snug tracking-tight text-heading sm:text-xl">{{ x.loop.title }}</h3>
+          <p class="mt-3 text-base leading-relaxed text-heading">{{ x.loop.lead }}</p>
+          <p class="mt-3 text-lg font-bold leading-snug tracking-tight text-fg-brand-strong">{{ x.loop.closing }}</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-{#- 14. the chapters — the features that declare themselves featured, in their own weight order.
-    A feature becomes one of these by setting `featured: true` in its own file; this template
-    does not choose, and everything beside the words is derived from what that file names. -#}
-<section id="chapters" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
+{#- 6. governance is executable — the sharpest thing this page says, and the only one that
+    separates the tool from a linter, so it stays.
+
+    What did not stay is its shape. The argument is a hundred words; the section was 7,895px
+    at 320px — a fifth of the whole document — because the rules the public features rest on
+    were seventy-seven cards in a single column on a phone. The count is the argument ("a
+    blocking rule stops the command"), and the count is derived here from the dataset's own
+    `class` field rather than written down. The enumeration is one disclosure away, complete,
+    every rule still linked to the doctrine page that carries its validator and its test. -#}
+<section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="12" kicker={m.chapters.kicker} title="What it does today" lead={m.chapters.lead} /> }}
-    <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    {{ <section_head number="04" kicker={x.governance.kicker} title={x.governance.title} lead={x.governance.lead} /> }}
+    <p class="mb-8 max-w-3xl text-base leading-relaxed text-body">{{ x.governance.closing }}</p>
+    {#- the route of a rule is the doctrine dataset's, joined by id: this page does not know
+        how a rule id becomes a slug -#}
+    {%- set doctrines = load_data(path="data/generated/doctrines.json") -%}
+    {%- set blocking = [r for r in model.rules if r.class == "blocking"] -%}
+    {%- set advisory = [r for r in model.rules if r.class == "advisory"] -%}
+    <dl class="grid gap-3 sm:grid-cols-3">
+      <div class="rounded-base border border-brand-subtle bg-brand-softer p-5">
+        <dt class="text-sm text-heading">rules that stop the command</dt>
+        <dd class="mt-1 font-mono text-4xl font-bold text-fg-brand-strong">{{ blocking | length }}</dd>
+      </div>
+      <div class="rounded-base border border-default bg-neutral-primary p-5">
+        <dt class="text-sm text-body">rules that report and let it pass</dt>
+        <dd class="mt-1 font-mono text-4xl font-bold text-heading">{{ advisory | length }}</dd>
+      </div>
+      <div class="rounded-base border border-default bg-neutral-primary p-5">
+        <dt class="text-sm text-body">resolved for the public features</dt>
+        <dd class="mt-1 font-mono text-4xl font-bold text-heading">{{ model.rules | length }}</dd>
+      </div>
+    </dl>
+    <details class="mt-6 rounded-base border border-default bg-neutral-primary">
+      <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">Every one of them, by name — {{ model.rules | length }} rules, resolved and deduplicated by the executable</summary>
+      <ul class="grid gap-2 border-t border-default p-4 sm:grid-cols-2">
+        {%- for r in model.rules %}
+        {%- set d = [dx for dx in doctrines.doctrines if dx.id == r.id] -%}
+        <li class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-3 py-2">
+          {{ <doctrine_class class={r.class} /> }}
+          {%- if d | length %}<a href="{{ get_url(path="/doctrines/" ~ d[0].slug ~ "/", trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ r.title }}</a>
+          {%- else %}<span class="min-w-0 text-sm text-heading">{{ r.title }}</span>{% endif -%}
+        </li>
+        {%- endfor %}
+      </ul>
+    </details>
+    <p class="mt-6 text-sm"><a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every rule, with the validator that decides it and the test that proves it &rarr;</a></p>
+  </div>
+</section>
+
+{#- 7. the chapters — the features that declare themselves featured, in their own weight order.
+    A feature becomes one of these by setting `featured: true` in its own file; this template
+    does not choose.
+
+    One line per feature now, not a card carrying the interface marks and a moments sentence:
+    both of those are on /features/, which renders every feature rather than the featured
+    ones, with the marks, the counts and the moments beside each. This is the way in, and the
+    page it leads to is the inventory. -#}
+<section id="chapters" class="scroll-mt-20 border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="05" kicker={m.chapters.kicker} title="What it does today" lead={m.chapters.lead} /> }}
+    {#- the title and nothing else. Each feature's headline is the first thing on its own page
+        (feature.html renders it in a panel of its own) and /features/ carries the longer
+        summary with the interface marks and the counts beside it, so eleven headlines here
+        were the same sentences a click earlier, at 1,800px on a phone. These titles are
+        already the description — "Declare once, derive every interface" needs no gloss. -#}
+    <ol class="grid gap-2 sm:grid-cols-2">
       {%- for f in chapters %}
-      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary p-5 shadow-xs">
-        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ loop.index }} / {{ chapters | length }}</span>
-        <h3 class="mt-2 text-lg font-semibold tracking-tight text-heading"><a href="{{ base }}{{ f.route }}" class="hover:text-fg-brand hover:underline">{{ f.title }}</a></h3>
-        <p class="mt-2 text-sm leading-relaxed text-body">{{ f.headline }}</p>
-        <div class="mt-4">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
-        {%- if f.moments | length %}
-        <p class="mt-3 text-xs text-body-subtle">Answers {{ f.counts.moments }} of the catalogue&rsquo;s operational moments, among them &ldquo;{{ f.moments[0].hook }}&rdquo;.</p>
-        {%- endif %}
-        <a href="{{ base }}{{ f.route }}" class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline">What it is, and what it does not do →</a>
-      </li>
+      <li class="min-w-0"><a href="{{ base }}{{ f.route }}" class="flex min-w-0 flex-wrap items-baseline gap-x-2 rounded-base border border-default bg-neutral-primary-soft px-4 py-2.5 hover:bg-neutral-secondary-medium">
+        <span class="font-mono text-xs text-body-subtle">{{ loop.index }} / {{ chapters | length }}</span>
+        <span class="min-w-0 text-base font-semibold tracking-tight text-heading">{{ f.title }}</span>
+      </a></li>
       {%- endfor %}
     </ol>
     <p class="mt-6 text-sm"><a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">All {{ model.counts.features }} features, each with the capabilities, objects, rules and guarantees behind it &rarr;</a></p>
   </div>
 </section>
 
-{#- 15. write once — the kinds of the layer, counted from the index -#}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="13" kicker="the layer" title={m.write_once.title} lead={m.write_once.lead} /> }}
-    {#- A kind is a link when the site publishes a page per object of it, plain text when it
-        does not. Which is which is site/data/publication.toml, declared once for every kind
-        the index holds and checked both ways by scripts/ci/entity-check — so a kind cannot
-        quietly stop being published, and this list cannot quietly stop naming one. -#}
-    {%- set pubkinds = load_data(path="data/generated/entities.json") -%}
-    <ul class="flex flex-wrap gap-2">
-      {%- for kind, n in model.telemetry.by_kind %}
-      {%- set published = [k for k in pubkinds.kinds if k.kind == kind] %}
-      {%- if published | length > 0 %}
-      <li><a href="{{ get_url(path=published[0].route, trailing_slash=true) }}" class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 hover:bg-neutral-secondary-medium"><code class="font-mono text-sm text-fg-brand">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></a></li>
-      {%- else %}
-      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></li>
-      {%- endif %}
-      {%- endfor %}
-    </ul>
-    <p class="mt-6 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. Each object has an address derived from its kind and its identity, the same one on the command line, over HTTP, over MCP and in the Cockpit; the kinds linked above publish a page per object here too. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
-  </div>
-</section>
+{#- 8. the product as a graph, and the boundary the whole thing rests on.
 
-{#- 16. providers — the adapters the distribution ships, and what this repository does with each -#}
+    The figure is the one thing /features/ renders that this page keeps rendering too: the
+    graph is what the hero's matrix looks like when the composition matters more than the
+    marks, and its own text fallback is behind a disclosure, so it costs a reader who does not
+    open it almost nothing. Beside it, the two sentences a page selling a control plane for
+    AI workers must not bury: what this never does, and what of the model is not built. -#}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="14" kicker="provider-neutral" title={m.providers.title} lead={m.providers.lead} /> }}
-    <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {%- for p in model.providers %}
-      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary p-4">
-        <span class="text-base font-semibold text-heading">{{ p.title }}</span>
-        {%- if p.bootstraps | length %}
-        <ul class="mt-3 space-y-1">
-          {%- for b in p.bootstraps %}<li class="break-all font-mono text-xs text-body">{{ b.target }}</li>{% endfor -%}
-        </ul>
-        {%- endif %}
-        {%- if p.client_config %}<p class="mt-auto break-all pt-2 font-mono text-xs text-body-subtle">{{ p.client_config }}</p>{% endif -%}
-      </li>
-      {%- endfor %}
-    </ul>
-    <div class="mt-8 rounded-base border border-brand-subtle bg-brand-softer p-6 sm:p-8">
-      <p class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">Repository intelligence is not a model provider.</p>
-      <p class="mt-4 max-w-3xl text-base leading-relaxed text-heading">{{ m.providers.boundary }}</p>
-    </div>
-  </div>
-</section>
+    {{ <section_head number="06" kicker="the same model" title="The product, composed" lead={m.graph.lead} /> }}
+    {#- The size of the registry the graph is drawn from. Every value is the dataset's — a
+        template that wrote one of these numbers down would be the drift this page argues
+        against, and scripts/site-check greps the rendered `<dd>` for each one against
+        product.json, so a stale figure here fails the build.
 
-{#- 17. the interfaces — the surfaces of the registry, with what stands behind each -#}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="15" kicker="one declaration" title={m.surfaces.title} lead={m.surfaces.lead} /> }}
-    <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-      {%- for s in model.surfaces %}
-      <li><a href="{{ base }}{{ s.route }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ s.id }}</span>
-        <span class="mt-1 text-base font-semibold text-heading">{{ s.title }}</span>
-        <span class="mt-auto pt-3 font-mono text-2xl font-bold text-fg-brand">{{ s.features }}</span>
-        <span class="text-xs text-body">features exposed here</span>
-      </a></li>
-      {%- endfor %}
-    </ul>
-    <dl class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        The four keys and their words are typed, and stay typed for a reason: `telemetry`
+        carries thirteen scalars and a by-kind breakdown, and which of them a stranger needs
+        in the first minute is an editorial judgement, not a fact to derive. It is not this
+        template's judgement either — site-check names exactly these four as the homepage's
+        headline telemetry, so the selection is the check's and this renders it. -#}
+    <dl class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {%- for label, key in {"capabilities in the registry": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "objects of the layer": "objects"} %}
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
+      <div class="rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
       {%- endfor %}
     </dl>
-    <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
-      <h3 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Coverage</h3>
-      <p class="mt-2 max-w-3xl text-sm text-body">{{ m.matrix.lead }}</p>
-      <dl class="mt-4 grid gap-2 sm:grid-cols-3">
-        {%- for label, pair in {"capability modules": ["modules_covered", "modules"], "public commands": ["commands_covered", "commands"], "object kinds": ["kinds_covered", "kinds"]} %}
-        <div class="flex items-baseline justify-between gap-3 border-b border-default pb-2"><dt class="text-sm text-body">{{ label }} named by a feature</dt><dd class="font-mono text-sm text-heading">{{ model.counts[pair[0]] }} / {{ model.counts[pair[1]] }}</dd></div>
-        {%- endfor %}
-      </dl>
-      <p class="mt-4 text-sm text-body">A part of the product no feature names is reported as a gap by <code class="font-mono text-heading">majordomus product validate</code> and shown on the matrix, never quietly absent.</p>
-    </div>
-    <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
-      <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The full matrix, both directions &rarr;</a>
-      <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry itself, capability by capability &rarr;</a>
-    </p>
-  </div>
-</section>
-
-{#- 18. the product as a graph -#}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="16" kicker="the same model" title="The product, composed" lead={m.graph.lead} /> }}
     {%- set graph = load_data(path="data/registry/product-graph.json") -%}
     {%- set graph_id = "product" -%}
     {%- set graph_rings = "feature,module,command,kind,surface" -%}
     {%- set graph_label = graph.description -%}
     {% include "partials/graph.html" %}
-  </div>
-</section>
-
-{#- 19. direction — what of the loop is shipped and what is not. The shipped half is the
-    matrix above, linked rather than restated; the unbuilt half is named, because a landing
-    page that implies a capability the registry does not carry is the drift this project
-    exists to refuse. -#}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="17" kicker={x.direction.kicker} title={x.direction.title} lead={x.direction.lead} /> }}
-    <div class="grid gap-5 lg:grid-cols-2">
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 sm:p-6">
-        <h3 class="text-lg font-semibold tracking-tight text-heading">{{ x.direction.shipped_title }}</h3>
-        <p class="mt-2 text-sm leading-relaxed text-body">Each command below is declared once, and that declaration is what the command line, the HTTP API, the MCP tools and this site are all projections of. Most run at a terminal and the other interfaces read them; a few are startable over the API.</p>
-        <ul class="mt-4 flex flex-wrap gap-2">
-          {%- set cmds = load_data(path="data/generated/commands.json") -%}
-        {%- for c in cmds.commands %}
-          <li><code class="inline-block rounded-base border border-default bg-neutral-primary px-2.5 py-1 font-mono text-xs text-heading">{{ c.name }}</code></li>
-          {%- endfor %}
-        </ul>
-        <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every command, argument by argument &rarr;</a></p>
+    <div class="mt-8 grid gap-5 lg:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6">
+        <h3 class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">Repository intelligence is not a model provider.</h3>
+        <p class="mt-3 text-base leading-relaxed text-heading">{{ m.providers.boundary }}</p>
+        <p class="mt-4 text-sm"><a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The tools this answers, and what it generates for each &rarr;</a></p>
       </div>
-      <div class="min-w-0 rounded-base border border-warning-subtle bg-warning-soft p-5 sm:p-6">
-        <h3 class="text-lg font-semibold tracking-tight text-heading">{{ x.direction.planned_title }}</h3>
+      <div class="min-w-0 rounded-base border border-warning-subtle bg-warning-soft p-6">
+        <h3 class="text-xl font-bold leading-snug tracking-tight text-heading sm:text-2xl">{{ x.direction.planned_title }}</h3>
         <p class="mt-3 text-base leading-relaxed text-heading">{{ x.direction.planned_lead }}</p>
         <p class="mt-4 text-sm text-heading">No wave of the roadmap is this work yet. <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What is scheduled, wave by wave &rarr;</a></p>
       </div>
@@ -521,37 +362,147 @@
   </div>
 </section>
 
-{#- 20. the doctrine -#}
-<section class="border-b border-default bg-brand-softer">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ x.doctrine.kicker }}</p>
-    <h2 class="mt-2 max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-fg-brand-strong sm:text-4xl lg:text-5xl">{{ x.doctrine.title }}</h2>
-    <p class="mt-5 max-w-3xl text-base leading-relaxed text-heading sm:text-lg">{{ x.doctrine.lead }}</p>
-    <ul class="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {%- for c in x.doctrine.conditions %}
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">{{ loop.index }}</span><span class="min-w-0">{{ c.text }}</span></li>
-      {%- endfor %}
-    </ul>
-  </div>
-</section>
+{#- 9. the doctrine, the rest of the argument, and the one action.
 
-{#- 21. this page — the architecture note, and the final action -#}
+    The disclosures below are the sections this page used to spend a full-bleed band on each:
+    provenance, issues as projections, claims against reality, completion, opposition, and the
+    shipped half of the direction. Every word of them is still manifesto.toml's and still
+    rendered — a reader who wants the long form opens one, and a reader who came to install
+    something is two screens from the button instead of thirty.
+
+    Where a topic has a page of its own the disclosure says so and links it, because the page
+    is the fuller answer: /evidence/ for what the repository records, /plan/ for the work
+    graph, /guarantees/ for the claims and their evidence, /contract/ for the finish contract,
+    /commands/ for the commands. Two of these sections used to print facts this template had
+    typed into it rather than read from data — the eight relations of an intent record and a
+    fabricated CLAIM DRIFT sample — on a page whose thesis is that nothing is invented. Those
+    are gone; the prose that argued for them is not. -#}
 <section class="bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    <div class="mx-auto max-w-3xl text-center">
-      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ x.close.title }}</h2>
-      <p class="mt-4 text-base leading-relaxed text-body">{{ x.close.lead }}</p>
-      <p class="mt-4 text-lg font-semibold text-heading">{{ x.close.closing }}</p>
-      <p class="mt-6 text-sm leading-relaxed text-body-subtle">{{ m.architecture.lead }}</p>
-      <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-        <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">Install Majordomus</a>
+    <div class="mx-auto max-w-3xl">
+      <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ x.doctrine.kicker }}</p>
+      <h2 class="mt-2 text-3xl font-extrabold leading-tight tracking-tight text-heading sm:text-4xl">{{ x.doctrine.title }}</h2>
+      <p class="mt-5 text-base leading-relaxed text-body sm:text-lg">{{ x.doctrine.lead }}</p>
+      <ul class="mt-6 grid gap-2 sm:grid-cols-2">
+        {%- for c in x.doctrine.conditions %}
+        <li class="flex gap-3 rounded-base border border-brand-subtle bg-brand-softer px-4 py-2 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">{{ loop.index }}</span><span class="min-w-0">{{ c.text }}</span></li>
+        {%- endfor %}
+      </ul>
+
+      <h3 class="mt-12 text-sm font-semibold uppercase tracking-wide text-body-subtle">The rest of the argument</h3>
+      <div class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+        <details class="min-w-0">
+          <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ x.graph.title }}</summary>
+          <div class="border-t border-default px-4 py-4">
+            <p class="text-sm leading-relaxed text-body">{{ x.graph.lead }}</p>
+            <p class="mt-4 text-sm font-semibold uppercase tracking-wide text-body-subtle">Instead of &ldquo;{{ x.graph.bad_question }}&rdquo; &mdash; &ldquo;{{ x.graph.bad_answer }}&rdquo;, an answerable history says</p>
+            <p class="mt-2 rounded-base border border-brand-subtle bg-brand-softer p-4 text-sm leading-relaxed text-heading">{{ x.graph.good_answer }}</p>
+            <p class="mt-4 text-sm"><a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What this repository already records, and what reads it back &rarr;</a></p>
+          </div>
+        </details>
+        <details class="min-w-0">
+          <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ x.projections.title }}</summary>
+          <div class="border-t border-default px-4 py-4">
+            <p class="text-sm leading-relaxed text-body">{{ x.projections.lead }}</p>
+            <ul class="mt-4 grid gap-2 sm:grid-cols-2">
+              {%- for d in x.projections.detects %}
+              <li class="flex gap-3 rounded-base border border-default bg-neutral-primary px-3 py-2 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">{{ d.text }}</span></li>
+              {%- endfor %}
+            </ul>
+            <p class="mt-4 text-sm leading-relaxed text-body">{{ x.projections.closing }}</p>
+            <p class="mt-4 text-sm"><a href="{{ get_url(path="/plan/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The work graph this repository keeps, issue by issue and milestone by milestone &rarr;</a></p>
+          </div>
+        </details>
+        <details class="min-w-0">
+          <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ x.claims.title }}</summary>
+          <div class="border-t border-default px-4 py-4">
+            <p class="text-sm leading-relaxed text-body">{{ x.claims.lead }}</p>
+            <p class="mt-4 text-sm leading-relaxed text-body">{{ x.claims.closing }}</p>
+            <p class="mt-4 rounded-base border border-brand-subtle bg-brand-softer p-4 text-sm leading-relaxed text-heading">This repository's index holds <span class="font-mono font-bold text-fg-brand-strong">{{ model.telemetry.by_kind.claim }}</span> of them, each naming the source, the implementation and the test that settle it. A claim whose evidence no longer resolves fails the build before the site can be published; comparing a claim's wording to the behaviour it describes is still a person's job here.</p>
+            <p class="mt-4 text-sm"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every claim, with its evidence and the command that verifies it &rarr;</a></p>
+          </div>
+        </details>
+        <details class="min-w-0">
+          <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ x.completion.title }}</summary>
+          <div class="border-t border-default px-4 py-4">
+            <p class="text-sm leading-relaxed text-body">{{ x.completion.lead }}</p>
+            <p class="mt-4 text-sm leading-relaxed text-body">{{ m.contract.caption }}</p>
+            <ol class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary">
+              {%- for c in readme.finish_checks %}
+              <li class="flex items-baseline gap-3 px-4 py-2 font-mono text-xs text-body"><span class="text-body-subtle">{{ loop.index }}</span><span class="min-w-0 break-words text-heading">{{ c }}</span></li>
+              {%- endfor %}
+            </ol>
+            <p class="mt-3 text-sm text-body-subtle">Work leaves as <span class="font-medium text-heading">completed</span> only when every line passes. Anything else gets a name, not a shrug.</p>
+            <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The full contract, argument by argument &rarr;</a></p>
+          </div>
+        </details>
+        <details class="min-w-0">
+          <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ x.opposition.title }}</summary>
+          <div class="border-t border-default px-4 py-4">
+            <p class="text-sm leading-relaxed text-body">{{ x.opposition.lead }}</p>
+            <ul class="mt-4 grid gap-2 sm:grid-cols-2">
+              {%- for q in x.opposition.questions %}
+              <li class="flex gap-3 rounded-base border border-default bg-neutral-primary px-3 py-2 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">{{ q.text }}</span></li>
+              {%- endfor %}
+            </ul>
+          </div>
+        </details>
+        <details class="min-w-0">
+          <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ x.direction.title }}</summary>
+          <div class="border-t border-default px-4 py-4">
+            <p class="text-sm leading-relaxed text-body">{{ x.direction.lead }}</p>
+            <h4 class="mt-4 text-base font-semibold tracking-tight text-heading">{{ x.direction.shipped_title }}</h4>
+            <p class="mt-2 text-sm leading-relaxed text-body">Each command is declared once, and that declaration is what the command line, the HTTP API, the MCP tools and this site are all projections of.</p>
+            <ul class="mt-3 flex flex-wrap gap-1.5">
+              {%- set cmds = load_data(path="data/generated/commands.json") -%}
+              {%- for c in cmds.commands %}
+              <li><code class="inline-block rounded-base border border-default bg-neutral-primary px-2 py-0.5 font-mono text-xs text-heading">{{ c.name }}</code></li>
+              {%- endfor %}
+            </ul>
+            <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every command, argument by argument &rarr;</a></p>
+          </div>
+        </details>
+        <details class="min-w-0">
+          <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">{{ m.write_once.title }}</summary>
+          <div class="border-t border-default px-4 py-4">
+            <p class="text-sm leading-relaxed text-body">{{ m.write_once.lead }}</p>
+            {#- A kind is a link when the site publishes a page per object of it, plain text
+                when it does not. Which is which is site/data/publication.toml, declared once
+                for every kind the index holds and checked both ways by scripts/ci/entity-check,
+                so a kind cannot quietly stop being published and this list cannot quietly stop
+                naming one. It lived in a full-bleed section of its own until the homepage went
+                to nine sections; the behaviour moved into this disclosure with the list. -#}
+            {%- set pubkinds = load_data(path="data/generated/entities.json") -%}
+            <ul class="mt-4 flex flex-wrap gap-2">
+              {%- for kind, n in model.telemetry.by_kind %}
+              {%- set published = [k for k in pubkinds.kinds if k.kind == kind] %}
+              {%- if published | length > 0 %}
+              <li><a href="{{ get_url(path=published[0].route, trailing_slash=true) }}" class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1 hover:bg-neutral-secondary-medium"><code class="font-mono text-sm text-fg-brand">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></a></li>
+              {%- else %}
+              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></li>
+              {%- endif %}
+              {%- endfor %}
+            </ul>
+            <p class="mt-4 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. Nothing registers anything. Each object has an address derived from its kind and its identity, the same one on the command line, over HTTP, over MCP and in the Cockpit; the kinds linked above publish a page per object here too. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
+          </div>
+        </details>
       </div>
-      <p class="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm font-medium">
-        <a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every feature</a>
-        <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Read the guarantees</a>
-        <a href="{{ get_url(path="/docs/product/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How this page is derived</a>
-        <a href="{{ project.repository_url }}" class="text-fg-brand hover:underline">View on GitHub</a>
-      </p>
+
+      <div class="mt-12 text-center">
+        <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ x.close.title }}</h2>
+        <p class="mt-4 text-base leading-relaxed text-body">{{ x.close.lead }}</p>
+        <p class="mt-4 text-lg font-semibold text-heading">{{ x.close.closing }}</p>
+        <p class="mt-6 text-sm leading-relaxed text-body-subtle">{{ m.architecture.lead }}</p>
+        <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">Install Majordomus</a>
+        </div>
+        <p class="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm font-medium">
+          <a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every feature</a>
+          <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Read the guarantees</a>
+          <a href="{{ get_url(path="/docs/product/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How this page is derived</a>
+          <a href="{{ project.repository_url }}" class="text-fg-brand hover:underline">View on GitHub</a>
+        </p>
+      </div>
     </div>
   </div>
 </section>

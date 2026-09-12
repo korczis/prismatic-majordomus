@@ -4,7 +4,7 @@ description = "Every object of the layer as an addressable node: the kinds and t
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 123
+weight = 128
 [extra]
 route = "/docs/cli/entity/"
 command = "majordomus entity"

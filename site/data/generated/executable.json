@@ -120,6 +120,74 @@
       "tool": "majordomus_commands"
     },
     {
+      "api_anchor": "/docs/api/#op-commit-history",
+      "claims": [],
+      "cli": "majordomus commit history",
+      "id": "commit.history",
+      "kind": "query",
+      "module": "commit",
+      "module_route": "/registry/modules/commit/",
+      "resource": null,
+      "route": "/registry/capabilities/commit-history/",
+      "slug": "commit-history",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "tests": [],
+      "title": "Judge a range of history",
+      "tool": "majordomus_commit_history"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commit-plan",
+      "claims": [],
+      "cli": "majordomus commit plan",
+      "id": "commit.plan",
+      "kind": "query",
+      "module": "commit",
+      "module_route": "/registry/modules/commit/",
+      "resource": "majordomus://commit/plan",
+      "route": "/registry/capabilities/commit-plan/",
+      "slug": "commit-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "tests": [],
+      "title": "What the working tree would commit",
+      "tool": "majordomus_commit_plan"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commit-scopes",
+      "claims": [],
+      "cli": "majordomus commit scopes",
+      "id": "commit.scopes",
+      "kind": "query",
+      "module": "commit",
+      "module_route": "/registry/modules/commit/",
+      "resource": "majordomus://commit/scopes",
+      "route": "/registry/capabilities/commit-scopes/",
+      "slug": "commit-scopes",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "tests": [],
+      "title": "The scope vocabulary",
+      "tool": "majordomus_commit_scopes"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commit-validate",
+      "claims": [],
+      "cli": "majordomus commit validate",
+      "id": "commit.validate",
+      "kind": "query",
+      "module": "commit",
+      "module_route": "/registry/modules/commit/",
+      "resource": null,
+      "route": "/registry/capabilities/commit-validate/",
+      "slug": "commit-validate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "tests": [],
+      "title": "Judge one commit message",
+      "tool": "majordomus_commit_validate"
+    },
+    {
       "api_anchor": "/docs/api/#op-continuity-state",
       "claims": [],
       "cli": null,
@@ -2265,6 +2333,27 @@
         "route": "/guarantees/models-no-secret-fields/",
         "status": "guaranteed",
         "test": "apps/majordomus-cli/src/models/mod.rs"
+      },
+      {
+        "id": "commit-message-is-judged",
+        "implementation": "apps/majordomus-cli/src/commit/verdict.rs",
+        "route": "/guarantees/commit-message-is-judged/",
+        "status": "guaranteed",
+        "test": "test/cases/274_commit_policy.sh"
+      },
+      {
+        "id": "commit-scopes-are-learned",
+        "implementation": "apps/majordomus-cli/src/commit/scopes.rs",
+        "route": "/guarantees/commit-scopes-are-learned/",
+        "status": "guaranteed",
+        "test": "test/cases/274_commit_policy.sh"
+      },
+      {
+        "id": "commit-plan-is-refusable",
+        "implementation": "apps/majordomus-cli/src/commit/plan.rs",
+        "route": "/guarantees/commit-plan-is-refusable/",
+        "status": "guaranteed",
+        "test": "test/cases/274_commit_policy.sh"
       }
     ],
     "http": [
@@ -2329,9 +2418,9 @@
     ]
   },
   "counts": {
-    "capabilities": 110,
-    "claims": 48,
-    "modules": 36
+    "capabilities": 114,
+    "claims": 51,
+    "modules": 37
   },
   "generator": "majordomus-cli 0.6.0",
   "modules": [
@@ -2402,6 +2491,37 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
       "title": "Command graph"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "commit.history",
+          "route": "/registry/capabilities/commit-history/",
+          "slug": "commit-history"
+        },
+        {
+          "id": "commit.plan",
+          "route": "/registry/capabilities/commit-plan/",
+          "slug": "commit-plan"
+        },
+        {
+          "id": "commit.scopes",
+          "route": "/registry/capabilities/commit-scopes/",
+          "slug": "commit-scopes"
+        },
+        {
+          "id": "commit.validate",
+          "route": "/registry/capabilities/commit-validate/",
+          "slug": "commit-validate"
+        }
+      ],
+      "claims": [],
+      "id": "commit",
+      "route": "/registry/modules/commit/",
+      "slug": "commit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commit.rs",
+      "title": "Commit"
     },
     {
       "capabilities": [

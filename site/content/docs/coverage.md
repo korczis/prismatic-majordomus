@@ -1,7 +1,7 @@
 +++
 title = "Coverage: one measurement, two questions"
 description = "test coverage of the Rust executable: one measurement (scripts/rust-coverage), the crate floor and the session/continuity domain, and the changed-code differential gate of #214 that refuses new debt while leaving untouched legacy debt alone"
-weight = 50
+weight = 51
 [extra]
 source = "docs/COVERAGE.md"
 +++

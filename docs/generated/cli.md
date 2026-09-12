@@ -95,6 +95,11 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
 | [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
+| [`majordomus commit`](#majordomus-commit) | `/docs/cli/commit/` | The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy |
+| [`majordomus commit plan`](#majordomus-commit-plan) | `/docs/cli/commit/plan/` | What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves |
+| [`majordomus commit scopes`](#majordomus-commit-scopes) | `/docs/cli/commit/scopes/` | Every scope this repository's commit history uses, how often, and the directories each one is written about |
+| [`majordomus commit history`](#majordomus-commit-history) | `/docs/cli/commit/history/` | Judge every commit in a range of history against the commit policy, in one pass; exit 10 when any carries an error |
+| [`majordomus commit validate`](#majordomus-commit-validate) | `/docs/cli/commit/validate/` | Judge one commit message against the repository's commit policy; exit 10 when a finding is an error |
 | [`majordomus product`](#majordomus-product) | `/docs/cli/product/` | The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation |
 | [`majordomus product list`](#majordomus-product-list) | `/docs/cli/product/list/` | Every feature, narrowed by any filter, with the surfaces derived for each |
 | [`majordomus product show`](#majordomus-product-show) | `/docs/cli/product/show/` | One feature in full: what it is made of, resolved, and everything derived from that |
@@ -145,7 +150,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules), [`majordomus entity`](#majordomus-entity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules), [`majordomus entity`](#majordomus-entity).
 
 ```text
 majordomus <COMMAND>
@@ -2595,6 +2600,155 @@ Examples:
   ```
 
   Verified: exits 0.
+
+<a id="majordomus-commit"></a>
+## `majordomus commit`
+
+The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
+
+Subcommands: [`majordomus commit plan`](#majordomus-commit-plan), [`majordomus commit scopes`](#majordomus-commit-scopes), [`majordomus commit history`](#majordomus-commit-history), [`majordomus commit validate`](#majordomus-commit-validate).
+
+```text
+majordomus commit [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What this tree would commit, and why** — `commit` with nothing after it plans, because that is what a person wants when they ask about committing. The branch, its upstream and divergence, what is staged and what is not, and the commits the history's own scoping supports — each with the evidence for it rather than an assertion. A clean tree says so.
+
+  ```console
+  $ majordomus commit
+  ```
+
+  Verified: exits 0; prints branch, tree, fingerprint.
+
+<a id="majordomus-commit-plan"></a>
+## `majordomus commit plan`
+
+What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves
+
+```text
+majordomus commit plan [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The plan, with the fingerprint that makes it refusable** — The fingerprint is the repository, the worktree, HEAD and a hash over every change with its stage. A caller holding a plan compares it with the tree in front of it and is told what moved — `HEAD moved from a1b2c3d4e to e4f5a6b70` — rather than being told nothing and committing somebody else's staged work.
+
+  ```console
+  $ majordomus commit plan
+  ```
+
+  Verified: exits 0; prints fingerprint, nothing staged.
+
+- **The same answer, as the shape the API and MCP return** — One domain model behind every projection: this document is what `GET /api/v1/commit/plan` returns and what the `majordomus_commit_plan` tool answers, with the working tree, every group with its rationale, and the fingerprint.
+
+  ```console
+  $ majordomus commit plan --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /fingerprint/repository, /fingerprint/worktree, /tree/changes.
+
+<a id="majordomus-commit-scopes"></a>
+## `majordomus commit scopes`
+
+Every scope this repository's commit history uses, how often, and the directories each one is written about
+
+```text
+majordomus commit scopes [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The scope vocabulary, learned rather than declared** — Every scope this repository's own commits use, how often, and the directories each one is written about — read from at most 1500 commits of the log. Nothing here is configured: a subsystem committed today is in the vocabulary today, and one nobody has touched sinks on its own. A repository whose history is not conventional yields an empty vocabulary and says how many commits it read.
+
+  ```console
+  $ majordomus commit scopes
+  ```
+
+  Verified: exits 0; prints learned from.
+
+<a id="majordomus-commit-history"></a>
+## `majordomus commit history`
+
+Judge every commit in a range of history against the commit policy, in one pass; exit 10 when any carries an error
+
+```text
+majordomus commit history [OPTIONS] [RANGE]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<RANGE>` | `<RANGE>` | — | Anything `git log` accepts: `origin/master..HEAD`, `v0.6.0..`, a bare `HEAD`. None is `HEAD` |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A whole range judged in one pass** — One process for the range rather than one per commit: this reads 1755 commits of this repository's own history in about three and a half seconds, which is what lets `scripts/ci/commit-policy` be a gate rather than a nightly job. It reports how many were read, how many git composed and are therefore exempt, and how many carry an error — and exits 10 when any does.
+
+  ```console
+  $ majordomus commit history
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-commit-validate"></a>
+## `majordomus commit validate`
+
+Judge one commit message against the repository's commit policy; exit 10 when a finding is an error
+
+```text
+majordomus commit validate [OPTIONS] [FILE]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<FILE>` | `<FILE>` | — | The file holding the message; none reads standard input, which is what the `commit-msg` hook has |
+| `--paths` | `<PATHS>` | — | Judge it as a commit of these paths, comma-separated: what needs them — whether a fix carries a test — is otherwise not judged rather than guessed |
+| `--rev` | `<REV>` | — | Judge the message of this commit instead of a file: any revision `git show` accepts |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The verdict on a commit that is already made** — `--rev` judges the message of any revision `git show` accepts; without it the message is read from a file or from standard input, which is the shape the `commit-msg` hook has. The exit code is the verdict: 0 when nothing of error severity was found, 10 when something was. Here the repository's first commit is subject `install`, which is not `type(scope): subject`, so the answer is 10 and the finding names the eleven type words.
+
+  ```console
+  $ majordomus commit validate --rev HEAD
+  ```
+
+  Verified: exits 10.
 
 <a id="majordomus-product"></a>
 ## `majordomus product`

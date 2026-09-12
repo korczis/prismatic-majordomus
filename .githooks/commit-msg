@@ -1,0 +1,18 @@
+#!/bin/sh
+# install once: git config core.hooksPath .githooks
+#
+# The commit policy, at the one moment the whole of its evidence exists: the message has
+# been written and the files are staged, so a `fix` with no test among them can be noticed
+# while it is still cheap to add one. The hook carries no rule of its own — it asks the
+# executable's `commit.validate`, which is the same judge `scripts/ci/commit-policy` reads
+# the history through and the same one an agent is handed over MCP. Exit 10 aborts the
+# commit, and the findings say which code and what to do.
+#
+# $1 is the file git will take the message from, comments and all; the judge strips them the
+# way git does, so what is judged is what would be stored.
+STAGED="$(git diff --cached --name-only --diff-filter=ACMR | paste -sd, -)"
+if [ -n "$STAGED" ]; then
+  bin/majordomus-cli commit validate "$1" --paths "$STAGED" || exit $?
+else
+  bin/majordomus-cli commit validate "$1" || exit $?
+fi

@@ -209,6 +209,54 @@
         }
       }
     },
+    "commit": {
+      "type": "object",
+      "description": "What a commit message is held to. The type vocabulary is not here: it is the changelog's own, and a second copy under this key is the duplication the commit subsystem exists to remove.",
+      "additionalProperties": false,
+      "properties": {
+        "subject_max_chars": {
+          "description": "The widest a subject line may be, measured whole including the type and scope.",
+          "type": "integer",
+          "minimum": 20
+        },
+        "scope_unknown": {
+          "description": "A scope outside the vocabulary the repository's own history yields.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "fix_requires_test": {
+          "description": "A `fix` whose files include no test.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "reference_unresolved": {
+          "description": "A record id in the message that the layer does not hold.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "breaking_unexplained": {
+          "description": "A commit marked breaking with no body and no BREAKING CHANGE trailer.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        }
+      }
+    },
     "projections": {
       "type": "array",
       "items": {

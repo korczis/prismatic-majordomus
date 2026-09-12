@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 51,
+      "count": 52,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -1287,9 +1287,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.conventional-commits@1",
+          "label": "project.conventional-commits@2",
           "kind": "rule",
-          "route": "/rules/project-conventional-commits-1/",
+          "route": "/rules/project-conventional-commits-2/",
           "external": false
         },
         {
@@ -2521,7 +2521,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0054",
+          "kind": "adr",
+          "route": "/adrs/adr-0054/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -2839,6 +2847,144 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/271_adr_allocation.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0054",
+      "identity": "adr-0054",
+      "slug": "adr-0054",
+      "cockpit": "/cockpit/objects/adr/adr-0054",
+      "title": "A commit message is a judged value, not a convention and not a prompt",
+      "status": "proposed",
+      "tags": [
+        "git",
+        "commit",
+        "governance",
+        "projections"
+      ],
+      "source": ".ai/repo/adrs/0054-a-commit-message-is-a-judged-value-not-a-convention-and-not-a-prompt.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/commit-policy-baseline.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".githooks/commit-msg",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/commit/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/release/commits.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/commit-policy",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0048",
+          "kind": "adr",
+          "route": "/adrs/adr-0048/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "commit-message-is-judged",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "commit-plan-is-refusable",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "commit-scopes-are-learned",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COMMIT.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/policy.yaml",
+          "kind": "policy",
+          "route": "/policy/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.blocking-checks-cheap@1",
+          "kind": "rule",
+          "route": "/rules/project-blocking-checks-cheap-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.conventional-commits@2",
+          "kind": "rule",
+          "route": "/rules/project-conventional-commits-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/274_commit_policy.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -3781,6 +3927,13 @@
         {
           "edge": "exercises",
           "label": "gate-ci-on-the-tool-itself",
+          "kind": "use-case",
+          "route": "/use-cases/",
+          "external": false
+        },
+        {
+          "edge": "exercises",
+          "label": "plan-a-commit-and-judge-its-message",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -5774,6 +5927,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0053/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0054",
+          "kind": "adr",
+          "route": "/adrs/adr-0054/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.conventional-commits@2",
+          "kind": "rule",
+          "route": "/rules/project-conventional-commits-2/",
+          "external": false
         }
       ]
     },
@@ -5978,23 +6145,54 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.conventional-commits@1",
-      "identity": "project.conventional-commits@1",
-      "slug": "project-conventional-commits-1",
-      "cockpit": "/cockpit/objects/rule/project-conventional-commits-1",
-      "title": "Conventional commits, committed and pushed incrementally",
+      "id": "majordomus://rule/project.conventional-commits@2",
+      "identity": "project.conventional-commits@2",
+      "slug": "project-conventional-commits-2",
+      "cockpit": "/cockpit/objects/rule/project-conventional-commits-2",
+      "title": "A commit message is a value this repository judges, not a convention it hopes for",
       "status": "active",
       "tags": [
-        "git"
+        "git",
+        "commit",
+        "governance"
       ],
-      "source": ".ai/repo/rules/project/conventional-commits.v1.md",
-      "references": [],
+      "source": ".ai/repo/rules/project/conventional-commits.v2.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.blocking-checks-cheap@1",
+          "kind": "rule",
+          "route": "/rules/project-blocking-checks-cheap-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        }
+      ],
       "referenced_by": [
         {
           "edge": "put_in_force",
           "label": "adr-0029",
           "kind": "adr",
           "route": "/adrs/adr-0029/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0054",
+          "kind": "adr",
+          "route": "/adrs/adr-0054/",
           "external": false
         }
       ]
@@ -7121,6 +7319,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0054",
+          "kind": "adr",
+          "route": "/adrs/adr-0054/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
@@ -7139,6 +7344,13 @@
           "label": "project.commands-are-projections@1",
           "kind": "rule",
           "route": "/rules/project-commands-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.conventional-commits@2",
+          "kind": "rule",
+          "route": "/rules/project-conventional-commits-2/",
           "external": false
         },
         {
@@ -7599,6 +7811,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0054",
+          "kind": "adr",
+          "route": "/adrs/adr-0054/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.benchmarkable-commands@1",
           "kind": "rule",
@@ -7610,6 +7829,13 @@
           "label": "project.cache-is-invisible@1",
           "kind": "rule",
           "route": "/rules/project-cache-is-invisible-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.conventional-commits@2",
+          "kind": "rule",
+          "route": "/rules/project-conventional-commits-2/",
           "external": false
         },
         {

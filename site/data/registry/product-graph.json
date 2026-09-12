@@ -296,6 +296,15 @@
       "status": "featured"
     },
     {
+      "id": "feature:commit",
+      "kind": "feature",
+      "label": "Commits",
+      "summary": "The same parse the changelog reads the history with decides whether a new message passes. The policy is data in the repository's own policy file, its subject width measured from the history rather than taken from the convention. The scope vocabulary is observed from at most 1500 commits of the log, so a subsystem committed today is in it today and a scope nobody uses sinks on its own. A plan over the working tree carries a fingerprint of repository, worktree, HEAD and change set, so a plan acted on after the tree moved is refused rather than applied - and a change set holding generated files is one commit, because only the last of several could carry current derived data.",
+      "route": "/features/commit/",
+      "source": ".ai/repo/features/commit.md",
+      "status": "stable"
+    },
+    {
       "id": "feature:context",
       "kind": "feature",
       "label": "Context",
@@ -479,7 +488,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "51 object(s) of the layer",
+      "summary": "52 object(s) of the layer",
       "route": "/registry/modules/adr/",
       "source": "share/kinds.yaml"
     },
@@ -511,7 +520,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "170 object(s) of the layer",
+      "summary": "173 object(s) of the layer",
       "route": "/registry/modules/claim/",
       "source": "share/kinds.yaml"
     },
@@ -543,7 +552,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "243 object(s) of the layer",
+      "summary": "247 object(s) of the layer",
       "route": "/registry/modules/document/",
       "source": "share/kinds.yaml"
     },
@@ -551,7 +560,7 @@
       "id": "kind:feature",
       "kind": "kind",
       "label": "feature",
-      "summary": "24 object(s) of the layer",
+      "summary": "25 object(s) of the layer",
       "route": "/registry/modules/feature/",
       "source": "share/kinds.yaml"
     },
@@ -655,7 +664,7 @@
       "id": "kind:use-case",
       "kind": "kind",
       "label": "use-case",
-      "summary": "45 object(s) of the layer",
+      "summary": "46 object(s) of the layer",
       "route": "/registry/modules/use-case/",
       "source": "share/kinds.yaml"
     },
@@ -675,6 +684,15 @@
       "summary": "Capabilities",
       "route": "/registry/modules/capabilities/",
       "source": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:commit",
+      "kind": "module",
+      "label": "commit",
+      "summary": "Commit",
+      "route": "/registry/modules/commit/",
+      "source": "apps/majordomus-cli/src/capability/builtin/commit.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -1087,6 +1105,31 @@
     },
     {
       "source": "feature:cockpit",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "feature:commit",
+      "target": "feature:declare-once",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:commit",
+      "target": "feature:doctrine",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:commit",
+      "target": "feature:provenance",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:commit",
+      "target": "module:commit",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:commit",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -2086,6 +2129,26 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:commit",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:commit",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:commit",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:commit",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:continuity",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2422,8 +2485,8 @@
     }
   ],
   "metadata": {
-    "nodes": 100,
-    "edges": 308,
+    "nodes": 102,
+    "edges": 317,
     "acyclic": false,
     "truncated": false
   },
