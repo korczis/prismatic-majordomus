@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>majordomus adr — Prismatic Majordomus</title>
-<meta name="description" content="The repository&#39;s architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.">
+<meta name="description" content="The repository&#39;s architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.">
 <link rel="canonical" href="https://majordomus.dev/commands/adr/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="majordomus adr — Prismatic Majordomus">
-<meta property="og:description" content="The repository&#39;s architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.">
+<meta property="og:description" content="The repository&#39;s architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.">
 <meta property="og:url" content="https://majordomus.dev/commands/adr/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -218,16 +218,16 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">majordomus adr</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">The repository&#39;s architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The repository&#39;s architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
-  <div class="min-w-0"><p class="text-lg text-body">The repository&#39;s architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.</p>
+  <div class="min-w-0"><p class="text-lg text-body">The repository&#39;s architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.</p>
     <ul class="mt-4 flex flex-wrap gap-2 text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">state-mutating</span></li>
-      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">memory</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">propose writes status &#39;proposed&#39; and refuses --status: accepting a decision is a person editing the field. The identity is allocated under a lock over the section directory, so two worktrees proposing at once get two identities; check refuses duplicate identities, a superseded record with no replacement, and one-sided supersession.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" tabindex="0">majordomus adr &lt;list|show &lt;id&gt;|propose &quot;&lt;title&gt;&quot;|check&gt; [--json]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">memory</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">propose writes status &#39;proposed&#39; and refuses --status: accepting a decision is a person editing the field. An identity is allocated above the high-water mark of four sources — this working tree, every sibling worktree as it stands on disk, every ref, and the peer board — and never into a hole, because a hole is an identity taken and withdrawn or taken and not yet written; next asks that survey without writing anything and says what each source claimed. check refuses duplicate identities, a superseded record with no replacement, one-sided supersession, and an identity this tree adds that another ref carries a different decision at.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" tabindex="0">majordomus adr &lt;list|show &lt;id&gt;|next|propose &quot;&lt;title&gt;&quot;|check|affected&gt; [--json]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
     <ol class="mt-3 flex flex-wrap gap-2 text-sm"><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Set up</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Begin</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Work</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Verify</li><li class="rounded-base border px-3 py-1.5 border-brand-subtle bg-brand-softer font-medium text-fg-brand-strong" aria-current="step">Conclude</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Inspect</li></ol>
     <p class="mt-3 text-sm text-body-subtle">Other commands at this stage:<a href="https://majordomus.dev/commands/handover/" class="font-mono text-fg-brand hover:underline">handover</a>, <a href="https://majordomus.dev/commands/finish/" class="font-mono text-fg-brand hover:underline">finish</a>.</p><div class="mt-10 grid gap-6 sm:grid-cols-2">
       <div class="min-w-0">
@@ -379,6 +379,7 @@ and where the record came from. Under the layer's <code>adrs</code> section.</p>
 declaration the Rust executable indexes. See <a href="https://majordomus.dev/commands/adr/SCHEMAS.md"><code>SCHEMAS.md</code></a> for the contract.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus adr list [--status &lt;status&gt;] [--json]      every decision: id, status, date, title</span></span>
 <span class="giallo-l"><span>majordomus adr show &lt;id&gt; [--json]                     the path, then the file as written</span></span>
+<span class="giallo-l"><span>majordomus adr next [--json]                          the next free identity, and every source surveyed</span></span>
 <span class="giallo-l"><span>majordomus adr propose &quot;&lt;title&gt;&quot; [--from &lt;ref&gt;]...    write a new decision, status proposed</span></span>
 <span class="giallo-l"><span>                       [--tag &lt;tag&gt;]... [--supersedes &lt;id&gt;]</span></span>
 <span class="giallo-l"><span>majordomus adr check [--json]                         validate every decision and every reference</span></span>
@@ -391,6 +392,24 @@ filters to one of <code>proposed</code>, <code>accepted</code>, <code>superseded
 <li>
 <p><code>show</code> prints the repository-relative path on the first line and the file below it. An
 id that is not a decision exits <code>12</code> and names <code>adr list</code>.</p>
+</li>
+<li>
+<p><code>next</code> answers what the next free identity is, and says what it looked at to decide. Four
+sources, each reporting how many identities it claimed: this working tree, every sibling
+worktree as it stands on disk (authored and not yet committed is a real claim), every ref —
+branches, tags, remote-tracking refs and every linked worktree's <code>HEAD</code>, in one
+<code>git log --all --no-renames --diff-filter=A</code> — and the peer board of the shared server,
+which is the only source that knows about an identity a session has decided to take and has
+not written anywhere. A source that could not be reached is reported as unreachable and
+never dropped silently from the denominator.
+Allocation is <strong>monotonic</strong>: one above the highest identity anything has ever claimed,
+never into a hole. A hole means an identity was taken and withdrawn, or taken and not yet
+written, and nothing can tell either from a number nobody ever used — <code>0034</code> of this
+repository is on no branch, in no tag and in no working tree, and <code>ADR 0035</code> cites it. Holes
+are therefore listed as spent, with whatever cites them named as evidence for the reader.
+The shell tool has no peer identity of its own, so a session that announced an allocation
+and then asks is stepped over its own claim; the output says when the high-water mark came
+from a board claim. <code>propose</code> allocates through the same survey.</p>
 </li>
 <li>
 <p><code>propose</code> writes <code>status: proposed</code> and nothing else. <strong>There is no way to write
@@ -421,6 +440,20 @@ a <code>superseded</code> record with no <code>superseded_by</code>, one-sided s
 that resolves to nothing. It exits <code>10</code> on any failure.</p>
 </li>
 <li>
+<p><code>check</code> also asks the question no single tree can answer about itself: for every identity
+this tree <strong>adds</strong> relative to the base (<code>origin/master</code>, <code>origin/main</code>, <code>master</code>, <code>main</code>,
+in that order; <code>MJ_ADR_BASE</code> overrides and is then the only candidate), does another ref
+carry a <em>different</em> document at that identity? A different file name is a competing claim
+and is refused, naming both documents, the refs that carry the other one, and
+<code>majordomus adr next</code>; the same file name on two refs is an edit and is resolved by
+merging. The verdict always states its subject — how many identities were added and what
+they were measured against — and when the base does not resolve it says the other refs were
+<strong>not</strong> surveyed rather than exiting clean with nothing said. <code>doctor</code> runs the same
+examination, and <code>doctor</code> is the pre-commit hook, so a collision is refused on the branch
+rather than at the merge where <code>generate --strict</code> would exclude every claimant and name
+only the identity. <code>ADR 0053</code> is the reasoning.</p>
+</li>
+<li>
 <p><code>affected</code> reads a change set — the working tree against <code>HEAD</code> by default, <code>--staged</code>
 for the index, <code>--base &lt;ref&gt;</code> for <code>&lt;ref&gt;..HEAD</code> plus the working tree — and names every
 decision whose own file changed, or whose <code>related</code> names a path the change touches (a
@@ -446,7 +479,7 @@ reports what a change reaches, and never claims to know that a diff embodied a d
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/99_adr.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">99_adr</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/271_adr_allocation.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">271_adr_allocation</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/99_adr.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">99_adr</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
@@ -498,7 +531,7 @@ reports what a change reaches, and never claims to know that a diff embodied a d
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/94a018ded9dd1451d79026b351e2f683482a4ce0" class="font-mono underline">94a018d</a> · inputs <span class="font-mono">9c4c7877a6e1</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/180687c8f9b121e574d7d4cd31d2ed405ea6f4f2" class="font-mono underline">180687c</a> · inputs <span class="font-mono">5e47c3d183a7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
