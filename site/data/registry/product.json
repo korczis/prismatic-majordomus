@@ -5,11 +5,11 @@
     "id": "majordomus-cli",
     "version": "0.6.0"
   },
-  "fingerprint": "f5768167cb30522843152ae2d23026fc852a87a06e0b46663a8b4684de6efd01",
+  "fingerprint": "f4cd92771af3a735df145fcdd7ebb6f4d418058694c4eb4ca524b03869784a4b",
   "route": "/features/",
   "counts": {
-    "features": 23,
-    "features_all": 24,
+    "features": 24,
+    "features_all": 25,
     "featured": 11,
     "providers": 6,
     "modules": 36,
@@ -48,7 +48,7 @@
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 23
+      "features": 24
     }
   ],
   "features": [
@@ -266,7 +266,7 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 24
+          "objects": 25
         },
         {
           "name": "command",
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 172
+          "objects": 173
         }
       ],
       "rule_refs": [
@@ -538,11 +538,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 231,
+        "mcp_resources": 233,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 227,
+        "objects": 229,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -2812,7 +2812,7 @@
         },
         {
           "name": "document",
-          "objects": 245
+          "objects": 247
         }
       ],
       "rule_refs": [
@@ -3061,11 +3061,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 298,
+        "mcp_resources": 300,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 297,
+        "objects": 299,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3275,7 +3275,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 133
+          "objects": 135
         }
       ],
       "rule_refs": [
@@ -3630,6 +3630,7 @@
       "backlinks": [
         "ci",
         "commit",
+        "coverage",
         "finish-contract",
         "knowledge",
         "policy",
@@ -3638,11 +3639,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 135,
+        "mcp_resources": 137,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 133,
+        "objects": 135,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -3658,6 +3659,107 @@
         "modules": {
           "behaviorally_verified": 2
         }
+      }
+    },
+    {
+      "id": "coverage",
+      "title": "New code is covered, measured once and asked two questions",
+      "short_title": "Coverage",
+      "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a full-coverage domain, and — the invariant of",
+      "summary": "scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, the session/continuity domain held to 100%, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.",
+      "status": "stable",
+      "weight": 72,
+      "featured": false,
+      "areas": [
+        "verification"
+      ],
+      "audiences": [],
+      "modules": [],
+      "commands": [],
+      "kinds": [],
+      "rules": [
+        "project.new-code-is-covered"
+      ],
+      "docs": [
+        "docs/COVERAGE.md"
+      ],
+      "adrs": [],
+      "claims": [
+        "new-code-is-covered"
+      ],
+      "use_cases": [],
+      "cockpit": [],
+      "web": [],
+      "related": [
+        "doctrine",
+        "ci"
+      ],
+      "tags": [
+        "coverage",
+        "testing"
+      ],
+      "route": "/features/coverage/",
+      "source": ".ai/repo/features/coverage.md",
+      "surfaces": {
+        "cli": false,
+        "api": false,
+        "mcp": false,
+        "cockpit": false,
+        "docs": true
+      },
+      "module_refs": [],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [
+        {
+          "id": "project.new-code-is-covered",
+          "identity": "project.new-code-is-covered@1",
+          "title": "New and changed executable code is covered by a test; legacy debt may only shrink",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/new-code-is-covered.v1.md"
+        }
+      ],
+      "doc_refs": [
+        {
+          "path": "docs/COVERAGE.md",
+          "title": "Coverage: one measurement, two questions"
+        }
+      ],
+      "adr_refs": [],
+      "claim_refs": [
+        {
+          "id": "new-code-is-covered",
+          "claim": "Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 0,
+        "mcp_tools": 0,
+        "mcp_resources": 0,
+        "http_routes": 0,
+        "cli_paths": 0,
+        "commands": 0,
+        "objects": 0,
+        "rules": 1,
+        "enforced_rules": 1,
+        "docs": 1,
+        "adrs": 0,
+        "claims": 1,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 1
+        },
+        "modules": {}
       }
     },
     {
@@ -7449,6 +7551,7 @@
       ],
       "backlinks": [
         "benchmarks",
+        "coverage",
         "evidence"
       ],
       "counts": {
@@ -8012,6 +8115,22 @@
           "api",
           "mcp",
           "cockpit",
+          "docs"
+        ]
+      },
+      {
+        "id": "coverage",
+        "label": "Coverage",
+        "route": "/features/coverage/",
+        "status": "stable",
+        "surfaces": {
+          "cli": false,
+          "api": false,
+          "mcp": false,
+          "cockpit": false,
+          "docs": true
+        },
+        "exposed": [
           "docs"
         ]
       },
@@ -8784,7 +8903,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (172)",
+        "title": "claim (173)",
         "features": [
           "declare-once"
         ]
@@ -8817,7 +8936,7 @@
       },
       {
         "id": "feature",
-        "title": "feature (24)",
+        "title": "feature (25)",
         "features": [
           "declare-once"
         ]
@@ -8883,7 +9002,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (133)",
+        "title": "rule (135)",
         "features": [
           "doctrine"
         ]
@@ -9461,6 +9580,14 @@
       "path": ".ai/repo/rules/project/never-store-transcripts.v1.md"
     },
     {
+      "id": "project.new-code-is-covered",
+      "identity": "project.new-code-is-covered@1",
+      "title": "New and changed executable code is covered by a test; legacy debt may only shrink",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/new-code-is-covered.v1.md"
+    },
+    {
       "id": "project.no-claim-without-test",
       "identity": "project.no-claim-without-test@1",
       "title": "No claim without a test",
@@ -9699,29 +9826,29 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1434,
+    "capabilities": 1448,
     "builtin": 112,
-    "declarative": 1322,
+    "declarative": 1336,
     "modules": 36,
     "mcp_tools": 109,
-    "mcp_resources": 1363,
+    "mcp_resources": 1377,
     "http_routes": 111,
     "cli_commands": 116,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1322,
+    "objects": 1336,
     "by_kind": {
       "adr": 51,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 172,
+      "claim": 173,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 245,
-      "feature": 24,
+      "document": 247,
+      "feature": 25,
       "implementation": 49,
       "issue": 215,
       "knowledge": 1,
@@ -9732,17 +9859,17 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 133,
+      "rule": 135,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 196,
+      "test": 204,
       "use-case": 46,
       "workspace": 1
     },
     "providers": 6,
-    "features": 23,
+    "features": 24,
     "web_surfaces": 9
   },
   "valid": true

@@ -651,7 +651,7 @@ fn load_baselines(repo: &Repository, policy_path: &Path) -> Result<Vec<BaselineV
         .filter_map(|e| e.file_name().to_str().map(str::to_string))
         .filter(|n| n.starts_with("baseline.") && n.ends_with(".json"))
         .collect();
-    names.sort();
+    crate::order::canonical(&mut names);
     let mut out = Vec::new();
     for name in names {
         let path = dir.join(&name);

@@ -105,8 +105,8 @@ benchmark:
     p95: 0.5
     p99: 0.6
   budget:                # doctor and watch report their own wall time against these (WARN, never the exit code)
-    doctor_ms: 3000
-    watch_ms: 3000
+    doctor_ms: 20000     # the skeleton's values, measured on a freshly adopted repository
+    watch_ms: 20000      # re-derive with `majordomus bench` once your catalogue has grown
 
 enforcement:                             # what doctor reconciles; each must be wired
   - name: doctor-on-commit
@@ -1336,6 +1336,16 @@ ledger is one file per repository, so a selection by time range cannot tell two 
 workers apart, and the first real run of one claimed another worker's records. A line with
 no `session` belongs to no episode, which is the honest answer for work done outside one.
 
+`ts`, `event`, `head`, `branch`, `by` and `session` are the **envelope keys**, and a
+payload may not use one of them as a field name. JSON permits a duplicated key and says
+nothing about which of the two wins, so such a line means one thing to a reader that takes
+the first and another to a reader that takes the last. `mj_ledger_append` refuses the
+collision as an internal error, naming the field; a payload that wants to record something
+of the same shape names it apart, which is why the provider receipts carry
+`provider_event` and not `event`. Every reader takes the **first** occurrence of a key —
+the envelope's — through the one extraction `MJ_LEDGER_FIELD_AWK` declares, so a line
+written by an older version is still read as its writer meant it.
+
 The event vocabulary is closed. `share/events.yaml` declares every name the ledger
 accepts, what writes it, and the payload keys it must carry; `mj_ledger_append` refuses
 an unregistered name, `history --event` refuses to filter on one, and
@@ -1358,8 +1368,8 @@ Events and their extra fields:
 | `session.started` | `owner`, `worker` when one was supplied |
 | `session.closed` | `outcome`, `session_path` |
 | `session.recovered` | `session_id` (the episode recovered, which is never the one the envelope's own `session` stamp names), `reason` (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), `session_path` |
-| `provider.event.received` | `provider`, `event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
-| `provider.event.failed` | `provider`, `event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
+| `provider.event.received` | `provider`, `provider_event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
+| `provider.event.failed` | `provider`, `provider_event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 | `use_cases.ran` | `ran`, `failed` (counts; the evidence under `.ai/local/evidence/use-cases/` carries the steps) |

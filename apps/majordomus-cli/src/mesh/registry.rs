@@ -95,6 +95,17 @@ pub struct Sighting {
     pub at: String,
 }
 
+/// A node is sighted at most once per source — a second sighting from the same source
+/// replaces the first — so the source is the whole key, and it is the explicit rank
+/// because its order is the declared precedence of the transports, not the alphabet of
+/// their names. The path and the timestamp end the key so that it stays total if that
+/// ever stops being true.
+impl crate::order::Ordered for Sighting {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.path, &self.at).ranked(self.source as i64)
+    }
+}
+
 /// One discovered node: the canonical record every surface projects.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct NodeRecord {
@@ -246,7 +257,7 @@ impl MeshRegistry {
                 Some(existing) => *existing = sighting,
                 None => slot.record.sources.push(sighting),
             }
-            slot.record.sources.sort_by_key(|s| s.source);
+            crate::order::canonical(&mut slot.record.sources);
             inner.tallies.accepted += 1;
             return true;
         }

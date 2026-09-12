@@ -12088,6 +12088,13 @@
           "type": "boolean"
         },
         {
+          "description": "True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \"is what the public is being served still a projection of\nthe trunk\" has no answer a commit can give, and its moment is when a session\nclaims to be done.",
+          "name": "at-finish",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
           "description": "Gates that are selected whenever this one is.",
           "name": "implies",
           "refs": [],
@@ -29617,14 +29624,93 @@
           "cache": "process",
           "cache_detail": "max_entries=16",
           "cli": "devcontext compile",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext?issue=I0001&milestone=M000&intent=the%20context%20a%20session%20is%20given%20and%20the%20budget%20it%20costs\"",
           "description": "The objects a session working on this issue, milestone, intent or set of paths should be given: each with its canonical identifier, the index's own provenance, every discovery path that reached it with the reason and the confidence, its version, its tier and its cost in estimated tokens — followed by everything reached and not given with the reason for each, everything that collapsed into one entry, every pair that does not agree, and the per-tier spend against the budget. Deterministic for a given tree and request; the index fingerprint it was compiled from is in the answer.",
           "id": "devcontext.compile",
           "kind": "query",
           "mcp_resource": "",
           "mcp_tool": "majordomus_devcontext",
           "method": "GET",
-          "parameters": [],
+          "parameters": [
+            {
+              "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
+              "examples": [
+                {
+                  "case": "issue",
+                  "value": "\"I0001\""
+                }
+              ],
+              "name": "issue",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "A milestone id or slug, or its canonical identifier.",
+              "examples": [
+                {
+                  "case": "milestone",
+                  "value": "\"M000\""
+                }
+              ],
+              "name": "milestone",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
+              "examples": [
+                {
+                  "case": "intent",
+                  "value": "\"the context a session is given and the budget it costs\""
+                }
+              ],
+              "name": "intent",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
+              "examples": [],
+              "name": "paths",
+              "required": false,
+              "type": "array of string"
+            },
+            {
+              "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.",
+              "examples": [],
+              "name": "uris",
+              "required": false,
+              "type": "array of string"
+            },
+            {
+              "description": "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent.",
+              "examples": [],
+              "name": "budget_tokens",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent.",
+              "examples": [],
+              "name": "max_depth",
+              "required": false,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent.",
+              "examples": [],
+              "name": "floor",
+              "required": false,
+              "type": "number (double)"
+            },
+            {
+              "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
+              "examples": [],
+              "name": "all_blocking_rules",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
           "path": "/api/v1/devcontext",
           "provenance": {
             "module": "majordomus_cli::capability::builtin::devcontext",
@@ -29669,14 +29755,94 @@
           "cache": "process",
           "cache_detail": "max_entries=8",
           "cli": "devcontext explain",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext/explain\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext/explain?uri=majordomus%3A%2F%2Frule%2Fnothing-like-this%401\"",
           "description": "One canonical identifier judged under a request: whether it was selected, reached and excluded, folded into another identifier, held by the index and never reached, or unknown — with the entry, the exclusion or the collapse itself, and the budget the judgement was made under so that `excluded for budget` can be acted on without a second call.",
           "id": "devcontext.explain",
           "kind": "query",
           "mcp_resource": "",
           "mcp_tool": "majordomus_devcontext_explain",
           "method": "GET",
-          "parameters": [],
+          "parameters": [
+            {
+              "description": "The canonical identifier to explain.",
+              "examples": [
+                {
+                  "case": "absent",
+                  "value": "\"majordomus://rule/nothing-like-this@1\""
+                },
+                {
+                  "case": "policy",
+                  "value": "\"majordomus://policy/.ai/repo/policy.yaml\""
+                }
+              ],
+              "name": "uri",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
+              "examples": [],
+              "name": "issue",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "A milestone id or slug, or its canonical identifier.",
+              "examples": [],
+              "name": "milestone",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
+              "examples": [],
+              "name": "intent",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
+              "examples": [],
+              "name": "paths",
+              "required": false,
+              "type": "array of string"
+            },
+            {
+              "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.",
+              "examples": [],
+              "name": "uris",
+              "required": false,
+              "type": "array of string"
+            },
+            {
+              "description": "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent.",
+              "examples": [],
+              "name": "budget_tokens",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent.",
+              "examples": [],
+              "name": "max_depth",
+              "required": false,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent.",
+              "examples": [],
+              "name": "floor",
+              "required": false,
+              "type": "number (double)"
+            },
+            {
+              "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
+              "examples": [],
+              "name": "all_blocking_rules",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
           "path": "/api/v1/devcontext/explain",
           "provenance": {
             "module": "majordomus_cli::capability::builtin::devcontext",

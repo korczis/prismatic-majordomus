@@ -129,6 +129,9 @@ expect_grep 'name<TAB>result<TAB>seconds<TAB>phase'
 [ ! -f "$LEDGER" ] || { echo "    a refused recording wrote $LEDGER"; exit 1; }
 
 # ---------------------------------------------------------------- 2. a run, recorded
+# Proves `evidence-proof-is-an-execution`: what makes the claim proven below is this
+# recorded execution and the commit it ran against, not the fact that its `test:` path
+# resolves — section 1 already showed the path resolving and the answer was `not_run`.
 printf '01_alpha\tok\t12\tparallel\n02_beta\tok\t7\texclusive\n' > "$W/all.tsv"
 expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/all.tsv" --origin ci
 expect_grep 'recorded +2 execution\(s\), 2 passing'
@@ -165,6 +168,8 @@ jqe alpha '.reproduce == "bash test/run.sh 01_alpha"' "the claim does not say ho
 expect_exit 0 "$MJB" evidence --repo "$T" show --check
 
 # ---------------------------------------------------------------- 7. both directions
+# Proves `evidence-navigates-both-ways`: one derivation, read from either end — a test
+# lists the claims it proves and each of those claims names the test back.
 # A relation that can only be walked one way is half a relation.
 ev t1 proves suite:01_alpha
 jqe t1 '.test == "suite:01_alpha" and .present == true and .digest_matches == true' \
@@ -182,6 +187,8 @@ ev t2 proves suite:02_beta
 jqe t2 '[.proves[].id] == ["beta-holds"]' "the second test claims the wrong claims"
 
 # ---------------------------------------------------------------- 3. a partial second run
+# Proves `evidence-partial-run-preserves-the-rest`: the second report names one test, and
+# every other claim's evidence must survive it unchanged.
 # The regression that matters most: recording one case must not delete the evidence for
 # every case the run did not include.
 printf '01_alpha\tok\t3\tserial\n' > "$W/one.tsv"
@@ -198,6 +205,9 @@ jqe partial '[.claims[] | select(.test != null) | select(.state != "proven")] | 
   "a partial run left the tests it did not name unproven"
 
 # ---------------------------------------------------------------- 5. proven vs unchanged
+# Proves `evidence-currency-is-not-collapsed`: `proven` and `inputs_unchanged` are two
+# states here and never one, because a run recorded against this commit says more than a
+# run whose inputs merely have not changed since.
 # One commit that changes nothing any claim names. The run still stands — but it was not
 # made against this commit, and saying `proven` here would be the green badge whose
 # derivation cannot be inspected.
@@ -247,6 +257,9 @@ jqe stale2 '.state == "stale" and (.changed == ["lib/beta.sh"])' \
 git checkout -q -- lib/beta.sh
 
 # ---------------------------------------------------------------- 6. a failing result
+# Proves `evidence-unsupported-guarantee-is-reported`: a guarantee no recorded run
+# supports is named by the gate — `show --check` exits 10 — rather than still displayed
+# as guaranteed.
 # Nothing here re-judges a run: a case that failed is a case the runner said failed.
 printf '02_beta\tFAIL\t9\tserial\n' > "$W/fail.tsv"
 expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/fail.tsv"
@@ -292,6 +305,135 @@ ev after_ghost show
 jqe after_ghost '.ledger.executions == 2' "the ghost result reached the ledger after all"
 jqe after_ghost '(.claims[] | select(.id == "beta-holds") | .state) == "proven"' \
   "the run that followed a failure did not replace it"
+
+# ---------------------------------------------------------------- 9. the ratchet
+# `scripts/evidence-check` renders the answer above and ratchets it against
+# .ai/repo/evidence-baseline.txt. What the ratchet refuses is the whole question: its first
+# predicate was membership — an unsupported claim absent from the baseline list is a
+# regression — and membership cannot tell a claim that LOST its proof from a claim written
+# after the list was, because both are absent from a snapshot of the past. So every newly
+# merged guarantee reddened the trunk for evidence it had never had. The baseline now
+# records the state per claim, both halves, and three behaviours are asserted here:
+#   a  a claim that arrives already supported does not fire, and neither does one that
+#      arrives unsupported — that is new debt, named as such, and not a regression
+#   b  a claim the baseline recorded as supported, and that no longer is, DOES fire
+#   c  a supported guarantee leaving the matrix DOES fire, because nothing became unproven
+#      and yet the repository proves less: the denominator shrank instead of the debt
+EC="$ROOT/scripts/evidence-check"
+BL="$T/.ai/repo/evidence-baseline.txt"
+export MAJORDOMUS_BIN="$MJB"
+claims_matrix() {  # claims_matrix <extra yaml on stdin> — the fixture matrix, rewritten
+  { printf 'version: 1\nclaims:\n'; cat; } > docs/CLAIMS.yaml
+  git add -A >/dev/null && git commit -qm matrix
+}
+BASE_CLAIMS='  - id: alpha-holds
+    claim: Alpha holds
+    source: docs/ALPHA.md
+    implementation: lib/alpha.sh
+    test: test/cases/01_alpha.sh
+    status: guaranteed
+  - id: beta-holds
+    claim: Beta holds
+    source: docs/BETA.md
+    implementation: lib/beta.sh
+    test: test/cases/02_beta.sh
+    status: guaranteed
+'
+
+# 9a. the baseline, over a matrix whose two guarantees both carry a passing run
+printf '01_alpha\tok\t2\tparallel\n02_beta\tok\t3\tparallel\n' > "$W/ratchet.tsv"
+expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/ratchet.tsv"
+printf '%s' "$BASE_CLAIMS" | claims_matrix
+expect_exit 0 bash "$EC" --repo "$T" --baseline
+expect_grep 'baseline written, 2 supported and 0 unsupported'
+expect_grep '^\+alpha-holds$' "$BL"
+expect_grep '^\+beta-holds$' "$BL"
+expect_exit 0 bash "$EC" --repo "$T"
+expect_grep '2 supported, 0 unsupported'
+
+# 9b (case a, first half). A claim written after the baseline, naming a test that already
+# has a passing run. It is absent from the baseline for the only reason it could be, and it
+# is supported. Nothing fires.
+{ printf '%s' "$BASE_CLAIMS"; printf '  - id: epsilon-holds
+    claim: Epsilon holds
+    source: docs/ALPHA.md
+    implementation: lib/alpha.sh
+    test: test/cases/01_alpha.sh
+    status: guaranteed
+'; } | claims_matrix
+expect_exit 0 bash "$EC" --repo "$T"
+expect_no_grep 'lost the evidence'
+expect_grep '3 supported, 0 unsupported'
+
+# 9c (case a, second half — the defect that reddened the trunk). A claim written after the
+# baseline naming a test no run has ever covered. Under membership this was "lost the
+# evidence that supported them", of evidence it never had, and exit 10 on every branch that
+# merged after it. It is new debt: named, counted, and not a regression.
+printf '# the eta case\n' > test/cases/04_eta.sh
+{ printf '%s' "$BASE_CLAIMS"; printf '  - id: eta-holds
+    claim: Eta holds
+    source: docs/ALPHA.md
+    implementation: lib/alpha.sh
+    test: test/cases/04_eta.sh
+    status: guaranteed
+'; } | claims_matrix
+expect_exit 0 bash "$EC" --repo "$T"
+expect_grep '1 guaranteed claim\(s\) the baseline does not know'
+expect_grep 'New debt, not a regression'
+expect_grep 'eta-holds'
+expect_no_grep 'lost the evidence'
+
+# 9d (case b). A claim the baseline recorded as supported, whose test most recently failed.
+# It had a proof and does not now. This is the regression the gate exists for, and it is
+# the one membership could never see: a claim losing its proof joins the unsupported set
+# exactly as a new claim does.
+printf '02_beta\tFAIL\t9\tserial\n' > "$W/ratchet-fail.tsv"
+expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/ratchet-fail.tsv"
+expect_exit 10 bash "$EC" --repo "$T"
+expect_grep '1 guaranteed claim\(s\) lost the evidence that supported them'
+expect_grep 'beta-holds'
+# and the remedy the gate names is a run, not an edit to the list
+expect_grep 'reproduce: bash test/run\.sh 02_beta'
+
+# 9e (case c). Beta is put back, and then the guarantee is deleted from the matrix while an
+# unproven one takes its place. No claim lost anything — beta-holds is not a finding, it is
+# not a claim — and the repository nonetheless proves one guarantee fewer than the baseline
+# records while carrying one more unproven. A ratchet that watched only names would call
+# this clean, which is how a ratchet rots without ever going red.
+printf '02_beta\tok\t3\tserial\n' > "$W/ratchet-pass.tsv"
+expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/ratchet-pass.tsv"
+expect_exit 0 bash "$EC" --repo "$T"
+printf '# the zeta case\n' > test/cases/03_zeta.sh
+{ printf '  - id: alpha-holds
+    claim: Alpha holds
+    source: docs/ALPHA.md
+    implementation: lib/alpha.sh
+    test: test/cases/01_alpha.sh
+    status: guaranteed
+  - id: zeta-holds
+    claim: Zeta holds
+    source: docs/BETA.md
+    implementation: lib/beta.sh
+    test: test/cases/03_zeta.sh
+    status: guaranteed
+'; } | claims_matrix
+expect_exit 10 bash "$EC" --repo "$T"
+expect_grep '1 supported guarantee\(s\) left the matrix'
+expect_grep 'beta-holds'
+expect_no_grep 'lost the evidence'
+
+# 9f. A baseline written before the gate learned the difference carries bare lines only. It
+# says which guarantees were unsupported and nothing about which were supported, so the only
+# honest reading is that nothing is recorded as supported: permissive, and never a crash or
+# a false regression against a file that cannot answer the question.
+printf '%s' "$BASE_CLAIMS" | claims_matrix
+{ printf '# old format\n'; printf 'alpha-holds\nbeta-holds\n'; } > "$BL"
+expect_exit 0 bash "$EC" --repo "$T"
+expect_no_grep 'lost the evidence'
+expect_no_grep 'left the matrix'
+# and rewriting it restores both halves
+expect_exit 0 bash "$EC" --repo "$T" --baseline
+expect_grep '^\+alpha-holds$' "$BL"
 
 # ---------------------------------------------------------------- reading changes nothing
 before="$(git status --porcelain)"

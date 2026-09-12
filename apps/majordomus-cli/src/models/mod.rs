@@ -467,6 +467,8 @@ models:
 
     #[test]
     fn no_field_of_the_catalogue_can_hold_a_secret_value() {
+        // Proves `models-no-secret-fields`: the catalogue reports whether a vendor's
+        // named credential variable is set and has no field a value could hide in.
         // The vendor declares the *name* of a credential's environment variable; the
         // schema has no field for a value, so a leak would need a new field to exist.
         // Property names are what is checked — prose may say "tokens" all it likes.

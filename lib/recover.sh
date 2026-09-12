@@ -203,16 +203,10 @@ mj_recover_ledger_seen() {
   # a rescued record for a stranded episode moved that episode's last sign of life to *now*,
   # and the episodes pass a second later then found it young and left it open for ever.
   # Measured while writing test/cases/135; a recovery is not a sign of life.
-  awk '{ e = $0
-         if (index(e, "\"event\":\"") == 0) next
-         sub(/^.*"event":"/, "", e); sub(/".*$/, "", e)
-         if (e == "session.recovered") next
-         s = $0
-         if (index(s, "\"session\":\"") == 0) next
-         sub(/^.*"session":"/, "", s); sub(/".*$/, "", s)
-         t = $0
-         if (index(t, "\"ts\":\"") == 0) next
-         sub(/^.*"ts":"/, "", t); sub(/".*$/, "", t)
+  awk "$MJ_LEDGER_FIELD_AWK"'
+       { e = mjfield($0, "event"); if (e == "" || e == "session.recovered") next
+         s = mjfield($0, "session"); if (s == "") next
+         t = mjfield($0, "ts");      if (t == "") next
          if (!(s in last) || t > last[s]) last[s] = t }
        END { for (s in last) print s "\t" last[s] }' "$led"
   return 0

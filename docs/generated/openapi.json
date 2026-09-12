@@ -2077,7 +2077,115 @@
         "tags": [
           "devcontext"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "issue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
+            "examples": {
+              "issue": {
+                "value": "I0001"
+              }
+            }
+          },
+          {
+            "name": "milestone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A milestone id or slug, or its canonical identifier.",
+            "examples": {
+              "milestone": {
+                "value": "M000"
+              }
+            }
+          },
+          {
+            "name": "intent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
+            "examples": {
+              "intent": {
+                "value": "the context a session is given and the budget it costs"
+              }
+            }
+          },
+          {
+            "name": "paths",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Repository-relative paths the work touches, added to whatever the seeds declare."
+          },
+          {
+            "name": "uris",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
+          },
+          {
+            "name": "budget_tokens",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent."
+          },
+          {
+            "name": "max_depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent."
+          },
+          {
+            "name": "floor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent."
+          },
+          {
+            "name": "all_blocking_rules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Compile the context for a piece of work: the result.",
@@ -2158,7 +2266,117 @@
         "tags": [
           "devcontext"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The canonical identifier to explain.",
+            "examples": {
+              "absent": {
+                "value": "majordomus://rule/nothing-like-this@1"
+              },
+              "policy": {
+                "value": "majordomus://policy/.ai/repo/policy.yaml"
+              }
+            }
+          },
+          {
+            "name": "issue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
+          },
+          {
+            "name": "milestone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A milestone id or slug, or its canonical identifier."
+          },
+          {
+            "name": "intent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
+          },
+          {
+            "name": "paths",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Repository-relative paths the work touches, added to whatever the seeds declare."
+          },
+          {
+            "name": "uris",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
+          },
+          {
+            "name": "budget_tokens",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent."
+          },
+          {
+            "name": "max_depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent."
+          },
+          {
+            "name": "floor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent."
+          },
+          {
+            "name": "all_blocking_rules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Why one thing is or is not in a compiled context: the result.",
@@ -20099,6 +20317,11 @@
           "on-demand": {
             "type": "boolean",
             "description": "True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.",
+            "default": false
+          },
+          "at-finish": {
+            "type": "boolean",
+            "description": "True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \"is what the public is being served still a projection of\nthe trunk\" has no answer a commit can give, and its moment is when a session\nclaims to be done.",
             "default": false
           },
           "implies": {

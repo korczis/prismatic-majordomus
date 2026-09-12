@@ -65,6 +65,11 @@ expect_grep "unknown_key"
 expect_grep "default posture"
 
 # ---------------------------------------------------------------- 5. no server is an answer, not an error
+# Proves the operator-facing half of `mesh-one-registry`: `mesh status` and `mesh nodes`
+# are projections of the one registry and hold no peers of their own, so with no server
+# to project they say where the mesh lives instead of answering from a cache of their
+# own. The convergence half — deduplication by node identity across sources, and the
+# per-instance replay window — is proved in apps/majordomus-cli/tests/mesh.rs.
 expect_exit 0 mj "$R" mesh status
 expect_grep "inactive"
 expect_grep "no running server"
