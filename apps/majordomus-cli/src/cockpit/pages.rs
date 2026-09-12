@@ -2041,13 +2041,13 @@ fn closed_card(c: &ClosedSessions) -> El {
         badge("info", format!("{} tracked", c.total)),
         el("div")
             .child(el("div").class("mj-stats").children(vec![
-                statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
+                statistic(c.total.to_string(), "closed records", "the session records"),
                 statistic(
                     c.on_this_branch.to_string(),
                     "on this branch",
-                    ".ai/repo/sessions",
+                    "the session records",
                 ),
-                statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
+                statistic(c.window.to_string(), "shown below", "the session records"),
             ]))
             .child(table(
                 &["Episode", "Closed", "Branch", "Outcome", "Title"],
@@ -2170,7 +2170,9 @@ pub fn continuity(ctx: &Context) -> Page {
                 el("div").class("mj-stats").children(
                     c.tallies
                         .iter()
-                        .map(|(k, n)| statistic(n.to_string(), k.clone(), ".ai/local/state"))
+                        .map(|(k, n)| {
+                            statistic(n.to_string(), k.clone(), "this checkout's local state")
+                        })
                         .collect::<Vec<_>>(),
                 ),
             )
