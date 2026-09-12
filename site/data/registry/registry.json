@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "3cc469840aafd3fb500ff3c428be7cab069fe5ff2979d79d140d7b9b5ce8ee5e",
+    "fingerprint": "ec690dd2c4828eb316f4430eac6a4dc37039499fa633ededfe8a5c694359ed51",
     "summary": {
-      "total": 1419,
+      "total": 1421,
       "builtin": 108,
-      "declarative": 1311,
+      "declarative": 1313,
       "by_kind": {
         "command": 6,
         "query": 102,
-        "resource": 1311
+        "resource": 1313
       },
       "by_stability": {
         "behaviorally_verified": 95,
         "experimental": 7,
-        "implemented": 1317
+        "implemented": 1319
       },
       "mcp_tools": 105,
-      "mcp_resources": 1350,
+      "mcp_resources": 1352,
       "http_routes": 107,
       "cli_commands": 48,
       "modules": 64,
@@ -17571,6 +17571,11 @@
                   "on-demand": {
                     "type": "boolean",
                     "description": "True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.",
+                    "default": false
+                  },
+                  "at-finish": {
+                    "type": "boolean",
+                    "description": "True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \"is what the public is being served still a projection of\nthe trunk\" has no answer a commit can give, and its moment is when a session\nclaims to be done.",
                     "default": false
                   },
                   "implies": {
@@ -39219,7 +39224,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 133,
+        "capabilities": 134,
         "capability_ids": []
       },
       {
@@ -39298,7 +39303,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 195,
+        "capabilities": 196,
         "capability_ids": []
       },
       {
@@ -39378,7 +39383,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1ae0b05da477c9c8f87ab49dc581996ee1957495247df648f4bb3334f26cb492",
+    "fingerprint": "bef76154f90fe31395c7b02b2139e8299bc13cdb963119026a54bfc7b7310f18",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -39422,12 +39427,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 133,
+      "rule": 134,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 195,
+      "test": 196,
       "use-case": 45,
       "workspace": 1
     },
@@ -43133,7 +43138,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 24581
+        "bytes": 25922
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -43241,7 +43246,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 21560
+        "bytes": 22152
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -45611,7 +45616,7 @@
         "identity": "lib/gates.sh",
         "path": "lib/gates.sh",
         "source_class": "library",
-        "bytes": 13929
+        "bytes": 18223
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -49070,7 +49075,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 9565
+        "bytes": 9591
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -49758,6 +49763,23 @@
         "bytes": 1153,
         "tags": [
           "prompts"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/majordomus.publication-currency@1",
+        "kind": "rule",
+        "identity": "majordomus.publication-currency@1",
+        "title": "A session does not finish behind its own published site",
+        "description": "A repository that publishes has a second tree — the one the public is being served — and no commit-level gate can measure it, because no change to any file can make it right or wrong. A session that lands work and leaves the publication owed has finished nothing the public can see, and every check stays green while that is true. The gates that measure a deployment are declared as such in the CI model, and finish asks them.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6281,
+        "tags": [
+          "tasks",
+          "completion",
+          "deployment",
+          "evidence"
         ]
       },
       {
@@ -52439,6 +52461,14 @@
         "bytes": 8955
       },
       {
+        "uri": "majordomus://test/test/cases/275_publication_is_current.sh",
+        "kind": "test",
+        "identity": "test/cases/275_publication_is_current.sh",
+        "path": "test/cases/275_publication_is_current.sh",
+        "source_class": "case",
+        "bytes": 8129
+      },
+      {
         "uri": "majordomus://test/test/cases/276_disk_is_bounded.sh",
         "kind": "test",
         "identity": "test/cases/276_disk_is_bounded.sh",
@@ -53940,7 +53970,7 @@
         "id",
         "version"
       ],
-      "objects": 133
+      "objects": 134
     },
     {
       "name": "scope",
@@ -53995,7 +54025,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 195
+      "objects": 196
     },
     {
       "name": "use-case",

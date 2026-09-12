@@ -27211,6 +27211,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.publication-currency@1",
+        "kind": "rule",
+        "label": "majordomus.publication-currency@1",
+        "summary": "A session does not finish behind its own published site",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.publication-currency%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.completion-gates@1"
+          ],
+          "tags": [
+            "tasks",
+            "completion",
+            "deployment",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.questions-store-integrity@1",
         "kind": "rule",
         "label": "majordomus.questions-store-integrity@1",
@@ -31905,6 +31926,13 @@
         "label": "test/cases/273_navigation_is_declared_once.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F273_navigation_is_declared_once.sh",
         "source": "test/cases/273_navigation_is_declared_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/275_publication_is_current.sh",
+        "kind": "test",
+        "label": "test/cases/275_publication_is_current.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F275_publication_is_current.sh",
+        "source": "test/cases/275_publication_is_current.sh"
       },
       {
         "id": "majordomus://test/test/cases/276_disk_is_bounded.sh",
@@ -48013,6 +48041,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.publication-currency@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.publication-currency@1",
+        "target": "majordomus://rule/majordomus.completion-gates@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.questions-store-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -49784,6 +49822,11 @@
       },
       {
         "source": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/275_publication_is_current.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -53449,8 +53492,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1668,
-      "edges": 3748,
+      "nodes": 1670,
+      "edges": 3751,
       "acyclic": true,
       "truncated": false
     }
