@@ -30,7 +30,7 @@ S="$(mktemp -d "${TMPDIR:-/tmp}/mj-272.XXXXXX")"
 trap 'rm -rf "$S"' EXIT
 
 fixture() {  # fixture <dir>
-  mkdir -p "$1/docs" "$1/site/content" "$1/site/templates" "$1/.ai/repo"
+  mkdir -p "$1/docs" "$1/site/content-src" "$1/site/templates" "$1/.ai/repo"
   printf 'diagrams=0\n' > "$1/.ai/repo/diagram-baseline.txt"
 }
 
@@ -156,7 +156,7 @@ PROOF            ▼
   </div>
 </section>
 HTML
-cat > "$H/site/content/flow.md" <<'MD'
+cat > "$H/site/content-src/flow.md" <<'MD'
 # An HTML block in a page is a block too, entities and all
 
 <pre><code>intent  --&gt;  plan  --&gt;  execute</code></pre>
@@ -169,7 +169,7 @@ printf 'diagrams=0\n' > "$H/.ai/repo/diagram-baseline.txt"
 expect_exit 10 env MJ_ROOT="$H" "$GATE"
 expect_grep 'rose from 0 to 2'
 expect_grep 'site/templates/loop\.html'
-expect_grep 'site/content/flow\.md'
+expect_grep 'site/content-src/flow\.md'
 
 # ----------------------------------------------- the HTML form: what must NOT be caught
 # These are the ones that decide whether the gate survives. A `<pre class="console">` holding
@@ -203,7 +203,7 @@ cat > "$C/site/templates/declared.html" <<'HTML'
 # a --&gt; b, said a shell comment</code></pre>
 <p>Inline <code>a → b</code> is a word in a sentence, not a drawing.</p>
 HTML
-cat > "$C/site/content/quoted.md" <<'MD'
+cat > "$C/site/content-src/quoted.md" <<'MD'
 # Quoting the markup of a drawing is not drawing one
 
 ```html
@@ -223,7 +223,7 @@ expect_grep 'no hand-drawn diagram'
 # A Markdown page may fence a block of HTML that is itself a drawing. It is one finding: the
 # fence parser sees it, and the HTML parser must not see it again through the same bytes.
 O="$S/once"; fixture "$O"
-cat > "$O/site/content/once.md" <<'MD'
+cat > "$O/site/content-src/once.md" <<'MD'
 # One drawing, written twice over
 
 ```text

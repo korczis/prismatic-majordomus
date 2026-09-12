@@ -49,9 +49,11 @@ projections from a declaration to its surfaces, and anything else whose content 
 connects to what*.
 
 **Published means every form a reader meets it in**, not only the Markdown: `docs/**`, the
-pages written straight into `site/content/**`, and the templates those pages are rendered
-through, `site/templates/**`. And in each of them, both forms a block is written in — a
-```fenced block and an HTML `<pre>`/`<code>` block. The second is not a technicality: the
+pages written straight into `site/content-src/**`, and the templates those pages are rendered
+through, `site/templates/**`. Those are the canonical trees. `site/content/**` is a
+projection of the first two and the generator overwrites it, so a finding reported there
+would name a file its author cannot fix. And in each of them, both forms a block is written
+in — a ```fenced block and an HTML `<pre>`/`<code>` block. The second is not a technicality: the
 most-published document in this repository is a template, and for the rule's first weeks a
 hand-drawn control loop sat in one, in HTML, where a gate reading fences only could not see
 it at any scope.

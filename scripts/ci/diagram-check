@@ -17,7 +17,9 @@
 # them in:
 #
 #   `docs/**`             the documents the site derives its pages from
-#   `site/content/**`     the pages written directly as content
+#   `site/content-src/**` the pages written directly as content. The canonical tree, not the
+#                         projected `site/content/**`: the generator overwrites that one, so a
+#                         finding reported there names a file an author cannot fix.
 #   `site/templates/**`   the markup those pages are rendered through — the homepage
 #                         included, which is the most-published document in the repository
 #
@@ -87,7 +89,7 @@ import re, os, sys
 # Where a reader meets these: the documents the site publishes, the content written straight
 # into it, and the templates it is rendered through. A diagram in a shell script's comments
 # is read in a terminal, which is the one place box art is the right answer.
-ROOTS = ["docs", "site/content", "site/templates"]
+ROOTS = ["docs", "site/content-src", "site/templates"]
 EXTENSIONS = (".md", ".html")
 
 FENCE = re.compile(r'^([ \t]*)```([A-Za-z0-9_-]*)[ \t]*$')
