@@ -6,7 +6,10 @@
 {%- set base = config.base_url | trim_end(pat="/") -%}
 <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
   {%- for m in featured -%}
-  <li><a href="{{ base }}{{ m.route }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary p-4 text-base text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="flex flex-col gap-2"><span>{{ m.hook }}</span><span class="text-sm font-medium text-fg-brand">Why, and what to do →</span></span></a></li>
+  {#- the hook alone. The card is entirely a link, so a "Why, and what to do →" line under
+      every one of them repeated in words what the cursor and the arrow already say, and cost
+      a third of this grid's height on a phone. -#}
+  <li><a href="{{ base }}{{ m.route }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">{{ m.hook }}</span></a></li>
   {%- endfor -%}
 </ol>
 <p class="mt-4 text-sm"><a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">All {{ catalogue.counts.moments }}, by who you are and by what part of operations they fall under &rarr;</a></p>
