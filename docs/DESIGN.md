@@ -110,23 +110,13 @@ adds nouns becomes the thing it was meant to supervise.
 
 ## Core Mental Model
 
-```
-            Human / Organisation
-                    |
-                    v
-               MAJORDOMUS
-        policy · state · verification
-                    |
-      +-------------+-------------+
-      v             v             v
-   Worker A      Worker B      Worker C
-  (Claude Code)  (Codex)       (Gemini, Cursor, local ...)
-      |             |             |
-      +-------------+-------------+
-        an orchestrator (bb) runs any of them; the agent stays the worker
-                    |
-                    v
-          Verified, accepted outcomes
+```mermaid
+flowchart TD
+  human["Human / Organisation"] --> mj["MAJORDOMUS<br>policy · state · verification"]
+  mj --> wa["Worker A<br>(Claude Code)"]
+  mj --> wb["Worker B<br>(Codex)"]
+  mj --> wc["Worker C<br>(Gemini, Cursor, local ...)"]
+  wa & wb & wc -->|"an orchestrator (bb) runs any of them;<br>the agent stays the worker"| out["Verified, accepted outcomes"]
 ```
 
 Majordomus sits between the person and the workers. It holds one canonical policy,
@@ -277,25 +267,18 @@ task's", records the audit and the decision.
 
 A **task** is a unit of intended work that a person opens and closes.
 
-```
-majordomus start <task>
-      |
-      v
-  scope declared (paths)  --> claim normalised, overlap reported
-      |
-      v
-  profile selected        --> effort / verbosity / context / verification fixed
-      |
-      v
-  worker executes         (Majordomus is not involved)
-      |
-      v
-majordomus check          --> state consistent? scope respected? blockers?
-      |
-      +-- incomplete --> continue, or majordomus handover
-      |
-      v
-majordomus finish         --> finish contract evaluated; refuses if unmet
+```mermaid
+flowchart TD
+  st["majordomus start &lt;task&gt;"] --> sc["scope declared (paths)"]
+  sc --> claim["claim normalised, overlap reported"]
+  sc --> pf["profile selected"]
+  pf --> fixed["effort / verbosity / context /<br>verification fixed"]
+  pf --> worker["worker executes<br>(Majordomus is not involved)"]
+  worker --> ck["majordomus check"]
+  ck --> report["state consistent? scope respected? blockers?"]
+  ck -->|"incomplete"| cont["continue, or majordomus handover"]
+  ck --> fin["majordomus finish"]
+  fin --> contract["finish contract evaluated;<br>refuses if unmet"]
 ```
 
 A task is bounded by `start` and either `finish` or `handover`. There is no "still open
@@ -306,19 +289,22 @@ An **episode** is a provider's conversation boundary. It begins when a client at
 ends when it detaches, whether or not anybody declared a task and whether or not the last
 task anybody declared was finished a week ago.
 
-```
-provider fires SessionStart --> session start --if-open keep   (keyed by the provider
-      |                                                         session, not the checkout)
-      |                                                         briefing to stdout
-      v
-   work happens, every command stamping its own episode id onto its ledger line
-      |
-provider fires PreCompact   --> checkpoint --derive            (a checkpoint is an artefact
-      |                                                         of the episode; no task
-      |                                                         is required)
-      v
-provider fires SessionEnd   --> handover, then session close   (the envelope's references
-                                                                computed from the ledger)
+```mermaid
+flowchart TD
+  ss["provider fires SessionStart"]
+  kept["session start --if-open keep<br>(keyed by the provider session,<br>not the checkout)<br>briefing to stdout"]
+  work["work happens, every command stamping its own<br>episode id onto its ledger line"]
+  pc["provider fires PreCompact"]
+  cp["checkpoint --derive<br>(a checkpoint is an artefact of the episode;<br>no task is required)"]
+  se["provider fires SessionEnd"]
+  ho["handover, then session close<br>(the envelope's references computed from the ledger)"]
+
+  ss --> kept
+  ss --> work
+  work --> pc
+  pc --> cp
+  pc --> se
+  se --> ho
 ```
 
 `task != session` in both directions: a task spanning two sittings is named by both
@@ -495,14 +481,12 @@ Distinctions the evidence made necessary:
 
 ## Provider Projection Model
 
-```
-.ai/repo/policy.yaml
-         |
-         |  majordomus update
-         v
-   +-----+-----+-------------+
-   |           |             |
-CLAUDE.md   AGENTS.md    GEMINI.md   (+ .cursor/rules, generic)
+```mermaid
+flowchart TD
+  policy[".ai/repo/policy.yaml"] -->|"majordomus update"| claude["CLAUDE.md"]
+  policy -->|"majordomus update"| agents["AGENTS.md"]
+  policy -->|"majordomus update"| gemini["GEMINI.md"]
+  policy -->|"majordomus update"| extra["(+ .cursor/rules, generic)"]
 ```
 
 - Projections are generated, not hand-edited. Each carries a header stating that it

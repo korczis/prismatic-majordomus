@@ -3321,6 +3321,13 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "Of those, the ones [`crate::cli::local::LOCAL`] does not explain either: a command\nthat is neither the projection of a capability nor declared command-line-only with\na reason. Empty is the closure the rule asks for; anything here is an operation\nthat left the API by accident rather than by decision.",
+          "name": "unclassified",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
         }
       ],
       "type": "object",
@@ -11761,6 +11768,13 @@
         {
           "description": "True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.",
           "name": "on-demand",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \"is what the public is being served still a projection of\nthe trunk\" has no answer a commit can give, and its moment is when a session\nclaims to be done.",
+          "name": "at-finish",
           "refs": [],
           "required": false,
           "type": "boolean"

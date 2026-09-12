@@ -11,18 +11,23 @@ every run writes its own summary.
 
 ## The shape
 
+```mermaid
+flowchart LR
+  plan["plan"] --> structure["structure<br>(always)"]
+  plan --> suite["suite"]
+  plan --> rust["rust"]
+  plan --> coverage["coverage"]
+  plan --> bench["bench (macOS)"]
+  plan --> site["site"]
+  plan --> macos["macos"]
+  structure & suite & rust & coverage & bench & site & macos --> ci["ci<br>the verdict; the one<br>required status"]
 ```
-plan ──► structure (always) ──┐
-    ├──► suite                ├──► ci (the verdict; the one required status)
-    ├──► rust                 │
-    ├──► coverage             │
-    ├──► bench (macOS)        │
-    ├──► site                 │
-    └──► macos ───────────────┘
 
 and beside it, on the same commit, never after it:
 
-pages.yml ──► one job: build ──► check ──► push gh-pages ──► measure publication
+```mermaid
+flowchart LR
+  pages["pages.yml"] --> job["one job: build"] --> check["check"] --> push["push gh-pages"] --> measure["measure publication"]
 ```
 
 `plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
@@ -88,6 +93,24 @@ master carried the defects overnight with every check apparently green, because 
 never reported and a run that reported green look identical in the interface. The gates were
 not weakened: they run in full every night and on request, which is more often than they
 were completing. `ci` still needs their jobs and still turns red when one of them does.
+
+A fourth cuts across all of them, and it is the one distinction that takes a gate out of CI
+planning altogether. A gate the model marks `at-finish: true` measures a **deployment**
+rather than a tree: which commit GitHub Pages is serving, whether that commit is still on
+master, whether anything has landed since. No edit to any file can make that question come
+out differently, so no path class can select it — and being in no class is not the defect
+here that it was for `version-surface`, it is the honest consequence of what the gate
+measures. `pages-live` carries it.
+
+Which leaves the question owned by nobody. A full plan does ask it, and a full plan runs on
+a push to master — *before* the publication it would judge. The moment it is worth asking is
+when a worker says the work is done, so that is who asks: `majordomus finish` runs every
+`at-finish` gate live and refuses the outcome `completed` while one of them reports the
+published site is behind the trunk. The doctrine is `majordomus.publication-currency` and
+the repository turns it on with `publication_current` in `verification.finish_requires`; a
+gate that could not reach its subject — no network, no published branch — is reported
+unverified by name and refuses nothing, because a session that could not measure the site is
+not evidence that the site is stale.
 
 To force full validation of a pull request, add the label `ci:full`; the `labeled` event
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the

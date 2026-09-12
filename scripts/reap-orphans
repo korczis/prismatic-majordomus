@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
-# reap-orphans — end the majordomus servers that nothing owns any more.
+# reap-orphans — reclaim what a session that is gone left behind: the majordomus servers
+# nothing owns any more, and the build output of worktrees whose work has landed.
 #
-# A `majordomus serve` or `majordomus mcp` outlives its client whenever the client dies
-# without closing it: the parent is reaped, the server is re-parented to init, and it keeps
-# its port and its resident memory for as long as the machine is up. Nothing notices,
+# Two subjects, one discipline. Both are quantities that grow because nothing decided that
+# they should, both are invisible from the place a person looks, and both are reduced by a
+# predicate re-checked immediately before it acts — never by a name match, and never by an
+# age computed from a value that might not be there (project.accumulation-is-measured,
+# project.destructive-sweeps-fail-closed).
+#
+# SERVERS. A `majordomus serve` or `majordomus mcp` outlives its client whenever the client
+# dies without closing it: the parent is reaped, the server is re-parented to init, and it
+# keeps its port and its resident memory for as long as the machine is up. Nothing notices,
 # because a server that answers is not a server that anyone is talking to. On a machine
 # running many sessions over many worktrees they accumulate silently — this repository had
 # fourteen of them, one over a day old, together holding ~150MB and thirteen ports.
@@ -17,20 +24,87 @@
 #   - it has zero ESTABLISHED TCP connections — no client is attached
 #   - it is older than --min-age (default 30m) — a server still being set up is not garbage
 #
-# The four are re-checked immediately before each signal, so a server that acquires a client
-# between the scan and the kill is skipped rather than killed.
+# BUILD OUTPUT. A linked worktree's `apps/majordomus-cli/target` is 2.4GB the day it is
+# created and tens of gigabytes once a session has built debug, release and tests in it.
+# Nothing ever removes one: the branch lands, the session ends, the directory stays. On
+# 2026-09-12 this machine reached zero bytes free with ~145GB held by worktrees whose
+# branches were all merged — one of them for hours — and every session on it died at once,
+# not gracefully but with the harness unable to write its own files, which reads like
+# tooling breaking rather than a full disk.
 #
-#   scripts/reap-orphans              report what would be reaped, change nothing
-#   scripts/reap-orphans --kill       reap them (TERM, then KILL after --grace)
-#   scripts/reap-orphans --min-age 2h only consider processes older than two hours
+# This half removes `target/` and never a worktree. That is the decision the rest rests on:
+# a false positive costs somebody a rebuild and cannot cost a byte of source. A build
+# directory is reclaimed only when all four hold:
 #
-# Exit: 0 clean or reaped, 10 orphans found in report mode, 12 unusable.
+#   - merged     — the worktree's tip is an ancestor of origin/master
+#   - not live   — no process names that path and no process is standing in it
+#   - idle       — `git status` is empty: nothing uncommitted, nothing untracked
+#   - owned      — a real directory inside that worktree, never a symlink out of it
+#                  (worktrees here have shared one build directory exactly that way),
+#                  carrying cargo's own CACHEDIR.TAG signature
+#
+# Merged-ness alone would be a disaster, and it is worth saying why. A session working in a
+# worktree that has not committed yet leaves its tip exactly where the merge left it, so the
+# branch reads as fully merged while somebody is mid-task in it. On the morning this was
+# written `feature/entities-are-routable` was that worktree: an ancestor of origin/master by
+# `merge-base`, 12GB of build output, and a live peer inside it. Liveness is the condition
+# that catches it, and it is deliberately the one signal that depends on nobody announcing
+# anything — an announcement belongs to a connection, and a worker that reconnects keeps its
+# work while losing its place on the board, which is exactly the window a reaper runs in.
+#
+# What is deliberately NOT a signal here is an mtime. The incident behind
+# project.destructive-sweeps-fail-closed was a target/ sweep by `now - mtime`: for three
+# worktrees `stat` returned nothing, the shell substituted an empty string, and the
+# arithmetic made three *active* worktrees the oldest candidates in the set. A predicate
+# whose missing input becomes an extreme value has no place in a deletion — and `find
+# -newermt` silently matches nothing on macOS besides, while a status sweep rewrites index
+# mtimes and fakes liveness for every tree it touches (`--no-optional-locks` below is why
+# this script does not).
+#
+# Liveness is measured once, from `ps` and from every process's working directory, and the
+# whole sweep refuses when either reading comes back empty: a reaper that cannot tell the
+# living from the dead reclaims nothing, not everything.
+#
+#   scripts/reap-orphans              report both subjects, change nothing
+#   scripts/reap-orphans --servers    only the servers
+#   scripts/reap-orphans --targets    only the build directories
+#   scripts/reap-orphans --kill       end the abandoned servers (TERM, then KILL after --grace)
+#   scripts/reap-orphans --reclaim    remove the build output of landed, unattended worktrees
+#   scripts/reap-orphans --min-age 2h only consider servers older than two hours
+#
+# `--kill` and `--reclaim` are separate on purpose: the two subjects are consented to
+# separately, so that a caller already running `--kill` does not one day start deleting a
+# hundred gigabytes it never agreed to.
+#
+# Exit: 0 clean or acted, 10 orphans found in report mode, 12 unusable.
 set -eu
 set -o pipefail
 
+# Two different questions: where this script's own library is, and which repository it is
+# asked to sweep. MJ_ROOT moves the second and never the first — a case points it at a
+# fixture, and the fixture has no lib/ of its own.
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="${MJ_ROOT:-$HERE}"
+# Ownership and physical-path resolution live in one file; this one asks, it does not decide.
+# shellcheck source=../lib/rust_bin.sh
+. "$HERE/lib/rust_bin.sh"
+
 KILL=0
+RECLAIM=0
+DO_SERVERS=1
+DO_TARGETS=1
 MIN_AGE=1800
 GRACE=5
+# Where a build directory of this repository is. Not a guess: a build redirected elsewhere by
+# CARGO_TARGET_DIR is not this worktree's to remove anyway, and the ownership test below is
+# what says so.
+TARGET_REL="apps/majordomus-cli/target"
+# The signature cargo writes into a build directory's CACHEDIR.TAG, and refuses to clean a
+# directory that lacks. It is the first of three positive proofs that what is about to be
+# removed is build output and not somebody's data sitting at a path called target — three
+# because the tag alone is not enough: two build directories on this machine, 17GB together,
+# carry no CACHEDIR.TAG at all and are unmistakably cargo's by their other two marks.
+CACHEDIR_SIG='Signature: 8a477f597d28d172789f06886806bc55'
 
 die() { echo "reap-orphans: $*" >&2; exit 12; }
 
@@ -45,17 +119,29 @@ as_seconds() {
   esac
 }
 
+subject=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --kill)    KILL=1; shift ;;
+    --reclaim) RECLAIM=1; shift ;;
+    --servers) [ "$subject" = 1 ] || DO_TARGETS=0; DO_SERVERS=1; subject=1; shift ;;
+    --targets) [ "$subject" = 1 ] || DO_SERVERS=0; DO_TARGETS=1; subject=1; shift ;;
     --min-age) [ $# -ge 2 ] || die "--min-age needs a value"; MIN_AGE="$(as_seconds "$2")"; shift 2 ;;
     --grace)   [ $# -ge 2 ] || die "--grace needs a value"; GRACE="$(as_seconds "$2")"; shift 2 ;;
-    -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,80p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option $1" ;;
   esac
 done
 
 command -v lsof >/dev/null 2>&1 || die "lsof is needed to tell an attached server from an abandoned one"
+
+srv_found=0; srv_reaped=0; srv_kept=0; srv_freed=0
+tgt_found=0; tgt_reclaimed=0; tgt_kept=0; tgt_freed=0
+# Candidates excluded because an input could not be read. A hole in a deletion's measurement
+# is the thing project.destructive-sweeps-fail-closed exists to make loud.
+unreadable=0
+
+# ------------------------------------------------------------------------------- servers
 
 # ps etime (`[[dd-]hh:]mm:ss`) -> seconds
 etime_seconds() {
@@ -81,54 +167,278 @@ candidates() {
     }'
 }
 
-found=0; reaped=0; skipped=0; freed=0
-printf '%-8s %-12s %-9s %-6s %s\n' PID AGE RSS PORTS STATE
+reap_servers() {
+  printf '%-8s %-12s %-9s %-6s %s\n' PID AGE RSS PORTS STATE
 
-while read -r pid etime rss; do
-  [ -n "${pid:-}" ] || continue
-  age="$(etime_seconds "$etime")"
-  [ "$age" -ge "$MIN_AGE" ] || continue
-  est="$(established "$pid")"
-  if [ "$est" -ne 0 ]; then
-    printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "keep — $est client(s) attached"
-    skipped=$((skipped + 1)); continue
-  fi
-  found=$((found + 1))
-  if [ "$KILL" -eq 0 ]; then
-    printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "would reap"
-    continue
-  fi
-  # Re-check the whole predicate against the live process, not against the scan.
-  now_ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ' || true)"
-  if [ "${now_ppid:-}" != "1" ] || [ "$(established "$pid")" -ne 0 ]; then
-    printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "" "skip — acquired an owner since the scan"
-    skipped=$((skipped + 1)); found=$((found - 1)); continue
-  fi
-  kill -TERM "$pid" 2>/dev/null || true
-  printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "" "TERM"
-  reaped=$((reaped + 1)); freed=$((freed + rss))
-done <<EOF
-$(candidates)
-EOF
-
-if [ "$KILL" -eq 1 ] && [ "$reaped" -gt 0 ]; then
-  sleep "$GRACE"
-  while read -r pid _ _; do
+  while read -r pid etime rss; do
     [ -n "${pid:-}" ] || continue
-    if ps -p "$pid" >/dev/null 2>&1; then
-      kill -KILL "$pid" 2>/dev/null || true
-      echo "KILL $pid (did not exit within ${GRACE}s)"
+    age="$(etime_seconds "$etime")"
+    [ "$age" -ge "$MIN_AGE" ] || continue
+    est="$(established "$pid")"
+    if [ "$est" -ne 0 ]; then
+      printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "keep — $est client(s) attached"
+      srv_kept=$((srv_kept + 1)); continue
     fi
+    srv_found=$((srv_found + 1))
+    if [ "$KILL" -eq 0 ]; then
+      printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "would reap"
+      continue
+    fi
+    # Re-check the whole predicate against the live process, not against the scan.
+    now_ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ' || true)"
+    if [ "${now_ppid:-}" != "1" ] || [ "$(established "$pid")" -ne 0 ]; then
+      printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "" "skip — acquired an owner since the scan"
+      srv_kept=$((srv_kept + 1)); srv_found=$((srv_found - 1)); continue
+    fi
+    kill -TERM "$pid" 2>/dev/null || true
+    printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "" "TERM"
+    srv_reaped=$((srv_reaped + 1)); srv_freed=$((srv_freed + rss))
   done <<EOF
 $(candidates)
 EOF
+
+  if [ "$KILL" -eq 1 ] && [ "$srv_reaped" -gt 0 ]; then
+    sleep "$GRACE"
+    while read -r pid _ _; do
+      [ -n "${pid:-}" ] || continue
+      if ps -p "$pid" >/dev/null 2>&1; then
+        kill -KILL "$pid" 2>/dev/null || true
+        echo "KILL $pid (did not exit within ${GRACE}s)"
+      fi
+    done <<EOF
+$(candidates)
+EOF
+  fi
+}
+
+# -------------------------------------------------------------------------- build output
+
+SNAP_PS=""; SNAP_CWD=""
+cleanup() { [ -z "$SNAP_PS" ] || rm -f "$SNAP_PS" "$SNAP_CWD"; }
+trap cleanup EXIT
+
+# Who is working, asked of the machine itself. Two readings, because each has a hole the
+# other covers: a command line names a worktree only when somebody typed the path (`cargo
+# build` from inside it does not), and a working directory is where a session stands whatever
+# it typed. Neither depends on an announcement.
+#
+# Either reading coming back empty means this machine cannot be asked who is working, and a
+# sweep that cannot tell the living from the dead reclaims nothing at all.
+liveness_snapshot() {
+  [ -n "$SNAP_PS" ] || SNAP_PS="$(mktemp "${TMPDIR:-/tmp}/mj-reap-ps.XXXXXX")"
+  [ -n "$SNAP_CWD" ] || SNAP_CWD="$(mktemp "${TMPDIR:-/tmp}/mj-reap-cwd.XXXXXX")"
+  # `tr -s /`: one directory has more than one spelling on this machine and a doubled
+  # separator is one of them. $TMPDIR ends in a slash on macOS, so a session working in a
+  # scratch worktree shows up as `.../T//wt/...` while git reports `.../T/wt/...`, and a
+  # substring match between the two finds nothing — which reads as "nobody is working here".
+  ps -Ao command= 2>/dev/null | tr -s '/' > "$SNAP_PS" || true
+  lsof -a -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | tr -s '/' > "$SNAP_CWD" || true
+  [ -s "$SNAP_PS" ]  || return 1
+  [ -s "$SNAP_CWD" ] || return 1
+  return 0
+}
+
+# Every spelling one directory answers to here, because the readings above do not agree on
+# one. git reports a worktree by the path it was created with, `lsof` resolves every symlink,
+# and macOS reaches /tmp and /var through /private — so one live worktree is
+# `/tmp/x/wt` to the session working in it, `/private/tmp/x/wt` to lsof, and whichever of the
+# two git was handed. Asking about one spelling is how a live worktree reads as idle; this
+# repository keeps worktrees under both roots.
+spellings() {
+  mj_sp_phys="$(mj_rust_physical "$1" 2>/dev/null || true)"
+  for mj_sp_p in "$1" "$mj_sp_phys"; do
+    [ -n "$mj_sp_p" ] || continue
+    while [ "${mj_sp_p#*//}" != "$mj_sp_p" ]; do mj_sp_p="${mj_sp_p//\/\//\/}"; done
+    printf '%s\n' "$mj_sp_p"
+    case "$mj_sp_p" in
+      /private/*) printf '%s\n' "${mj_sp_p#/private}" ;;
+      /tmp/*|/var/*) printf '/private%s\n' "$mj_sp_p" ;;
+    esac
+  done
+}
+
+# Is anybody working in that path? A deliberately loose substring match: keeping a directory
+# nobody is using costs a few gigabytes until the next run, and removing one somebody is
+# using costs them their build mid-run.
+live_in() {
+  while read -r mj_li_p; do
+    [ -n "$mj_li_p" ] || continue
+    grep -qF -- "$mj_li_p" "$SNAP_PS" && return 0
+    grep -qF -- "$mj_li_p" "$SNAP_CWD" && return 0
+  done <<EOF
+$(spellings "$1")
+EOF
+  return 1
+}
+
+# KiB on disk, or nothing at all when it could not be read. Never a number that was not
+# measured: an unreadable size is a candidate this sweep leaves alone.
+size_kb() { du -sk "$1" 2>/dev/null | awk 'NR == 1 && $1 ~ /^[0-9]+$/ { print $1; exit }'; }
+
+human() { awk -v k="${1:-0}" 'BEGIN { if (k >= 1048576) printf "%.1fGB", k/1048576; else printf "%dMB", k/1024 }'; }
+
+free_kb() { df -k "$1" 2>/dev/null | awk 'NR == 2 { print $4; exit }'; }
+
+short() { case "$1" in "$HOME"/*) printf '~%s' "${1#"$HOME"}" ;; *) printf '%s' "$1" ;; esac; }
+
+# Is that directory cargo's own build output? Three marks, any one of which cargo and only
+# cargo writes: the cache-directory tag it stamps a build directory with, the record of the
+# compiler it last built with, and a profile's fingerprint store. None present means this
+# sweep cannot prove what the directory is, and it is left alone and counted.
+is_cargo_target() {
+  [ "$(head -n 1 "$1/CACHEDIR.TAG" 2>/dev/null || true)" = "$CACHEDIR_SIG" ] && return 0
+  [ -f "$1/.rustc_info.json" ] && return 0
+  [ -d "$1/debug/.fingerprint" ] && return 0
+  [ -d "$1/release/.fingerprint" ] && return 0
+  return 1
+}
+
+row() { printf '%-58s %8s  %s\n' "$(short "$1")" "$2" "$3"; }
+
+# path<TAB>tip for every worktree, from git and never from a glob.
+worktrees() {
+  git -C "$ROOT" worktree list --porcelain 2>/dev/null | awk '
+    $1 == "worktree" { path = substr($0, 10) }
+    $1 == "HEAD"     { print path "\t" $2 }
+  '
+}
+
+reap_targets() {
+  git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1 \
+    || die "$ROOT is not a git repository: no worktree can be classified, so nothing is reclaimed"
+
+  # What every candidate is measured against. Unresolvable means merged-ness is undecidable
+  # for everybody, which is a refusal and not an empty result.
+  local base main_wt self_wt wt tip target size st rc
+  base="$(git -C "$ROOT" rev-parse --verify --quiet origin/master 2>/dev/null || true)"
+  [ -n "$base" ] || die "origin/master cannot be resolved: merged-ness is undecidable, so nothing is reclaimed"
+
+  liveness_snapshot || die "liveness could not be measured (ps or lsof read empty): nothing is reclaimed"
+
+  # The primary checkout is excluded by name, not by predicate. It sits on master, it is
+  # clean more often than not, and it holds the executable other checkouts borrow: a
+  # predicate would reclaim it on a quiet afternoon (project.reclaim-only-what-you-own).
+  main_wt="$(git -C "$ROOT" worktree list --porcelain 2>/dev/null | awk 'NR == 1 && $1 == "worktree" { print substr($0, 10); exit }')"
+  self_wt="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || true)"
+
+  printf '%-58s %8s  %s\n' WORKTREE SIZE STATE
+
+  while IFS="$(printf '\t')" read -r wt tip; do
+    [ -n "${wt:-}" ] || continue
+    target="$wt/$TARGET_REL"
+    [ -e "$target" ] || continue
+
+    if [ "$wt" = "$main_wt" ] || [ "$wt" = "$self_wt" ]; then
+      row "$wt" "$(human "$(size_kb "$target")")" "keep — this checkout's own"
+      tgt_kept=$((tgt_kept + 1)); continue
+    fi
+
+    # Every verdict below prints the measurement that decided it, including the ones nothing
+    # happens to, so that a wrong predicate is visible before it does any damage.
+    size="$(size_kb "$target")"
+    if [ -z "$size" ]; then
+      row "$wt" "?" "skip — its size could not be read"
+      unreadable=$((unreadable + 1)); continue
+    fi
+
+    rc=0; git -C "$ROOT" merge-base --is-ancestor "$tip" "$base" >/dev/null 2>&1 || rc=$?
+    case "$rc" in
+      0) : ;;
+      1) row "$wt" "$(human "$size")" "keep — ${tip:0:9} is not an ancestor of origin/master"
+         tgt_kept=$((tgt_kept + 1)); continue ;;
+      *) row "$wt" "$(human "$size")" "skip — merged-ness could not be decided (git exit $rc)"
+         unreadable=$((unreadable + 1)); continue ;;
+    esac
+
+    if live_in "$wt"; then
+      row "$wt" "$(human "$size")" "keep — merged, but somebody is working in it"
+      tgt_kept=$((tgt_kept + 1)); continue
+    fi
+
+    # --no-optional-locks: reading a worktree's status must not refresh its index. A status
+    # sweep that writes index mtimes fakes liveness for every tree it touches, and other
+    # sessions here read that mtime.
+    rc=0
+    st="$(git --no-optional-locks -C "$wt" status --porcelain 2>/dev/null)" || rc=$?
+    if [ "$rc" -ne 0 ]; then
+      row "$wt" "$(human "$size")" "skip — its working tree could not be read (git exit $rc)"
+      unreadable=$((unreadable + 1)); continue
+    fi
+    if [ -n "$st" ]; then
+      row "$wt" "$(human "$size")" "keep — $(printf '%s\n' "$st" | grep -c .) uncommitted or untracked file(s)"
+      tgt_kept=$((tgt_kept + 1)); continue
+    fi
+
+    if [ -L "$target" ] || ! mj_rust_owns "$wt" "$target"; then
+      row "$wt" "$(human "$size")" "keep — that build directory is not this worktree's"
+      tgt_kept=$((tgt_kept + 1)); continue
+    fi
+    if ! is_cargo_target "$target"; then
+      row "$wt" "$(human "$size")" "skip — carries no mark of cargo's: not provably a build directory"
+      unreadable=$((unreadable + 1)); continue
+    fi
+
+    tgt_found=$((tgt_found + 1))
+    if [ "$RECLAIM" -eq 0 ]; then
+      row "$wt" "$(human "$size")" "would reclaim — merged, nobody in it, nothing uncommitted"
+      tgt_freed=$((tgt_freed + size))
+      continue
+    fi
+
+    # Re-check against the machine as it is now, not as the scan found it: a session that
+    # came back in the seconds since keeps its build.
+    liveness_snapshot || die "liveness stopped being measurable mid-sweep: nothing further is reclaimed"
+    if live_in "$wt"; then
+      row "$wt" "$(human "$size")" "skip — somebody started working in it since the scan"
+      tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1)); continue
+    fi
+    st="$(git --no-optional-locks -C "$wt" status --porcelain 2>/dev/null || true)"
+    if [ -n "$st" ]; then
+      row "$wt" "$(human "$size")" "skip — it stopped being clean since the scan"
+      tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1)); continue
+    fi
+
+    if rm -rf "$target"; then
+      row "$wt" "$(human "$size")" "reclaimed"
+      tgt_reclaimed=$((tgt_reclaimed + 1)); tgt_freed=$((tgt_freed + size))
+    else
+      row "$wt" "$(human "$size")" "FAILED to remove"
+      unreadable=$((unreadable + 1)); tgt_found=$((tgt_found - 1))
+    fi
+  done <<EOF
+$(worktrees)
+EOF
+}
+
+# ------------------------------------------------------------------------------- report
+
+before="$(free_kb "$ROOT")"
+if [ "$DO_SERVERS" -eq 1 ]; then reap_servers; fi
+if [ "$DO_TARGETS" -eq 1 ]; then
+  if [ "$DO_SERVERS" -eq 1 ]; then echo; fi
+  reap_targets
 fi
 
 echo
-if [ "$KILL" -eq 1 ]; then
-  echo "reap-orphans: reaped $reaped, kept $skipped, freed ~$((freed/1024))MB"
-  exit 0
+if [ "$DO_SERVERS" -eq 1 ]; then
+  if [ "$KILL" -eq 1 ]; then
+    echo "reap-orphans: servers — reaped $srv_reaped, kept $srv_kept, freed ~$((srv_freed/1024))MB of memory"
+  else
+    echo "reap-orphans: servers — $srv_found abandoned, $srv_kept attached and kept"
+  fi
 fi
-echo "reap-orphans: $found abandoned, $skipped attached and kept"
-[ "$found" -eq 0 ] || { echo "reap-orphans: run with --kill to end them"; exit 10; }
-exit 0
+if [ "$DO_TARGETS" -eq 1 ]; then
+  if [ "$RECLAIM" -eq 1 ]; then
+    echo "reap-orphans: build output — reclaimed $tgt_reclaimed ($(human "$tgt_freed")), kept $tgt_kept, skipped $unreadable for want of a readable input"
+  else
+    echo "reap-orphans: build output — $tgt_found reclaimable ($(human "$tgt_freed")), kept $tgt_kept, skipped $unreadable for want of a readable input"
+  fi
+  after="$(free_kb "$ROOT")"
+  echo "reap-orphans: free space $(human "${before:-0}") before, $(human "${after:-0}") now"
+fi
+
+if [ "$KILL" -eq 1 ] || [ "$RECLAIM" -eq 1 ]; then exit 0; fi
+if [ "$((srv_found + tgt_found))" -eq 0 ]; then exit 0; fi
+[ "$srv_found" -eq 0 ] || echo "reap-orphans: run with --kill to end the servers"
+[ "$tgt_found" -eq 0 ] || echo "reap-orphans: run with --reclaim to remove the build output"
+exit 10

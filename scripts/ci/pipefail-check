@@ -12,7 +12,7 @@
 #
 # Adding pipefail to a script that already exists can change what it does — a pipeline
 # ending in `head` or `grep -q` may now fail where it used to be ignored — so this is a
-# ratchet rather than a sweep, the same shape as scripts/ci/projection-check. The scripts
+# ratchet rather than a sweep, the same shape as scripts/ci/rust-command-check. The scripts
 # that pipe under `set -e` without pipefail today are recorded in the baseline; the check
 # fails when a NEW one appears, and reports — without failing — every baseline entry that
 # has since been fixed, so the baseline can be tightened deliberately.

@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # rule-proof-check — a rule names what proves it, and what it names exists.
 #
+# THE SUBJECT IS RULES. Claims are not measured here and this gate's verdict says nothing
+# about them; `scripts/ci/claim-proof-check` owns that population. Until this comment was
+# written the two gates read as verdicts on each other's subject, and a reader took
+# claim-proof-check's list of unproven *claims* for a list of unproven *rules* — see that
+# script's header for the duplicate rule reader it used to carry and why it is gone.
+#
 # The subject is every rule object under the repository's rules section. A rule carries an
 # enforcement block in one of two modes: DISPATCHED, which names a validator the doctrine
 # dispatcher calls at run time, and GATED, which names only the behavioural cases that prove
@@ -169,6 +175,15 @@ dangling="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "dangling"
 unproven="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "unproven" { print $1 }' | LC_ALL=C sort -u || true)"
 reviewed="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "reviewed" { print $1 }' | LC_ALL=C sort -u || true)"
 
+# The denominators. `measured` is every rule the section holds; `blocking` is the population
+# the `unproven` finding is actually about, and it is stated separately because a verdict
+# about blocking rules that prints only the total reads as a verdict about all of them.
+# This is the number enforcement-check (removed) used to print as "0 of 102" before its
+# rule half was removed as a duplicate of this one; it is stated here so nothing that half
+# reported was lost with it.
+measured_n="$(nlines "$(printf '%s\n' "$rows" | awk -F'	' '{ print $1 }' | LC_ALL=C sort -u)")"
+blocking_n="$(nlines "$(printf '%s\n' "$rows" | awk -F'	' '$2 == "blocking" { print $1 }' | LC_ALL=C sort -u)")"
+
 if [ "$MODE" = write ]; then
   { echo "# Blocking rules that name no executable proof: enforced by review today."
     echo "# Written by scripts/ci/rule-proof-check --write-baseline. The list may shrink;"
@@ -178,6 +193,22 @@ if [ "$MODE" = write ]; then
   echo "rule-proof-check: baseline written with $(nlines "$unproven") rule(s)"
   exit 0
 fi
+
+# Zero is a failure unless zero is declared expected. A rules section that exists and holds
+# no blocking rule is a population that vanished, not one that came back clean, and
+# reporting `no new debt` over it would be the defect project.empty-is-not-failure names.
+# The guard came from enforcement-check (removed), which carried it for the same population
+# until its rule half was removed; it is here so the removal cost no coverage.
+if [ "$blocking_n" = 0 ]; then
+  echo "rule-proof-check: no rule in $RULES is declared blocking — nothing was measured, which is not the same as nothing being wrong" >&2
+  exit 12
+fi
+
+# Both denominators, and the population this gate does not measure, before any finding: a
+# reader who meets a list of ids must not have to guess what they are ids of.
+printf 'blocking rules:      %s of %s rule(s) in %s; %s declare a reader enforces them, with a reason\n' \
+  "$blocking_n" "$measured_n" "$RULES" "$(nlines "$reviewed")"
+printf 'guaranteed claims:   not measured here — scripts/ci/claim-proof-check is the one reader of that population\n'
 
 known=""
 [ -f "$BASELINE" ] && known="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" || true)"
@@ -208,7 +239,7 @@ if [ -n "$dangling" ]; then
 fi
 
 if [ "$MODE" = strict ]; then
-  [ -z "$unproven" ] && { echo "rule-proof-check: every blocking rule names what proves it, and every proof is in the tree"; exit 0; }
+  [ -z "$unproven" ] && { echo "rule-proof-check: every one of $blocking_n blocking rule(s) names what proves it, and every proof is in the tree"; exit 0; }
   echo "rule-proof-check: $(nlines "$unproven") blocking rule(s) name no proof (--strict)" >&2
   exit 10
 fi
@@ -226,4 +257,4 @@ if [ -n "$new" ]; then
   echo "  case in its x-majordomus block: tests: [test/cases/NN_name.sh]." >&2
   exit 10
 fi
-echo "rule-proof-check: no new debt ($(nlines "$known") rule(s) known, $(nlines "$reviewed") declared review-enforced, $(nlines "$(printf '%s\n' "$rows" | awk -F'	' '{print $1}' | LC_ALL=C sort -u)") rule(s) measured)"
+echo "rule-proof-check: no new debt ($(nlines "$known") rule(s) known, $(nlines "$reviewed") declared review-enforced, $blocking_n blocking of $measured_n rule(s) measured)"

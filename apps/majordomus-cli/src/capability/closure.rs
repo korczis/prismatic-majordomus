@@ -25,7 +25,9 @@
 //!   is not automatically wrong: `serve`, `mcp` and `generate` are infrastructure and have
 //!   no capability behind them by design. It is, however, the measure of how much of the
 //!   command line is still hand-written rather than derived, so it is reported as an
-//!   inventory ([`unbacked`]) that a gate ratchets: what is undeclared today may not grow.
+//!   inventory ([`unbacked`]). What is refused is the *silent* case: of that inventory,
+//!   the commands [`crate::cli::local::LOCAL`] does not explain either ([`Matrix`]'s
+//!   `unclassified`), which `scripts/ci/projection-check` exits 10 on.
 //!
 //! Everything here is a pure function of the registry and the clap tree. Nothing reads the
 //! repository, the environment or the network, so the whole check costs a walk of two
@@ -171,6 +173,11 @@ pub struct Matrix {
     pub findings: Vec<Finding>,
     /// Runnable commands of the command line that no capability claims, in command order.
     pub unbacked: Vec<String>,
+    /// Of those, the ones [`crate::cli::local::LOCAL`] does not explain either: a command
+    /// that is neither the projection of a capability nor declared command-line-only with
+    /// a reason. Empty is the closure the rule asks for; anything here is an operation
+    /// that left the API by accident rather than by decision.
+    pub unclassified: Vec<String>,
 }
 
 /// Every unmet claim, in capability order, then in projection order.
@@ -248,12 +255,15 @@ pub fn matrix(registry: &CapabilityRegistry, tree: &CommandDoc) -> Matrix {
     let commands = index(tree);
     let mut rows: Vec<Row> = registry.iter().map(|c| row(c, &commands)).collect();
     crate::order::canonical(&mut rows);
+    let debt = unbacked(registry, tree);
     Matrix {
         rows,
         findings: findings(registry, tree),
-        unbacked: unbacked(registry, tree)
-            .into_iter()
-            .map(|u| u.command)
+        unbacked: debt.iter().map(|u| u.command.clone()).collect(),
+        unclassified: debt
+            .iter()
+            .filter(|u| crate::cli::local::find(&u.path.join(" ")).is_none())
+            .map(|u| u.command.clone())
             .collect(),
     }
 }
@@ -545,12 +555,17 @@ mod tests {
             rows: vec![row(&claiming("demo.ok", &["scope"]), &commands)],
             findings: vec![],
             unbacked: vec!["majordomus serve".to_string()],
+            unclassified: vec![],
         };
         let v = serde_json::to_value(&m).expect("the matrix serialises");
         assert_eq!(v["rows"][0]["id"], "demo.ok");
         assert_eq!(v["rows"][0]["cli"], "majordomus scope");
         assert_eq!(v["rows"][0]["closed"], true);
         assert_eq!(v["unbacked"][0], "majordomus serve");
+        assert!(
+            v["unclassified"].as_array().expect("an array").is_empty(),
+            "the classified half is carried on the wire too, and is empty here"
+        );
         // absent exposures are omitted rather than rendered as null, so a client can ask
         // "is there an http route" without distinguishing null from missing
         assert!(v["rows"][0].get("http").is_none());
@@ -595,7 +610,29 @@ mod tests {
         sorted.sort();
         assert_eq!(
             debt, sorted,
-            "the inventory is ordered, so a baseline is stable"
+            "the inventory is ordered, so a report is stable"
+        );
+    }
+
+    #[test]
+    fn every_command_no_capability_claims_says_why_it_is_local() {
+        // The inventory is allowed to be large — a process command has nothing to derive
+        // from — but not silent. A command that is neither a capability's projection nor
+        // classified in cli::LOCAL is an operation that left the API by accident, which is
+        // what `scripts/ci/projection-check` refuses from this same value.
+        let registry = CapabilityRegistry::builder()
+            .with_modules(crate::capability::builtin::modules())
+            .build()
+            .unwrap();
+        let m = matrix(&registry, &crate::cli::tree());
+        assert!(
+            !m.unbacked.is_empty(),
+            "the process commands are always in the inventory"
+        );
+        assert!(
+            m.unclassified.is_empty(),
+            "unclassified commands: {:?}",
+            m.unclassified
         );
     }
 }

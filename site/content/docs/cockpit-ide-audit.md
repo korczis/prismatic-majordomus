@@ -538,32 +538,37 @@ Cockpit's documented route table, and semantics decided in the browser.
 
 ### The target flow for one development mutation
 
-```text
-Cockpit form / MCP tool / HTTP POST / CLI
-        │  typed input, validated against the capability's own schema
-        ▼
-capability!  kind: command    ← the only place the transition is decided
-        │
-        ├─▶ the object in its canonical storage   (.ai/repo/project/issues/<id>.yaml)
-        ├─▶ a ledger event whose name share/events.yaml declares   (durable record)
-        └─▶ the execution stream                                   (live view)
-```
+<pre class="mermaid">
+flowchart TD
+  entry["Cockpit form / MCP tool /&lt;br&gt;HTTP POST / CLI"]
+  cap["capability! kind: command&lt;br&gt;the only place the transition is decided"]
+  entry --&gt;|"typed input, validated against&lt;br&gt;the capability's own schema"| cap
+  cap --&gt; object["the object in its canonical storage&lt;br&gt;(.ai/repo/project/issues/&amp;lt;id&amp;gt;.yaml)"]
+  cap --&gt; ledger["a ledger event whose name&lt;br&gt;share/events.yaml declares&lt;br&gt;(durable record)"]
+  cap --&gt; stream["the execution stream&lt;br&gt;(live view)"]
+</pre>
+
 
 Nothing in that diagram is new infrastructure. Every box exists; the arrows from the first
 box to the rest are what is missing.
 
 ### Dependency graph
 
-```text
-A. one mutating development capability, end to end
-        │
-        ├──▶ B. events: a mutating capability appends to the ledger
-        │            │
-        │            └──▶ E. Cockpit development pages (issues, sessions, peers)
-        ├──▶ C. the lifecycle capabilities (task, session, checkpoint, handover, finish)
-        └──▶ D. compiled context as a capability
-F. navigation and route derivation ──▶ E     (independent of A–D; do it any time)
-```
+<pre class="mermaid">
+flowchart TD
+  a["A. one mutating development&lt;br&gt;capability, end to end"]
+  b["B. events: a mutating capability&lt;br&gt;appends to the ledger"]
+  c["C. the lifecycle capabilities&lt;br&gt;(task, session, checkpoint,&lt;br&gt;handover, finish)"]
+  d["D. compiled context as a capability"]
+  e["E. Cockpit development pages&lt;br&gt;(issues, sessions, peers)"]
+  f["F. navigation and route derivation&lt;br&gt;(independent of A–D; do it any time)"]
+  a --&gt; b
+  a --&gt; c
+  a --&gt; d
+  b --&gt; e
+  f --&gt; e
+</pre>
+
 
 ### Phases
 

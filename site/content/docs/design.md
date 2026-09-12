@@ -118,24 +118,15 @@ adds nouns becomes the thing it was meant to supervise.
 
 ## Core Mental Model
 
-```
-            Human / Organisation
-                    |
-                    v
-               MAJORDOMUS
-        policy · state · verification
-                    |
-      +-------------+-------------+
-      v             v             v
-   Worker A      Worker B      Worker C
-  (Claude Code)  (Codex)       (Gemini, Cursor, local ...)
-      |             |             |
-      +-------------+-------------+
-        an orchestrator (bb) runs any of them; the agent stays the worker
-                    |
-                    v
-          Verified, accepted outcomes
-```
+<pre class="mermaid">
+flowchart TD
+  human["Human / Organisation"] --&gt; mj["MAJORDOMUS&lt;br&gt;policy · state · verification"]
+  mj --&gt; wa["Worker A&lt;br&gt;(Claude Code)"]
+  mj --&gt; wb["Worker B&lt;br&gt;(Codex)"]
+  mj --&gt; wc["Worker C&lt;br&gt;(Gemini, Cursor, local ...)"]
+  wa &amp; wb &amp; wc --&gt;|"an orchestrator (bb) runs any of them;&lt;br&gt;the agent stays the worker"| out["Verified, accepted outcomes"]
+</pre>
+
 
 Majordomus sits between the person and the workers. It holds one canonical policy,
 projects it into whatever instruction format each worker reads, keeps durable state
@@ -285,26 +276,20 @@ task's", records the audit and the decision.
 
 A **task** is a unit of intended work that a person opens and closes.
 
-```
-majordomus start <task>
-      |
-      v
-  scope declared (paths)  --> claim normalised, overlap reported
-      |
-      v
-  profile selected        --> effort / verbosity / context / verification fixed
-      |
-      v
-  worker executes         (Majordomus is not involved)
-      |
-      v
-majordomus check          --> state consistent? scope respected? blockers?
-      |
-      +-- incomplete --> continue, or majordomus handover
-      |
-      v
-majordomus finish         --> finish contract evaluated; refuses if unmet
-```
+<pre class="mermaid">
+flowchart TD
+  st["majordomus start &amp;lt;task&amp;gt;"] --&gt; sc["scope declared (paths)"]
+  sc --&gt; claim["claim normalised, overlap reported"]
+  sc --&gt; pf["profile selected"]
+  pf --&gt; fixed["effort / verbosity / context /&lt;br&gt;verification fixed"]
+  pf --&gt; worker["worker executes&lt;br&gt;(Majordomus is not involved)"]
+  worker --&gt; ck["majordomus check"]
+  ck --&gt; report["state consistent? scope respected? blockers?"]
+  ck --&gt;|"incomplete"| cont["continue, or majordomus handover"]
+  ck --&gt; fin["majordomus finish"]
+  fin --&gt; contract["finish contract evaluated;&lt;br&gt;refuses if unmet"]
+</pre>
+
 
 A task is bounded by `start` and either `finish` or `handover`. There is no "still open
 from Tuesday" state that Majordomus recognises as healthy; `watch` reports any task record
@@ -314,20 +299,24 @@ An **episode** is a provider's conversation boundary. It begins when a client at
 ends when it detaches, whether or not anybody declared a task and whether or not the last
 task anybody declared was finished a week ago.
 
-```
-provider fires SessionStart --> session start --if-open keep   (keyed by the provider
-      |                                                         session, not the checkout)
-      |                                                         briefing to stdout
-      v
-   work happens, every command stamping its own episode id onto its ledger line
-      |
-provider fires PreCompact   --> checkpoint --derive            (a checkpoint is an artefact
-      |                                                         of the episode; no task
-      |                                                         is required)
-      v
-provider fires SessionEnd   --> handover, then session close   (the envelope's references
-                                                                computed from the ledger)
-```
+<pre class="mermaid">
+flowchart TD
+  ss["provider fires SessionStart"]
+  kept["session start --if-open keep&lt;br&gt;(keyed by the provider session,&lt;br&gt;not the checkout)&lt;br&gt;briefing to stdout"]
+  work["work happens, every command stamping its own&lt;br&gt;episode id onto its ledger line"]
+  pc["provider fires PreCompact"]
+  cp["checkpoint --derive&lt;br&gt;(a checkpoint is an artefact of the episode;&lt;br&gt;no task is required)"]
+  se["provider fires SessionEnd"]
+  ho["handover, then session close&lt;br&gt;(the envelope's references computed from the ledger)"]
+
+  ss --&gt; kept
+  ss --&gt; work
+  work --&gt; pc
+  pc --&gt; cp
+  pc --&gt; se
+  se --&gt; ho
+</pre>
+
 
 `task != session` in both directions: a task spanning two sittings is named by both
 episodes, and an episode that touches three tasks names all three. Task outcome may change
@@ -508,15 +497,14 @@ Distinctions the evidence made necessary:
 
 ## Provider Projection Model
 
-```
-.ai/repo/policy.yaml
-         |
-         |  majordomus update
-         v
-   +-----+-----+-------------+
-   |           |             |
-CLAUDE.md   AGENTS.md    GEMINI.md   (+ .cursor/rules, generic)
-```
+<pre class="mermaid">
+flowchart TD
+  policy[".ai/repo/policy.yaml"] --&gt;|"majordomus update"| claude["CLAUDE.md"]
+  policy --&gt;|"majordomus update"| agents["AGENTS.md"]
+  policy --&gt;|"majordomus update"| gemini["GEMINI.md"]
+  policy --&gt;|"majordomus update"| extra["(+ .cursor/rules, generic)"]
+</pre>
+
 
 - Projections are generated, not hand-edited. Each carries a header stating that it
   is generated and naming the command that regenerates it.

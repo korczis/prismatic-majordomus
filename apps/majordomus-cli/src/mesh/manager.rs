@@ -294,7 +294,7 @@ impl MeshRuntime {
             Some(active) => {
                 let mut providers: Vec<ProviderStatus> =
                     active.providers.iter().map(|p| p.status()).collect();
-                providers.sort_by(|a, b| a.id.cmp(&b.id));
+                crate::order::canonical(&mut providers);
                 MeshStatus {
                     active: true,
                     reason: None,

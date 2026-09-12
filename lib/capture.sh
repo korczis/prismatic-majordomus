@@ -1921,20 +1921,37 @@ mj_validate_prompt_continuity() {
 # files: a 0755 directory over 0600 records still tells every account on the machine what was
 # asked and when, because the file names are the openings of the prompts.
 mj_capture_permissions() {
-  local dir="$1" rel="$2" loose dperm
-  dperm="$(mj_capture_mode "$dir")"
+  local dir="$1" rel="$2" loose dperm spec found rc unasked=""
+  dperm="$(mj_capture_mode "$dir")" || dperm=""
+  [ -n "$dperm" ] || unasked="the directory's own mode (no stat here answers 'stat -c %a' or 'stat -f %Lp' with octal digits)"
   # `-perm /077` is GNU and `-perm +077` is BSD, and each rejects the other's spelling — the
   # gate runs on Linux and the development machine is a Mac, so both are asked and the first
   # that the local find accepts is the answer. A find that accepts neither reports nothing
   # rather than zero, because "no loose files" and "the question could not be asked" are
   # different answers and only one of them is a pass.
-  local spec
-  # asked of the directory itself, where the answer does not matter and only the exit does:
-  # a find that rejects the spelling fails here rather than silently reporting nothing later,
-  # which a pipeline into `wc -l` would have turned into a clean zero.
-  if find "$dir" -maxdepth 0 -perm /077 >/dev/null 2>&1; then spec=/077; else spec=+077; fi
-  loose="$(find "$dir" -type f -perm "$spec" 2>/dev/null | wc -l | tr -d ' ')"
-  if [ "${loose:-0}" != 0 ]; then
+  #
+  # Both spellings are asked of the directory itself, where the answer does not matter and
+  # only the exit does. Neither being accepted used to leave `spec` at the BSD spelling and
+  # walk with it anyway, and the walk's own failure then reached `wc -l`, which turned it
+  # into a clean zero — a check reporting "no loose files" because it never looked.
+  spec=""
+  if find "$dir" -maxdepth 0 -perm /077 >/dev/null 2>&1; then spec=/077
+  elif find "$dir" -maxdepth 0 -perm +077 >/dev/null 2>&1; then spec=+077; fi
+  loose=""
+  if [ -n "$spec" ]; then
+    rc=0; found="$(find "$dir" -type f -perm "$spec" 2>/dev/null)" || rc=$?
+    # a find that errored mid-walk has not seen the whole archive, so it has not answered
+    if [ "$rc" = 0 ]; then loose="$(printf '%s' "$found" | grep -c '[^[:space:]]' || true)"; fi
+  fi
+  [ -n "$loose" ] || unasked="${unasked:+$unasked, and }the records' modes (no find here accepts '-perm /077' or '-perm +077', or the walk failed)"
+  if [ -n "$unasked" ]; then
+    # Never silently green. This environment cannot be asked the question, which is a fact
+    # about the environment and not a result about the archive — and an unverifiable
+    # privacy guarantee is not a satisfied one (majordomus.never-reported-is-not-green).
+    mj_doctrine_fail prompts "$rel" \
+      "unverified — this environment cannot be asked $unasked; whether the archive is private is unknown here, and unknown is not a pass" \
+      "ls -ld $rel && ls -l $rel"
+  elif [ "$loose" != 0 ]; then
     mj_doctrine_fail prompts "$rel" \
       "$loose file(s) in the prompt archive are readable beyond their owner; raw prompts are the most private thing this tool writes" \
       "chmod 700 $rel && chmod 600 $rel/*   # or: majordomus capture render, which sets both"
@@ -1947,10 +1964,37 @@ mj_capture_permissions() {
   fi
 }
 
+# The mode of one path as octal digits, or nothing and a non-zero status when this system
+# cannot be asked.
+#
+# GNU FIRST. The ORDER is load-bearing, and this is the same trap lib/recover.sh and
+# lib/common.sh already name for mtime — this was the one site left facing the other way.
+# `stat -f` means two different things: on BSD it is "this format string", on GNU it is
+# "report the FILE SYSTEM, not the file". Asked BSD-first, a GNU stat read `%Lp` as a
+# filename, failed on it, printed the *filesystem* block for the directory to STDOUT
+# anyway, and exited non-zero — so `||` ran the GNU spelling too and appended the real
+# mode to that paragraph. The caller compared the whole thing against `700`, so an archive
+# that was mode 700 was reported as
+#
+#     the archive directory is mode   File: "…/.ai/local/prompts"
+#         ID: … Type: ext4  Block size: 4096 …
+#     700; the file names are the openings of the prompts
+#
+# `doctor` therefore failed with exit 10 and `watch` drifted with exit 11 inside every
+# use-case scenario that runs `init` first, on Linux only — so twelve scenarios passed on
+# the Mac that wrote them and failed on every CI runner, taking `generate-site-data
+# --check` and the whole `core-check` gate with them.
+#
+# `stat -c` is unambiguous: GNU accepts it, BSD rejects the option and falls through. The
+# answer is then shape-checked rather than trusted, which is what makes that class of
+# failure impossible rather than merely unlikely: anything that is not octal digits is not
+# a mode, whatever printed it, and this says so with its status instead of handing a caller
+# a number that is not one.
 mj_capture_mode() {
-  # BSD and GNU stat disagree about the flag and about the width; both are asked, and a
-  # system that answers neither reports nothing rather than a wrong number.
-  stat -f '%Lp' "$1" 2>/dev/null || stat -c '%a' "$1" 2>/dev/null || true
+  local m
+  m="$(stat -c '%a' "$1" 2>/dev/null || stat -f '%Lp' "$1" 2>/dev/null || true)"
+  case "$m" in ''|*[!0-7]*) return 1 ;; esac
+  printf '%s' "$m"
 }
 
 # Every record says which episode it belongs to, or says in so many words that it does not.

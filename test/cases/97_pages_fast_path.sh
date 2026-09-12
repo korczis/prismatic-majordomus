@@ -21,10 +21,29 @@ P="$ROOT/scripts/pages"
 expect_exit 0 "$P" budget
 expect_grep 'controlled'
 "$P" budget --json > budget.json || { echo "    scripts/pages budget --json failed"; exit 1; }
-for k in checkout setup build check publish controlled; do
+for k in build check publish controlled; do
   jq -e --arg k "$k" '.warm[$k] | numbers' budget.json >/dev/null || { echo "    the model declares no warm budget for $k"; exit 1; }
 done
 jq -e '.end_to_end | numbers' budget.json >/dev/null || { echo "    the model declares no end-to-end target"; exit 1; }
+
+# 1a. the budget is reachable by adding up its own rows, and every row the run measures has
+#     one. Both were false until 2026-09-12: `controlled` was 75 while the phases summed to
+#     105, so a run could be inside every phase budget and still breach with nothing to point
+#     at; and `fingerprint`, `local-check` and the merged checkout+setup row were summed into
+#     `controlled` while no key named them, so three of the six rows of every job summary
+#     printed an empty budget cell. A total that cannot be reached by adding up its parts is
+#     a number nobody can act on, so it is asserted rather than trusted.
+jq -e '([.warm | to_entries[] | select(.key != "controlled") | .value] | add) <= .warm.controlled' budget.json >/dev/null \
+  || { echo "    .ai/repo/ci/pages.yaml: the warm phases sum to more than budget.warm.controlled, so the aggregate is stricter than the parts it is made of:"; jq -c '.warm' budget.json; exit 1; }
+# every row the workflow and scripts/pages emit into the timings file is a row the model
+# budgets. The workflow writes the first and the last; scripts/pages `row()` writes the rest.
+emitted="$( { grep -oE "printf 'pages.t[a-z-]+" "$W" | sed "s/.*pages.t//"
+              grep -oE 'timed [a-z-]+' "$P" | awk '{print $2}'; } | LC_ALL=C sort -u)"
+[ -n "$emitted" ] || { echo "    no timing row names could be read from pages.yml and scripts/pages"; exit 1; }
+for r in $emitted; do
+  jq -e --arg r "$r" '.warm[$r] | numbers' budget.json >/dev/null \
+    || { echo "    the run measures a phase '$r' that .ai/repo/ci/pages.yaml declares no budget for; its column in the job summary would be empty and it would still be summed into the total"; exit 1; }
+done
 grep -qE 'budget|controlled' "$P" && ! grep -qE '^[^#]*(checkout|controlled)[=:][[:space:]]*[0-9]+' "$P" \
   || { echo "    scripts/pages carries a budget number of its own; the model owns them"; exit 1; }
 
@@ -137,6 +156,55 @@ fi
   || { echo "    the site does not serve $(sed -n 's/^  identity: //p' "$MODEL"); a deployment could not be verified from outside"; exit 1; }
 jq -e '.commit | strings' "$ROOT/site/public/$(sed -n 's/^  identity: //p' "$MODEL")" >/dev/null \
   || { echo "    the served identity carries no commit"; exit 1; }
+
+# 9a. THE VERDICT OF A RUN IS ITS PUBLICATION; THE BUDGET IS A REPORT ON IT.
+#
+# Eleven runs of pages.yml between 2026-09-11T22:36Z and 2026-09-12T06:38Z reported `failure`
+# while every one of them pushed gh-pages correctly and the public site went on to serve the
+# commit it had built. `scripts/pages report` exits 10 when the controlled path is over its
+# budget, the workflow ran it as an ordinary step *after* the publish, and its Markdown goes
+# to $GITHUB_STEP_SUMMARY rather than to the log — so what a reader got was a red deploy run,
+# the line `Process completed with exit code 10`, and no number anywhere they would look.
+#
+# What proves that verdict carried no information is the one run in that window that really
+# did fail to publish: d5e27a500, whose build failed, whose publish was skipped, and whose
+# report step therefore passed. The run that had NOT published was the one this check was
+# green on, and it wore the same `failure` as the eleven that had.
+#
+# Both halves of the repair are asserted here, because dropping either one restores a defect:
+# without the first the budget becomes decorative, and without the second the deploy run lies
+# about the deployment.
+mkdir -p slo
+# a run inside its budget is clean: PASS, and no annotation of any kind
+printf 'pages\tcheck\t1\n' > slo/under.tsv
+expect_exit 0 env GITHUB_STEP_SUMMARY="$PWD/slo/under.md" "$P" report --timings slo/under.tsv
+expect_grep 'pages-slo verdict=PASS'
+expect_no_grep '^::(warning|error)'
+expect_grep 'Pages SLO: \*\*PASS\*\*' slo/under.md
+
+# over budget, default contract: a refusal. This is what a person gets, and what any gate that
+# calls this command gets; it is the budget's teeth and it is deliberately unchanged.
+printf 'pages\tcheck\t99999\n' > slo/over.tsv
+expect_exit 10 env GITHUB_STEP_SUMMARY="$PWD/slo/over.md" "$P" report --timings slo/over.tsv
+expect_grep 'Pages SLO: \*\*OVER BUDGET\*\*' slo/over.md
+
+# the same run as the publication path measures it: reported in full, and not the verdict
+expect_exit 0 env GITHUB_STEP_SUMMARY="$PWD/slo/adv.md" GITHUB_OUTPUT="$PWD/slo/adv.out" \
+  "$P" report --advisory --timings slo/over.tsv
+expect_grep '^::warning title=Pages controlled path over budget'   # impossible to miss on the run
+expect_grep 'pages-slo verdict=OVER BUDGET'                        # and in the log, where the summary is not
+expect_grep 'not whether the site published'                       # and saying which fact it is not
+expect_grep 'Pages SLO: \*\*OVER BUDGET\*\*' slo/adv.md            # the summary is not softened
+expect_grep 'check 99999s/' slo/adv.md                             # and names the phase that spent it
+expect_grep 'verdict=OVER BUDGET' slo/adv.out                      # machine-readable, for a reader that is not a person
+expect_grep 'controlled=99999' slo/adv.out
+
+# a breach is a warning for exactly one caller: the step that measures a deployment already
+# done. Anything else calling it this way would be softening a gate.
+grep -q 'scripts/pages report --advisory' "$W" \
+  || { echo "    pages.yml takes the budget as its own verdict again: a breach measured after the push to gh-pages would report a successful deployment as a failure"; exit 1; }
+[ "$(grep -v '^[[:space:]]*#' "$W" | grep -c -- '--advisory')" = 1 ] \
+  || { echo "    more than one step of pages.yml reports advisorily; only the post-publish measurement, which reads work already finished, may"; exit 1; }
 
 # 10. invalidation, in a disposable repository: the fingerprint moves when and only when a
 #     canonical input moves, and the freshness check refuses a tree whose committed data is

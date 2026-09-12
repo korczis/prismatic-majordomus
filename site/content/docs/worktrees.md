@@ -77,19 +77,27 @@ checkouts of one repository could disagree about.
 
 ## The architecture
 
-```text
-   git (common dir · worktree list · for-each-ref · status)
-                        ↓
-   RepositoryIdentity           primary, current, container, trunk — from anywhere inside
-                        ↓
-   path::expected_path()        container / branch, proved to stay inside the container
-                        ↓
-   WorktreeService              topology · status · guard · inspect · create · migrate · repair · remove
-        ↙        ↓        ↘
-   CLI      capability       git hook
-             registry ──── MCP tools + majordomus://worktrees · /api/v1/worktrees* · OpenAPI · Swagger UI
-                       ──── Cockpit /cockpit/worktrees · docs/generated
-```
+<pre class="mermaid">
+flowchart TD
+  git["git&lt;br&gt;common dir · worktree list · for-each-ref · status"]
+  identity["RepositoryIdentity&lt;br&gt;primary, current, container, trunk —&lt;br&gt;from anywhere inside"]
+  path["path::expected_path()&lt;br&gt;container / branch, proved to stay&lt;br&gt;inside the container"]
+  service["WorktreeService&lt;br&gt;topology · status · guard · inspect&lt;br&gt;create · migrate · repair · remove"]
+  cli["CLI"]
+  registry["capability registry"]
+  hook["git hook"]
+  mcp["MCP tools + majordomus://worktrees&lt;br&gt;/api/v1/worktrees* · OpenAPI · Swagger UI"]
+  cockpit["Cockpit /cockpit/worktrees · docs/generated"]
+  git --&gt; identity
+  identity --&gt; path
+  path --&gt; service
+  service --&gt; cli
+  service --&gt; registry
+  service --&gt; hook
+  registry --- mcp
+  registry --- cockpit
+</pre>
+
 
 Business logic exists once, in `apps/majordomus-cli/src/worktree/`. Every surface is an
 adapter that renders or projects what the service answered; none derives a path, decides a
@@ -216,19 +224,21 @@ compdef '_arguments "1:sub:(status list topology root path inspect create ensure
 
 ## Lifecycle
 
-```text
-issue / task                majordomus plan next
-      ↓
-branch                      feature/<ID>-<slug>, or any name git accepts
-      ↓
-canonical worktree          majordomus worktree create <branch>   → <repo>-wt/<branch>
-      ↓
-session / agent             majordomus context, start, checkpoint, handover — in that worktree
-      ↓
-commit / PR                 the pre-commit hook asks the guard; push and open the PR from there
-      ↓
-cleanup                     majordomus worktree cleanup → worktree remove, git branch -d, by a person
-```
+<pre class="mermaid">
+flowchart TD
+  issue["issue / task&lt;br&gt;majordomus plan next"]
+  branch["branch&lt;br&gt;feature/&amp;lt;ID&amp;gt;-&amp;lt;slug&amp;gt;, or any name git accepts"]
+  worktree["canonical worktree&lt;br&gt;majordomus worktree create &amp;lt;branch&amp;gt;&lt;br&gt;→ &amp;lt;repo&amp;gt;-wt/&amp;lt;branch&amp;gt;"]
+  session["session / agent&lt;br&gt;majordomus context, start, checkpoint, handover&lt;br&gt;— in that worktree"]
+  commit["commit / PR&lt;br&gt;the pre-commit hook asks the guard;&lt;br&gt;push and open the PR from there"]
+  cleanup["cleanup&lt;br&gt;majordomus worktree cleanup → worktree remove,&lt;br&gt;git branch -d, by a person"]
+  issue --&gt; branch
+  branch --&gt; worktree
+  worktree --&gt; session
+  session --&gt; commit
+  commit --&gt; cleanup
+</pre>
+
 
 A handover records the branch and the worktree; a session resumed elsewhere derives the
 worktree from the branch rather than trusting the recorded path, because the path is

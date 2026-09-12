@@ -315,6 +315,14 @@ pub struct Excluded {
     pub relevance: f64,
 }
 
+/// The tier is the precedence the budget spends in, so it is the explicit rank; inside a
+/// tier a reader looks for a reason, and the identifier ends the key so the list is total.
+impl crate::order::Ordered for Excluded {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(self.reason.as_str(), &self.uri).ranked(self.tier as i64)
+    }
+}
+
 /// Two names, one thing. The compiler keeps one entry and records the collapse here, so
 /// that "why is this ADR listed once when four things point at it" has an answer that is
 /// state rather than a log line.
@@ -332,6 +340,14 @@ pub struct Deduplicated {
     pub paths: usize,
 }
 
+/// Filed under what made the two the same thing, then by the entry that survived — which
+/// is unique, because one entry is kept once under one key.
+impl crate::order::Ordered for Deduplicated {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::grouped(&self.key, &self.kept, &self.kept)
+    }
+}
+
 /// Two things in the answer that do not agree, named rather than silently ordered.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Conflict {
@@ -343,6 +359,14 @@ pub struct Conflict {
     pub kind: String,
     /// The same, in words.
     pub detail: String,
+}
+
+/// Filed under the kind of disagreement, then the current entry, and ended by the entry it
+/// stands against — the pair is what makes one conflict distinct from another under a kind.
+impl crate::order::Ordered for Conflict {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::grouped(&self.kind, &self.current, &self.against)
+    }
 }
 
 /// What one tier cost and what it was allowed.
@@ -410,6 +434,14 @@ pub struct CommitReference {
     /// What the record says the commit was for.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub covers: Option<String>,
+}
+
+/// The commit is what a reader looks for; the entry that named it ends the key, because one
+/// commit is named by several records and each of those is a separate fact.
+impl crate::order::Ordered for CommitReference {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.commit, &self.named_by)
+    }
 }
 
 /// What the request asked to compile a context about.

@@ -253,6 +253,11 @@
       "target": "rule:majordomus.obligation-closure"
     },
     {
+      "kind": "depends_on",
+      "source": "rule:majordomus.publication-currency",
+      "target": "rule:majordomus.completion-gates"
+    },
+    {
       "kind": "decided_by",
       "source": "rule:majordomus.ai-layout-integrity",
       "target": "validator:ai_layout"
@@ -471,6 +476,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.completion-gates",
       "target": "validator:completion_gates"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.publication-currency",
+      "target": "validator:publication_currency"
     },
     {
       "kind": "run_by",
@@ -746,6 +756,11 @@
       "kind": "run_by",
       "source": "validator:prompts",
       "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:publication_currency",
+      "target": "command:finish"
     },
     {
       "kind": "run_by",
@@ -1116,6 +1131,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.completion-gates",
       "target": "test:test/cases/131_completion_gates.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.publication-currency",
+      "target": "test:test/cases/275_publication_is_current.sh"
     }
   ],
   "generator": "scripts/lib/governance-graph.jq",
@@ -1670,6 +1690,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.publication-currency",
+      "kind": "rule",
+      "label": "publication-currency",
+      "note": "exit 10 · gate",
+      "role": "text",
+      "route": "/doctrines/publication-currency/",
+      "status": "blocking",
+      "summary": "A repository that publishes has a second tree — the one the public is being served — and no commit-level gate can measure it, because no change to any file can make it right or wrong. A session that lands work and leaves the publication owed has finished nothing the public can see, and every check stays green while that is true. The gates that measure a deployment are declared as such in the CI model, and finish asks them."
+    },
+    {
+      "external": false,
       "id": "validator:adr",
       "kind": "validator",
       "label": "mj_validate_adr",
@@ -1899,6 +1930,14 @@
       "label": "mj_validate_prompts",
       "role": "muted",
       "summary": "Decides the rule. Declared in lib/doctor.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:publication_currency",
+      "kind": "validator",
+      "label": "mj_validate_publication_currency",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/gates.sh."
     },
     {
       "external": false,
@@ -2209,6 +2248,14 @@
       "id": "test:test/cases/25_continuity_lifecycle.sh",
       "kind": "test",
       "label": "test/cases/25_continuity_lifecycle.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/275_publication_is_current.sh",
+      "kind": "test",
+      "label": "test/cases/275_publication_is_current.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

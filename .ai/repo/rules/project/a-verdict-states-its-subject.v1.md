@@ -80,15 +80,34 @@ question is whether its detector is right, and the answer is never to raise the 
 because the number went up.
 
 **A promise names a proof.** A rule declared `blocking` and a claim marked `guaranteed` each
-name something a machine can follow to code that runs. `scripts/ci/enforcement-check` decides
-this, and it is a ratchet for the same reason: the debt is real and predates the rule.
+name something a machine can follow to code that runs. Two gates decide this, one per
+population, and each is a ratchet for the same reason — the debt is real and predates the
+rule: `scripts/ci/rule-proof-check` for rules, `scripts/ci/claim-proof-check` for claims.
+
+**A gate says which population it is not about.** Where two checks measure neighbouring
+populations, each names the other's on every run rather than leaving the reader to infer it
+from a list of identifiers. The two gates above were one script carrying both halves, and its
+failure report printed rule ids and claim ids in one list under a remedy paragraph that led
+with blocking rules; the list of unproven *claims* was read as a list of unproven *rules*, and
+the two gates were reported as contradicting each other while they agreed. A verdict that
+states its denominator and not its population is still not a verdict about anything nameable.
+
+**One property has one reader.** A second inventory of a property another gate already owns is
+not a harmless redundancy — it drifts, and the weaker of the two becomes wrong. The removed
+half accepted any `x-majordomus` block as proof, so when ADR 0048 put `reviewed_because:`
+inside that block it read four rules that declare a *person* enforces them as machine-followed
+enforcement, and reported the exemptions as promises that had gained a proof. The repair is to
+delete the duplicate reader, never to teach the two to agree.
 
 # Failure behaviour
 
-`scripts/ci/enforcement-check` exits 10 on a blocking rule or a guaranteed claim whose proof
-no machine can follow and which the baseline does not carry. `doctor` reports the rule
-package's tally with both numbers beside each other, and reports the blocking rules with no
-validator as a named finding rather than leaving them where only another surface can see them.
+`scripts/ci/rule-proof-check` exits 10 on a blocking rule whose proof no machine can follow
+and which `.ai/repo/rule-proof-baseline.txt` does not carry, and `scripts/ci/claim-proof-check`
+exits 10 on a guaranteed claim whose test does not name it back and which
+`.ai/repo/claim-proof-baseline.txt` does not carry. Each states both denominators and names the
+population it did not measure. `doctor` reports the rule package's tally with both numbers
+beside each other, and reports the blocking rules with no validator as a named finding rather
+than leaving them where only another surface can see them.
 
 A bare count in a new check is refused at review. A gate whose detector cannot distinguish its
 subject is a defect in the gate, and is repaired in the gate — never by recording its false
@@ -96,10 +115,14 @@ positives in a baseline, which converts a broken detector into permanent debt.
 
 # Verification
 
-`test/cases/230_verdict_states_its_subject.sh` proves both halves by mutation against fixture
-trees rather than against this checkout: a rule set whose blocking rule names no proof is
-refused, one that names a case by path or the way the runner takes it is accepted, a claim
-whose test does not name it back is counted, and a baseline the tree is already above is
-reported as unreachable rather than as a finding. `scripts/ci/enforcement-check --strict`
-reports both populations with their denominators; `bin/majordomus doctor` prints the rule
-tally.
+`test/cases/230_verdict_states_its_subject.sh` proves this by mutation against fixture trees
+rather than against this checkout: a blocking rule that names no proof is refused and one that
+names a validator or a case is accepted; a rule carrying only `reviewed_because:` is reported
+apart and never as proof; a guaranteed claim whose test does not name it back is counted; a
+rule whose body quotes `class: blocking` while its front matter says otherwise is not counted;
+and a population that is empty where the subject exists exits unusable rather than clean. The
+section that pins the boundary drives one tree holding both an unproven rule and an unproven
+claim through both gates, and requires each to report its own finding, to report neither the
+other's, and to say in words which population it did not measure.
+`scripts/ci/rule-proof-check --strict` and `scripts/ci/claim-proof-check --strict` each report
+their population with its denominator; `bin/majordomus doctor` prints the rule tally.

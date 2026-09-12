@@ -12963,11 +12963,19 @@
               "type": "string"
             },
             "description": "Runnable commands of the command line that no capability claims, in command order."
+          },
+          "unclassified": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Of those, the ones [`crate::cli::local::LOCAL`] does not explain either: a command\nthat is neither the projection of a capability nor declared command-line-only with\na reason. Empty is the closure the rule asks for; anything here is an operation\nthat left the API by accident rather than by decision."
           }
         },
         "required": [
           "rows",
-          "unbacked"
+          "unbacked",
+          "unclassified"
         ],
         "description": "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\"."
       },
@@ -19493,6 +19501,11 @@
           "on-demand": {
             "type": "boolean",
             "description": "True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.",
+            "default": false
+          },
+          "at-finish": {
+            "type": "boolean",
+            "description": "True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \"is what the public is being served still a projection of\nthe trunk\" has no answer a commit can give, and its moment is when a session\nclaims to be done.",
             "default": false
           },
           "implies": {

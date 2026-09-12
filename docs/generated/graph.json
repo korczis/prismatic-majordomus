@@ -1935,14 +1935,6 @@
         "external": true
       },
       {
-        "id": "file:docs/COVERAGE.md",
-        "kind": "file",
-        "label": "COVERAGE.md",
-        "summary": "named by the layer; not an object of this index",
-        "source": "docs/COVERAGE.md",
-        "external": true
-      },
-      {
         "id": "file:scripts/ci-plan",
         "kind": "file",
         "label": "ci-plan",
@@ -2444,14 +2436,6 @@
         "label": "why.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/why.html",
-        "external": true
-      },
-      {
-        "id": "file:test/cases/132_coverage_differential.sh",
-        "kind": "file",
-        "label": "132_coverage_differential.sh",
-        "summary": "named by the layer; not an object of this index",
-        "source": "test/cases/132_coverage_differential.sh",
         "external": true
       },
       {
@@ -3794,6 +3778,33 @@
           "tags": [
             "coordination",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0055",
+        "kind": "adr",
+        "label": "adr-0055",
+        "summary": "Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0055",
+        "source": ".ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "related": [
+            "rule:project.accumulation-is-measured",
+            "rule:project.destructive-sweeps-fail-closed",
+            "rule:project.reclaim-only-what-you-own",
+            "rule:project.every-wait-is-bounded",
+            "rule:project.worktree-topology",
+            "test:test/cases/276_disk_is_bounded.sh",
+            "test:test/cases/131_backlog_hygiene.sh"
+          ],
+          "tags": [
+            "operations",
+            "safety",
+            "worktrees",
+            "ci"
           ]
         }
       },
@@ -9196,6 +9207,14 @@
         "source": "docs/CONTINUITY.md"
       },
       {
+        "id": "majordomus://document/docs/COVERAGE.md",
+        "kind": "document",
+        "label": "docs/COVERAGE.md",
+        "summary": "Coverage: one measurement, two questions",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOVERAGE.md",
+        "source": "docs/COVERAGE.md"
+      },
+      {
         "id": "majordomus://document/docs/DESIGN.md",
         "kind": "document",
         "label": "docs/DESIGN.md",
@@ -10228,6 +10247,14 @@
         "source": "docs/claims/models-routing-explains-itself.md"
       },
       {
+        "id": "majordomus://document/docs/claims/new-code-is-covered.md",
+        "kind": "document",
+        "label": "docs/claims/new-code-is-covered.md",
+        "summary": "Every executable line, function and region a change adds or touches in the Rust crate is covered by a test; new debt is refused and untouched legacy debt is left alone",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fnew-code-is-covered.md",
+        "source": "docs/claims/new-code-is-covered.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/no-counts-in-context.md",
         "kind": "document",
         "label": "docs/claims/no-counts-in-context.md",
@@ -11255,6 +11282,45 @@
             "mcp"
           ],
           "weight": 30
+        }
+      },
+      {
+        "id": "majordomus://feature/coverage",
+        "kind": "feature",
+        "label": "coverage",
+        "summary": "New code is covered, measured once and asked two questions",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Fcoverage",
+        "source": ".ai/repo/features/coverage.md",
+        "status": "stable",
+        "facts": {
+          "areas": [
+            "verification"
+          ],
+          "claims": [
+            "new-code-is-covered"
+          ],
+          "cockpit": [],
+          "commands": [],
+          "docs": [
+            "docs/COVERAGE.md"
+          ],
+          "featured": false,
+          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a full-coverage domain, and — the invariant of",
+          "modules": [],
+          "related": [
+            "doctrine",
+            "ci"
+          ],
+          "rules": [
+            "project.new-code-is-covered"
+          ],
+          "short_title": "Coverage",
+          "tags": [
+            "coverage",
+            "testing"
+          ],
+          "use_cases": [],
+          "weight": 72
         }
       },
       {
@@ -27215,6 +27281,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.publication-currency@1",
+        "kind": "rule",
+        "label": "majordomus.publication-currency@1",
+        "summary": "A session does not finish behind its own published site",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.publication-currency%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.completion-gates@1"
+          ],
+          "tags": [
+            "tasks",
+            "completion",
+            "deployment",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.questions-store-integrity@1",
         "kind": "rule",
         "label": "majordomus.questions-store-integrity@1",
@@ -27530,6 +27617,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "kind": "rule",
+        "label": "project.a-diagram-is-drawn-not-typed@1",
+        "summary": "An architectural relationship in a published document is drawn, never typed in box art",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-diagram-is-drawn-not-typed%401",
+        "source": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-once@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "documentation",
+            "diagrams",
+            "web",
+            "accessibility"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -27593,18 +27702,21 @@
         }
       },
       {
-        "id": "majordomus://rule/project.accumulation-is-measured@1",
+        "id": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "rule",
-        "label": "project.accumulation-is-measured@1",
+        "label": "project.accumulation-is-measured@2",
         "summary": "Everything that accumulates is measured, bounded and reaped by a committed command",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.accumulation-is-measured%401",
-        "source": ".ai/repo/rules/project/accumulation-is-measured.v1.md",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.accumulation-is-measured%402",
+        "source": ".ai/repo/rules/project/accumulation-is-measured.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [
             "project.worktree-topology@1",
-            "project.work-is-claimed-before-it-is-built@1"
+            "project.work-is-claimed-before-it-is-built@1",
+            "project.destructive-sweeps-fail-closed@1",
+            "project.reclaim-only-what-you-own@1",
+            "project.every-wait-is-bounded@1"
           ],
           "tags": [
             "operations",
@@ -27613,7 +27725,8 @@
             "safety",
             "agents",
             "coordination",
-            "ci"
+            "ci",
+            "disk"
           ]
         }
       },
@@ -28270,6 +28383,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.navigation-is-declared-once@1",
+        "kind": "rule",
+        "label": "project.navigation-is-declared-once@1",
+        "summary": "The site's navigation is declared once, and every projection derives from that declaration",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.navigation-is-declared-once%401",
+        "source": ".ai/repo/rules/project/navigation-is-declared-once.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-once@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "web",
+            "navigation",
+            "projections",
+            "documentation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.never-author-identity@1",
         "kind": "rule",
         "label": "project.never-author-identity@1",
@@ -28323,6 +28458,24 @@
           "tags": [
             "records",
             "continuity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.new-code-is-covered@1",
+        "kind": "rule",
+        "label": "project.new-code-is-covered@1",
+        "summary": "New and changed executable code is covered by a test; legacy debt may only shrink",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.new-code-is-covered%401",
+        "source": ".ai/repo/rules/project/new-code-is-covered.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "coverage",
+            "testing",
+            "doctrine"
           ]
         }
       },
@@ -31562,6 +31715,13 @@
         "source": "test/cases/131_models.sh"
       },
       {
+        "id": "majordomus://test/test/cases/132_coverage_differential.sh",
+        "kind": "test",
+        "label": "test/cases/132_coverage_differential.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F132_coverage_differential.sh",
+        "source": "test/cases/132_coverage_differential.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "kind": "test",
         "label": "test/cases/132_health_sees_a_stopped_writer.sh",
@@ -31847,6 +32007,34 @@
         "label": "test/cases/271_adr_allocation.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F271_adr_allocation.sh",
         "source": "test/cases/271_adr_allocation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
+        "kind": "test",
+        "label": "test/cases/272_diagrams_are_drawn.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F272_diagrams_are_drawn.sh",
+        "source": "test/cases/272_diagrams_are_drawn.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
+        "kind": "test",
+        "label": "test/cases/273_navigation_is_declared_once.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F273_navigation_is_declared_once.sh",
+        "source": "test/cases/273_navigation_is_declared_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/275_publication_is_current.sh",
+        "kind": "test",
+        "label": "test/cases/275_publication_is_current.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F275_publication_is_current.sh",
+        "source": "test/cases/275_publication_is_current.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "test",
+        "label": "test/cases/276_disk_is_bounded.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F276_disk_is_bounded.sh",
+        "source": "test/cases/276_disk_is_bounded.sh"
       },
       {
         "id": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -38008,6 +38196,46 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0055",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://test/test/cases/131_backlog_hygiene.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -39974,23 +40202,23 @@
       },
       {
         "source": "majordomus://claim/new-code-is-covered",
-        "target": "file:docs/COVERAGE.md",
-        "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/new-code-is-covered",
         "target": "file:scripts/rust-coverage",
         "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/new-code-is-covered",
-        "target": "file:test/cases/132_coverage_differential.sh",
-        "kind": "tested_by"
+        "target": "kind:claim",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://claim/new-code-is-covered",
-        "target": "kind:claim",
-        "kind": "is_a"
+        "target": "majordomus://document/docs/COVERAGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "majordomus://test/test/cases/132_coverage_differential.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/no-counts-in-context",
@@ -42198,6 +42426,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/COVERAGE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/DESIGN.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -42843,6 +43076,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/new-code-is-covered.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/no-counts-in-context.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -43264,6 +43502,11 @@
       },
       {
         "source": "majordomus://feature/coordination",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/coverage",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -47928,6 +48171,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.publication-currency@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.publication-currency@1",
+        "target": "majordomus://rule/majordomus.completion-gates@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.questions-store-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -48093,6 +48346,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -48133,17 +48401,32 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "depends_on"
       },
@@ -48543,6 +48826,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.navigation-is-declared-once@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-is-declared-once@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-is-declared-once@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.never-author-identity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -48559,6 +48857,11 @@
       },
       {
         "source": "majordomus://rule/project.never-store-transcripts@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.new-code-is-covered@1",
         "target": "kind:rule",
         "kind": "is_a"
       },
@@ -49443,6 +49746,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/132_coverage_differential.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -49644,6 +49952,26 @@
       },
       {
         "source": "majordomus://test/test/cases/271_adr_allocation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/275_publication_is_current.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/276_disk_is_bounded.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -53304,8 +53632,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1665,
-      "edges": 3732,
+      "nodes": 1676,
+      "edges": 3760,
       "acyclic": true,
       "truncated": false
     }

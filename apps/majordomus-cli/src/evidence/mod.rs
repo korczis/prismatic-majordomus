@@ -584,6 +584,14 @@ pub struct Execution {
     pub command: String,
 }
 
+/// A ledger holds one execution per test, so the test identifies it; the label and the
+/// identity are the same string because there is nothing else to read it by.
+impl crate::order::Ordered for Execution {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.test, &self.test)
+    }
+}
+
 impl Execution {
     /// Does the test's source still hash to what was recorded?
     ///
@@ -1168,12 +1176,7 @@ fn claims_of(index: &Index) -> Vec<IndexedClaim> {
 /// an unanswerable comparison is why [`ProofState`] has to be able to say it does not know.
 fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
     let git = |args: &[&str]| -> Option<Vec<String>> {
-        let out = std::process::Command::new("git")
-            .arg("-C")
-            .arg(root)
-            .args(args)
-            .output()
-            .ok()?;
+        let out = crate::git::read_only(root).args(args).output().ok()?;
         if !out.status.success() {
             return None;
         }
