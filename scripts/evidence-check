@@ -12,17 +12,45 @@
 #   scripts/evidence-check --json          the report as JSON, from the capability itself
 #   scripts/evidence-check --strict        every unsupported guarantee fails, baseline ignored
 #   scripts/evidence-check --baseline      rewrite the baseline from what is found now
+#   scripts/evidence-check --repo <path>   judge that repository instead of this one
 #
-# WHY THIS IS ADVISORY TODAY, AND WHAT TIGHTENS IT
+# WHAT COUNTS AS A REGRESSION, AND WHY IT IS NOT MEMBERSHIP
 #
-# The ledger starts empty, so on the day this gate arrives every one of the 135 guaranteed
-# claims is `not_run` — which is true, and which as a blocking gate would mean nothing
-# could be merged by anyone until a full suite run had been recorded. So existing debt is
-# recorded in .ai/repo/evidence-baseline.txt and the ratchet is the usual one: a claim in
-# the baseline is reported as known and does not fail; a claim that is not is a regression
-# and does fail; a baseline line that no longer matches is reported as stale so the ratchet
-# tightens instead of rotting. Recording a full run and rewriting the baseline shrinks it.
-# `--strict` is the end state, and CI may switch to it once the baseline is empty.
+# The first version of this ratchet asked one question: is this unsupported claim in the
+# baseline list? If not, regression. That is the wrong question, and it made the gate fire
+# on the wrong event. The baseline lists the guarantees that were unsupported on the day it
+# was written; a claim written *after* that day is absent from the list for the only reason
+# a claim can be absent from a snapshot of the past — it did not exist yet. So every newly
+# merged guaranteed claim was reported as having "lost the evidence that supported them",
+# evidence it had never had, and reddened the trunk for every branch that merged after it. A
+# ratchet whose alarm fires on growth rather than on regression measures the wrong thing: it
+# taxes writing claims down, which is the behaviour the matrix exists to reward.
+#
+# So the subject is not a set of names but a *state per claim*, and the baseline records
+# both halves: which guarantees the recorded evidence supported, and which it did not. Two
+# things are then refused, and each is a real loss rather than a change of size:
+#
+#   lost      a claim the baseline recorded as SUPPORTED, and the evidence no longer
+#             supports. That claim had a proof and does not now. This is the regression the
+#             gate was always meant to name, and membership could never see it, because a
+#             claim losing its proof enters the unsupported set exactly as a new claim does.
+#
+#   withdrawn the repository proves fewer guarantees than the baseline records, with no
+#             single claim having lost anything — a supported guarantee was deleted from
+#             the matrix, or renamed. Nothing is "unproven", the denominator simply got
+#             smaller, which is how a ratchet rots without ever going red. A shrinking
+#             subject makes every ratchet shrink for free, and this repository has paid for
+#             that lesson elsewhere; it is worth one line of arithmetic here.
+#
+# And one thing is deliberately NOT refused: a guaranteed claim this baseline never knew,
+# arriving without a recorded run. That is new debt, and it is reported and counted, but it
+# does not fail, because refusing it is precisely the broken behaviour above — it would
+# block every branch that writes a claim until a full suite run had been recorded and the
+# baseline rewritten on the trunk, which no branch can do. New debt is admitted to the
+# baseline by `--baseline`, in its own commit, with the reason; the ratchet then holds it.
+# The limit of that is stated plainly: a claim promoted from `advisory` to `guaranteed`
+# without a run is also new debt and is also only reported. `--strict` refuses all of it and
+# is the end state, reachable when the baseline's unsupported half is empty.
 #
 # The distinction the report keeps is the one the whole subsystem exists for: `proven` (a
 # passing run, and the diff against its own commit is empty but for the ledger's own row —
@@ -34,18 +62,21 @@ set -eu
 set -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BASELINE="$ROOT/.ai/repo/evidence-baseline.txt"
+REPO="$ROOT"
 JSON=0; WRITE=0; STRICT=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) JSON=1; shift ;;
     --baseline|--write-baseline) WRITE=1; shift ;;
     --strict) STRICT=1; shift ;;
-    --help|-h) sed -n '2,28p' "$0"; exit 0 ;;
+    --repo) [ $# -ge 2 ] || { echo "evidence-check: --repo needs a path" >&2; exit 2; }
+            REPO="$(cd "$2" && pwd)"; shift 2 ;;
+    --help|-h) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "evidence-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
 
+BASELINE="$REPO/.ai/repo/evidence-baseline.txt"
 cd "$ROOT"
 
 # The executable is the one implementation; this script renders and ratchets its answer and
@@ -61,9 +92,9 @@ if [ ! -x "$RB" ]; then
 fi
 
 TMP="$(mktemp "${TMPDIR:-/tmp}/mj-evidence.XXXXXX")"
-trap 'rm -f "$TMP" "$TMP.now" "$TMP.base" "$TMP.new" "$TMP.stale"' EXIT
+trap 'rm -f "$TMP" "$TMP".*' EXIT
 
-if ! "$RB" evidence show --repo "$ROOT" --format json >"$TMP" 2>/dev/null; then
+if ! "$RB" evidence show --repo "$REPO" --format json >"$TMP" 2>/dev/null; then
   echo 'evidence-check: the executable could not answer evidence show' >&2
   exit 12
 fi
@@ -94,21 +125,37 @@ if [ "$(jq -r '.subject.complete' "$TMP")" != "true" ]; then
   exit 12
 fi
 
-jq -r '.findings[].claim' "$TMP" | LC_ALL=C sort > "$TMP.now"
-total="$(wc -l < "$TMP.now" | tr -d ' ')"
+# The state per guaranteed claim, in two files: the ones the evidence does not support (the
+# findings), and the ones it does (every other guarantee). Only `guaranteed` is judged —
+# advisory, planned and rejected already say that a current proof is not what they claim.
+jq -r '.findings[].claim' "$TMP" | LC_ALL=C sort > "$TMP.now_unsup"
+jq -r '.claims[] | select(.status == "guaranteed") | .id' "$TMP" | LC_ALL=C sort > "$TMP.guaranteed"
+LC_ALL=C comm -23 "$TMP.guaranteed" "$TMP.now_unsup" > "$TMP.now_sup"
+lines() { wc -l < "$1" | tr -d ' '; }
+total="$(lines "$TMP.now_unsup")"
+supported="$(lines "$TMP.now_sup")"
 claims="$(jq -r '.claims | length' "$TMP")"
 
 if [ "$WRITE" = 1 ]; then
   {
-    echo "# Claims that declare a guarantee the recorded evidence does not support."
+    echo "# Every claim that declares a guarantee, and whether a recorded run supported it"
+    echo "# when this file was written."
     echo "#"
-    echo "# Written by scripts/evidence-check --baseline; never by hand. A claim here is"
-    echo "# known debt and does not fail the gate; a claim not here is a regression and"
-    echo "# does. The set may only shrink, and it shrinks by recording a run that proves"
-    echo "# the claim — never by adding a line."
-    cat "$TMP.now"
+    echo "# Written by scripts/evidence-check --baseline; never by hand. A bare line is a"
+    echo "# guarantee the recorded evidence did not support — known debt, which does not fail"
+    echo "# the gate. A line marked '+' is a guarantee it did support — a proof this"
+    echo "# repository may not lose, and losing it is what the gate refuses."
+    echo "#"
+    echo "# Both halves are here because the ratchet is not membership. A claim this file"
+    echo "# does not name at all is a claim written after it, not a claim that lost its"
+    echo "# evidence, and the gate says so instead of reddening the trunk for it."
+    echo "#"
+    echo "# --- supported: a run was recorded, and the gate refuses losing it"
+    sed 's/^/+/' "$TMP.now_sup"
+    echo "# --- unsupported: known debt, paid by recording a run — never by adding a line"
+    cat "$TMP.now_unsup"
   } > "$BASELINE"
-  echo "evidence-check: baseline written, $total unsupported claim(s) of $claims"
+  echo "evidence-check: baseline written, $supported supported and $total unsupported guarantee(s) of $claims claim(s) examined"
   exit 0
 fi
 
@@ -134,28 +181,65 @@ if [ ! -f "$BASELINE" ]; then
   echo "evidence-check: $BASELINE is absent; run scripts/evidence-check --baseline" >&2
   exit 12
 fi
-grep -v '^#' "$BASELINE" | grep -v '^$' | LC_ALL=C sort > "$TMP.base"
 
-LC_ALL=C comm -23 "$TMP.now" "$TMP.base" > "$TMP.new"
-LC_ALL=C comm -13 "$TMP.now" "$TMP.base" > "$TMP.stale"
-new="$(wc -l < "$TMP.new" | tr -d ' ')"
-stale="$(wc -l < "$TMP.stale" | tr -d ' ')"
+# The baseline's two halves. A file written before this gate learned the difference has no
+# '+' lines at all; it then reads as "nothing was recorded as supported", under which
+# nothing can be lost and nothing withdrawn. That is permissive and it is honest — such a
+# file genuinely does not say what was supported — and `--baseline` replaces it.
+grep -v '^#' "$BASELINE" | grep -v '^[[:space:]]*$' > "$TMP.base_all" || true
+sed -n 's/^+//p' "$TMP.base_all" | LC_ALL=C sort > "$TMP.base_sup"
+{ grep -v '^+' "$TMP.base_all" || true; } | LC_ALL=C sort > "$TMP.base_unsup"
+sed 's/^+//' "$TMP.base_all" | LC_ALL=C sort -u > "$TMP.base_known"
+base_sup="$(lines "$TMP.base_sup")"
 
-if [ "$stale" -gt 0 ]; then
-  echo "evidence-check: $stale baseline line(s) now supported — tighten the baseline:"
-  sed 's/^/      /' "$TMP.stale"
+# (b) lost: the baseline recorded a proof for this claim and the evidence no longer carries
+#     one. Membership could never see this — a claim losing its proof joins the unsupported
+#     set exactly as a newly written claim does, which is why the old predicate could only
+#     be right by accident.
+LC_ALL=C comm -12 "$TMP.now_unsup" "$TMP.base_sup" > "$TMP.lost"
+# (c) withdrawn: a guarantee the baseline recorded as supported is no longer a guaranteed
+#     claim of this matrix at all. Nothing became unproven; the denominator shrank.
+LC_ALL=C comm -23 "$TMP.base_sup" "$TMP.guaranteed" > "$TMP.withdrawn"
+# debt paid, and claims the baseline never knew: both are reported, neither fails.
+LC_ALL=C comm -12 "$TMP.now_sup" "$TMP.base_unsup" > "$TMP.paid"
+LC_ALL=C comm -23 "$TMP.now_unsup" "$TMP.base_known" > "$TMP.new_unsup"
+lost="$(lines "$TMP.lost")"
+withdrawn="$(lines "$TMP.withdrawn")"
+paid="$(lines "$TMP.paid")"
+new_unsup="$(lines "$TMP.new_unsup")"
+
+if [ "$paid" -gt 0 ]; then
+  echo "evidence-check: $paid baseline line(s) now supported — tighten the baseline:"
+  sed 's/^/      /' "$TMP.paid"
   echo "      scripts/evidence-check --baseline"
 fi
 
-if [ "$new" -gt 0 ]; then
-  echo "evidence-check: $new guaranteed claim(s) lost the evidence that supported them:"
+if [ "$new_unsup" -gt 0 ]; then
+  echo "evidence-check: $new_unsup guaranteed claim(s) the baseline does not know, with no recorded run."
+  echo "      New debt, not a regression: record a run, or admit them with --baseline in their own commit."
+  sed 's/^/      /' "$TMP.new_unsup"
+fi
+
+fail=0
+if [ "$lost" -gt 0 ]; then
+  fail=1
+  echo "evidence-check: $lost guaranteed claim(s) lost the evidence that supported them:"
   while IFS= read -r c; do
     [ -n "$c" ] || continue
     jq -r --arg c "$c" '.findings[] | select(.claim == $c)
       | "  \(.claim)\n      \(.reason)\n      reproduce: \(.reproduce // "-")"' "$TMP"
-  done < "$TMP.new"
-  exit 10
+  done < "$TMP.lost"
 fi
 
-echo "evidence-check: no guaranteed claim lost its evidence ($total known, $claims examined)"
+if [ "$withdrawn" -gt 0 ]; then
+  fail=1
+  echo "evidence-check: $withdrawn supported guarantee(s) left the matrix, so this repository proves fewer than the baseline records ($supported now, $base_sup then):"
+  sed 's/^/      /' "$TMP.withdrawn"
+  echo "      A deleted or renamed proof shrinks the subject instead of the debt. Restore the claim,"
+  echo "      or rewrite the baseline in its own commit saying why the guarantee went away."
+fi
+
+[ "$fail" = 0 ] || exit 10
+
+echo "evidence-check: no guaranteed claim lost its evidence ($supported supported, $total unsupported, $claims examined)"
 exit 0

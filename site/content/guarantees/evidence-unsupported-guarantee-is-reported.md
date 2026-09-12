@@ -40,12 +40,28 @@ tallies for the whole matrix, not only the failures, so a reader sees the shape 
 evidence and when it was last recorded. Without a build it exits 12 and says so rather than
 passing quietly.
 
-The ratchet is the one this repository already uses for `pipefail-check` and
-`liveness-check`. A claim in the baseline is known debt and does not fail; a claim that is
-not in it is a regression and does; a baseline line that is now supported is reported as
-stale so the list tightens instead of rotting. The baseline is written by
-`scripts/evidence-check --baseline` and never by hand, and it shrinks in one direction
-only — by recording a run that proves a claim, never by adding a line.
+The ratchet is not membership of a list of names. It was, and that was the defect rather
+than the strictness: the baseline names the guarantees that were unsupported on the day it
+was written, so a claim written after that day is absent from it for the only reason a
+claim can be absent from a snapshot of the past — it did not exist yet. Under membership
+every newly merged guarantee was reported as having lost evidence it had never had, and
+reddened the trunk for every branch that merged afterwards. A ratchet whose alarm fires on
+growth rather than on regression measures the wrong thing.
+
+So the baseline records the state per claim — a `+` line for a guarantee a run supported, a
+bare line for one no run supported — and two things fail the gate. **Lost**: a claim the
+baseline recorded as supported, and the evidence no longer supports; it had a proof and
+does not now, and membership could never see this, because a claim losing its proof joins
+the unsupported set exactly as a new claim does. **Withdrawn**: a supported guarantee that
+is no longer a guaranteed claim of the matrix at all; nothing became unproven, the
+denominator simply shrank, which is how a ratchet rots without ever going red.
+
+A guaranteed claim the baseline never knew, arriving with no recorded run, is reported and
+counted as new debt and does not fail — refusing it is the broken behaviour above. It is
+admitted by `scripts/evidence-check --baseline`, in its own commit, with the reason. A
+baseline line that is now supported is reported so the list tightens instead of rotting.
+The file is written by `--baseline` and never by hand, and its unsupported half shrinks in
+one direction only — by recording a run that proves a claim, never by adding a line.
 
 The gate is declared in `.ai/repo/ci/gates.yaml` under the `structure` job with
 `always: true`, and the `evidence` change class routes the ledger, the baseline, the gate,
@@ -59,6 +75,7 @@ majordomus evidence show --findings --format json # the findings alone, with rea
 scripts/evidence-check                            # the ratcheted verdict, with the tallies
 scripts/evidence-check --strict                   # every unsupported guarantee fails
 scripts/evidence-check --baseline                 # rewrite the baseline from what is found now
+scripts/evidence-check --repo PATH                # judge that repository instead of this one
 ```
 
 Filtering never narrows the tallies: an answer showing one claim still reports how much of
@@ -70,9 +87,10 @@ It is advisory today, and saying otherwise would be the kind of claim this subsy
 exists to refuse. The ledger starts empty, so on the day the gate arrived every guaranteed
 claim was `not_run` — true, and as a blocking gate it would have meant nothing could be
 merged by anybody until a full suite run had been recorded. Every one of those claims is in
-the baseline, so what the gate refuses right now is a regression against that list, not an
-unproven guarantee. `--strict` ignores the baseline and fails on all of them; it is the end
-state, reachable when the baseline is empty, and CI switches to it then.
+the baseline, so what the gate refuses right now is a guarantee that lost its proof or left
+the matrix, not an unproven guarantee. New unproven guarantees are named and counted and do
+not fail. `--strict` ignores the baseline and fails on all of them; it is the end state,
+reachable when the baseline's unsupported half is empty, and CI switches to it then.
 
 The gate does not run anything. It reads what was recorded, so a claim proven by a run
 nobody recorded is indistinguishable from one nobody ran, and the remedy for a finding is
