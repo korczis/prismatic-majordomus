@@ -209,7 +209,7 @@ whose failure leaves the repository in a state the caller did not ask for.
 
 **A commit can now be refused.** The `commit-msg` hook exits 10 and git aborts, printing
 every finding with its code. That cost is ~0.8 s per commit and is paid by every worker in
-this repository, human and agent. The gate costs ~3.5 s over 1755 commits. Both satisfy
+this repository, human and agent. The gate costs 1720 ms over 1788 commits. Both satisfy
 `project.blocking-checks-cheap`; the hook was sized to the moment it runs in, and neither
 reaches a network.
 

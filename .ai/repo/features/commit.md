@@ -27,8 +27,7 @@ the history has not used, a record id the layer does not hold, a `fix` with no t
 its files, a breaking change that explains nothing. `.githooks/commit-msg` asks it with the
 staged paths, which is the one moment the message and the files both exist, and git aborts
 the commit when a finding is an error. `scripts/ci/commit-policy` asks the same judge of the
-history through `majordomus commit history`, which reads 1755 commits in about three
-seconds.
+history through `majordomus commit history`, which reads 1788 commits in about a second.
 
 `majordomus commit scopes` answers which scopes this repository writes about which
 directories, learned from the log. `majordomus commit plan` says what the working tree would

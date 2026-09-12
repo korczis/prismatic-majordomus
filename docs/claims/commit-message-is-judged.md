@@ -34,7 +34,8 @@ repository's own `Diagnostic`. `.githooks/commit-msg` asks it with `git diff --c
 --name-only`, which is the one moment the message and the files both exist — so
 `commit.fix_without_test` can be asked there and is deliberately not asked of the history,
 where the evidence is absent and the judgement would be a guess. `scripts/ci/commit-policy`
-asks `commit.history`, which judges 1755 commits in about three and a half seconds.
+asks `commit.history`, which judges 1788 commits in 992 ms — one process for the range
+rather than one per commit, which is what lets it be a gate rather than a nightly job.
 
 The hook is declared in the policy's `enforcement` list as `commit-policy-on-message`, wired
 by `git-hook:commit-msg`, so `majordomus doctor` holds it the way it holds `doctor-on-commit`

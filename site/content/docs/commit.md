@@ -230,14 +230,21 @@ silently.
 
 <div class="overflow-x-auto" tabindex="0">
 
-| moment | what runs | what it costs |
+| moment | what runs | measured |
 |---|---|---|
-| `commit-msg` | `.githooks/commit-msg` → `commit.validate` with the staged paths | ~0.8 s |
-| a gate | `scripts/ci/commit-policy` → `commit.history` | ~3.5 s over 1755 commits |
+| `commit-msg` | `.githooks/commit-msg` → `commit.validate` with the staged paths | 806 ms |
+| a gate | `scripts/ci/commit-policy` → `commit.history`, twice: the branch and the history | 1720 ms |
 | CI | the `commit-policy` gate, in the `structure` job | as above |
 
 </div>
 
+
+Those are debug-build numbers on a loaded machine, which is the worst case a person meets.
+The three history-reading commands cost about a second each — `commit scopes` 957 ms,
+`commit plan` 926 ms, `commit history` 992 ms over 1788 commits — and **nothing on a hot path
+pays any of it**: `env enter` is 38 ms against a 750 ms budget, `completion query` 11 ms,
+`--help` 10 ms, none of them touching the log. The history is read only where a person is
+already waiting for git.
 
 The hook runs at the one moment the message and the files both exist, which is why
 `fix_requires_test` can be asked there and nowhere else: a fix with no test among its files
