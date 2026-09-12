@@ -222,10 +222,14 @@ are the ones the declaration names.
 |---|---|---|---|
 | `5d81b5c9` | Tomass-MacBook-Pro | primary checkout; registers outward | — (firewall) |
 | `9d652b2c` | jetson (aarch64) | hub | `192.168.100.30:8791`, `100.92.246.32:8791` |
-| `25c9758f` | lundra (x86_64) | hub | `192.168.100.10:8741`, `100.65.22.118:8741` |
+| `25c9758f` | lundra (x86_64) | hub | `192.168.100.10:8791`, `100.65.22.118:8791` |
 
 </div>
 
+
+Both hubs listen on 8791: on lundra, `tailscale serve` already holds the tailnet
+address at 8741 (an HTTPS proxy to loopback), and the rendezvous client speaks plain
+HTTP — a hub port is one nothing else on the machine listens on.
 
 A machine that joins the fleet: `majordomus mesh identity` there, its key into
 `trust.allow`, commit; `scripts/mesh-hub install` if it is to be a hub, and its address
