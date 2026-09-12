@@ -1,7 +1,7 @@
 +++
 title = "majordomus executions events"
 description = "One execution's retained events, oldest first"
-weight = 98
+weight = 99
 [extra]
 route = "/docs/cli/executions/events/"
 command = "majordomus executions events"

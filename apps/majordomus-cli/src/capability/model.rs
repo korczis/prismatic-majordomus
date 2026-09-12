@@ -196,6 +196,14 @@ pub enum WaiverReason {
     /// A benchmark host cannot stage an execution to read, and running the operation in a
     /// loop would measure the work rather than the operation.
     TransientState,
+    /// The capability answers about what this repository has *published*, so its input is a
+    /// release: a version tag, the commit it points at, and the projection committed there.
+    /// A benchmark fixture is a repository that has published nothing, and the honest answer
+    /// in one is a refusal — so the case would time an error path and call it coverage.
+    /// Distinct from [`WaiverReason::ExternalDependency`]: nothing outside this process is
+    /// consulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,
+    /// it simply does not exist yet where the benchmark runs.
+    PublishedHistory,
 }
 
 /// Whether the capability is a benchmark target. `Required` is the default and the norm:

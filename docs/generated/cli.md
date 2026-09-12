@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.5.0 -->
+     Generator: majordomus-cli 0.6.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -104,7 +104,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus release`](#majordomus-release) | `/docs/cli/release/` | What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both |
 | [`majordomus release changelog`](#majordomus-release-changelog) | `/docs/cli/release/changelog/` | The changelog, composed from the layer's release records, the decisions dated inside each release's window, and the conventional commits in its range |
 | [`majordomus release version`](#majordomus-release-version) | `/docs/cli/release/version/` | The version the two writers state, whether they agree, and the bump the commits since the last release imply |
-| [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in both places at once, to the bump the commits imply or to one you name |
+| [`majordomus release analyze`](#majordomus-release-analyze) | `/docs/cli/release/analyze/` | What the public contract did since the last release, and the smallest version this tree may therefore declare |
+| [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in both places at once, to at least what the public contract requires |
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
 | [`majordomus run`](#majordomus-run) | `/docs/cli/run/` | Run a capability as an execution and follow it: its steps, its progress and its output as they happen |
@@ -2812,7 +2813,7 @@ Examples:
 
 What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both
 
-Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release bump`](#majordomus-release-bump).
+Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release bump`](#majordomus-release-bump).
 
 ```text
 majordomus release [OPTIONS] [COMMAND]
@@ -2882,7 +2883,7 @@ majordomus release version [OPTIONS]
 
 Examples:
 
-- **The version, and the one the commits imply** — The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state, whether they agree, and what the conventional commits since the last release imply the next one should be.
+- **The version, and the one the commits imply** — The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.
 
   ```console
   $ majordomus release version --format json
@@ -2890,10 +2891,39 @@ Examples:
 
   Verified: exits 0; prints one JSON document carrying /declared, /agree, /bump.
 
+<a id="majordomus-release-analyze"></a>
+## `majordomus release analyze`
+
+What the public contract did since the last release, and the smallest version this tree may therefore declare
+
+```text
+majordomus release analyze [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--since` | `<REF>` | — | Measure against this ref instead of the last release |
+| `--explain` | flag | — | Name every movement of the contract and the reason it counts for what it does |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | How to render the answer (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What the contract did, and the smallest version it allows** — The public capability surface of this tree against the one the last release published, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command or required field a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. The same value answers `GET /api/v1/release/analysis`, the `majordomus_release_analysis` MCP tool, the Cockpit's Release page and the `version-surface` gate. A repository that has published nothing has no baseline to measure against, and says so with exit 12 rather than reporting an empty diff — which would read as "nothing changed".
+
+  ```console
+  $ majordomus release analyze --format json
+  ```
+
+  Verified: exits 12.
+
 <a id="majordomus-release-bump"></a>
 ## `majordomus release bump`
 
-Raise the version in both places at once, to the bump the commits imply or to one you name
+Raise the version in both places at once, to at least what the public contract requires
 
 ```text
 majordomus release bump [OPTIONS]
@@ -2901,8 +2931,8 @@ majordomus release bump [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--level` | `<LEVEL>` | — | Raise by this much instead of by what the commits imply |
-| `--exact` | `<VERSION>` | — | Set exactly this version, instead of raising the current one |
+| `--level` | `<LEVEL>` | — | Raise by this much instead of by the measured minimum; never below it |
+| `--exact` | `<VERSION>` | — | Set exactly this version; refused when it is below the measured minimum |
 | `--dry-run` | flag | — | Say what would change and write nothing |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
@@ -2912,7 +2942,7 @@ majordomus release bump [OPTIONS]
 
 Examples:
 
-- **Raising it, in both places, once** — The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. A repository that declares no version — the example runs in one with no crate — cannot be raised, and says so with exit 12 rather than inventing a number to raise from.
+- **Raising it, in both places, once** — The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.
 
   ```console
   $ majordomus release bump --dry-run

@@ -15,6 +15,15 @@ use crate::model::Object;
 pub const MANIFEST: &str = "apps/majordomus-cli/Cargo.toml";
 /// The shell tool, which prints its own version and cannot read the manifest at run time.
 pub const ENTRY: &str = "bin/majordomus";
+/// The lock file, which records the crate's own version alongside every dependency's.
+///
+/// Not a third *declaration* — cargo writes it from the manifest, and nobody chooses the
+/// value. It is a third *site*, because the lock is tracked and the build runs `--locked`:
+/// a bump that raised the manifest and left the lock behind made the next build fail with
+/// `cannot update the lock file ... because --locked was passed`, which reads as a toolchain
+/// fault rather than as a half-applied bump. The writer owns it for the same reason it owns
+/// the other two.
+pub const LOCK: &str = "apps/majordomus-cli/Cargo.lock";
 
 /// How much a set of changes raises a version.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -52,12 +61,20 @@ impl Bump {
     }
 }
 
-/// The bump a set of changes implies.
+/// What a set of conventional commits *says about itself*.
 ///
 /// The rule is the conventional-commit rule and nothing more: a breaking change is major, a
-/// feature is minor, anything else is patch, and no commits at all is none. It is a total
-/// function of the changes, which is what makes the answer arguable from the evidence rather
-/// than a judgement the reader has to trust.
+/// feature is minor, anything else is patch, and no commits at all is none.
+///
+/// # This is evidence, not authority
+///
+/// It used to decide what `release bump` wrote, and that was the defect this subsystem
+/// exists to remove. A commit message is a label a person chose, and a capability deleted
+/// under a `refactor:` heading was a patch to this function and a broken caller to everyone
+/// else. The compatibility level is now measured from the public contract by
+/// [`crate::release::compat::analyze`]; this answer is carried beside it as
+/// [`crate::release::compat::CommitEvidence`], and when the two disagree the plan says which
+/// one understated the change. Nothing decides a version from this alone.
 pub fn bump_of(changes: &[Change]) -> Bump {
     if changes.is_empty() {
         return Bump::None;
@@ -72,7 +89,10 @@ pub fn bump_of(changes: &[Change]) -> Bump {
 }
 
 /// A semantic version, only as much as this needs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+///
+/// Ordered by the three numbers, which is what lets the writer refuse a version smaller than
+/// the one the contract requires rather than only a *bump* smaller than required.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Version {
     /// Major.
     pub major: u64,
@@ -101,10 +121,10 @@ impl Version {
 
     /// This version raised by `bump`.
     ///
-    /// Zero-major is not special-cased: a project at `0.x` that declares a breaking change
-    /// gets `1.0.0`, and if that is not what the maintainer meant, the maintainer names the
-    /// bump instead. Guessing differently below 1.0 is a convention some projects hold and
-    /// others do not, and silently applying it would make the derived answer unarguable.
+    /// Arithmetic and nothing else: zero-major is not special-cased here, because whether a
+    /// breaking change below 1.0 costs a major or a minor is a *policy* question and this
+    /// repository answers it in exactly one place, [`crate::release::compat::Policy`]. A
+    /// second answer here is the shape this subsystem was built to remove.
     pub fn raised(self, bump: Bump) -> Version {
         match bump {
             Bump::None => self,
@@ -123,6 +143,31 @@ impl Version {
                 patch: 0,
             },
         }
+    }
+}
+
+impl Version {
+    /// This version raised by a measured compatibility impact.
+    ///
+    /// The bridge between the engine's verdict and the arithmetic: the policy has already
+    /// decided what a `0.x` breaking change costs, so this only has to apply it.
+    ///
+    /// ```
+    /// use majordomus_cli::release::compat::Impact;
+    /// use majordomus_cli::release::version::Version;
+    /// let v = Version::parse("0.5.0").unwrap();
+    /// assert_eq!(v.raised_to(Impact::Minor).to_string(), "0.6.0");
+    /// assert_eq!(v.raised_to(Impact::Major).to_string(), "1.0.0");
+    /// assert_eq!(v.raised_to(Impact::None).to_string(), "0.5.0");
+    /// ```
+    pub fn raised_to(self, impact: crate::release::compat::Impact) -> Version {
+        use crate::release::compat::Impact;
+        self.raised(match impact {
+            Impact::None => Bump::None,
+            Impact::Patch => Bump::Patch,
+            Impact::Minor => Bump::Minor,
+            Impact::Major => Bump::Major,
+        })
     }
 }
 
@@ -149,6 +194,39 @@ pub fn declared(root: &Path) -> Option<String> {
                 if let Some(v) = rest.split('"').nth(1) {
                     return Some(v.to_string());
                 }
+            }
+        }
+    }
+    None
+}
+
+/// The version the lock file records for this crate.
+///
+/// Only the entry whose `name` is this crate's: a dependency that happens to be at the same
+/// version is a different package and is never read or written here.
+///
+/// ```
+/// use majordomus_cli::release::version::locked;
+/// let dir = tempfile::tempdir().unwrap();
+/// // No lock file at all is `None`, never a guess.
+/// assert_eq!(locked(dir.path()), None);
+/// ```
+pub fn locked(root: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(root.join(LOCK)).ok()?;
+    let mut in_package = false;
+    for line in text.lines() {
+        let line = line.trim();
+        if line == "[[package]]" {
+            in_package = false;
+            continue;
+        }
+        if line == "name = \"majordomus-cli\"" {
+            in_package = true;
+            continue;
+        }
+        if in_package {
+            if let Some(rest) = line.strip_prefix("version") {
+                return rest.split('"').nth(1).map(|v| v.to_string());
             }
         }
     }
@@ -192,6 +270,34 @@ pub fn write(root: &Path, to: &str) -> std::io::Result<Vec<String>> {
     if out != text {
         std::fs::write(&manifest, out)?;
         written.push(MANIFEST.to_string());
+    }
+
+    // The lock's own entry, and only it: the `version` line that follows
+    // `name = "majordomus-cli"`. Every other `version` in the file belongs to a dependency.
+    let lock = root.join(LOCK);
+    if let Ok(text) = std::fs::read_to_string(&lock) {
+        let mut out = String::with_capacity(text.len());
+        let mut here = false;
+        let mut done = false;
+        for line in text.lines() {
+            let trimmed = line.trim();
+            if trimmed == "[[package]]" {
+                here = false;
+            } else if trimmed == "name = \"majordomus-cli\"" {
+                here = true;
+            } else if here && !done && trimmed.starts_with("version") && trimmed.contains('"') {
+                out.push_str(&format!("version = \"{to}\"\n"));
+                here = false;
+                done = true;
+                continue;
+            }
+            out.push_str(line);
+            out.push('\n');
+        }
+        if out != text {
+            std::fs::write(&lock, out)?;
+            written.push(LOCK.to_string());
+        }
     }
 
     let entry = root.join(ENTRY);
@@ -313,7 +419,7 @@ mod tests {
     }
 
     #[test]
-    fn writing_touches_only_the_two_lines_that_state_the_version() {
+    fn writing_touches_only_the_lines_that_state_the_version() {
         let dir = std::env::temp_dir().join(format!("mj-version-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("apps/majordomus-cli")).unwrap();
@@ -329,11 +435,25 @@ mod tests {
             "#!/usr/bin/env bash\n# was 0.3.1 once\nMJ_VERSION=\"0.3.1\"\necho hi\n",
         )
         .unwrap();
+        // The lock: this crate's entry, and a dependency that happens to be at the same
+        // version, which must not move.
+        std::fs::write(
+            dir.join(LOCK),
+            "[[package]]\nname = \"serde\"\nversion = \"0.3.1\"\n\n[[package]]\nname = \"majordomus-cli\"\nversion = \"0.3.1\"\ndependencies = [\n \"serde\",\n]\n",
+        )
+        .unwrap();
 
         let written = write(&dir, "0.4.0").unwrap();
-        assert_eq!(written.len(), 2, "both writers, once each");
+        assert_eq!(written.len(), 3, "all three sites, once each");
         assert_eq!(declared(&dir).as_deref(), Some("0.4.0"));
         assert_eq!(tool(&dir).as_deref(), Some("0.4.0"));
+        assert_eq!(locked(&dir).as_deref(), Some("0.4.0"));
+
+        let lock = std::fs::read_to_string(dir.join(LOCK)).unwrap();
+        assert!(
+            lock.contains("name = \"serde\"\nversion = \"0.3.1\""),
+            "a dependency at the same version was rewritten: {lock}"
+        );
 
         let manifest = std::fs::read_to_string(dir.join(MANIFEST)).unwrap();
         assert!(

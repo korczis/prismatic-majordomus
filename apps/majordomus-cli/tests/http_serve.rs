@@ -191,6 +191,65 @@ fn mcp_call(cwd: &std::path::Path, tool: &str, args: Value) -> Value {
     frames[1]["result"]["structuredContent"].clone()
 }
 
+/// The release analysis is one value, and every machine surface renders that one.
+///
+/// The whole subsystem rests on there being a single verdict: if HTTP and MCP could answer
+/// differently, the gate's refusal and the Cockpit's badge would be two opinions again,
+/// which is the defect ADR 0051 removed. The fixture has published nothing, so the honest
+/// answer is a refusal with a reason — and the two surfaces must agree on *that* too, which
+/// is the case a happy-path comparison would never reach.
+#[test]
+fn the_release_analysis_is_one_value_on_every_surface() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+
+    let (status, via_http) = s.get("/api/v1/release/analysis");
+    let via_mcp = mcp_call(&f.root(), "majordomus_release_analysis", json!({}));
+
+    if status == 200 {
+        assert_eq!(
+            via_http, via_mcp,
+            "HTTP and MCP must not be two opinions about one contract"
+        );
+        // A repository that has published something: the plan is the canonical shape, and
+        // the fields the gate and the Cockpit read are the ones declared.
+        for field in [
+            "policy",
+            "baseline",
+            "declared_version",
+            "implied",
+            "required",
+            "declared",
+            "required_version",
+            "status",
+            "breaking",
+            "changes",
+            "commits",
+        ] {
+            assert!(
+                via_http.get(field).is_some(),
+                "the plan is missing `{field}`: {via_http}"
+            );
+        }
+        assert_eq!(via_http["policy"]["schema"], "majordomus/version-policy/v1");
+    } else {
+        // A repository with no release cannot be measured, and says so rather than
+        // answering with an empty diff that would read as "nothing changed" — the false
+        // negative this subsystem exists to refuse. Both surfaces must refuse together:
+        // `mcp_call` yields structured content only for a result, so a null here is the
+        // MCP refusal, and an object would mean MCP answered where HTTP would not.
+        let text = via_http["error"]["message"].as_str().unwrap_or_default();
+        assert!(
+            text.contains("published nothing"),
+            "a refusal must name what was missing rather than blaming the clone: {via_http}"
+        );
+        assert!(
+            via_mcp.is_null(),
+            "HTTP refused and MCP answered; one contract, two verdicts: {via_mcp}"
+        );
+    }
+}
+
 #[test]
 fn mcp_and_http_answer_the_same_capability_with_the_same_result() {
     let f = Fixture::new();

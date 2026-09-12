@@ -1525,6 +1525,23 @@
       "tool": "majordomus_quality"
     },
     {
+      "api_anchor": "/docs/api/#op-release-analysis",
+      "claims": [],
+      "cli": null,
+      "id": "release.analysis",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-analysis/",
+      "slug": "release-analysis",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "What the public contract did, and the smallest version it allows",
+      "tool": "majordomus_release_analysis"
+    },
+    {
       "api_anchor": "/docs/api/#op-release-changelog",
       "claims": [],
       "cli": null,
@@ -2278,11 +2295,11 @@
     ]
   },
   "counts": {
-    "capabilities": 107,
+    "capabilities": 108,
     "claims": 48,
     "modules": 35
   },
-  "generator": "majordomus-cli 0.5.0",
+  "generator": "majordomus-cli 0.6.0",
   "modules": [
     {
       "capabilities": [
@@ -3006,6 +3023,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "release.analysis",
+          "route": "/registry/capabilities/release-analysis/",
+          "slug": "release-analysis"
+        },
         {
           "id": "release.changelog",
           "route": "/registry/capabilities/release-changelog/",

@@ -179,6 +179,7 @@ impl Cockpit {
             "/cockpit/health" => pages::health(ctx),
             "/cockpit/quality" => pages::quality(ctx),
             "/cockpit/artifacts" => pages::artifacts(ctx),
+            "/cockpit/release" => pages::release(ctx),
             "/cockpit/design" => pages::design(ctx),
             "/cockpit/api" => pages::api(ctx),
             "/cockpit/search" => pages::search(ctx, query),

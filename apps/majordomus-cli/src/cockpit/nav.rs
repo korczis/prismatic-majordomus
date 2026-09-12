@@ -59,6 +59,8 @@ pub enum Area {
     Quality,
     /// What the generator writes.
     Artifacts,
+    /// What the public contract did since the last release, and the version it requires.
+    Release,
     /// The design system: what every surface of this tool is rendered with.
     Design,
     /// The HTTP and MCP surfaces.
@@ -161,6 +163,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Artifacts",
             href: "/cockpit/artifacts",
             area: Area::Artifacts,
+        },
+        AreaInfo {
+            id: "release",
+            label: "Release",
+            href: "/cockpit/release",
+            area: Area::Release,
         },
         AreaInfo {
             id: "design",

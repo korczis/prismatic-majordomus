@@ -23,6 +23,7 @@ use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
+use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,
@@ -2802,6 +2803,244 @@ pub fn health(ctx: &Context) -> Page {
     )
     .subtitle("The same verdicts `capabilities validate`, `bench coverage --check` and `generate --check` reach, read through one capability.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Health", None)])
+}
+
+// --------------------------------------------------------------------- release
+
+/// A digest, cut to what a person compares by eye.
+///
+/// `sha256:` and 64 hex characters is 71, and a 320px viewport is about 40 — so the full
+/// value in a table cell is the whole page's overflow. Two fingerprints that differ do so in
+/// the first bytes with overwhelming probability, which is what this cell is read for; the
+/// whole value stays in the JSON every machine surface answers with, where nothing truncates
+/// it. The commit two rows above is abbreviated for the same reason.
+fn short_digest(digest: &str) -> String {
+    match digest.split_once(':') {
+        Some((algo, hex)) => format!("{algo}:{}…", &hex[..hex.len().min(12)]),
+        None => digest.chars().take(12).collect::<String>() + "…",
+    }
+}
+
+/// What the public contract did since the last release, and the smallest version it allows.
+///
+/// Every number here is read from `release.analysis` — the one engine the command line, the
+/// HTTP route, the MCP tool, the CI gate and `release bump` all read. The Cockpit computes
+/// no compatibility of its own and increments no version: the page shows the verdict and the
+/// exact command that acts on it, because raising the version writes tracked files and the
+/// exposure policy keeps repository mutations off every machine surface (ADR 0027).
+pub fn release(ctx: &Context) -> Page {
+    let plan: VersionPlan = match ask(ctx, "release.analysis", json!({})) {
+        Ok(p) => p,
+        // Not `failed`, which answers 500. Every way this capability refuses is a *state of
+        // the repository* — it has published nothing, or its last release predates the
+        // committed registry — and a repository that has not released yet is not a server
+        // error. It is still never rendered as an empty diff, which would read as "nothing
+        // changed": the page says what could not be measured and why.
+        Err(reason) => {
+            return Page::new(
+                Area::Release,
+                "Release",
+                el("div").class("mj-grid").child(card(
+                    "Nothing to measure against yet",
+                    el("div")
+                        // `mj-identity`: the reason names what could not be read, and that
+                        // is an identity — a 40-character commit, or a ref — with no space
+                        // to break at. The cockpit job checks out one commit deep, so this
+                        // is the page CI renders, and it is the one that overflowed 320px.
+                        .child(el("p").class("mj-prose mj-identity").text(&reason))
+                        .child(el("p").class("mj-note").text(
+                            "The smallest allowed version is measured against the surface the last release published. Until there is one — a release record, and the registry committed at its commit — there is no baseline, and no bump can be derived. A version named deliberately is still written: `majordomus release bump --level minor`.",
+                        )),
+                )),
+            )
+            .subtitle("The smallest version this tree may declare, measured from the public capability surface against the last release.")
+            .trail(vec![("Cockpit", Some("/cockpit")), ("Release", None)]);
+        }
+    };
+    let (added, changed, removed) = plan.counts();
+    let blocked = plan.status == ReleaseStatus::Blocked;
+
+    let verdict = card_with(
+        if blocked {
+            format!("{} → {} required", plan.declared_version, plan.required_version)
+        } else {
+            format!("{} — aligned", plan.declared_version)
+        },
+        badge(
+            if blocked { "fail" } else { "ok" },
+            if blocked { "blocked" } else { "aligned" },
+        ),
+        el("div")
+            .child(facts(vec![
+                ("Last release", Node::Element(mono(&plan.baseline.reference))),
+                ("Required bump", Node::Element(badge(
+                    if plan.required == Impact::Major { "fail" } else if plan.required == Impact::Minor { "warn" } else { "ok" },
+                    plan.required.as_str(),
+                ))),
+                ("Declared bump", Node::Element(mono(plan.declared.as_str()))),
+                ("Next minimum", Node::Element(mono(&plan.required_version))),
+                ("Surface", Node::Element(mono(format!(
+                    "{} public atoms, was {}",
+                    plan.atoms, plan.baseline.atoms
+                )))),
+            ]))
+            .child(
+                el("div").class("mj-marks").children(vec![
+                    badge("ok", format!("{added} added")),
+                    badge("info", format!("{changed} changed")),
+                    badge(if removed > 0 { "fail" } else { "ok" }, format!("{removed} removed")),
+                ]),
+            )
+            .child(el("p").class("mj-note").text(plan.policy.statement()))
+            .when(blocked, |d| {
+                d.child(el("p").class("mj-prose").text(
+                    "The public contract moved by more than the version says. Raise it with the one writer:",
+                ))
+                .child(mono("majordomus release bump"))
+            }),
+    );
+
+    // Why — every movement, with the reason it counts for what it does. The list is the
+    // evidence for the badge above, so a surprising verdict can be checked rather than
+    // believed.
+    let why = card(
+        "Why",
+        el("div")
+            .when(plan.changes.is_empty(), |d| {
+                d.child(el("p").class("mj-prose").text(format!(
+                    "Nothing a caller can hold has moved since {}. No bump is owed.",
+                    plan.baseline.reference
+                )))
+            })
+            .when(!plan.changes.is_empty(), |d| {
+                d.child(
+                    el("ul").class("mj-list").children(
+                        plan.changes
+                            .iter()
+                            .map(|c| {
+                                // Prose, not a `mono` chip. A change id is a dotted path
+                                // with no spaces to break at
+                                // (`$defs.Record.properties.next_action_withheld`), and
+                                // `.mj-mono` does not break — only `a.mj-mono` does — so a
+                                // chip of one overflows a 320px viewport however its row is
+                                // laid out. Rendered as prose beside its reason it wraps,
+                                // and the monospace was decoration rather than meaning.
+                                el("li")
+                                    .child(badge(
+                                        match c.impact {
+                                            Impact::Major => "fail",
+                                            Impact::Minor => "warn",
+                                            _ => "ok",
+                                        },
+                                        c.impact.as_str(),
+                                    ))
+                                    .child(
+                                        el("div")
+                                            .class("mj-identity")
+                                            .text(format!("{c} — {}", c.detail)),
+                                    )
+                            })
+                            .collect::<Vec<_>>(),
+                    ),
+                )
+            }),
+    );
+
+    let mut cards = vec![verdict, why];
+
+    // The line this subsystem exists for: the human account and the measured one, side by
+    // side, when they disagree.
+    if plan.understated {
+        cards.push(card_with(
+            "The commits understate the change".to_string(),
+            badge("warn", "evidence"),
+            el("div")
+                .child(facts(vec![
+                    ("Commits say", Node::Element(mono(plan.commits.implied.as_str()))),
+                    ("The contract moved by", Node::Element(mono(plan.implied.as_str()))),
+                    ("Commits since", Node::Element(mono(plan.commits.commits.to_string()))),
+                ]))
+                .child(el("p").class("mj-note").text(
+                    "Conventional commits are how a change explains itself; the contract is what decides the version. The measurement wins.",
+                )),
+        ));
+    }
+
+    if !plan.diagnostics.is_empty() {
+        cards.push(card(
+            "The release state",
+            el("ul").class("mj-list").children(
+                plan.diagnostics
+                    .iter()
+                    .map(|d| {
+                        el("li")
+                            .child(badge(
+                                if d.severity == Severity::Error {
+                                    "fail"
+                                } else {
+                                    "warn"
+                                },
+                                if d.severity == Severity::Error {
+                                    "error"
+                                } else {
+                                    "warning"
+                                },
+                            ))
+                            .child(el("span").text(&d.message))
+                    })
+                    .collect::<Vec<_>>(),
+            ),
+        ));
+    }
+
+    cards.push(card(
+        "Provenance",
+        facts(vec![
+            // Not `mono`: the schema id is 28 characters with no space to break at, and
+            // `.mj-mono` does not break. Beside a label on one row it is the widest thing
+            // on the page at 320px.
+            (
+                "Policy",
+                Node::Element(el("span").class("mj-prose").text(&plan.policy.schema)),
+            ),
+            (
+                "Baseline commit",
+                Node::Element(mono(
+                    plan.baseline.commit.chars().take(12).collect::<String>(),
+                )),
+            ),
+            (
+                "Recorded",
+                Node::Element(badge(
+                    if plan.baseline.recorded { "ok" } else { "warn" },
+                    if plan.baseline.recorded {
+                        "yes"
+                    } else {
+                        "from a tag alone"
+                    },
+                )),
+            ),
+            (
+                "Baseline digest",
+                Node::Element(mono(short_digest(&plan.baseline.fingerprint))),
+            ),
+            (
+                "This digest",
+                Node::Element(mono(short_digest(&plan.fingerprint))),
+            ),
+            (
+                "Writers agree",
+                Node::Element(badge(
+                    if plan.writers_agree { "ok" } else { "fail" },
+                    if plan.writers_agree { "yes" } else { "no" },
+                )),
+            ),
+        ]),
+    ));
+
+    Page::new(Area::Release, "Release", el("div").class("mj-grid").children(cards))
+        .subtitle("The smallest version this tree may declare, measured from the public capability surface against the last release — the same verdict `majordomus release analyze` and the `version-surface` gate reach.")
+        .trail(vec![("Cockpit", Some("/cockpit")), ("Release", None)])
 }
 
 // --------------------------------------------------------------------- artifacts

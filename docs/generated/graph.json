@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.5.0",
+  "generator": "majordomus-cli 0.6.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -800,6 +800,15 @@
         "summary": "Public API quality report",
         "route": "/cockpit/capabilities/quality.report",
         "source": "apps/majordomus-cli/src/capability/builtin/quality.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:release.analysis",
+        "kind": "capability",
+        "label": "release.analysis",
+        "summary": "What the public contract did, and the smallest version it allows",
+        "route": "/cockpit/capabilities/release.analysis",
+        "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
         "status": "query"
       },
       {
@@ -1750,6 +1759,22 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/release/compat.rs",
+        "kind": "file",
+        "label": "compat.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/release/compat.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/release/surface.rs",
+        "kind": "file",
+        "label": "surface.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/release/surface.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/rules/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -1987,6 +2012,14 @@
         "label": "verdict",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ci/verdict",
+        "external": true
+      },
+      {
+        "id": "file:scripts/ci/version-matches-surface",
+        "kind": "file",
+        "label": "version-matches-surface",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/version-matches-surface",
         "external": true
       },
       {
@@ -3187,6 +3220,7 @@
         "facts": {
           "date": "2026-09-09",
           "related": [
+            "rule:project.the-version-is-measured",
             "rule:project.interfaces-are-projections",
             "rule:project.derived-files-regenerated",
             "rule:project.conventional-commits",
@@ -3662,6 +3696,33 @@
             "mesh",
             "discovery",
             "security"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0051",
+        "kind": "adr",
+        "label": "adr-0051",
+        "summary": "The minimum release version is measured from the public contract, and conventional commits are demoted to evidence",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0051",
+        "source": ".ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "related": [
+            "rule:project.the-version-is-measured",
+            "rule:project.release-is-a-projection",
+            "rule:project.interfaces-are-projections",
+            "file:apps/majordomus-cli/src/release/surface.rs",
+            "file:apps/majordomus-cli/src/release/compat.rs",
+            "file:scripts/ci/version-matches-surface",
+            "file:docs/RELEASE.md"
+          ],
+          "tags": [
+            "release",
+            "versioning",
+            "compatibility",
+            "projections"
           ]
         }
       },
@@ -28768,18 +28829,19 @@
         }
       },
       {
-        "id": "majordomus://rule/project.the-version-is-measured@1",
+        "id": "majordomus://rule/project.the-version-is-measured@2",
         "kind": "rule",
-        "label": "project.the-version-is-measured@1",
+        "label": "project.the-version-is-measured@2",
         "summary": "The version is measured against the public surface, not claimed",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-version-is-measured%401",
-        "source": ".ai/repo/rules/project/the-version-is-measured.v1.md",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-version-is-measured%402",
+        "source": ".ai/repo/rules/project/the-version-is-measured.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [
             "project.land-and-publish@1",
-            "project.interfaces-are-projections@1"
+            "project.interfaces-are-projections@1",
+            "project.release-is-a-projection@1"
           ],
           "tags": [
             "release",
@@ -35895,6 +35957,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:release.analysis",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.analysis",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.analysis",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:release.changelog",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -36975,6 +37052,11 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0029",
+        "target": "majordomus://rule/project.the-version-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0030",
         "target": "kind:adr",
         "kind": "is_a"
@@ -37727,6 +37809,46 @@
       {
         "source": "majordomus://adr/adr-0050",
         "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0051",
+        "target": "file:apps/majordomus-cli/src/release/compat.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0051",
+        "target": "file:apps/majordomus-cli/src/release/surface.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0051",
+        "target": "file:scripts/ci/version-matches-surface",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0051",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0051",
+        "target": "majordomus://document/docs/RELEASE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0051",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0051",
+        "target": "majordomus://rule/project.release-is-a-projection@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0051",
+        "target": "majordomus://rule/project.the-version-is-measured@2",
         "kind": "put_in_force"
       },
       {
@@ -48615,18 +48737,23 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-version-is-measured@1",
+        "source": "majordomus://rule/project.the-version-is-measured@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.the-version-is-measured@1",
+        "source": "majordomus://rule/project.the-version-is-measured@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-version-is-measured@1",
+        "source": "majordomus://rule/project.the-version-is-measured@2",
         "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-version-is-measured@2",
+        "target": "majordomus://rule/project.release-is-a-projection@1",
         "kind": "depends_on"
       },
       {
@@ -52931,6 +53058,11 @@
       },
       {
         "source": "module:release",
+        "target": "capability:release.analysis",
+        "kind": "composes"
+      },
+      {
+        "source": "module:release",
         "target": "capability:release.changelog",
         "kind": "composes"
       },
@@ -53056,8 +53188,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1655,
-      "edges": 3707,
+      "nodes": 1660,
+      "edges": 3721,
       "acyclic": true,
       "truncated": false
     }

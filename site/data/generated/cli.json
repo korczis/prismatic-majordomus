@@ -14925,7 +14925,13 @@
           "route": "/docs/cli/release/version/"
         },
         {
-          "about": "Raise the version in both places at once, to the bump the commits imply or to one you name",
+          "about": "What the public contract did since the last release, and the smallest version this tree may therefore declare",
+          "command": "majordomus release analyze",
+          "name": "analyze",
+          "route": "/docs/cli/release/analyze/"
+        },
+        {
+          "about": "Raise the version in both places at once, to at least what the public contract requires",
           "command": "majordomus release bump",
           "name": "bump",
           "route": "/docs/cli/release/bump/"
@@ -15200,7 +15206,7 @@
             "json"
           ],
           "command": "majordomus release version --format json",
-          "description": "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state, whether they agree, and what the conventional commits since the last release imply the next one should be.",
+          "description": "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.",
           "expectation": "exits 0; prints one JSON document carrying /declared, /agree, /bump",
           "id": "release-version",
           "setup": [],
@@ -15220,7 +15226,7 @@
       "usage": "majordomus release version [OPTIONS]"
     },
     {
-      "about": "Raise the version in both places at once, to the bump the commits imply or to one you name",
+      "about": "What the public contract did since the last release, and the smallest version this tree may therefore declare",
       "ancestors": [
         {
           "command": "majordomus",
@@ -15237,7 +15243,164 @@
         {
           "defaults": [],
           "global": false,
-          "help": "Raise by this much instead of by what the commits imply",
+          "help": "Measure against this ref instead of the last release",
+          "long": "since",
+          "name": "since",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Name every movement of the contract and the reason it counts for what it does",
+          "long": "explain",
+          "name": "explain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "EXPLAIN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release analyze",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "analyze",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus release analyze --format json",
+          "description": "The public capability surface of this tree against the one the last release published, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command or required field a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. The same value answers `GET /api/v1/release/analysis`, the `majordomus_release_analysis` MCP tool, the Cockpit's Release page and the `version-surface` gate. A repository that has published nothing has no baseline to measure against, and says so with exit 12 rather than reporting an empty diff — which would read as \"nothing changed\".",
+          "expectation": "exits 12",
+          "id": "release-analyze",
+          "setup": [],
+          "title": "What the contract did, and the smallest version it allows"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "analyze",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "analyze"
+      ],
+      "route": "/docs/cli/release/analyze/",
+      "usage": "majordomus release analyze [OPTIONS]"
+    },
+    {
+      "about": "Raise the version in both places at once, to at least what the public contract requires",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Raise by this much instead of by the measured minimum; never below it",
           "long": "level",
           "name": "level",
           "positional": false,
@@ -15249,7 +15412,7 @@
         {
           "defaults": [],
           "global": false,
-          "help": "Set exactly this version, instead of raising the current one",
+          "help": "Set exactly this version; refused when it is below the measured minimum",
           "long": "exact",
           "name": "exact",
           "positional": false,
@@ -15368,7 +15531,7 @@
             "--dry-run"
           ],
           "command": "majordomus release bump --dry-run",
-          "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. A repository that declares no version — the example runs in one with no crate — cannot be raised, and says so with exit 12 rather than inventing a number to raise from.",
+          "description": "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
           "expectation": "exits 12",
           "id": "release-bump-dry-run",
           "setup": [],
@@ -19790,13 +19953,13 @@
     }
   ],
   "counts": {
-    "arguments": 870,
-    "commands": 121,
-    "examples": 127,
-    "runnable": 110
+    "arguments": 877,
+    "commands": 122,
+    "examples": 128,
+    "runnable": 111
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

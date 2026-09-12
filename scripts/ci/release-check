@@ -14,7 +14,10 @@
 #      does not read, and nothing else notices until a tag is cut.
 #   2. That the two sites agree is checked only by the release workflow, at the moment of
 #      publication — so a half-applied bump lives on the default branch until somebody tries
-#      to ship it. The same verdict belongs on every plan.
+#      to ship it. The same verdict belongs on every plan. The comparison itself is not made
+#      here: scripts/release-version is the one shell reader of the version, this gate runs
+#      it, and check 1 above is what proves it reads the sites the crate writes. A third
+#      parser here would be the duplication this gate exists to catch.
 #   3. Nothing may keep a changelog by hand. A composed changelog and a maintained
 #      CHANGELOG.md are two answers to one question, and the maintained one wins by being
 #      the file people open. A page that renders the derived document is a projection and is
@@ -62,19 +65,44 @@ MANIFEST_PATH="$(rust_const MANIFEST)"
 ENTRY_PATH="$(rust_const ENTRY)"
 
 # ------------------------------------------------------------ 2. the two sites state one version
+#
+# Asked of scripts/release-version, never parsed again here. That script is the one shell
+# reader of the version — it exists because a released tree has no toolchain — and check 1
+# above has just proved it reads the same two sites the crate writes. Reading them a third
+# time in this file would add exactly the drift this gate is for.
 if [ -n "$MANIFEST_PATH" ] && [ -n "$ENTRY_PATH" ] && [ -f "$MANIFEST_PATH" ] && [ -f "$ENTRY_PATH" ]; then
-  crate="$(awk '/^\[package\]/{p=1;next} /^\[/{p=0} p && /^version *=/{gsub(/[^0-9A-Za-z.+-]/,"",$3); print $3; exit}' "$MANIFEST_PATH")"
-  tool="$(sed -n 's/^MJ_VERSION="\([^"]*\)".*/\1/p' "$ENTRY_PATH" | head -n 1)"
-  if [ -z "$crate" ]; then
-    fail "$MANIFEST_PATH states no version under [package]"
-  elif [ "$crate" = "$tool" ]; then
+  if version_out="$("$SCRIPT" --check 2>&1)"; then
+    crate="$("$SCRIPT")"
     ok "both writers state $crate"
   else
-    fail "$MANIFEST_PATH states '$crate' and $ENTRY_PATH states '$tool'; one release has one version — \`majordomus release bump --exact $crate\` writes both"
+    crate=""
+    printf '%s\n' "$version_out" | sed -n 's/^release-version: FAIL /      /p' | while IFS= read -r line; do
+      printf '%s\n' "$line"
+    done
+    fail "the two version sites do not state one version (scripts/release-version --check); \`majordomus release bump --exact <version>\` writes both"
   fi
 else
   fail "a version site the crate declares does not exist: $MANIFEST_PATH, $ENTRY_PATH"
   crate=""
+fi
+
+# ------------------------------------------------- 2b. the lock records the version too
+#
+# Cargo.lock is not a third declaration — cargo derives it from the manifest and nobody
+# chooses the value — but it is tracked and the build runs `--locked`, so a bump that raised
+# the manifest and left the lock behind fails the next build with "cannot update the lock
+# file", which reads as a toolchain fault rather than as a half-applied bump. The writer owns
+# it (release/version.rs, LOCK); this is what notices when something else edited one of them.
+LOCK_PATH="$(rust_const LOCK)"
+if [ -n "$LOCK_PATH" ] && [ -f "$LOCK_PATH" ] && [ -n "$crate" ]; then
+  locked="$(awk '/^name = "majordomus-cli"$/{f=1;next} f && /^version = /{gsub(/[^0-9A-Za-z.+-]/,"",$3); print $3; exit}' "$LOCK_PATH")"
+  if [ "$locked" = "$crate" ]; then
+    ok "$LOCK_PATH records $locked for this crate"
+  else
+    fail "$LOCK_PATH records '$locked' for this crate and the manifest states '$crate'; the next --locked build fails — \`majordomus release bump --exact $crate\` writes every site"
+  fi
+elif [ -n "$LOCK_PATH" ] && [ ! -f "$LOCK_PATH" ]; then
+  fail "the crate declares the lock site $LOCK_PATH and it does not exist"
 fi
 
 # ------------------------------------------------------------------- 3. no changelog is kept

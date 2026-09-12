@@ -1,6 +1,7 @@
-//! The `release` module: the changelog and the version, both derived.
+//! The `release` module: the changelog, the version, and the compatibility analysis behind
+//! it — all three derived.
 //!
-//! Two capabilities, both read-only, both answered by [`crate::release`] — the same code the
+//! Three capabilities, all read-only, all answered by [`crate::release`] — the same code the
 //! command line renders, the generated document is written from, and the site page shows.
 //! Neither reads a file somebody maintains: the changelog composes the layer's own release
 //! records, decisions and the repository's commits, and the version report reads the two
@@ -15,9 +16,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, Exposure, McpExposure, McpResource, Stability, WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::registry::CapabilityRegistry;
+use crate::release::compat::VersionPlan;
 use crate::release::{self, model::ProducedBy, model::VersionReport, Changelog};
 use crate::{capability, module};
 
@@ -61,6 +65,38 @@ impl BenchmarkCases for ChangelogInput {
                 },
             ),
         ]
+    }
+}
+
+/// Which release to measure this tree against.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::release::AnalysisInput;
+/// // Absent means the last release the layer records, which is the canonical baseline.
+/// let input = AnalysisInput::default();
+/// assert!(input.since.is_none());
+/// let explicit = AnalysisInput { since: Some("v0.4.0".into()) };
+/// assert_eq!(explicit.since.as_deref(), Some("v0.4.0"));
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(rename = "ReleaseAnalysisInput")]
+pub struct AnalysisInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// A ref to compare with instead of the last release: `v0.4.0`, or any commit that
+    /// carries a committed registry.
+    pub since: Option<String>,
+}
+
+impl BenchmarkCases for AnalysisInput {
+    /// None. The capability is waived from the benchmark
+    /// ([`WaiverReason::PublishedHistory`]) because its input is a release this repository
+    /// has published, and a benchmark fixture has published nothing — so every case here
+    /// would time a refusal and be counted as coverage. The trait is still implemented
+    /// because the registry asks every input type for its cases; answering "none" is the
+    /// honest answer rather than a case that measures an error path.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
     }
 }
 
@@ -113,9 +149,39 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["release", "version"],
                 handler: version,
             },
+            capability! {
+                id: ANALYSIS_ID,
+                title: "What the public contract did, and the smallest version it allows",
+                description: "The public capability surface of this tree against the one the last release published, every movement of it named with the reason it counts for what it does, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command, or a required field of either schema that a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. What the commits said about themselves is carried beside the verdict as evidence, and the answer says when the two disagree.",
+                input: AnalysisInput,
+                output: VersionPlan,
+                stability: Stability::Implemented,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_release_analysis".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/release/analysis"),
+                    // `majordomus release analyze` renders this capability for a person at a
+                    // terminal; `cli::LOCAL` declares that once, and declaring the path here
+                    // as well is the double accounting `tests/quality.rs` refuses.
+                    cli: None,
+                },
+                tags: ["release", "version", "compatibility"],
+                // Timed nowhere, because there is nothing honest to time. The analysis reads
+                // what the last release published, and a benchmark fixture is a repository
+                // that has published nothing: every case would measure the refusal rather
+                // than the comparison. The behavioural case (112) is where it is exercised
+                // against a repository with a real publication history.
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
+                handler: analysis,
+            },
         ],
     }
 }
+
+/// The compatibility analysis, named beside its declaration.
+pub const ANALYSIS_ID: &str = "release.analysis";
 
 /// The capability's own id. Beside its declaration, so the two cannot drift apart without
 /// the test below noticing; the document carries it so that no page has to enumerate where
@@ -191,6 +257,22 @@ fn version(ctx: &Context, _: Empty) -> Result<VersionReport, CapabilityError> {
     Ok(release::version::report(root, &ctx.index.objects))
 }
 
+/// The one analysis, behind every surface that shows a version verdict.
+///
+/// A surface that cannot be read is a refusal and never an empty diff: an empty diff means
+/// "nothing changed", and answering that when the truth is "the baseline could not be read"
+/// is the false negative this whole subsystem exists to stop.
+fn analysis(ctx: &Context, input: AnalysisInput) -> Result<VersionPlan, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    release::compat::analyze(
+        root,
+        &ctx.registry,
+        &ctx.index.objects,
+        input.since.as_deref(),
+    )
+    .map_err(|e| CapabilityError::NotFound(e.to_string()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,6 +286,10 @@ mod tests {
     fn the_declaration_yields_the_projections_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "release");
+        assert_eq!(
+            ANALYSIS_ID, "release.analysis",
+            "the id beside the declaration is the declared one"
+        );
         let expected: &[(&str, &str, &str)] = &[
             (
                 "release.changelog",
@@ -214,6 +300,11 @@ mod tests {
                 "release.version",
                 "majordomus_release_version",
                 "/api/v1/release/version",
+            ),
+            (
+                "release.analysis",
+                "majordomus_release_analysis",
+                "/api/v1/release/analysis",
             ),
         ];
         let ids: Vec<&str> = m

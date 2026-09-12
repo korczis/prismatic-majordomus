@@ -4,7 +4,7 @@ description = "The executions of the server serving this repository: what has ru
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 95
+weight = 96
 [extra]
 route = "/docs/cli/executions/"
 command = "majordomus executions"

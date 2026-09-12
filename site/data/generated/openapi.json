@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 106,
-    "schemas": 492,
+    "operations": 107,
+    "schemas": 504,
     "tags": 35
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -32,7 +32,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.5.0",
+  "generated_by": "majordomus-cli 0.6.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -41,7 +41,7 @@
     "license": "MIT",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "infrastructure": [
     {
@@ -8825,6 +8825,7 @@
         "product.validate",
         "quality.report",
         "health.ready",
+        "release.analysis",
         "release.version",
         "repository.info",
         "rules.report",
@@ -20100,6 +20101,69 @@
       "variants": []
     },
     {
+      "description": "The release this tree is measured against, and how it was found.\n\n```\nuse majordomus_cli::release::compat::Baseline;\nlet baseline = Baseline {\n    version: \"0.5.0\".into(),\n    reference: \"v0.5.0\".into(),\n    read_at: \"3a032c1e033b\".into(),\n    commit: \"3a032c1e033b\".into(),\n    recorded: true,\n    atoms: 300,\n    fingerprint: \"sha256:…\".into(),\n};\n// `recorded` is the half that matters: a baseline taken from a tag alone is reported.\nassert!(baseline.recorded);\nassert_eq!(baseline.reference, \"v0.5.0\");\n```",
+      "is_enum": false,
+      "name": "ReleaseBaseline",
+      "properties": [
+        {
+          "description": "`0.5.0`.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`v0.5.0`: the release, as a reader recognises it.",
+          "name": "reference",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The ref the surface was actually read from — the commit the release record names,\nwhich a clone always has, rather than a tag it may not.",
+          "name": "read_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit that ref resolved to.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the layer holds a release record for it, which is what makes it canonical\nrather than the newest thing that looked like a tag.",
+          "name": "recorded",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many public atoms it published.",
+          "name": "atoms",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The fingerprint of the surface it published.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseVersionPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One change, from one commit.",
       "is_enum": false,
       "name": "ReleaseChange",
@@ -20165,6 +20229,32 @@
         "ReleaseVersionReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a change added, removed or altered part of the contract.\n\n```\nuse majordomus_cli::release::compat::Direction;\nassert_eq!(Direction::Removed.sign(), '-');\n```",
+      "is_enum": true,
+      "name": "ReleaseChangeDirection",
+      "properties": [],
+      "type": "\"added\" | \"removed\" | \"changed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSurfaceChange"
+      ],
+      "values": [
+        {
+          "description": "It was not there before.",
+          "value": "added"
+        },
+        {
+          "description": "It was there before and is not now.",
+          "value": "removed"
+        },
+        {
+          "description": "It is there in both, and differs.",
+          "value": "changed"
+        }
+      ],
       "variants": []
     },
     {
@@ -20365,6 +20455,43 @@
       "variants": []
     },
     {
+      "description": "What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that [`VersionPlan::understated`] can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied < Impact::Minor);\n```",
+      "is_enum": false,
+      "name": "ReleaseCommitEvidence",
+      "properties": [
+        {
+          "description": "How many commits since the baseline.",
+          "name": "commits",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "What their conventional-commit types alone would have implied.",
+          "name": "implied",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The subjects of the ones that claimed to be breaking.",
+          "name": "breaking",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseVersionPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One decision, as the layer's own ADR object states it.",
       "is_enum": false,
       "name": "ReleaseDecision",
@@ -20418,6 +20545,127 @@
         "ReleaseSection"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Something about the release state that a person should be told, whatever the verdict.\n\n```\nuse majordomus_cli::release::compat::{Diagnostic, Severity};\nlet d = Diagnostic {\n    id: \"tag-without-record\".into(),\n    severity: Severity::Warning,\n    message: \"v0.1.0 is tagged and the layer holds no release record for it\".into(),\n};\nassert_eq!(d.severity, Severity::Warning, \"a warning states the plan still stands\");\n```",
+      "is_enum": false,
+      "name": "ReleaseDiagnostic",
+      "properties": [
+        {
+          "description": "`tag-without-record`, `record-without-tag`, `tag-commit-mismatch`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it stops a release or only warns.",
+          "name": "severity",
+          "refs": [
+            "ReleaseSeverity"
+          ],
+          "required": true,
+          "type": "ReleaseSeverity"
+        },
+        {
+          "description": "What is wrong, in one sentence.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseVersionPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How much a change moves the contract.\n\nOrdered, so that \"the declared bump covers what is required\" is a comparison rather than\na table:\n\n```\nuse majordomus_cli::release::compat::Impact;\nassert!(Impact::Major > Impact::Minor);\nassert!(Impact::Minor > Impact::Patch);\nassert!(Impact::Patch > Impact::None);\n```",
+      "is_enum": true,
+      "name": "ReleaseImpact",
+      "properties": [],
+      "type": "\"none\" | \"patch\" | \"minor\" | \"major\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseCommitEvidence",
+        "ReleaseSurfaceChange",
+        "ReleaseVersionPlan"
+      ],
+      "values": [
+        {
+          "description": "The contract did not move.",
+          "value": "none"
+        },
+        {
+          "description": "It moved behind the boundary: a caller cannot tell.",
+          "value": "patch"
+        },
+        {
+          "description": "Something arrived; every existing caller still works.",
+          "value": "minor"
+        },
+        {
+          "description": "Something a caller could hold is gone or changed under it.",
+          "value": "major"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The compatibility policy, named and versioned.\n\n```\nuse majordomus_cli::release::compat::{Impact, Policy, POLICY_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet policy = Policy::for_version(Version::parse(\"0.5.0\").unwrap());\nassert_eq!(policy.schema, POLICY_SCHEMA, \"a verdict carries the rules it was reached under\");\nassert_eq!(policy.required_of(Impact::Major), Impact::Minor);\n```",
+      "is_enum": false,
+      "name": "ReleasePolicy",
+      "properties": [
+        {
+          "description": "`majordomus/version-policy/v1`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which rule is in force, decided by the baseline version alone.",
+          "name": "mode",
+          "refs": [
+            "ReleasePolicyMode"
+          ],
+          "required": true,
+          "type": "ReleasePolicyMode"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseVersionPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \"anything MAY change at any\ntime\" — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: [`Mode::Semver`] is the ordinary rule, and the transition is\none line of [`Policy::required_of`].\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\"0.9.0\").unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\"1.0.0\").unwrap()).mode, Mode::Semver);\n```",
+      "is_enum": true,
+      "name": "ReleasePolicyMode",
+      "properties": [],
+      "type": "\"pre1-0-strict\" | \"semver\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleasePolicy"
+      ],
+      "values": [
+        {
+          "description": "Below `1.0.0`: breaking changes are allowed, and cost a minor rather than nothing.",
+          "value": "pre1-0-strict"
+        },
+        {
+          "description": "At or above `1.0.0`: the impact is the requirement.",
+          "value": "semver"
+        }
+      ],
       "variants": []
     },
     {
@@ -20605,6 +20853,309 @@
       "used_by_schemas": [
         "ReleaseChangelog"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\n```",
+      "is_enum": true,
+      "name": "ReleaseSeverity",
+      "properties": [],
+      "type": "\"error\" | \"warning\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseDiagnostic"
+      ],
+      "values": [
+        {
+          "description": "The plan cannot be trusted; the verdict is blocked.",
+          "value": "error"
+        },
+        {
+          "description": "The plan stands, and something is still wrong.",
+          "value": "warning"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Whether the tree may land or ship as it stands.\n\n```\nuse majordomus_cli::release::compat::Status;\nassert_ne!(Status::Ok, Status::Blocked);\n```",
+      "is_enum": true,
+      "name": "ReleaseStatus",
+      "properties": [],
+      "type": "\"ok\" | \"blocked\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseVersionPlan"
+      ],
+      "values": [
+        {
+          "description": "The declared version covers what the contract did.",
+          "value": "ok"
+        },
+        {
+          "description": "It does not, and the plan says by how much.",
+          "value": "blocked"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One movement of the public contract, with the reason it counts for what it does.\n\n```\nuse majordomus_cli::release::compat::{Direction, Impact, SurfaceChange, SurfaceKind};\nlet change = SurfaceChange {\n    impact: Impact::Major,\n    direction: Direction::Removed,\n    surface: SurfaceKind::Http,\n    capability: \"alpha.list\".into(),\n    id: \"GET /api/v1/alpha\".into(),\n    detail: \"the capability survives; this way of reaching it does not\".into(),\n};\nassert_eq!(change.to_string(), \"- route GET /api/v1/alpha\");\n```",
+      "is_enum": false,
+      "name": "ReleaseSurfaceChange",
+      "properties": [
+        {
+          "description": "How much it moves the contract on its own.",
+          "name": "impact",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "Added, removed, or altered.",
+          "name": "direction",
+          "refs": [
+            "ReleaseChangeDirection"
+          ],
+          "required": true,
+          "type": "ReleaseChangeDirection"
+        },
+        {
+          "description": "Which promise it is.",
+          "name": "surface",
+          "refs": [
+            "ReleaseSurfaceKind"
+          ],
+          "required": true,
+          "type": "ReleaseSurfaceKind"
+        },
+        {
+          "description": "The capability it belongs to.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The thing itself: `GET /api/v1/foo`, `majordomus_release_analysis`, `release.analysis`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why this impact and not a smaller one, in one clause.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseVersionPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which projection of the contract a change is in.\n\nNot where it was *found* — everything here is found in the registry — but which promise\nit is, so that a reader sees \"a route is gone\" rather than a JSON pointer.\n\n```\nuse majordomus_cli::release::compat::SurfaceKind;\nassert_eq!(SurfaceKind::Http.as_str(), \"route\");\n```",
+      "is_enum": true,
+      "name": "ReleaseSurfaceKind",
+      "properties": [],
+      "type": "\"capability\" | \"kind\" | \"mcp_tool\" | \"mcp_resource\" | \"http\" | \"cli\" | \"input\" | \"output\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSurfaceChange"
+      ],
+      "values": [
+        {
+          "description": "The capability itself.",
+          "value": "capability"
+        },
+        {
+          "description": "Whether calling it changes anything.",
+          "value": "kind"
+        },
+        {
+          "description": "An MCP tool name.",
+          "value": "mcp_tool"
+        },
+        {
+          "description": "An MCP resource URI.",
+          "value": "mcp_resource"
+        },
+        {
+          "description": "An HTTP method and path.",
+          "value": "http"
+        },
+        {
+          "description": "A command-line path.",
+          "value": "cli"
+        },
+        {
+          "description": "What a caller may send.",
+          "value": "input"
+        },
+        {
+          "description": "What a caller is promised back.",
+          "value": "output"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The whole answer: what moved, what that requires, and what the tree declares.\n\nOne value, and every surface renders it — the command line, `/api/v1/release/analysis`,\nthe MCP tool, the Cockpit panel, the generated document and the CI gate. There is no\nsecond computation anywhere, which is the property that makes the number mean something.\n\n```\nuse majordomus_cli::release::compat::{Status, VersionPlan};\n#### use majordomus_cli::release::compat::{Baseline, CommitEvidence, Impact, Policy};\n#### use majordomus_cli::release::version::Version;\nlet plan = VersionPlan {\n    policy: Policy::for_version(Version::parse(\"0.5.0\").unwrap()),\n    baseline: Baseline {\n        version: \"0.5.0\".into(), reference: \"v0.5.0\".into(), read_at: \"3a032c1e\".into(),\n        commit: \"3a032c1e\".into(), recorded: true, atoms: 300, fingerprint: \"sha256:a\".into(),\n    },\n    declared_version: \"0.5.0\".into(),\n    tool_version: \"0.5.0\".into(),\n    writers_agree: true,\n    atoms: 333,\n    fingerprint: \"sha256:b\".into(),\n    implied: Impact::Minor,\n    required: Impact::Minor,\n    declared: Impact::None,\n    required_version: \"0.6.0\".into(),\n    status: Status::Blocked,\n    breaking: false,\n    changes: Vec::new(),\n    commits: CommitEvidence { commits: 24, implied: Impact::Patch, breaking: Vec::new() },\n    understated: true,\n    diagnostics: Vec::new(),\n};\n// The contract requires a minor and the version declares none: this tree may not land.\nassert_eq!(plan.status, Status::Blocked);\nassert!(plan.declared < plan.required);\nassert!(plan.understated, \"the commit subjects claim less than the contract did\");\n```",
+      "is_enum": false,
+      "name": "ReleaseVersionPlan",
+      "properties": [
+        {
+          "description": "The policy the verdict was reached under.",
+          "name": "policy",
+          "refs": [
+            "ReleasePolicy"
+          ],
+          "required": true,
+          "type": "ReleasePolicy"
+        },
+        {
+          "description": "The release this was measured against.",
+          "name": "baseline",
+          "refs": [
+            "ReleaseBaseline"
+          ],
+          "required": true,
+          "type": "ReleaseBaseline"
+        },
+        {
+          "description": "The version the crate manifest declares.",
+          "name": "declared_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version `bin/majordomus` prints, and whether the two agree.",
+          "name": "tool_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the two writers of the version state one value.",
+          "name": "writers_agree",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many public atoms this tree carries.",
+          "name": "atoms",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The fingerprint of this tree's surface.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the surface movement amounts to on its own.",
+          "name": "implied",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "What the policy requires of it.",
+          "name": "required",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "What the two version numbers already represent.",
+          "name": "declared",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The smallest version this tree may declare.",
+          "name": "required_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it does.",
+          "name": "status",
+          "refs": [
+            "ReleaseStatus"
+          ],
+          "required": true,
+          "type": "ReleaseStatus"
+        },
+        {
+          "description": "Whether anything a caller could hold is gone.",
+          "name": "breaking",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every movement of the contract, worst first.",
+          "name": "changes",
+          "refs": [
+            "ReleaseSurfaceChange"
+          ],
+          "required": true,
+          "type": "array of ReleaseSurfaceChange"
+        },
+        {
+          "description": "What the commits said about themselves.",
+          "name": "commits",
+          "refs": [
+            "ReleaseCommitEvidence"
+          ],
+          "required": true,
+          "type": "ReleaseCommitEvidence"
+        },
+        {
+          "description": "Whether the commit subjects understate what the contract actually did.",
+          "name": "understated",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Anything incoherent about the release state, whatever the verdict.",
+          "name": "diagnostics",
+          "refs": [
+            "ReleaseDiagnostic"
+          ],
+          "required": false,
+          "type": "array of ReleaseDiagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "release.analysis"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -26599,7 +27150,7 @@
       "is_enum": true,
       "name": "WaiverReason",
       "properties": [],
-      "type": "\"not_executable\" | \"destructive\" | \"external_dependency\" | \"transient_state\"",
+      "type": "\"not_executable\" | \"destructive\" | \"external_dependency\" | \"transient_state\" | \"published_history\"",
       "used_by": [],
       "used_by_schemas": [
         "BenchmarkPolicy"
@@ -26620,6 +27171,10 @@
         {
           "description": "The capability starts, or answers about, work that exists only while it is running.\nA benchmark host cannot stage an execution to read, and running the operation in a\nloop would measure the work rather than the operation.",
           "value": "transient_state"
+        },
+        {
+          "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from [`WaiverReason::ExternalDependency`]: nothing outside this process is\nconsulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,\nit simply does not exist yet where the benchmark runs.",
+          "value": "published_history"
         }
       ],
       "variants": []
@@ -32535,6 +33090,66 @@
           "result_schema": "ReleaseChangelog",
           "stability": "implemented",
           "summary": "The changelog"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "published_history",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/analysis\"",
+          "description": "The public capability surface of this tree against the one the last release published, every movement of it named with the reason it counts for what it does, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command, or a required field of either schema that a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. What the commits said about themselves is carried beside the verdict as evidence, and the answer says when the two disagree.",
+          "id": "release.analysis",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_release_analysis",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A ref to compare with instead of the last release: `v0.4.0`, or any commit that\ncarries a committed registry.",
+              "examples": [],
+              "name": "since",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/release/analysis",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::release",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What the public contract did, and the smallest version it allows: the result.",
+              "schema": "ReleaseVersionPlan",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReleaseVersionPlan",
+          "stability": "implemented",
+          "summary": "What the public contract did, and the smallest version it allows"
         },
         {
           "benchmark": "required",

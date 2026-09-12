@@ -281,8 +281,19 @@ git checkout -- "$ENTRY"
 
 # ---------------------------------------------------------------- the one writer
 #
-# --dry-run writes nothing at all, and says which two files it would write.
-expect_exit 0 "$RB" release bump --dry-run
+# This fixture publishes release *records* and never commits a registry, so the public
+# contract of its releases cannot be read — and the writer says so rather than inventing a
+# floor. That is the honest answer and it is the one ADR 0051 requires: before it, the bump
+# was derived from the commit subjects here, which is the authority that was removed.
+expect_exit 12 "$RB" release bump --dry-run
+expect_grep 'the public contract cannot be measured here'
+expect_grep 'name the version deliberately'
+[ "$(sha256_of_file "$MANIFEST")" = "$before_manifest" ] || { echo "    a refused bump wrote to $MANIFEST"; exit 1; }
+[ "$(sha256_of_file "$ENTRY")" = "$before_entry" ] || { echo "    a refused bump wrote to $ENTRY"; exit 1; }
+
+# A version named deliberately is still written: refusing would make the command unusable in
+# exactly the repositories that most need to cut a first release. --dry-run writes nothing.
+expect_exit 0 "$RB" release bump --level minor --dry-run
 expect_grep 'would raise 1\.0\.0 -> 1\.1\.0'
 expect_grep "$MANIFEST"
 expect_grep "$ENTRY"
@@ -429,7 +440,9 @@ export ANTHROPIC_API_KEY=SENTINEL_ANTHROPIC_DO_NOT_LEAK
   "$RB" release changelog v1.0.0
   "$RB" release version
   "$RB" release version --format json
-  "$RB" release bump --dry-run
+  # Its exit code is not what this section asserts — only its output is scanned — and in
+  # this fixture it refuses, because no release here committed a registry to measure against.
+  "$RB" release bump --dry-run || true
   "$RB" capabilities describe release.changelog
   "$RB" capabilities describe release.version
   "$RB" commands show executable.release.bump

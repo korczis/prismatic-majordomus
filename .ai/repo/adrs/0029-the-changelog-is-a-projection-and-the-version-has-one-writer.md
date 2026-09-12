@@ -11,6 +11,7 @@ tags:
   - versioning
   - projections
 related:
+  - rule:project.the-version-is-measured
   - rule:project.interfaces-are-projections
   - rule:project.derived-files-regenerated
   - rule:project.conventional-commits
@@ -29,6 +30,16 @@ provenance:
 ---
 
 # 29. The changelog is a projection of what the repository already records, and the version has one writer rather than one source
+
+> **Amended by [ADR 0051](0051-the-minimum-release-version-is-measured-from-the-public-contract.md) (proposed), 2026-09-12.**
+> The fourth decision below — that `release bump` takes by default *the bump the conventional
+> commits imply* — no longer holds. The minimum version is measured from the public capability
+> surface against the last release, and conventional commits are evidence beside that verdict
+> rather than the authority for it. The consequences section of this record names that
+> inference as a known cost ("a breaking change committed as `feat` produces a minor bump");
+> ADR 0051 is what removed it. Everything else here stands: the changelog is composed, the
+> window is one interval said twice, the parser is total, and the version keeps two statements
+> and one writer.
 
 ## Context
 

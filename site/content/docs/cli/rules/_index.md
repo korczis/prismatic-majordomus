@@ -4,7 +4,7 @@ description = "Every rule against the proof there is for it: what each one names
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 118
+weight = 119
 [extra]
 route = "/docs/cli/rules/"
 command = "majordomus rules"

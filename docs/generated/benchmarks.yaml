@@ -1,35 +1,35 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.5.0
+# Generator: majordomus-cli 0.6.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.5.0
+generator: majordomus-cli 0.6.0
 coverage:
   - scope: direct
+    required: 108
+    covered: 103
+    missing: 0
+    waived: 5
+  - scope: http
     required: 107
     covered: 103
     missing: 0
     waived: 4
-  - scope: http
-    required: 106
-    covered: 103
-    missing: 0
-    waived: 3
   - scope: mcp
-    required: 104
+    required: 105
     covered: 101
     missing: 0
-    waived: 3
+    waived: 4
   - scope: system
     required: 13
     covered: 13
     missing: 0
     waived: 0
   - scope: total
-    required: 330
+    required: 333
     covered: 320
     missing: 0
-    waived: 10
+    waived: 13
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -804,6 +804,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: release.analysis
+    module: release
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: release.changelog
     module: release
     kind: query
