@@ -225,12 +225,18 @@ pub fn derive(root: &Path) -> ScopeVocabulary {
     let mut scopes: Vec<ScopeUse> = counts
         .into_iter()
         .map(|(scope, commits)| {
-            let mut dirs: Vec<(String, usize)> = association
+            let dirs: Vec<(String, usize)> = association
                 .iter()
                 .filter(|((s, _), _)| *s == scope)
                 .map(|((_, d), n)| (d.clone(), *n))
                 .collect();
-            dirs.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+            let mut weighted: Vec<Weighted> = dirs
+                .into_iter()
+                .map(|(name, weight)| Weighted { name, weight })
+                .collect();
+            crate::order::canonical(&mut weighted);
+            let mut dirs: Vec<(String, usize)> =
+                weighted.into_iter().map(|w| (w.name, w.weight)).collect();
             dirs.truncate(5);
             ScopeUse {
                 scope,
@@ -239,11 +245,7 @@ pub fn derive(root: &Path) -> ScopeVocabulary {
             }
         })
         .collect();
-    scopes.sort_by(|a, b| {
-        b.commits
-            .cmp(&a.commits)
-            .then_with(|| a.scope.cmp(&b.scope))
-    });
+    crate::order::canonical(&mut scopes);
     ScopeVocabulary {
         scopes,
         sampled,
@@ -335,9 +337,21 @@ impl ScopeVocabulary {
                 break;
             }
         }
-        let mut ranked: Vec<(String, usize, String)> =
+        let ranked: Vec<(String, usize, String)> =
             votes.into_iter().map(|(s, (n, d))| (s, n, d)).collect();
-        ranked.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        let mut candidates: Vec<Candidate> = ranked
+            .into_iter()
+            .map(|(scope, weight, directory)| Candidate {
+                scope,
+                weight,
+                directory,
+            })
+            .collect();
+        crate::order::canonical(&mut candidates);
+        let ranked: Vec<(String, usize, String)> = candidates
+            .into_iter()
+            .map(|c| (c.scope, c.weight, c.directory))
+            .collect();
         let (scope, weight, directory) = ranked.first()?.clone();
         let ambiguous = ranked.get(1).is_some_and(|(_, n, _)| *n == weight);
         // The weight is what ranked the candidates — every path votes, so it grows with the
@@ -356,6 +370,38 @@ impl ScopeVocabulary {
             directory,
             ambiguous,
         })
+    }
+}
+
+/// A scope is shown most-used first; between equally used scopes, by name.
+impl crate::order::Ordered for ScopeUse {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.scope, &self.scope).ranked(-(self.commits as i64))
+    }
+}
+
+/// A directory weighted by how many commits tie it to a scope: heaviest first, then by name.
+struct Weighted {
+    name: String,
+    weight: usize,
+}
+
+impl crate::order::Ordered for Weighted {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.name, &self.name).ranked(-(self.weight as i64))
+    }
+}
+
+/// A candidate scope for a set of paths: most votes first, then by name.
+struct Candidate {
+    scope: String,
+    weight: usize,
+    directory: String,
+}
+
+impl crate::order::Ordered for Candidate {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.scope, &self.scope).ranked(-(self.weight as i64))
     }
 }
 

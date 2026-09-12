@@ -336,13 +336,20 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
 }
 
 /// Order the findings and decide the verdict.
-fn finish(message: CommitMessage, mut found: Vec<(CommitRule, Severity, String)>) -> CommitVerdict {
-    found.sort_by_key(|(rule, _, _)| {
-        CommitRule::ALL
-            .iter()
-            .position(|r| r == rule)
-            .unwrap_or(usize::MAX)
-    });
+fn finish(message: CommitMessage, found: Vec<(CommitRule, Severity, String)>) -> CommitVerdict {
+    let mut ranked: Vec<RankedFinding> = found
+        .into_iter()
+        .map(|(rule, severity, message)| RankedFinding {
+            rule,
+            severity,
+            message,
+        })
+        .collect();
+    crate::order::canonical(&mut ranked);
+    let found: Vec<(CommitRule, Severity, String)> = ranked
+        .into_iter()
+        .map(|f| (f.rule, f.severity, f.message))
+        .collect();
     let passed = !found.iter().any(|(_, s, _)| *s == Severity::Error);
     CommitVerdict {
         message,
@@ -357,6 +364,24 @@ fn finish(message: CommitMessage, mut found: Vec<(CommitRule, Severity, String)>
                 message: msg,
             })
             .collect(),
+    }
+}
+
+/// A finding in the order a person reads them: by the rule's place in `CommitRule::ALL`,
+/// then by what it says, so two findings under one rule never trade places between runs.
+struct RankedFinding {
+    rule: CommitRule,
+    severity: Severity,
+    message: String,
+}
+
+impl crate::order::Ordered for RankedFinding {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        let position = CommitRule::ALL
+            .iter()
+            .position(|r| *r == self.rule)
+            .map_or(i64::MAX, |p| p as i64);
+        crate::order::OrderKey::plain(&self.message, &self.message).ranked(position)
     }
 }
 
