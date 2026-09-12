@@ -7311,6 +7311,7 @@
           "exit_codes": [
             "0",
             "2",
+            "10",
             "12",
             "13",
             "15"
@@ -8193,6 +8194,7 @@
             "2",
             "10",
             "12",
+            "13",
             "15"
           ],
           "json": false,
@@ -19751,7 +19753,7 @@
           "profile": "deep-work",
           "risk": "A forensic phase can become a rewrite the moment it finds something ugly. It records; the phases that follow change.",
           "scope": [
-            "docs/INTEGRATION.md",
+            "docs",
             ".ai/repo/adrs"
           ],
           "slug": "adoption-footprint-forensics",
@@ -32251,6 +32253,13 @@
         "label": "test/cases/276_disk_is_bounded.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F276_disk_is_bounded.sh",
         "source": "test/cases/276_disk_is_bounded.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/279_the_publication_age_is_the_oldest_debt.sh",
+        "kind": "test",
+        "label": "test/cases/279_the_publication_age_is_the_oldest_debt.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F279_the_publication_age_is_the_oldest_debt.sh",
+        "source": "test/cases/279_the_publication_age_is_the_oldest_debt.sh"
       },
       {
         "id": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -50388,6 +50397,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/279_the_publication_age_is_the_oldest_debt.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/27_foreign_task.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -54069,8 +54083,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1689,
-      "edges": 3800,
+      "nodes": 1690,
+      "edges": 3801,
       "acyclic": true,
       "truncated": false
     }

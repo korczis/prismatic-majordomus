@@ -73,7 +73,7 @@ the structural release analysis, the task record's issue, the continuity store. 
 literal is gone; `gates::done` reads the policy and answers each question from its source
 and from nowhere else. `gates.policy` serves the policy and the problems it has against the
 repository (a token the vocabulary lacks, a gate the model lacks). The provider bootstraps
-carry it as a generated fragment (`{{COMPLETION_CONTRACT}}`), rendered from the same file
+carry it as a generated fragment (`COMPLETION_CONTRACT`), rendered from the same file
 by the shell tool and the executable and held to the same bytes by `generate --check`.
 
 **A derived stage, and one bit.** The completion report folds the answers over the

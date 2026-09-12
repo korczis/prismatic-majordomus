@@ -36,7 +36,22 @@ identity expected, the identity stated and one sentence — never a body beyond 
 compared. The network is behind one trait, and the default fetcher is `curl` with a bounded
 timeout; the crate's suites drive the same comparison with answers of their own.
 
-## What proves it
+## Why it asks rather than trusts
+
+A deploy command's exit code says the command ran; a green pipeline says the tree was fine;
+an HTTP 200 says something answered. None of them says which revision is live, and the
+repository paid for that difference twice. The only fact that settles it is the identity the
+surface itself states, so that is the only fact this reads.
+
+## What it does not cover
+
+A deployment object that is `declared` rather than `active` is not asked and not pretended
+about. A surface the repository does not declare — a mirror, a CDN edge, a fork — is not a
+target. Smoke tests beyond the identity comparison belong to the surfaces' own probes
+(`scripts/pages verify`, `scripts/ci/pages-check`, the release smoke phase); this claim is
+about the revision, not the behaviour behind it.
+
+## How to see it
 
 `test/cases/281_deploy_verify_live.sh` serves a site identity from a local origin and proves
 the same target verified, stale, unreadable and unreachable in turn, that a target the change

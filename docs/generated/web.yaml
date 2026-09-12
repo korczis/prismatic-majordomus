@@ -102,6 +102,26 @@ surfaces:
     provenance:
       mount:
         source: registry
+  - id: tests
+    title: Test results
+    category: report
+    visibility: public
+    kind: static-directory
+    mount: /tests
+    producer: "bash test/run.sh + cargo test, rendered by majordomus web report tests"
+    artifact: target/web/tests
+    index: index.html
+    availability: both
+    provenance:
+      artifact:
+        source: filesystem
+        path: target/web/tests/surface.json
+      kind:
+        source: filesystem
+        path: target/web/tests/surface.json
+      mount:
+        source: producer-declaration
+        path: target/web/tests/surface.json
   - id: app
     title: The site as it is deployed
     category: documentation
