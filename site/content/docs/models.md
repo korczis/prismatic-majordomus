@@ -1,7 +1,7 @@
 +++
 title = "The model catalogue"
 description = "the model catalogue: vendors and models declared once in share/models.yaml with provenance and no fabricated facts, and the explainable routing that names why every candidate was chosen or excluded"
-weight = 48
+weight = 49
 [extra]
 source = "docs/MODELS.md"
 +++
@@ -9,7 +9,7 @@ source = "docs/MODELS.md"
 {% raw %}
 
 Which AI models exist for this tool's world, what each can do, and which one a stated
-need selects — as declared data. ADR 0044 is the decision; `share/models.yaml` is the
+need selects — as declared data. ADR 0049 is the decision; `share/models.yaml` is the
 whole declaration; `apps/majordomus-cli/src/models/` is the implementation. Nothing
 here calls a model, holds an SDK, or reads a credential's value: ADR 0032's no-network
 boundary stands, and what cannot be verified is absent rather than guessed.
@@ -80,7 +80,7 @@ lifecycle adapters — their schema (`capture.v1`) already declares the optional
 `model`, `effort` and `tokens` fields, and nothing fills them today
 (`docs/ECONOMICS.md` names this as the missing half). Live model discovery over
 vendor APIs, health and usage accounting would each need a network layer this crate
-deliberately does not have; ADR 0044 names the two legal shapes such a thing could
+deliberately does not have; ADR 0049 names the two legal shapes such a thing could
 take (an outside layer writing files the crate reads, or a new ADR revisiting ADR
 0032's posture). Until then the catalogue is honest, versioned, reviewable data.
 {% endraw %}

@@ -40,9 +40,18 @@ mkchk() {
     > "$1/apps/majordomus-cli/Cargo.toml"
   echo 'fn main(){}' > "$1/apps/majordomus-cli/src/main.rs"
   echo marker > "$1/apps/majordomus-cli/target/MARKER"
+  # cargo refuses to clean a target/ that carries no CACHEDIR.TAG — "cleaning has been
+  # aborted to prevent accidental deletion of unrelated files" — so a directory that only
+  # looks like a build directory is not one it will touch. A real build writes this file;
+  # the fixture did not, and the half of this case that proves cleaning *works* failed for
+  # a reason that had nothing to do with which directory the deletion lands in.
+  printf 'Signature: 8a477f597d28d172789f06886806bc55\n# This file is a cache directory tag created by cargo.\n# For information about cache directory tags see https://bford.info/cachedir/\n' \
+    > "$1/apps/majordomus-cli/target/CACHEDIR.TAG"
 }
 MINE="$T/mine"; THEIRS="$T/theirs"
 mkchk "$MINE"; mkchk "$THEIRS"
+# the file is chosen at run time by rust_bin, so there is no path for shellcheck to follow
+# shellcheck source=/dev/null
 . "$RB"
 
 # --- it refuses when the build directory is somebody else's --------------------------------

@@ -11,6 +11,7 @@ use serde_json::{json, Value};
 
 use crate::capability::{builtin, CapabilityError, CapabilityKind, CapabilityRegistry, Context};
 use crate::index::Index;
+use crate::live::{IntoLive, Live, Memo};
 
 use super::protocol::{resource_json, tool_json};
 use crate::peers::PeerId;
@@ -104,25 +105,34 @@ struct Listing {
 
 #[derive(Clone)]
 /// The registry seen as resources and tools.
+///
+/// The context is taken from [`Live`] per call rather than held, because an MCP session
+/// outlives many commits: a surface that captured one context would answer a client
+/// attached this morning with the repository as it was this morning, for the whole day.
+/// The listings are memoised per generation of the repository, so a client that lists its
+/// tools a thousand times builds them once, and a client that lists them after a commit
+/// that added a capability sees it.
 pub struct Surface {
-    ctx: Arc<Context>,
-    listing: Arc<Listing>,
+    live: Arc<Live>,
+    caller: Option<PeerId>,
+    listing: Arc<Memo<Listing>>,
 }
 
 impl std::fmt::Debug for Surface {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Surface")
-            .field("capabilities", &self.ctx.registry.len())
+            .field("capabilities", &self.context().registry.len())
             .finish()
     }
 }
 
 impl Surface {
-    /// A surface over a loaded context.
-    pub fn new(ctx: Arc<Context>) -> Self {
+    /// A surface over a view of the repository.
+    pub fn new(live: impl IntoLive) -> Self {
         Surface {
-            ctx,
-            listing: Arc::new(Listing::default()),
+            live: live.into_live(),
+            caller: None,
+            listing: Arc::new(Memo::default()),
         }
     }
 
@@ -130,24 +140,33 @@ impl Surface {
     /// which is how `peers.announce` knows who is speaking. The listings are shared.
     pub fn for_peer(&self, peer: PeerId) -> Self {
         Surface {
-            ctx: Arc::new(self.ctx.for_caller(peer)),
+            live: Arc::clone(&self.live),
+            caller: Some(peer),
             listing: Arc::clone(&self.listing),
         }
     }
 
-    /// The tool listing as `tools/list` answers it, prepared once.
+    /// The listings of the generation that is current, built once for it.
+    fn listing(&self) -> Arc<Listing> {
+        self.listing
+            .get_or_init(self.live.view().generation, Listing::default)
+    }
+
+    /// The tool listing as `tools/list` answers it, prepared once per generation.
     pub fn tools_json(&self) -> Arc<Vec<Value>> {
+        let listing = self.listing();
         Arc::clone(
-            self.listing
+            listing
                 .tools_json
                 .get_or_init(|| Arc::new(self.tools().iter().map(tool_json).collect())),
         )
     }
 
-    /// The resource listing as `resources/list` answers it, prepared once.
+    /// The resource listing as `resources/list` answers it, prepared once per generation.
     pub fn resources_json(&self) -> Arc<Vec<Value>> {
+        let listing = self.listing();
         Arc::clone(
-            self.listing
+            listing
                 .resources_json
                 .get_or_init(|| Arc::new(self.resources().iter().map(resource_json).collect())),
         )
@@ -156,7 +175,8 @@ impl Surface {
     /// The whole `tools/list` result, `{"tools": [...]}`, serialised once: a frame that
     /// carries it copies bytes and builds nothing.
     pub fn tools_result(&self) -> Arc<Box<RawValue>> {
-        Arc::clone(self.listing.tools_raw.get_or_init(|| {
+        let listing = self.listing();
+        Arc::clone(listing.tools_raw.get_or_init(|| {
             let text = serde_json::to_string(&json!({ "tools": *self.tools_json() }))
                 .unwrap_or_else(|_| "{\"tools\":[]}".into());
             Arc::new(RawValue::from_string(text).expect("serialised JSON"))
@@ -165,48 +185,87 @@ impl Surface {
 
     /// The whole `resources/list` result, `{"resources": [...]}`, serialised once.
     pub fn resources_result(&self) -> Arc<Box<RawValue>> {
-        Arc::clone(self.listing.resources_raw.get_or_init(|| {
+        let listing = self.listing();
+        Arc::clone(listing.resources_raw.get_or_init(|| {
             let text = serde_json::to_string(&json!({ "resources": *self.resources_json() }))
                 .unwrap_or_else(|_| "{\"resources\":[]}".into());
             Arc::new(RawValue::from_string(text).expect("serialised JSON"))
         }))
     }
 
-    /// The context behind the surface.
-    pub fn context(&self) -> &Arc<Context> {
-        &self.ctx
+    /// The context behind the surface, as the repository is now.
+    ///
+    /// Owned rather than borrowed: the context this answers with is replaced when the
+    /// repository moves, so a reference into the surface would be a promise it cannot
+    /// keep. Callers hold the `Arc` for as long as they read it, which is what keeps one
+    /// answer built from one generation.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mcp::Surface;
+    /// # fn example(ctx: Arc<majordomus_cli::capability::Context>) {
+    /// let surface = Surface::new(ctx);
+    /// // the peer board is this process's own life and is the same across every reading
+    /// assert!(Arc::ptr_eq(&surface.context().peers, &surface.context().peers));
+    /// # }
+    /// ```
+    pub fn context(&self) -> Arc<Context> {
+        match &self.caller {
+            Some(peer) => Arc::new(self.live.current().for_caller(peer.clone())),
+            None => self.live.current(),
+        }
     }
 
     /// The peer this surface speaks for, when it speaks for one.
     pub fn peer(&self) -> Option<&PeerId> {
-        self.ctx.caller.as_ref()
+        self.caller.as_ref()
     }
 
-    /// The index behind the surface.
-    pub fn index(&self) -> &Index {
-        &self.ctx.index
+    /// The index behind the surface, as the repository is now.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mcp::Surface;
+    /// # fn example(ctx: Arc<majordomus_cli::capability::Context>) {
+    /// let surface = Surface::new(ctx);
+    /// assert_eq!(surface.index().objects.len(), surface.context().index.objects.len());
+    /// # }
+    /// ```
+    pub fn index(&self) -> Arc<Index> {
+        Arc::clone(&self.context().index)
     }
 
-    /// The registry behind the surface.
-    pub fn registry(&self) -> &CapabilityRegistry {
-        &self.ctx.registry
+    /// The registry behind the surface, as the repository is now.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mcp::Surface;
+    /// # fn example(ctx: Arc<majordomus_cli::capability::Context>) {
+    /// let surface = Surface::new(ctx);
+    /// assert_eq!(surface.registry().len(), surface.context().registry.len());
+    /// # }
+    /// ```
+    pub fn registry(&self) -> Arc<CapabilityRegistry> {
+        Arc::clone(&self.context().registry)
     }
 
     /// Every resource: executable ones (a query read as a document) first, then the
     /// declarative ones, each group by canonical id. Computed once and shared.
     pub fn resources(&self) -> Arc<Vec<Resource>> {
+        let listing = self.listing();
         Arc::clone(
-            self.listing
+            listing
                 .resources
                 .get_or_init(|| Arc::new(self.compute_resources())),
         )
     }
 
     fn compute_resources(&self) -> Vec<Resource> {
+        let ctx = self.context();
         let _phase = crate::perf::phase(crate::perf::Phase::McpProjectionBuild);
         crate::perf::Counters::bump(&crate::perf::COUNTERS.mcp_projection_builds);
         let mut out: Vec<(u8, Resource)> = Vec::new();
-        for c in self.ctx.registry.iter() {
+        for c in ctx.registry.iter() {
             let Some(res) = c.exposure.mcp.as_ref().and_then(|m| m.resource.as_ref()) else {
                 continue;
             };
@@ -217,7 +276,7 @@ impl Surface {
                     json!({ "id": c.id, "kind": "query", "provenance": c.provenance }),
                 ),
                 CapabilityKind::Resource => {
-                    let object = self.ctx.index.get(&res.uri);
+                    let object = ctx.index.get(&res.uri);
                     (
                         1,
                         object
@@ -252,7 +311,8 @@ impl Surface {
     /// as JSON. The resolution is `objects.get`'s ([`builtin::resolve`]), so the tool, the
     /// HTTP route and this read answer one URI alike.
     pub fn read(&self, uri: &str) -> Result<ResourceContent, SurfaceError> {
-        let resolved = builtin::resolve(&self.ctx, uri).map_err(|e| match e {
+        let ctx = self.context();
+        let resolved = builtin::resolve(&ctx, uri).map_err(|e| match e {
             CapabilityError::NotFound(_) => SurfaceError::UnknownResource(uri.to_string()),
             other => SurfaceError::Internal(other.to_string()),
         })?;
@@ -265,18 +325,15 @@ impl Surface {
 
     /// Every tool, by canonical id. Computed once and shared.
     pub fn tools(&self) -> Arc<Vec<Tool>> {
-        Arc::clone(
-            self.listing
-                .tools
-                .get_or_init(|| Arc::new(self.compute_tools())),
-        )
+        let listing = self.listing();
+        Arc::clone(listing.tools.get_or_init(|| Arc::new(self.compute_tools())))
     }
 
     fn compute_tools(&self) -> Vec<Tool> {
+        let ctx = self.context();
         let _phase = crate::perf::phase(crate::perf::Phase::McpProjectionBuild);
         crate::perf::Counters::bump(&crate::perf::COUNTERS.mcp_projection_builds);
-        self.ctx
-            .registry
+        ctx.registry
             .iter()
             .filter_map(|c| {
                 let name = c.exposure.mcp.as_ref()?.tool.clone()?;
@@ -295,12 +352,12 @@ impl Surface {
 
     /// Call a tool by name.
     pub fn call(&self, name: &str, args: &Value) -> Result<ToolOutcome, SurfaceError> {
-        let c = self
-            .ctx
+        let ctx = self.context();
+        let c = ctx
             .registry
             .by_mcp_tool(name)
             .ok_or_else(|| SurfaceError::UnknownTool(name.to_string()))?;
-        match self.ctx.execute(c.id.as_str(), args.clone()) {
+        match ctx.execute(c.id.as_str(), args.clone()) {
             Ok(v) => Ok(ToolOutcome::Ok(v)),
             Err(CapabilityError::Internal(e)) => Err(SurfaceError::Internal(e)),
             Err(e) => Ok(ToolOutcome::Refused(e.to_string())),
@@ -309,7 +366,7 @@ impl Surface {
 
     /// The repository report, as the `repository.info` capability answers it.
     pub fn repository_info(&self) -> Result<Value, SurfaceError> {
-        self.ctx
+        self.context()
             .execute("repository.info", json!({}))
             .map_err(|e| SurfaceError::Internal(e.to_string()))
     }

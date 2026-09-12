@@ -1,7 +1,7 @@
 +++
 title = "An archive that lost the file modes fails rather than travelling"
 description = "majordomus archive writes a snapshot of the tracked tree and then opens it again before returning. The entry count in the container must equal what was staged, and if executable files went in and none came back out, the command fails with exit 13 and a reproduce command instead of handing you a copy in which nothing can run."
-weight = 38
+weight = 39
 [extra]
 claim_id = "archive-fidelity"
 status = "guaranteed"

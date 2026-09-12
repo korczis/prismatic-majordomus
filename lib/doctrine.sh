@@ -3,7 +3,9 @@
 #
 # The registry is the repository's effective rule set: every rule under its rules section
 # (the vendored Majordomus baseline plus its own project rules) whose x-majordomus block
-# names a validator, in resolved dependency order. A validator function named
+# names a validator, in resolved dependency order. A rule whose block names tests but no
+# validator is gated rather than dispatched — the cases prove it, nothing calls it here —
+# and the loader passes over it, so it never reads as a validator this file cannot find. A validator function named
 # mj_validate_<validator> determines whether the rule holds. This dispatcher decides when a
 # validator runs: it iterates the registry and calls every doctrine that names the running
 # command. Nothing here selects validators by hand, so a rule added to the package runs
@@ -37,7 +39,7 @@ mj_doctrine_load() {
   # list fields in the order the rule declared them, and the first test as test
   awk '
     function flush(  j, nk, ks) {
-      if (cur == "" || s["enforced"] != 1) return
+      if (cur == "" || s["enforced"] != 1 || s["validator"] == "") return
       nk = split("id title class validator category policy_key exit_code file provenance", ks, " ")
       for (j = 1; j <= nk; j++) if (s[ks[j]] != "") print "doctrines." n "." ks[j] "=" s[ks[j]]
       print "doctrines." n ".summary=" s["description"]

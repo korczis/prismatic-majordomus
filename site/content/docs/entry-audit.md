@@ -104,6 +104,10 @@ run first died on a silent peer.
    handshake failed, all enter a repository that has no server and are told nothing that
    says so. `MAJORDOMUS_URL` is simply absent (`src/environment/shell.rs:116-130`).
    Reproduce: with no lease, `bin/majordomus-env export --shell direnv | grep -c URL`.
+   The providers named above are examples of the ones that carry a lifecycle adapter and the
+   ones that do not; which is which is not a list this document keeps — it is
+   [`docs/generated/providers.md`](generated/providers.md), written from
+   `share/providers.yaml` by `majordomus generate providers` (ADR 0024).
 
 3. **The episode is one per checkout, keyed on nothing the provider sent.** `session start
    --if-open keep` returns the open episode whatever `--provider-session` says

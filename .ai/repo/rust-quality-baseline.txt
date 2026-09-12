@@ -7,6 +7,7 @@
 # The gate fails for a finding that is not here, so the debt can shrink and cannot
 # grow. Written only by `majordomus quality report --write-baseline`. The rule is
 # not finished until this file is empty and removed.
+OPERATION_CLI_UNCLASSIFIED	apps/majordomus-cli/src/cli.rs	majordomus env enter
 RUST_EXAMPLE_DOES_NOT_NAME_SUBJECT	apps/majordomus-cli/src/environment/probe.rs	majordomus_cli::environment::probe::reachable
 RUST_EXAMPLE_NOT_EXECUTABLE	apps/majordomus-cli/src/cockpit/mod.rs	majordomus_cli::cockpit
 RUST_EXAMPLE_NOT_EXECUTABLE	apps/majordomus-cli/src/command_graph/bridge.rs	majordomus_cli::command_graph::bridge
@@ -39,6 +40,7 @@ RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/continuit
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/devtask.rs	majordomus_cli::capability::builtin::devtask
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/environment.rs	majordomus_cli::capability::builtin::environment
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/health.rs	majordomus_cli::capability::builtin::health
+RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/objects.rs	majordomus_cli::capability::builtin::objects
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/plan.rs	majordomus_cli::capability::builtin::plan
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/release.rs	majordomus_cli::capability::builtin::release
@@ -60,6 +62,9 @@ RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/command_graph/workflow.rs	ma
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/commands/mod.rs	majordomus_cli::commands
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/deploy/mod.rs	majordomus_cli::deploy
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/deploy/render.rs	majordomus_cli::deploy::render
+RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/budget.rs	majordomus_cli::devcontext::budget
+RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext
+RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/select.rs	majordomus_cli::devcontext::select
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/devtask/graph.rs	majordomus_cli::devtask::graph
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/devtask/mod.rs	majordomus_cli::devtask
 RUST_MODULE_MISSING_EXAMPLE	apps/majordomus-cli/src/devtask/readiness.rs	majordomus_cli::devtask::readiness
@@ -254,7 +259,22 @@ RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/health.rs
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/health.rs	majordomus_cli::capability::builtin::health::Liveness
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/health.rs	majordomus_cli::capability::builtin::health::Readiness
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/health.rs	majordomus_cli::capability::builtin::health::module
-RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/mesh.rs	majordomus_cli::capability::builtin::mesh::IdentityReport
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::Balance
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::ClosedSession
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::ClosedSessions
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::Episode
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::EpisodeStanding
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::Episodes
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::Orphan
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::Pointer
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::PointerLayout
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::ProviderLifecycle
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::ProviderLifecycles
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::Recovery
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::RuntimeView
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::Stranded
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::module
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/mesh.rs	majordomus_cli::capability::builtin::mesh::MeshIdentityReport
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/mesh.rs	majordomus_cli::capability::builtin::mesh::NodeList
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/mesh.rs	majordomus_cli::capability::builtin::mesh::RegisterInput
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/capability/builtin/mod.rs	majordomus_cli::capability::builtin::all
@@ -418,6 +438,9 @@ RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::CompletionQueryArgs
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::CompletionShell
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::CompletionSurface
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::DevcontextArgs
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::DevcontextCommand
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::DevcontextRequest
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::DevtaskArgs
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::DevtaskCommand
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/cli.rs	majordomus_cli::cli::DiscoveryMode
@@ -626,6 +649,42 @@ RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/deploy/render.rs	majordomus_
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/deploy/render.rs	majordomus_cli::deploy::render::dockerfile
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/deploy/render.rs	majordomus_cli::deploy::render::dockerignore
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/deploy/render.rs	majordomus_cli::deploy::render::fly_toml
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/budget.rs	majordomus_cli::devcontext::budget::Spend
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/budget.rs	majordomus_cli::devcontext::budget::spend
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::CompileInput
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::CompilerPolicy
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::EdgeRule
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::ExplainInput
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::Explanation
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::SelectorRule
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::Standing
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::TierRule
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::compile
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::explain
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/mod.rs	majordomus_cli::devcontext::policy
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Budget
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::CommitReference
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::CompiledContext
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Conflict
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::ContextEntry
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Deduplicated
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Discovery
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::EntryProvenance
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Excluded
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::ExclusionReason
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::GitContext
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Seed
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Selector
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Tier
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::Tier::meaning
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/model.rs	majordomus_cli::devcontext::model::TierSpend
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/select.rs	majordomus_cli::devcontext::select::Candidate
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/select.rs	majordomus_cli::devcontext::select::Candidate::confidence
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/select.rs	majordomus_cli::devcontext::select::EdgePolicy
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/select.rs	majordomus_cli::devcontext::select::Request
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/select.rs	majordomus_cli::devcontext::select::Selection
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/select.rs	majordomus_cli::devcontext::select::select
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devcontext/select.rs	majordomus_cli::devcontext::select::version_of
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devtask/graph.rs	majordomus_cli::devtask::graph::CriticalBlocker
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devtask/graph.rs	majordomus_cli::devtask::graph::MilestoneCounts
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/devtask/graph.rs	majordomus_cli::devtask::graph::MilestoneEdge
@@ -1113,7 +1172,7 @@ RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/model.rs	majordomus_cli::mod
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/model.rs	majordomus_cli::model::Provenance
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/model.rs	majordomus_cli::model::Severity
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/model.rs	majordomus_cli::model::uri_for
-RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/models/mod.rs	majordomus_cli::models::Excluded
+RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/models/mod.rs	majordomus_cli::models::ExcludedModel
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/models/mod.rs	majordomus_cli::models::Inference
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/models/mod.rs	majordomus_cli::models::ModelCatalogue
 RUST_PUBLIC_MISSING_EXAMPLE	apps/majordomus-cli/src/models/mod.rs	majordomus_cli::models::ModelCatalogue::diagnostics
@@ -1604,6 +1663,9 @@ RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/graph.rs	majord
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/graph.rs	majordomus_cli::capability::builtin::graph::GraphList
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/health.rs	majordomus_cli::capability::builtin::health::HealthStatus::as_str
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/health.rs	majordomus_cli::capability::builtin::health::module
+RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::EpisodeStanding::as_str
+RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::PointerLayout::as_str
+RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/lifecycle.rs	majordomus_cli::capability::builtin::lifecycle::module
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/models.rs	majordomus_cli::capability::builtin::models::ModelsReport
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/objects.rs	majordomus_cli::capability::builtin::objects::ListInput
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/capability/builtin/objects.rs	majordomus_cli::capability::builtin::objects::SearchResult
@@ -1712,6 +1774,7 @@ RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/deploy/mod.rs	majordomus_cli::depl
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/deploy/mod.rs	majordomus_cli::deploy::Positive::get
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/deploy/mod.rs	majordomus_cli::deploy::Resources
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/deploy/mod.rs	majordomus_cli::deploy::Route::as_str
+RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/devcontext/budget.rs	majordomus_cli::devcontext::budget::Spend
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/devtask/mod.rs	majordomus_cli::devtask::AttestationTally::count
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/devtask/mod.rs	majordomus_cli::devtask::AttestationTally::total
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/devtask/mod.rs	majordomus_cli::devtask::FieldProvenance::as_str
@@ -1769,9 +1832,6 @@ RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mcp/protocol.rs	majordomus_cli::mc
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mcp/protocol.rs	majordomus_cli::mcp::protocol::Server::surface
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mcp/surface.rs	majordomus_cli::mcp::surface::ResourceContent
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mcp/surface.rs	majordomus_cli::mcp::surface::Surface::call
-RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mcp/surface.rs	majordomus_cli::mcp::surface::Surface::context
-RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mcp/surface.rs	majordomus_cli::mcp::surface::Surface::index
-RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mcp/surface.rs	majordomus_cli::mcp::surface::Surface::registry
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mesh/doctor.rs	majordomus_cli::mesh::doctor::DoctorCheck
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/mesh/doctor.rs	majordomus_cli::mesh::doctor::MeshDoctorReport
 RUST_PUBLIC_THIN_DOCS	apps/majordomus-cli/src/metadata/mod.rs	majordomus_cli::metadata::KindSchema::kind

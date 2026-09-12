@@ -43,4 +43,4 @@ session's work is the capture adapters' follow-up, not this function's promise.
 An unexplainable router is a black box somebody eventually distrusts and routes
 around, at which point there are two routers. A pure function whose answer carries
 its own reasons can be read, tested and argued with — which is what keeps it the
-only one (ADR 0044).
+only one (ADR 0049).

@@ -1,7 +1,7 @@
 +++
 title = "Every continuity store is proven reachable through its own command, not merely present on disk"
 description = "majordomus doctor does not check that the continuity directories exist. It runs the commands a worker would run and reports what they do. A store nothing reads is indistinguishable from no store at all, and files on disk are not evidence that anything uses them."
-weight = 72
+weight = 73
 [extra]
 claim_id = "continuity-reachable"
 status = "guaranteed"

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.no-claim-without-test@1, project.derived-once@1]
 tags: [projection, github, enforcement, drift]
+
+x-majordomus:
+  tests: [test/cases/97_github_gate.sh, test/cases/45_github_projection.sh]
 ---
 
 # Rationale

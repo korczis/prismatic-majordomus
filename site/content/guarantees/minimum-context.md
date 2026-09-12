@@ -1,7 +1,7 @@
 +++
 title = "A profile declares which context a worker should load and no more"
 description = "Each profile carries context toggles — task, current state, decisions, relevant files, failing output, recent history depth, architecture notes — and the always-loaded instruction file tells the worker not to read the whole repository to orient but to load what the profile names. The routine profile loads the task and the current state; deep-work adds architecture notes and two hundred commits of history."
-weight = 59
+weight = 60
 [extra]
 claim_id = "minimum-context"
 status = "advisory"

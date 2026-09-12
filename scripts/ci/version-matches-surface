@@ -37,6 +37,7 @@
 # the refusal names what moved · 12 something needed is absent (no release to compare with,
 # no committed registry at that ref) · 2 usage.
 set -eu
+set -o pipefail
 
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"

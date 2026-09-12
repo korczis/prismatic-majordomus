@@ -1,7 +1,7 @@
 +++
 title = "The repository's AI layer is one directory whose manifest names every section, readable without the tool"
 description = "Everything Majordomus knows about a repository lives under .ai/: .ai/manifest.yaml names the schema and every section of the layer, .ai/repo/ holds the tracked canonical context (policy, profiles, rules, prompts, workflows, knowledge, the project model) and .ai/local/ holds this checkout's own state. A person or another tool can read the layer with nothing but a file browser, because the manifest says what each directory is and .ai/README.md says how to read it."
-weight = 76
+weight = 77
 [extra]
 claim_id = "ai-layer-manifest"
 status = "guaranteed"

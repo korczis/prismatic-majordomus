@@ -319,13 +319,21 @@ impl Server {
         );
         if let Some(url) = &self.endpoint {
             text.push_str(&format!(
-                " This session belongs to the one shared server for this repository at {url}: its home page at {url}/ lists every surface, Swagger UI is {url}/swagger, OpenAPI {url}/openapi.json, MCP over HTTP {url}/mcp."
+                // "of this checkout", not "for this repository": a linked worktree is a
+                // checkout with a server of its own, and on 2026-09-11 this repository had
+                // seven of them. The sentence a client reads on every initialize was the
+                // one that told nine agents they had seen each other (ADR 0044).
+                " This session belongs to the shared server of this checkout at {url}: its home page at {url}/ lists every surface, Swagger UI is {url}/swagger, OpenAPI {url}/openapi.json, MCP over HTTP {url}/mcp."
             ));
         }
         if let Some(peer) = self.surface.peer() {
             let board = &self.surface.context().peers;
             text.push_str(&format!(
-                " You are peer {peer}; peers attached: {}. majordomus_peers lists them with what they announced; call majordomus_announce with your intent and the paths you expect to touch so that the other clients (Claude, Codex, Gemini, ...) can avoid colliding with you.",
+                // Only this checkout's board is named here: the gathered one costs a lease
+                // read and a probe per registered checkout, and `initialize` is on the path
+                // of every client's first millisecond. The words point at the capability
+                // that pays for the wide answer rather than paying for it here.
+                " You are peer {peer} on this checkout's board; attached here: {}. majordomus_peers lists every worker of this repository — this board and the board of every other checkout of it, each peer stamped with the worktree it is working in; call majordomus_announce with your intent and the paths you expect to touch so that the other clients (Claude, Codex, Gemini, ...) can avoid colliding with you.",
                 board.summary()
             ));
             // The nudge that matters is delivered here, on every initialize, which is also
@@ -339,7 +347,7 @@ impl Server {
                 .iter()
                 .any(|p| Some(&p.id) == self.surface.peer() && p.announcement.is_some())
             {
-                text.push_str(" You have not announced anything. If you have worked in this repository before in another session, the board does not know it: announce now, before you start, and again if this connection is ever re-established.");
+                text.push_str(" You have not announced anything. If you have worked in this repository before in another session, the board does not know it: announce now, before you start, and again if this connection is ever re-established — your peer id is a position on this board, handed out again on a reconnect, and never your identity.");
             }
             let silent = peers
                 .iter()

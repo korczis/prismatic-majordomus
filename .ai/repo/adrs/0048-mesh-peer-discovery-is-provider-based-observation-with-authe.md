@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0043
+id: adr-0048
 kind: adr
 title: Mesh peer discovery is provider-based observation with authenticated node identity
 status: proposed
@@ -15,7 +15,7 @@ provenance:
   origin: authored
 ---
 
-# 43. Mesh peer discovery is provider-based observation with authenticated node identity
+# 48. Mesh peer discovery is provider-based observation with authenticated node identity
 
 ## Context
 

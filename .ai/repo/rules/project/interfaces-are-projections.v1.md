@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [architecture, capabilities, rust]
+
+x-majordomus:
+  tests: [test/cases/76_capabilities_projections.sh, test/cases/95_executable_reference.sh, scripts/site-check]
 ---
 
 # Rationale

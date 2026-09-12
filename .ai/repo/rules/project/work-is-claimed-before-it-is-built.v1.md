@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: []
 tags: [coordination, process]
+
+x-majordomus:
+  tests: [scripts/collision-check]
 ---
 
 # Rationale

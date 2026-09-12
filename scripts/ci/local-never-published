@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+# local-never-published — nothing from the local half of the AI layer ever reaches the public site.
+#
+# `.ai/` has two halves and the split is the whole point of it. `.ai/repo/` is the tracked,
+# canonical context a repository publishes about itself; `.ai/local/` is this checkout's own
+# working state — the prompts a person actually typed (`.ai/local/prompts/`), the session
+# contexts a worker was handed, the ledger, the open questions, the handovers, the decisions.
+# `.ai/manifest.yaml` marks it `tracked: false` and git ignores it. It is not secret by
+# obscurity; it is out of the repository, and the only way it can become public is if the site
+# generator reads it.
+#
+# Nothing checked that. `scripts/generate-site-data` excludes the local root at exactly one
+# line — a `case "$p" in "$LOCAL"/*) continue` inside the responsibility loop — and that line
+# had no test: delete it and every gate in this repository stays green while the next build
+# starts resolving paths under a directory full of raw prompts. The plan item that asked for
+# this gate (site/content/plan/I1303.md, "prove with a gate that nothing published ever reaches
+# it") had been open since the workspace kind was designed.
+#
+# Four questions, and the order is deliberate — the first is the one that cannot be argued
+# around, because it is behavioural rather than textual:
+#
+#   1. Is the local store an input of the site at all? A file planted under the local root must
+#      not move the generator's own input fingerprint. This is the check that survives a
+#      refactor: it does not care where the exclusion is written or what it is called, only
+#      that the bytes under `.ai/local/` are not among the bytes the site is a function of.
+#   2. Is anything under the local root tracked? If nothing is, the published bytes are a
+#      function of tracked files, and 1 closes the only other door. `doctor` asks this too;
+#      it is asked here because this gate's argument depends on it and a check that leans on
+#      another check's result without stating it is a check with a hole.
+#   3. Does the published tree carry a path under the local root?
+#   4. Does the published tree carry a file that IS a file from the local store, byte for
+#      byte? Decidable only where the store exists — on a fresh clone and on a CI runner it is
+#      empty — so where it cannot be asked this says so. An absent measurement reported as a
+#      passing check is the defect class this repository keeps re-finding; it is not committed
+#      here.
+#
+# A page that *names* a path under the local root is not a finding. The responsibility pages
+# do it on purpose and `scripts/site-check` tolerates it for the same reason: naming where a
+# record lives is documentation, and publishing the record is the leak. This gate separates
+# the two — 4 compares content, never prose.
+#
+#   scripts/ci/local-never-published              site/public and site/data/generated
+#   scripts/ci/local-never-published --tree DIR   a different published tree
+#   scripts/ci/local-never-published --no-probe   skip 1 (it runs the generator's fingerprint twice)
+#
+# Exit: 0 ok · 2 usage · 10 something local is published, or could be · 12 nothing to check.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
+MJ_VERSION="local-never-published"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
+export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../../lib/common.sh
+. "$ROOT/lib/common.sh"
+MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
+LOCAL_ABS="$MJ_AI_LOCAL_DIR"
+LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
+
+TREES=""
+PROBE=1
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tree) TREES="$TREES${2:?--tree needs a directory}
+"; shift 2 ;;
+    --no-probe) PROBE=0; shift ;;
+    -h|--help) sed -n '2,49p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "local-never-published: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+# The published bytes are two trees: what Zola rendered, and the derived data it rendered
+# from — which is committed, so a leak into it is a leak that survives in the repository even
+# before anything is deployed.
+[ -n "$TREES" ] || TREES="site/public
+site/data/generated"
+
+ok()   { printf 'ok    %s\n' "$*"; }
+bad()  { printf 'FAIL  %s\n' "$*"; fail=1; }
+note() { printf 'note  %s\n' "$*"; }
+fail=0
+looked=0
+
+# ---------------------------------------------------------------- 1. is it an input at all?
+#
+# The generator states the hash of everything the site is derived from, in one number, in
+# about four seconds (`scripts/pages current` compares that same number against the committed
+# one). So the question "does the site depend on the local store" has a direct experiment:
+# put a file in the local store and ask the number again. If it moved, the store is an input
+# and whatever is in it is one edit away from being published.
+#
+# The canary is written at the top of the local root under a name nothing else uses, and
+# removed by the trap whatever happens. Several sessions share a checkout of this repository,
+# so it must not land inside a store another process reads (`state/`, `prompts/`) and must not
+# outlive this script by one command.
+if [ "$PROBE" = 0 ]; then
+  note "the generator's input fingerprint was not asked (--no-probe)"
+elif [ ! -x scripts/generate-site-data ]; then
+  note "scripts/generate-site-data is absent; whether the local store is an input was not measured"
+else
+  before="$(scripts/generate-site-data --fingerprint 2>/dev/null || true)"
+  if [ -z "$before" ]; then
+    note "the generator would not state an input fingerprint here; whether the local store is an input was not measured"
+  else
+    canary="$LOCAL_ABS/.publication-canary-$$-$(date +%s)"
+    mkdir -p "$LOCAL_ABS"
+    cleanup_canary() { rm -f "$canary"; }
+    trap cleanup_canary EXIT INT TERM
+    printf 'a file the public site must never be a function of\n' > "$canary"
+    after="$(scripts/generate-site-data --fingerprint 2>/dev/null || true)"
+    cleanup_canary
+    trap - EXIT INT TERM
+    looked=$((looked + 1))
+    if [ -z "$after" ]; then
+      bad "the generator stated no input fingerprint with a file present under $LOCAL/"
+    elif [ "$before" = "$after" ]; then
+      ok "$LOCAL/ is not an input of the site: a file planted there does not move the generator's fingerprint"
+    else
+      bad "$LOCAL/ IS an input of the site: planting one file there moved the generator's"
+      printf '      input fingerprint from %s to %s.\n' "${before:0:12}" "${after:0:12}"
+      printf '      Everything in that directory — the prompts a person typed, the ledger, the open\n'
+      printf '      questions, the session contexts — is now one build away from the public site.\n'
+      printf '      scripts/generate-site-data must skip the local root; the manifest marks it tracked: false.\n'
+    fi
+  fi
+fi
+
+# ---------------------------------------------------------------- 2. is any of it tracked?
+#
+# The argument that 1 is sufficient rests on this: if nothing under the local root is tracked,
+# the published bytes are a function of tracked files plus whatever the generator reads, and 1
+# says it reads none of this. Tracked local state would break that argument silently, so the
+# argument states its own premise instead of assuming it.
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  note "not a git checkout; whether anything under $LOCAL/ is tracked was not measured"
+else
+  tracked="$(git ls-files -- "$LOCAL" 2>/dev/null | head -20 || true)"
+  looked=$((looked + 1))
+  if [ -z "$tracked" ]; then
+    ok "nothing under $LOCAL/ is tracked, so the published bytes cannot carry it through git"
+  else
+    bad "$(printf '%s' "$tracked" | wc -l | tr -d ' ') file(s) under $LOCAL/ are tracked; the manifest marks that half tracked: false"
+    printf '%s\n' "$tracked" | sed 's/^/      /'
+  fi
+fi
+
+# ---------------------------------------------------------------- 3 and 4. the published tree
+#
+# 3 is a path question and 4 is a content question, and they are different failures: a route
+# called /local/ is a leak of the layout, and a published file that is byte-for-byte a prompt
+# record is a leak of the prompt. Naming a path in prose is neither, and is not looked at —
+# the responsibility pages name paths under the local root on purpose.
+localbase="${LOCAL##*/}"
+for tree in $TREES; do
+  [ -d "$tree" ] || { note "$tree/ does not exist here, so it was not read"; continue; }
+  looked=$((looked + 1))
+
+  # 3. a published path under the local root
+  hits="$(find "$tree" -path "*/$LOCAL/*" -o -path "*/$localbase/prompts/*" 2>/dev/null | head -10 || true)"
+  if [ -n "$hits" ]; then
+    bad "$tree/ carries path(s) under the local half of the layer:"
+    printf '%s\n' "$hits" | sed 's/^/      /'
+  else
+    ok "$tree/ carries no path under $LOCAL/"
+  fi
+
+  # 4. a published file that IS a local record
+  if [ ! -d "$LOCAL_ABS" ] || [ -z "$(find "$LOCAL_ABS" -type f -print -quit 2>/dev/null || true)" ]; then
+    note "$LOCAL/ is empty in this checkout (it is on a fresh clone and on a runner), so $tree/ was not compared against it"
+    continue
+  fi
+  # One hash pass over each side, then an intersection. Hashing content rather than comparing
+  # names is what makes this survive a rename: a prompt published as /notes/whatever.html is
+  # still the same bytes.
+  lh="$(mktemp "${TMPDIR:-/tmp}/mj-local.XXXXXX")"
+  ph="$(mktemp "${TMPDIR:-/tmp}/mj-pub.XXXXXX")"
+  # an empty file is the same bytes everywhere and names nothing; it is not evidence of a leak
+  find "$LOCAL_ABS" -type f -size +0 -exec shasum -a 256 {} + 2>/dev/null | awk '{print $1}' | sort -u > "$lh" || true
+  find "$tree" -type f -size +0 -exec shasum -a 256 {} + 2>/dev/null | sort > "$ph" || true
+  shared="$(awk 'NR==FNR{h[$1];next} ($1 in h){print $2}' "$lh" "$ph" | head -10 || true)"
+  rm -f "$lh" "$ph"
+  if [ -n "$shared" ]; then
+    bad "$tree/ publishes file(s) byte-identical to records under $LOCAL/:"
+    printf '%s\n' "$shared" | sed 's/^/      /'
+  else
+    ok "$tree/ publishes nothing byte-identical to a record under $LOCAL/"
+  fi
+done
+
+if [ "$looked" = 0 ]; then
+  echo "local-never-published: nothing could be measured here" >&2
+  exit 12
+fi
+[ "$fail" = 0 ] || exit 10
+printf 'local-never-published: the public site is not a function of %s/\n' "$LOCAL"

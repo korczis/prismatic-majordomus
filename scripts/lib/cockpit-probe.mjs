@@ -36,6 +36,14 @@ const MODE = process.argv[3] || 'full'; // full | quick
 let WIDTHS = [];
 /** The design as the executable carries it: the fingerprint every stylesheet must match. */
 let DESIGN = null;
+/**
+ * The least of the frame, in each direction, that a drawing must occupy before it is a
+ * drawing at all. Not a quality bar — a floor. `breadthfirst` over the composed graph put
+ * 1442 nodes on one BFS level, so `fit()` zoomed out until that row fitted the frame's
+ * width and the result was about 1 pixel tall: 0.16% down, over three healthy canvas
+ * layers. Anything at or under a tenth of the frame in either direction is that failure.
+ */
+const MIN_DRAWN = 0.1;
 const findings = [];
 const notes = [];
 
@@ -379,16 +387,104 @@ async function graph(context) {
       ok('graph', 'without the library the frame says so and every node and edge is still listed');
     }
   } else {
-    await page.waitForFunction(() => !!document.querySelector('[data-mj-graph] canvas'), null, {
-      timeout: 15000,
+    // A canvas element is not a drawing. Counting `[data-mj-graph] canvas` reported three
+    // healthy layers over a drawing that was a horizontal line about one pixel tall — every
+    // large graph, for as long as this page existed — because Cytoscape always makes three
+    // layers and `breadthfirst` put 1400 nodes on one row. So the question asked here is
+    // how much of the frame the rendered elements actually occupy, answered by the renderer
+    // through `frame.mjGraph.extent()`: a drawing that fills a tenth of the frame in either
+    // direction is not a drawing, and this fails.
+    await page.waitForFunction(() => !!document.querySelector('[data-mj-graph]')?.mjGraph, null, {
+      timeout: 20000,
     }).catch(() => {});
-    const drew = await page.evaluate(() => document.querySelectorAll('[data-mj-graph] canvas').length);
-    if (!drew) fail('graph', 'the drawing library loaded and drew nothing');
-    else {
-      // the search narrows the drawing without touching the page
-      await page.fill('[data-mj-graph-search]', 'objects');
-      await page.waitForTimeout(400);
-      ok('graph', `the drawing rendered (${drew} canvas layer(s)) over the same nodes the page lists`);
+    const drew = await page.evaluate(() => {
+      const frame = document.querySelector('[data-mj-graph]');
+      return {
+        layers: document.querySelectorAll('[data-mj-graph] canvas').length,
+        extent: frame && frame.mjGraph ? frame.mjGraph.extent() : null,
+        layout: frame && frame.mjGraph ? frame.mjGraph.layout : null,
+      };
+    });
+    if (!drew.layers) fail('graph', 'the drawing library loaded and drew nothing');
+    else if (!drew.extent) {
+      fail('graph', `${drew.layers} canvas layer(s) and no extent: the viewer never reported what it drew`);
+    } else {
+      const e = drew.extent;
+      const across = e.width / Math.max(e.frameWidth, 1);
+      const down = e.height / Math.max(e.frameHeight, 1);
+      const said = `${e.nodes} nodes by "${drew.layout}" occupy ${Math.round(e.width)}x${Math.round(e.height)}px of a ${Math.round(e.frameWidth)}x${Math.round(e.frameHeight)}px frame`;
+      if (across < MIN_DRAWN || down < MIN_DRAWN) {
+        fail('graph', `the drawing is not a drawing: ${said} (${(across * 100).toFixed(1)}% across, ${(down * 100).toFixed(1)}% down; ${MIN_DRAWN * 100}% of each is the least that conveys anything)`);
+      } else {
+        // the search narrows the drawing without touching the page
+        await page.fill('[data-mj-graph-search]', 'objects');
+        await page.waitForTimeout(400);
+        ok('graph', `${said} over the same nodes the page lists`);
+      }
+    }
+  }
+  await page.close();
+}
+
+/**
+ * Which graph is the biggest. Asked, never named: the set of graphs is derived and a probe
+ * that hard-codes `composed` stops looking at the largest one the day a larger is derived.
+ * `graph.list` describes without deriving, so each is asked for its own metadata.
+ */
+async function largestGraph() {
+  const list = await api('/api/v1/graphs');
+  let largest = null;
+  let most = -1;
+  for (const info of list.graphs || []) {
+    const g = await api(`/api/v1/graph?id=${encodeURIComponent(info.id)}`);
+    const nodes = g && g.metadata ? g.metadata.nodes : 0;
+    if (nodes > most) {
+      most = nodes;
+      largest = info.id;
+    }
+  }
+  return largest;
+}
+
+/**
+ * The same question of the biggest graph there is. `registry` above is 162 nodes and was
+ * legible even when every graph used one layout; `composed` is 1442 nodes and 34 kinds, and
+ * it is the one that rendered as a hairline. A probe that only ever looks at the small
+ * graph cannot see the defect that only the large one has.
+ */
+async function graphAtScale(context, largest) {
+  if (!largest) return;
+  const page = await context.newPage();
+  watch(page, 'graph-scale');
+  await page.setViewportSize({ width: 1600, height: 1200 });
+  await page.goto(`${BASE}/cockpit/graphs/${largest}`, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => !!document.querySelector('[data-mj-graph]')?.mjGraph, null, {
+    timeout: 40000,
+  }).catch(() => {});
+  const drew = await page.evaluate(() => {
+    const frame = document.querySelector('[data-mj-graph]');
+    return frame && frame.mjGraph
+      ? { extent: frame.mjGraph.extent(), layout: frame.mjGraph.layout, kinds: frame.mjGraph.shape.kinds }
+      : null;
+  });
+  if (!drew) {
+    fail('graph-scale', `${largest}: the viewer never reported what it drew`);
+  } else {
+    const e = drew.extent;
+    const across = e.width / Math.max(e.frameWidth, 1);
+    const down = e.height / Math.max(e.frameHeight, 1);
+    const said = `${largest}: ${e.nodes} nodes, ${drew.kinds} kinds, laid out by "${drew.layout}", occupying ${Math.round(e.width)}x${Math.round(e.height)}px of ${Math.round(e.frameWidth)}x${Math.round(e.frameHeight)}px`;
+    if (across < MIN_DRAWN || down < MIN_DRAWN) {
+      fail('graph-scale', `${said} — ${(across * 100).toFixed(1)}% across and ${(down * 100).toFixed(1)}% down is a line, not a graph`);
+    } else {
+      const legend = await page.evaluate(
+        () => document.querySelectorAll('[data-mj-graph-legend] .mj-graph-legend-entry').length,
+      );
+      if (legend < drew.kinds) {
+        fail('graph-scale', `${said}, and the legend names ${legend} of its ${drew.kinds} kinds`);
+      } else {
+        ok('graph-scale', `${said}, with a legend naming every kind`);
+      }
     }
   }
   await page.close();
@@ -493,6 +589,7 @@ try {
     ['interactions', () => interactions(context)],
     ['runner', () => runner(context)],
     ['graph', () => graph(context)],
+    ['graph-scale', async () => graphAtScale(context, await largestGraph())],
     ['framing', () => framing(context)],
   ]) {
     try {

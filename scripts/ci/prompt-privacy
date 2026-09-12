@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# prompt-privacy — the raw prompt archive never reaches anything published.
+#
+# The archive under .ai/local/prompts/ holds the person's prompts verbatim. It is ignored, and
+# doctor refuses a repository that tracks it; both were true before this gate existed. What
+# neither covers is the second half of the same risk: a *derived* artefact that carries a
+# prompt. The site is generated from the repository by scripts that resolve the layout with
+# the tool's own helpers, and one `find` that forgot to exclude the local half would publish
+# every prompt in the archive to a public web site — with no prompt file committed anywhere
+# for a reviewer to notice.
+#
+# What it looks for is a file that **is** a record or a rendering, not a file that mentions
+# one. Documentation quotes an example rendering inside a fence, deliberately, and a gate that
+# could not tell that from a leak would be turned off within the week. A record opens with `{`
+# and names the capture schema on its second line; a rendering opens with its front matter and
+# names the schema on its first line of it. Those shapes are what a copy out of the archive has
+# and what a fenced example in a document does not.
+#
+#   1. no file in a published tree is a record or a rendering;
+#   2. no file in a published tree is named the way a record in the archive is, because a copy
+#      keeps its name and the names are the openings of the prompts;
+#   3. no file in a published tree is byte-identical to a file in this checkout's archive;
+#   4. every generator that walks the AI layer resolves the local half explicitly, which is
+#      the only way it can exclude it — the defect is visible in the source before it is
+#      visible in the output.
+#
+# Exit 0 clean, 10 on a finding. The trees are the ones a release publishes: docs/,
+# site/content/, site/data/, site/static/ and site/public/ when a build has left one.
+set -eu
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
+SCHEMA='majordomus.capture/v1'
+fails=0
+ok()  { printf 'OK   %-16s %s\n' "$1" "$2"; }
+bad() { printf 'FAIL %-16s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+
+trees=""
+for d in docs site/content site/data site/static site/public; do [ -d "$d" ] && trees="$trees $d"; done
+[ -n "$trees" ] || { echo "prompt-privacy: none of the published trees exist here"; exit 0; }
+
+# 1. is this file a record or a rendering? One awk pass over the published trees, reading the
+# first two lines of each: the whole shape question is decided there, and nothing after line
+# two is read, so the cost does not depend on how large the site is.
+# shellcheck disable=SC2086
+leaked="$(find $trees -type f \( -name '*.json' -o -name '*.md' -o -name '*.yaml' \) -exec awk -v s="$SCHEMA" '
+    FNR == 1 { first = $0; kind = "" }
+    FNR == 2 {
+      if (first == "{" && $0 == "  \"schema\": \"" s "\",") kind = "record"
+      else if (first == "---" && $0 == "schema: '"'"'" s "'"'"'") kind = "rendering"
+      if (first == "schema: '"'"'" s "'"'"'") kind = "rendering"
+      if (kind != "") print kind " " FILENAME
+    }
+    FNR > 2 { next }   # only the first two lines decide; `nextfile` is not in every awk
+  ' {} + 2>/dev/null || true)"
+if [ -n "$leaked" ]; then
+  bad shape "a published file is a prompt record or rendering: $(printf '%s' "$leaked" | tr '\n' ' ')"
+else
+  ok shape "no published file is a record or a rendering of $SCHEMA"
+fi
+
+# 2. a copy keeps its name, and the archive's names are the openings of the prompts, so a
+# leak is legible in a directory listing before anybody opens a file.
+# shellcheck disable=SC2086
+named="$(find $trees -type f \
+           \( -name '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.json' \
+           -o -name '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.yaml' \) 2>/dev/null || true)"
+if [ -n "$named" ]; then
+  bad names "a published file is named the way a record in the archive is: $(printf '%s' "$named" | tr '\n' ' ')"
+else
+  ok names "no published file is named the way a record in the archive is"
+fi
+
+# 3. and the check that needs no shape at all: the same bytes, under any name. Only possible
+# in a checkout that has an archive — CI's does not, which is why it is one check of four and
+# not the gate.
+ARCHIVE=".ai/local/prompts"
+if [ -d "$ARCHIVE" ] && [ -n "$(find "$ARCHIVE" -maxdepth 1 -type f -name '*.json' -print -quit 2>/dev/null)" ]; then
+  sums="$(mktemp "${TMPDIR:-/tmp}/mj.pp.XXXXXX")"
+  trap 'rm -f "$sums"' EXIT
+  find "$ARCHIVE" -maxdepth 1 -type f -exec shasum -a 256 {} + 2>/dev/null | cut -d' ' -f1 | sort -u > "$sums" || : > "$sums"
+  # shellcheck disable=SC2086
+  dup="$(find $trees -type f -size -2M -exec shasum -a 256 {} + 2>/dev/null \
+         | awk -v s="$sums" 'BEGIN { while ((getline h < s) > 0) k[h] = 1 } ($1 in k) { sub(/^[^ ]*  /, ""); print }' || true)"
+  if [ -n "$dup" ]; then
+    bad bytes "a published file has the bytes of a file in $ARCHIVE: $(printf '%s' "$dup" | tr '\n' ' ')"
+  else
+    ok bytes "no published file has the bytes of anything in $ARCHIVE"
+  fi
+else
+  ok bytes "no archive in this checkout to compare against"
+fi
+
+# 4. the generators. Each resolves the layout with the tool's helpers and must name the local
+# half in order to exclude it; one that walks the AI layer without naming it is the defect
+# this gate is really about.
+for g in scripts/generate-site-data scripts/site-check; do
+  [ -f "$g" ] || continue
+  if grep -q 'MJ_AI_LOCAL_DIR' "$g"; then
+    ok generator "$g resolves the local half explicitly, so it can exclude it"
+  else
+    bad generator "$g reads the AI layer without naming the local half; nothing stops it walking into the prompt archive"
+  fi
+done
+
+[ "$fails" = 0 ] || { printf 'prompt-privacy: %s finding(s)\n' "$fails"; exit 10; }
+printf 'prompt-privacy: ok\n'

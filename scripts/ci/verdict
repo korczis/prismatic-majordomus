@@ -33,6 +33,21 @@ plan_result="$(jq -r '.plan.result // "absent"' "$NEEDS")"
 [ "$plan_result" = success ] || { echo "verdict: planning did not succeed ($plan_result)"; red=1; }
 n_selected="$(jq -r '[.gates[] | select(.selected)] | length' "$PLAN")"
 [ "$n_selected" -gt 0 ] || { echo "verdict: the plan selected no gate; that is a broken plan, not a pass"; red=1; }
+# What a non-success result means, in the row a person reads.
+#
+# `cancelled` is the one worth spelling out. GitHub renders a job killed by its own
+# `timeout-minutes` exactly as it renders a job somebody cancelled by hand, and on
+# 2026-09-11 that cost a reader an hour: master's `suite` had been dying at its bound for
+# days and every run looked abandoned rather than timed out. The verdict has always been
+# red for it — this only stops the row reading as though a person walked away.
+note_for() {
+  case "$1" in
+    cancelled) printf '%s' 'the job reported no result: a timeout renders as cancelled, and so does a run superseded by a newer push' ;;
+    absent)    printf '%s' 'the job never ran, so this gate has no verdict' ;;
+    *)         printf '%s' 'a selected gate did not succeed' ;;
+  esac
+}
+
 for g in $(jq -r '.gates[].id' "$PLAN"); do
   job="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .job' "$PLAN")"
   selected="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .selected' "$PLAN")"
@@ -41,13 +56,13 @@ for g in $(jq -r '.gates[].id' "$PLAN"); do
   if [ "$selected" = true ]; then
     case "$result" in
       success) say "$g" "$job" "run ($reason)" "success" "" ;;
-      *) say "$g" "$job" "run ($reason)" "**$result**" "a selected gate did not succeed"; echo "verdict: gate $g was selected and its job $job reported $result"; red=1 ;;
+      *) say "$g" "$job" "run ($reason)" "**$result**" "$(note_for "$result")"; echo "verdict: gate $g was selected and its job $job reported $result"; red=1 ;;
     esac
   else
     case "$result" in
       skipped) say "$g" "$job" "skipped ($reason)" "skipped" "" ;;
       success) say "$g" "$job" "not planned ($reason)" "success" "its job ran for another gate" ;;
-      *) say "$g" "$job" "not planned ($reason)" "**$result**" "a job that ran did not succeed"; echo "verdict: gate $g was not planned, yet its job $job reported $result"; red=1 ;;
+      *) say "$g" "$job" "not planned ($reason)" "**$result**" "$(note_for "$result")"; echo "verdict: gate $g was not planned, yet its job $job reported $result"; red=1 ;;
     esac
   fi
 done

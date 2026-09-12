@@ -1,7 +1,7 @@
 +++
 title = "majordomus commands graph"
 description = "The whole graph as one document, with its fingerprint and every diagnostic"
-weight = 58
+weight = 59
 [extra]
 route = "/docs/cli/commands/graph/"
 command = "majordomus commands graph"

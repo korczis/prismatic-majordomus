@@ -1,4 +1,4 @@
-//! One shared server per repository: the lease that decides who it is. The first
+//! One shared server per checkout: the lease that decides who it is. The first
 //! `majordomus mcp` (or `serve`) to create `state/mcp/server.json` under the checkout's
 //! local half owns the server and publishes its URL there; every later process reads the
 //! file, checks that the server answers for this root, and attaches to it. A lease whose
@@ -7,6 +7,11 @@
 //! file is the only thing the server writes anywhere, it lives under `.ai/local/` (never
 //! tracked, by the layer's contract), and it is removed when the server stops, or when
 //! the server dies of `SIGTERM`, `SIGINT` or `SIGHUP`.
+//!
+//! Per *checkout*, and this file said "per repository" until ADR 0044: a linked worktree
+//! is a checkout, so it has a manifest, a root, a lease and a server of its own, and on
+//! 2026-09-11 this repository had seven of them at once. What is repository-wide is the
+//! board, which `peers.list` gathers over these very leases; the election is unchanged.
 
 use std::fs;
 use std::io::Write;

@@ -1,0 +1,209 @@
+---
+schema: adr/v1
+id: adr-0044
+kind: adr
+title: Cooperation is repository-wide because the board is gathered, not because the server is shared
+status: accepted
+date: 2026-09-11
+tags:
+  - mcp
+  - architecture
+  - coordination
+  - worktrees
+related:
+  - file:apps/majordomus-cli/src/peers.rs
+  - file:apps/majordomus-cli/src/capability/builtin/peers.rs
+  - file:test/cases/250_the_board_is_repository_wide.sh
+  - claim:mcp-peers
+  - claim:mcp-shared-server
+provenance:
+  origin: authored
+  derived_from:
+    - decision:adr-0003
+    - decision:adr-0021
+    - decision:adr-0035
+---
+
+# 44. Cooperation is repository-wide because the board is gathered, not because the server is shared
+
+## Context
+
+Every worker of this repository is bootstrapped with one sentence about cooperation, in
+`CLAUDE.md` and in `AGENTS.md` alike:
+
+> One shared server serves this repository, and every worker attached to it is visible to
+> every other through `majordomus_peers`.
+
+The first half of that sentence is false, and has been false since ADR 0021 made linked
+worktrees the ordinary way to work on a branch. The second half was therefore false too,
+in the only situation where it mattered.
+
+**Measured, on 2026-09-11, on the machine this repository is developed on.** Reading the
+lease of every checkout (`.ai/local/state/mcp/server.json`) and asking each address it
+names for its identity and its board:
+
+| checkout | port | `git_repository_id` | `repository_id` | peers |
+|---|---|---|---|---|
+| `prismatic-majordomus` (primary) | 8741 | `4ca83e49…` | `b8293f11…` | 4 |
+| `…-wt/feature/surfaces-compose-alike` | 8801 | `4ca83e49…` | `7aa97991…` | 0 |
+| `…-wt/feature/swagger-offline` | 60204 | (older executable) | `31d111bc…` | 0 |
+| `…-wt/feature/the-cockpit-shows-the-board` | 62403 | `4ca83e49…` | `284b86b7…` | 0 |
+| `…-wt/fix/cockpit-answers-quickly` | 8791 | `4ca83e49…` | `8f8685e5…` | 0 |
+| `…-wt/fix/stale-runtime-is-loud` | 8799 | (older executable) | `8c355cc1…` | 0 |
+| `…-wt/fix/worktrees-page-is-fast` | 8792 | (older executable) | `84c4e090…` | 0 |
+
+Seven live servers. One git repository. Seven boards. `majordomus serve status` reported
+118 registered checkouts in 3.0s wall. A worker in one of those worktrees calling
+`majordomus_peers` was answered by its own server's memory, saw whoever shared its own
+checkout, and was told nothing whatever about the other six — while the bootstrap it had
+just read told it that it had seen everybody.
+
+That is not a documentation slip. It is the failure mode the sentence exists to prevent,
+running unattended: the memory of this repository already records *"two workers built the
+same subsystem in one afternoon because neither looked first"*, and on 2026-09-09 an
+unrelated session recorded *"the peer board is per-checkout and collision-check only sees
+pushed refs"* as a distinct defect class. Nine agents worked in this repository on the day
+this was written, across sixty worktrees, each one reading a board that held itself.
+
+ADR 0035 had seen half of this. It gave every server a `git_repository_id`, taught
+`server.status` to enumerate the checkouts git registers and to report each one's lease,
+standing and *peer count*, and closed with the line this decision starts from: *"A peer
+still carries no worktree of its own on the board; that is the next decision's."* A count
+is not a board. Knowing that another worktree's server holds three peers tells a worker
+that it is not alone and nothing at all about what those three are touching, which is the
+only thing a worker needed to know.
+
+## Decision
+
+**One server per checkout, with the board gathered across the repository.** Not one server
+per repository.
+
+The topology does not change, and no new one is invented. There is no second authority, no
+registry of servers, no daemon, no new port, no new lease and no new file: the election of
+ADR 0003 and the one lease per checkout of ADR 0035 stand exactly as they are. What changes
+is one read.
+
+- **`peers.list` is repository-wide by default.** It enumerates the checkouts git
+  registers and reads the lease of each — through `server::checkouts_of` and
+  `server::standing_at`, the readers `server.status` already uses, so the two capabilities
+  cannot come to disagree about which checkouts exist or where their servers stand. Its own
+  board it reads from this process's memory. Every other checkout whose server answers is
+  asked for its own board over the route the registry declares for `peers.list`, and the
+  peers come back merged.
+- **The gather is one hop deep, by construction.** A sibling is asked with
+  `checkouts=this`, and a server answering that question enumerates no checkout, reads no
+  other lease and probes no other server. There is deliberately no retry without the
+  parameter: a server of an older version refuses it (`Empty` denies unknown fields), and
+  answering its whole board would be the cycle. A board that cannot be read narrowly is
+  reported unread, with the reason.
+- **Every peer carries the checkout it is on.** `Peer::checkout` — the checkout's identity
+  digest, its worktree path, its branch, and whether it is this one. This is not
+  decoration: `p1` is the first session of *every* board, so a merged listing without it
+  would hold several peers called `p1` and no way to tell them apart. The reader that
+  gathered a peer stamps it, its own board included, because a board does not know which
+  checkout it is the board of.
+- **Overlaps are computed across the union.** `peers::overlaps_among` is now the one
+  algorithm for the listing side — `PeerBoard::overlaps` is that function over its own
+  peers — so a collision between two worktrees is found by exactly the code that already
+  found a collision between two sessions of one checkout. Peers are paired by position and
+  never by `PeerId`, for the reason above.
+- **An answer says how much of the repository it covers.** `boards` holds one entry per
+  checkout covered, reached or not, with its standing and the reason it was not read;
+  `complete` is `false` when any was missed. A listing that silently drops the checkouts it
+  could not reach has the same shape as the defect being fixed — a worker seeing a short
+  board and concluding that nobody else is here.
+
+**And the claim is narrowed where it was simply wrong.** Widening the implementation makes
+the *second* half of the bootstrap sentence true; it cannot make the first half true, and
+nothing should. `CLAUDE.md`, `AGENTS.md` (through `.ai/repo/policy.yaml`, which generates
+both) and `docs/CLAIMS.yaml` now say what is so: a server serves the checkout it was
+started in, your worktree has one of its own, and the board you read is the repository's
+because it is gathered from all of them.
+
+## Alternatives rejected
+
+- **One server per repository, serving every worktree.** This is the reading the bootstrap
+  sentence invites, and ADR 0035 already rejected it for the right reason: a server serves
+  the `.ai/` layer of the checkout it was started in, so a session on a feature branch
+  attaching to the primary's server would read the trunk's rules, decisions and plan.
+  Making it correct means one process indexing every worktree — a far larger change than
+  the one the claim needs, and one that puts every worker's context behind a single
+  process's liveness. Measured today, it would also have to serve 118 checkouts. The
+  smallest change that makes the claim true is to gather a board, not to centralise a
+  server.
+- **A shared board file under the primary's local half.** A file every server writes into
+  and removes itself from is a second lease with all of the same failure modes and a new
+  stale state of its own — precisely the alternative ADR 0035 rejected for the server
+  registry, and the board is worse suited to it: a board is about *now*, and a file
+  outlives the process whose memory it described.
+- **Pushing announcements between servers.** Replication needs delivery, retries and
+  reconciliation, and every server would hold an opinion about peers it has never spoken
+  to. The gather is a pull, at the moment of asking, from processes that are authoritative
+  about themselves.
+- **Leaving `peers.list` narrow and adding a second, wide capability.** Two capabilities
+  answering "who else is working here" is the repeated semantic definition ADR 0004 calls a
+  design defect, and the wrong one would be the default — which is exactly the state being
+  fixed, since every worker that reads the bootstrap calls `majordomus_peers`.
+- **Making the default `checkouts: this` for cost.** The cost is real (below), and it is
+  smaller than the cost of a worker believing it is alone. The narrow answer stays
+  available by name.
+
+## Consequences
+
+`PeerList` gains `boards` and `complete`; `Peer` and `Overlap` gain an optional `checkout`;
+`peers.list` gains an optional `checkouts` input taking the same word, with the same
+default, as `server.status`. All are additive: a reader of the old shape still reads.
+`peers.announce` is untouched — it answers about the announcing session, on this server's
+board, and that answer was never ambiguous.
+
+**Cost.** One lease read per registered checkout, one probe per checkout whose lease names
+an address, one further round trip per server that answers. On this repository on
+2026-09-11 — 118 registered checkouts, 7 live servers — the enumeration and probing that
+`server.status` already performs took 3.0s wall, and the boards are a handful of loopback
+round trips on top of it. `checkouts: this` enumerates nothing, probes nothing and reads
+one board out of memory; the benchmark case uses it, because a benchmark may not depend on
+how many worktrees the machine running it happens to have.
+
+**During the rollout, every running server is a checkout that cannot be read, and the
+answer says so.** A server started before this change refuses `checkouts=this` — its
+`peers.list` took no input and denied unknown fields — so a gather run against the seven
+servers live on 2026-09-11 came back `complete: false` with seven reasons naming the
+address and the 400. That is the design working: it reported that it could not ask rather
+than reporting an empty repository, which is the behaviour the whole decision exists to
+produce. The remedy is the ordinary one for an executable change here — the server of a
+checkout is restarted (`serve stop`, then the next client's election, or `serve ensure`) —
+and those servers are already reported `outdated` by `server.status` for the same reason.
+
+**A peer id is still not a durable worker identity, and this decision does not make it
+one.** `p1`, `p2`, `p3` are positions on one board in attachment order, handed out again
+when a server restarts and reassigned when a worker reconnects — a session that was `p3`
+in the morning is `p1` after its bridge re-attaches. Nothing may correlate a worker across
+a reconnect by its board position. What this decision adds is the durable half:
+`Peer::checkout` names a worktree, which outlives every connection made to it, and in this
+repository's topology a worktree is a branch is a piece of work. A reader that needs to
+say "this is the same worker as before" uses the checkout and what the peer announced, not
+the id.
+
+**An announcement still dies with its connection, and that is accepted.** ADR 0035 already
+made the bridge repeat its client's last announcement after a re-attach or a takeover, so
+the common reconnect is covered; a worker whose *bridge process* ends and is replaced
+announces again, as both bootstraps instruct. Making an announcement outlive its process
+would mean persisting it, and the board is deliberately memory: a record of what a session
+said it was doing, after the session is gone, is a stale claim that warns workers off
+ground nobody is standing on. A departed peer is already retained on its own board with
+`attached: false` for as long as that server lives, which is the right amount of memory —
+it is a fact about the process, and it ends with the process.
+
+**What is still not visible.** A checkout with no running server contributes nothing, and
+correctly so: nobody is attached there. A branch pushed before a session started carries no
+announcement and no less of a claim — `scripts/collision-check` is the reader for that, and
+`project.work-is-claimed-before-it-is-built` already requires both. And `Overlap` names the
+earlier peer of a pair without naming the later one; the `peers` array carries both sides
+with their checkouts, so the pair is recoverable, but the entry alone is one-sided. That is
+pre-existing and left alone here rather than widened into this diff.
+
+`test/cases/250_the_board_is_repository_wide.sh` is the proof over real processes: two
+worktrees of one repository, a real MCP client attached in each through `bin/majordomus-mcp`,
+each seeing the other's worker and the overlap between their claims; concurrent entry from
+both worktrees at once leaving one lease and one server per checkout; and a checkout whose
+server is stopped reported as covered-and-empty rather than dropped.

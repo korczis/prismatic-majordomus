@@ -33,9 +33,11 @@ pub(crate) mod bench;
 pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod completion;
+pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
 pub(crate) mod env;
+pub(crate) mod evidence;
 pub(crate) mod executions;
 pub(crate) mod generate;
 pub(crate) mod mcp;
@@ -77,6 +79,8 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Executions(args) => executions::executions(args),
         Command::Mesh(args) => mesh::run(args),
         Command::Models(args) => models::run(args),
+        Command::Devcontext(args) => devcontext::run(args),
+        Command::Evidence(args) => evidence::run(args),
     }
 }
 
@@ -129,6 +133,10 @@ mod tests {
             (&["majordomus", "quality", "report"], |c| {
                 matches!(c, Command::Quality(_))
             }),
+            (
+                &["majordomus", "devcontext", "compile", "--issue", "I1"],
+                |c| matches!(c, Command::Devcontext(_)),
+            ),
         ];
         for (argv, is_expected) in cases {
             let cli =

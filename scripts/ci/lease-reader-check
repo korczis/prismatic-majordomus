@@ -102,6 +102,15 @@ subject() {
       .envrc) continue ;;                                     # watches, never opens
       *.md|docs/*|site/*|.ai/*) continue ;;                   # documentation
       apps/majordomus-cli/tests/*|test/cases/*) continue ;;    # the lease as a subject
+      scripts/ci/lease-reader-check) continue ;;               # this gate: it names the lease
+                                                               # path, file and schema because
+                                                               # that is how it finds a second
+                                                               # reader. Counting itself made it
+                                                               # report its own detector as the
+                                                               # violation, which no branch could
+                                                               # ever clear — the same shape as
+                                                               # providers-check excluding the
+                                                               # gates that quote its pattern.
     esac
     printf '%s\n' "$f"
   done

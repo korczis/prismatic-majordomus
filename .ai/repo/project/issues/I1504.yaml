@@ -1,0 +1,42 @@
+id: I1504
+milestone: development-runtime
+title: One development transition is a capability, end to end
+slug: phase-a-one-mutating-capability
+priority: p0
+profile: deep-work
+parallel_safe: false
+objective: "Declare one development transition — the plan's `done` — as a single `capability!` of kind command in the plan module, with a typed input schema, benchmark cases and a registered ledger event, and point lib/plan.sh at it instead of letting it write the YAML itself."
+why: "This is the smallest change that tests the architecture ADR 0040 states, and the audit's own conclusion is that the first phase of work is not UI. Nothing in the target flow is new infrastructure: the capability macro, the input schemas, the generated OpenAPI, the MCP bridge and the Cockpit's schema-generated runner form all exist and all work — what is missing is an arrow from a development transition to any of them. The registry today has three command capabilities and not one of them is about development, which is why `tools/call majordomus_plan_done` answers `unknown tool`: there is no capability for a plan transition, and that error message is the architecture in one line. If this lands cleanly every later phase is the same shape, and if it does not, nothing later would have worked either."
+current_state: "Plan transitions exist only in lib/plan.sh, which writes the issue YAML directly. The Rust side reads the same records through plan.* and, since the audit's base, through devtask.issue and devtask.milestone, and writes nothing. .ai/repo/development-semantics-baseline.txt carries `backing:plan` as an accepted entry."
+desired_state: "Moving one issue to done is decided in one place. The CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated form are each a projection of that one declaration, none of them hand-written, and the shell tool calls it the way lib/context.sh and lib/capture.sh already call the Rust binary."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/plan.rs
+  - apps/majordomus-cli/src/plan.rs
+  - share/events.yaml
+  - lib/plan.sh
+  - .ai/repo/development-semantics-baseline.txt
+  - test/cases
+non_scope:
+  - The other transitions. Start and verify follow the same shape once this one is proved; widening before it is proved is the failure this issue is designed to catch.
+  - Any Cockpit page. The existing generic runner must drive the new capability with no Cockpit source edited; if it cannot, that is the finding.
+  - A second project model. The canonical records stay where they are and keep their shape.
+depends_on: []
+acceptance_criteria:
+  - The MCP tool exists and tools/call moves an issue to done
+  - A non-GET operation for the transition appears in the generated OpenAPI without anyone editing the document
+  - The Cockpit's existing generic runner drives it with no file under apps/majordomus-cli/src/cockpit changed
+  - lib/plan.sh no longer writes the issue YAML itself
+  - test/cases/99_plan_capabilities.sh still holds the two engines to byte equality
+  - The development-semantics gate reports one fewer entry and refuses the baseline's return
+validation:
+  - bin/majordomus-cli capabilities validate
+  - bin/majordomus-cli generate --check
+  - bash test/run.sh 99_plan_capabilities
+  - majordomus plan validate
+evidence_required:
+  - transition_is_a_capability
+  - projection_not_handwritten
+  - two_engines_still_agree
+risk: "High value, contained blast radius. The real risk is scope: a branch that ports lib/plan.sh wholesale proves nothing and cannot be reviewed. One transition, or stop."
+created_at: 2026-09-11
+updated_at: 2026-09-11

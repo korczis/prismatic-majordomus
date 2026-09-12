@@ -1,7 +1,7 @@
 +++
 title = "Every generated artifact declares the document it projects, the encoding it is written in, the schema its content satisfies and its source, and a structured document is written in every encoding it is committed in from one value"
 description = "majordomus generate writes a *typed* tree. Every file in it declares four things: the **document** it projects, the **encoding** it is written in (json, yaml, markdown or text, matching its own suffix), the **schema** its content satisfies where the document has a contract, and the **source** it was derived from. Every file carries a provenance header in the form its encoding allows, so a person who opens one learns it is a cache before they edit it."
-weight = 111
+weight = 112
 [extra]
 claim_id = "generated-artifacts-typed"
 status = "guaranteed"

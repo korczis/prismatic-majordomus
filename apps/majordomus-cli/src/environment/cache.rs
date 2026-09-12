@@ -148,6 +148,16 @@ impl Cache {
         // file, or one truncates the other's and the rename publishes half a document.
         let tmp = path.with_extension(format!("json.{}.tmp", std::process::id()));
         let text = serde_json::to_string(self)?;
+        // A cache that says the same thing is not written again. Since ADR 0043 this runs on
+        // the entry path of every `cd`, and a file whose modification time moves on every
+        // entry is a file somebody is watching: direnv watches paths by mtime, `git status`
+        // stats the tree, a backup tool copies it, and a case asserting that entering a
+        // healthy repository changes nothing on disk fails on a document identical to the one
+        // already there. Comparing first costs one read of a small file and saves a write, a
+        // rename and an inode's worth of churn on the hottest path this executable has.
+        if std::fs::read(&path).is_ok_and(|existing| existing == text.as_bytes()) {
+            return Ok(());
+        }
         std::fs::write(&tmp, text)?;
         match std::fs::rename(&tmp, &path) {
             Ok(()) => Ok(()),

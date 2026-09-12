@@ -1,7 +1,7 @@
 +++
 title = "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error"
 description = "The repository's standing posture — nothing leaves the machine — survives the existence"
-weight = 165
+weight = 167
 [extra]
 claim_id = "mesh-off-by-default"
 status = "guaranteed"
@@ -32,7 +32,7 @@ take a request, and activates `mesh::MeshRuntime` only from `enabled: true`
 (`apps/majordomus-cli/src/shared.rs`). Every other outcome calls `decline(reason)` and
 starts nothing. `apps/majordomus-cli/tests/mesh.rs` proves both directions over a real
 socket: a disabled declaration answers with its reason and creates no identity file,
-and an enabled one activates before the first request lands. ADR 0043 records the
+and an enabled one activates before the first request lands. ADR 0048 records the
 decision and answers the repository's "Intentionally Absent" list point by point.
 
 ## How to see it
@@ -59,5 +59,5 @@ that a visible, committed decision.
 The repository's security posture is "nothing leaves the machine", and a discovery
 subsystem is exactly the kind of feature that erodes such a posture silently. Making
 absence the default and enablement a reviewed commit keeps the posture true until a
-person decides otherwise (ADR 0043).
+person decides otherwise (ADR 0048).
 {% endraw %}

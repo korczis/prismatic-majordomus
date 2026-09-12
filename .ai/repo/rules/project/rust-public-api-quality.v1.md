@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.no-claim-without-test@1, project.rust-command-tested-in-file@1]
 tags: [rust, documentation, testing, public-api]
+
+x-majordomus:
+  tests: [test/cases/96_rust_public_api_quality.sh]
 ---
 
 # Rationale

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.generated-artifacts-are-typed@1]
 tags: [release, changelog, version, projections]
+
+x-majordomus:
+  tests: [scripts/ci/release-check, test/cases/103_release_projection.sh]
 ---
 
 # Rationale

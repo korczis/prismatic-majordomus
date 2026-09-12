@@ -137,6 +137,23 @@
         }
       }
     },
+    "prompts": {
+      "description": "Bounds on the raw prompt archive under .ai/local/prompts/. Pruning replaces a prompt body with a tombstone and keeps every other field, including the provenance of its episode link; a record is never deleted. Either bound alone is a bound.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "retention_max_days": {
+          "description": "A prompt body older than this many days is pruned.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "retention_max_bytes": {
+          "description": "The total size of the prompt bodies the archive keeps; the oldest are pruned first past it.",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
     "enforcement": {
       "type": "array",
       "items": {
@@ -228,11 +245,23 @@
           "properties": {
             "doctor_ms": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "description": "Wall-time budget for `majordomus doctor`; over it the command WARNs and still exits on its findings."
             },
             "watch_ms": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "description": "Wall-time budget for `majordomus watch`; over it the command WARNs and still exits on its findings."
+            },
+            "enter_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-time budget for entering the repository (`majordomus env enter`) when a server is already serving this checkout, which is every entry but the first. Entering a directory is something a person does dozens of times a day and never chose to wait for."
+            },
+            "enter_cold_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-time budget for the first entry, which additionally finds that nothing answers and starts a server \u2014 and then returns, because entry never waits for a server it started to become ready."
             }
           }
         }

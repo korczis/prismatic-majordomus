@@ -241,35 +241,31 @@ fi
 # status is a fact with an API, so it is read rather than guessed at from the symptom.
 if [ "$OFFLINE" = 1 ]; then
   ok "GitHub's own Pages build was not asked (--offline)"
-elif ! command -v gh >/dev/null 2>&1; then
-  note "gh is not installed, so GitHub's own Pages build was not read"
 else
-  slug="${GITHUB_REPOSITORY:-}"
-  if [ -z "$slug" ]; then
-    slug="$(git remote get-url "$REMOTE" 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
-  fi
+  # Asked in one place, not two. This gate read `repos/:slug/pages/builds` in its own words
+  # until 2026-09-11, and .github/workflows/pages.yml — the run that does the publishing, and
+  # the only reader in a position to go red at the moment the build fails — could not read it
+  # at all. One API, one parser, two callers: `scripts/pages built`. Its exit is the verdict
+  # (0 built, 10 errored, 12 not determinable) and its porcelain line is the reading, so the
+  # words a person sees stay this gate's and the question stays the tool's.
   head_sha="$(git rev-parse "$REMOTE/$BRANCH" 2>/dev/null || true)"
-  build="$(gh api "repos/$slug/pages/builds" --jq '.[0] | "\(.status) \(.commit) \(.error.message // "no message")"' 2>/dev/null || true)"
-  if [ -z "$build" ]; then
-    note "GitHub's Pages build for $slug could not be read (no token, or no pages:read); not measured"
-  else
-    b_status="${build%% *}"
-    b_rest="${build#* }"
-    b_commit="${b_rest%% *}"
-    b_error="${b_rest#* }"
-    if [ "$b_status" = "errored" ] && [ "$b_commit" = "$head_sha" ]; then
-      bad "GitHub's own Pages build of ${b_commit:0:12} — the head of $BRANCH — errored: $b_error"
-      say "      the branch is right and the site is not; re-run the build by dispatching the"
-      say "      pages workflow, or push $BRANCH again. Nothing in this repository's own"
-      say "      workflow goes red for this, which is why it is asked here."
-    elif [ "$b_status" = "errored" ]; then
-      note "an older Pages build (${b_commit:0:12}) errored; the head of $BRANCH is ${head_sha:0:12}"
-    elif [ "$b_commit" != "$head_sha" ]; then
-      note "GitHub's newest Pages build is of ${b_commit:0:12} ($b_status), not the head of $BRANCH ${head_sha:0:12}"
-    else
-      ok "GitHub's own Pages build of ${b_commit:0:12} is $b_status"
-    fi
-  fi
+  reading=""; rc=0
+  reading="$(scripts/pages built --commit "$head_sha" --porcelain 2>/dev/null)" || rc=$?
+  b_status="$(printf '%s' "$reading" | cut -f1)"
+  b_commit="$(printf '%s' "$reading" | cut -f2)"
+  b_error="$(printf '%s' "$reading" | cut -f3)"
+  case "$rc" in
+    0)  ok "GitHub's own Pages build of ${b_commit:0:12} is $b_status" ;;
+    10) bad "GitHub's own Pages build of ${b_commit:0:12} — the head of $BRANCH — errored: $b_error"
+        say "      the branch is right and the site is not; re-run the build by dispatching the"
+        say "      pages workflow, or push $BRANCH again. The pages workflow goes red for this"
+        say "      now as well, at the moment it happens; this is what notices afterwards." ;;
+    *)  if [ "$b_status" = unreadable ] || [ -z "$b_status" ]; then
+          note "GitHub's Pages build could not be read (${b_error:-no gh, no token, or no pages:read}); not measured"
+        else
+          note "GitHub's newest Pages build is of ${b_commit:0:12} ($b_status), not the head of $BRANCH ${head_sha:0:12}"
+        fi ;;
+  esac
 fi
 
 [ "$fail" = 0 ] || exit 10

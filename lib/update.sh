@@ -123,6 +123,13 @@ H
     i=$((i+1))
   done
   mkdir -p "$MJ_STATE_DIR"
+  # Converge the prompt archive's mode while we are here. `update` is the command that brings
+  # a repository up to what this version of the tool expects, and the archive was created
+  # 0755 by every version before this one — a directory whose file names are the openings of
+  # the prompts, readable by every account on the machine. Repairing it here means an
+  # existing repository is fixed by the command it already runs, rather than by reading a
+  # finding and retyping a chmod.
+  [ -d "$MJ_AI_LOCAL_DIR/prompts" ] && chmod 700 "$MJ_AI_LOCAL_DIR/prompts" 2>/dev/null
   mj_ledger_append projections.updated "\"policy_sha256\":\"$psha\",\"targets\":$i"
   rm -rf "$tmp"
   printf 'generated %s target(s) from policy %s; each carries its own stamp\n' "$i" "${psha:0:12}"

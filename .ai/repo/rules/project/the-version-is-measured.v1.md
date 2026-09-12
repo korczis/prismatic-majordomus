@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.land-and-publish@1, project.interfaces-are-projections@1]
 tags: [release, versioning, contract, evidence]
+
+x-majordomus:
+  tests: [test/cases/112_version_matches_surface.sh]
 ---
 
 # Rationale

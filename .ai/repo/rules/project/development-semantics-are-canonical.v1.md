@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.rust-canonical-declaration@1, project.interfaces-are-projections@1, project.commands-are-projections@1]
 tags: [architecture, capabilities, cockpit, runtime]
+
+x-majordomus:
+  tests: [scripts/development-semantics-check]
 ---
 
 # Rationale

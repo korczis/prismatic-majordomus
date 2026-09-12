@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [scope, safety, rust]
+
+x-majordomus:
+  tests: [test/cases/93_scope_policy.sh]
 ---
 
 # Rationale

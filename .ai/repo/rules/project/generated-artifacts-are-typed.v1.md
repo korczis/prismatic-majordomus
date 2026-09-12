@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.derived-files-regenerated@1, project.interfaces-are-projections@1]
 tags: [derived, generation, schema]
+
+x-majordomus:
+  tests: [scripts/derive-check, test/cases/52_generated_artifact_typing.sh]
 ---
 
 # Rationale

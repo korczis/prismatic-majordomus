@@ -1,7 +1,7 @@
 +++
 title = "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI"
 description = "AGENTS.md, CLAUDE.md, GEMINI.md and every other target the policy's projections[] declares are caches of two inputs: .ai/repo/policy.yaml with its profiles, and the provider template (.ai/repo/providers/<provider>.tmpl, else the distribution's share/providers/<provider>.tmpl). The Rust executable's majordomus generate providers writes them; majordomus generate --check, which CI runs on every push, derives them again, compares byte for byte, writes nothing, and exits 10 naming every file that differs or is missing. A rule typed into AGENTS.md by hand therefore does not merge."
-weight = 126
+weight = 127
 [extra]
 claim_id = "provider-projections-one-renderer"
 status = "guaranteed"

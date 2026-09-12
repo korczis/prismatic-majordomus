@@ -29,5 +29,5 @@ environment variable, never a value, and the catalogue's schema has no field a s
 could hide in (a test holds it). It states no price and no unverified vendor — what
 cannot carry provenance stays absent. And it does not yet record which model actually
 executed a session's work; that belongs to the capture adapters, whose schema already
-declares the fields (ADR 0044 names it as the follow-up).
+declares the fields (ADR 0049 names it as the follow-up).
 {% endraw %}

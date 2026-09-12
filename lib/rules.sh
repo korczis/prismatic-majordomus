@@ -11,9 +11,13 @@
 # claiming one identity, or a project rule reusing a vendored namespace is an error, and
 # an unresolved set is not applied partially: the command that needed it stops.
 #
-# Rules with an x-majordomus block are enforced: the dispatcher in doctrine.sh reads them
-# as its registry. Rules without one are normative for whoever reads them and enforced by
-# nobody, which is a fact `rules list` shows rather than hides.
+# Rules with an x-majordomus block are enforced, in one of two modes. A rule that names a
+# validator is dispatched: doctrine.sh reads it as its registry and calls the validator at
+# run time. A rule that names none is gated: nothing dispatches it, and the behavioural
+# cases it names are what prove it. Either mode names at least one test, because a rule
+# nothing proves is a rule nobody enforces. Rules without the block are normative for
+# whoever reads them and enforced by nobody, which is a fact `rules list` shows rather
+# than hides.
 
 MJ_RULES_FLAT=""          # rules.N.<field> for the effective set, resolved order
 MJ_RULES_ERROR=""         # why the last load failed
@@ -75,10 +79,14 @@ mj_rule_scan() {
         }
         enforced = 0; for (i = 1; i <= nl; i++) if (index(keys[i], "x-majordomus.") == 1) enforced = 1
         if (enforced) {
-          if (first["x-majordomus.validator"] == "") fail("x-majordomus lacks validator")
-          if (first["x-majordomus.category"] == "") fail("x-majordomus lacks category")
-          if (first["x-majordomus.exit_code"] == "") fail("x-majordomus lacks exit_code")
-          if (first["x-majordomus.enforced_by.0"] == "") fail("x-majordomus names no enforcing command")
+          if (first["x-majordomus.validator"] != "") {
+            if (first["x-majordomus.category"] == "") fail("x-majordomus lacks category")
+            if (first["x-majordomus.exit_code"] == "") fail("x-majordomus lacks exit_code")
+            if (first["x-majordomus.enforced_by.0"] == "") fail("x-majordomus names no enforcing command")
+          } else if (first["x-majordomus.enforced_by.0"] != "")
+            fail("x-majordomus names an enforcing command but no validator to dispatch")
+          else if (first["x-majordomus.category"] != "" || first["x-majordomus.exit_code"] != "")
+            fail("x-majordomus names a category or exit code but no validator to use them")
           if (first["x-majordomus.tests.0"] == "") fail("x-majordomus names no test")
         }
         # the flat record, in the order the registry is read in; @ is the resolved index
@@ -200,6 +208,7 @@ mj_rule_index() {
 mj_rules_render() {
   awk -v json="$1" '
     function jesc(s,  o, i, c) { o = ""; for (i = 1; i <= length(s); i++) { c = substr(s, i, 1); if (c == "\\") o = o "\\\\"; else if (c == "\"") o = o "\\\""; else if (c != "\n") o = o c } return o }
+    function jlist(v,  a, m, j, o) { if (v == "") return ""; m = split(v, a, ","); o = ""; for (j = 1; j <= m; j++) o = o (j > 1 ? "," : "") "\"" jesc(a[j]) "\""; return o }
     {
       eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
       if (split(k, p, ".") < 3 || p[1] != "rules") next
@@ -208,16 +217,18 @@ mj_rules_render() {
       if (f == "id") id[i] = v; else if (f == "version") ver[i] = v; else if (f == "class") cls[i] = v
       else if (f == "status") st[i] = v; else if (f == "provenance") prov[i] = v; else if (f == "file") file[i] = v
       else if (f == "enforced") enf[i] = v
+      else if (f == "validator") val[i] = v
+      else if (f ~ /^tests\.[0-9]+$/) ts[i] = (i in ts ? ts[i] "," v : v)
       else if (f ~ /^enforced_by\.[0-9]+$/) eb[i] = (i in eb ? eb[i] "," v : v)
       else if (f ~ /^depends_on\.[0-9]+$/) dep[i] = (i in dep ? dep[i] ",\"" v "\"" : "\"" v "\"")
     }
     END {
       if (json) {
         printf "{\"schema\":1,\"rules\":["
-        for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), dep[i]
+        for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"mode\":\"%s\",\"tests\":[%s],\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), (enf[i] != 1 ? "none" : val[i] != "" ? "dispatched" : "gated"), jlist(ts[i]), dep[i]
         printf "]}\n"
       } else
-        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] == 1 ? "enforced by " eb[i] : "no validator; see the rule")
+        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] != 1 ? "no validator; see the rule" : val[i] != "" ? "enforced by " eb[i] : "proven by " ts[i])
     }' "$MJ_RULES_FLAT"
 }
 

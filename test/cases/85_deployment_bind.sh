@@ -57,7 +57,7 @@ write_deployment 8087
 git add -A >/dev/null; git commit -qm "the deployment object" >/dev/null
 
 # ---------------------------------------------------------------- the local default
-"$RB" serve --port 0 </dev/null >"$S/local.log" 2>&1 &
+"$RB" serve --port 0 --idle 60 </dev/null >"$S/local.log" 2>&1 &
 pid=$!; n=0
 while [ $n -lt 150 ] && ! grep -q 'shared server listening' "$S/local.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
 kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
@@ -67,7 +67,7 @@ grep -q '0\.0\.0\.0' "$S/local.log" \
   && { echo "    the local default bound a reachable interface"; exit 1; }
 
 # ---------------------------------------------------------------- the declared address
-"$RB" serve --deployment hosted </dev/null >"$S/hosted.log" 2>&1 &
+"$RB" serve --deployment hosted --idle 60 </dev/null >"$S/hosted.log" 2>&1 &
 pid=$!; n=0
 while [ $n -lt 150 ] && ! grep -q 'shared server listening' "$S/hosted.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
 # it bound every interface, on the port the object states, and said which object said so
@@ -85,7 +85,7 @@ kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
 # Change it in the object and nowhere else; the process follows.
 write_deployment 8092
 git add -A >/dev/null
-"$RB" serve --deployment hosted </dev/null >"$S/moved.log" 2>&1 &
+"$RB" serve --deployment hosted --idle 60 </dev/null >"$S/moved.log" 2>&1 &
 pid=$!; n=0
 while [ $n -lt 150 ] && ! grep -q 'shared server listening' "$S/moved.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
 kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true

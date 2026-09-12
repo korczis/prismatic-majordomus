@@ -1,7 +1,7 @@
 +++
 title = "An outcome is a value from a closed vocabulary, not free text"
 description = "A task ends with exactly one of completed, partial, blocked, no_match, failed (plus handed_over when it continues elsewhere and active while it runs). no_match means the work was done and the thing sought does not exist; failed means the work could not be done. They look alike in a chat — \"we found nothing\" versus \"we could not search\" — and are different facts a supervisor must tell apart to decide whether to retry, escalate or accept."
-weight = 56
+weight = 57
 [extra]
 claim_id = "typed-outcome"
 status = "guaranteed"

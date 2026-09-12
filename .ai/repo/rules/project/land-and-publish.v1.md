@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.derived-files-regenerated@1, project.interfaces-are-projections@1]
 tags: [process, integration, deployment, evidence]
+
+x-majordomus:
+  tests: [test/cases/104_published_site.sh, test/cases/97_pages_fast_path.sh, test/cases/57_derived_merge_driver.sh, test/cases/111_unblock.sh]
 ---
 
 # Rationale

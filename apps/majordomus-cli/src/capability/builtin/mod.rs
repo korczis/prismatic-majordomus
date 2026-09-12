@@ -36,13 +36,16 @@ pub mod commands;
 pub mod continuity;
 pub(crate) mod deploy;
 pub(crate) mod design;
+pub(crate) mod devcontext;
 pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
+pub mod evidence;
 pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
+pub mod lifecycle;
 pub(crate) mod mesh;
 pub(crate) mod models;
 pub mod objects;
@@ -56,6 +59,7 @@ pub mod release;
 pub mod repository;
 mod scope;
 pub mod server;
+pub mod session_domain;
 pub mod trace;
 mod views;
 pub mod web;
@@ -76,6 +80,7 @@ pub use deploy::{
 // the Cockpit's Design page renders these two; everything else the module declares is
 // read as JSON through the executor, like every other capability's output
 pub(crate) use design::{DesignReport, TokenList};
+pub use devcontext::DEVCONTEXT_POLICY_URI;
 pub use devtask::{DevMilestoneInput, DevTaskInput};
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
@@ -96,7 +101,12 @@ pub use executions::{
 };
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
-pub use mesh::{IdentityReport, NodeList, RegisterInput, MESH_URI};
+pub use lifecycle::{
+    Balance, ClosedSession, ClosedSessions, Episode, EpisodeStanding, Episodes, Orphan, Pointer,
+    PointerLayout, ProviderLifecycle, ProviderLifecycles, Recovery, RuntimeView, Stranded,
+    EPISODES_URI, RECOVERY_URI,
+};
+pub use mesh::{MeshIdentityReport, NodeList, RegisterInput, MESH_URI};
 pub use models::{ModelsFilter, ModelsReport, RouteInput, VendorView, MODELS_URI};
 pub use objects::{
     resolve, AnswerView, Comparison, DriftedObject, GetInput, ListInput, ObjectList,
@@ -116,6 +126,7 @@ pub use server::{
     Checkouts, Desired, LeaseView, ServerStanding, ServerStatus, ServerStatusInput, ServerView,
     SERVER_URI,
 };
+pub use session_domain::{IdentityReport, MachineReport, IDENTITY_URI, MACHINE_URI};
 pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};
 pub(crate) mod why;
 
@@ -138,16 +149,20 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         graph,
         health,
         continuity,
+        lifecycle,
         obligations,
         deploy,
+        evidence,
         executions,
         mesh,
         models,
         peers,
         server,
+        session_domain,
         perf,
         plan,
         directories,
+        devcontext,
         artifacts,
         environment,
         quality,

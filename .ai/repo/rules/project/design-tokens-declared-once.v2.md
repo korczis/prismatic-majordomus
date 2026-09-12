@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.derived-files-regenerated@1, project.interfaces-are-projections@1, project.generated-artifacts-are-typed@1, project.ui-conformance@1]
 tags: [design, ui, derived, projections, cockpit, site]
+
+x-majordomus:
+  tests: [test/cases/107_design_tokens.sh, test/cases/109_design_system.sh, test/cases/120_design_contrast.sh, scripts/ci/design-check]
 ---
 
 # Rationale

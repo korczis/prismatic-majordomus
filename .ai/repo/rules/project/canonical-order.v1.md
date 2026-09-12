@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.no-new-nouns@1]
 tags: [architecture, presentation, determinism, rust]
+
+x-majordomus:
+  tests: [test/cases/99_canonical_order.sh, scripts/ci/order-check]
 ---
 
 # Rationale

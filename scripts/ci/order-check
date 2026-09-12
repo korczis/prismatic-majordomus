@@ -81,10 +81,27 @@ fi
 # ---------------------------------------------------------------- 4. the ratchets
 crate_sorts="$(grep -rn '\.sort_by(\|\.sort_by_key(\|\.sort()\|\.sort_unstable' \
   apps/majordomus-cli/src --include='*.rs' 2>/dev/null | grep -vc 'src/order\.rs:' || true)"
-# `sort` wherever a command begins — after a pipe, a semicolon, a brace, a `&&`, or at the
-# start of a line — because an unpinned sort collates by the locale whatever precedes it.
-shell_sorts="$(grep -rnE '(\|[[:space:]]*sort\b)|((^|[;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$))' \
-  lib scripts bin test 2>/dev/null | grep -vc 'LC_ALL=C' || true)"
+# `sort` wherever a shell command begins — after a pipe, a semicolon, a brace, a `&&`, or
+# at the start of a line — because an unpinned sort collates by the locale whatever
+# precedes it.
+#
+# The subject is the shell utility. jq has a builtin of the same name, over a JSON array,
+# ordered by jq's own total order and reached by no locale at all; pinning LC_ALL=C around
+# it would be noise that means nothing. So a jq program is not scanned: `.jq` files are out,
+# and in a shell file the single-quoted spans are removed before the line is matched, because
+# nothing inside `'...'` is a shell command. Without that, thirteen jq filters were counted as
+# unpinned shell sorts and the ratchet refused a tree that had not regressed.
+#
+# The line-start case is spelled against grep's own `file:line:` prefix rather than with a
+# bare `^`, which could never match the start of the source line and so let a `sort` in the
+# first column through.
+shell_sorts_lines() {
+  grep -rnI --exclude='*.jq' -e '' lib scripts bin test 2>/dev/null \
+    | sed "s/'[^']*'//g" \
+    | grep -E '(\|[[:space:]]*sort\b)|(^[^:]+:[0-9]+:[[:space:]]*sort([[:space:]]|$))|(([;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$))' \
+    | grep -v 'LC_ALL=C' || true
+}
+shell_sorts="$(shell_sorts_lines | grep -c . || true)"
 
 if [ "$UPDATE" = 1 ]; then
   {
@@ -119,6 +136,7 @@ fi
 
 if [ "$shell_sorts" -gt "$base_shell" ]; then
   fail "unpinned shell sorts rose from $base_shell to $shell_sorts — write LC_ALL=C sort, so the order does not depend on the machine"
+  shell_sorts_lines | sed 's/^/      /' >&2
 elif [ "$shell_sorts" -lt "$base_shell" ]; then
   fail "unpinned shell sorts fell from $base_shell to $shell_sorts — lower the baseline in $BASELINE (scripts/ci/order-check --update)"
 else

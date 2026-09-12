@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.5.0 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `1c73468b1437a8c9066eef0eb69fd19f2392c8cbb080db92d7c630195bdce2be` (`--mj-design: "1c73468b1437"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `e6bf12153d9f8ec6562be979f2fda8bc516c7c093fb829891292f2773d7cff1a` (`--mj-design: "e6bf12153d9f"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -40,6 +40,14 @@ Each role is one custom property; its value follows the theme.
 | `--mj-accent-line` | `blue-200` | `blue-900` | `--color-brand-subtle` | the accent as a border around its soft ground |
 | `--mj-accent-fill` | `blue-700` | `blue-600` | `--color-brand` | a primary action's background; always carries on-accent text |
 | `--mj-on-accent` | `white` | `white` | — | text on a primary action |
+| `--mj-series-1` | `blue-600` | `blue-400` | — | the first colour of the categorical series; a vocabulary a drawing cannot know in advance |
+| `--mj-series-2` | `orange-600` | `orange-400` | — | the second colour of the categorical series |
+| `--mj-series-3` | `emerald-600` | `emerald-400` | — | the third colour of the categorical series |
+| `--mj-series-4` | `violet-600` | `violet-400` | — | the fourth colour of the categorical series |
+| `--mj-series-5` | `cyan-600` | `cyan-400` | — | the fifth colour of the categorical series |
+| `--mj-series-6` | `rose-600` | `rose-400` | — | the sixth colour of the categorical series |
+| `--mj-series-7` | `lime-600` | `lime-400` | — | the seventh colour of the categorical series |
+| `--mj-series-8` | `fuchsia-600` | `fuchsia-400` | — | the eighth colour of the categorical series |
 
 ## Status
 
@@ -99,16 +107,30 @@ Internal. A role or a status names an entry; nothing else does.
 | `blue-950` | `oklch(28.2% 0.091 267.935)` |
 | `emerald-50` | `oklch(97.9% 0.021 166.113)` |
 | `emerald-200` | `oklch(90.5% 0.093 164.15)` |
+| `emerald-400` | `oklch(76.5% 0.177 163.223)` |
 | `emerald-300` | `oklch(84.5% 0.143 164.978)` |
+| `emerald-600` | `oklch(59.6% 0.145 163.225)` |
 | `emerald-900` | `oklch(37.8% 0.077 168.94)` |
 | `emerald-950` | `oklch(26.2% 0.051 172.552)` |
 | `orange-50` | `oklch(98% 0.016 73.684)` |
 | `orange-200` | `oklch(90.1% 0.076 70.697)` |
+| `orange-400` | `oklch(75% 0.183 55.934)` |
 | `orange-300` | `oklch(83.7% 0.128 66.29)` |
+| `orange-600` | `oklch(64.6% 0.222 41.116)` |
 | `orange-900` | `oklch(40.8% 0.123 38.172)` |
 | `orange-950` | `oklch(26.6% 0.079 36.259)` |
 | `rose-50` | `oklch(96.9% 0.015 12.422)` |
 | `rose-200` | `oklch(89.2% 0.058 10.001)` |
+| `rose-400` | `oklch(71.2% 0.194 13.428)` |
 | `rose-300` | `oklch(81% 0.117 11.638)` |
+| `rose-600` | `oklch(58.6% 0.253 17.585)` |
 | `rose-900` | `oklch(41% 0.159 10.272)` |
 | `rose-950` | `oklch(27.1% 0.105 12.094)` |
+| `violet-400` | `oklch(70.2% 0.183 293.541)` |
+| `violet-600` | `oklch(54.1% 0.281 293.009)` |
+| `cyan-400` | `oklch(78.9% 0.154 211.53)` |
+| `cyan-600` | `oklch(60.9% 0.126 221.723)` |
+| `lime-400` | `oklch(84.1% 0.238 128.85)` |
+| `lime-600` | `oklch(64.8% 0.2 131.684)` |
+| `fuchsia-400` | `oklch(74% 0.238 322.16)` |
+| `fuchsia-600` | `oklch(59.1% 0.293 322.896)` |

@@ -1,7 +1,7 @@
 +++
 title = "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing"
 description = "The neighbouring claim — [GitHub milestones and issues are generated from the canonical"
-weight = 104
+weight = 105
 [extra]
 claim_id = "github-projection-gated"
 status = "guaranteed"

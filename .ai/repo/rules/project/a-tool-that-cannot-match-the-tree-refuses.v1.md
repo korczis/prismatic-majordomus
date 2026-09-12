@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.derived-files-regenerated@1]
 tags: [derived, safety]
+
+x-majordomus:
+  tests: [test/cases/33_stale_executable.sh]
 ---
 
 # Rationale

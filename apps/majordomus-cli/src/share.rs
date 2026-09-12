@@ -209,6 +209,8 @@ impl Share {
                         .unwrap_or_else(|| id.clone()),
                     client_config: decl.and_then(|d| d.client_config.clone()),
                     scratch_roots: decl.map(|d| d.scratch_roots.clone()).unwrap_or_default(),
+                    lifecycle: decl.map(|d| d.lifecycle.clone()).unwrap_or_default(),
+                    prompt_capture: decl.map(|d| d.prompt_capture).unwrap_or(false),
                     template: templates.contains(&id),
                     declared: decl.is_some(),
                     id,
@@ -244,6 +246,10 @@ struct ProviderEntry {
     client_config: Option<String>,
     #[serde(default)]
     scratch_roots: Vec<String>,
+    #[serde(default)]
+    lifecycle: Vec<String>,
+    #[serde(default)]
+    prompt_capture: bool,
 }
 
 /// What the distribution declares about its providers, joined with the templates it ships.
@@ -270,6 +276,17 @@ pub struct ProviderDeclaration {
     /// The scratch roots it creates checkouts under, unexpanded.
     #[serde(default)]
     pub scratch_roots: Vec<String>,
+    /// The lifecycle events the tool's adapter for it declares, in the provider's own
+    /// vocabulary (`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships
+    /// no lifecycle adapter for it, which costs a worker the automation and none of the
+    /// model. Declared, because the two other ways to answer this question are both wrong:
+    /// reading `.claude/hooks/` reports an installation as a capability, and a list written
+    /// into a page is a second source of truth that goes stale the day an adapter changes.
+    #[serde(default)]
+    pub lifecycle: Vec<String>,
+    /// Whether the tool's adapter for it can archive the worker's prompts.
+    #[serde(default)]
+    pub prompt_capture: bool,
     /// The distribution ships a template for it.
     pub template: bool,
     /// The distribution declares it.

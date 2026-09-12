@@ -16,6 +16,7 @@ use crate::app::App;
 use crate::cli::{McpArgs, OutputFormat, RepoArgs, Transport};
 use crate::error::{Error, Result};
 use crate::lease::{self, Lease, Role};
+use crate::live::Live;
 use crate::mcp::bridge::{Bridge, BridgeError, HEARTBEAT};
 use crate::mcp::protocol::Reply;
 use crate::mcp::{stdio, Server, Surface};
@@ -51,10 +52,11 @@ pub fn run(args: McpArgs) -> Result<u8> {
 /// A server answering one stdio session alone: no shared server, no HTTP, no peers.
 fn standalone(repo: &RepoArgs) -> Result<Server> {
     let app = App::load(repo)?;
-    let ctx = app.context.clone();
-    let peer = ctx.peers.attach(PeerTransport::Stdio);
+    // a stdio session outlives commits like any other: it follows the repository too
+    let live = Arc::new(Live::watching(repo.clone(), app.context.clone()));
+    let peer = live.current().peers.attach(PeerTransport::Stdio);
     Ok(Server::new(
-        Surface::new(ctx).for_peer(peer),
+        Surface::new(Arc::clone(&live)).for_peer(peer),
         crate::VERSION,
     ))
 }
@@ -170,9 +172,10 @@ impl Session {
         // never mistakes a slow start for an abandoned one
         lease.keep_alive();
         let app = App::load(&args.repo)?;
-        let ctx = app.context.clone();
+        let live = Arc::new(Live::watching(args.repo.clone(), app.context.clone()));
+        let ctx = live.current();
         let shared = SharedServer::start(
-            Arc::clone(&ctx),
+            Arc::clone(&live),
             crate::VERSION,
             &args.http_host,
             args.http_port,
@@ -182,7 +185,7 @@ impl Session {
             Some(app.share.dir()),
         )?;
         let peer = ctx.peers.attach(PeerTransport::Stdio);
-        let mut server = Server::new(Surface::new(ctx).for_peer(peer.clone()), crate::VERSION)
+        let mut server = Server::new(Surface::new(live).for_peer(peer.clone()), crate::VERSION)
             .with_endpoint(Some(shared.url()));
         if let Some(client) = resume {
             server.resume(client);

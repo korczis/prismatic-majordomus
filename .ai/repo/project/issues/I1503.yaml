@@ -1,0 +1,32 @@
+id: I1503
+milestone: development-runtime
+title: A closed session is not closed a second time under the same identity
+slug: one-record-per-session-identity
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Stop the session closer from writing a second record for a session that already has one, so that a session identity names one record and the index does not exclude every claimant of it."
+why: "The identity collision it produces is not a cosmetic finding: the repository reported its state as `degraded`, and because every claimant of a contested identity is excluded, the session was absent from the registry whose whole purpose is to hold it. A record nobody can read is not a record. The data half of this was repaired — four files claimed majordomus://session/s-20260909152316-024f, three of them written the following morning thirteen and fifteen seconds apart by a closer re-closing a session closed the evening before, and each a strict superset of the committed one — but repairing data does not repair the writer, and the writer will produce the next collision."
+current_state: "Fixed as data on this milestone's own branch: one record kept, the complete one, proved a superset by comparing commit sets rather than assuming it. The writer is unchanged. Nothing refuses a second closure of an already-closed session, and nothing in the commit path notices that two tracked records claim one identity — the collision was found by reading the server's diagnostics, not by a gate."
+desired_state: "Closing a session that is already closed is a no-op or a refusal, not a second record. A tracked tree in which two objects of any kind claim one identity fails a check before it is committed, rather than degrading the index of whoever reads it next."
+scope:
+  - lib
+  - .ai/repo/sessions
+  - test/cases
+non_scope:
+  - Deleting any session record. The repair that preceded this issue kept the complete record and deleted only the partial one it contains.
+  - The wider question of when an episode begins and ends, which ADR 0041 owns on a branch of its own.
+depends_on: []
+acceptance_criteria:
+  - Closing an already-closed session does not produce a second record under the same identity
+  - A tree carrying two objects that claim one identity is refused by a check, with both paths named
+  - The repository's own diagnostics report no duplicate_identity on a clean tree
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - second_close_is_refused
+  - duplicate_identity_is_gated
+risk: "Low. The failure mode to avoid is a closer that refuses a legitimate re-close after a crash and leaves a session open forever; the refusal must be specific to an identity that already has a complete record."
+created_at: 2026-09-11
+updated_at: 2026-09-11

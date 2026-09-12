@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# evidence-check — every claim that declares a guarantee, against the run recorded for it.
+#
+# docs/CLAIMS.yaml says a claim is `guaranteed` and names the test that proves it.
+# `scripts/generate-site-data --check` already refuses a claim whose test path does not
+# resolve. That is a check on the reference, not on the proof: a path resolving says a file
+# exists, not that it ever ran. This gate reads the other half — the ledger under
+# .ai/repo/evidence — and reports every claim whose declared guarantee the recorded
+# evidence does not support.
+#
+#   scripts/evidence-check                 report; exit 0 clean, 10 with regressions
+#   scripts/evidence-check --json          the report as JSON, from the capability itself
+#   scripts/evidence-check --strict        every unsupported guarantee fails, baseline ignored
+#   scripts/evidence-check --baseline      rewrite the baseline from what is found now
+#
+# WHY THIS IS ADVISORY TODAY, AND WHAT TIGHTENS IT
+#
+# The ledger starts empty, so on the day this gate arrives every one of the 135 guaranteed
+# claims is `not_run` — which is true, and which as a blocking gate would mean nothing
+# could be merged by anyone until a full suite run had been recorded. So existing debt is
+# recorded in .ai/repo/evidence-baseline.txt and the ratchet is the usual one: a claim in
+# the baseline is reported as known and does not fail; a claim that is not is a regression
+# and does fail; a baseline line that no longer matches is reported as stale so the ratchet
+# tightens instead of rotting. Recording a full run and rewriting the baseline shrinks it.
+# `--strict` is the end state, and CI may switch to it once the baseline is empty.
+#
+# The distinction the report keeps is the one the whole subsystem exists for: `proven` (a
+# passing run, and the diff against its own commit is empty but for the ledger's own row —
+# the tree in front of you is the tree the run measured) and `inputs_unchanged` (a passing
+# run and nothing the claim names has moved since, which is the absence of a known
+# invalidation rather than proof at HEAD) are both accepted as support, and are never
+# printed as the same thing.
+set -eu
+set -o pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BASELINE="$ROOT/.ai/repo/evidence-baseline.txt"
+JSON=0; WRITE=0; STRICT=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) JSON=1; shift ;;
+    --baseline|--write-baseline) WRITE=1; shift ;;
+    --strict) STRICT=1; shift ;;
+    --help|-h) sed -n '2,28p' "$0"; exit 0 ;;
+    *) echo "evidence-check: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+cd "$ROOT"
+
+# The executable is the one implementation; this script renders and ratchets its answer and
+# derives nothing of its own. A gate with a second opinion about what is proven would be a
+# second model of proof.
+RB="${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}"
+if [ ! -x "$RB" ]; then
+  RB="$ROOT/bin/majordomus-cli"
+fi
+if [ ! -x "$RB" ]; then
+  echo "evidence-check: no majordomus executable; set MAJORDOMUS_BIN or build the crate" >&2
+  exit 12
+fi
+
+TMP="$(mktemp "${TMPDIR:-/tmp}/mj-evidence.XXXXXX")"
+trap 'rm -f "$TMP" "$TMP.now" "$TMP.base" "$TMP.new" "$TMP.stale"' EXIT
+
+if ! "$RB" evidence show --repo "$ROOT" --format json >"$TMP" 2>/dev/null; then
+  echo 'evidence-check: the executable could not answer evidence show' >&2
+  exit 12
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "evidence-check: jq is required to read the report" >&2
+  exit 12
+fi
+
+if ! jq -e '(.claims | type) == "array" and (.findings | type) == "array"' "$TMP" >/dev/null 2>&1; then
+  echo 'evidence-check: evidence show did not answer the expected shape' >&2
+  exit 12
+fi
+
+if [ "$JSON" = 1 ]; then
+  cat "$TMP"
+  exit 0
+fi
+
+# The denominator, before anything is counted. An index that excluded a file holds fewer
+# claims, every tally below is then over a smaller matrix, and an empty finding list is the
+# absence of an answer rather than a pass. A ratchet is especially vulnerable to this: the
+# set can only shrink, and a subject that shrank makes it shrink for free.
+if [ "$(jq -r '.subject.complete' "$TMP")" != "true" ]; then
+  echo "evidence-check: the index could not read the whole matrix, so no verdict is available"
+  jq -r '.subject.excluded[] | "      " + .' "$TMP"
+  echo "      reproduce: majordomus evidence show --format json | jq .subject"
+  exit 12
+fi
+
+jq -r '.findings[].claim' "$TMP" | LC_ALL=C sort > "$TMP.now"
+total="$(wc -l < "$TMP.now" | tr -d ' ')"
+claims="$(jq -r '.claims | length' "$TMP")"
+
+if [ "$WRITE" = 1 ]; then
+  {
+    echo "# Claims that declare a guarantee the recorded evidence does not support."
+    echo "#"
+    echo "# Written by scripts/evidence-check --baseline; never by hand. A claim here is"
+    echo "# known debt and does not fail the gate; a claim not here is a regression and"
+    echo "# does. The set may only shrink, and it shrinks by recording a run that proves"
+    echo "# the claim — never by adding a line."
+    cat "$TMP.now"
+  } > "$BASELINE"
+  echo "evidence-check: baseline written, $total unsupported claim(s) of $claims"
+  exit 0
+fi
+
+# the tallies, so a reader sees the shape of the evidence and not only its failures
+echo "evidence-check: $claims claim(s) examined"
+jq -r '.totals | to_entries[] | "  \(.key)\t\(.value)"' "$TMP" | while IFS="$(printf '\t')" read -r k v; do
+  printf '  %-18s %s\n' "$k" "$v"
+done
+newest="$(jq -r '.ledger.newest // "never"' "$TMP")"
+echo "  ledger recorded    $newest"
+
+if [ "$STRICT" = 1 ]; then
+  if [ "$total" -gt 0 ]; then
+    echo "evidence-check: $total guaranteed claim(s) are not supported by a recorded run (--strict)"
+    jq -r '.findings[] | "  \(.claim)\n      \(.reason)\n      reproduce: \(.reproduce // "-")"' "$TMP"
+    exit 10
+  fi
+  echo "evidence-check: every guaranteed claim is supported by a recorded run"
+  exit 0
+fi
+
+if [ ! -f "$BASELINE" ]; then
+  echo "evidence-check: $BASELINE is absent; run scripts/evidence-check --baseline" >&2
+  exit 12
+fi
+grep -v '^#' "$BASELINE" | grep -v '^$' | LC_ALL=C sort > "$TMP.base"
+
+LC_ALL=C comm -23 "$TMP.now" "$TMP.base" > "$TMP.new"
+LC_ALL=C comm -13 "$TMP.now" "$TMP.base" > "$TMP.stale"
+new="$(wc -l < "$TMP.new" | tr -d ' ')"
+stale="$(wc -l < "$TMP.stale" | tr -d ' ')"
+
+if [ "$stale" -gt 0 ]; then
+  echo "evidence-check: $stale baseline line(s) now supported — tighten the baseline:"
+  sed 's/^/      /' "$TMP.stale"
+  echo "      scripts/evidence-check --baseline"
+fi
+
+if [ "$new" -gt 0 ]; then
+  echo "evidence-check: $new guaranteed claim(s) lost the evidence that supported them:"
+  while IFS= read -r c; do
+    [ -n "$c" ] || continue
+    jq -r --arg c "$c" '.findings[] | select(.claim == $c)
+      | "  \(.claim)\n      \(.reason)\n      reproduce: \(.reproduce // "-")"' "$TMP"
+  done < "$TMP.new"
+  exit 10
+fi
+
+echo "evidence-check: no guaranteed claim lost its evidence ($total known, $claims examined)"
+exit 0

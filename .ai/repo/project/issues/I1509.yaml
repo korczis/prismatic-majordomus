@@ -1,0 +1,32 @@
+id: I1509
+milestone: development-runtime
+title: A detail page that pages nothing has outgrown the reason it pages nothing
+slug: composed-graph-is-unreadable
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Reconcile the two things the Cockpit's largest page is trying to be — complete before any JavaScript loads, and usable by a person — without giving up the first, and bring the page under the test sweep that covers every other one."
+why: "Measured on today's master from a freshly built executable in this worktree: GET /cockpit/graphs/composed returns 1,196,549 characters and 4,729 table rows in a single document, with no paging control anywhere in it. That is not a bug in the sense of a mistake; docs/COCKPIT.md states in terms that a detail page pages nothing, and gives the reason — a graph's nodes and edges are listed whole because the drawing is an enhancement, a reader without JavaScript has only those lists, and a reader checking whether a path is in the manifest must be able to find it with the browser's own search. The contract is right and its cost has outgrown it: a 1.2 MB document is not searchable by a person either. The second half of the finding is that this page is not covered at all — the test sweep in apps/majordomus-cli/tests/cockpit.rs names /cockpit/graphs, /cockpit/graphs/topology and /cockpit/graphs/registry, and not /cockpit/graphs/composed, so the largest page the Cockpit serves is the one no test renders."
+current_state: "1,196,549 characters, 4,729 <tr> rows, two tables, zero occurrences of a paging parameter, served in 60 ms. Not in the PAGES sweep. The behaviour follows a documented contract that names no size at which it stops applying."
+desired_state: "A reader without JavaScript can still reach every node and edge, and a reader with a browser is not handed a megabyte to scroll. Whatever is chosen — a progressive disclosure that needs no script, a per-part entry like the listings already offer, or an explicit size beyond which the contract changes — is written into docs/COCKPIT.md as the contract rather than left as behaviour. The page is in the sweep."
+scope:
+  - apps/majordomus-cli/src/cockpit
+  - docs/COCKPIT.md
+  - apps/majordomus-cli/tests
+non_scope:
+  - Making the nodes and edges reachable only by JavaScript. That is the one outcome the existing contract exists to prevent, and it stays prevented.
+  - The other detail pages, unless the same measurement says they are also over. The artifact manifest is named by the same contract sentence and was not measured here.
+depends_on: []
+acceptance_criteria:
+  - Every node and edge of the composed graph remains reachable with JavaScript disabled
+  - The page a reader receives is not a single document of this size, or docs/COCKPIT.md states the size at which the contract changes and why
+  - /cockpit/graphs/composed is rendered by the page sweep that covers the other pages
+validation:
+  - cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit
+  - bash test/run.sh
+evidence_required:
+  - complete_without_javascript
+  - page_is_covered
+risk: "Low in mechanism. The risk is the reflex fix: adding ?page= to a detail page silently breaks the browser-search guarantee that the contract was written for, and it would break it in a way no test currently notices, because no test renders this page."
+created_at: 2026-09-11
+updated_at: 2026-09-11

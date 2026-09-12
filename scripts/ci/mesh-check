@@ -2,7 +2,7 @@
 # mesh-check — the mesh stays one subsystem: sockets under src/mesh/, one registry,
 # and a declaration whose kind and schema exist together.
 #
-# ADR 0043 gives network discovery three boundaries a grep can hold: the crate opens
+# ADR 0048 gives network discovery three boundaries a grep can hold: the crate opens
 # UDP sockets only inside apps/majordomus-cli/src/mesh/ (a socket anywhere else is a
 # second discovery mechanism growing outside the provider contract); the one peer
 # store is mesh::registry::MeshRegistry, constructed only inside the mesh module (a

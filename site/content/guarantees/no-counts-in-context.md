@@ -1,7 +1,7 @@
 +++
 title = "A hardcoded count in the always-loaded file is a failure"
 description = "The always-loaded instruction file must not contain sentences like \"14 agents\", \"97 apps\" or \"63 skills\". Counts written into prose are stale within days and a worker reads them as fact. The rule is: write the command that computes the number, never the number. doctor fails on a digit sequence next to the words that usually carry such counts."
-weight = 41
+weight = 42
 [extra]
 claim_id = "no-counts-in-context"
 status = "guaranteed"

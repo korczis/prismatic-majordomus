@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.derived-once@1, project.interfaces-are-projections@1]
 tags: [architecture, web, routing]
+
+x-majordomus:
+  tests: [test/cases/89_web_surface.sh, scripts/rust-check, scripts/generate-site-data, scripts/site-basepath-check]
 ---
 
 # Rationale

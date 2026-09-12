@@ -1,0 +1,351 @@
+#!/usr/bin/env bash
+# rust-coverage — line, function and region coverage of the Rust executable, measured over
+# the code that is under test rather than over the code plus the tests.
+#
+#   scripts/rust-coverage                 measure, report, and hold both thresholds
+#   scripts/rust-coverage --report        measure and report; hold nothing (exit 0)
+#   scripts/rust-coverage --from FILE     post-process an existing `cargo llvm-cov --json`
+#                                         export instead of running the suite again
+#   scripts/rust-coverage --export FILE   also keep the raw export at FILE
+#   scripts/rust-coverage --domain        report the canonical session/continuity domain only
+#
+# WHY THIS EXISTS.
+#
+# The gate was `cargo llvm-cov --all-targets --summary-only --fail-under-lines <threshold>`,
+# with no --ignore-filename-regex. `--all-targets` instruments every target, so the files
+# under tests/ and benches/ are in the report as source files of their own; and this crate
+# keeps its unit tests inline, as `#[cfg(test)] mod tests` inside src/*.rs, so those lines are
+# in the report too — attributed to the module they are testing.
+#
+# A percentage measured that way cannot be reasoned about. Test code is nearly always fully
+# executed by the run that is measuring it, so every test added raises the number whether or
+# not it covers anything, and every test deleted lowers it. "Coverage is 90%" then means
+# "the mixture of product code and test code in this crate is 90% executed", and the obvious
+# way to hold the threshold is to write more tests of the tests.
+#
+# So: test code is excluded from the measurement, on both sides of the fraction.
+#
+#   a whole file      tests/, benches/, examples/, build.rs — targets that exist to run
+#   a range of lines  every `#[cfg(test)]` item in a src file, brace-matched from its opening
+#                     line to its closing one, and every `#[test]`/`#[bench]` function
+#
+# --ignore-filename-regex cannot do the second: it selects files, and the test module is in
+# the same file as the code it tests. So the exclusion is computed here, from the source, and
+# applied to the llvm-cov JSON export.
+#
+# HOW A LINE IS COUNTED. The export's `segments` are (line, col, count, has_count,
+# is_region_entry, is_gap_region). A line is *counted* when a segment on it has a count, and
+# *covered* when one of those counts is non-zero — which is llvm-cov's own definition and is
+# what makes the number produced here comparable with the one `--summary-only` prints for the
+# same export. Functions and regions come from `functions[]`, attributed to the file each
+# region names.
+#
+# TWO THRESHOLDS. The crate-wide one lives in scripts/rust-coverage-threshold and is a floor
+# over the whole executable. The second, scripts/session-coverage-threshold, is over the
+# canonical session/continuity domain declared in scripts/session-coverage-domain — one file
+# per line. A crate-wide floor says nothing about whether the subsystem a repository's
+# continuity depends on is tested at all: it can sit at zero while the number stays green,
+# which is where it was.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE="$ROOT/apps/majordomus-cli"
+MODE=gate FROM="" EXPORT="" ONLY=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --report) MODE=report; shift ;;
+    --from) FROM="$2"; shift 2 ;;
+    --from=*) FROM="${1#--from=}"; shift ;;
+    --export) EXPORT="$2"; shift 2 ;;
+    --export=*) EXPORT="${1#--export=}"; shift ;;
+    --domain) ONLY=domain; shift ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    *) echo "rust-coverage: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+command -v python3 >/dev/null 2>&1 || { echo "rust-coverage: python3 is needed to read the export" >&2; exit 12; }
+
+if [ -z "$FROM" ]; then
+  command -v cargo >/dev/null 2>&1 || { echo "rust-coverage: cargo is not installed" >&2; exit 12; }
+  cargo llvm-cov --version >/dev/null 2>&1 || {
+    printf 'rust-coverage: cargo-llvm-cov is not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview)\n' >&2
+    exit 12; }
+  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX.json")"
+  # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
+  # measurement. The suite's own verdict is `cargo test`'s; this command's is the coverage.
+  ( cd "$CRATE" && RUSTFLAGS='' cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null
+fi
+[ -z "$EXPORT" ] || cp "$FROM" "$EXPORT"
+
+CRATE="$CRATE" ROOT="$ROOT" ONLY="$ONLY" MODE="$MODE" python3 - "$FROM" <<'PY'
+import json, os, re, sys
+
+root = os.environ["ROOT"]
+only = os.environ["ONLY"]
+mode = os.environ["MODE"]
+
+def read(path):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            return fh.read().splitlines()
+    except OSError:
+        return []
+
+# ------------------------------------------------------------------ what is test code
+#
+# The lines of one source file that are test code, as a set of 1-based line numbers.
+#
+# Brace matching rather than a regex over the whole file: `#[cfg(test)] mod tests { ... }` is
+# a block, its end is a brace, and a regex looking for the next `^}` would stop at the first
+# closing brace of a nested item. Braces inside strings, chars and line comments are skipped,
+# because a test module containing a brace in a string literal would otherwise never close
+# and the whole rest of the file would be called test code -- an exclusion that raises the
+# number, which is the one thing this script exists to refuse.
+ATTR = re.compile(r'^\s*#\[(cfg\(test\)|test|bench|cfg_attr\(test\b)')
+
+def test_lines(path):
+    src = read(path)
+    out = set()
+    i = 0
+    while i < len(src):
+        if not ATTR.match(src[i]):
+            i += 1
+            continue
+        start = i
+        j = i
+        while j < len(src) and (src[j].lstrip().startswith("#[") or src[j].lstrip().startswith("//")
+                                or not src[j].strip()):
+            j += 1
+        if j >= len(src):
+            break
+        depth, k, opened = 0, j, False
+        while k < len(src):
+            line, m = src[k], 0
+            while m < len(line):
+                c = line[m]
+                if c == '"':
+                    m += 1
+                    while m < len(line):
+                        if line[m] == "\\":
+                            m += 2
+                            continue
+                        if line[m] == '"':
+                            break
+                        m += 1
+                elif c == "'" and m + 2 < len(line) and (line[m + 2] == "'" or line[m + 1] == "\\"):
+                    m += 2
+                    while m < len(line) and line[m] != "'":
+                        m += 1
+                elif c == "/" and m + 1 < len(line) and line[m + 1] == "/":
+                    break
+                elif c == "{":
+                    depth += 1
+                    opened = True
+                elif c == "}":
+                    depth -= 1
+                m += 1
+            if opened and depth <= 0:
+                break
+            if not opened and line.rstrip().endswith(";"):   # a `#[cfg(test)] use ...;`
+                break
+            k += 1
+        for n in range(start + 1, min(k, len(src) - 1) + 2):
+            out.add(n)
+        i = k + 1
+    return out
+
+def whole_file_is_test(rel):
+    parts = rel.split("/")
+    return ("tests" in parts or "benches" in parts or "examples" in parts
+            or rel.endswith("build.rs"))
+
+_cache = {}
+def skip_for(abs_path, rel):
+    if rel not in _cache:
+        _cache[rel] = test_lines(abs_path)
+    return _cache[rel]
+
+# ------------------------------------------------------------------ the three measures
+#
+# LINES are computed from the export's `segments` with llvm's own line rule: walk every line
+# from the first segment to the last, carry the segment that wraps into it, and call the line
+# mapped when that wrapped segment has a count or a region starts on the line. This
+# reproduces llvm-cov's per-line verdicts but not, exactly, its per-file `lines.count`: the
+# summary counts lines reached through macro expansions that the per-file segment list does
+# not carry, so it runs about one point higher here than llvm-cov's own figure (88.00%
+# against 87.28% on the export this was written against). Both sides of the fraction use one
+# rule, which is what a threshold needs, and llvm-cov's own number is printed beside it so
+# the difference is visible rather than asserted.
+#
+# FUNCTIONS and REGIONS use llvm's own rule: the export lists one entry per *instantiation*,
+# so entries are merged -- regions by their source span, functions by the span of their first
+# region -- and a merged thing is covered when any instantiation executed it. On a file this
+# repository holds to a threshold that reproduces llvm's per-file numbers exactly (checked
+# against continuity.rs: 587 regions and 40 functions, llvm's figures to the unit); crate-wide
+# it runs a point or two above llvm's totals, which count some instantiations this walk
+# attributes elsewhere.
+#
+# So: none of the three is bit-identical to what `cargo llvm-cov --summary-only` prints, and
+# the report says so by printing that figure on its own line. What matters for a threshold is
+# that one rule is used on both sides of every fraction, and that the same rule is used for
+# the number with the tests in and the number with them out -- which is the comparison the
+# whole exercise is about.
+def lines_of(f):
+    segs = f["segments"]
+    if not segs:
+        return {}
+    out, idx, n = {}, 0, len(segs)
+    line, last = segs[0][0], segs[-1][0]
+    while line <= last:
+        wrapped = segs[idx - 1] if idx > 0 else None
+        here = []
+        while idx < n and segs[idx][0] == line:
+            here.append(segs[idx])
+            idx += 1
+        entries = [s for s in here if (not s[5]) and s[3] and s[4]]
+        start_skipped = bool(here) and (not here[0][3]) and here[0][4]
+        mapped = (not start_skipped) and ((wrapped is not None and wrapped[3]) or bool(entries))
+        if mapped:
+            cnt = wrapped[2] if wrapped is not None else 0
+            if entries:
+                cnt = max([cnt] + [s[2] for s in entries])
+            out[line] = cnt
+        line += 1
+    return out
+
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+export = data["data"][0]
+
+class Tally(object):
+    def __init__(self):
+        self.lines = [0, 0]; self.functions = [0, 0]; self.regions = [0, 0]
+        self.lines_all = [0, 0]; self.functions_all = [0, 0]; self.regions_all = [0, 0]
+    def add(self, o):
+        for k in ("lines", "functions", "regions", "lines_all", "functions_all", "regions_all"):
+            a, b = getattr(self, k), getattr(o, k)
+            a[0] += b[0]; a[1] += b[1]
+
+files = {}
+def tally(rel):
+    return files.setdefault(rel, Tally())
+
+for f in export.get("files", []):
+    ab = f["filename"]
+    if not ab.startswith(root):
+        continue
+    rel = os.path.relpath(ab, root)
+    t = tally(rel)
+    skip_all = whole_file_is_test(rel)
+    skip = set() if skip_all else skip_for(ab, rel)
+    for line, count in lines_of(f).items():
+        t.lines_all[1] += 1
+        if count:
+            t.lines_all[0] += 1
+        if skip_all or line in skip:
+            continue
+        t.lines[1] += 1
+        if count:
+            t.lines[0] += 1
+
+regions, functions = {}, {}
+for fn in export.get("functions", []):
+    names = fn.get("filenames", [])
+    if not names:
+        continue
+    home = names[0]
+    own = []
+    for r in fn.get("regions", []):
+        f_abs = names[r[5]] if r[5] < len(names) else home
+        if not f_abs.startswith(root):
+            continue
+        key = (f_abs, r[0], r[1], r[2], r[3])
+        regions[key] = regions.get(key, 0) + r[4]
+        if f_abs == home:
+            own.append(r)
+    if own and home.startswith(root):
+        b = min(own, key=lambda r: (r[0], r[1]))
+        key = (home, b[0], b[1], b[2], b[3])
+        functions[key] = functions.get(key, 0) + fn.get("count", 0)
+
+def fold(pairs, all_attr, kept_attr):
+    for key, count in pairs.items():
+        ab, l1 = key[0], key[1]
+        rel = os.path.relpath(ab, root)
+        t = tally(rel)
+        getattr(t, all_attr)[1] += 1
+        if count:
+            getattr(t, all_attr)[0] += 1
+        if whole_file_is_test(rel) or l1 in skip_for(ab, rel):
+            continue
+        getattr(t, kept_attr)[1] += 1
+        if count:
+            getattr(t, kept_attr)[0] += 1
+
+fold(regions, "regions_all", "regions")
+fold(functions, "functions_all", "functions")
+
+def pct(pair):
+    return 100.0 if pair[1] == 0 else 100.0 * pair[0] / pair[1]
+
+# ------------------------------------------------------------------ the domain
+domain = []
+for line in read(os.path.join(root, "scripts", "session-coverage-domain")):
+    line = line.split("#", 1)[0].strip()
+    if line:
+        domain.append(line)
+
+crate_total, domain_total = Tally(), Tally()
+for rel, t in files.items():
+    crate_total.add(t)
+    if rel in domain:
+        domain_total.add(t)
+missing = [d for d in domain if d not in files]
+
+def row(label, t):
+    return ("%-56s %7.2f%%  %8.2f%%  %7.2f%%   %6d/%-6d lines"
+            % (label, pct(t.lines), pct(t.functions), pct(t.regions), t.lines[0], t.lines[1]))
+
+rc = 0
+print("%-56s %8s  %9s  %8s" % ("", "lines", "functions", "regions"))
+if only != "domain":
+    print(row("the crate, test code excluded", crate_total))
+    print("%-56s %7.2f%%  %8.2f%%  %7.2f%%   %6d/%-6d lines"
+          % ("the crate, test code included (the old gate's subject)",
+             pct(crate_total.lines_all), pct(crate_total.functions_all), pct(crate_total.regions_all),
+             crate_total.lines_all[0], crate_total.lines_all[1]))
+    tot = export.get("totals", {})
+    if tot:
+        print("%-56s %7.2f%%  %8.2f%%  %7.2f%%   cargo-llvm-cov's own summary"
+              % ("  the same, as cargo-llvm-cov itself reports it",
+                 tot["lines"]["percent"], tot["functions"]["percent"], tot["regions"]["percent"]))
+print(row("the canonical session/continuity domain", domain_total))
+for d in domain:
+    if d in files:
+        print(row("  " + d, files[d]))
+if missing:
+    for d in missing:
+        print("  %-54s NOT IN THE EXPORT" % d)
+    print("rust-coverage: the domain names %d file(s) the export does not carry; a domain "
+          "measured over a file nothing compiled is a threshold measured over nothing" % len(missing))
+    rc = 10
+
+if mode == "gate":
+    def threshold(name):
+        p = os.path.join(root, "scripts", name)
+        return float(open(p).read().strip()) if os.path.exists(p) else None
+    want_crate = threshold("rust-coverage-threshold")
+    want_dom = threshold("session-coverage-threshold")
+    if only != "domain" and want_crate is not None and pct(crate_total.lines) < want_crate:
+        print("rust-coverage: the crate is at %.2f%% lines, below the threshold of %.2f%% "
+              "(scripts/rust-coverage-threshold)" % (pct(crate_total.lines), want_crate))
+        rc = 10
+    if want_dom is not None:
+        for what in ("lines", "functions", "regions"):
+            got = pct(getattr(domain_total, what))
+            if got < want_dom:
+                print("rust-coverage: the session/continuity domain is at %.2f%% %s, below the "
+                      "threshold of %.2f%% (scripts/session-coverage-threshold)"
+                      % (got, what, want_dom))
+                rc = 10
+sys.exit(rc)
+PY

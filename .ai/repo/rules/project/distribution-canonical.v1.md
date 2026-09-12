@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.derived-files-regenerated@1, project.no-claim-without-test@1]
 tags: [distribution, release, architecture]
+
+x-majordomus:
+  tests: [test/cases/84_distribution_model.sh, test/cases/85_installer.sh, test/cases/86_installer_platform.sh, test/cases/87_release_pipeline.sh]
 ---
 
 # Rationale

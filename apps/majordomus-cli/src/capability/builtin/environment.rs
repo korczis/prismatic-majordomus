@@ -100,6 +100,7 @@ fn snapshot(
             share: None,
             index: Some(&ctx.index),
             registry: Some(&ctx.registry),
+            policy: None,
         },
         &EnvironmentQuery {
             resolution: Resolution::Full,

@@ -6,6 +6,2396 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release
 generator: majordomus-cli 0.5.0
 current: "0.5.0"
 sections:
+  - version: "0.5.0"
+    tag: v0.5.0
+    date: "2026-09-11T13:36:34Z"
+    commit: 3a032c1e033ba437325f64f883356269d7a6c73e
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v0.5.0
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v0.3.1...v0.5.0
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v0.5.0
+    decisions:
+      - id: adr-0040
+        title: Development semantics are capabilities of one runtime; every surface is a consumer
+        status: accepted
+        date: "2026-09-10"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+        added: 93c5f3f87886512418bf65004eb21cd8df89ccc5
+      - id: adr-0039
+        title: "Liveness is four rules, advisory until a scan can decide them"
+        status: proposed
+        date: "2026-09-10"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0039-liveness-is-four-rules-advisory-until-a-scan-can-decide-them.md
+        added: bb8e5d76b05e5a83e05b86f0eb6c798eaf04a60b
+      - id: adr-0038
+        title: "A scenario declares where it runs, and an obligation is a step"
+        status: proposed
+        date: "2026-09-10"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md
+        added: 8e2c1afd7b8478f1363f58f2b44fa8e41632490e
+      - id: adr-0037
+        title: "A gate whose runner the repository cannot get on demand is planned on demand, so that the verdict arrives"
+        status: accepted
+        date: "2026-09-10"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0037-a-gate-whose-runner-is-scarce-is-planned-on-demand-so-that-the-verdict-arrives.md
+        added: ff921a93f9da8204f60ed451f93a451995ab664b
+      - id: adr-0036
+        title: The design system is a typed declaration in the crate and every first-party surface consumes its projections
+        status: accepted
+        date: "2026-09-10"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md
+        added: 95ffb1b7c2bfd4badf9765cd9553972fc7674384
+      - id: adr-0035
+        title: "A checkout's server is one of the repository's, and its state is served like every other fact"
+        status: proposed
+        date: "2026-09-10"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0035-a-checkout-s-server-is-one-of-the-repository-s-and-its-state.md
+        added: 7c4bc6a1b597122b237d5f7f045e26ab8ce722d8
+      - id: adr-0031
+        title: The design is one declaration and every surface is a projection of it
+        status: accepted
+        date: "2026-09-09"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0031-the-design-is-one-declaration-and-every-surface-is-a-project.md
+        added: 50f276bc3da1c789694e4f5eabf94da5cf101bd2
+      - id: adr-0030
+        title: "A task owes obligations, and the evidence that discharges them goes stale"
+        status: proposed
+        date: "2026-09-09"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md
+        added: f1c1b6556fc682d1e837d1c60002e631c34e93ca
+      - id: adr-0029
+        title: "The changelog is a projection of what the repository already records, and the version has one writer rather than one source"
+        status: proposed
+        date: "2026-09-09"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md
+        added: 957a6ff5a8ad73925c793033b1971d3c397ac21e
+      - id: adr-0026
+        title: "A capability module's area is derived from the features that name it, not declared beside it"
+        status: accepted
+        date: "2026-09-09"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0026-a-capability-modules-area-is-derived-from-the-features-that-name-it.md
+        added: 1c36ca9a2e32ca41e2353baf8ef79cbc850bdcbb
+      - id: adr-0025
+        title: "Presentation order is one total order owned by the crate, not a decision each surface makes"
+        status: accepted
+        date: "2026-09-09"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0025-presentation-order-is-one-total-order-owned-by-the-crate-not-a-decision-each-surface-makes.md
+        added: 28304f30078fb94e1b8cd7fc1f01cd03120cc37c
+      - id: adr-0024
+        title: "An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts"
+        status: accepted
+        date: "2026-09-09"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0024-an-orchestrator-is-a-provider-only-at-the-bootstrap-level-an.md
+        added: 7da5ad9b230417c7fbf1eae5f09b63d55a842301
+      - id: adr-0028
+        title: "The crate's public surface is measured by the crate, and absence from the API is a decision"
+        status: accepted
+        date: "2026-09-08"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0028-the-crates-public-surface-is-measured-by-the-crate-and-absence.md
+        added: 60bc499e4bf3ef702e26b902795c7483ba994382
+      - id: adr-0027
+        title: A command is declared once and every surface is a projection of the command graph
+        status: proposed
+        date: "2026-09-08"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md
+        added: ff2d64e57e70b84399300ef94d051dfb7582c128
+      - id: adr-0023
+        title: "Product features are objects of the layer, and the landing page is a projection of them"
+        status: accepted
+        date: "2026-09-07"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md
+        added: 6bd67fe571e8917cf04940cd931b4105bc69f0b2
+    groups:
+      - kind: feat
+        heading: Added
+        rank: 0
+        changes:
+          - kind: feat
+            scope: archive
+            subject: a snapshot of the tracked tree that can leave the machine
+            breaking: false
+            commit: 71d716cc1
+            url: https://github.com/korczis/prismatic-majordomus/commit/71d716cc1
+          - kind: feat
+            scope: site
+            subject: the landing page is the intent-driven development argument
+            breaking: false
+            commit: a47f93ef9
+            url: https://github.com/korczis/prismatic-majordomus/commit/a47f93ef9
+          - kind: feat
+            scope: devtask
+            subject: "a declared session link is derived, a branch guess is inferred"
+            breaking: false
+            commit: b08d5de58
+            url: https://github.com/korczis/prismatic-majordomus/commit/b08d5de58
+          - kind: feat
+            scope: devtask
+            subject: issues and milestones as executable development scopes
+            breaking: false
+            commit: 2c3749fc3
+            url: https://github.com/korczis/prismatic-majordomus/commit/2c3749fc3
+          - kind: feat
+            scope: peers
+            subject: a peer holds more than one claim
+            breaking: false
+            commit: 83f75b088
+            url: https://github.com/korczis/prismatic-majordomus/commit/83f75b088
+          - kind: feat
+            scope: rules
+            subject: the liveness doctrine lands as four rules
+            breaking: false
+            commit: bb8e5d76b
+            url: https://github.com/korczis/prismatic-majordomus/commit/bb8e5d76b
+          - kind: feat
+            scope: entry
+            subject: a rule and a gate hold repository entry shut
+            breaking: false
+            commit: b59009b22
+            url: https://github.com/korczis/prismatic-majordomus/commit/b59009b22
+          - kind: feat
+            scope: site
+            subject: the method as a projection — governance layers and the four axes
+            breaking: false
+            commit: bd367dd0b
+            url: https://github.com/korczis/prismatic-majordomus/commit/bd367dd0b
+          - kind: feat
+            scope: site
+            subject: the site is published at majordomus.dev
+            breaking: false
+            commit: ef96b2351
+            url: https://github.com/korczis/prismatic-majordomus/commit/ef96b2351
+          - kind: feat
+            scope: release
+            subject: "the version is measured against the public surface, not claimed"
+            breaking: false
+            commit: 303dca256
+            url: https://github.com/korczis/prismatic-majordomus/commit/303dca256
+          - kind: feat
+            scope: use-cases
+            subject: a scenario declares where it runs and an obligation is a step
+            breaking: false
+            commit: 8e2c1afd7
+            url: https://github.com/korczis/prismatic-majordomus/commit/8e2c1afd7
+          - kind: feat
+            scope: design
+            subject: the gate asks whether a declared colour can be read
+            breaking: false
+            commit: 61e2989c7
+            url: https://github.com/korczis/prismatic-majordomus/commit/61e2989c7
+          - kind: feat
+            scope: session
+            subject: "one episode per provider session, not one per checkout"
+            breaking: false
+            commit: e91a07d5b
+            url: https://github.com/korczis/prismatic-majordomus/commit/e91a07d5b
+          - kind: feat
+            scope: design
+            subject: measure the declared colours against WCAG 2.1 AA
+            breaking: false
+            commit: 5f646e867
+            url: https://github.com/korczis/prismatic-majordomus/commit/5f646e867
+          - kind: feat
+            scope: ui
+            subject: "audit every surface the executable serves, not only the built ones"
+            breaking: false
+            commit: b80b1d2de
+            url: https://github.com/korczis/prismatic-majordomus/commit/b80b1d2de
+          - kind: feat
+            scope: health
+            subject: "the report names the server, and readiness stops meaning three things"
+            breaking: false
+            commit: eb00abc10
+            url: https://github.com/korczis/prismatic-majordomus/commit/eb00abc10
+          - kind: feat
+            scope: integration
+            subject: "scripts/unblock, the local master merge as one command"
+            breaking: false
+            commit: 5525f4b9b
+            url: https://github.com/korczis/prismatic-majordomus/commit/5525f4b9b
+          - kind: feat
+            scope: mcp
+            subject: "the shared server's lease has one reader, and a gate that keeps it"
+            breaking: false
+            commit: 534e8fb7b
+            url: https://github.com/korczis/prismatic-majordomus/commit/534e8fb7b
+          - kind: feat
+            scope: mcp
+            subject: an announcement outlives the server it was made to
+            breaking: false
+            commit: f200a90fe
+            url: https://github.com/korczis/prismatic-majordomus/commit/f200a90fe
+          - kind: feat
+            scope: design
+            subject: the design system is a typed declaration and every surface consumes its projections
+            breaking: false
+            commit: 95ffb1b7c
+            url: https://github.com/korczis/prismatic-majordomus/commit/95ffb1b7c
+          - kind: feat
+            scope: serve
+            subject: "entry converges — ensure, status and stop, the start event calling ensure, and the election under a slow start"
+            breaking: false
+            commit: 4a4a945d5
+            url: https://github.com/korczis/prismatic-majordomus/commit/4a4a945d5
+          - kind: feat
+            scope: server
+            subject: "a checkout's server is one of the repository's, and its state is served"
+            breaking: false
+            commit: 7c4bc6a1b
+            url: https://github.com/korczis/prismatic-majordomus/commit/7c4bc6a1b
+          - kind: feat
+            scope: release
+            subject: "the changelog links where it can, names its producer, and the published site is gated"
+            breaking: false
+            commit: efebf080c
+            url: https://github.com/korczis/prismatic-majordomus/commit/efebf080c
+            references:
+              - kind: issue
+                id: I1305
+                title: "An observed contract has a fingerprint, a compatibility state and a fixture"
+                route: /plan/i1305/
+              - kind: milestone
+                id: M000
+                title: Milestone and DAG driven development
+                route: /plan/m000/
+          - kind: feat
+            scope: obligations
+            subject: "the outer obligations are established from git and the published site, not typed into a ledger by the worker who owes them"
+            breaking: false
+            commit: f2000a52c
+            url: https://github.com/korczis/prismatic-majordomus/commit/f2000a52c
+          - kind: feat
+            scope: obligations
+            subject: "what a task owes, and whether its evidence still describes this tree, over every surface"
+            breaking: false
+            commit: dc14dd0d3
+            url: https://github.com/korczis/prismatic-majordomus/commit/dc14dd0d3
+          - kind: feat
+            scope: rules
+            subject: an empty result and a failed command must not look alike
+            breaking: false
+            commit: 824223cb5
+            url: https://github.com/korczis/prismatic-majordomus/commit/824223cb5
+          - kind: feat
+            scope: ci
+            subject: "three failures of one session, turned into checks"
+            breaking: false
+            commit: 1e96e91b7
+            url: https://github.com/korczis/prismatic-majordomus/commit/1e96e91b7
+          - kind: feat
+            scope: plan
+            subject: "one issue walks the whole chain and back, and a remote close still does not complete it"
+            breaking: false
+            commit: 67d6298c2
+            url: https://github.com/korczis/prismatic-majordomus/commit/67d6298c2
+            references:
+              - kind: issue
+                id: I1307
+                title: The ChatGPT shape is mapped from evidence and never becomes the canonical model
+                route: /plan/i1307/
+          - kind: feat
+            scope: context
+            subject: the board reaches the worker who never asked for it
+            breaking: false
+            commit: 8ad5bb6a7
+            url: https://github.com/korczis/prismatic-majordomus/commit/8ad5bb6a7
+          - kind: feat
+            scope: plan
+            subject: "the plan's derivations are capabilities, so a server can answer what to work on next"
+            breaking: false
+            commit: e41faa62d
+            url: https://github.com/korczis/prismatic-majordomus/commit/e41faa62d
+            references:
+              - kind: issue
+                id: I0001
+                title: Audit what actually plans work in this repository
+                route: /plan/i0001/
+          - kind: feat
+            scope: peers
+            subject: "a session is told it has not announced, and doctor names the work that exists on one disk"
+            breaking: false
+            commit: 1487d729e
+            url: https://github.com/korczis/prismatic-majordomus/commit/1487d729e
+          - kind: feat
+            scope: trace
+            subject: "an issue leads to the commits and pull requests that realised it, and back, without either being written down"
+            breaking: false
+            commit: 3831e151c
+            url: https://github.com/korczis/prismatic-majordomus/commit/3831e151c
+            references:
+              - kind: issue
+                id: I1305
+                title: "An observed contract has a fingerprint, a compatibility state and a fixture"
+                route: /plan/i1305/
+          - kind: feat
+            scope: design
+            subject: "one declaration for the design, and every surface projects it"
+            breaking: false
+            commit: 2b3b9fffa
+            url: https://github.com/korczis/prismatic-majordomus/commit/2b3b9fffa
+          - kind: feat
+            scope: closure
+            subject: "a task owes obligations, and the evidence that discharges them goes stale"
+            breaking: false
+            commit: cf1ee94ca
+            url: https://github.com/korczis/prismatic-majordomus/commit/cf1ee94ca
+          - kind: feat
+            scope: peers
+            subject: "an announcement outlives the connection that made it, and a claim is answered rather than merely recorded"
+            breaking: false
+            commit: 6aeec67b1
+            url: https://github.com/korczis/prismatic-majordomus/commit/6aeec67b1
+          - kind: feat
+            scope: ci
+            subject: "a gate says the published site came from master, and is being served"
+            breaking: false
+            commit: fbc1da919
+            url: https://github.com/korczis/prismatic-majordomus/commit/fbc1da919
+          - kind: feat
+            scope: release
+            subject: "the version rises to 0.4.0, and the projection gains its page, gate and record"
+            breaking: false
+            commit: 957a6ff5a
+            url: https://github.com/korczis/prismatic-majordomus/commit/957a6ff5a
+          - kind: feat
+            scope: release
+            subject: "the changelog is a projection, and the version is derived from the commits"
+            breaking: false
+            commit: 82583eba1
+            url: https://github.com/korczis/prismatic-majordomus/commit/82583eba1
+          - kind: feat
+            scope: ci
+            subject: "the GitHub projection has a gate, so it cannot rot green again"
+            breaking: false
+            commit: 597ebe4e5
+            url: https://github.com/korczis/prismatic-majordomus/commit/597ebe4e5
+            references:
+              - kind: issue
+                id: I1303
+                title: "The store is bounded, measured and invisible to every published projection"
+                route: /plan/i1303/
+              - kind: issue
+                id: I1304
+                title: The browser transport is the one this repository already drives
+                route: /plan/i1304/
+          - kind: feat
+            scope: skills
+            subject: a description that does not tell two skills apart is a finding
+            breaking: false
+            commit: 7af039a4a
+            url: https://github.com/korczis/prismatic-majordomus/commit/7af039a4a
+          - kind: feat
+            scope: plan
+            subject: "the projection to GitHub becomes a gated, identified, traversable milestone"
+            breaking: false
+            commit: 209a82c30
+            url: https://github.com/korczis/prismatic-majordomus/commit/209a82c30
+            references:
+              - kind: issue
+                id: I0001
+                title: Audit what actually plans work in this repository
+                route: /plan/i0001/
+          - kind: feat
+            scope: completion
+            subject: "the shell integration installs itself, and takes itself out again"
+            breaking: false
+            commit: 2a7af4272
+            url: https://github.com/korczis/prismatic-majordomus/commit/2a7af4272
+          - kind: feat
+            scope: workspace
+            subject: "a workspace is a kind, and only its content is local"
+            breaking: false
+            commit: f9bbc636a
+            url: https://github.com/korczis/prismatic-majordomus/commit/f9bbc636a
+            references:
+              - kind: issue
+                id: I1301
+                title: A workspace is a declared object of the layer; only its content is local
+                route: /plan/i1301/
+          - kind: feat
+            scope: commands
+            subject: "a surface that withholds a command says why, including the last silent case"
+            breaking: false
+            commit: 26743dac5
+            url: https://github.com/korczis/prismatic-majordomus/commit/26743dac5
+          - kind: feat
+            scope: product
+            subject: "a capability module's area is derived from the features that name it, and the sidebar groups by it"
+            breaking: false
+            commit: 1c36ca9a2
+            url: https://github.com/korczis/prismatic-majordomus/commit/1c36ca9a2
+          - kind: feat
+            scope: order
+            subject: "one canonical presentation order, total and natural, owned by the crate"
+            breaking: false
+            commit: d7df74e93
+            url: https://github.com/korczis/prismatic-majordomus/commit/d7df74e93
+          - kind: feat
+            scope: providers
+            subject: "the provider table is a generated document, a rule and a gate hold every document to it, and a job runs the gates its model assigns"
+            breaking: false
+            commit: 798a58094
+            url: https://github.com/korczis/prismatic-majordomus/commit/798a58094
+          - kind: feat
+            scope: providers
+            subject: "what a provider is beyond its template is data, and bb is the first orchestrator declared"
+            breaking: false
+            commit: c1666878c
+            url: https://github.com/korczis/prismatic-majordomus/commit/c1666878c
+          - kind: feat
+            scope: just
+            subject: "the distribution group delegates, it does not reimplement"
+            breaking: false
+            commit: 4f5cc1b07
+            url: https://github.com/korczis/prismatic-majordomus/commit/4f5cc1b07
+          - kind: feat
+            scope: quality
+            subject: "the measurement is a capability, and the rules that hold it are the layer's"
+            breaking: false
+            commit: 578ff6545
+            url: https://github.com/korczis/prismatic-majordomus/commit/578ff6545
+          - kind: feat
+            scope: cli
+            subject: "every command says whether it is a capability, or why it is not"
+            breaking: false
+            commit: db8b6f227
+            url: https://github.com/korczis/prismatic-majordomus/commit/db8b6f227
+          - kind: feat
+            scope: quality
+            subject: the crate measures its own public surface from its syntax tree
+            breaking: false
+            commit: 94b0c22fc
+            url: https://github.com/korczis/prismatic-majordomus/commit/94b0c22fc
+          - kind: feat
+            scope: commands
+            subject: "the palette, fish, and the cost measured rather than claimed"
+            breaking: false
+            commit: 8e7faed93
+            url: https://github.com/korczis/prismatic-majordomus/commit/8e7faed93
+          - kind: feat
+            scope: product
+            subject: "product features are objects of the layer, and the landing page is a projection of them"
+            breaking: false
+            commit: 675068f01
+            url: https://github.com/korczis/prismatic-majordomus/commit/675068f01
+          - kind: feat
+            scope: execution
+            subject: "an execution is a watched capability call, not a second registry"
+            breaking: false
+            commit: 65dded963
+            url: https://github.com/korczis/prismatic-majordomus/commit/65dded963
+          - kind: feat
+            scope: commands
+            subject: "one canonical command graph, and every surface derives from it"
+            breaking: false
+            commit: 427b73248
+            url: https://github.com/korczis/prismatic-majordomus/commit/427b73248
+          - kind: feat
+            scope: capabilities
+            subject: "projection closure as a capability, a gate and a ratchet"
+            breaking: false
+            commit: d05b1eafe
+            url: https://github.com/korczis/prismatic-majordomus/commit/d05b1eafe
+          - kind: feat
+            scope: capabilities
+            subject: "the command line is compared with the registry, not with itself"
+            breaking: false
+            commit: d2ac127a7
+            url: https://github.com/korczis/prismatic-majordomus/commit/d2ac127a7
+          - kind: feat
+            scope: cockpit
+            subject: the sidebar reads alphabetically
+            breaking: false
+            commit: 8518f00dc
+            url: https://github.com/korczis/prismatic-majordomus/commit/8518f00dc
+          - kind: feat
+            scope: web
+            subject: "every projection route carries its availability, and the served-only ones are checked"
+            breaking: false
+            commit: ade9050e6
+            url: https://github.com/korczis/prismatic-majordomus/commit/ade9050e6
+          - kind: feat
+            scope: env
+            subject: "a direnv adapter that carries no repository logic, and a modular justfile"
+            breaking: false
+            commit: d648e974c
+            url: https://github.com/korczis/prismatic-majordomus/commit/d648e974c
+          - kind: feat
+            scope: cli
+            subject: "majordomus env, and the split between what may build the index"
+            breaking: false
+            commit: c6bbce3a2
+            url: https://github.com/korczis/prismatic-majordomus/commit/c6bbce3a2
+          - kind: feat
+            scope: env
+            subject: one typed snapshot of what a checkout is
+            breaking: false
+            commit: aa64215da
+            url: https://github.com/korczis/prismatic-majordomus/commit/aa64215da
+          - kind: feat
+            scope: generate
+            subject: "the composed graph is an artifact of the one plan, with a schema and nothing private"
+            breaking: false
+            commit: 674b89907
+            url: https://github.com/korczis/prismatic-majordomus/commit/674b89907
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: archive
+            subject: "the archive command's pipelines stop hiding their own failures"
+            breaking: false
+            commit: 60a04f33f
+            url: https://github.com/korczis/prismatic-majordomus/commit/60a04f33f
+          - kind: fix
+            scope: ui
+            subject: the pin test counts the foreign-surface marker the audit added
+            breaking: false
+            commit: 4e04aa6ff
+            url: https://github.com/korczis/prismatic-majordomus/commit/4e04aa6ff
+          - kind: fix
+            scope: site
+            subject: the landing page stops stating the unbuilt half as present fact
+            breaking: false
+            commit: 87b9ac659
+            url: https://github.com/korczis/prismatic-majordomus/commit/87b9ac659
+          - kind: fix
+            scope: site
+            subject: "the landing page's own gate stops claiming a check it does not run"
+            breaking: false
+            commit: 46fd96bd2
+            url: https://github.com/korczis/prismatic-majordomus/commit/46fd96bd2
+          - kind: fix
+            scope: schemas
+            subject: "the subset is a subset, and a gate asks an independent parser"
+            breaking: false
+            commit: 4e48a5677
+            url: https://github.com/korczis/prismatic-majordomus/commit/4e48a5677
+          - kind: fix
+            scope: mcp
+            subject: "a server that lost its lease says so, and takes on nobody new"
+            breaking: false
+            commit: f245eb630
+            url: https://github.com/korczis/prismatic-majordomus/commit/f245eb630
+          - kind: fix
+            scope: capture
+            subject: a provider shim declares whether the person waits for it
+            breaking: false
+            commit: cb4207874
+            url: https://github.com/korczis/prismatic-majordomus/commit/cb4207874
+          - kind: fix
+            scope: site-probe
+            subject: "the sweep serves the site it measures, and the guard cannot pass on a listing"
+            breaking: false
+            commit: 67c3c2405
+            url: https://github.com/korczis/prismatic-majordomus/commit/67c3c2405
+          - kind: fix
+            scope: test
+            subject: "every wait in this repository's shell carries a bound"
+            breaking: false
+            commit: d66904da8
+            url: https://github.com/korczis/prismatic-majordomus/commit/d66904da8
+          - kind: fix
+            scope: site
+            subject: a use case carries the same shape whether or not it declares a list
+            breaking: false
+            commit: 4a87331cf
+            url: https://github.com/korczis/prismatic-majordomus/commit/4a87331cf
+          - kind: fix
+            scope: pages
+            subject: report the deploy that did not happen
+            breaking: false
+            commit: b0b095709
+            url: https://github.com/korczis/prismatic-majordomus/commit/b0b095709
+          - kind: fix
+            scope: site
+            subject: "the group's self-link carries a target of its own"
+            breaking: false
+            commit: 8b9409897
+            url: https://github.com/korczis/prismatic-majordomus/commit/8b9409897
+          - kind: fix
+            scope: doctor
+            subject: "the vendor's evidence is verified where it lives, not in the repository that adopted it"
+            breaking: false
+            commit: c99aee554
+            url: https://github.com/korczis/prismatic-majordomus/commit/c99aee554
+          - kind: fix
+            scope: session
+            subject: "one episode writes one record, and an uncommitted one is visible"
+            breaking: false
+            commit: a038591b4
+            url: https://github.com/korczis/prismatic-majordomus/commit/a038591b4
+          - kind: fix
+            scope: capability
+            subject: "environment.status answers with a clock in it, so it is not cached"
+            breaking: false
+            commit: 0839627b7
+            url: https://github.com/korczis/prismatic-majordomus/commit/0839627b7
+          - kind: fix
+            scope: site
+            subject: "the base path the old address had, and the file the new one rests on"
+            breaking: false
+            commit: 05fdb333a
+            url: https://github.com/korczis/prismatic-majordomus/commit/05fdb333a
+          - kind: fix
+            scope: site
+            subject: "the link to a changelog group is beside its disclosure, not inside it"
+            breaking: false
+            commit: a0d6b0f90
+            url: https://github.com/korczis/prismatic-majordomus/commit/a0d6b0f90
+          - kind: fix
+            scope: release
+            subject: "one group per kind, so the changelog stops repeating itself"
+            breaking: false
+            commit: 0799bc91f
+            url: https://github.com/korczis/prismatic-majordomus/commit/0799bc91f
+          - kind: fix
+            scope: build
+            subject: cleaning stops at the checkout that asked for it
+            breaking: false
+            commit: e02305e24
+            url: https://github.com/korczis/prismatic-majordomus/commit/e02305e24
+          - kind: fix
+            subject: "the site builds again, and clippy reaches the tests"
+            breaking: false
+            commit: 28a68421b
+            url: https://github.com/korczis/prismatic-majordomus/commit/28a68421b
+          - kind: fix
+            scope: site
+            subject: a deploy that lost the CNAME is refused rather than published
+            breaking: false
+            commit: 92c0098a3
+            url: https://github.com/korczis/prismatic-majordomus/commit/92c0098a3
+          - kind: fix
+            scope: task
+            subject: "obligations gain a producer, and an honest outcome is no longer stranded"
+            breaking: false
+            commit: 05ee9dbd8
+            url: https://github.com/korczis/prismatic-majordomus/commit/05ee9dbd8
+          - kind: fix
+            scope: ci
+            subject: "the implied level is a string, and shellcheck says so"
+            breaking: false
+            commit: d40b236e5
+            url: https://github.com/korczis/prismatic-majordomus/commit/d40b236e5
+          - kind: fix
+            scope: generate
+            subject: a derivation refuses an executable of another generation
+            breaking: false
+            commit: 9a34710c6
+            url: https://github.com/korczis/prismatic-majordomus/commit/9a34710c6
+          - kind: fix
+            scope: ui
+            subject: the audit measures the served surfaces it can now reach
+            breaking: false
+            commit: e798d42f5
+            url: https://github.com/korczis/prismatic-majordomus/commit/e798d42f5
+          - kind: fix
+            scope: site-probe
+            subject: the walk that discounts a clipped element is asked about the element
+            breaking: false
+            commit: 0ece4be20
+            url: https://github.com/korczis/prismatic-majordomus/commit/0ece4be20
+          - kind: fix
+            scope: "plan,release"
+            subject: a repository with no plan or release still sets every parameter
+            breaking: false
+            commit: 2b59268ec
+            url: https://github.com/korczis/prismatic-majordomus/commit/2b59268ec
+            references:
+              - kind: milestone
+                id: M000
+                title: Milestone and DAG driven development
+                route: /plan/m000/
+          - kind: fix
+            scope: commands
+            subject: evidence declares a class and a task requirement the vocabulary holds
+            breaking: false
+            commit: 79ce87d97
+            url: https://github.com/korczis/prismatic-majordomus/commit/79ce87d97
+          - kind: fix
+            scope: site
+            subject: "the navigation row wraps, so no page is wider than the viewport at 768px"
+            breaking: false
+            commit: fcb70bb30
+            url: https://github.com/korczis/prismatic-majordomus/commit/fcb70bb30
+          - kind: fix
+            scope: security
+            subject: "the peer-board request is a declared exception, not an undeclared one"
+            breaking: false
+            commit: f66418147
+            url: https://github.com/korczis/prismatic-majordomus/commit/f66418147
+          - kind: fix
+            scope: ci
+            subject: "a gate whose runner is scarce is planned on demand, so the verdict arrives"
+            breaking: false
+            commit: ff921a93f
+            url: https://github.com/korczis/prismatic-majordomus/commit/ff921a93f
+          - kind: fix
+            scope: execution
+            subject: the queued transition is published before anything may start the work
+            breaking: false
+            commit: 759307be5
+            url: https://github.com/korczis/prismatic-majordomus/commit/759307be5
+          - kind: fix
+            scope: session
+            subject: "the server line reaches the briefing as an argument, not as a shared name"
+            breaking: false
+            commit: 8b6a03f98
+            url: https://github.com/korczis/prismatic-majordomus/commit/8b6a03f98
+          - kind: fix
+            scope: order
+            subject: "every shell sort is pinned with LC_ALL=C, and the debt is zero"
+            breaking: false
+            commit: ad9ff819d
+            url: https://github.com/korczis/prismatic-majordomus/commit/ad9ff819d
+          - kind: fix
+            scope: docs
+            subject: "a public item's documentation stops linking to a private one"
+            breaking: false
+            commit: efdcefb3c
+            url: https://github.com/korczis/prismatic-majordomus/commit/efdcefb3c
+          - kind: fix
+            scope: generate
+            subject: the composed graph is a generated artifact again
+            breaking: false
+            commit: e380088ee
+            url: https://github.com/korczis/prismatic-majordomus/commit/e380088ee
+          - kind: fix
+            scope: capability
+            subject: a handler answers from the distribution the process located
+            breaking: false
+            commit: 861f81a5a
+            url: https://github.com/korczis/prismatic-majordomus/commit/861f81a5a
+          - kind: fix
+            scope: site
+            subject: the page never scrolls sideways to reach one identifier
+            breaking: false
+            commit: 48c445170
+            url: https://github.com/korczis/prismatic-majordomus/commit/48c445170
+          - kind: fix
+            scope: ci
+            subject: the changelog is checked against the history it is composed from
+            breaking: false
+            commit: fe5fdc91e
+            url: https://github.com/korczis/prismatic-majordomus/commit/fe5fdc91e
+          - kind: fix
+            scope: design
+            subject: "the gate reaches its own implementation, and the crate's new surface stays inside the crate"
+            breaking: false
+            commit: 4b7122a73
+            url: https://github.com/korczis/prismatic-majordomus/commit/4b7122a73
+          - kind: fix
+            scope: ci
+            subject: the ratchets and projections master raised without noticing
+            breaking: false
+            commit: b994eeaa9
+            url: https://github.com/korczis/prismatic-majordomus/commit/b994eeaa9
+          - kind: fix
+            scope: pages
+            subject: a short sha names the commit it abbreviates
+            breaking: false
+            commit: 873c9e1ac
+            url: https://github.com/korczis/prismatic-majordomus/commit/873c9e1ac
+          - kind: fix
+            scope: design
+            subject: file the data-page vocabulary and tag an unfiled data word
+            breaking: false
+            commit: 13b3abc33
+            url: https://github.com/korczis/prismatic-majordomus/commit/13b3abc33
+          - kind: fix
+            scope: ci
+            subject: "the two ratchets the branch moved, moved back"
+            breaking: false
+            commit: a3cd91399
+            url: https://github.com/korczis/prismatic-majordomus/commit/a3cd91399
+          - kind: fix
+            scope: release
+            subject: "the command line is accounted for once, and every new export shows itself"
+            breaking: false
+            commit: da4f72511
+            url: https://github.com/korczis/prismatic-majordomus/commit/da4f72511
+          - kind: fix
+            scope: tests
+            subject: four examples and one assertion catch up with contracts that already changed
+            breaking: false
+            commit: 91f9fb851
+            url: https://github.com/korczis/prismatic-majordomus/commit/91f9fb851
+          - kind: fix
+            scope: execution
+            subject: "a cancellation after a failure keeps the failure, said as a guard"
+            breaking: false
+            commit: ce40e2b49
+            url: https://github.com/korczis/prismatic-majordomus/commit/ce40e2b49
+          - kind: fix
+            scope: context
+            subject: "a peer that said nothing no longer ends `context` with nothing said"
+            breaking: false
+            commit: 89c814490
+            url: https://github.com/korczis/prismatic-majordomus/commit/89c814490
+          - kind: fix
+            scope: ci
+            subject: the structure job is green on two of its three gates
+            breaking: false
+            commit: b6743dc39
+            url: https://github.com/korczis/prismatic-majordomus/commit/b6743dc39
+          - kind: fix
+            scope: release
+            subject: the committed changelog stops describing the commit it is in
+            breaking: false
+            commit: ebc10de4d
+            url: https://github.com/korczis/prismatic-majordomus/commit/ebc10de4d
+          - kind: fix
+            scope: ci
+            subject: the probe reads 426 from the WebSocket route as a surface answering
+            breaking: false
+            commit: 7af40d230
+            url: https://github.com/korczis/prismatic-majordomus/commit/7af40d230
+          - kind: fix
+            scope: ci
+            subject: master is green again on the three causes nobody owned
+            breaking: false
+            commit: 6c979b376
+            url: https://github.com/korczis/prismatic-majordomus/commit/6c979b376
+          - kind: fix
+            scope: site
+            subject: two checks meet new content and stop reading it as an inventory
+            breaking: false
+            commit: 709407a1d
+            url: https://github.com/korczis/prismatic-majordomus/commit/709407a1d
+          - kind: fix
+            scope: worktree
+            subject: a new path starts approved for direnv
+            breaking: false
+            commit: b3ffee4e9
+            url: https://github.com/korczis/prismatic-majordomus/commit/b3ffee4e9
+          - kind: fix
+            scope: obligations
+            subject: the pathspecs an obligation is hashed over reach every depth
+            breaking: false
+            commit: c5268505b
+            url: https://github.com/korczis/prismatic-majordomus/commit/c5268505b
+          - kind: fix
+            scope: scope
+            subject: a task that merged the trunk has not touched what the trunk touched
+            breaking: false
+            commit: 83775c7ab
+            url: https://github.com/korczis/prismatic-majordomus/commit/83775c7ab
+          - kind: fix
+            scope: derive
+            subject: "where cargo builds is asked, not assumed"
+            breaking: false
+            commit: bd63891d9
+            url: https://github.com/korczis/prismatic-majordomus/commit/bd63891d9
+          - kind: fix
+            scope: ci
+            subject: "the gate model parses again, and the gate a merge dropped is declared again"
+            breaking: false
+            commit: d7f492294
+            url: https://github.com/korczis/prismatic-majordomus/commit/d7f492294
+          - kind: fix
+            scope: site-check
+            subject: a route is named on the API page whatever it is styled with
+            breaking: false
+            commit: 9fcd06f8f
+            url: https://github.com/korczis/prismatic-majordomus/commit/9fcd06f8f
+          - kind: fix
+            scope: runtime
+            subject: "a stale runtime says so, on the lease and on the way in"
+            breaking: false
+            commit: 53b21b4bb
+            url: https://github.com/korczis/prismatic-majordomus/commit/53b21b4bb
+          - kind: fix
+            scope: tooling
+            subject: two failures of this session become refusals with tests
+            breaking: false
+            commit: b90e0dd47
+            url: https://github.com/korczis/prismatic-majordomus/commit/b90e0dd47
+          - kind: fix
+            scope: release
+            subject: the module asserts the two projections it documents
+            breaking: false
+            commit: 98f6606ce
+            url: https://github.com/korczis/prismatic-majordomus/commit/98f6606ce
+          - kind: fix
+            scope: gates
+            subject: "a derivation refuses a degraded index, and one pass says everything a command still needs"
+            breaking: false
+            commit: f6b73b05a
+            url: https://github.com/korczis/prismatic-majordomus/commit/f6b73b05a
+          - kind: fix
+            scope: "design,adr"
+            subject: "the three failures this session hit, each with the gate that would have caught it"
+            breaking: false
+            commit: 1cbb36869
+            url: https://github.com/korczis/prismatic-majordomus/commit/1cbb36869
+          - kind: fix
+            scope: traceability
+            subject: an open pull request keeps the columns after its empty ones
+            breaking: false
+            commit: efe5afdb4
+            url: https://github.com/korczis/prismatic-majordomus/commit/efe5afdb4
+            references:
+              - kind: issue
+                id: I1305
+                title: "An observed contract has a fingerprint, a compatibility state and a fixture"
+                route: /plan/i1305/
+          - kind: fix
+            scope: commands
+            subject: the module asserts the three projections it documents
+            breaking: false
+            commit: 5609ab148
+            url: https://github.com/korczis/prismatic-majordomus/commit/5609ab148
+          - kind: fix
+            scope: site
+            subject: the changelog page reads the groups the document carries
+            breaking: false
+            commit: b551a3327
+            url: https://github.com/korczis/prismatic-majordomus/commit/b551a3327
+          - kind: fix
+            scope: doctrine
+            subject: "the schema check reads the schemas, instead of reporting a clean bill of health over an empty set"
+            breaking: false
+            commit: 0ad022303
+            url: https://github.com/korczis/prismatic-majordomus/commit/0ad022303
+          - kind: fix
+            scope: docs
+            subject: the semantics module documents a validation that is not an item
+            breaking: false
+            commit: ed649c769
+            url: https://github.com/korczis/prismatic-majordomus/commit/ed649c769
+          - kind: fix
+            scope: share
+            subject: a MAJORDOMUS_SHARE naming another worktree of this repository is refused
+            breaking: false
+            commit: fc9864ebc
+            url: https://github.com/korczis/prismatic-majordomus/commit/fc9864ebc
+          - kind: fix
+            scope: derive
+            subject: every stage names itself as it begins and reports what it cost
+            breaking: false
+            commit: 59aa3769c
+            url: https://github.com/korczis/prismatic-majordomus/commit/59aa3769c
+          - kind: fix
+            scope: ci
+            subject: ci-plan tells a bare path list which spelling it wanted
+            breaking: false
+            commit: 5bd2f77bc
+            url: https://github.com/korczis/prismatic-majordomus/commit/5bd2f77bc
+          - kind: fix
+            scope: cli
+            subject: an unknown command that the Rust executable provides says so and names the launcher
+            breaking: false
+            commit: 59f5c8b75
+            url: https://github.com/korczis/prismatic-majordomus/commit/59f5c8b75
+          - kind: fix
+            scope: github-sync
+            subject: "the protection against overwriting a person's edit was blind when the plan had moved"
+            breaking: false
+            commit: 21f7ad848
+            url: https://github.com/korczis/prismatic-majordomus/commit/21f7ad848
+            references:
+              - kind: issue
+                id: I1302
+                title: "Identity, provenance and support level are typed fields, not prose"
+                route: /plan/i1302/
+          - kind: fix
+            scope: github-sync
+            subject: "a projected record carries its own identity, so a rename cannot orphan it"
+            breaking: false
+            commit: 3db47f7d6
+            url: https://github.com/korczis/prismatic-majordomus/commit/3db47f7d6
+            references:
+              - kind: issue
+                id: I0001
+                title: Audit what actually plans work in this repository
+                route: /plan/i0001/
+              - kind: issue
+                id: I1301
+                title: A workspace is a declared object of the layer; only its content is local
+                route: /plan/i1301/
+          - kind: fix
+            scope: ui
+            subject: "a scroll container is a containing block for what it positions, and the finding that says so names it"
+            breaking: false
+            commit: 2d328460b
+            url: https://github.com/korczis/prismatic-majordomus/commit/2d328460b
+          - kind: fix
+            scope: ci
+            subject: a job that hangs fails instead of holding a runner for a shift
+            breaking: false
+            commit: 1ea8da126
+            url: https://github.com/korczis/prismatic-majordomus/commit/1ea8da126
+          - kind: fix
+            scope: completion
+            subject: TAB in this repository asks a program that can answer it
+            breaking: false
+            commit: ff2d64e57
+            url: https://github.com/korczis/prismatic-majordomus/commit/ff2d64e57
+          - kind: fix
+            scope: order
+            subject: "the collections that disagreed with each other, and a rule that keeps them from disagreeing again"
+            breaking: false
+            commit: 28304f300
+            url: https://github.com/korczis/prismatic-majordomus/commit/28304f300
+          - kind: fix
+            scope: ci
+            subject: "the wiring case asserts the dispatch, and the provider table is a document of the docs target"
+            breaking: false
+            commit: 38cec32a9
+            url: https://github.com/korczis/prismatic-majordomus/commit/38cec32a9
+          - kind: fix
+            scope: derive
+            subject: "the catalogue carries the rewritten summaries, and the crate is formatted"
+            breaking: false
+            commit: 441aa73f4
+            url: https://github.com/korczis/prismatic-majordomus/commit/441aa73f4
+          - kind: fix
+            scope: worktree
+            subject: the scratch roots are read from the checkout the command runs in
+            breaking: false
+            commit: 24a21375f
+            url: https://github.com/korczis/prismatic-majordomus/commit/24a21375f
+          - kind: fix
+            scope: usecase
+            subject: "the tool under test is on PATH for its scenarios, so the evidence is the same on every machine"
+            breaking: false
+            commit: 28af54468
+            url: https://github.com/korczis/prismatic-majordomus/commit/28af54468
+          - kind: fix
+            scope: site
+            subject: "the document router parses under bash 3.2, so the macos job runs the site cases again"
+            breaking: false
+            commit: 1df70e37e
+            url: https://github.com/korczis/prismatic-majordomus/commit/1df70e37e
+          - kind: fix
+            scope: rust
+            subject: "the test build compiles again on master, and clippy 1.98 is satisfied"
+            breaking: false
+            commit: 5540b762f
+            url: https://github.com/korczis/prismatic-majordomus/commit/5540b762f
+          - kind: fix
+            scope: merge
+            subject: the test-only index literal gains the field master added
+            breaking: false
+            commit: 52bfbe7f0
+            url: https://github.com/korczis/prismatic-majordomus/commit/52bfbe7f0
+          - kind: fix
+            scope: site
+            subject: "the mobile overflow findings, and the measure that invented three of them"
+            breaking: false
+            commit: 93977cce1
+            url: https://github.com/korczis/prismatic-majordomus/commit/93977cce1
+          - kind: fix
+            scope: test
+            subject: "the five suite cases that fail on master, and the silence that hid them"
+            breaking: false
+            commit: e5933f485
+            url: https://github.com/korczis/prismatic-majordomus/commit/e5933f485
+          - kind: fix
+            scope: site-data
+            subject: "a scenario failure says which scenario, and case 11 re-pins the package it edits"
+            breaking: false
+            commit: 82ec36404
+            url: https://github.com/korczis/prismatic-majordomus/commit/82ec36404
+          - kind: fix
+            scope: release
+            subject: the guard died on the archive it was written to catch
+            breaking: false
+            commit: 1ef73612a
+            url: https://github.com/korczis/prismatic-majordomus/commit/1ef73612a
+          - kind: fix
+            scope: distribution
+            subject: a release is complete over the set it was published against
+            breaking: false
+            commit: 8c48954e8
+            url: https://github.com/korczis/prismatic-majordomus/commit/8c48954e8
+          - kind: fix
+            scope: release
+            subject: "the release asks Pages to publish, because its own commit cannot"
+            breaking: false
+            commit: "238e95089"
+            url: https://github.com/korczis/prismatic-majordomus/commit/238e95089
+          - kind: fix
+            scope: release-verify
+            subject: "a report a person reads, and no OK it has not earned"
+            breaking: false
+            commit: 5374ca524
+            url: https://github.com/korczis/prismatic-majordomus/commit/5374ca524
+          - kind: fix
+            scope: release
+            subject: "the packer that lost v0.2.0, and the status nobody could ask for"
+            breaking: false
+            commit: 84aa37b49
+            url: https://github.com/korczis/prismatic-majordomus/commit/84aa37b49
+          - kind: fix
+            scope: site
+            subject: "the dependency-graph links are distinguishable without colour, and the crate is formatted"
+            breaking: false
+            commit: bbe74e431
+            url: https://github.com/korczis/prismatic-majordomus/commit/bbe74e431
+          - kind: fix
+            scope: quality
+            subject: the re-export arm is a guard rather than a nested if
+            breaking: false
+            commit: 99623c0ac
+            url: https://github.com/korczis/prismatic-majordomus/commit/99623c0ac
+          - kind: fix
+            scope: test
+            subject: "case 11 mutates the version the tool has, not the one it had"
+            breaking: false
+            commit: 6658d2c1d
+            url: https://github.com/korczis/prismatic-majordomus/commit/6658d2c1d
+          - kind: fix
+            scope: test
+            subject: case 12c stops testing a subsystem that moved out of it
+            breaking: false
+            commit: 5d849ae60
+            url: https://github.com/korczis/prismatic-majordomus/commit/5d849ae60
+          - kind: fix
+            scope: gate
+            subject: "derived-current asks both halves, not the one that is cheap"
+            breaking: false
+            commit: 94eb63142
+            url: https://github.com/korczis/prismatic-majordomus/commit/94eb63142
+          - kind: fix
+            scope: quality
+            subject: a test builds its report in one initialiser
+            breaking: false
+            commit: 95ca55bd8
+            url: https://github.com/korczis/prismatic-majordomus/commit/95ca55bd8
+          - kind: fix
+            scope: quality
+            subject: "the documentation links only to what the crate still exports, and the renderer is testable"
+            breaking: false
+            commit: 0f25df64d
+            url: https://github.com/korczis/prismatic-majordomus/commit/0f25df64d
+          - kind: fix
+            scope: test
+            subject: "case 12 counts the moments the catalogue features, and matches the tag the build writes"
+            breaking: false
+            commit: 26d263b2c
+            url: https://github.com/korczis/prismatic-majordomus/commit/26d263b2c
+          - kind: fix
+            scope: generated
+            subject: "the typing case asserted more than the rule, and less than it could"
+            breaking: false
+            commit: fe4958aa2
+            url: https://github.com/korczis/prismatic-majordomus/commit/fe4958aa2
+          - kind: fix
+            scope: generated
+            subject: "the two documents nobody published a contract for, and the rule case 52 meant"
+            breaking: false
+            commit: 2257db97b
+            url: https://github.com/korczis/prismatic-majordomus/commit/2257db97b
+          - kind: fix
+            scope: site
+            subject: "the command route wraps, and the closure is proved where it is written"
+            breaking: false
+            commit: 348431bc1
+            url: https://github.com/korczis/prismatic-majordomus/commit/348431bc1
+          - kind: fix
+            scope: ci
+            subject: the install gate gives the deployment the window it needs
+            breaking: false
+            commit: 84e8b526d
+            url: https://github.com/korczis/prismatic-majordomus/commit/84e8b526d
+          - kind: fix
+            scope: product
+            subject: "meet master where it moved — ADR 23, the shared install block, the UI standard"
+            breaking: false
+            commit: 6bd67fe57
+            url: https://github.com/korczis/prismatic-majordomus/commit/6bd67fe57
+          - kind: fix
+            scope: product
+            subject: the feature route has a benchmark case in a repository with no features
+            breaking: false
+            commit: 0b385b67a
+            url: https://github.com/korczis/prismatic-majordomus/commit/0b385b67a
+          - kind: fix
+            scope: test
+            subject: "the homepage's moment count reads the catalogue, not a directory that moved"
+            breaking: false
+            commit: 0fcd91fce
+            url: https://github.com/korczis/prismatic-majordomus/commit/0fcd91fce
+          - kind: fix
+            scope: test
+            subject: two site checks that no longer describe what the build produces
+            breaking: false
+            commit: 5e04284fc
+            url: https://github.com/korczis/prismatic-majordomus/commit/5e04284fc
+          - kind: fix
+            scope: worktree
+            subject: the container test names no home directory
+            breaking: false
+            commit: efc6a085b
+            url: https://github.com/korczis/prismatic-majordomus/commit/efc6a085b
+          - kind: fix
+            scope: test
+            subject: the duplicate plan test and the unformatted tests a merge left behind
+            breaking: false
+            commit: de52b8497
+            url: https://github.com/korczis/prismatic-majordomus/commit/de52b8497
+          - kind: fix
+            scope: cli
+            subject: "the crate passes fmt, rustdoc and its test build again"
+            breaking: false
+            commit: a10f0af08
+            url: https://github.com/korczis/prismatic-majordomus/commit/a10f0af08
+          - kind: fix
+            scope: environment
+            subject: "describe the services master serves, from its route constants"
+            breaking: false
+            commit: b405705ba
+            url: https://github.com/korczis/prismatic-majordomus/commit/b405705ba
+          - kind: fix
+            scope: tests
+            subject: "master's own two failures, and the size cliff behind one of them"
+            breaking: false
+            commit: 6815b9bf5
+            url: https://github.com/korczis/prismatic-majordomus/commit/6815b9bf5
+          - kind: fix
+            scope: why
+            subject: the acceptance case asserts the schema identity the tool prints
+            breaking: false
+            commit: 5314bd6c8
+            url: https://github.com/korczis/prismatic-majordomus/commit/5314bd6c8
+      - kind: perf
+        heading: Performance
+        rank: 2
+        changes:
+          - kind: perf
+            scope: server
+            subject: let a caller ask about this checkout alone
+            breaking: false
+            commit: e042a4cac
+            url: https://github.com/korczis/prismatic-majordomus/commit/e042a4cac
+          - kind: perf
+            scope: context
+            subject: a file that cannot be a context document costs no process
+            breaking: false
+            commit: d0bda2132
+            url: https://github.com/korczis/prismatic-majordomus/commit/d0bda2132
+      - kind: revert
+        heading: Reverted
+        rank: 2
+        changes:
+          - kind: revert
+            scope: design
+            subject: the pull request numbers stay as they were written
+            breaking: false
+            commit: 2600b2932
+            url: https://github.com/korczis/prismatic-majordomus/commit/2600b2932
+      - kind: refactor
+        heading: Changed
+        rank: 3
+        changes:
+          - kind: refactor
+            scope: entry
+            subject: the rule defers the lease to project.the-lease-is-read-once
+            breaking: false
+            commit: 9f6926ac0
+            url: https://github.com/korczis/prismatic-majordomus/commit/9f6926ac0
+      - kind: docs
+        heading: Documentation
+        rank: 4
+        changes:
+          - kind: docs
+            scope: audit
+            subject: "complete phase 01 — gap matrix, drift audit and the phased plan"
+            breaking: false
+            commit: b2ebc5fbd
+            url: https://github.com/korczis/prismatic-majordomus/commit/b2ebc5fbd
+          - kind: docs
+            scope: audit
+            subject: "phase 01 baseline — the system run end to end, with evidence"
+            breaking: false
+            commit: 174a1d24a
+            url: https://github.com/korczis/prismatic-majordomus/commit/174a1d24a
+          - kind: docs
+            scope: architecture
+            subject: name the canonical development runtime and make it enforceable
+            breaking: false
+            commit: 93c5f3f87
+            url: https://github.com/korczis/prismatic-majordomus/commit/93c5f3f87
+          - kind: docs
+            scope: ci
+            subject: "where a gate cannot reach, and a milestone for derived-data integrity"
+            breaking: false
+            commit: c17b62387
+            url: https://github.com/korczis/prismatic-majordomus/commit/c17b62387
+            references:
+              - kind: issue
+                id: I1409
+                title: Derived data stops hashing inputs it cannot control
+                route: /plan/i1409/
+          - kind: docs
+            scope: plan
+            subject: the plan meets the tree it is supposed to describe
+            breaking: false
+            commit: a2882e3b6
+            url: https://github.com/korczis/prismatic-majordomus/commit/a2882e3b6
+            references:
+              - kind: issue
+                id: I1031
+                title: A served surface says which checkout it is serving
+                route: /plan/i1031/
+              - kind: issue
+                id: I1021
+                title: "A browser proves the interface, at the widths people use"
+                route: /plan/i1021/
+              - kind: issue
+                id: I1305
+                title: "An observed contract has a fingerprint, a compatibility state and a fixture"
+                route: /plan/i1305/
+              - kind: issue
+                id: I1306
+                title: "A sync resumes, repeats itself without harm, and says how fresh it is"
+                route: /plan/i1306/
+          - kind: docs
+            scope: release
+            subject: "`scope classify` left the public surface after v0.3.1"
+            breaking: true
+            commit: 4fcccc69c
+            url: https://github.com/korczis/prismatic-majordomus/commit/4fcccc69c
+          - kind: docs
+            scope: rules
+            subject: "four rules this day taught, and the two documents that meet them"
+            breaking: false
+            commit: 6d2c54ad1
+            url: https://github.com/korczis/prismatic-majordomus/commit/6d2c54ad1
+          - kind: docs
+            scope: ui
+            subject: the skipped-subtree record carries its own example
+            breaking: false
+            commit: 7f813a56d
+            url: https://github.com/korczis/prismatic-majordomus/commit/7f813a56d
+          - kind: docs
+            scope: design
+            subject: "the rule sets a floor on the value, and the branch that measures it carries the amendment"
+            breaking: false
+            commit: f13273f9e
+            url: https://github.com/korczis/prismatic-majordomus/commit/f13273f9e
+          - kind: docs
+            scope: schemas
+            subject: task.evidence is documented where every other event is
+            breaking: false
+            commit: a547850b3
+            url: https://github.com/korczis/prismatic-majordomus/commit/a547850b3
+          - kind: docs
+            scope: claims
+            subject: two claim documents carry the five sections the contract requires
+            breaking: false
+            commit: 20b2f941e
+            url: https://github.com/korczis/prismatic-majordomus/commit/20b2f941e
+          - kind: docs
+            scope: entry
+            subject: "the operator's page for entering the repository"
+            breaking: false
+            commit: 766adaec6
+            url: https://github.com/korczis/prismatic-majordomus/commit/766adaec6
+          - kind: docs
+            scope: entry
+            subject: the audit of repository entry — what converges on its own and where it breaks
+            breaking: false
+            commit: 143af7b54
+            url: https://github.com/korczis/prismatic-majordomus/commit/143af7b54
+          - kind: docs
+            scope: bootstrap
+            subject: "every worker is told it is not alone, and told to push before it is"
+            breaking: false
+            commit: e6571df53
+            url: https://github.com/korczis/prismatic-majordomus/commit/e6571df53
+          - kind: docs
+            scope: plan
+            subject: "I1301 is done, and I1302 may not land its schema alone"
+            breaking: false
+            commit: 012fed644
+            url: https://github.com/korczis/prismatic-majordomus/commit/012fed644
+            references:
+              - kind: issue
+                id: I1301
+                title: A workspace is a declared object of the layer; only its content is local
+                route: /plan/i1301/
+              - kind: issue
+                id: I1302
+                title: "Identity, provenance and support level are typed fields, not prose"
+                route: /plan/i1302/
+          - kind: docs
+            scope: plan
+            subject: "the projection claim splits in two, and only one of the halves was ever true"
+            breaking: false
+            commit: 990bd0588
+            url: https://github.com/korczis/prismatic-majordomus/commit/990bd0588
+            references:
+              - kind: issue
+                id: I1308
+                title: "The executable's share is one capability, shaped like continuity"
+                route: /plan/i1308/
+          - kind: docs
+            scope: plan
+            subject: the external-workspaces milestone and its ten issues
+            breaking: false
+            commit: 54c5f45ee
+            url: https://github.com/korczis/prismatic-majordomus/commit/54c5f45ee
+            references:
+              - kind: issue
+                id: I1301
+                title: A workspace is a declared object of the layer; only its content is local
+                route: /plan/i1301/
+              - kind: issue
+                id: I1308
+                title: "The executable's share is one capability, shaped like continuity"
+                route: /plan/i1308/
+              - kind: issue
+                id: I1304
+                title: The browser transport is the one this repository already drives
+                route: /plan/i1304/
+              - kind: issue
+                id: I1309
+                title: "The boundaries this milestone asserts are gates, not sentences"
+                route: /plan/i1309/
+          - kind: docs
+            scope: adr
+            subject: the audit withdraws two thirds of ADR 0025
+            breaking: false
+            commit: 7f75414bf
+            url: https://github.com/korczis/prismatic-majordomus/commit/7f75414bf
+          - kind: docs
+            scope: adr
+            subject: an external workspace is not a provider
+            breaking: false
+            commit: a845624ad
+            url: https://github.com/korczis/prismatic-majordomus/commit/a845624ad
+          - kind: docs
+            scope: adr
+            subject: "the synthetic run under bb was done, and it says what archiving a thread does not"
+            breaking: false
+            commit: cc6540f2e
+            url: https://github.com/korczis/prismatic-majordomus/commit/cc6540f2e
+          - kind: docs
+            scope: adr
+            subject: ".mcp.json reaches Claude Code under bb, and the projection baseline takes the parent command the unwired gate let in"
+            breaking: false
+            commit: 929c29f8e
+            url: https://github.com/korczis/prismatic-majordomus/commit/929c29f8e
+          - kind: docs
+            scope: adr
+            subject: "an orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts"
+            breaking: false
+            commit: 7da5ad9b2
+            url: https://github.com/korczis/prismatic-majordomus/commit/7da5ad9b2
+          - kind: docs
+            scope: claim
+            subject: "the claim says what the gate now does, and where it cannot reach"
+            breaking: false
+            commit: d485fe9ae
+            url: https://github.com/korczis/prismatic-majordomus/commit/d485fe9ae
+          - kind: docs
+            scope: worktrees
+            subject: the cleanup nobody is prompted to do has a bill
+            breaking: false
+            commit: a3afb1dac
+            url: https://github.com/korczis/prismatic-majordomus/commit/a3afb1dac
+          - kind: docs
+            scope: adoption
+            subject: "close the warning block, and say apparatus not ledger"
+            breaking: false
+            commit: c713bf419
+            url: https://github.com/korczis/prismatic-majordomus/commit/c713bf419
+          - kind: docs
+            scope: adoption
+            subject: what doctor reports in a repository that is not this one
+            breaking: false
+            commit: 7eebc1e9e
+            url: https://github.com/korczis/prismatic-majordomus/commit/7eebc1e9e
+          - kind: docs
+            scope: plan
+            subject: "the deployed surfaces learn who is asking, and the providers are data"
+            breaking: false
+            commit: 9f973e52c
+            url: https://github.com/korczis/prismatic-majordomus/commit/9f973e52c
+            references:
+              - kind: issue
+                id: I1208
+                title: "Adding a provider is one file, removing one is one deletion, and both are executed rather than described"
+                route: /plan/i1208/
+              - kind: issue
+                id: I1206
+                title: "What an anonymous reader may do is derived from the effect classification, not from a list"
+                route: /plan/i1206/
+          - kind: docs
+            scope: environment
+            subject: the document the env recipes cite
+            breaking: false
+            commit: 97f4cad8c
+            url: https://github.com/korczis/prismatic-majordomus/commit/97f4cad8c
+      - kind: test
+        heading: Tests
+        rank: 5
+        changes:
+          - kind: test
+            scope: entry
+            subject: "the cold start is proven — a storm, a crash, two worktrees, planted drift"
+            breaking: false
+            commit: 96257970f
+            url: https://github.com/korczis/prismatic-majordomus/commit/96257970f
+          - kind: test
+            scope: suite
+            subject: "a waived benchmark is a declaration, so the two cases read it"
+            breaking: false
+            commit: bf3f22e0a
+            url: https://github.com/korczis/prismatic-majordomus/commit/bf3f22e0a
+          - kind: test
+            scope: suite
+            subject: the staleness case answers for the executable beside the sources
+            breaking: false
+            commit: 11263d490
+            url: https://github.com/korczis/prismatic-majordomus/commit/11263d490
+          - kind: test
+            scope: suite
+            subject: "the docker context case reads the first rule, not the sixth line"
+            breaking: false
+            commit: 19fca96a2
+            url: https://github.com/korczis/prismatic-majordomus/commit/19fca96a2
+          - kind: test
+            scope: session
+            subject: "the case takes 111, since 110 was allocated twice"
+            breaking: false
+            commit: 51aa6e92e
+            url: https://github.com/korczis/prismatic-majordomus/commit/51aa6e92e
+            references:
+              - kind: issue
+                id: I1301
+                title: A workspace is a declared object of the layer; only its content is local
+                route: /plan/i1301/
+              - kind: issue
+                id: I1308
+                title: "The executable's share is one capability, shaped like continuity"
+                route: /plan/i1308/
+          - kind: test
+            scope: suite
+            subject: the rust-check step list follows the gate that was added to it
+            breaking: false
+            commit: 5d72ae69d
+            url: https://github.com/korczis/prismatic-majordomus/commit/5d72ae69d
+          - kind: test
+            scope: suite
+            subject: each stage of the future-command case gets its own repository
+            breaking: false
+            commit: ab00adc8d
+            url: https://github.com/korczis/prismatic-majordomus/commit/ab00adc8d
+          - kind: test
+            scope: unblock
+            subject: the case takes a number nobody else is taking
+            breaking: false
+            commit: d912a58ea
+            url: https://github.com/korczis/prismatic-majordomus/commit/d912a58ea
+          - kind: test
+            scope: design
+            subject: the zero-registration mutations use a word the declaration does not file
+            breaking: false
+            commit: 60b5b2492
+            url: https://github.com/korczis/prismatic-majordomus/commit/60b5b2492
+          - kind: test
+            scope: workspace
+            subject: the declaration is proved to carry no credential
+            breaking: false
+            commit: 3d9c929a5
+            url: https://github.com/korczis/prismatic-majordomus/commit/3d9c929a5
+          - kind: test
+            scope: order
+            subject: "the gate is driven against fixture trees, and driving it found five more unpinned sorts"
+            breaking: false
+            commit: f6af28819
+            url: https://github.com/korczis/prismatic-majordomus/commit/f6af28819
+          - kind: test
+            scope: gate
+            subject: "case 56's first export is a repository too, so CI asks the same gate as a laptop"
+            breaking: false
+            commit: 8b6b9a982
+            url: https://github.com/korczis/prismatic-majordomus/commit/8b6b9a982
+          - kind: test
+            scope: env
+            subject: "the two tests the adapter rule names, written"
+            breaking: false
+            commit: 000e40d67
+            url: https://github.com/korczis/prismatic-majordomus/commit/000e40d67
+          - kind: test
+            subject: "the recipe set is asked of just --dump, not of one file's text"
+            breaking: false
+            commit: "010541612"
+            url: https://github.com/korczis/prismatic-majordomus/commit/010541612
+          - kind: test
+            scope: distribution
+            subject: "the installability report, over states this repository is not in"
+            breaking: false
+            commit: b1be17353
+            url: https://github.com/korczis/prismatic-majordomus/commit/b1be17353
+          - kind: test
+            scope: gate
+            subject: "the registry half needs a repository, not just a tree"
+            breaking: false
+            commit: b7f88c73e
+            url: https://github.com/korczis/prismatic-majordomus/commit/b7f88c73e
+          - kind: test
+            scope: cockpit
+            subject: the sweep renders the routes the dispatcher actually answers
+            breaking: false
+            commit: 4fd2d838c
+            url: https://github.com/korczis/prismatic-majordomus/commit/4fd2d838c
+          - kind: test
+            scope: site
+            subject: the feature pages vouch for the claims the homepage used to
+            breaking: false
+            commit: ca45221c0
+            url: https://github.com/korczis/prismatic-majordomus/commit/ca45221c0
+          - kind: test
+            scope: execution
+            subject: "the terminal's rendering is asserted, and a surface count is derived"
+            breaking: false
+            commit: 9badf2448
+            url: https://github.com/korczis/prismatic-majordomus/commit/9badf2448
+          - kind: test
+            scope: commands
+            subject: "the generated completion, loaded into a real zsh"
+            breaking: false
+            commit: f37da5681
+            url: https://github.com/korczis/prismatic-majordomus/commit/f37da5681
+          - kind: test
+            scope: worktree
+            subject: "the migration's classification, its guard, and a dirty move"
+            breaking: false
+            commit: e4ef4cba4
+            url: https://github.com/korczis/prismatic-majordomus/commit/e4ef4cba4
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: env
+            subject: source machine-local .envrc.local from .envrc and ignore it
+            breaking: false
+            commit: 1a651e644
+            url: https://github.com/korczis/prismatic-majordomus/commit/1a651e644
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge of master
+            breaking: false
+            commit: 83cd83ee6
+            url: https://github.com/korczis/prismatic-majordomus/commit/83cd83ee6
+          - kind: chore
+            scope: derive
+            subject: the projections follow the peer claims merge
+            breaking: false
+            commit: 702d06d5f
+            url: https://github.com/korczis/prismatic-majordomus/commit/702d06d5f
+          - kind: chore
+            scope: derive
+            subject: the projections follow the quoted scalars
+            breaking: false
+            commit: cf1cc1b54
+            url: https://github.com/korczis/prismatic-majordomus/commit/cf1cc1b54
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merges master never regenerated
+            breaking: false
+            commit: 06fa25891
+            url: https://github.com/korczis/prismatic-majordomus/commit/06fa25891
+            references:
+              - kind: issue
+                id: I1409
+                title: Derived data stops hashing inputs it cannot control
+                route: /plan/i1409/
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 8a51ba050
+            url: https://github.com/korczis/prismatic-majordomus/commit/8a51ba050
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 95b775cec
+            url: https://github.com/korczis/prismatic-majordomus/commit/95b775cec
+          - kind: chore
+            scope: derive
+            subject: "the projections describe the trunk again, so it can publish"
+            breaking: false
+            commit: 84b90b193
+            url: https://github.com/korczis/prismatic-majordomus/commit/84b90b193
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge of master
+            breaking: false
+            commit: 2aee5b1c1
+            url: https://github.com/korczis/prismatic-majordomus/commit/2aee5b1c1
+          - kind: chore
+            scope: derive
+            subject: the site data follows the tree
+            breaking: false
+            commit: 08caf51aa
+            url: https://github.com/korczis/prismatic-majordomus/commit/08caf51aa
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge of master
+            breaking: false
+            commit: 4cfd25574
+            url: https://github.com/korczis/prismatic-majordomus/commit/4cfd25574
+          - kind: chore
+            scope: derive
+            subject: the projections follow the second master merge
+            breaking: false
+            commit: e120f1996
+            url: https://github.com/korczis/prismatic-majordomus/commit/e120f1996
+          - kind: chore
+            scope: derive
+            subject: the projections follow the template repair
+            breaking: false
+            commit: 2511a3241
+            url: https://github.com/korczis/prismatic-majordomus/commit/2511a3241
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: f27d366d2
+            url: https://github.com/korczis/prismatic-majordomus/commit/f27d366d2
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge of master
+            breaking: false
+            commit: 6042f4286
+            url: https://github.com/korczis/prismatic-majordomus/commit/6042f4286
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: bb82e058d
+            url: https://github.com/korczis/prismatic-majordomus/commit/bb82e058d
+          - kind: chore
+            scope: derive
+            subject: the projections follow the last four merges
+            breaking: false
+            commit: 940b00262
+            url: https://github.com/korczis/prismatic-majordomus/commit/940b00262
+          - kind: chore
+            scope: release
+            subject: "0.5.0, and the projections that follow it"
+            breaking: false
+            commit: 4cd5cf6ac
+            url: https://github.com/korczis/prismatic-majordomus/commit/4cd5cf6ac
+          - kind: chore
+            scope: derive
+            subject: the projections follow the contrast capability
+            breaking: false
+            commit: 89b039165
+            url: https://github.com/korczis/prismatic-majordomus/commit/89b039165
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge of master
+            breaking: false
+            commit: 4e015631a
+            url: https://github.com/korczis/prismatic-majordomus/commit/4e015631a
+          - kind: chore
+            scope: derive
+            subject: the projections follow the registry entry and the claim documents
+            breaking: false
+            commit: a46012d3e
+            url: https://github.com/korczis/prismatic-majordomus/commit/a46012d3e
+          - kind: chore
+            scope: derive
+            subject: the projections follow the on-demand gates and ADR 0037
+            breaking: false
+            commit: 2a6ba6d8b
+            url: https://github.com/korczis/prismatic-majordomus/commit/2a6ba6d8b
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 3b3ac4313
+            url: https://github.com/korczis/prismatic-majordomus/commit/3b3ac4313
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 1ae462da0
+            url: https://github.com/korczis/prismatic-majordomus/commit/1ae462da0
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: "371e33659"
+            url: https://github.com/korczis/prismatic-majordomus/commit/371e33659
+          - kind: chore
+            scope: derive
+            subject: the projections follow the second master merge
+            breaking: false
+            commit: 47f87721c
+            url: https://github.com/korczis/prismatic-majordomus/commit/47f87721c
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 829e9ca5a
+            url: https://github.com/korczis/prismatic-majordomus/commit/829e9ca5a
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 8ea2cbe5a
+            url: https://github.com/korczis/prismatic-majordomus/commit/8ea2cbe5a
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 998eee46a
+            url: https://github.com/korczis/prismatic-majordomus/commit/998eee46a
+          - kind: chore
+            subject: "an empty commit, to prove a commit no longer owes a derive"
+            breaking: false
+            commit: e54def3af
+            url: https://github.com/korczis/prismatic-majordomus/commit/e54def3af
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: ec677b281
+            url: https://github.com/korczis/prismatic-majordomus/commit/ec677b281
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 04599afd2
+            url: https://github.com/korczis/prismatic-majordomus/commit/04599afd2
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: ea5592a9e
+            url: https://github.com/korczis/prismatic-majordomus/commit/ea5592a9e
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 789e95ab8
+            url: https://github.com/korczis/prismatic-majordomus/commit/789e95ab8
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the merge of #142"
+            breaking: false
+            commit: c1a3e7930
+            url: https://github.com/korczis/prismatic-majordomus/commit/c1a3e7930
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 08348b0c1
+            url: https://github.com/korczis/prismatic-majordomus/commit/08348b0c1
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the merge of #128"
+            breaking: false
+            commit: 7c3e9f9ac
+            url: https://github.com/korczis/prismatic-majordomus/commit/7c3e9f9ac
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: c4b6d0715
+            url: https://github.com/korczis/prismatic-majordomus/commit/c4b6d0715
+          - kind: chore
+            scope: derive
+            subject: the projections follow the target-directory fix
+            breaking: false
+            commit: 6be9c8080
+            url: https://github.com/korczis/prismatic-majordomus/commit/6be9c8080
+          - kind: chore
+            scope: derive
+            subject: the projections follow master once more
+            breaking: false
+            commit: f36420c30
+            url: https://github.com/korczis/prismatic-majordomus/commit/f36420c30
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 8c53e2b11
+            url: https://github.com/korczis/prismatic-majordomus/commit/8c53e2b11
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: a4f9780b0
+            url: https://github.com/korczis/prismatic-majordomus/commit/a4f9780b0
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 16cc159c7
+            url: https://github.com/korczis/prismatic-majordomus/commit/16cc159c7
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the merge, generated by a binary that knows every module"
+            breaking: false
+            commit: 0df29dbcf
+            url: https://github.com/korczis/prismatic-majordomus/commit/0df29dbcf
+          - kind: chore
+            scope: derive
+            subject: the projections follow eight branches and current master
+            breaking: false
+            commit: 98f3dfbda
+            url: https://github.com/korczis/prismatic-majordomus/commit/98f3dfbda
+          - kind: chore
+            scope: derive
+            subject: the projections follow six branches folded together
+            breaking: false
+            commit: e15b311e7
+            url: https://github.com/korczis/prismatic-majordomus/commit/e15b311e7
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: c114a92f3
+            url: https://github.com/korczis/prismatic-majordomus/commit/c114a92f3
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 341451cb7
+            url: https://github.com/korczis/prismatic-majordomus/commit/341451cb7
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 91b4e8be6
+            url: https://github.com/korczis/prismatic-majordomus/commit/91b4e8be6
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 3a2aeab52
+            url: https://github.com/korczis/prismatic-majordomus/commit/3a2aeab52
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: f2b018f26
+            url: https://github.com/korczis/prismatic-majordomus/commit/f2b018f26
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the two merges, and the baseline records lib/doctor.sh"
+            breaking: false
+            commit: 501ea2d41
+            url: https://github.com/korczis/prismatic-majordomus/commit/501ea2d41
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge of origin/master
+            breaking: false
+            commit: 11fc8bf2b
+            url: https://github.com/korczis/prismatic-majordomus/commit/11fc8bf2b
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the master merge, and the baseline records three scripts that arrived with it"
+            breaking: false
+            commit: 8ddb6496d
+            url: https://github.com/korczis/prismatic-majordomus/commit/8ddb6496d
+          - kind: chore
+            scope: derive
+            subject: the projections follow the final master merge
+            breaking: false
+            commit: cdc859654
+            url: https://github.com/korczis/prismatic-majordomus/commit/cdc859654
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 5e6d324c1
+            url: https://github.com/korczis/prismatic-majordomus/commit/5e6d324c1
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 0d45da189
+            url: https://github.com/korczis/prismatic-majordomus/commit/0d45da189
+          - kind: chore
+            scope: "adr,test"
+            subject: renumber to the identities the board actually left free
+            breaking: false
+            commit: 50f276bc3
+            url: https://github.com/korczis/prismatic-majordomus/commit/50f276bc3
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 21a1203cc
+            url: https://github.com/korczis/prismatic-majordomus/commit/21a1203cc
+          - kind: chore
+            scope: derive
+            subject: the projections follow the second master merge
+            breaking: false
+            commit: e94b760d1
+            url: https://github.com/korczis/prismatic-majordomus/commit/e94b760d1
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 5fe8f2ec8
+            url: https://github.com/korczis/prismatic-majordomus/commit/5fe8f2ec8
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: b79363681
+            url: https://github.com/korczis/prismatic-majordomus/commit/b79363681
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the master merge, with the ADR renumbered to 0030"
+            breaking: false
+            commit: f1c1b6556
+            url: https://github.com/korczis/prismatic-majordomus/commit/f1c1b6556
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge of the base branch
+            breaking: false
+            commit: e4c40b814
+            url: https://github.com/korczis/prismatic-majordomus/commit/e4c40b814
+          - kind: chore
+            scope: derive
+            subject: the projections follow the entry-point fixes
+            breaking: false
+            commit: 691fab7db
+            url: https://github.com/korczis/prismatic-majordomus/commit/691fab7db
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: 44468dbc1
+            url: https://github.com/korczis/prismatic-majordomus/commit/44468dbc1
+          - kind: chore
+            scope: order
+            subject: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are
+            breaking: false
+            commit: c72d294cc
+            url: https://github.com/korczis/prismatic-majordomus/commit/c72d294cc
+          - kind: chore
+            scope: derive
+            subject: the projections follow the two adopted sessions
+            breaking: false
+            commit: 4066bdf4f
+            url: https://github.com/korczis/prismatic-majordomus/commit/4066bdf4f
+          - kind: chore
+            scope: sessions
+            subject: adopt the two episodes this checkout left unrecorded
+            breaking: false
+            commit: 1015d8ff8
+            url: https://github.com/korczis/prismatic-majordomus/commit/1015d8ff8
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: ee9e79b3f
+            url: https://github.com/korczis/prismatic-majordomus/commit/ee9e79b3f
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the five-PR integration, with adr-0028 renumbered"
+            breaking: false
+            commit: 60bc499e4
+            url: https://github.com/korczis/prismatic-majordomus/commit/60bc499e4
+          - kind: chore
+            scope: derive
+            subject: the projections follow the skill description invariant
+            breaking: false
+            commit: 6d19fc7ba
+            url: https://github.com/korczis/prismatic-majordomus/commit/6d19fc7ba
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: d5d95779c
+            url: https://github.com/korczis/prismatic-majordomus/commit/d5d95779c
+          - kind: chore
+            scope: derive
+            subject: the projections follow ADR 0025
+            breaking: false
+            commit: a3a267e8e
+            url: https://github.com/korczis/prismatic-majordomus/commit/a3a267e8e
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the merge of #114"
+            breaking: false
+            commit: 867f3a9f8
+            url: https://github.com/korczis/prismatic-majordomus/commit/867f3a9f8
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: 946bc36e0
+            url: https://github.com/korczis/prismatic-majordomus/commit/946bc36e0
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: 09d410b5a
+            url: https://github.com/korczis/prismatic-majordomus/commit/09d410b5a
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merges
+            breaking: false
+            commit: ebec65fd1
+            url: https://github.com/korczis/prismatic-majordomus/commit/ebec65fd1
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merges
+            breaking: false
+            commit: 3bdc000ac
+            url: https://github.com/korczis/prismatic-majordomus/commit/3bdc000ac
+          - kind: chore
+            scope: sessions
+            subject: adopt the record the hook wrote on 2026-09-08
+            breaking: false
+            commit: 86b63f649
+            url: https://github.com/korczis/prismatic-majordomus/commit/86b63f649
+          - kind: chore
+            scope: derive
+            subject: the registry follows lib/context_docs.sh
+            breaking: false
+            commit: f3880a89a
+            url: https://github.com/korczis/prismatic-majordomus/commit/f3880a89a
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: 914c13f56
+            url: https://github.com/korczis/prismatic-majordomus/commit/914c13f56
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: 004af3b53
+            url: https://github.com/korczis/prismatic-majordomus/commit/004af3b53
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merges
+            breaking: false
+            commit: e47531a4e
+            url: https://github.com/korczis/prismatic-majordomus/commit/e47531a4e
+          - kind: chore
+            scope: derive
+            subject: the projections follow the rebase onto cdd7f1cd
+            breaking: false
+            commit: 41beeb077
+            url: https://github.com/korczis/prismatic-majordomus/commit/41beeb077
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: 6b21a9e85
+            url: https://github.com/korczis/prismatic-majordomus/commit/6b21a9e85
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merges
+            breaking: false
+            commit: 19fa9d1f1
+            url: https://github.com/korczis/prismatic-majordomus/commit/19fa9d1f1
+          - kind: chore
+            scope: derive
+            subject: the artifact manifest records the fingerprint the last commit made
+            breaking: false
+            commit: a1b0d2637
+            url: https://github.com/korczis/prismatic-majordomus/commit/a1b0d2637
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: cdd7f1cd9
+            url: https://github.com/korczis/prismatic-majordomus/commit/cdd7f1cd9
+          - kind: chore
+            scope: derive
+            subject: the projections follow the second rebase
+            breaking: false
+            commit: c217f2359
+            url: https://github.com/korczis/prismatic-majordomus/commit/c217f2359
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: 4cda9f9f2
+            url: https://github.com/korczis/prismatic-majordomus/commit/4cda9f9f2
+          - kind: chore
+            scope: derive
+            subject: the projections follow the rebase
+            breaking: false
+            commit: 2c077cfad
+            url: https://github.com/korczis/prismatic-majordomus/commit/2c077cfad
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: 9ee7c2952
+            url: https://github.com/korczis/prismatic-majordomus/commit/9ee7c2952
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: bebf76f03
+            url: https://github.com/korczis/prismatic-majordomus/commit/bebf76f03
+          - kind: chore
+            scope: release
+            subject: record v0.3.1 and the metadata it publishes
+            breaking: false
+            commit: c2629a26c
+            url: https://github.com/korczis/prismatic-majordomus/commit/c2629a26c
+          - kind: chore
+            scope: product
+            subject: "follow master to 1fd5e32e, and take the sharper form of the moment count"
+            breaking: false
+            commit: 04bbeb483
+            url: https://github.com/korczis/prismatic-majordomus/commit/04bbeb483
+          - kind: chore
+            scope: derive
+            subject: the projections follow the moment-count correction
+            breaking: false
+            commit: 015d21dda
+            url: https://github.com/korczis/prismatic-majordomus/commit/015d21dda
+          - kind: chore
+            scope: derive
+            subject: the projections follow the two check corrections
+            breaking: false
+            commit: 6cda9bcc2
+            url: https://github.com/korczis/prismatic-majordomus/commit/6cda9bcc2
+          - kind: chore
+            scope: derive
+            subject: the use-case evidence re-recorded at normal speed
+            breaking: false
+            commit: 3c5705d1e
+            url: https://github.com/korczis/prismatic-majordomus/commit/3c5705d1e
+          - kind: chore
+            scope: derive
+            subject: the projections follow
+            breaking: false
+            commit: 99ead0772
+            url: https://github.com/korczis/prismatic-majordomus/commit/99ead0772
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: c85c2cb0b
+            url: https://github.com/korczis/prismatic-majordomus/commit/c85c2cb0b
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: 8bafa2854
+            url: https://github.com/korczis/prismatic-majordomus/commit/8bafa2854
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: e25278a71
+            url: https://github.com/korczis/prismatic-majordomus/commit/e25278a71
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: 2365af0cf
+            url: https://github.com/korczis/prismatic-majordomus/commit/2365af0cf
+          - kind: chore
+            scope: plan
+            subject: "I1005 done, with the evidence the contract asked for"
+            breaking: false
+            commit: 27662495a
+            url: https://github.com/korczis/prismatic-majordomus/commit/27662495a
+            references:
+              - kind: issue
+                id: I1005
+                title: The graph is a generated artifact with a schema and no unsafe field
+                route: /plan/i1005/
+      - kind: other
+        heading: Other
+        rank: 8
+        changes:
+          - kind: other
+            subject: "wip: milestone, issue and the CI.md section before the master merge"
+            breaking: false
+            commit: 7143d199e
+            url: https://github.com/korczis/prismatic-majordomus/commit/7143d199e
+          - kind: other
+            subject: Merge origin/master into feature/github-work-graph
+            breaking: false
+            commit: 6b5c2eb45
+            url: https://github.com/korczis/prismatic-majordomus/commit/6b5c2eb45
+          - kind: other
+            subject: "Merge feature/github-work-graph into int/everything, with I1305 restored to its own milestone"
+            breaking: false
+            commit: d52f43334
+            url: https://github.com/korczis/prismatic-majordomus/commit/d52f43334
+            references:
+              - kind: issue
+                id: I1305
+                title: "An observed contract has a fingerprint, a compatibility state and a fixture"
+                route: /plan/i1305/
+              - kind: issue
+                id: I1401
+                title: "The identity of a projected record is what the record carries, not what its title says"
+                route: /plan/i1401/
+              - kind: issue
+                id: I1408
+                title: The documents stop claiming a projection nobody runs
+                route: /plan/i1408/
+              - kind: issue
+                id: I1301
+                title: A workspace is a declared object of the layer; only its content is local
+                route: /plan/i1301/
+              - kind: issue
+                id: I1308
+                title: "The executable's share is one capability, shaped like continuity"
+                route: /plan/i1308/
+              - kind: issue
+                id: I1304
+                title: The browser transport is the one this repository already drives
+                route: /plan/i1304/
+              - kind: issue
+                id: I1405
+                title: "A pull request names the issue it realises, and the edge is derived rather than remembered"
+                route: /plan/i1405/
+          - kind: other
+            scope: feature/graph-model
+            subject: "wip: uncommitted work found in the worktree at the topology migration, committed as it was"
+            breaking: false
+            commit: 034f334bf
+            url: https://github.com/korczis/prismatic-majordomus/commit/034f334bf
+          - kind: other
+            scope: feature/deployment-core
+            subject: "wip: uncommitted work found in the worktree at the topology migration, committed as it was"
+            breaking: false
+            commit: 6579f1978
+            url: https://github.com/korczis/prismatic-majordomus/commit/6579f1978
+          - kind: other
+            scope: chore/derive-master
+            subject: "wip: uncommitted work found in the worktree at the topology migration, committed as it was"
+            breaking: false
+            commit: 1410a0c79
+            url: https://github.com/korczis/prismatic-majordomus/commit/1410a0c79
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v0.5.0-aarch64-apple-darwin.tar.gz
+        sha256: cadb5ed2a7a61759cb279dfc29bd39594f5791472e551103bf18bf28b6e33f58
+      - target: macos-x86_64
+        name: majordomus-v0.5.0-x86_64-apple-darwin.tar.gz
+        sha256: f04ce1b034bd5d5248d0e19051e955553769e72517e05f62309e4f322c3676d3
+      - target: linux-x86_64-gnu
+        name: majordomus-v0.5.0-x86_64-unknown-linux-gnu.tar.gz
+        sha256: 1180951cf5bb97c9ac07b60a673364dd8c712dcc60ae45728580212c6eb656b7
+      - target: linux-x86_64-musl
+        name: majordomus-v0.5.0-x86_64-unknown-linux-musl.tar.gz
+        sha256: 420407cc6a47b05b4e0a85735ef8346538378c0680ede455b38ba034f66bc92f
+      - target: linux-aarch64-gnu
+        name: majordomus-v0.5.0-aarch64-unknown-linux-gnu.tar.gz
+        sha256: 2d2465e1ea348514a7b071529af69ccff015939efc587ef3759ea8bef250defa
+      - target: linux-aarch64-musl
+        name: majordomus-v0.5.0-aarch64-unknown-linux-musl.tar.gz
+        sha256: 1cbc4d05e0863012187220257f433061f643e64ad71a46ffcfaf08d62b429fef
   - version: "0.3.1"
     tag: v0.3.1
     date: "2026-09-08T07:10:37Z"

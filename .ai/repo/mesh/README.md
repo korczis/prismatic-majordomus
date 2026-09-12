@@ -25,10 +25,10 @@ from it; nothing else interprets it, and no environment variable overrides it.
 The default posture of the repository — nothing leaves the machine — is preserved by
 absence: no object here, or `enabled: false`, and not one socket opens. Committing an
 enabled object is the operator's explicit, reviewed decision, exactly as a deployment
-object is for binding beyond loopback (ADR 0043).
+object is for binding beyond loopback (ADR 0048).
 
 The schema is `mesh/v1` (`share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json`);
 the kind `mesh-declaration` is declared in `share/kinds.yaml`; the invariants are
 `project.mesh-is-observation-not-authority`; the architecture is `docs/MESH.md` and ADR
-0043. Trust `allow` entries are Ed25519 *public* keys — nothing secret belongs in this
+0048. Trust `allow` entries are Ed25519 *public* keys — nothing secret belongs in this
 directory, and the node's signing key never leaves the machine it was created on.

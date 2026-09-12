@@ -58,7 +58,23 @@ site/content/docs/**                merge=derived
 # this file exists — the merged tree's answer appears in neither side.
 # Only the projected schemas: the `.proto` beside each one is a hand-written source, and
 # merging two edits of a source is exactly what git should do with it.
-share/schemas/**/*.schema.json      merge=derived
+# Only the schemas `majordomus generate` actually writes, named one by one. The glob that
+# used to stand here — share/schemas/**/*.schema.json — covered all of them, and generate
+# writes nine of forty-five: the other thirty-six are hand-authored, and the driver resolved
+# each merge by taking one whole generation and discarding the other side in silence. It ate
+# the policy schema twice in one evening; the second time the merged tree refused to serve.
+# The authority is docs/generated/artifacts.json. When generate gains or loses a schema this
+# list must follow it:
+#   grep -o '"share/schemas/[^"]*schema.json"' docs/generated/artifacts.json | tr -d '"' | sort -u
+share/schemas/majordomus/adr/adr.v1.schema.json      merge=derived
+share/schemas/majordomus/application/application.v1.schema.json      merge=derived
+share/schemas/majordomus/capture/capture.v1.schema.json      merge=derived
+share/schemas/majordomus/context/context.v1.schema.json      merge=derived
+share/schemas/majordomus/knowledge/knowledge.v1.schema.json      merge=derived
+share/schemas/majordomus/prompt/prompt.v1.schema.json      merge=derived
+share/schemas/majordomus/rule/rule.v1.schema.json      merge=derived
+share/schemas/majordomus/skill/skill.v1.schema.json      merge=derived
+share/schemas/majordomus/use-case/use-case.v1.schema.json      merge=derived
 share/allow/**                      merge=derived
 share/sections/**                   merge=derived
 
@@ -85,3 +101,40 @@ site/static/releases/**             merge=derived
 fly.toml                            merge=derived
 deploy/Dockerfile                   merge=derived
 .dockerignore                       merge=derived
+
+# Every section under site/content that scripts/generate-site-data deletes and rewrites on
+# each run (its `rm -rf "$CONTENT_ROOT/..."` lines are the authoritative list). Thirteen of
+# these fourteen were never declared, so every integration conflicted over content that no
+# branch owns and that the generator replaces wholesale — the single largest mechanical
+# cause of the pull-request backlog measured on 2026-09-11 (docs/BACKLOG.md).
+# scripts/ci/backlog-check derives the list from the generator and refuses a new omission.
+site/content/applications/**        merge=derived
+site/content/commands/**            merge=derived
+site/content/context/**             merge=derived
+site/content/doctrines/**           merge=derived
+site/content/features/**            merge=derived
+site/content/guarantees/**          merge=derived
+site/content/plan/**                merge=derived
+site/content/profiles/**            merge=derived
+site/content/sessions/**            merge=derived
+site/content/skills/**              merge=derived
+site/content/supervises/**          merge=derived
+site/content/use-cases/**           merge=derived
+site/content/why/**                 merge=derived
+
+# The design system's projections. Every one of these is generated from a canonical source
+# that is deliberately NOT listed here — share/design/tokens.yaml and share/design/brand/*
+# are edited by hand and must keep conflicting honestly. These are the copies the generator
+# writes into the crate, the shared assets and the site, and docs/generated/artifacts.json
+# names each with its source. test/cases/57_derived_merge_driver.sh has been failing on
+# master over exactly these ten paths.
+apps/majordomus-cli/src/cockpit/logo-mark.svg   merge=derived
+apps/majordomus-cli/src/design/tokens.yaml      merge=derived
+apps/majordomus-cli/src/web/tokens.css          merge=derived
+share/cockpit/favicon.svg                       merge=derived
+share/design/status.css                         merge=derived
+share/design/surface.css                        merge=derived
+share/design/theme.css                          merge=derived
+site/static/favicon.svg                         merge=derived
+site/static/images/logo-mark.svg                merge=derived
+site/static/images/logo.svg                     merge=derived

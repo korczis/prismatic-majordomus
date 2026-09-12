@@ -1,0 +1,34 @@
+id: I1512
+milestone: development-runtime
+title: Gate state is something the runtime can answer
+slug: ci-status-is-a-capability
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Give the runtime a capability that answers what the repository's gates are and how the last run of each one went, so that CI status stops being the one observability subject with no reader on any surface."
+why: "The gap matrix records CI status as absent, and it is absent in a specific and avoidable way: the gates and their plan are canonical — .ai/repo/ci/gates.yaml declares them and scripts/ci-plan --check holds the workflow to them — and nothing reads run state on any surface. Quality gates are recorded as canonical, implemented and verified and yet carry the note that there is no capability and no view of gate state. This repository has repeatedly mistaken a gate that never reported for a gate that passed; master carried three branch-breaking defects it never reported, and no required check exists at the merge, so a verdict that never arrives is the normal case rather than the exception. A surface that shows gate state is how that becomes visible."
+current_state: "Gates are declared and planned. Their run state is read by a person on GitHub and by nothing in this repository. No capability, no route, no page."
+desired_state: "The runtime answers the gate set and the standing of each gate's last run, including the case where no run has reported, which is the case that matters most and the one an absent reader hides."
+scope:
+  - apps/majordomus-cli/src/capability/builtin
+  - scripts/ci
+  - docs/COCKPIT.md
+  - test/cases
+non_scope:
+  - Editing .ai/repo/ci/gates.yaml or docs/CI.md. The gate declaration is canonical and this issue reads it.
+  - Running gates from the runtime. Reading state is not executing it.
+  - A GitHub token requirement for the local read. A capability that cannot answer offline must say so rather than fail.
+depends_on: []
+acceptance_criteria:
+  - A capability answers the declared gate set and the last known standing of each
+  - A gate that has never reported is distinguished from a gate that passed
+  - The capability answers without network access, saying what it could not reach
+validation:
+  - bin/majordomus-cli capabilities validate
+  - bash test/run.sh
+evidence_required:
+  - gate_state_is_answerable
+  - never_reported_is_distinct_from_passed
+risk: "Medium. The failure to avoid is a reader that renders a missing verdict as a green one; this repository has already paid for that mistake twice."
+created_at: 2026-09-11
+updated_at: 2026-09-11

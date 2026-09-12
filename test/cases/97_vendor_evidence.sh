@@ -54,7 +54,7 @@ PKG="$T/dist-packaged"; stage_dist "$PKG"; stamp_release "$PKG"
 SRC="$T/dist-source";   stage_dist "$SRC"          # identical but for the stamp
 
 # ---------------------------------------------------------------- packaged: not read, said so
-cd "$T"
+cd "$T" || exit 1
 expect_exit 0 env -u MAJORDOMUS_SHARE "$PKG/bin/majordomus" init || exit 1
 expect_exit 0 env -u MAJORDOMUS_SHARE "$PKG/bin/majordomus" update || exit 1
 
@@ -98,7 +98,7 @@ expect_grep 'doctrine +[0-9]+ doctrines' "$T/packaged.txt" || {
 # there the evidence is read. This one has no test/ and no docs/CLAIMS.yaml, so it must
 # fail, loudly, over exactly the paths the packaged run stayed quiet about. This assertion
 # is what a lazy "skip when the path is missing" implementation would break.
-rm -rf "$T/repo2"; mkdir -p "$T/repo2"; cd "$T/repo2"
+rm -rf "$T/repo2"; mkdir -p "$T/repo2"; cd "$T/repo2" || exit 1
 git init -q . && git config user.email t@example.com && git config user.name t
 git commit -q --allow-empty -m init
 expect_exit 0 env -u MAJORDOMUS_SHARE "$SRC/bin/majordomus" init || exit 1
@@ -132,7 +132,7 @@ expect_no_grep 'test test/cases/.* does not exist' "$T/source-stamped.txt" || {
 # ---------------------------------------------------------------- the sibling command
 # `doctrine status` counted the same evidence and exited 10 in every adopting repository for
 # the same reason. It reads the count from MJ_HOME exactly as the validator did.
-cd "$T"
+cd "$T" || exit 1
 expect_exit 0 env -u MAJORDOMUS_SHARE "$PKG/bin/majordomus" doctrine status || {
   echo "    doctrine status still refuses an adopting repository over the vendor's test cases"
   exit 1

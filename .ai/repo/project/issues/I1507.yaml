@@ -1,0 +1,35 @@
+id: I1507
+milestone: development-runtime
+title: Issues, milestones, sessions and peers reach the Cockpit as projections
+slug: phase-e-development-pages
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Give the Cockpit the development areas it has none of — issues, milestones, sessions, peers and the current task — each one rendering what a capability answered and computing nothing of its own."
+why: "Phase E of the audit's plan, and it is deliberately last. The gap matrix records issues and milestones as having no Cockpit page at all, and peers as reachable only through the generic runner despite peers.list and peers.announce both existing and both being covered by tests. Two capabilities landed after the audit's base that change the shape of this work: devtask.issue and devtask.milestone answer an issue and a milestone as work — readiness, waves, blockers, the parallel subsets, every value carrying whether a person authored it or a machine derived it — as a pure function of the canonical records, explicitly so that a work surface reading it derives nothing itself. That is the page's data source, already built. What must not happen is a page that computes a status: that is the defect the whole audit exists to prevent."
+current_state: "No Cockpit page for issues, milestones, sessions or the current task. Peers have no area. devtask.issue and devtask.milestone are exposed on CLI, MCP and HTTP and on no page."
+desired_state: "Each area is a page that renders a capability's answer. A status shown on a page came from devtask or plan, and the page contains no rule for deriving one."
+scope:
+  - apps/majordomus-cli/src/cockpit
+  - share/cockpit
+  - docs/COCKPIT.md
+  - test/cases
+non_scope:
+  - Any write path invented for a page. A page may only offer a transition that exists as a capability, through the mechanism the Cockpit already has.
+  - A second readiness vocabulary. devtask's refines the canonical statuses; a page must not add a third.
+depends_on:
+  - I1505
+  - I1506
+acceptance_criteria:
+  - Each new area renders from a capability's answer with no status derived in the page or in the browser
+  - Every new page appears in the navigation and is reached by the probe
+  - A page shows everything it knows before any JavaScript loads
+validation:
+  - bash test/run.sh
+  - bin/majordomus-cli web
+evidence_required:
+  - pages_are_projections
+  - pages_are_navigable
+risk: "Medium. The tempting shortcut — a small status calculation in a template or in a browser module — is exactly the drift class the drift audit catalogued, including a browser module that already decides execution finality on its own."
+created_at: 2026-09-11
+updated_at: 2026-09-11

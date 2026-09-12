@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [derived]
+
+x-majordomus:
+  tests: [test/cases/56_derived_current_gate.sh, scripts/derive-check, test/cases/51_derived_artifacts_committed.sh, test/cases/95_executable_reference.sh]
 ---
 
 # Rationale

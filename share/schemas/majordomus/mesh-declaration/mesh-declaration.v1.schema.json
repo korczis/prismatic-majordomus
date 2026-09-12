@@ -3,7 +3,7 @@
   "$id": "https://majordomus.dev/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
   "x-majordomus-schema": "majordomus.mesh-declaration/v1",
   "title": "Mesh",
-  "description": "The mesh declaration of a repository, under .ai/repo/mesh/: whether this repository's shared servers participate in discovery of other running Majordomus instances, over which transports (multicast, broadcast fallback, rendezvous endpoints), and whom they trust. Absent, or enabled: false, means no discovery socket opens anywhere this repository's servers run — the default posture is that nothing leaves the machine, and this object is the one place a person changes that (ADR 0043). Trust allow entries are Ed25519 public keys; nothing secret belongs here.",
+  "description": "The mesh declaration of a repository, under .ai/repo/mesh/: whether this repository's shared servers participate in discovery of other running Majordomus instances, over which transports (multicast, broadcast fallback, rendezvous endpoints), and whom they trust. Absent, or enabled: false, means no discovery socket opens anywhere this repository's servers run — the default posture is that nothing leaves the machine, and this object is the one place a person changes that (ADR 0048). Trust allow entries are Ed25519 public keys; nothing secret belongs here.",
   "x-majordomus-allow": "mesh-declaration",
   "type": "object",
   "additionalProperties": false,

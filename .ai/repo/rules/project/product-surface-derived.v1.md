@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.derived-files-regenerated@1, project.no-counts-in-prose@1]
 tags: [product, site, projections, documentation]
+
+x-majordomus:
+  tests: [scripts/derive-check, scripts/site-check, test/cases/97_product_features.sh]
 ---
 
 # Rationale
