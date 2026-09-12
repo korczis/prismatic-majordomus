@@ -8,6 +8,11 @@
 #                                         export instead of running the suite again
 #   scripts/rust-coverage --export FILE   also keep the raw export at FILE
 #   scripts/rust-coverage --domain        report the canonical session/continuity domain only
+#   scripts/rust-coverage --changed BASE  the differential gate (#214): every executable line,
+#                                         function and region the working tree changed against
+#                                         BASE must be covered. Exit 0 clean, 10 on an
+#                                         uncovered changed item, 13 when git cannot resolve
+#                                         BASE (UNKNOWN — never a silent pass).
 #
 # WHY THIS EXISTS.
 #
@@ -49,7 +54,7 @@
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
-MODE=gate FROM="" EXPORT="" ONLY=""
+MODE=gate FROM="" EXPORT="" ONLY="" CHANGED=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --report) MODE=report; shift ;;
@@ -58,12 +63,39 @@ while [ $# -gt 0 ]; do
     --export) EXPORT="$2"; shift 2 ;;
     --export=*) EXPORT="${1#--export=}"; shift ;;
     --domain) ONLY=domain; shift ;;
+    --changed) MODE=changed; CHANGED="$2"; shift 2 ;;
+    --changed=*) MODE=changed; CHANGED="${1#--changed=}"; shift ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "rust-coverage: unknown option $1" >&2; exit 2 ;;
   esac
 done
 
 command -v python3 >/dev/null 2>&1 || { echo "rust-coverage: python3 is needed to read the export" >&2; exit 12; }
+
+# In --changed mode, the diff is git's to compute, not python's: which crate source lines a
+# change added or touched against BASE, working tree included so an uncommitted change is
+# held to the same rule as a committed one. The unified diff's new-side hunk headers
+# (`@@ -a,b +c,d @@`) give the added/changed line numbers per file; a base that git cannot
+# name is a diff nothing can compute, which is UNKNOWN rather than a silent pass (exit 13).
+CHANGED_FILE=""
+if [ "$MODE" = changed ]; then
+  command -v git >/dev/null 2>&1 || { echo "rust-coverage: git is needed for --changed" >&2; exit 13; }
+  git -C "$ROOT" rev-parse --verify --quiet "$CHANGED^{commit}" >/dev/null 2>&1 || {
+    echo "rust-coverage: --changed base '$CHANGED' is not a commit git can resolve" >&2; exit 13; }
+  CHANGED_FILE="$(mktemp "${TMPDIR:-/tmp}/mj-cov-changed.XXXXXX")"
+  # Only crate source files; a rename or a deletion carries no new-side lines to cover.
+  git -C "$ROOT" diff --no-color --unified=0 --diff-filter=d "$CHANGED" -- 'apps/majordomus-cli/src/*.rs' \
+    | awk '
+        /^\+\+\+ b\// { file = substr($0, 7); next }
+        /^@@ / {
+          # @@ -a,b +c,d @@  — c is the new-side start, d the count (1 when absent)
+          plus = $3; sub(/^\+/, "", plus)
+          n = split(plus, cd, ",")
+          start = cd[1] + 0; count = (n > 1 ? cd[2] + 0 : 1)
+          for (i = 0; i < count; i++) print file "\t" (start + i)
+        }
+      ' > "$CHANGED_FILE"
+fi
 
 if [ -z "$FROM" ]; then
   command -v cargo >/dev/null 2>&1 || { echo "rust-coverage: cargo is not installed" >&2; exit 12; }
@@ -77,10 +109,14 @@ if [ -z "$FROM" ]; then
 fi
 [ -z "$EXPORT" ] || cp "$FROM" "$EXPORT"
 
-CRATE="$CRATE" ROOT="$ROOT" ONLY="$ONLY" MODE="$MODE" python3 - "$FROM" <<'PY'
+status=0
+CRATE="$CRATE" ROOT="$ROOT" ONLY="$ONLY" MODE="$MODE" CHANGED_FILE="$CHANGED_FILE" CHANGED_BASE="$CHANGED" python3 - "$FROM" <<'PY' || status=$?
 import json, os, re, sys
 
-root = os.environ["ROOT"]
+# normpath so a root or an export filename carrying a doubled slash (a $TMPDIR ending in
+# `/`, a symlinked checkout) still compares equal — `startswith` is exact, and a path that
+# is the same directory spelled two ways would otherwise drop every file out of the report.
+root = os.path.normpath(os.environ["ROOT"])
 only = os.environ["ONLY"]
 mode = os.environ["MODE"]
 
@@ -230,7 +266,7 @@ def tally(rel):
     return files.setdefault(rel, Tally())
 
 for f in export.get("files", []):
-    ab = f["filename"]
+    ab = os.path.normpath(f["filename"])
     if not ab.startswith(root):
         continue
     rel = os.path.relpath(ab, root)
@@ -249,7 +285,7 @@ for f in export.get("files", []):
 
 regions, functions = {}, {}
 for fn in export.get("functions", []):
-    names = fn.get("filenames", [])
+    names = [os.path.normpath(n) for n in fn.get("filenames", [])]
     if not names:
         continue
     home = names[0]
@@ -283,6 +319,83 @@ def fold(pairs, all_attr, kept_attr):
 
 fold(regions, "regions_all", "regions")
 fold(functions, "functions_all", "functions")
+
+# ------------------------------------------------------------------ differential mode
+#
+# The changed-code gate of #214: every executable line, function and region a change added
+# or touched must be covered. The measurement is the same export and the same test-exclusion
+# as the crate gate — coverage judgment exists once (there is no second threshold, no second
+# parser) — intersected with the lines git says the change touched. What legacy debt sits on
+# untouched lines is not this gate's business; what a change introduces is.
+#
+# A line/function/region is *held* when it is executable (llvm-cov mapped it and it is not
+# test code) and its source position is among the changed lines. It *fails* when held and its
+# count is zero. A changed line that maps to nothing executable — a comment, a blank, a type
+# declaration, a `use` — is not a finding: there is nothing there to run. So a diff of pure
+# documentation or of test code produces no findings and passes, which is correct.
+if mode == "changed":
+    changed = {}  # rel -> set(line numbers the diff touched)
+    cf = os.environ.get("CHANGED_FILE", "")
+    if cf and os.path.exists(cf):
+        for entry in read(cf):
+            entry = entry.strip()
+            if not entry or "\t" not in entry:
+                continue
+            rel, num = entry.rsplit("\t", 1)
+            try:
+                changed.setdefault(rel, set()).add(int(num))
+            except ValueError:
+                pass
+
+    findings = []  # (rel, line, kind)
+
+    def hold(ab, l1, count, kind):
+        rel = os.path.relpath(ab, root)
+        if rel not in changed or l1 not in changed[rel]:
+            return
+        if whole_file_is_test(rel) or l1 in skip_for(ab, rel):
+            return
+        if not count:
+            findings.append((rel, l1, kind))
+
+    # lines: re-walk each mapped file, since the per-line counts are not kept in the tally
+    for f in export.get("files", []):
+        ab = os.path.normpath(f["filename"])
+        if not ab.startswith(root):
+            continue
+        rel = os.path.relpath(ab, root)
+        if rel not in changed or whole_file_is_test(rel):
+            continue
+        skip = skip_for(ab, rel)
+        for line, count in lines_of(f).items():
+            if line in changed[rel] and line not in skip and not count:
+                findings.append((rel, line, "line"))
+    for key, count in functions.items():
+        hold(key[0], key[1], count, "function")
+    for key, count in regions.items():
+        hold(key[0], key[1], count, "region")
+
+    changed_files = sorted(changed)
+    n_changed_lines = sum(len(v) for v in changed.values())
+    base = os.environ.get("CHANGED_BASE", "?")
+    if not changed_files:
+        print("rust-coverage --changed %s: no changed crate source lines; nothing to hold" % base)
+        sys.exit(0)
+    findings.sort(key=lambda x: (x[0], x[1], x[2]))
+    print("rust-coverage --changed %s: %d changed line(s) across %d file(s)"
+          % (base, n_changed_lines, len(changed_files)))
+    if not findings:
+        print("PASS: every changed executable line, function and region is covered")
+        sys.exit(0)
+    seen = set()
+    for rel, line, kind in findings:
+        if (rel, line, kind) in seen:
+            continue
+        seen.add((rel, line, kind))
+        print("FAIL %s:%d changed %s is not covered by any test" % (rel, line, kind))
+    print("rust-coverage --changed: %d uncovered changed item(s); new code owes complete "
+          "coverage (project.new-code-is-covered)" % len(seen))
+    sys.exit(10)
 
 def pct(pair):
     return 100.0 if pair[1] == 0 else 100.0 * pair[0] / pair[1]
@@ -349,3 +462,5 @@ if mode == "gate":
                 rc = 10
 sys.exit(rc)
 PY
+[ -n "$CHANGED_FILE" ] && rm -f "$CHANGED_FILE"
+exit $status

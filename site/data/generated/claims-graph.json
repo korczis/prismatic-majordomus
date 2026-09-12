@@ -1536,6 +1536,15 @@
       "note": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential."
     },
     {
+      "id": "claim:new-code-is-covered",
+      "kind": "claim",
+      "label": "Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone",
+      "status": "guaranteed",
+      "route": "/guarantees/new-code-is-covered/",
+      "external": false,
+      "note": "scripts/ci/coverage-differential intersects the one canonical llvm-cov export (test code excluded) with the lines git says the change touched against the branch's merge-base with the trunk, working tree included, and exits 10 on the first changed executable item no test covers. The rule is project.new-code-is-covered; case 132 plants a deliberately uncovered changed line, proves the gate fails, then covers it and proves the gate passes, and proves an unresolvable base is UNKNOWN rather than a silent pass."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -2257,6 +2266,13 @@
       "external": false
     },
     {
+      "id": "source:docs/COVERAGE.md",
+      "kind": "source",
+      "label": "docs/COVERAGE.md",
+      "route": "/docs/coverage/",
+      "external": false
+    },
+    {
       "id": "source:docs/DESIGN.md",
       "kind": "source",
       "label": "docs/DESIGN.md",
@@ -2584,6 +2600,13 @@
       "label": "test/cases/131_models.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/131_models.sh"
+    },
+    {
+      "id": "test:test/cases/132_coverage_differential.sh",
+      "kind": "test",
+      "label": "test/cases/132_coverage_differential.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/132_coverage_differential.sh"
     },
     {
       "id": "test:test/cases/133_rule_graph.sh",
@@ -3874,6 +3897,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:new-code-is-covered",
+      "target": "source:docs/COVERAGE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -4674,6 +4702,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:new-code-is-covered",
+      "target": "impl:scripts/rust-coverage",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -5471,6 +5504,11 @@
     {
       "source": "claim:models-no-secret-fields",
       "target": "test:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:new-code-is-covered",
+      "target": "test:test/cases/132_coverage_differential.sh",
       "kind": "proved_by"
     }
   ]
