@@ -46,26 +46,19 @@ The pack speaks its own language. This repository already has words for most of 
 
 ## The path from entry to cooperation, as it is
 
-```text
-cd <repo>                       direnv → .envrc → bin/majordomus-env → `majordomus env export --banner --bridge`
-                                exports MAJORDOMUS_ROOT/SHARE/COMPLETION_BIN, and MAJORDOMUS_URL only if a lease exists
-                                one TCP connect to the lease's address, no HTTP, no version, no identity
-                                never builds, never starts anything                         .envrc:33, src/environment/shell.rs:116-130
-        ↓
-agent starts                    Claude Code fires SessionStart → .claude/hooks/majordomus-session-start
-                                → `majordomus capture session --event start` → `session start --if-open keep`
-                                → briefing on stdout (episode, task, blockers, handover Next Action)
-                                no peer board, no server, no announce                       lib/capture.sh:797-816
-        ↓
-MCP client attaches             .mcp.json → bin/majordomus-mcp → `majordomus mcp` → lease::elect
-                                first process serves (lease + loopback HTTP), later ones bridge
-                                the only thing that starts the server                       src/commands/mcp.rs:135, src/lease.rs:89
-        ↓
-peer on the board               attach on initialize, named `p<n>`; announce is a tool call the model may or may not make
-                                in memory, gone with the process                             src/peers.rs:268, :315
-        ↓
-context loaded                  `majordomus context` when somebody runs it; the briefing carried the handover already
-```
+<pre class="mermaid">
+flowchart TD
+  cd["cd &amp;lt;repo&amp;gt;&lt;br&gt;direnv → .envrc → bin/majordomus-env&lt;br&gt;→ majordomus env export --banner --bridge&lt;br&gt;exports MAJORDOMUS_ROOT/SHARE/COMPLETION_BIN,&lt;br&gt;and MAJORDOMUS_URL only if a lease exists&lt;br&gt;one TCP connect to the lease's address,&lt;br&gt;no HTTP, no version, no identity&lt;br&gt;never builds, never starts anything&lt;br&gt;.envrc:33, src/environment/shell.rs:116-130"]
+  agent["agent starts&lt;br&gt;Claude Code fires SessionStart&lt;br&gt;→ .claude/hooks/majordomus-session-start&lt;br&gt;→ majordomus capture session --event start&lt;br&gt;→ session start --if-open keep&lt;br&gt;→ briefing on stdout (episode, task,&lt;br&gt;blockers, handover Next Action)&lt;br&gt;no peer board, no server, no announce&lt;br&gt;lib/capture.sh:797-816"]
+  mcp["MCP client attaches&lt;br&gt;.mcp.json → bin/majordomus-mcp&lt;br&gt;→ majordomus mcp → lease::elect&lt;br&gt;first process serves (lease + loopback HTTP),&lt;br&gt;later ones bridge&lt;br&gt;the only thing that starts the server&lt;br&gt;src/commands/mcp.rs:135, src/lease.rs:89"]
+  peer["peer on the board&lt;br&gt;attach on initialize, named p&amp;lt;n&amp;gt;;&lt;br&gt;announce is a tool call the model&lt;br&gt;may or may not make&lt;br&gt;in memory, gone with the process&lt;br&gt;src/peers.rs:268, :315"]
+  context["context loaded&lt;br&gt;majordomus context when somebody runs it;&lt;br&gt;the briefing carried the handover already"]
+  cd --&gt; agent
+  agent --&gt; mcp
+  mcp --&gt; peer
+  peer --&gt; context
+</pre>
+
 
 What is genuinely automatic today: the executable is built by the first launcher that needs
 it (`bin/majordomus-cli:36-56`); the first MCP client starts the server and every later one
@@ -284,26 +277,23 @@ run first died on a silent peer.
 
 ## Dependency graph
 
-```text
-A  identity: one repository, every server of it ─────┐
-   (the git repository named beside the checkout;    │
-    the servers of one listed from any of them)      │
-                                                     ▼
-B  the server's state as one typed value ──────►  C  ensure: entry converges
-   (lease read once by a Lease type; status,         (the start event and the MCP launcher
-    version, executable, peers, readiness on         call it; a shell is told, not served;
-    every surface)                                    bounded, idempotent, concurrency-safe)
-                                                     │
-D  episode keyed on the provider's session ◄─────────┤
-   (one record per session, ended by its owner)      │
-                                                     ▼
-E  presence: expiry, reaper, reconnect nudge,     F  events for peers, lease, health
-   claims with a lease (journal from ADR 0034)        on the existing typed channel
-                                                     │
-G  Cockpit: peers, sessions, server state ◄──────────┘
-H  gates: cold start through the configured path, storm, crash, two worktrees, two
-   providers, drift; rule + ADR; docs
-```
+<pre class="mermaid">
+flowchart TD
+  a["A identity: one repository, every server of it&lt;br&gt;(the git repository named beside the checkout;&lt;br&gt;the servers of one listed from any of them)"]
+  b["B the server's state as one typed value&lt;br&gt;(lease read once by a Lease type; status,&lt;br&gt;version, executable, peers, readiness on&lt;br&gt;every surface)"]
+  c["C ensure: entry converges&lt;br&gt;(the start event and the MCP launcher&lt;br&gt;call it; a shell is told, not served;&lt;br&gt;bounded, idempotent, concurrency-safe)"]
+  d["D episode keyed on the provider's session&lt;br&gt;(one record per session, ended by its owner)"]
+  e["E presence: expiry, reaper, reconnect nudge,&lt;br&gt;claims with a lease (journal from ADR 0034)"]
+  f["F events for peers, lease, health&lt;br&gt;on the existing typed channel"]
+  g["G Cockpit: peers, sessions, server state"]
+  h["H gates: cold start through the configured path,&lt;br&gt;storm, crash, two worktrees, two providers,&lt;br&gt;drift; rule + ADR; docs"]
+  a --&gt; c
+  b --&gt; c
+  c --&gt; d
+  c --&gt; f
+  f --&gt; g
+</pre>
+
 
 A must land first: every later step that says "the repository" means the git repository,
 and today the code means the checkout. ADR 0035 takes A and B: the election stays per

@@ -33,25 +33,17 @@ The pack speaks its own language. This repository already has words for most of 
 
 ## The path from entry to cooperation, as it is
 
-```text
-cd <repo>                       direnv → .envrc → bin/majordomus-env → `majordomus env export --banner --bridge`
-                                exports MAJORDOMUS_ROOT/SHARE/COMPLETION_BIN, and MAJORDOMUS_URL only if a lease exists
-                                one TCP connect to the lease's address, no HTTP, no version, no identity
-                                never builds, never starts anything                         .envrc:33, src/environment/shell.rs:116-130
-        ↓
-agent starts                    Claude Code fires SessionStart → .claude/hooks/majordomus-session-start
-                                → `majordomus capture session --event start` → `session start --if-open keep`
-                                → briefing on stdout (episode, task, blockers, handover Next Action)
-                                no peer board, no server, no announce                       lib/capture.sh:797-816
-        ↓
-MCP client attaches             .mcp.json → bin/majordomus-mcp → `majordomus mcp` → lease::elect
-                                first process serves (lease + loopback HTTP), later ones bridge
-                                the only thing that starts the server                       src/commands/mcp.rs:135, src/lease.rs:89
-        ↓
-peer on the board               attach on initialize, named `p<n>`; announce is a tool call the model may or may not make
-                                in memory, gone with the process                             src/peers.rs:268, :315
-        ↓
-context loaded                  `majordomus context` when somebody runs it; the briefing carried the handover already
+```mermaid
+flowchart TD
+  cd["cd &lt;repo&gt;<br>direnv → .envrc → bin/majordomus-env<br>→ majordomus env export --banner --bridge<br>exports MAJORDOMUS_ROOT/SHARE/COMPLETION_BIN,<br>and MAJORDOMUS_URL only if a lease exists<br>one TCP connect to the lease's address,<br>no HTTP, no version, no identity<br>never builds, never starts anything<br>.envrc:33, src/environment/shell.rs:116-130"]
+  agent["agent starts<br>Claude Code fires SessionStart<br>→ .claude/hooks/majordomus-session-start<br>→ majordomus capture session --event start<br>→ session start --if-open keep<br>→ briefing on stdout (episode, task,<br>blockers, handover Next Action)<br>no peer board, no server, no announce<br>lib/capture.sh:797-816"]
+  mcp["MCP client attaches<br>.mcp.json → bin/majordomus-mcp<br>→ majordomus mcp → lease::elect<br>first process serves (lease + loopback HTTP),<br>later ones bridge<br>the only thing that starts the server<br>src/commands/mcp.rs:135, src/lease.rs:89"]
+  peer["peer on the board<br>attach on initialize, named p&lt;n&gt;;<br>announce is a tool call the model<br>may or may not make<br>in memory, gone with the process<br>src/peers.rs:268, :315"]
+  context["context loaded<br>majordomus context when somebody runs it;<br>the briefing carried the handover already"]
+  cd --> agent
+  agent --> mcp
+  mcp --> peer
+  peer --> context
 ```
 
 What is genuinely automatic today: the executable is built by the first launcher that needs
@@ -266,25 +258,21 @@ run first died on a silent peer.
 
 ## Dependency graph
 
-```text
-A  identity: one repository, every server of it ─────┐
-   (the git repository named beside the checkout;    │
-    the servers of one listed from any of them)      │
-                                                     ▼
-B  the server's state as one typed value ──────►  C  ensure: entry converges
-   (lease read once by a Lease type; status,         (the start event and the MCP launcher
-    version, executable, peers, readiness on         call it; a shell is told, not served;
-    every surface)                                    bounded, idempotent, concurrency-safe)
-                                                     │
-D  episode keyed on the provider's session ◄─────────┤
-   (one record per session, ended by its owner)      │
-                                                     ▼
-E  presence: expiry, reaper, reconnect nudge,     F  events for peers, lease, health
-   claims with a lease (journal from ADR 0034)        on the existing typed channel
-                                                     │
-G  Cockpit: peers, sessions, server state ◄──────────┘
-H  gates: cold start through the configured path, storm, crash, two worktrees, two
-   providers, drift; rule + ADR; docs
+```mermaid
+flowchart TD
+  a["A identity: one repository, every server of it<br>(the git repository named beside the checkout;<br>the servers of one listed from any of them)"]
+  b["B the server's state as one typed value<br>(lease read once by a Lease type; status,<br>version, executable, peers, readiness on<br>every surface)"]
+  c["C ensure: entry converges<br>(the start event and the MCP launcher<br>call it; a shell is told, not served;<br>bounded, idempotent, concurrency-safe)"]
+  d["D episode keyed on the provider's session<br>(one record per session, ended by its owner)"]
+  e["E presence: expiry, reaper, reconnect nudge,<br>claims with a lease (journal from ADR 0034)"]
+  f["F events for peers, lease, health<br>on the existing typed channel"]
+  g["G Cockpit: peers, sessions, server state"]
+  h["H gates: cold start through the configured path,<br>storm, crash, two worktrees, two providers,<br>drift; rule + ADR; docs"]
+  a --> c
+  b --> c
+  c --> d
+  c --> f
+  f --> g
 ```
 
 A must land first: every later step that says "the repository" means the git repository,

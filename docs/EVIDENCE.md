@@ -11,20 +11,18 @@ the rules it serves are `project.no-claim-without-test` and
 `project.never-reported-is-not-green` under
 [`.ai/repo/rules/project/`](../.ai/repo/rules/project/).
 
-```text
-docs/CLAIMS.yaml                    .ai/repo/evidence/ledger.json
-claim → source, implementation,     latest execution per test:
-        test (a path)                 outcome, seconds, commit, tree,
-        ↓                             digest, time, origin, command
-   TestId::of(path)                            ↓
-   suite:84_distribution_model  ─────────  ledger.latest(id)
-   crate:why                                   ↓
-                                        evidence::report()
-                                                ↓
-                       proven · inputs_unchanged · stale · failing
-                       not_run · unrunnable · no_test
-                                                ↓
-                    CLI · HTTP · MCP · scripts/evidence-check
+```mermaid
+flowchart TD
+  claims["docs/CLAIMS.yaml<br>claim → source, implementation,<br>test (a path)"]
+  testid["TestId::of(path)<br>suite:84_distribution_model<br>crate:why"]
+  ledger[".ai/repo/evidence/ledger.json<br>latest execution per test:<br>outcome, seconds, commit, tree,<br>digest, time, origin, command"]
+  latest["ledger.latest(id)"]
+  report["evidence::report()"]
+  states["proven · inputs_unchanged · stale · failing<br>not_run · unrunnable · no_test"]
+  out["CLI · HTTP · MCP · scripts/evidence-check"]
+  claims --> testid --> latest
+  ledger --> latest
+  latest --> report --> states --> out
 ```
 
 ## The problem

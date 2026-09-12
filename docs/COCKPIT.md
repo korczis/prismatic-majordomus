@@ -14,15 +14,20 @@ it is bound by are `project.interfaces-are-projections`,
 `project.rust-hot-path`. Behaviour as implemented and tested; where this document and the
 executable disagree, the document is wrong and changes in the same commit.
 
-```text
-ONE CANONICAL DECLARATION   capability! { id, title, description, input, output,
-                                          stability, exposure, tags, cache?, handler }
-        ↓
-CAPABILITY REGISTRY         + every declarative object of the layer
-        ↓
-DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · benchmark targets
-                            · docs/generated/* · the website's /registry/ pages
-                            · THE COCKPIT — pages, navigation, search, palette, runner, graphs
+```mermaid
+flowchart TD
+  decl["ONE CANONICAL DECLARATION<br>capability! { id, title, description, input,<br>output, stability, exposure, tags, cache?, handler }"]
+  reg["CAPABILITY REGISTRY<br>+ every declarative object of the layer"]
+  proj["DERIVED PROJECTIONS"]
+  decl --> reg --> proj
+  proj --> mcp["MCP"]
+  proj --> http["HTTP"]
+  proj --> openapi["OpenAPI"] --> swagger["Swagger UI"]
+  proj --> cli["CLI"]
+  proj --> bench["benchmark targets"]
+  proj --> generated["docs/generated/*"]
+  proj --> registry["the website's /registry/ pages"]
+  proj --> cockpit["THE COCKPIT<br>pages, navigation, search,<br>palette, runner, graphs"]
 ```
 
 ## Getting there
