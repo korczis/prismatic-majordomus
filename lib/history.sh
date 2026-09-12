@@ -91,11 +91,18 @@ mj_history_validate() {
   # will be silently skipped by every filter, so it is a failure rather than a curiosity.
   mj_events_load
   local unknown="" e n=0
+  # The name read below is the envelope's, which is the FIRST "event" on the line. This was
+  # `sed -n 's/.*"event":"\([^"]*\)".*/\1/p'`, and `.*` is greedy: on a line carrying the key
+  # twice it returned the payload's value instead. Every provider receipt written before
+  # 2026-09-12 carried it twice, so this gate read the name as `start`, `end` or `compact`,
+  # none of which the registry declares, and refused a healthy ledger with exit 10 on every
+  # developer checkout. The writer can no longer produce such a line; the ones already
+  # written are still read as their writer meant them.
   while IFS= read -r e; do
     n=$((n+1))
     [ -n "$e" ] || continue
     mj_event_known "$e" || case " $unknown " in *" $e "*) ;; *) unknown="$unknown $e" ;; esac
-  done < <(sed -n 's/.*"event":"\([^"]*\)".*/\1/p' "$led")
+  done < <(awk "$MJ_LEDGER_FIELD_AWK"'{ print mjfield($0, "event") }' "$led")
   if [ -n "$unknown" ]; then
     for e in $unknown; do
       mj_fail ledger "$e" "not a registered event; no reader recognises it" "grep -n '\"event\":\"$e\"' .ai/local/state/ledger.jsonl"
@@ -126,12 +133,11 @@ mj_history_rotate() {
 # mj_history_render LEDGER TASK EVENT CUTOFF LIMIT JSON
 # Oldest line first. LIMIT 0 means everything. JSON 1 emits the matching lines verbatim.
 mj_history_render() {
-  awk -v task="$2" -v ev="$3" -v cutoff="$4" -v limit="$5" -v json="$6" '
-    function field(s, k,   r) {
-      if (match(s, "\"" k "\":\"")) { r = substr(s, RSTART + length(k) + 4); sub(/".*/, "", r); return r }
-      if (match(s, "\"" k "\":"))   { r = substr(s, RSTART + length(k) + 3); sub(/[,}].*/, "", r); return r }
-      return ""
-    }
+  # This reader had the extraction right — `match`, so the first occurrence — while two
+  # others had a greedy `sub`. It now uses the one declaration of it rather than its own
+  # copy, which is what let them disagree.
+  awk -v task="$2" -v ev="$3" -v cutoff="$4" -v limit="$5" -v json="$6" "$MJ_LEDGER_FIELD_AWK"'
+    function field(s, k) { return mjfield(s, k) }
     {
       ts = field($0, "ts"); e = field($0, "event"); t = field($0, "task_id")
       if (ts == "" || e == "") next
