@@ -6,23 +6,23 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "f24f465b21c2e4e315c633cf8104df3a5bc7a07434daf0ca8b7623dc171c5522",
+    "fingerprint": "3d69693813a6964fe92baab468c185f5a8c78cc49c0487b8d8b3527fe26f3c96",
     "summary": {
-      "total": 1404,
+      "total": 1409,
       "builtin": 107,
-      "declarative": 1297,
+      "declarative": 1302,
       "by_kind": {
         "command": 6,
         "query": 101,
-        "resource": 1297
+        "resource": 1302
       },
       "by_stability": {
         "behaviorally_verified": 95,
         "experimental": 7,
-        "implemented": 1302
+        "implemented": 1307
       },
       "mcp_tools": 104,
-      "mcp_resources": 1336,
+      "mcp_resources": 1341,
       "http_routes": 106,
       "cli_commands": 48,
       "modules": 64,
@@ -4008,9 +4008,29 @@
                     "$ref": "#/$defs/Divergence",
                     "description": "How far its commit is from this one."
                   },
+                  "freshness": {
+                    "$ref": "#/$defs/Freshness",
+                    "description": "How old it is, judged against `session.freshness`. Independent of `divergence`: a\nrecord is routinely `advanced` and `stale` at once, and that pair is what a reader\nmust not collapse into \"trustworthy\"."
+                  },
+                  "age_minutes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int64",
+                    "description": "Its age in whole minutes, when it has a timestamp that parses."
+                  },
+                  "freshness_reason": {
+                    "type": "string",
+                    "description": "Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot\nact on is the failure this subsystem is being corrected for."
+                  },
                   "next_action": {
                     "type": "string",
-                    "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections."
+                    "description": "The section a resuming worker acts on, when the record has one and is still current.\nA handover's `Next Action`; empty for a record that carries no sections, and\ndeliberately empty for one that is `stale` or `invalid` — see `next_action_withheld`."
+                  },
+                  "next_action_withheld": {
+                    "type": "string",
+                    "description": "Why `next_action` is empty despite the record having one. Set only when it was\nwithheld, never when the record simply carries no such section, so that a reader can\ntell \"there is nothing to do\" from \"what there was to do is six days old\"."
                   }
                 },
                 "required": [
@@ -4021,7 +4041,9 @@
                   "head",
                   "working_tree",
                   "matched",
-                  "divergence"
+                  "divergence",
+                  "freshness",
+                  "freshness_reason"
                 ],
                 "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
               },
@@ -4069,6 +4091,36 @@
                   }
                 ],
                 "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice."
+              },
+              "Freshness": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "fresh",
+                    "description": "Inside `session.freshness.fresh_minutes`. Current; act on it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "aging",
+                    "description": "Between the two thresholds. Still current, but its age is worth stating."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "At or beyond `session.freshness.stale_minutes`. History, never current."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Nothing to judge it by: no timestamp, or no thresholds declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "invalid",
+                    "description": "A timestamp that does not parse, or one in the future."
+                  }
+                ],
+                "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared."
               }
             }
           }
@@ -18611,7 +18663,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "The tasks this episode's ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode's own records\nto go unwritten, which is the premise ADR 0041 removes."
+                    "description": "The tasks this episode's ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode's own records\nto go unwritten, which is the premise ADR 0052 removes."
                   },
                   "note": {
                     "type": "string",
@@ -19031,7 +19083,7 @@
                   "agrees",
                   "note"
                 ],
-                "description": "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not."
+                "description": "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not."
               }
             }
           }
@@ -32244,7 +32296,7 @@
         "module": "session_domain",
         "kind": "query",
         "title": "The episode lifecycle, as data",
-        "description": "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0041.",
+        "description": "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0052.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -32388,7 +32440,7 @@
                   {
                     "type": "string",
                     "const": "checkpoint",
-                    "description": "A progress note was recorded against the episode. An artefact of the episode and\nnot of a task (ADR 0041): a checkpoint outside a task records `task: none` and is a\nnormal record, not a refusal."
+                    "description": "A progress note was recorded against the episode. An artefact of the episode and\nnot of a task (ADR 0052): a checkpoint outside a task records `task: none` and is a\nnormal record, not a refusal."
                   },
                   {
                     "type": "string",
@@ -32406,7 +32458,7 @@
                     "description": "Nobody ended it and its last sign of life is older than the stranded threshold, so\nmaintenance closed it. The record says so: an episode closed this way is\n`interrupted`, because a reader resuming from it needs to know it may be incomplete."
                   }
                 ],
-                "description": "What moved an episode. The vocabulary the ADR 0041 audit needs: `open`, `resume`,\n`checkpoint`, `detach`, `close`, `recover`.\n\nOne of them does not change the state, and it is a transition anyway. A checkpoint\nleaves an open episode open — but it is one of the two events whose *absence* is what\nthe audit was looking for, and an event that is modelled as \"nothing happened\" cannot\nbe counted. The six days of silence were six days in which `session.started` and\n`session.closed` kept arriving and the two events that produce the records a worker\nresumes from did not. A vocabulary in which those two are not events is a vocabulary in\nwhich that outage is invisible.\n\n```\nuse majordomus_cli::session::{EpisodeState, Transition};\n\n// a checkpoint is a transition that does not move the state, and says so\nlet c = Transition::Checkpoint;\nassert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));\nassert!(!c.moves_state());\n\n// a resume is canonically the return to a detached episode; a provider's start event\n// arriving at one that is already open is the same transition seen from `Open`, which\n// the machine allows without a move\nassert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open));\n\n// and every transition's own move is one the machine allows\nfor t in Transition::ALL {\n    let (from, to) = t.from_to();\n    assert!(from.may_move_to(to), \"{} is not a legal move\", t.as_str());\n}\n```"
+                "description": "What moved an episode. The vocabulary the ADR 0052 audit needs: `open`, `resume`,\n`checkpoint`, `detach`, `close`, `recover`.\n\nOne of them does not change the state, and it is a transition anyway. A checkpoint\nleaves an open episode open — but it is one of the two events whose *absence* is what\nthe audit was looking for, and an event that is modelled as \"nothing happened\" cannot\nbe counted. The six days of silence were six days in which `session.started` and\n`session.closed` kept arriving and the two events that produce the records a worker\nresumes from did not. A vocabulary in which those two are not events is a vocabulary in\nwhich that outage is invisible.\n\n```\nuse majordomus_cli::session::{EpisodeState, Transition};\n\n// a checkpoint is a transition that does not move the state, and says so\nlet c = Transition::Checkpoint;\nassert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));\nassert!(!c.moves_state());\n\n// a resume is canonically the return to a detached episode; a provider's start event\n// arriving at one that is already open is the same transition seen from `Open`, which\n// the machine allows without a move\nassert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open));\n\n// and every transition's own move is one the machine allows\nfor t in Transition::ALL {\n    let (from, to) = t.from_to();\n    assert!(from.may_move_to(to), \"{} is not a legal move\", t.as_str());\n}\n```"
               }
             }
           }
@@ -38134,7 +38186,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 46,
+        "capabilities": 47,
         "capability_ids": []
       },
       {
@@ -38697,7 +38749,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 130,
+        "capabilities": 131,
         "capability_ids": []
       },
       {
@@ -38776,7 +38828,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 188,
+        "capabilities": 191,
         "capability_ids": []
       },
       {
@@ -38856,7 +38908,7 @@
     ]
   },
   "index": {
-    "fingerprint": "bc3ea557a322f5d49fc84be2fcb9234a06497f2b50daadafc6321511746626eb",
+    "fingerprint": "351a6855305add2166031c958488ca91fdaf8d6def53eaff6103bca8ac421823",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -38879,7 +38931,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 46,
+      "adr": 47,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -38900,12 +38952,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 130,
+      "rule": 131,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 188,
+      "test": 191,
       "use-case": 45,
       "workspace": 1
     },
@@ -39658,6 +39710,23 @@
           "mesh",
           "discovery",
           "security"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0052",
+        "kind": "adr",
+        "identity": "adr-0052",
+        "title": "The session lifecycle is the episode's, not the task's",
+        "description": "The session lifecycle is the episode's, not the task's",
+        "path": ".ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8462,
+        "tags": [
+          "sessions",
+          "continuity",
+          "governance",
+          "architecture"
         ]
       },
       {
@@ -42552,7 +42621,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 114443
+        "bytes": 115511
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -42606,7 +42675,7 @@
         "title": "Continuity — how work survives the session that was doing it",
         "path": "docs/CONTINUITY.md",
         "source_class": "document",
-        "bytes": 30191
+        "bytes": 32871
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -42876,7 +42945,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 68423
+        "bytes": 69093
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -44226,7 +44295,7 @@
         "title": "A provider hook opens and closes the execution episode, and the context it was given at the open is frozen beside it",
         "path": "docs/claims/session-lifecycle.md",
         "source_class": "claim_page",
-        "bytes": 7541
+        "bytes": 8379
       },
       {
         "uri": "majordomus://document/docs/claims/session-observability.md",
@@ -44901,7 +44970,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 119868
+        "bytes": 123701
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -44917,7 +44986,7 @@
         "identity": "lib/check.sh",
         "path": "lib/check.sh",
         "source_class": "library",
-        "bytes": 15721
+        "bytes": 16983
       },
       {
         "uri": "majordomus://implementation/lib/checkpoint.sh",
@@ -44925,7 +44994,7 @@
         "identity": "lib/checkpoint.sh",
         "path": "lib/checkpoint.sh",
         "source_class": "library",
-        "bytes": 4318
+        "bytes": 5254
       },
       {
         "uri": "majordomus://implementation/lib/commands.sh",
@@ -44941,7 +45010,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 65471
+        "bytes": 70224
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -44981,7 +45050,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 20707
+        "bytes": 22127
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -44989,7 +45058,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 64722
+        "bytes": 69828
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -45029,7 +45098,7 @@
         "identity": "lib/handover.sh",
         "path": "lib/handover.sh",
         "source_class": "library",
-        "bytes": 6124
+        "bytes": 6613
       },
       {
         "uri": "majordomus://implementation/lib/history.sh",
@@ -48480,7 +48549,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 8396
+        "bytes": 9565
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -48974,6 +49043,22 @@
         "tags": [
           "records",
           "ledger"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "kind": "rule",
+        "identity": "majordomus.lifecycle-observed@1",
+        "title": "Lifecycle observation",
+        "description": "A store that can be read is not a store that is being written. While episodes go on opening, the records a future worker resumes from must go on advancing, every lifecycle event received must leave evidence it arrived, and an episode that outlives the staleness threshold must be named rather than left open.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/lifecycle-observed.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3931,
+        "tags": [
+          "sessions",
+          "continuity",
+          "health"
         ]
       },
       {
@@ -51406,6 +51491,14 @@
         "bytes": 19944
       },
       {
+        "uri": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "kind": "test",
+        "identity": "test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "path": "test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "source_class": "case",
+        "bytes": 9269
+      },
+      {
         "uri": "majordomus://test/test/cases/130_mesh.sh",
         "kind": "test",
         "identity": "test/cases/130_mesh.sh",
@@ -51430,12 +51523,28 @@
         "bytes": 13112
       },
       {
+        "uri": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
+        "kind": "test",
+        "identity": "test/cases/131_freshness_has_an_age.sh",
+        "path": "test/cases/131_freshness_has_an_age.sh",
+        "source_class": "case",
+        "bytes": 6119
+      },
+      {
         "uri": "majordomus://test/test/cases/131_models.sh",
         "kind": "test",
         "identity": "test/cases/131_models.sh",
         "path": "test/cases/131_models.sh",
         "source_class": "case",
         "bytes": 2884
+      },
+      {
+        "uri": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
+        "kind": "test",
+        "identity": "test/cases/132_health_sees_a_stopped_writer.sh",
+        "path": "test/cases/132_health_sees_a_stopped_writer.sh",
+        "source_class": "case",
+        "bytes": 5392
       },
       {
         "uri": "majordomus://test/test/cases/133_plan_transition.sh",
@@ -51635,7 +51744,7 @@
         "identity": "test/cases/20_checkpoint.sh",
         "path": "test/cases/20_checkpoint.sh",
         "source_class": "case",
-        "bytes": 3968
+        "bytes": 6074
       },
       {
         "uri": "majordomus://test/test/cases/21_decision_question.sh",
@@ -53033,7 +53142,7 @@
       "identity": [
         "id"
       ],
-      "objects": 46
+      "objects": 47
     },
     {
       "name": "application",
@@ -53243,7 +53352,7 @@
         "id",
         "version"
       ],
-      "objects": 130
+      "objects": 131
     },
     {
       "name": "scope",
@@ -53298,7 +53407,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 188
+      "objects": 191
     },
     {
       "name": "use-case",
@@ -71369,7 +71478,7 @@
         "name": "majordomus_session_machine",
         "id": "session_domain.machine",
         "title": "The episode lifecycle, as data",
-        "description": "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0041.",
+        "description": "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0052.",
         "kind": "query",
         "read_only": true,
         "input": "Empty",

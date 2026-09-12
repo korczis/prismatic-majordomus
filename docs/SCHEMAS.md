@@ -1348,16 +1348,18 @@ Events and their extra fields:
 | event | extra fields |
 |---|---|
 | `task.started` | `profile`, `scope[]`, `owner` |
-| `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved |
+| `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved; `task_id` when a task was open, absent otherwise — a checkpoint is the episode's record and an episode need not have a task (ADR 0052) |
 | `task.evidence` | `task`, `covers` (the obligation token), `kind`, `inputs_hash` (over the obligation's declared inputs), and `command`, `artifact`, `result` when given |
 | `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |
-| `task.handed_over` | `handover_path`, `closed` (true with `--close`) |
+| `task.handed_over` | `handover_path`, `closed` (true with `--close`); `task_id` when a task was open, absent otherwise |
 | `decision.recorded` | `decision` (the entry's title) |
 | `question.opened` | `question` |
 | `question.resolved` | `question`, `answer` |
 | `session.started` | `owner`, `worker` when one was supplied |
 | `session.closed` | `outcome`, `session_path` |
 | `session.recovered` | `session_id` (the episode recovered, which is never the one the envelope's own `session` stamp names), `reason` (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), `session_path` |
+| `provider.event.received` | `provider`, `event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
+| `provider.event.failed` | `provider`, `event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 | `use_cases.ran` | `ran`, `failed` (counts; the evidence under `.ai/local/evidence/use-cases/` carries the steps) |

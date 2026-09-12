@@ -1238,14 +1238,6 @@
         "external": true
       },
       {
-        "id": "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
-        "kind": "file",
-        "label": "0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
-        "external": true
-      },
-      {
         "id": "file:.ai/repo/ci/gates.yaml",
         "kind": "file",
         "label": "gates.yaml",
@@ -2363,6 +2355,14 @@
         "label": "majordomus",
         "summary": "named by the layer; not an object of this index",
         "source": "share/standard/majordomus",
+        "external": true
+      },
+      {
+        "id": "file:share/standard/majordomus/rules/lifecycle-observed.v1.md",
+        "kind": "file",
+        "label": "lifecycle-observed.v1.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/standard/majordomus/rules/lifecycle-observed.v1.md",
         "external": true
       },
       {
@@ -3558,7 +3558,7 @@
         "facts": {
           "date": "2026-09-11",
           "related": [
-            "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+            "file:.ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
             "file:.ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md",
             "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
             "file:apps/majordomus-cli/src/session/mod.rs",
@@ -3662,6 +3662,38 @@
             "mesh",
             "discovery",
             "security"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0052",
+        "kind": "adr",
+        "label": "adr-0052",
+        "summary": "The session lifecycle is the episode's, not the task's",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0052",
+        "source": ".ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "rule:majordomus.lifecycle-observed",
+            "rule:majordomus.handover-integrity",
+            "rule:majordomus.session-lifecycle",
+            "rule:majordomus.checkpoint-freshness",
+            "file:.ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md",
+            "file:share/standard/majordomus/rules/lifecycle-observed.v1.md",
+            "file:share/events.yaml",
+            "file:docs/CONTINUITY.md",
+            "file:.ai/repo/policy.yaml",
+            "test:test/cases/130_lifecycle_survives_a_stale_task.sh",
+            "test:test/cases/131_freshness_has_an_age.sh",
+            "test:test/cases/132_health_sees_a_stopped_writer.sh"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "governance",
+            "architecture"
           ]
         }
       },
@@ -21898,7 +21930,7 @@
           "milestone": "development-runtime",
           "non_scope": [
             "Deleting any session record. The repair that preceded this issue kept the complete record and deleted only the partial one it contains.",
-            "The wider question of when an episode begins and ends, which ADR 0041 owns on a branch of its own."
+            "The wider question of when an episode begins and ends, which ADR 0052 owns on a branch of its own."
           ],
           "objective": "Stop the session closer from writing a second record for a session that already has one, so that a session identity names one record and the index does not exclude every claimant of it.",
           "parallel_safe": true,
@@ -26817,6 +26849,26 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "kind": "rule",
+        "label": "majordomus.lifecycle-observed@1",
+        "summary": "Lifecycle observation",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.lifecycle-observed%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/lifecycle-observed.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.handover-integrity@1"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "health"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.minimum-sufficient-context@1",
         "kind": "rule",
         "label": "majordomus.minimum-sufficient-context@1",
@@ -31352,6 +31404,13 @@
         "source": "test/cases/130_context_compiler.sh"
       },
       {
+        "id": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "kind": "test",
+        "label": "test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_lifecycle_survives_a_stale_task.sh",
+        "source": "test/cases/130_lifecycle_survives_a_stale_task.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/130_mesh.sh",
         "kind": "test",
         "label": "test/cases/130_mesh.sh",
@@ -31373,11 +31432,25 @@
         "source": "test/cases/131_completion_gates.sh"
       },
       {
+        "id": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
+        "kind": "test",
+        "label": "test/cases/131_freshness_has_an_age.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F131_freshness_has_an_age.sh",
+        "source": "test/cases/131_freshness_has_an_age.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/131_models.sh",
         "kind": "test",
         "label": "test/cases/131_models.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F131_models.sh",
         "source": "test/cases/131_models.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
+        "kind": "test",
+        "label": "test/cases/132_health_sees_a_stopped_writer.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F132_health_sees_a_stopped_writer.sh",
+        "source": "test/cases/132_health_sees_a_stopped_writer.sh"
       },
       {
         "id": "majordomus://test/test/cases/133_plan_transition.sh",
@@ -37443,11 +37516,6 @@
       },
       {
         "source": "majordomus://adr/adr-0047",
-        "target": "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0047",
         "target": "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
         "kind": "put_in_force"
       },
@@ -37474,6 +37542,11 @@
       {
         "source": "majordomus://adr/adr-0047",
         "target": "majordomus://adr/adr-0014",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "majordomus://adr/adr-0052",
         "kind": "put_in_force"
       },
       {
@@ -37654,6 +37727,71 @@
       {
         "source": "majordomus://adr/adr-0050",
         "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "file:share/events.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "file:share/standard/majordomus/rules/lifecycle-observed.v1.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://adr/adr-0014",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://document/docs/CONTINUITY.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://policy/.ai/repo/policy.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://rule/majordomus.checkpoint-freshness@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://rule/majordomus.handover-integrity@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://rule/majordomus.session-lifecycle@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0052",
+        "target": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "kind": "put_in_force"
       },
       {
@@ -47437,6 +47575,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "target": "majordomus://rule/majordomus.handover-integrity@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.minimum-sufficient-context@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -49027,6 +49175,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/130_mesh.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -49042,7 +49195,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/131_models.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -52893,8 +53056,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1650,
-      "edges": 3689,
+      "nodes": 1655,
+      "edges": 3707,
       "acyclic": true,
       "truncated": false
     }

@@ -9,7 +9,7 @@
 //! came to have four immutable records — and it cannot say that a transition is legal
 //! without also performing it, which is how every check of the form "is this allowed" ended
 //! up written separately at each call site, in shell, three times, with the task guard ADR
-//! 0041 removed embedded in one of them.
+//! 0052 removed embedded in one of them.
 //!
 //! So the transitions are the contract and [`EpisodeState::may_move_to`] is the one place
 //! they are written down: the store asks before every change, and a caller that reads a
@@ -27,7 +27,7 @@
 //! # What is not in the signature
 //!
 //! There is no task. [`EpisodeState::may_move_to`] takes a target state and nothing else;
-//! [`Transition`] carries no task field. This is the whole of ADR 0041 expressed as a type:
+//! [`Transition`] carries no task field. This is the whole of ADR 0052 expressed as a type:
 //! the defect it removed was `outcome != active -> skip` on the path that writes an
 //! episode's artefacts, and in this model there is nowhere to put it. A task's outcome may
 //! change what a continuation record *says* — that belongs to the record's composition, not
@@ -151,7 +151,7 @@ impl EpisodeState {
     ];
 }
 
-/// What moved an episode. The vocabulary the ADR 0041 audit needs: `open`, `resume`,
+/// What moved an episode. The vocabulary the ADR 0052 audit needs: `open`, `resume`,
 /// `checkpoint`, `detach`, `close`, `recover`.
 ///
 /// One of them does not change the state, and it is a transition anyway. A checkpoint
@@ -195,7 +195,7 @@ pub enum Transition {
     /// is already open" is to keep it rather than to open a second one.
     Resume,
     /// A progress note was recorded against the episode. An artefact of the episode and
-    /// not of a task (ADR 0041): a checkpoint outside a task records `task: none` and is a
+    /// not of a task (ADR 0052): a checkpoint outside a task records `task: none` and is a
     /// normal record, not a refusal.
     Checkpoint,
     /// The connection went away without an end event.
@@ -287,7 +287,7 @@ impl Transition {
 /// This is what `session.machine` answers. It exists because the same diagram is currently
 /// redrawn in `docs/CONTINUITY.md`, in `lib/session.sh`'s comments and in the Cockpit, and
 /// three drawings of one machine drift — the `lib/session.sh` one still had the task guard
-/// in it after ADR 0041 removed it from the code.
+/// in it after ADR 0052 removed it from the code.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Machine {
     /// Every state, with what it means and whether it is terminal.
@@ -388,7 +388,7 @@ impl Machine {
             transitions,
             independent_of: vec![
                 "task state: an episode's lifecycle does not depend on a task's outcome, \
-                 and may_move_to takes no task (ADR 0041)"
+                 and may_move_to takes no task (ADR 0052)"
                     .to_string(),
             ],
         }

@@ -465,7 +465,7 @@ fn the_ledger_is_counted_and_a_detached_checkout_says_detached_rather_than_guess
     // saying what is true rather than what is convenient.
     //
     // `tallies.ledger_lines` is how a reader learns whether this checkout's lifecycle has
-    // written anything at all — the distinction ADR 0041 was written after, where events kept
+    // written anything at all — the distinction ADR 0052 was written after, where events kept
     // arriving and derived state stopped advancing. Blank lines are not lines: a store that
     // ends with a newline would otherwise be reported one event richer than it is.
     //

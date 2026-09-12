@@ -142,6 +142,25 @@ mj_validate_state() {
 mj_validate_scope() {
   mj_task_gate scope || return 0
   mj_finish_gate scope || return 0
+  # A scope is a claim an *active* task makes about the paths it will touch. Once the task
+  # is finished or handed over there is no claim left to violate, and what this gate would
+  # measure instead is `git diff <the task's head>..HEAD` — every file everybody has
+  # touched since. Measured in this repository on 2026-09-11: a task handed over on
+  # 2026-09-05 produced 389 FAIL findings in one run, naming site templates, test fixtures
+  # and the runner, none of which the task had anything to do with. A check whose output is
+  # four hundred lines of wallpaper is not a check; its reader learns to skip it, and the
+  # eight real findings underneath go with it.
+  #
+  # `mj_task_gate`'s own comment says a task-scoped doctrine has nothing to say when no task
+  # is active. It only ever tested whether a record existed. This is the rest of that
+  # sentence, kept here rather than in the gate because the other validators that share it
+  # still have something true to say about a finished task.
+  case "$(mj_cur outcome)" in
+    active) ;;
+    *) mj_doctrine_skip scope "$(mj_cur id)" \
+         "outcome is $(mj_cur outcome); a scope is what an active task claims, and a finished one claims nothing"
+       MJ_DOCTRINE_SKIPPED=1; return 0 ;;
+  esac
   local id f inside n_out=0 n_in=0 s allow_gen scope_list scope_words soft=0 repro
   id="$(mj_cur id)"; allow_gen="$(mj_projection_targets | tr '\n' ' ')"
   # Only a *completed* finish is refused by scope, for the reason the blocker gate below

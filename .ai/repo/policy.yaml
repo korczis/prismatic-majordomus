@@ -60,16 +60,30 @@ prompts:
 # switch here rather than a constant in the shim. The start event hands the worker a
 # briefing on standard output, which the provider adds to the context it is about to build;
 # the compaction event records a derived checkpoint, because a compaction discards the
-# conversation while the work continues; the end event writes a derived continuation record
-# when the task is still active, because a closed envelope says what an episode produced and
-# not what the next worker should do.
+# conversation while the work continues; the end event writes a derived continuation record,
+# because a closed envelope says what an episode produced and not what the next worker
+# should do. None of the three asks whether a task is active: an episode is the provider's
+# boundary and a task is an optional relation it carries, and making the first depend on the
+# second is what silenced this subsystem for six days (ADR 0052).
 session:
   briefing_on_start: true
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
-  checkpoint_on_compact: true
+  checkpoint_on_compact: true            # also the checkpoint the close records, for the
+                                         # same reason: both are moments at which what the
+                                         # episode knows stops being reachable
   handover_on_end: true
   ensure_server_on_start: true           # the start event converges on a ready shared server
   stranded_after: 12h                    # an open episode silent this long may be recovered
+  # How old a continuation record may be before it stops being current. Divergence
+  # (exact/advanced/diverged/different_context) is a fact about git topology and says
+  # nothing about age; a record can be `advanced` and six days dead at the same time, which
+  # is exactly the combination that promoted a finished instruction into every new episode.
+  # Declared once here and read by every surface: a second copy of these numbers in a
+  # shell function, a Rust constant or a page of prose is the drift this file exists to
+  # prevent.
+  freshness:
+    fresh_minutes: 720                   # 12h: within a working day either side, current
+    stale_minutes: 2880                  # 48h: beyond this it is history, never current
 
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's

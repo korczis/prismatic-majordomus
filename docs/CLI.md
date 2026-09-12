@@ -412,10 +412,13 @@ that tries to set identity fields is rejected.
 `start` in this checkout; the old record is archived by that `start`. Without
 `--close` the task stays active for the next session to continue.
 
-The provider's `SessionEnd` event runs `--derive --close` when the task is still active, so
-an episode that ends leaves a continuation record and not only the envelope of what it
-produced. The two answer different questions: the session record indexes the episode, and a
-handover is what the next worker resumes from.
+The provider's `SessionEnd` event runs `--derive --close`, or `--derive --no-task` when no
+task record exists, so that an episode that ends leaves a continuation record and not only
+the envelope of what it produced. The two answer different questions: the session record
+indexes the episode, and a handover is what the next worker resumes from. It does not ask
+whether the task is active — until ADR 0052 it did, and a repository whose last task had
+been handed over stopped writing the one record a future worker resumes from, for six days,
+while every health check passed.
 
 **Refuses** (`10`) if a required section is missing or empty, or if the body contains
 an identity field. Refuses (`12`) with no active task unless `--no-task`.
@@ -812,11 +815,23 @@ one that can also say what was true.
   provider's compaction event runs — a compaction discards the conversation while the work
   continues, and the moment it is announced is the only moment anything can be written about
   a context that is about to stop being reachable.
-- `--show` prints the newest checkpoint for the active task in this worktree and branch.
+- `--show` prints the newest checkpoint for this worktree and branch — for the active task
+  when there is one, and otherwise the newest whatever task it names.
 - `--list` lists this worktree's checkpoints, newest first, with each one's git label.
 
-Exit `12` with no active task, `15` when the task is no longer active, `10` when the body
-carries identity fields or exceeds the cap.
+A checkpoint belongs to the **episode**, not to a task. It is written whether or not a task
+is open and whatever outcome the last one reached; the record's `task_id` is the task when
+there is one and `none` otherwise, and the ledger event omits the field entirely rather than
+writing a literal `none` that every reader of that event would collect as a task by that
+name. Only the task's own `checkpoint_at` is left alone when the task is over, because that
+field is the task's.
+
+This refused with `12` (no active task) and `15` (the task is no longer active) until ADR
+0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never
+replaced silenced this repository's progress records for six days, while episodes went on
+opening and closing and every health check passed.
+
+Exit `10` when the body carries identity fields or exceeds the cap.
 
 ```
 $ majordomus checkpoint <<'EOF'

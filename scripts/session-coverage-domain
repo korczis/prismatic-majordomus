@@ -7,16 +7,16 @@
 # `capability/builtin/continuity.rs` is the whole of the session and continuity domain in
 # this executable, and that is a fact about where the domain lives rather than a choice made
 # here. The module says so in its own first paragraph — "It is read, never written. The
-# lifecycle is the shell tool's" — and ADR 0041 names that split as the structural cause of
+# lifecycle is the shell tool's" — and ADR 0052 names that split as the structural cause of
 # the outage it was written after: the shell owns the writes and the state machine, this
 # crate owns the typed read model, and nothing spans both. The single canonical domain
-# service ADR 0041 settles on does not exist yet; it is staged work. When it lands, its files
+# service ADR 0052 settles on does not exist yet; it is staged work. When it lands, its files
 # belong on this list and the threshold follows them.
 #
 # Considered and left out, each for a reason:
 #
 #   src/policy.rs             holds no session key on this branch. `session.freshness` is
-#                             added by the ADR 0041 branch and is not here; adding the file
+#                             added by the ADR 0052 branch and is not here; adding the file
 #                             now would put four hundred lines of projection loading into a
 #                             session threshold and make the number say less, not more.
 #   builtin/obligations.rs    reads the ledger and shares `read_task` with continuity, but

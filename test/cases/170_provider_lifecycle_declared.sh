@@ -19,7 +19,7 @@
 # it and nowhere else.
 #
 # The long-term fix is for lib/capture.sh to read the YAML rather than carry its own table
-# (ADR 0041 names the direction: one domain service, everything else an adapter). Until it
+# (ADR 0052 names the direction: one domain service, everything else an adapter). Until it
 # does, this gate is what makes the duplication safe rather than silent.
 . "$ROOT/test/lib.sh"
 

@@ -63,6 +63,25 @@ pub struct ProfilesPolicy {
     pub checkpoint_interval_default: Option<String>,
 }
 
+/// `session.freshness:` of the policy: how old a continuation record may be before it stops
+/// being current.
+///
+/// These are the only numbers that decide it, and they are declared once. Divergence
+/// (`exact`/`advanced`/`diverged`/`different_context`) answers a different question — where
+/// the record's commit sits relative to HEAD — and answers it identically on the day a
+/// record is written and a month later. Keeping a default here would be a second source of
+/// truth for the same thresholds, so absence is carried as absence and reported as
+/// `unknown`, naming the missing key.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
+pub struct FreshnessPolicy {
+    /// Below this age a record is `fresh`.
+    #[serde(default)]
+    pub fresh_minutes: Option<i64>,
+    /// At or beyond this age a record is `stale`, and is never presented as current.
+    #[serde(default)]
+    pub stale_minutes: Option<i64>,
+}
+
 /// The policy, typed to what the projections consume. Every other key is carried through
 /// unread: the policy schema under `share/schemas/majordomus/policy/policy.v1.schema.json` owns the full shape.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
@@ -76,12 +95,12 @@ pub struct Policy {
     /// `profiles:`.
     #[serde(default)]
     pub profiles: ProfilesPolicy,
-    /// `projections:`.
-    #[serde(default)]
-    pub projections: Vec<Projection>,
     /// `session:`.
     #[serde(default)]
     pub session: SessionPolicy,
+    /// `projections:`.
+    #[serde(default)]
+    pub projections: Vec<Projection>,
 }
 
 /// `session:` — what the episode boundary does beyond drawing itself.
@@ -102,6 +121,11 @@ pub struct Policy {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SessionPolicy {
+    /// `session.freshness:` — how old a continuation record may be before it stops being
+    /// current. A separate question from divergence, which is about git topology and says
+    /// nothing about age.
+    #[serde(default)]
+    pub freshness: FreshnessPolicy,
     /// Whether entering the repository converges on a ready shared server.
     ///
     /// One switch, both entry paths: the provider's start event (ADR 0035) and the file a
@@ -116,6 +140,7 @@ pub struct SessionPolicy {
 impl Default for SessionPolicy {
     fn default() -> Self {
         SessionPolicy {
+            freshness: FreshnessPolicy::default(),
             ensure_server_on_start: true,
         }
     }

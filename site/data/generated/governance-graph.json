@@ -199,6 +199,11 @@
     },
     {
       "kind": "depends_on",
+      "source": "rule:majordomus.lifecycle-observed",
+      "target": "rule:majordomus.handover-integrity"
+    },
+    {
+      "kind": "depends_on",
       "source": "rule:majordomus.context-budget",
       "target": "rule:majordomus.projection-integrity"
     },
@@ -336,6 +341,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.handover-integrity",
       "target": "validator:resolver"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.lifecycle-observed",
+      "target": "validator:lifecycle"
     },
     {
       "kind": "decided_by",
@@ -635,6 +645,16 @@
     {
       "kind": "run_by",
       "source": "validator:ledger",
+      "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:lifecycle",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:lifecycle",
       "target": "command:watch"
     },
     {
@@ -966,6 +986,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.handover-integrity",
       "target": "test:test/cases/23_context.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.lifecycle-observed",
+      "target": "test:test/cases/130_lifecycle_survives_a_stale_task.sh"
     },
     {
       "kind": "proved_by",
@@ -1356,6 +1381,17 @@
       "route": "/doctrines/handover-integrity/",
       "status": "blocking",
       "summary": "The resolver runs and reports either the record for this worktree and branch or its clean absence; a malformed record is never silently skipped, and a record describing a history this checkout no longer has is reported."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.lifecycle-observed",
+      "kind": "rule",
+      "label": "lifecycle-observed",
+      "note": "exit 10 · lifecycle",
+      "role": "text",
+      "route": "/doctrines/lifecycle-observed/",
+      "status": "blocking",
+      "summary": "A store that can be read is not a store that is being written. While episodes go on opening, the records a future worker resumes from must go on advancing, every lifecycle event received must leave evidence it arrived, and an episode that outlives the staleness threshold must be named rather than left open."
     },
     {
       "external": false,
@@ -1778,6 +1814,14 @@
     },
     {
       "external": false,
+      "id": "validator:lifecycle",
+      "kind": "validator",
+      "label": "mj_validate_lifecycle",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/doctor.sh."
+    },
+    {
+      "external": false,
       "id": "validator:note",
       "kind": "validator",
       "label": "mj_validate_note",
@@ -2053,6 +2097,14 @@
       "id": "test:test/cases/103_obligations.sh",
       "kind": "test",
       "label": "test/cases/103_obligations.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/130_lifecycle_survives_a_stale_task.sh",
+      "kind": "test",
+      "label": "test/cases/130_lifecycle_survives_a_stale_task.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

@@ -4262,9 +4262,29 @@
                   "$ref": "#/$defs/Divergence",
                   "description": "How far its commit is from this one."
                 },
+                "freshness": {
+                  "$ref": "#/$defs/Freshness",
+                  "description": "How old it is, judged against `session.freshness`. Independent of `divergence`: a\nrecord is routinely `advanced` and `stale` at once, and that pair is what a reader\nmust not collapse into \"trustworthy\"."
+                },
+                "age_minutes": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int64",
+                  "description": "Its age in whole minutes, when it has a timestamp that parses."
+                },
+                "freshness_reason": {
+                  "type": "string",
+                  "description": "Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot\nact on is the failure this subsystem is being corrected for."
+                },
                 "next_action": {
                   "type": "string",
-                  "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections."
+                  "description": "The section a resuming worker acts on, when the record has one and is still current.\nA handover's `Next Action`; empty for a record that carries no sections, and\ndeliberately empty for one that is `stale` or `invalid` — see `next_action_withheld`."
+                },
+                "next_action_withheld": {
+                  "type": "string",
+                  "description": "Why `next_action` is empty despite the record having one. Set only when it was\nwithheld, never when the record simply carries no such section, so that a reader can\ntell \"there is nothing to do\" from \"what there was to do is six days old\"."
                 }
               },
               "required": [
@@ -4275,7 +4295,9 @@
                 "head",
                 "working_tree",
                 "matched",
-                "divergence"
+                "divergence",
+                "freshness",
+                "freshness_reason"
               ],
               "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
             },
@@ -4323,6 +4345,36 @@
                 }
               ],
               "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice."
+            },
+            "Freshness": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "fresh",
+                  "description": "Inside `session.freshness.fresh_minutes`. Current; act on it."
+                },
+                {
+                  "type": "string",
+                  "const": "aging",
+                  "description": "Between the two thresholds. Still current, but its age is worth stating."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "At or beyond `session.freshness.stale_minutes`. History, never current."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "Nothing to judge it by: no timestamp, or no thresholds declared."
+                },
+                {
+                  "type": "string",
+                  "const": "invalid",
+                  "description": "A timestamp that does not parse, or one in the future."
+                }
+              ],
+              "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared."
             }
           }
         }
@@ -18865,7 +18917,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "The tasks this episode's ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode's own records\nto go unwritten, which is the premise ADR 0041 removes."
+                  "description": "The tasks this episode's ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode's own records\nto go unwritten, which is the premise ADR 0052 removes."
                 },
                 "note": {
                   "type": "string",
@@ -19285,7 +19337,7 @@
                 "agrees",
                 "note"
               ],
-              "description": "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not."
+              "description": "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not."
             }
           }
         }
@@ -32498,7 +32550,7 @@
       "module": "session_domain",
       "kind": "query",
       "title": "The episode lifecycle, as data",
-      "description": "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0041.",
+      "description": "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0052.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -32642,7 +32694,7 @@
                 {
                   "type": "string",
                   "const": "checkpoint",
-                  "description": "A progress note was recorded against the episode. An artefact of the episode and\nnot of a task (ADR 0041): a checkpoint outside a task records `task: none` and is a\nnormal record, not a refusal."
+                  "description": "A progress note was recorded against the episode. An artefact of the episode and\nnot of a task (ADR 0052): a checkpoint outside a task records `task: none` and is a\nnormal record, not a refusal."
                 },
                 {
                   "type": "string",
@@ -32660,7 +32712,7 @@
                   "description": "Nobody ended it and its last sign of life is older than the stranded threshold, so\nmaintenance closed it. The record says so: an episode closed this way is\n`interrupted`, because a reader resuming from it needs to know it may be incomplete."
                 }
               ],
-              "description": "What moved an episode. The vocabulary the ADR 0041 audit needs: `open`, `resume`,\n`checkpoint`, `detach`, `close`, `recover`.\n\nOne of them does not change the state, and it is a transition anyway. A checkpoint\nleaves an open episode open — but it is one of the two events whose *absence* is what\nthe audit was looking for, and an event that is modelled as \"nothing happened\" cannot\nbe counted. The six days of silence were six days in which `session.started` and\n`session.closed` kept arriving and the two events that produce the records a worker\nresumes from did not. A vocabulary in which those two are not events is a vocabulary in\nwhich that outage is invisible.\n\n```\nuse majordomus_cli::session::{EpisodeState, Transition};\n\n// a checkpoint is a transition that does not move the state, and says so\nlet c = Transition::Checkpoint;\nassert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));\nassert!(!c.moves_state());\n\n// a resume is canonically the return to a detached episode; a provider's start event\n// arriving at one that is already open is the same transition seen from `Open`, which\n// the machine allows without a move\nassert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open));\n\n// and every transition's own move is one the machine allows\nfor t in Transition::ALL {\n    let (from, to) = t.from_to();\n    assert!(from.may_move_to(to), \"{} is not a legal move\", t.as_str());\n}\n```"
+              "description": "What moved an episode. The vocabulary the ADR 0052 audit needs: `open`, `resume`,\n`checkpoint`, `detach`, `close`, `recover`.\n\nOne of them does not change the state, and it is a transition anyway. A checkpoint\nleaves an open episode open — but it is one of the two events whose *absence* is what\nthe audit was looking for, and an event that is modelled as \"nothing happened\" cannot\nbe counted. The six days of silence were six days in which `session.started` and\n`session.closed` kept arriving and the two events that produce the records a worker\nresumes from did not. A vocabulary in which those two are not events is a vocabulary in\nwhich that outage is invisible.\n\n```\nuse majordomus_cli::session::{EpisodeState, Transition};\n\n// a checkpoint is a transition that does not move the state, and says so\nlet c = Transition::Checkpoint;\nassert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));\nassert!(!c.moves_state());\n\n// a resume is canonically the return to a detached episode; a provider's start event\n// arriving at one that is already open is the same transition seen from `Open`, which\n// the machine allows without a move\nassert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open));\n\n// and every transition's own move is one the machine allows\nfor t in Transition::ALL {\n    let (from, to) = t.from_to();\n    assert!(from.may_move_to(to), \"{} is not a legal move\", t.as_str());\n}\n```"
             }
           }
         }

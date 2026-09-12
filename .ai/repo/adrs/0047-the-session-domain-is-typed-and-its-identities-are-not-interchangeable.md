@@ -12,7 +12,7 @@ tags:
   - identity
   - rust
 related:
-  - file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md
+  - file:.ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md
   - file:.ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md
   - file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md
   - file:apps/majordomus-cli/src/session/mod.rs
@@ -25,7 +25,7 @@ provenance:
 
 ## Context
 
-ADR 0041 settled the direction: one canonical session/continuity domain service in
+ADR 0052 settled the direction: one canonical session/continuity domain service in
 `apps/majordomus-cli`, owning the typed lifecycle state machine, identity, events,
 freshness, persistence, recovery and projection, with `.envrc`, the provider hook shims,
 the CLI, MCP, HTTP and the Cockpit as adapters and projections over it. It did not build
@@ -58,7 +58,7 @@ refuses the comparison that prose could not.
 
 ### An episode is not a thing that happens inside a task
 
-This is ADR 0041's finding and the model must make it unrepresentable rather than merely
+This is ADR 0052's finding and the model must make it unrepresentable rather than merely
 unwise. The representation that caused six days of silence is the one where an episode's
 lifecycle transition *reads* task state. A model in which `Episode` carries an
 `Option<TaskId>` and the transition function has no task parameter at all cannot express
@@ -160,13 +160,13 @@ The capability ids carry the module's name (`session_domain.machine`,
 tool name is a projection and not the identity.
 
 **Freshness is consumed, not restated.** `fresh | aging | stale | unknown | invalid`,
-`Thresholds::judge` and `epoch_seconds` arrive with ADR 0041 in
+`Thresholds::judge` and `epoch_seconds` arrive with ADR 0052 in
 `capability/builtin/continuity.rs`. This domain does not define a second vocabulary for
 age. It takes ages in seconds and answers one predicate the state machine needs —
-[`Episode::stranded_after`] — and the classification stays where ADR 0041 put it. The one
+[`Episode::stranded_after`] — and the classification stays where ADR 0052 put it. The one
 piece of time arithmetic this change adds is [`crate::peers::epoch_seconds`], the exact
 inverse of the `rfc3339` formatter that already lives there, placed beside it so the pair
-is one thing; when ADR 0041 lands, `continuity.rs`'s copy is deleted in favour of it.
+is one thing; when ADR 0052 lands, `continuity.rs`'s copy is deleted in favour of it.
 
 ## Alternatives rejected
 
@@ -176,7 +176,7 @@ than textual, in the one subsystem where a silently wrong merge is invisible unt
 resumes from a record that is not theirs. The domain is built first, beside the shell, and
 the shell is moved onto it when it is still.
 
-**A second store for episodes.** Rejected by ADR 0041 in advance and again here. The ledger
+**A second store for episodes.** Rejected by ADR 0052 in advance and again here. The ledger
 and the record directories are the substrate. A second store is a second account of events
 the first one holds, which is the class of defect this whole subsystem keeps producing.
 
@@ -208,7 +208,7 @@ documentation, runnable examples and module coverage. Every public item added he
 a doctest.
 
 `peers::epoch_seconds` and `continuity::epoch_seconds` will both exist for as long as ADR
-0041's branch and this one are both unmerged. That is a known, textual, one-hunk conflict
+0052's branch and this one are both unmerged. That is a known, textual, one-hunk conflict
 and it is recorded here so that whoever merges second deletes the continuity copy rather
 than renaming one of them.
 
@@ -220,10 +220,10 @@ revertible.
 2. `majordomus session start` delegates to the domain's opener; the shell keeps the
    argument parsing and the human output.
 3. The provider hook shims call the domain directly instead of `capture session`, so the
-   receipt events of ADR 0041 are written by the thing that knows whether the work
+   receipt events of ADR 0052 are written by the thing that knows whether the work
    afterwards completed.
 4. `checkpoint` and `handover` record against the episode rather than the task, which is
-   ADR 0041's own change and is already on its branch; at that point the shell's
+   ADR 0052's own change and is already on its branch; at that point the shell's
    `lib/checkpoint.sh` and `lib/handover.sh` become argument parsing and rendering.
 5. The read side — `continuity.state`, `lifecycle.*`, `episodes.*` and the Cockpit — is
    repointed at the domain's aggregates, and the duplicated resolution in `continuity.rs`
