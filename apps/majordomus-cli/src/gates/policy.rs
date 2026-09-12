@@ -322,9 +322,7 @@ impl CompletionPolicy {
         self.questions
             .iter()
             .filter_map(|q| match q.kind() {
-                QuestionSource::Gate(g) if !gates.iter().any(|x| *x == g) => {
-                    Some(format!("{}:{g}", q.id))
-                }
+                QuestionSource::Gate(g) if !gates.contains(&g) => Some(format!("{}:{g}", q.id)),
                 _ => None,
             })
             .collect()
