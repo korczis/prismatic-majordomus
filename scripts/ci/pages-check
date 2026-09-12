@@ -87,6 +87,16 @@ bad()  { printf 'FAIL  %s\n' "$*"; fail=1; }
 note() { printf 'note  %s\n' "$*"; }
 fail=0
 on_trunk=0
+behind=""
+
+# The commit of the trunk a gh-pages commit is the site of. The deploy commit names its source:
+# `deploy: site from <sha> (registry <hash>), N routes`. scripts/site-deploy writes it and this
+# is the only reader of it, used for the head of the branch in 1 and for whichever commit
+# GitHub built in 4. Empty when the commit is not here or does not say.
+source_of() {
+  { git log -1 --format=%s "$1" 2>/dev/null || true; } \
+    | sed -n 's/^deploy: site from \([0-9a-f][0-9a-f]*\).*/\1/p'
+}
 
 # ---------------------------------------------------------------- 1. what was published
 git fetch -q "$REMOTE" "$BRANCH" "$TRUNK" 2>/dev/null || true
@@ -96,10 +106,9 @@ if ! git rev-parse --verify -q "$REMOTE/$BRANCH" >/dev/null; then
 fi
 
 subject="$(git log -1 --format=%s "$REMOTE/$BRANCH")"
-# The deploy commit names its source: `deploy: site from <sha> (registry <hash>), N routes`.
-# scripts/site-deploy writes it, and this is the only reader; a deploy that stopped saying
-# where it came from is itself the failure, so an unreadable subject is not tolerated.
-source_sha="$(printf '%s' "$subject" | sed -n 's/^deploy: site from \([0-9a-f][0-9a-f]*\).*/\1/p')"
+# A deploy that stopped saying where it came from is itself the failure, so an unreadable
+# subject is not tolerated.
+source_sha="$(source_of "$REMOTE/$BRANCH")"
 if [ -z "$source_sha" ]; then
   say "pages-check: the head of $BRANCH does not name the commit it was built from:"
   say "             $subject"
@@ -262,16 +271,56 @@ else
   b_status="$(printf '%s' "$reading" | cut -f1)"
   b_commit="$(printf '%s' "$reading" | cut -f2)"
   b_error="$(printf '%s' "$reading" | cut -f3)"
+  # What the build is a build of, in the trunk's terms. The build's commit is a gh-pages commit —
+  # a deploy — and a gh-pages sha on its own says nothing about how current the site is. On
+  # 2026-09-12 this line read `ok GitHub's own Pages build of 7a7fe00b4abb is built` directly
+  # under `FAIL the site owes a publication`, and it read as "the current build is fine": it was
+  # the build of the site from acebf3d, 34 commits behind master's head, and nothing in the line
+  # said so. True, and about a subject it did not name. Whether the trunk owes a publication is
+  # judged in 3; this states the distance so that 4 cannot be read as an answer to 3.
+  built_of="the published commit ${source_sha:0:12}, the head of $BRANCH"
+  if [ "$on_trunk" != 1 ]; then
+    built_of="$built_of, which is not on $TRUNK"
+  elif [ "$behind" = 0 ]; then
+    built_of="$built_of, which is $TRUNK's head"
+  else
+    built_of="$built_of, $behind commit(s) behind $TRUNK's head"
+  fi
   case "$rc" in
-    0)  ok "GitHub's own Pages build of ${b_commit:0:12} is $b_status" ;;
-    10) bad "GitHub's own Pages build of ${b_commit:0:12} — the head of $BRANCH — errored: $b_error"
+    # `scripts/pages built` answers 0 only for a build of the commit it was asked about. A 0 for
+    # any other commit is that contract broken, and a build of something else is not a build of
+    # what was published: it is reported as not measured rather than as an `ok` about the wrong
+    # subject.
+    0)  if [ "$b_commit" = "$head_sha" ]; then
+          ok "GitHub's own Pages build of ${b_commit:0:12} is $b_status — a build of $built_of"
+        else
+          note "scripts/pages built answered $b_status for ${b_commit:0:12}, not for the head of $BRANCH ${head_sha:0:12} it was asked about; not measured"
+        fi ;;
+    10) bad "GitHub's own Pages build of ${b_commit:0:12} — $built_of — errored: $b_error"
         say "      the branch is right and the site is not; re-run the build by dispatching the"
         say "      pages workflow, or push $BRANCH again. The pages workflow goes red for this"
         say "      now as well, at the moment it happens; this is what notices afterwards." ;;
     *)  if [ "$b_status" = unreadable ] || [ -z "$b_status" ]; then
           note "GitHub's Pages build could not be read (${b_error:-no gh, no token, or no pages:read}); not measured"
+        elif [ "$b_commit" = "$head_sha" ]; then
+          # A build of the head still queued or building. Saying "not the head" here, as this
+          # line once did for every non-zero answer, named a subject that was wrong.
+          note "GitHub's own Pages build of ${b_commit:0:12} — $built_of — is $b_status; not a verdict yet"
         else
-          note "GitHub's newest Pages build is of ${b_commit:0:12} ($b_status), not the head of $BRANCH ${head_sha:0:12}"
+          # GitHub's newest build is of some other gh-pages commit: a deploy it has not built
+          # yet, or one it never will. Which deploy that was, and how far back, is stated; the
+          # published commit's own build was not measured, and a site not serving what was
+          # published is 2's refusal to make, from the site itself.
+          older="$(source_of "$b_commit")"
+          older="${older:+, the site from ${older:0:12}}"
+          if [ -n "$b_commit" ] && git merge-base --is-ancestor "$b_commit" "$head_sha" 2>/dev/null; then
+            older="$older, $(git rev-list --count "$b_commit..$head_sha") deploy(s) behind the head of $BRANCH"
+          elif [ -n "$b_commit" ] && git cat-file -e "$b_commit^{commit}" 2>/dev/null; then
+            older="$older, not an ancestor of the head of $BRANCH"
+          else
+            older="$older, a commit not in this clone"
+          fi
+          note "GitHub's newest Pages build is of ${b_commit:0:12} ($b_status$older), not of $built_of; that build was not measured"
         fi ;;
   esac
 fi
