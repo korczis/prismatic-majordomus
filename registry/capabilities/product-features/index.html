@@ -213,10 +213,21 @@ written anywhere.</p><div class="mt-3 overflow-x-auto rounded-base border border
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only features made of this shell command. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">status</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Only features of this status. Absent means the stable ones; pass `any` for
+everything the model holds. <span class="font-mono text-xs text-body-subtle">default null</span></td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">featured</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only the features the homepage shows. <span class="font-mono text-xs text-body-subtle">default null</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">surface</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Only features exposed through this surface: `cli`, `api`, `mcp`, `cockpit`, `docs`. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">module</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -228,40 +239,37 @@ written anywhere.</p><div class="mt-3 overflow-x-auto rounded-base border border
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Case-insensitive text, matched against the identity, the titles, the headline, the
 summary, the tags and the body. <span class="font-mono text-xs text-body-subtle">default null</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">status</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only features of this status. Absent means the stable ones; pass `any` for
-everything the model holds. <span class="font-mono text-xs text-body-subtle">default null</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">surface</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only features exposed through this surface: `cli`, `api`, `mcp`, `cockpit`, `docs`. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;What a listing is narrowed by. Every field is optional and they compose as a\nconjunction; the values a caller may pass are the facets the model derives, never a list\nwritten anywhere.&quot;,
+  &quot;title&quot;: &quot;ProductQuery&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;area&quot;: {
-      &quot;default&quot;: null,
       &quot;description&quot;: &quot;Only features serving this operational area.&quot;,
+      &quot;default&quot;: null,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
     },
     &quot;command&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only features made of this shell command.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Only features made of this shell command.&quot;,
+      &quot;default&quot;: null
+    },
+    &quot;status&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Only features of this status. Absent means the stable ones; pass `any` for\neverything the model holds.&quot;,
+      &quot;default&quot;: null
     },
     &quot;featured&quot;: {
       &quot;default&quot;: null,
@@ -271,41 +279,33 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
         &quot;null&quot;
       ]
     },
-    &quot;module&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only features made of this capability module.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;q&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Case-insensitive text, matched against the identity, the titles, the headline, the\nsummary, the tags and the body.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;status&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only features of this status. Absent means the stable ones; pass `any` for\neverything the model holds.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
     &quot;surface&quot;: {
-      &quot;default&quot;: null,
       &quot;description&quot;: &quot;Only features exposed through this surface: `cli`, `api`, `mcp`, `cockpit`, `docs`.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;default&quot;: null
+    },
+    &quot;module&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Only features made of this capability module.&quot;,
+      &quot;default&quot;: null
+    },
+    &quot;q&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;Case-insensitive text, matched against the identity, the titles, the headline, the\nsummary, the tags and the body.&quot;
     }
   },
-  &quot;title&quot;: &quot;ProductQuery&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;What a listing is narrowed by. Every field is optional and they compose as a\nconjunction; the values a caller may pass are the facets the model derives, never a list\nwritten anywhere.&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -314,25 +314,25 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">counts</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The counts.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">features</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The matching features, in presentation order.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">counts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The hash of the model&#39;s sources and derived facts.</td>
+        <td class="px-3 py-2 text-body">The counts.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">[`SCHEMA`].</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The hash of the model&#39;s sources and derived facts.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">surfaces</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -343,95 +343,206 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;The features as a client reads them.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;FeatureCounts&quot;: {
-      &quot;description&quot;: &quot;How much stands behind a feature, every number derived.&quot;,
+    &quot;ProductCounts&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;adrs&quot;: {
-          &quot;description&quot;: &quot;Decisions it names.&quot;,
+        &quot;modules_covered&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Modules a stable feature names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;commands_covered&quot;: {
+          &quot;description&quot;: &quot;Commands a stable feature names.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;capabilities&quot;: {
-          &quot;description&quot;: &quot;Builtin capabilities of the modules it names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;kinds&quot;: {
           &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Kinds of the layer a feature can present.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;claims&quot;: {
-          &quot;description&quot;: &quot;Claims it names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;features_all&quot;: {
+          &quot;description&quot;: &quot;Features of every status, drafts included.&quot;,
           &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;cli_paths&quot;: {
-          &quot;description&quot;: &quot;Command-line paths of the executable among them.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;providers&quot;: {
           &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Providers the tool has an adapter for.&quot;,
           &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;kinds_covered&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Kinds a stable feature names.&quot;,
+          &quot;minimum&quot;: 0
         },
         &quot;commands&quot;: {
-          &quot;description&quot;: &quot;Public commands of the shell tool it names.&quot;,
+          &quot;description&quot;: &quot;Public commands of the shell tool.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;features&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Stable features.&quot;
+        },
+        &quot;featured&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Stable features the homepage shows.&quot;
+        },
+        &quot;modules&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Builtin modules of the executable, and how many a stable feature names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        }
+      },
+      &quot;description&quot;: &quot;How much the model holds. Every count anywhere is one of these.&quot;,
+      &quot;required&quot;: [
+        &quot;features&quot;,
+        &quot;features_all&quot;,
+        &quot;featured&quot;,
+        &quot;providers&quot;,
+        &quot;modules&quot;,
+        &quot;modules_covered&quot;,
+        &quot;commands&quot;,
+        &quot;commands_covered&quot;,
+        &quot;kinds&quot;,
+        &quot;kinds_covered&quot;
+      ]
+    },
+    &quot;SurfaceInfo&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One surface of the vocabulary, as a client reads it.&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`cli`, `api`, `mcp`, `cockpit` or `docs`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;features&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many stable features it exposes.&quot;
+        },
+        &quot;route&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The route on the website where the surface is documented.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The name a person reads.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;route&quot;,
+        &quot;features&quot;
+      ]
+    },
+    &quot;FeatureCounts&quot;: {
+      &quot;properties&quot;: {
+        &quot;http_routes&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;HTTP routes among them.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;moments&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Moments it answers.&quot;
+        },
+        &quot;cli_paths&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Command-line paths of the executable among them.&quot;
+        },
+        &quot;adrs&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Decisions it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;commands&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Public commands of the shell tool it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;mcp_tools&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;MCP tools among them.&quot;
+        },
+        &quot;objects&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Objects of the kinds it names.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;rules&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Rules it names.&quot;
+        },
+        &quot;use_cases&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Use cases it names.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;docs&quot;: {
+          &quot;minimum&quot;: 0,
           &quot;description&quot;: &quot;Documents it names.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;enforced_rules&quot;: {
-          &quot;description&quot;: &quot;Rules the tool enforces among them.&quot;,
+        &quot;capabilities&quot;: {
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;http_routes&quot;: {
-          &quot;description&quot;: &quot;HTTP routes among them.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Builtin capabilities of the modules it names.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;mcp_resources&quot;: {
           &quot;description&quot;: &quot;MCP resources among them, plus one per object of the kinds it names.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;enforced_rules&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Rules the tool enforces among them.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;mcp_tools&quot;: {
-          &quot;description&quot;: &quot;MCP tools among them.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;claims&quot;: {
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;moments&quot;: {
-          &quot;description&quot;: &quot;Moments it answers.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;objects&quot;: {
-          &quot;description&quot;: &quot;Objects of the kinds it names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;rules&quot;: {
-          &quot;description&quot;: &quot;Rules it names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;use_cases&quot;: {
-          &quot;description&quot;: &quot;Use cases it names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Claims it names.&quot;
         }
       },
+      &quot;description&quot;: &quot;How much stands behind a feature, every number derived.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;capabilities&quot;,
         &quot;mcp_tools&quot;,
@@ -447,40 +558,37 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
         &quot;claims&quot;,
         &quot;use_cases&quot;,
         &quot;moments&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;FeatureEvidence&quot;: {
-      &quot;description&quot;: &quot;What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature&#39;s maturity.&quot;,
-      &quot;properties&quot;: {
-        &quot;claims&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;description&quot;: &quot;Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;modules&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;description&quot;: &quot;The modules it names by stability.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;claims&quot;,
-        &quot;modules&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;FeatureSummary&quot;: {
       &quot;description&quot;: &quot;One feature as a listing shows it: everything a card needs and nothing a page needs.&quot;,
       &quot;properties&quot;: {
+        &quot;headline&quot;: {
+          &quot;description&quot;: &quot;The promise a visitor reads first.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;tags&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Free tags.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;summary&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line: what it does.&quot;
+        },
+        &quot;audiences&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The audiences it is written for.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The feature as a heading.&quot;
+        },
         &quot;areas&quot;: {
           &quot;description&quot;: &quot;The operational areas it serves.&quot;,
           &quot;items&quot;: {
@@ -488,12 +596,9 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;audiences&quot;: {
-          &quot;description&quot;: &quot;The audiences it is written for.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;route&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Derived: `/features/&lt;id&gt;/`.&quot;
         },
         &quot;counts&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/FeatureCounts&quot;,
@@ -507,50 +612,27 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
           &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;headline&quot;: {
-          &quot;description&quot;: &quot;The promise a visitor reads first.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity and the slug.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;Derived: `/features/&lt;id&gt;/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;
         },
         &quot;status&quot;: {
           &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line: what it does.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;surfaces&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Surfaces&quot;,
-          &quot;description&quot;: &quot;Derived: the interfaces it is exposed through.&quot;
-        },
-        &quot;tags&quot;: {
-          &quot;description&quot;: &quot;Free tags.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The feature as a heading.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;weight&quot;: {
-          &quot;description&quot;: &quot;Presentation order.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;format&quot;: &quot;uint32&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;description&quot;: &quot;Presentation order.&quot;
+        },
+        &quot;surfaces&quot;: {
+          &quot;description&quot;: &quot;Derived: the interfaces it is exposed through.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Surfaces&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The identity and the slug.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -572,128 +654,47 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;ProductCounts&quot;: {
-      &quot;description&quot;: &quot;How much the model holds. Every count anywhere is one of these.&quot;,
+    &quot;FeatureEvidence&quot;: {
+      &quot;required&quot;: [
+        &quot;claims&quot;,
+        &quot;modules&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature&#39;s maturity.&quot;,
       &quot;properties&quot;: {
-        &quot;commands&quot;: {
-          &quot;description&quot;: &quot;Public commands of the shell tool.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;commands_covered&quot;: {
-          &quot;description&quot;: &quot;Commands a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;featured&quot;: {
-          &quot;description&quot;: &quot;Stable features the homepage shows.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;features&quot;: {
-          &quot;description&quot;: &quot;Stable features.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;features_all&quot;: {
-          &quot;description&quot;: &quot;Features of every status, drafts included.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;kinds&quot;: {
-          &quot;description&quot;: &quot;Kinds of the layer a feature can present.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;kinds_covered&quot;: {
-          &quot;description&quot;: &quot;Kinds a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;claims&quot;: {
+          &quot;description&quot;: &quot;Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`.&quot;,
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;format&quot;: &quot;uint&quot;
+          },
+          &quot;type&quot;: &quot;object&quot;
         },
         &quot;modules&quot;: {
-          &quot;description&quot;: &quot;Builtin modules of the executable, and how many a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;modules_covered&quot;: {
-          &quot;description&quot;: &quot;Modules a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;providers&quot;: {
-          &quot;description&quot;: &quot;Providers the tool has an adapter for.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;format&quot;: &quot;uint&quot;
+          },
+          &quot;description&quot;: &quot;The modules it names by stability.&quot;,
+          &quot;type&quot;: &quot;object&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;features&quot;,
-        &quot;features_all&quot;,
-        &quot;featured&quot;,
-        &quot;providers&quot;,
-        &quot;modules&quot;,
-        &quot;modules_covered&quot;,
-        &quot;commands&quot;,
-        &quot;commands_covered&quot;,
-        &quot;kinds&quot;,
-        &quot;kinds_covered&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SurfaceInfo&quot;: {
-      &quot;description&quot;: &quot;One surface of the vocabulary, as a client reads it.&quot;,
-      &quot;properties&quot;: {
-        &quot;features&quot;: {
-          &quot;description&quot;: &quot;How many stable features it exposes.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;`cli`, `api`, `mcp`, `cockpit` or `docs`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;The route on the website where the surface is documented.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The name a person reads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;route&quot;,
-        &quot;features&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
     },
     &quot;Surfaces&quot;: {
-      &quot;description&quot;: &quot;The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document.&quot;,
       &quot;properties&quot;: {
         &quot;api&quot;: {
           &quot;description&quot;: &quot;The HTTP routes under `/api/v1/`, and the OpenAPI document over them.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;cli&quot;: {
-          &quot;description&quot;: &quot;The command line: the executable&#39;s own, or the shell tool&#39;s.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The command line: the executable&#39;s own, or the shell tool&#39;s.&quot;
         },
         &quot;cockpit&quot;: {
-          &quot;description&quot;: &quot;The Cockpit.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The Cockpit.&quot;
         },
         &quot;docs&quot;: {
           &quot;description&quot;: &quot;The documentation.&quot;,
@@ -711,36 +712,8 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
         &quot;cockpit&quot;,
         &quot;docs&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The features as a client reads them.&quot;,
-  &quot;properties&quot;: {
-    &quot;counts&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ProductCounts&quot;,
-      &quot;description&quot;: &quot;The counts.&quot;
-    },
-    &quot;features&quot;: {
-      &quot;description&quot;: &quot;The matching features, in presentation order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/FeatureSummary&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;fingerprint&quot;: {
-      &quot;description&quot;: &quot;The hash of the model&#39;s sources and derived facts.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;surfaces&quot;: {
-      &quot;description&quot;: &quot;The surface vocabulary, with how many stable features each exposes.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/SurfaceInfo&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document.&quot;
     }
   },
   &quot;required&quot;: [
@@ -751,7 +724,34 @@ everything the model holds. <span class="font-mono text-xs text-body-subtle">def
     &quot;features&quot;
   ],
   &quot;title&quot;: &quot;FeatureList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;properties&quot;: {
+    &quot;features&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The matching features, in presentation order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/FeatureSummary&quot;
+      }
+    },
+    &quot;counts&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ProductCounts&quot;,
+      &quot;description&quot;: &quot;The counts.&quot;
+    },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;fingerprint&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The hash of the model&#39;s sources and derived facts.&quot;
+    },
+    &quot;surfaces&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/SurfaceInfo&quot;
+      },
+      &quot;description&quot;: &quot;The surface vocabulary, with how many stable features each exposes.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    }
+  }
 }</pre></div>
   </details>
 </div>

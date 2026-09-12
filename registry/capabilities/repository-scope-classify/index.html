@@ -211,19 +211,19 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which path to judge.&quot;,
+  &quot;required&quot;: [
+    &quot;path&quot;
+  ],
   &quot;properties&quot;: {
     &quot;path&quot;: {
       &quot;description&quot;: &quot;Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input.&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;path&quot;
-  ],
-  &quot;title&quot;: &quot;ClassifyInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;Which path to judge.&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;ClassifyInput&quot;
 }</pre></div>
   </details>
 </div>
@@ -247,16 +247,6 @@
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Whether the path exists in the work tree; a path that does not is judged by name.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">path</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The path, repository-relative, as judged.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">reason</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Why it is out; absent when it is in.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">rule</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -267,14 +257,30 @@
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">In or out.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">path</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The path, repository-relative, as judged.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reason</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Why it is out; absent when it is in.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;One path, judged.&quot;,
+  &quot;required&quot;: [
+    &quot;path&quot;,
+    &quot;verdict&quot;,
+    &quot;exists&quot;,
+    &quot;directory&quot;
+  ],
   &quot;$defs&quot;: {
     &quot;Reason&quot;: {
-      &quot;description&quot;: &quot;Why a path is out. The order is the order the rules decide in.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;path&quot;,
@@ -282,19 +288,19 @@
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;secret&quot;,
-          &quot;description&quot;: &quot;A secret.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A secret.&quot;
         },
         {
-          &quot;const&quot;: &quot;generated&quot;,
           &quot;description&quot;: &quot;A generated asset.&quot;,
+          &quot;const&quot;: &quot;generated&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;archive&quot;,
           &quot;description&quot;: &quot;An archive.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;archive&quot;
         },
         {
           &quot;const&quot;: &quot;image&quot;,
@@ -307,9 +313,9 @@
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;pdf&quot;,
           &quot;description&quot;: &quot;A PDF document.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;pdf&quot;
         },
         {
           &quot;const&quot;: &quot;database_dump&quot;,
@@ -317,14 +323,14 @@
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;undeclared&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Matches no `in` pathspec.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;undeclared&quot;
         },
         {
-          &quot;const&quot;: &quot;fixture_over_limit&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A fixture over `out.fixtures.max_bytes`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;fixture_over_limit&quot;
         },
         {
           &quot;const&quot;: &quot;over_limit&quot;,
@@ -332,19 +338,20 @@
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;binary&quot;,
-          &quot;description&quot;: &quot;Content with a NUL byte in its first [`SNIFF_BYTES`]: not text.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Content with a NUL byte in its first [`SNIFF_BYTES`]: not text.&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Why a path is out. The order is the order the rules decide in.&quot;
     },
     &quot;Verdict&quot;: {
       &quot;description&quot;: &quot;In or out.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;in&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;in&quot;
         },
         {
           &quot;const&quot;: &quot;out&quot;,
@@ -354,12 +361,11 @@
       ]
     }
   },
-  &quot;description&quot;: &quot;One path, judged.&quot;,
   &quot;properties&quot;: {
     &quot;bytes&quot;: {
-      &quot;description&quot;: &quot;The size, when the path is an existing file.&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
       &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;The size, when the path is an existing file.&quot;,
       &quot;type&quot;: [
         &quot;integer&quot;,
         &quot;null&quot;
@@ -373,11 +379,23 @@
       &quot;description&quot;: &quot;Whether the path exists in the work tree; a path that does not is judged by name.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
+    &quot;rule&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The pattern or limit that decided: the `in` pathspec, the `out` pattern, `binary`,\n`max_bytes` or `fixtures.max_bytes`; absent for `undeclared`.&quot;
+    },
+    &quot;verdict&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Verdict&quot;,
+      &quot;description&quot;: &quot;In or out.&quot;
+    },
     &quot;path&quot;: {
-      &quot;description&quot;: &quot;The path, repository-relative, as judged.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The path, repository-relative, as judged.&quot;
     },
     &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why it is out; absent when it is in.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/Reason&quot;
@@ -385,27 +403,9 @@
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Why it is out; absent when it is in.&quot;
-    },
-    &quot;rule&quot;: {
-      &quot;description&quot;: &quot;The pattern or limit that decided: the `in` pathspec, the `out` pattern, `binary`,\n`max_bytes` or `fixtures.max_bytes`; absent for `undeclared`.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
       ]
-    },
-    &quot;verdict&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Verdict&quot;,
-      &quot;description&quot;: &quot;In or out.&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;path&quot;,
-    &quot;verdict&quot;,
-    &quot;exists&quot;,
-    &quot;directory&quot;
-  ],
   &quot;title&quot;: &quot;Classification&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>

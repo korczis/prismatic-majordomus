@@ -201,9 +201,9 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -226,58 +226,58 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;GraphList&quot;,
+  &quot;required&quot;: [
+    &quot;count&quot;,
+    &quot;graphs&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;count&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many.&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;graphs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Each, described but not derived.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/GraphInfo&quot;
+      }
+    }
+  },
   &quot;$defs&quot;: {
     &quot;GraphInfo&quot;: {
-      &quot;description&quot;: &quot;One graph the executable can derive: what it is, without deriving it.&quot;,
-      &quot;properties&quot;: {
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;One paragraph.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;What it is derived from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The short name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
         &quot;description&quot;,
         &quot;source&quot;
       ],
+      &quot;description&quot;: &quot;One graph the executable can derive: what it is, without deriving it.&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The identity.&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;What it is derived from.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The short name.&quot;
+        },
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;One paragraph.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;Every graph this executable derives.&quot;,
-  &quot;properties&quot;: {
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;graphs&quot;: {
-      &quot;description&quot;: &quot;Each, described but not derived.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/GraphInfo&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;count&quot;,
-    &quot;graphs&quot;
-  ],
-  &quot;title&quot;: &quot;GraphList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;Every graph this executable derives.&quot;
 }</pre></div>
   </details>
 </div>

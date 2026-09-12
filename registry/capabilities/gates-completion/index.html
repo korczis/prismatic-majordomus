@@ -236,7 +236,7 @@ selects a gate whose runner is unavailable is a plan whose verdict never arrives
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task&#39;s own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() &amp;&amp; mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\&quot;docs/CLI.md\&quot;.into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\&quot;docs/CLI.md\&quot;]);\n```\nWhich change to judge completion over.&quot;,
   &quot;properties&quot;: {
     &quot;base&quot;: {
@@ -248,13 +248,13 @@ selects a gate whose runner is unavailable is a plan whose verdict never arrives
     },
     &quot;changed&quot;: {
       &quot;description&quot;: &quot;The changed paths, repository-relative. Absent means the task&#39;s own change set:\neverything between the commit the task started at and the working tree.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
       &quot;type&quot;: [
         &quot;array&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
     },
     &quot;on_demand&quot;: {
       &quot;description&quot;: &quot;Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives.&quot;,
@@ -264,8 +264,8 @@ selects a gate whose runner is unavailable is a plan whose verdict never arrives
       ]
     }
   },
-  &quot;title&quot;: &quot;CompletionInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;CompletionInput&quot;
 }</pre></div>
   </details>
 </div>
@@ -301,6 +301,39 @@ renders it, and all of them are reading this one execution.</p><div class="mt-3 
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">unverified</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The required gates that have never reported, or cannot be judged here. A task
+finished over these is finished unverified, and the record says so.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">task</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The task, as its record declares it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tallies</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many gates stand in each status, by word.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">gates</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every gate of the model, what refuses first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">obligations</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Which obligations the change set implies, and whether the task promised them. The
+judgement of a declared one is `obligations.closure`&#39;s, not this module&#39;s.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">finishable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">False when a required gate is known to be failing, stale, or blocked by one that is.
+Absence of a verdict does not make this false — it makes `unverified` non-empty.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">blocking</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -312,27 +345,10 @@ renders it, and all of them are reading this one execution.</p><div class="mt-3 
         <td class="px-3 py-2 text-body">What could not be established, each as one line. Never empty when something was
 skipped: a gap is reported rather than left to be inferred.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">finishable</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">False when a required gate is known to be failing, stale, or blocked by one that is.
-Absence of a verdict does not make this false — it makes `unverified` non-empty.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">gates</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every gate of the model, what refuses first.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">model</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The CI model this was judged against.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">obligations</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Which obligations the change set implies, and whether the task promised them. The
-judgement of a declared one is `obligations.closure`&#39;s, not this module&#39;s.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">plan</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -351,124 +367,109 @@ judgement of a declared one is `obligations.closure`&#39;s, not this module&#39;
 finished, each with the source that answered it and the evidence it read. Composed
 from the obligation closure, the gates and the change set; a question nothing here
 reaches is `unknown` and names the command that would answer it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tallies</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many gates stand in each status, by word.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">task</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The task, as its record declares it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">unverified</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The required gates that have never reported, or cannot be judged here. A task
-finished over these is finished unverified, and the record says so.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;unverified&quot;: {
+      &quot;description&quot;: &quot;The required gates that have never reported, or cannot be judged here. A task\nfinished over these is finished unverified, and the record says so.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;task&quot;: {
+      &quot;description&quot;: &quot;The task, as its record declares it.&quot;,
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ]
+    },
+    &quot;tallies&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;How many gates stand in each status, by word.&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;uint&quot;
+      }
+    },
+    &quot;gates&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Gate&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every gate of the model, what refuses first.&quot;
+    },
+    &quot;obligations&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ImpliedObligation&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Which obligations the change set implies, and whether the task promised them. The\njudgement of a declared one is `obligations.closure`&#39;s, not this module&#39;s.&quot;
+    },
+    &quot;finishable&quot;: {
+      &quot;description&quot;: &quot;False when a required gate is known to be failing, stale, or blocked by one that is.\nAbsence of a verdict does not make this false — it makes `unverified` non-empty.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;blocking&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The required gates whose status refuses completion.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;findings&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;What could not be established, each as one line. Never empty when something was\nskipped: a gap is reported rather than left to be inferred.&quot;
+    },
+    &quot;model&quot;: {
+      &quot;description&quot;: &quot;The CI model this was judged against.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;plan&quot;: {
+      &quot;description&quot;: &quot;Affected or full, and why.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/GatePlan&quot;
+    },
+    &quot;present&quot;: {
+      &quot;description&quot;: &quot;True when a task record was found in this checkout.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;questions&quot;: {
+      &quot;description&quot;: &quot;The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates and the change set; a question nothing here\nreaches is `unknown` and names the command that would answer it.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/DoneQuestion&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;present&quot;,
+    &quot;model&quot;,
+    &quot;plan&quot;,
+    &quot;finishable&quot;,
+    &quot;tallies&quot;,
+    &quot;gates&quot;,
+    &quot;obligations&quot;,
+    &quot;questions&quot;
+  ],
+  &quot;title&quot;: &quot;Completion&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;ActiveTask&quot;: {
-      &quot;description&quot;: &quot;The active task of this checkout, when there is one.&quot;,
-      &quot;properties&quot;: {
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it started at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The task id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;outcome&quot;: {
-          &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;profile&quot;: {
-          &quot;description&quot;: &quot;The execution profile it runs under.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;requires&quot;: {
-          &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The paths it claims.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When it started.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;What is being worked on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;task&quot;,
-        &quot;profile&quot;,
-        &quot;outcome&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DoneQuestion&quot;: {
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \&quot;pushed\&quot;.into(),\n    question: \&quot;Has the commit reached the remote?\&quot;.into(),\n    status: GateStatus::Queued,\n    evidence: \&quot;the obligation is owed\&quot;.into(),\n    source: \&quot;obligation push (obligations.closure)\&quot;.into(),\n    remediation: \&quot;git push\&quot;.into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() &amp;&amp; !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.&quot;,
-      &quot;properties&quot;: {
-        &quot;evidence&quot;: {
-          &quot;description&quot;: &quot;What was actually read — never a restatement of the status.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The question&#39;s identity, stable across reports.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;question&quot;: {
-          &quot;description&quot;: &quot;The question, as a person would ask it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remediation&quot;: {
-          &quot;description&quot;: &quot;What would settle it, as a command.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;What answered it: an obligation token, a gate id, or the capability that would.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/GateStatus&quot;,
-          &quot;description&quot;: &quot;The answer, in the same vocabulary every gate uses.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;question&quot;,
-        &quot;status&quot;,
-        &quot;evidence&quot;,
-        &quot;source&quot;,
-        &quot;remediation&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;Gate&quot;: {
       &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{Gate, GateStatus};\n\nlet gate = Gate {\n    id: \&quot;rust-check\&quot;.into(),\n    title: \&quot;the crate builds, is formatted and passes its tests\&quot;.into(),\n    scope: \&quot;apps/majordomus-cli\&quot;.into(),\n    required: true,\n    status: GateStatus::Queued,\n    reason: \&quot;the plan selects it and no run has ever reported\&quot;.into(),\n    remediation: \&quot;majordomus evidence --gate rust-check --exit 0\&quot;.into(),\n    source: \&quot;the plan\&quot;.into(),\n    evidence: None,\n    inputs: vec![\&quot;apps/majordomus-cli/**\&quot;.into()],\n    inputs_hash: \&quot;3f0a\&quot;.into(),\n    evaluated_at: \&quot;2026-01-01T00:00:00Z\&quot;.into(),\n};\n// silence does not refuse and is not a pass either: it is a debt, reported as one\nassert!(!gate.status.refuses());\nassert!(gate.status.unverified());\nassert!(gate.evidence.is_none());\n```\nOne completion gate: what it is, whether it applies, what it said, and what to do.&quot;,
       &quot;properties&quot;: {
-        &quot;evaluated_at&quot;: {
-          &quot;description&quot;: &quot;When this judgement was made, RFC 3339 UTC. A judgement is about a moment.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;evidence&quot;: {
+          &quot;description&quot;: &quot;The run that last reported, when one has.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/GateRun&quot;
@@ -476,42 +477,14 @@ finished over these is finished unverified, and the record says so.</td>
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;The run that last reported, when one has.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The gate&#39;s identity in the model.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;inputs&quot;: {
-          &quot;description&quot;: &quot;The pathspecs its evidence is taken over, derived from the model.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;inputs_hash&quot;: {
-          &quot;description&quot;: &quot;The hash of those files as they stand now, when it could be taken.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          ]
         },
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;Why it is in this status, in words a worker can act on.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;remediation&quot;: {
-          &quot;description&quot;: &quot;What would settle it, as a command.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;required&quot;: {
-          &quot;description&quot;: &quot;True when the plan selects it and its verdict therefore decides completion. False\nfor a gate the plan left out, and for one whose runner is only had on demand.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
         &quot;scope&quot;: {
           &quot;description&quot;: &quot;What it is a gate over: the CI job that runs it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;Where the gate is declared: the model, and the command it runs.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;status&quot;: {
@@ -521,6 +494,37 @@ finished over these is finished unverified, and the record says so.</td>
         &quot;title&quot;: {
           &quot;description&quot;: &quot;One line naming it, from the model&#39;s own summary.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;inputs&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The pathspecs its evidence is taken over, derived from the model.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The gate&#39;s identity in the model.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;inputs_hash&quot;: {
+          &quot;description&quot;: &quot;The hash of those files as they stand now, when it could be taken.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;remediation&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What would settle it, as a command.&quot;
+        },
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Where the gate is declared: the model, and the command it runs.&quot;
+        },
+        &quot;evaluated_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When this judgement was made, RFC 3339 UTC. A judgement is about a moment.&quot;
+        },
+        &quot;required&quot;: {
+          &quot;description&quot;: &quot;True when the plan selects it and its verdict therefore decides completion. False\nfor a gate the plan left out, and for one whose runner is only had on demand.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         }
       },
       &quot;required&quot;: [
@@ -535,6 +539,253 @@ finished over these is finished unverified, and the record says so.</td>
         &quot;evaluated_at&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GatePlanMode&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The gates of the classes the changed paths fall in.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;affected&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Every gate but the on-demand ones: asked for, or escalated to.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;full&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GatePlanMode;\n\n// a plan is either the gates the change selects, or everything the runners allow\nassert_eq!(GatePlanMode::Affected.as_str(), \&quot;affected\&quot;);\nassert_eq!(GatePlanMode::Full.as_str(), \&quot;full\&quot;);\nassert_ne!(GatePlanMode::Affected, GatePlanMode::Full);\n```\nWhy the plan selects what it selects.&quot;
+    },
+    &quot;ActiveTask&quot;: {
+      &quot;description&quot;: &quot;The active task of this checkout, when there is one.&quot;,
+      &quot;properties&quot;: {
+        &quot;requires&quot;: {
+          &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;started_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it started.&quot;
+        },
+        &quot;head&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The commit it started at.&quot;
+        },
+        &quot;task&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is being worked on.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The task id.&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The execution profile it runs under.&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The paths it claims.&quot;
+        },
+        &quot;outcome&quot;: {
+          &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;task&quot;,
+        &quot;profile&quot;,
+        &quot;outcome&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;DoneQuestion&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \&quot;pushed\&quot;.into(),\n    question: \&quot;Has the commit reached the remote?\&quot;.into(),\n    status: GateStatus::Queued,\n    evidence: \&quot;the obligation is owed\&quot;.into(),\n    source: \&quot;obligation push (obligations.closure)\&quot;.into(),\n    remediation: \&quot;git push\&quot;.into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() &amp;&amp; !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.&quot;,
+      &quot;properties&quot;: {
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;What answered it: an obligation token, a gate id, or the capability that would.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;The answer, in the same vocabulary every gate uses.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/GateStatus&quot;
+        },
+        &quot;evidence&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What was actually read — never a restatement of the status.&quot;
+        },
+        &quot;remediation&quot;: {
+          &quot;description&quot;: &quot;What would settle it, as a command.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;question&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The question, as a person would ask it.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The question&#39;s identity, stable across reports.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;question&quot;,
+        &quot;status&quot;,
+        &quot;evidence&quot;,
+        &quot;source&quot;,
+        &quot;remediation&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ImpliedObligation&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::ImpliedObligation;\n\nlet owed = ImpliedObligation {\n    id: \&quot;tests\&quot;.into(),\n    title: \&quot;The cases the change obliges were run\&quot;.into(),\n    applicable: true,\n    declared: false,\n    reason: \&quot;lib/check.sh is an input of this obligation\&quot;.into(),\n    because: vec![\&quot;lib/check.sh\&quot;.into()],\n    remediation: \&quot;majordomus start --requires tests\&quot;.into(),\n};\n// applicable and undeclared is the gap nothing else reports: the change owes it and\n// the task promised nothing, so no validator holds anybody to it\nassert!(owed.applicable &amp;&amp; !owed.declared);\n```\nOne obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token&#39;s own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not.&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;applicable&quot;,
+        &quot;declared&quot;,
+        &quot;reason&quot;,
+        &quot;remediation&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it applies, or why it does not.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;declared&quot;: {
+          &quot;description&quot;: &quot;True when the task&#39;s `requires` names it, so `finish` already holds the task to it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;remediation&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What would discharge it.&quot;
+        },
+        &quot;because&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The changed paths that implied it, when paths did.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The obligation as a heading, from the vocabulary.&quot;
+        },
+        &quot;applicable&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;True when the change set, or the task&#39;s own declaration, makes it owed.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The token.&quot;
+        }
+      }
+    },
+    &quot;GateRun&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \&quot;2026-01-01T00:00:00Z\&quot;.into(),\n    head: \&quot;9b1e2d4\&quot;.into(),\n    branch: \&quot;master\&quot;.into(),\n    exit: 0,\n    command: \&quot;scripts/rust-check --ci\&quot;.into(),\n    inputs_hash: \&quot;3f0a\&quot;.into(),\n    session: \&quot;s-1\&quot;.into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \&quot;0000\&quot;);\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it.&quot;,
+      &quot;required&quot;: [
+        &quot;recorded_at&quot;,
+        &quot;head&quot;,
+        &quot;branch&quot;,
+        &quot;exit&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit the ledger&#39;s envelope stamped on it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The session that recorded it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;inputs_hash&quot;: {
+          &quot;description&quot;: &quot;The hash of the files that select the gate, as they stood when it ran.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch it was recorded on.&quot;
+        },
+        &quot;command&quot;: {
+          &quot;description&quot;: &quot;The command that produced it — narrative is not evidence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;exit&quot;: {
+          &quot;description&quot;: &quot;The exit status the gate reported. `0` is a pass.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;int64&quot;
+        },
+        &quot;recorded_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it was recorded, RFC 3339 UTC.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GatePlan&quot;: {
+      &quot;properties&quot;: {
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/GatePlanMode&quot;,
+          &quot;description&quot;: &quot;Affected, or full.&quot;
+        },
+        &quot;selected&quot;: {
+          &quot;description&quot;: &quot;Gate id to the reason it was selected, for the gates in the plan.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;changed&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The changed paths the plan was computed over, sorted.&quot;
+        },
+        &quot;unclassified&quot;: {
+          &quot;description&quot;: &quot;Changed paths no class of the model covers; each one escalates the plan.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;classes&quot;: {
+          &quot;description&quot;: &quot;The classes they fall in.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/GateClassMatch&quot;
+          }
+        },
+        &quot;excluded&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Gate id to the reason it was left out, for the gates that are not.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why, in words.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;mode&quot;,
+        &quot;reason&quot;,
+        &quot;changed&quot;,
+        &quot;classes&quot;,
+        &quot;unclassified&quot;,
+        &quot;selected&quot;,
+        &quot;excluded&quot;
+      ],
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{GateClassMatch, GatePlan, GatePlanMode};\nuse std::collections::BTreeMap;\n\nlet plan = GatePlan {\n    mode: GatePlanMode::Affected,\n    reason: \&quot;3 path(s) fall in 1 class\&quot;.into(),\n    changed: vec![\&quot;docs/CLI.md\&quot;.into()],\n    classes: vec![GateClassMatch { id: \&quot;docs\&quot;.into(), paths: vec![\&quot;docs/CLI.md\&quot;.into()] }],\n    unclassified: Vec::new(),\n    selected: BTreeMap::from([(\&quot;reference-check\&quot;.to_string(), \&quot;class docs\&quot;.to_string())]),\n    excluded: BTreeMap::new(),\n};\n// the plan says what it selected and why, so a reader can check it rather than believe it\nassert_eq!(plan.selected[\&quot;reference-check\&quot;], \&quot;class docs\&quot;);\nassert!(!plan.selected.contains_key(\&quot;rust-check\&quot;), \&quot;a document change cannot break the crate\&quot;);\n```\nWhich gates a change must pass, and why each one is in or out.&quot;
     },
     &quot;GateClassMatch&quot;: {
       &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateClassMatch;\n\nlet hit = GateClassMatch { id: \&quot;docs\&quot;.into(), paths: vec![\&quot;docs/CLI.md\&quot;.into()] };\n// the class, and the files of the change that put it in the plan — never the class alone,\n// because a plan a reader cannot check is a plan a reader has to believe\nassert_eq!(hit.paths.len(), 1);\n```\nOne class a change fell in, and the paths that put it there.&quot;,
@@ -557,127 +808,13 @@ finished over these is finished unverified, and the record says so.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;GatePlan&quot;: {
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{GateClassMatch, GatePlan, GatePlanMode};\nuse std::collections::BTreeMap;\n\nlet plan = GatePlan {\n    mode: GatePlanMode::Affected,\n    reason: \&quot;3 path(s) fall in 1 class\&quot;.into(),\n    changed: vec![\&quot;docs/CLI.md\&quot;.into()],\n    classes: vec![GateClassMatch { id: \&quot;docs\&quot;.into(), paths: vec![\&quot;docs/CLI.md\&quot;.into()] }],\n    unclassified: Vec::new(),\n    selected: BTreeMap::from([(\&quot;reference-check\&quot;.to_string(), \&quot;class docs\&quot;.to_string())]),\n    excluded: BTreeMap::new(),\n};\n// the plan says what it selected and why, so a reader can check it rather than believe it\nassert_eq!(plan.selected[\&quot;reference-check\&quot;], \&quot;class docs\&quot;);\nassert!(!plan.selected.contains_key(\&quot;rust-check\&quot;), \&quot;a document change cannot break the crate\&quot;);\n```\nWhich gates a change must pass, and why each one is in or out.&quot;,
-      &quot;properties&quot;: {
-        &quot;changed&quot;: {
-          &quot;description&quot;: &quot;The changed paths the plan was computed over, sorted.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;classes&quot;: {
-          &quot;description&quot;: &quot;The classes they fall in.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/GateClassMatch&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;excluded&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;Gate id to the reason it was left out, for the gates that are not.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;mode&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/GatePlanMode&quot;,
-          &quot;description&quot;: &quot;Affected, or full.&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why, in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;selected&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;Gate id to the reason it was selected, for the gates in the plan.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;unclassified&quot;: {
-          &quot;description&quot;: &quot;Changed paths no class of the model covers; each one escalates the plan.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;mode&quot;,
-        &quot;reason&quot;,
-        &quot;changed&quot;,
-        &quot;classes&quot;,
-        &quot;unclassified&quot;,
-        &quot;selected&quot;,
-        &quot;excluded&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;GatePlanMode&quot;: {
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GatePlanMode;\n\n// a plan is either the gates the change selects, or everything the runners allow\nassert_eq!(GatePlanMode::Affected.as_str(), \&quot;affected\&quot;);\nassert_eq!(GatePlanMode::Full.as_str(), \&quot;full\&quot;);\nassert_ne!(GatePlanMode::Affected, GatePlanMode::Full);\n```\nWhy the plan selects what it selects.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;affected&quot;,
-          &quot;description&quot;: &quot;The gates of the classes the changed paths fall in.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;full&quot;,
-          &quot;description&quot;: &quot;Every gate but the on-demand ones: asked for, or escalated to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;GateRun&quot;: {
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \&quot;2026-01-01T00:00:00Z\&quot;.into(),\n    head: \&quot;9b1e2d4\&quot;.into(),\n    branch: \&quot;master\&quot;.into(),\n    exit: 0,\n    command: \&quot;scripts/rust-check --ci\&quot;.into(),\n    inputs_hash: \&quot;3f0a\&quot;.into(),\n    session: \&quot;s-1\&quot;.into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \&quot;0000\&quot;);\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it.&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it was recorded on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;command&quot;: {
-          &quot;description&quot;: &quot;The command that produced it — narrative is not evidence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;exit&quot;: {
-          &quot;description&quot;: &quot;The exit status the gate reported. `0` is a pass.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit the ledger&#39;s envelope stamped on it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;inputs_hash&quot;: {
-          &quot;description&quot;: &quot;The hash of the files that select the gate, as they stood when it ran.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;recorded_at&quot;: {
-          &quot;description&quot;: &quot;When it was recorded, RFC 3339 UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The session that recorded it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;recorded_at&quot;,
-        &quot;head&quot;,
-        &quot;branch&quot;,
-        &quot;exit&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;GateStatus&quot;: {
       &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \&quot;a run that failed refuses\&quot;);\nassert!(GateStatus::Queued.unverified(), \&quot;asked and unanswered is a debt\&quot;);\nassert!(!GateStatus::Exempt.refuses() &amp;&amp; !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \&quot;stale\&quot;);\n```\nWhat is known about one gate. Every word is one this repository&#39;s design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;pass&quot;,
-          &quot;description&quot;: &quot;It ran over these inputs and succeeded. The only word that discharges anything.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;It ran over these inputs and succeeded. The only word that discharges anything.&quot;
         },
         {
           &quot;const&quot;: &quot;fail&quot;,
@@ -695,14 +832,14 @@ finished over these is finished unverified, and the record says so.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;queued&quot;,
-          &quot;description&quot;: &quot;The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible.&quot;
         },
         {
-          &quot;const&quot;: &quot;exempt&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The plan does not select it: nothing the task changed can make it true or false.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;exempt&quot;
         },
         {
           &quot;const&quot;: &quot;unknown&quot;,
@@ -710,146 +847,9 @@ finished over these is finished unverified, and the record says so.</td>
           &quot;type&quot;: &quot;string&quot;
         }
       ]
-    },
-    &quot;ImpliedObligation&quot;: {
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::ImpliedObligation;\n\nlet owed = ImpliedObligation {\n    id: \&quot;tests\&quot;.into(),\n    title: \&quot;The cases the change obliges were run\&quot;.into(),\n    applicable: true,\n    declared: false,\n    reason: \&quot;lib/check.sh is an input of this obligation\&quot;.into(),\n    because: vec![\&quot;lib/check.sh\&quot;.into()],\n    remediation: \&quot;majordomus start --requires tests\&quot;.into(),\n};\n// applicable and undeclared is the gap nothing else reports: the change owes it and\n// the task promised nothing, so no validator holds anybody to it\nassert!(owed.applicable &amp;&amp; !owed.declared);\n```\nOne obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token&#39;s own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not.&quot;,
-      &quot;properties&quot;: {
-        &quot;applicable&quot;: {
-          &quot;description&quot;: &quot;True when the change set, or the task&#39;s own declaration, makes it owed.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;because&quot;: {
-          &quot;description&quot;: &quot;The changed paths that implied it, when paths did.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;declared&quot;: {
-          &quot;description&quot;: &quot;True when the task&#39;s `requires` names it, so `finish` already holds the task to it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The token.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why it applies, or why it does not.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remediation&quot;: {
-          &quot;description&quot;: &quot;What would discharge it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The obligation as a heading, from the vocabulary.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;applicable&quot;,
-        &quot;declared&quot;,
-        &quot;reason&quot;,
-        &quot;remediation&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \&quot;present\&quot;: true,\n    \&quot;model\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;plan\&quot;: { \&quot;mode\&quot;: \&quot;affected\&quot;, \&quot;reason\&quot;: \&quot;1 path in 1 class\&quot;, \&quot;changed\&quot;: [\&quot;docs/CLI.md\&quot;],\n              \&quot;classes\&quot;: [], \&quot;unclassified\&quot;: [], \&quot;selected\&quot;: {}, \&quot;excluded\&quot;: {} },\n    \&quot;finishable\&quot;: true,\n    \&quot;unverified\&quot;: [\&quot;reference-check\&quot;],\n    \&quot;tallies\&quot;: { \&quot;queued\&quot;: 1 },\n    \&quot;gates\&quot;: [],\n    \&quot;obligations\&quot;: [],\n    \&quot;questions\&quot;: []\n}))\n.unwrap();\nassert!(c.finishable, \&quot;absence of a verdict does not refuse\&quot;);\nassert_eq!(c.unverified, [\&quot;reference-check\&quot;], \&quot;and it is never silently accepted\&quot;);\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool&#39;s `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.&quot;,
-  &quot;properties&quot;: {
-    &quot;blocking&quot;: {
-      &quot;description&quot;: &quot;The required gates whose status refuses completion.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;What could not be established, each as one line. Never empty when something was\nskipped: a gap is reported rather than left to be inferred.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;finishable&quot;: {
-      &quot;description&quot;: &quot;False when a required gate is known to be failing, stale, or blocked by one that is.\nAbsence of a verdict does not make this false — it makes `unverified` non-empty.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;gates&quot;: {
-      &quot;description&quot;: &quot;Every gate of the model, what refuses first.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Gate&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;model&quot;: {
-      &quot;description&quot;: &quot;The CI model this was judged against.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;obligations&quot;: {
-      &quot;description&quot;: &quot;Which obligations the change set implies, and whether the task promised them. The\njudgement of a declared one is `obligations.closure`&#39;s, not this module&#39;s.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ImpliedObligation&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;plan&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/GatePlan&quot;,
-      &quot;description&quot;: &quot;Affected or full, and why.&quot;
-    },
-    &quot;present&quot;: {
-      &quot;description&quot;: &quot;True when a task record was found in this checkout.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;questions&quot;: {
-      &quot;description&quot;: &quot;The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates and the change set; a question nothing here\nreaches is `unknown` and names the command that would answer it.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/DoneQuestion&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;tallies&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
-      },
-      &quot;description&quot;: &quot;How many gates stand in each status, by word.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;task&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The task, as its record declares it.&quot;
-    },
-    &quot;unverified&quot;: {
-      &quot;description&quot;: &quot;The required gates that have never reported, or cannot be judged here. A task\nfinished over these is finished unverified, and the record says so.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;present&quot;,
-    &quot;model&quot;,
-    &quot;plan&quot;,
-    &quot;finishable&quot;,
-    &quot;tallies&quot;,
-    &quot;gates&quot;,
-    &quot;obligations&quot;,
-    &quot;questions&quot;
-  ],
-  &quot;title&quot;: &quot;Completion&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \&quot;present\&quot;: true,\n    \&quot;model\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;plan\&quot;: { \&quot;mode\&quot;: \&quot;affected\&quot;, \&quot;reason\&quot;: \&quot;1 path in 1 class\&quot;, \&quot;changed\&quot;: [\&quot;docs/CLI.md\&quot;],\n              \&quot;classes\&quot;: [], \&quot;unclassified\&quot;: [], \&quot;selected\&quot;: {}, \&quot;excluded\&quot;: {} },\n    \&quot;finishable\&quot;: true,\n    \&quot;unverified\&quot;: [\&quot;reference-check\&quot;],\n    \&quot;tallies\&quot;: { \&quot;queued\&quot;: 1 },\n    \&quot;gates\&quot;: [],\n    \&quot;obligations\&quot;: [],\n    \&quot;questions\&quot;: []\n}))\n.unwrap();\nassert!(c.finishable, \&quot;absence of a verdict does not refuse\&quot;);\nassert_eq!(c.unverified, [\&quot;reference-check\&quot;], \&quot;and it is never silently accepted\&quot;);\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool&#39;s `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.&quot;
 }</pre></div>
   </details>
 </div>

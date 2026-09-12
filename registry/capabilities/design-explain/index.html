@@ -211,18 +211,18 @@ palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `design.explain`: one token by name.&quot;,
   &quot;properties&quot;: {
     &quot;token&quot;: {
-      &quot;description&quot;: &quot;A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`).&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`).&quot;
     }
   },
+  &quot;description&quot;: &quot;The input of `design.explain`: one token by name.&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;ExplainTokenInput&quot;,
   &quot;required&quot;: [
     &quot;token&quot;
   ],
-  &quot;title&quot;: &quot;ExplainTokenInput&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -232,20 +232,20 @@ palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">about</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What it is for, from the declaration.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">aliases</td>
+        <td class="px-3 py-2 font-mono text-heading">parts</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The Flowbite names that are synonyms of it.</td>
+        <td class="px-3 py-2 text-body">For a colour token: its parts, each resolved per theme.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">css</td>
+        <td class="px-3 py-2 font-mono text-heading">states</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The custom properties and Tailwind utilities it becomes.</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">For a status: the state words filed under it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">value</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">For a scalar token: the value.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">kind</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -257,11 +257,6 @@ palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The name as declared.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">parts</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">For a colour token: its parts, each resolved per theme.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">projections</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -272,55 +267,103 @@ palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">For a state word: the status it is filed under.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">states</td>
+        <td class="px-3 py-2 font-mono text-heading">css</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The custom properties and Tailwind utilities it becomes.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">about</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What it is for, from the declaration.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">aliases</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">For a status: the state words filed under it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">value</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">For a scalar token: the value.</td>
+        <td class="px-3 py-2 text-body">The Flowbite names that are synonyms of it.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;ColourPart&quot;: {
-      &quot;description&quot;: &quot;One part of a colour token — a role has one, a status has its text, ground and border.&quot;,
-      &quot;properties&quot;: {
-        &quot;css&quot;: {
-          &quot;description&quot;: &quot;The custom property a surface reads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;dark&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Resolved&quot;,
-          &quot;description&quot;: &quot;In the dark theme.&quot;
-        },
-        &quot;light&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Resolved&quot;,
-          &quot;description&quot;: &quot;In the light theme.&quot;
-        },
-        &quot;part&quot;: {
-          &quot;description&quot;: &quot;`fg`, `bg` or `line`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
+  &quot;title&quot;: &quot;Token&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;parts&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ColourPart&quot;
       },
-      &quot;required&quot;: [
-        &quot;part&quot;,
-        &quot;css&quot;,
-        &quot;light&quot;,
-        &quot;dark&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;For a colour token: its parts, each resolved per theme.&quot;
     },
+    &quot;states&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;For a status: the state words filed under it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;value&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;For a scalar token: the value.&quot;
+    },
+    &quot;kind&quot;: {
+      &quot;description&quot;: &quot;What kind of token.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/TokenKind&quot;
+    },
+    &quot;name&quot;: {
+      &quot;description&quot;: &quot;The name as declared.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;projections&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The generated files the token reaches.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;role&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;For a state word: the status it is filed under.&quot;
+    },
+    &quot;css&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The custom properties and Tailwind utilities it becomes.&quot;
+    },
+    &quot;about&quot;: {
+      &quot;description&quot;: &quot;What it is for, from the declaration.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;aliases&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The Flowbite names that are synonyms of it.&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;kind&quot;,
+    &quot;about&quot;,
+    &quot;css&quot;,
+    &quot;projections&quot;
+  ],
+  &quot;$defs&quot;: {
     &quot;Resolved&quot;: {
-      &quot;description&quot;: &quot;What a colour reference resolved to.&quot;,
       &quot;properties&quot;: {
         &quot;css&quot;: {
-          &quot;description&quot;: &quot;The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-&lt;role&gt;)`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-&lt;role&gt;)`.&quot;
         },
         &quot;literal&quot;: {
           &quot;description&quot;: &quot;The literal after every reference is followed.&quot;,
@@ -331,40 +374,68 @@ palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;What a colour reference resolved to.&quot;,
       &quot;required&quot;: [
         &quot;reference&quot;,
         &quot;css&quot;,
         &quot;literal&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
+    },
+    &quot;ColourPart&quot;: {
+      &quot;description&quot;: &quot;One part of a colour token — a role has one, a status has its text, ground and border.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;light&quot;: {
+          &quot;description&quot;: &quot;In the light theme.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Resolved&quot;
+        },
+        &quot;css&quot;: {
+          &quot;description&quot;: &quot;The custom property a surface reads.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;part&quot;: {
+          &quot;description&quot;: &quot;`fg`, `bg` or `line`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;dark&quot;: {
+          &quot;description&quot;: &quot;In the dark theme.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Resolved&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;part&quot;,
+        &quot;css&quot;,
+        &quot;light&quot;,
+        &quot;dark&quot;
+      ]
     },
     &quot;TokenKind&quot;: {
-      &quot;description&quot;: &quot;What kind of thing a token is.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;font&quot;,
-          &quot;description&quot;: &quot;A type stack.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A type stack.&quot;
         },
         {
-          &quot;const&quot;: &quot;palette&quot;,
           &quot;description&quot;: &quot;A raw palette entry.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;palette&quot;
         },
         {
-          &quot;const&quot;: &quot;role&quot;,
           &quot;description&quot;: &quot;A semantic surface role.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;role&quot;
         },
         {
-          &quot;const&quot;: &quot;status&quot;,
           &quot;description&quot;: &quot;A status meaning.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;status&quot;
         },
         {
-          &quot;const&quot;: &quot;state&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A state word, filed under a status.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;state&quot;
         },
         {
           &quot;const&quot;: &quot;type&quot;,
@@ -373,105 +444,34 @@ palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg
         },
         {
           &quot;const&quot;: &quot;tracking&quot;,
-          &quot;description&quot;: &quot;A letter-spacing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A letter-spacing.&quot;
         },
         {
-          &quot;const&quot;: &quot;layout&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A shared layout value.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;layout&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;radius&quot;,
-          &quot;description&quot;: &quot;A corner radius.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A corner radius.&quot;
         },
         {
-          &quot;const&quot;: &quot;motion&quot;,
           &quot;description&quot;: &quot;A duration.&quot;,
+          &quot;const&quot;: &quot;motion&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;theme&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The theme contract.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;theme&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;What kind of thing a token is.&quot;
     }
   },
-  &quot;description&quot;: &quot;One token, explained: where it came from, what it resolves to, what reads it.&quot;,
-  &quot;properties&quot;: {
-    &quot;about&quot;: {
-      &quot;description&quot;: &quot;What it is for, from the declaration.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;aliases&quot;: {
-      &quot;description&quot;: &quot;The Flowbite names that are synonyms of it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;css&quot;: {
-      &quot;description&quot;: &quot;The custom properties and Tailwind utilities it becomes.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;kind&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/TokenKind&quot;,
-      &quot;description&quot;: &quot;What kind of token.&quot;
-    },
-    &quot;name&quot;: {
-      &quot;description&quot;: &quot;The name as declared.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;parts&quot;: {
-      &quot;description&quot;: &quot;For a colour token: its parts, each resolved per theme.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ColourPart&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;projections&quot;: {
-      &quot;description&quot;: &quot;The generated files the token reaches.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;role&quot;: {
-      &quot;description&quot;: &quot;For a state word: the status it is filed under.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;states&quot;: {
-      &quot;description&quot;: &quot;For a status: the state words filed under it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;value&quot;: {
-      &quot;description&quot;: &quot;For a scalar token: the value.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    }
-  },
-  &quot;required&quot;: [
-    &quot;name&quot;,
-    &quot;kind&quot;,
-    &quot;about&quot;,
-    &quot;css&quot;,
-    &quot;projections&quot;
-  ],
-  &quot;title&quot;: &quot;Token&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;One token, explained: where it came from, what it resolves to, what reads it.&quot;
 }</pre></div>
   </details>
 </div>

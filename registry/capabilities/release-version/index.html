@@ -201,9 +201,9 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -212,42 +212,42 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">agree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the two agree. `scripts/release-version --check` is the gate; this is the
-same question asked by the executable, so every surface can show the answer.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">bump</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the commits since it imply: `major`, `minor`, `patch`, or `none`.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">changes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many commits since the last release, and of what kind — the evidence for the
 bump, so that a surprising answer can be checked rather than believed.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">declared</td>
+        <td class="px-3 py-2 font-mono text-heading">agree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the two agree. `scripts/release-version --check` is the gate; this is the
+same question asked by the executable, so every surface can show the answer.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tool</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The version the crate manifest declares — the authority.</td>
+        <td class="px-3 py-2 text-body">The version `bin/majordomus` prints.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">last_release</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The last release the layer records.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">declared</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The version the crate manifest declares — the authority.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">next</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The version that bump would produce.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tool</td>
+        <td class="px-3 py-2 font-mono text-heading">bump</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The version `bin/majordomus` prints.</td>
+        <td class="px-3 py-2 text-body">What the commits since it imply: `major`, `minor`, `patch`, or `none`.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -257,35 +257,35 @@ bump, so that a surprising answer can be checked rather than believed.</td>
     &quot;ReleaseChange&quot;: {
       &quot;description&quot;: &quot;One change, from one commit.&quot;,
       &quot;properties&quot;: {
-        &quot;breaking&quot;: {
-          &quot;description&quot;: &quot;Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;references&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ReleaseReference&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;What it did.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;
         },
         &quot;commit&quot;: {
           &quot;description&quot;: &quot;The abbreviated commit.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
-          &quot;description&quot;: &quot;What it did.&quot;
+        &quot;subject&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The subject, without the type and scope that prefixed it.&quot;
         },
-        &quot;references&quot;: {
-          &quot;description&quot;: &quot;The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ReleaseReference&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;breaking&quot;: {
+          &quot;description&quot;: &quot;Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The area it did it in, when the subject named one: `commands`, `ci`, `site`.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
-        },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;The subject, without the type and scope that prefixed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          ],
+          &quot;description&quot;: &quot;The area it did it in, when the subject named one: `commands`, `ci`, `site`.&quot;
         },
         &quot;url&quot;: {
           &quot;description&quot;: &quot;Where that commit can be read, when the repository&#39;s own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry.&quot;,
@@ -304,7 +304,6 @@ bump, so that a surprising answer can be checked rather than believed.</td>
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ReleaseChangeKind&quot;: {
-      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;feat&quot;,
@@ -317,13 +316,13 @@ bump, so that a surprising answer can be checked rather than believed.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;perf&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Performance, with the behaviour unchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;perf&quot;
         },
         {
-          &quot;const&quot;: &quot;refactor&quot;,
           &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;,
+          &quot;const&quot;: &quot;refactor&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -332,24 +331,24 @@ bump, so that a surprising answer can be checked rather than believed.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;test&quot;,
           &quot;description&quot;: &quot;Tests.&quot;,
+          &quot;const&quot;: &quot;test&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;chore&quot;,
-          &quot;description&quot;: &quot;The build, the pipeline, the tooling.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The build, the pipeline, the tooling.&quot;
         },
         {
-          &quot;const&quot;: &quot;ci&quot;,
           &quot;description&quot;: &quot;Continuous integration.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ci&quot;
         },
         {
-          &quot;const&quot;: &quot;style&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Formatting, with the behaviour unchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;style&quot;
         },
         {
           &quot;const&quot;: &quot;build&quot;,
@@ -358,8 +357,8 @@ bump, so that a surprising answer can be checked rather than believed.</td>
         },
         {
           &quot;const&quot;: &quot;revert&quot;,
-          &quot;description&quot;: &quot;A change that undoes another.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A change that undoes another.&quot;
         },
         {
           &quot;const&quot;: &quot;merge&quot;,
@@ -371,29 +370,29 @@ bump, so that a surprising answer can be checked rather than believed.</td>
           &quot;description&quot;: &quot;A commit whose subject does not parse as a conventional commit.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;
     },
     &quot;ReleaseReference&quot;: {
-      &quot;description&quot;: &quot;A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \&quot;issue\&quot;.into(),\n    id: \&quot;I1305\&quot;.into(),\n    title: \&quot;An observed contract has a fingerprint\&quot;.into(),\n    route: Some(\&quot;/plan/i1305/\&quot;.into()),\n};\nlet json = serde_json::to_value(&amp;r).unwrap();\nassert_eq!(json[\&quot;id\&quot;], \&quot;I1305\&quot;);\nassert_eq!(json[\&quot;route\&quot;], \&quot;/plan/i1305/\&quot;);\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&amp;bare).unwrap().get(\&quot;route\&quot;).is_none());\n```&quot;,
       &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;`I1305`, `M000`.&quot;,
+        &quot;route&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Where it is published on this site, when it has a page.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;What it is, from the record itself.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;kind&quot;: {
           &quot;description&quot;: &quot;`issue` or `milestone`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;Where it is published on this site, when it has a page.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;What it is, from the record itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`I1305`, `M000`.&quot;
         }
       },
       &quot;required&quot;: [
@@ -401,29 +400,25 @@ bump, so that a surprising answer can be checked rather than believed.</td>
         &quot;id&quot;,
         &quot;title&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \&quot;issue\&quot;.into(),\n    id: \&quot;I1305\&quot;.into(),\n    title: \&quot;An observed contract has a fingerprint\&quot;.into(),\n    route: Some(\&quot;/plan/i1305/\&quot;.into()),\n};\nlet json = serde_json::to_value(&amp;r).unwrap();\nassert_eq!(json[\&quot;id\&quot;], \&quot;I1305\&quot;);\nassert_eq!(json[\&quot;route\&quot;], \&quot;/plan/i1305/\&quot;);\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&amp;bare).unwrap().get(\&quot;route\&quot;).is_none());\n```&quot;
     }
   },
-  &quot;description&quot;: &quot;What the version is, and what the commits since the last release imply it should become.&quot;,
   &quot;properties&quot;: {
+    &quot;changes&quot;: {
+      &quot;description&quot;: &quot;How many commits since the last release, and of what kind — the evidence for the\nbump, so that a surprising answer can be checked rather than believed.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ReleaseChange&quot;
+      }
+    },
     &quot;agree&quot;: {
       &quot;description&quot;: &quot;Whether the two agree. `scripts/release-version --check` is the gate; this is the\nsame question asked by the executable, so every surface can show the answer.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
-    &quot;bump&quot;: {
-      &quot;description&quot;: &quot;What the commits since it imply: `major`, `minor`, `patch`, or `none`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;changes&quot;: {
-      &quot;description&quot;: &quot;How many commits since the last release, and of what kind — the evidence for the\nbump, so that a surprising answer can be checked rather than believed.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ReleaseChange&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;declared&quot;: {
-      &quot;description&quot;: &quot;The version the crate manifest declares — the authority.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;tool&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The version `bin/majordomus` prints.&quot;
     },
     &quot;last_release&quot;: {
       &quot;description&quot;: &quot;The last release the layer records.&quot;,
@@ -432,6 +427,10 @@ bump, so that a surprising answer can be checked rather than believed.</td>
         &quot;null&quot;
       ]
     },
+    &quot;declared&quot;: {
+      &quot;description&quot;: &quot;The version the crate manifest declares — the authority.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
     &quot;next&quot;: {
       &quot;description&quot;: &quot;The version that bump would produce.&quot;,
       &quot;type&quot;: [
@@ -439,11 +438,12 @@ bump, so that a surprising answer can be checked rather than believed.</td>
         &quot;null&quot;
       ]
     },
-    &quot;tool&quot;: {
-      &quot;description&quot;: &quot;The version `bin/majordomus` prints.&quot;,
+    &quot;bump&quot;: {
+      &quot;description&quot;: &quot;What the commits since it imply: `major`, `minor`, `patch`, or `none`.&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;description&quot;: &quot;What the version is, and what the commits since the last release imply it should become.&quot;,
   &quot;required&quot;: [
     &quot;declared&quot;,
     &quot;tool&quot;,

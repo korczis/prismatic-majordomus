@@ -247,35 +247,40 @@ here, not in any projection, and not in any log.</td>
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;PublicIdentity&quot;: {
-      &quot;description&quot;: &quot;What everyone may know about this node: the id, the public key, a display name and\nthis run&#39;s instance. Everything an advertisement carries; nothing that signs.&quot;,
-      &quot;properties&quot;: {
-        &quot;display_name&quot;: {
-          &quot;description&quot;: &quot;A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;instance_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
-          &quot;description&quot;: &quot;This run of the node.&quot;
-        },
-        &quot;node_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/NodeId&quot;,
-          &quot;description&quot;: &quot;The node id: a digest of the public key.&quot;
-        },
-        &quot;public_key&quot;: {
-          &quot;description&quot;: &quot;The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;node_id&quot;,
         &quot;public_key&quot;,
         &quot;display_name&quot;,
         &quot;instance_id&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;What everyone may know about this node: the id, the public key, a display name and\nthis run&#39;s instance. Everything an advertisement carries; nothing that signs.&quot;,
+      &quot;properties&quot;: {
+        &quot;public_key&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof.&quot;
+        },
+        &quot;display_name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust.&quot;
+        },
+        &quot;instance_id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
+          &quot;description&quot;: &quot;This run of the node.&quot;
+        },
+        &quot;node_id&quot;: {
+          &quot;description&quot;: &quot;The node id: a digest of the public key.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/NodeId&quot;
+        }
+      }
     }
   },
   &quot;description&quot;: &quot;The answer of `mesh.identity`: this machine&#39;s node identity, public half only.&quot;,
+  &quot;required&quot;: [
+    &quot;present&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;MeshIdentityReport&quot;,
   &quot;properties&quot;: {
     &quot;error&quot;: {
       &quot;description&quot;: &quot;Why the identity did not load, when it did not.&quot;,
@@ -285,6 +290,7 @@ here, not in any projection, and not in any log.</td>
       ]
     },
     &quot;identity&quot;: {
+      &quot;description&quot;: &quot;The public identity, when the file exists and loads. The signing key is not\nhere, not in any projection, and not in any log.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/PublicIdentity&quot;
@@ -292,26 +298,20 @@ here, not in any projection, and not in any log.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;The public identity, when the file exists and loads. The signing key is not\nhere, not in any projection, and not in any log.&quot;
+      ]
     },
     &quot;path&quot;: {
-      &quot;description&quot;: &quot;Where the identity file lives (or would).&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Where the identity file lives (or would).&quot;
     },
     &quot;present&quot;: {
       &quot;description&quot;: &quot;Whether the file exists.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     }
-  },
-  &quot;required&quot;: [
-    &quot;present&quot;
-  ],
-  &quot;title&quot;: &quot;MeshIdentityReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>

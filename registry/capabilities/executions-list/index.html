@@ -220,29 +220,32 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;ListInput&quot;,
+  &quot;description&quot;: &quot;The input of `executions.list`.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
     &quot;ExecutionState&quot;: {
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;queued&quot;,
           &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;queued&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;running&quot;,
-          &quot;description&quot;: &quot;The handler is running.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The handler is running.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;cancelling&quot;,
-          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;
         },
         {
-          &quot;const&quot;: &quot;succeeded&quot;,
           &quot;description&quot;: &quot;The handler returned an output.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;succeeded&quot;
         },
         {
           &quot;const&quot;: &quot;failed&quot;,
@@ -250,15 +253,14 @@
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;cancelled&quot;,
           &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cancelled&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;
     }
   },
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `executions.list`.&quot;,
   &quot;properties&quot;: {
     &quot;capability&quot;: {
       &quot;description&quot;: &quot;Only executions of this capability.&quot;,
@@ -268,9 +270,9 @@
       ]
     },
     &quot;limit&quot;: {
-      &quot;description&quot;: &quot;How many, newest first; the default and the bound are both `200`.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many, newest first; the default and the bound are both `200`.&quot;,
       &quot;type&quot;: [
         &quot;integer&quot;,
         &quot;null&quot;
@@ -287,9 +289,7 @@
       ],
       &quot;description&quot;: &quot;Only executions in this state.&quot;
     }
-  },
-  &quot;title&quot;: &quot;ListInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -298,11 +298,6 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">active</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many are not finished.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">count</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -313,88 +308,161 @@
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The executions, newest first.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">active</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many are not finished.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">live_channels</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many live channels are following them.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">queued</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many are waiting for a worker.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">remembered</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many this process remembers in total, before the filter.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">queued</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many are waiting for a worker.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;count&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many are answered here.&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;executions&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ExecutionView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The executions, newest first.&quot;
+    },
+    &quot;active&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many are not finished.&quot;
+    },
+    &quot;live_channels&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many live channels are following them.&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;remembered&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many this process remembers in total, before the filter.&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;queued&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many are waiting for a worker.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0
+    }
+  },
   &quot;$defs&quot;: {
-    &quot;Actor&quot;: {
-      &quot;description&quot;: &quot;Who asked, and which peer they are when this process knows.&quot;,
-      &quot;properties&quot;: {
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ActorKind&quot;,
-          &quot;description&quot;: &quot;Where the request came from.&quot;
+    &quot;Severity&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;const&quot;: &quot;info&quot;
         },
-        &quot;peer&quot;: {
-          &quot;description&quot;: &quot;The peer id, for a call that arrived through an MCP session.&quot;,
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;
+    },
+    &quot;StepState&quot;: {
+      &quot;description&quot;: &quot;Where a step of an execution stands.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Entered and not finished.&quot;,
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;completed&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Finished, and what it was asked to do happened.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Finished, and it did not.&quot;,
+          &quot;const&quot;: &quot;failed&quot;
+        }
+      ]
+    },
+    &quot;StepView&quot;: {
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;A stable name, unique within the execution.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StepState&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line for a reader.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;When it was entered, RFC 3339 in UTC.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What it said when it finished, when it said anything.&quot;
+        },
+        &quot;finished_at&quot;: {
+          &quot;description&quot;: &quot;When it finished, when it has.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One named phase of an execution, as the handler reported it.&quot;,
       &quot;required&quot;: [
-        &quot;kind&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ActorKind&quot;: {
-      &quot;description&quot;: &quot;Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;http&quot;,
-          &quot;description&quot;: &quot;An HTTP client, which includes the Cockpit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;mcp&quot;,
-          &quot;description&quot;: &quot;An MCP client attached to this process.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cli&quot;,
-          &quot;description&quot;: &quot;The command line of this process.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;internal&quot;,
-          &quot;description&quot;: &quot;This executable&#39;s own tests and benchmarks.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
+        &quot;name&quot;,
+        &quot;title&quot;,
+        &quot;state&quot;,
+        &quot;started_at&quot;
       ]
     },
     &quot;ExecutionDiagnostic&quot;: {
-      &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
       &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable machine-readable code.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;The rest, when there is more.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
         &quot;severity&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
           &quot;description&quot;: &quot;How bad.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line, for a person.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;suggestion&quot;: {
           &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
@@ -403,9 +471,16 @@
             &quot;null&quot;
           ]
         },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line, for a person.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A stable machine-readable code.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The rest, when there is more.&quot;
         }
       },
       &quot;required&quot;: [
@@ -413,29 +488,30 @@
         &quot;code&quot;,
         &quot;summary&quot;
       ],
+      &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ExecutionError&quot;: {
-      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
         &quot;code&quot;: {
           &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What went wrong, for a person.&quot;
+        },
         &quot;correlation_id&quot;: {
           &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What went wrong, for a person.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;suggestion&quot;: {
-          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;
         }
       },
       &quot;required&quot;: [
@@ -443,166 +519,157 @@
         &quot;message&quot;,
         &quot;correlation_id&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;
     },
-    &quot;ExecutionId&quot;: {
-      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;ExecutionLinks&quot;: {
-      &quot;description&quot;: &quot;Where to read more about one execution, in this server&#39;s own terms.\n\nEvery value is derived from the registry&#39;s declared routes and from the live channel&#39;s\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve.&quot;,
+    &quot;Actor&quot;: {
+      &quot;description&quot;: &quot;Who asked, and which peer they are when this process knows.&quot;,
       &quot;properties&quot;: {
-        &quot;cancel&quot;: {
-          &quot;description&quot;: &quot;Where to ask it to stop: `POST /api/v1/executions/cancel`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;peer&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The peer id, for a call that arrived through an MCP session.&quot;
         },
-        &quot;cockpit&quot;: {
-          &quot;description&quot;: &quot;The page a person opens.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;events&quot;: {
-          &quot;description&quot;: &quot;The retained history: `GET /api/v1/executions/events?id=…`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;self&quot;: {
-          &quot;description&quot;: &quot;The snapshot: `GET /api/v1/executions/get?id=…`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;websocket&quot;: {
-          &quot;description&quot;: &quot;The live channel, from the beginning: `GET /events?execution=…`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ActorKind&quot;,
+          &quot;description&quot;: &quot;Where the request came from.&quot;
         }
       },
       &quot;required&quot;: [
-        &quot;self&quot;,
-        &quot;events&quot;,
-        &quot;cancel&quot;,
-        &quot;websocket&quot;,
-        &quot;cockpit&quot;
+        &quot;kind&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;ExecutionState&quot;: {
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;,
+    &quot;ProgressView&quot;: {
+      &quot;properties&quot;: {
+        &quot;total&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Units in total, when the handler knows how many.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;current&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;Units done.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is being done, for a reader.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;current&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;How far along an execution is.&quot;
+    },
+    &quot;ExecutionId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;
+    },
+    &quot;ActorKind&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;queued&quot;,
-          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;http&quot;,
+          &quot;description&quot;: &quot;An HTTP client, which includes the Cockpit.&quot;
         },
         {
-          &quot;const&quot;: &quot;running&quot;,
-          &quot;description&quot;: &quot;The handler is running.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;An MCP client attached to this process.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;mcp&quot;
         },
         {
-          &quot;const&quot;: &quot;cancelling&quot;,
-          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cli&quot;,
+          &quot;description&quot;: &quot;The command line of this process.&quot;
         },
         {
-          &quot;const&quot;: &quot;succeeded&quot;,
-          &quot;description&quot;: &quot;The handler returned an output.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelled&quot;,
-          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
+          &quot;const&quot;: &quot;internal&quot;,
+          &quot;description&quot;: &quot;This executable&#39;s own tests and benchmarks.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI.&quot;
     },
     &quot;ExecutionView&quot;: {
-      &quot;description&quot;: &quot;One execution with the links to everything else about it.&quot;,
       &quot;properties&quot;: {
-        &quot;actor&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Actor&quot;,
-          &quot;description&quot;: &quot;Who asked for it.&quot;
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;Where it is.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;
         },
-        &quot;cancellable&quot;: {
-          &quot;description&quot;: &quot;Whether asking to cancel this execution will do anything: the capability&#39;s policy.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;output&quot;: {
+          &quot;description&quot;: &quot;What the handler returned, for a succeeded execution and never before.&quot;
         },
-        &quot;capability&quot;: {
-          &quot;description&quot;: &quot;The capability that ran, by its canonical id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;correlation_id&quot;: {
-          &quot;description&quot;: &quot;The id used in this process&#39;s logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;last_sequence&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The sequence number of the last event: the cursor a client subscribes from.&quot;
         },
         &quot;created_at&quot;: {
           &quot;description&quot;: &quot;When it was accepted, RFC 3339 in UTC.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;diagnostics&quot;: {
-          &quot;description&quot;: &quot;The findings it reported.&quot;,
+        &quot;steps&quot;: {
+          &quot;description&quot;: &quot;The steps it entered, in order.&quot;,
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
+            &quot;$ref&quot;: &quot;#/$defs/StepView&quot;
           },
           &quot;type&quot;: &quot;array&quot;
         },
+        &quot;diagnostics&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The findings it reported.&quot;
+        },
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability that ran, by its canonical id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;event_count&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;How many events it has produced, including the ones no longer retained.&quot;
+        },
+        &quot;input&quot;: {
+          &quot;description&quot;: &quot;The input it was given, with every value the input schema marks sensitive replaced.&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;When the handler was entered.&quot;
+        },
+        &quot;repository&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RepositoryRef&quot;,
+          &quot;description&quot;: &quot;Which repository it ran against.&quot;
+        },
+        &quot;correlation_id&quot;: {
+          &quot;description&quot;: &quot;The id used in this process&#39;s logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;duration_ms&quot;: {
-          &quot;description&quot;: &quot;How long it ran, in milliseconds, once it has finished.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: [
             &quot;integer&quot;,
             &quot;null&quot;
-          ]
-        },
-        &quot;error&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
           ],
-          &quot;description&quot;: &quot;Why it failed, for a failed execution and never before.&quot;
-        },
-        &quot;event_count&quot;: {
-          &quot;description&quot;: &quot;How many events it has produced, including the ones no longer retained.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;events_truncated&quot;: {
-          &quot;description&quot;: &quot;Whether the retained event history has lost its oldest entries to the bound.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;finished_at&quot;: {
-          &quot;description&quot;: &quot;When it reached a final state.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
-          &quot;description&quot;: &quot;The identity.&quot;
-        },
-        &quot;input&quot;: {
-          &quot;description&quot;: &quot;The input it was given, with every value the input schema marks sensitive replaced.&quot;
-        },
-        &quot;last_sequence&quot;: {
-          &quot;description&quot;: &quot;The sequence number of the last event: the cursor a client subscribes from.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;links&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionLinks&quot;,
-          &quot;description&quot;: &quot;Where to read more.&quot;
-        },
-        &quot;output&quot;: {
-          &quot;description&quot;: &quot;What the handler returned, for a succeeded execution and never before.&quot;
+          &quot;description&quot;: &quot;How long it ran, in milliseconds, once it has finished.&quot;
         },
         &quot;progress&quot;: {
           &quot;anyOf&quot;: [
@@ -615,33 +682,50 @@
           ],
           &quot;description&quot;: &quot;The last progress the handler reported.&quot;
         },
-        &quot;repository&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RepositoryRef&quot;,
-          &quot;description&quot;: &quot;Which repository it ran against.&quot;
+        &quot;events_truncated&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether the retained event history has lost its oldest entries to the bound.&quot;
         },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When the handler was entered.&quot;,
+        &quot;cancellable&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether asking to cancel this execution will do anything: the capability&#39;s policy.&quot;
+        },
+        &quot;error&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Why it failed, for a failed execution and never before.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;That capability&#39;s title, so a list needs no second lookup.&quot;
+        },
+        &quot;actor&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Actor&quot;,
+          &quot;description&quot;: &quot;Who asked for it.&quot;
+        },
+        &quot;finished_at&quot;: {
+          &quot;description&quot;: &quot;When it reached a final state.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;,
-          &quot;description&quot;: &quot;Where it is.&quot;
+        &quot;id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
+          &quot;description&quot;: &quot;The identity.&quot;
         },
-        &quot;steps&quot;: {
-          &quot;description&quot;: &quot;The steps it entered, in order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/StepView&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;That capability&#39;s title, so a list needs no second lookup.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;links&quot;: {
+          &quot;description&quot;: &quot;Where to read more.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionLinks&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;capability&quot;,
@@ -658,185 +742,100 @@
         &quot;correlation_id&quot;,
         &quot;links&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;One execution with the links to everything else about it.&quot;
     },
-    &quot;ProgressView&quot;: {
-      &quot;description&quot;: &quot;How far along an execution is.&quot;,
+    &quot;ExecutionLinks&quot;: {
+      &quot;description&quot;: &quot;Where to read more about one execution, in this server&#39;s own terms.\n\nEvery value is derived from the registry&#39;s declared routes and from the live channel&#39;s\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;current&quot;: {
-          &quot;description&quot;: &quot;Units done.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;cancel&quot;: {
+          &quot;description&quot;: &quot;Where to ask it to stop: `POST /api/v1/executions/cancel`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is being done, for a reader.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;events&quot;: {
+          &quot;description&quot;: &quot;The retained history: `GET /api/v1/executions/events?id=…`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;total&quot;: {
-          &quot;description&quot;: &quot;Units in total, when the handler knows how many.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
+        &quot;cockpit&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The page a person opens.&quot;
+        },
+        &quot;self&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The snapshot: `GET /api/v1/executions/get?id=…`.&quot;
+        },
+        &quot;websocket&quot;: {
+          &quot;description&quot;: &quot;The live channel, from the beginning: `GET /events?execution=…`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
-        &quot;current&quot;
+        &quot;self&quot;,
+        &quot;events&quot;,
+        &quot;cancel&quot;,
+        &quot;websocket&quot;,
+        &quot;cockpit&quot;
+      ]
+    },
+    &quot;ExecutionState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;queued&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;description&quot;: &quot;The handler is running.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelling&quot;,
+          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The handler returned an output.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;succeeded&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;
+        }
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;
     },
     &quot;RepositoryRef&quot;: {
-      &quot;description&quot;: &quot;Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \&quot;wherever this process happens to be\&quot;: the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them.&quot;,
       &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The repository&#39;s name: the last component of its root.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The stable identity two processes over one checkout both compute.&quot;
+        },
         &quot;branch&quot;: {
           &quot;description&quot;: &quot;The branch checked out, when git can say.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The stable identity two processes over one checkout both compute.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The repository&#39;s name: the last component of its root.&quot;,
-          &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;name&quot;,
         &quot;id&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;StepState&quot;: {
-      &quot;description&quot;: &quot;Where a step of an execution stands.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;running&quot;,
-          &quot;description&quot;: &quot;Entered and not finished.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;completed&quot;,
-          &quot;description&quot;: &quot;Finished, and what it was asked to do happened.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;Finished, and it did not.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;StepView&quot;: {
-      &quot;description&quot;: &quot;One named phase of an execution, as the handler reported it.&quot;,
-      &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What it said when it finished, when it said anything.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;finished_at&quot;: {
-          &quot;description&quot;: &quot;When it finished, when it has.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;A stable name, unique within the execution.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When it was entered, RFC 3339 in UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StepState&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;One line for a reader.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;title&quot;,
-        &quot;state&quot;,
-        &quot;started_at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `executions.list`.&quot;,
-  &quot;properties&quot;: {
-    &quot;active&quot;: {
-      &quot;description&quot;: &quot;How many are not finished.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many are answered here.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;executions&quot;: {
-      &quot;description&quot;: &quot;The executions, newest first.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ExecutionView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;live_channels&quot;: {
-      &quot;description&quot;: &quot;How many live channels are following them.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;queued&quot;: {
-      &quot;description&quot;: &quot;How many are waiting for a worker.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;remembered&quot;: {
-      &quot;description&quot;: &quot;How many this process remembers in total, before the filter.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;description&quot;: &quot;Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \&quot;wherever this process happens to be\&quot;: the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them.&quot;
     }
   },
   &quot;required&quot;: [
@@ -847,8 +846,9 @@
     &quot;live_channels&quot;,
     &quot;executions&quot;
   ],
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;ExecutionList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The answer of `executions.list`.&quot;
 }</pre></div>
   </details>
 </div>

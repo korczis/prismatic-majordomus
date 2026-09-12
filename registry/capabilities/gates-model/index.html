@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -247,6 +247,28 @@ assert_eq!(absent.unreadable.as_deref(), Some(&quot;no such file&quot;));
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">unreadable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Why there is no model to report, when there is none. A repository of the layer does
+not have to declare a CI model, and a reader is entitled to the difference between
+&quot;this repository declares no gates&quot; and &quot;this call failed&quot;.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">source</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where it was read from, repository-relative.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The schema version the file states.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">gates</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every gate, in declaration order, with the pathspecs its evidence is taken over.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">classes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -257,33 +279,11 @@ assert_eq!(absent.unreadable.as_deref(), Some(&quot;no such file&quot;));
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many gates it declares; measured, not written down.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">gates</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every gate, in declaration order, with the pathspecs its evidence is taken over.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">on_demand</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The gates whose runner cannot be had on demand, so no routine plan selects them.
 A gate that never runs protects nothing, and this is where that is said out loud.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">source</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it was read from, repository-relative.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">unreadable</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Why there is no model to report, when there is none. A repository of the layer does
-not have to declare a CI model, and a reader is entitled to the difference between
-&quot;this repository declares no gates&quot; and &quot;this call failed&quot;.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">version</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The schema version the file states.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -291,9 +291,25 @@ not have to declare a CI model, and a reader is entitled to the difference betwe
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;GateClass&quot;: {
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateClass;\n\n// one path class as the CI model declares it: which paths select which gates\nlet class: GateClass = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;docs\&quot;,\n    \&quot;paths\&quot;: [\&quot;docs/**\&quot;],\n    \&quot;gates\&quot;: [\&quot;reference-check\&quot;]\n}))\n.unwrap();\nassert_eq!(class.id, \&quot;docs\&quot;);\nassert_eq!(class.paths, [\&quot;docs/**\&quot;]);\n```\nOne path class: the paths it covers and the gates a change to them selects.&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;
+      ],
       &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The class&#39;s identity.&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;default&quot;: [],
+          &quot;description&quot;: &quot;The pathspecs it covers, in the subset the model&#39;s header defines.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
         &quot;gates&quot;: {
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;`full`, or the gates it names.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/GateClassSelects&quot;
@@ -301,84 +317,44 @@ not have to declare a CI model, and a reader is entitled to the difference betwe
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;`full`, or the gates it names.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The class&#39;s identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;The pathspecs it covers, in the subset the model&#39;s header defines.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          ]
         }
       },
-      &quot;required&quot;: [
-        &quot;id&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateClass;\n\n// one path class as the CI model declares it: which paths select which gates\nlet class: GateClass = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;docs\&quot;,\n    \&quot;paths\&quot;: [\&quot;docs/**\&quot;],\n    \&quot;gates\&quot;: [\&quot;reference-check\&quot;]\n}))\n.unwrap();\nassert_eq!(class.id, \&quot;docs\&quot;);\nassert_eq!(class.paths, [\&quot;docs/**\&quot;]);\n```\nOne path class: the paths it covers and the gates a change to them selects.&quot;
     },
     &quot;GateClassSelects&quot;: {
+      &quot;description&quot;: &quot;What a class selects: the word `full`, or the gates it names.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;description&quot;: &quot;`gates: full` — any change in this class escalates the whole plan.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;`gates: [a, b]` — exactly these, and `gates: []` — nothing.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         }
-      ],
-      &quot;description&quot;: &quot;What a class selects: the word `full`, or the gates it names.&quot;
+      ]
     },
     &quot;GateModelEntry&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;job&quot;,
+        &quot;runs&quot;,
+        &quot;inputs&quot;
+      ],
       &quot;description&quot;: &quot;```\nuse majordomus_cli::capability::builtin::gates::GateModelEntry;\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;site-check\&quot;,\n    \&quot;job\&quot;: \&quot;site\&quot;,\n    \&quot;runs\&quot;: \&quot;scripts/site-check\&quot;,\n    \&quot;summary\&quot;: \&quot;the site is whole\&quot;\n}))\n.unwrap();\nlet entry = GateModelEntry { declared: decl, inputs: vec![\&quot;site/**\&quot;.into()] };\n// the declaration as the file carries it, plus the paths its evidence is taken over —\n// derived from the classes that select it, never written down a second time\nassert_eq!(entry.declared.id, \&quot;site-check\&quot;);\nassert_eq!(entry.inputs, [\&quot;site/**\&quot;]);\n```\nOne gate of the model, with what the model implies about it.&quot;,
       &quot;properties&quot;: {
-        &quot;always&quot;: {
-          &quot;default&quot;: false,
-          &quot;description&quot;: &quot;True when every plan selects it, whatever changed.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;at-finish&quot;: {
-          &quot;default&quot;: false,
-          &quot;description&quot;: &quot;True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \&quot;is what the public is being served still a projection of\nthe trunk\&quot; has no answer a commit can give, and its moment is when a session\nclaims to be done.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The gate&#39;s identity, unique in the model.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;implies&quot;: {
-          &quot;default&quot;: [],
           &quot;description&quot;: &quot;Gates that are selected whenever this one is.&quot;,
+          &quot;default&quot;: [],
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;inputs&quot;: {
-          &quot;description&quot;: &quot;The pathspecs a run of this gate is evidence over, derived from the classes that\nselect it. A change to any of them makes a recorded run stale.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;job&quot;: {
-          &quot;description&quot;: &quot;The CI job that runs it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;on-demand&quot;: {
-          &quot;default&quot;: false,
-          &quot;description&quot;: &quot;True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;requires&quot;: {
           &quot;default&quot;: [],
@@ -388,39 +364,67 @@ not have to declare a CI model, and a reader is entitled to the difference betwe
           },
           &quot;type&quot;: &quot;array&quot;
         },
+        &quot;summary&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;default&quot;: &quot;&quot;,
+          &quot;description&quot;: &quot;One line saying what it proves.&quot;
+        },
+        &quot;job&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The CI job that runs it.&quot;
+        },
+        &quot;on-demand&quot;: {
+          &quot;default&quot;: false,
+          &quot;description&quot;: &quot;True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
         &quot;runs&quot;: {
           &quot;description&quot;: &quot;The command it runs.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;summary&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;One line saying what it proves.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;always&quot;: {
+          &quot;description&quot;: &quot;True when every plan selects it, whatever changed.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;default&quot;: false
+        },
+        &quot;inputs&quot;: {
+          &quot;description&quot;: &quot;The pathspecs a run of this gate is evidence over, derived from the classes that\nselect it. A change to any of them makes a recorded run stale.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;at-finish&quot;: {
+          &quot;description&quot;: &quot;True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \&quot;is what the public is being served still a projection of\nthe trunk\&quot; has no answer a commit can give, and its moment is when a session\nclaims to be done.&quot;,
+          &quot;default&quot;: false,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The gate&#39;s identity, unique in the model.&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;job&quot;,
-        &quot;runs&quot;,
-        &quot;inputs&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;The CI model this repository declares: what may refuse a change, and what selects each.\n\nTwo things about this report are worth knowing before reading one. `count` is measured\nfrom `gates` rather than written down, so the two can never disagree the way a\nhand-maintained total does. And `unreadable` is how a reader tells \&quot;this repository\ndeclares no CI model\&quot; from \&quot;the call failed\&quot;: a repository of the layer is not obliged\nto declare gates, so the empty model is an answer, and it says why it is empty.\n\n```\nuse majordomus_cli::capability::builtin::gates::GateModelReport;\nuse serde_json::json;\n\n// the shape every surface serves: `unreadable` is skipped when the model was read\nlet r: GateModelReport = serde_json::from_value(json!({\n    \&quot;version\&quot;: 1,\n    \&quot;source\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;count\&quot;: 0,\n    \&quot;on_demand\&quot;: [],\n    \&quot;gates\&quot;: [],\n    \&quot;classes\&quot;: [],\n})).unwrap();\nassert_eq!(r.count, r.gates.len(), \&quot;the total is measured, never declared\&quot;);\nassert!(r.unreadable.is_none(), \&quot;read, and it declares nothing\&quot;);\n\n// and the other empty answer, which a reader must not confuse with that one\nlet absent: GateModelReport = serde_json::from_value(json!({\n    \&quot;version\&quot;: 0,\n    \&quot;source\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;count\&quot;: 0,\n    \&quot;on_demand\&quot;: [],\n    \&quot;gates\&quot;: [],\n    \&quot;classes\&quot;: [],\n    \&quot;unreadable\&quot;: \&quot;no such file\&quot;,\n})).unwrap();\nassert_eq!(absent.unreadable.as_deref(), Some(\&quot;no such file\&quot;));\n```&quot;,
+  &quot;title&quot;: &quot;GateModelReport&quot;,
   &quot;properties&quot;: {
-    &quot;classes&quot;: {
-      &quot;description&quot;: &quot;Every path class, in declaration order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/GateClass&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;unreadable&quot;: {
+      &quot;description&quot;: &quot;Why there is no model to report, when there is none. A repository of the layer does\nnot have to declare a CI model, and a reader is entitled to the difference between\n\&quot;this repository declares no gates\&quot; and \&quot;this call failed\&quot;.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     },
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many gates it declares; measured, not written down.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
+    &quot;source&quot;: {
+      &quot;description&quot;: &quot;Where it was read from, repository-relative.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;version&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;The schema version the file states.&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;format&quot;: &quot;uint32&quot;
     },
     &quot;gates&quot;: {
       &quot;description&quot;: &quot;Every gate, in declaration order, with the pathspecs its evidence is taken over.&quot;,
@@ -429,31 +433,28 @@ not have to declare a CI model, and a reader is entitled to the difference betwe
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;on_demand&quot;: {
-      &quot;description&quot;: &quot;The gates whose runner cannot be had on demand, so no routine plan selects them.\nA gate that never runs protects nothing, and this is where that is said out loud.&quot;,
+    &quot;classes&quot;: {
+      &quot;description&quot;: &quot;Every path class, in declaration order.&quot;,
       &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
+        &quot;$ref&quot;: &quot;#/$defs/GateClass&quot;
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;source&quot;: {
-      &quot;description&quot;: &quot;Where it was read from, repository-relative.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;unreadable&quot;: {
-      &quot;description&quot;: &quot;Why there is no model to report, when there is none. A repository of the layer does\nnot have to declare a CI model, and a reader is entitled to the difference between\n\&quot;this repository declares no gates\&quot; and \&quot;this call failed\&quot;.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;version&quot;: {
-      &quot;description&quot;: &quot;The schema version the file states.&quot;,
-      &quot;format&quot;: &quot;uint32&quot;,
+    &quot;count&quot;: {
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;description&quot;: &quot;How many gates it declares; measured, not written down.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;on_demand&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The gates whose runner cannot be had on demand, so no routine plan selects them.\nA gate that never runs protects nothing, and this is where that is said out loud.&quot;
     }
   },
+  &quot;description&quot;: &quot;The CI model this repository declares: what may refuse a change, and what selects each.\n\nTwo things about this report are worth knowing before reading one. `count` is measured\nfrom `gates` rather than written down, so the two can never disagree the way a\nhand-maintained total does. And `unreadable` is how a reader tells \&quot;this repository\ndeclares no CI model\&quot; from \&quot;the call failed\&quot;: a repository of the layer is not obliged\nto declare gates, so the empty model is an answer, and it says why it is empty.\n\n```\nuse majordomus_cli::capability::builtin::gates::GateModelReport;\nuse serde_json::json;\n\n// the shape every surface serves: `unreadable` is skipped when the model was read\nlet r: GateModelReport = serde_json::from_value(json!({\n    \&quot;version\&quot;: 1,\n    \&quot;source\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;count\&quot;: 0,\n    \&quot;on_demand\&quot;: [],\n    \&quot;gates\&quot;: [],\n    \&quot;classes\&quot;: [],\n})).unwrap();\nassert_eq!(r.count, r.gates.len(), \&quot;the total is measured, never declared\&quot;);\nassert!(r.unreadable.is_none(), \&quot;read, and it declares nothing\&quot;);\n\n// and the other empty answer, which a reader must not confuse with that one\nlet absent: GateModelReport = serde_json::from_value(json!({\n    \&quot;version\&quot;: 0,\n    \&quot;source\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;count\&quot;: 0,\n    \&quot;on_demand\&quot;: [],\n    \&quot;gates\&quot;: [],\n    \&quot;classes\&quot;: [],\n    \&quot;unreadable\&quot;: \&quot;no such file\&quot;,\n})).unwrap();\nassert_eq!(absent.unreadable.as_deref(), Some(\&quot;no such file\&quot;));\n```&quot;,
   &quot;required&quot;: [
     &quot;version&quot;,
     &quot;source&quot;,
@@ -462,7 +463,6 @@ not have to declare a CI model, and a reader is entitled to the difference betwe
     &quot;gates&quot;,
     &quot;classes&quot;
   ],
-  &quot;title&quot;: &quot;GateModelReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>

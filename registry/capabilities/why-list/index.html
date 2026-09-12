@@ -208,35 +208,41 @@ list written anywhere.</p><div class="mt-3 overflow-x-auto rounded-base border b
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only moments in this operational area. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">audience</td>
+        <td class="px-3 py-2 font-mono text-heading">tag</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only moments this audience recognises. <span class="font-mono text-xs text-body-subtle">default null</span></td>
+        <td class="px-3 py-2 text-body">Only moments carrying this tag. <span class="font-mono text-xs text-body-subtle">default null</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">status</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Only moments of this status. Absent means the public ones (`stable`); pass `any`
+for everything the catalogue holds. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">capability</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only moments naming this capability of the executable. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">lifecycle</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Only moments at this stage of work. <span class="font-mono text-xs text-body-subtle">default null</span></td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">command</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only moments naming this command. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">featured</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
+        <td class="px-3 py-2 font-mono text-heading">audience</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only moments the homepage features. <span class="font-mono text-xs text-body-subtle">default null</span></td>
+        <td class="px-3 py-2 text-body">Only moments this audience recognises. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">frequency</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only moments of this frequency. <span class="font-mono text-xs text-body-subtle">default null</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">lifecycle</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only moments at this stage of work. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">q</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -249,16 +255,10 @@ summary, the tags, the aliases, the signals, the examples and the body. <span cl
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only moments of this severity. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">status</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-heading">featured</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only moments of this status. Absent means the public ones (`stable`); pass `any`
-for everything the catalogue holds. <span class="font-mono text-xs text-body-subtle">default null</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tag</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only moments carrying this tag. <span class="font-mono text-xs text-body-subtle">default null</span></td>
+        <td class="px-3 py-2 text-body">Only moments the homepage features. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -266,6 +266,8 @@ for everything the catalogue holds. <span class="font-mono text-xs text-body-sub
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;What a listing is narrowed by. Every field is optional and they compose as a\nconjunction; the values a caller may pass are the facets the catalogue reports, never a\nlist written anywhere.&quot;,
+  &quot;title&quot;: &quot;Query&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;area&quot;: {
       &quot;default&quot;: null,
@@ -275,41 +277,25 @@ for everything the catalogue holds. <span class="font-mono text-xs text-body-sub
         &quot;null&quot;
       ]
     },
-    &quot;audience&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only moments this audience recognises.&quot;,
+    &quot;tag&quot;: {
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;Only moments carrying this tag.&quot;
+    },
+    &quot;status&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;Only moments of this status. Absent means the public ones (`stable`); pass `any`\nfor everything the catalogue holds.&quot;
     },
     &quot;capability&quot;: {
-      &quot;default&quot;: null,
       &quot;description&quot;: &quot;Only moments naming this capability of the executable.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;command&quot;: {
       &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only moments naming this command.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;featured&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only moments the homepage features.&quot;,
-      &quot;type&quot;: [
-        &quot;boolean&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;frequency&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only moments of this frequency.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
@@ -323,6 +309,30 @@ for everything the catalogue holds. <span class="font-mono text-xs text-body-sub
         &quot;null&quot;
       ]
     },
+    &quot;command&quot;: {
+      &quot;description&quot;: &quot;Only moments naming this command.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;default&quot;: null
+    },
+    &quot;audience&quot;: {
+      &quot;description&quot;: &quot;Only moments this audience recognises.&quot;,
+      &quot;default&quot;: null,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;frequency&quot;: {
+      &quot;default&quot;: null,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Only moments of this frequency.&quot;
+    },
     &quot;q&quot;: {
       &quot;default&quot;: null,
       &quot;description&quot;: &quot;Case-insensitive text, matched against the identity, the titles, the hook, the\nsummary, the tags, the aliases, the signals, the examples and the body.&quot;,
@@ -333,31 +343,21 @@ for everything the catalogue holds. <span class="font-mono text-xs text-body-sub
     },
     &quot;severity&quot;: {
       &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only moments of this severity.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Only moments of this severity.&quot;
     },
-    &quot;status&quot;: {
+    &quot;featured&quot;: {
+      &quot;description&quot;: &quot;Only moments the homepage features.&quot;,
       &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only moments of this status. Absent means the public ones (`stable`); pass `any`\nfor everything the catalogue holds.&quot;,
       &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;tag&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only moments carrying this tag.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
+        &quot;boolean&quot;,
         &quot;null&quot;
       ]
     }
-  },
-  &quot;title&quot;: &quot;Query&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -366,25 +366,25 @@ for everything the catalogue holds. <span class="font-mono text-xs text-body-sub
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">areas</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every area, with its derived membership.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">audiences</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every audience, with its derived membership.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">counts</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The counts.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">facets</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The filters, derived from the records.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">moments</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The matching moments, in presentation order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">areas</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every area, with its derived membership.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -392,83 +392,23 @@ for everything the catalogue holds. <span class="font-mono text-xs text-body-sub
         <td class="px-3 py-2 text-body">The hash of the catalogue&#39;s own sources: stable for a tree, and independent of the
 rest of the index, so two runs over one tree agree.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">moments</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The matching moments, in presentation order.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">[`SCHEMA`].</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">counts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The counts.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
     &quot;AreaView&quot;: {
-      &quot;description&quot;: &quot;One area, with the membership nobody authored.&quot;,
-      &quot;properties&quot;: {
-        &quot;body&quot;: {
-          &quot;description&quot;: &quot;The Markdown body.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;count&quot;: {
-          &quot;description&quot;: &quot;Derived: how many.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;moments&quot;: {
-          &quot;description&quot;: &quot;Derived: the public moments that fall under it, in presentation order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;route&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;Derived: `/why/areas/&lt;id&gt;/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;Derived: the file it came from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line: what falls under it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;tags&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;Free tags.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The area.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;weight&quot;: {
-          &quot;default&quot;: 0,
-          &quot;description&quot;: &quot;Presentation order.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
@@ -477,75 +417,128 @@ rest of the index, so two runs over one tree agree.</td>
         &quot;moments&quot;,
         &quot;count&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;AudienceView&quot;: {
-      &quot;description&quot;: &quot;One audience, with the membership nobody authored.&quot;,
       &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line: what falls under it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;Derived: `/why/areas/&lt;id&gt;/`.&quot;,
+          &quot;default&quot;: &quot;&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The area.&quot;
+        },
+        &quot;moments&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Derived: the public moments that fall under it, in presentation order.&quot;
+        },
         &quot;body&quot;: {
           &quot;description&quot;: &quot;The Markdown body.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;count&quot;: {
-          &quot;description&quot;: &quot;Derived: how many.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Derived: how many.&quot;
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;weight&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;default&quot;: 0,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Presentation order.&quot;
         },
-        &quot;moments&quot;: {
-          &quot;description&quot;: &quot;Derived: the public moments that name it, in presentation order.&quot;,
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;default&quot;: &quot;&quot;,
+          &quot;description&quot;: &quot;Derived: the file it came from.&quot;
+        },
+        &quot;tags&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Free tags.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;route&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;Derived: `/why/audiences/&lt;id&gt;/`.&quot;,
+          &quot;default&quot;: []
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One area, with the membership nobody authored.&quot;
+    },
+    &quot;AudienceView&quot;: {
+      &quot;description&quot;: &quot;One audience, with the membership nobody authored.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;summary&quot;,
+        &quot;status&quot;,
+        &quot;moments&quot;,
+        &quot;count&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line: the working situation.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;moments&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Derived: the public moments that name it, in presentation order.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;Derived: `/why/audiences/&lt;id&gt;/`.&quot;,
+          &quot;default&quot;: &quot;&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;
+        },
         &quot;short_title&quot;: {
-          &quot;description&quot;: &quot;Two or three words for a filter chip.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;Two or three words for a filter chip.&quot;
         },
         &quot;source&quot;: {
           &quot;default&quot;: &quot;&quot;,
           &quot;description&quot;: &quot;Derived: the file it came from.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line: the working situation.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;tags&quot;: {
-          &quot;default&quot;: [],
+          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;Free tags.&quot;,
+          &quot;default&quot;: [],
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
+        },
+        &quot;status&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;
         },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;Who they are.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;weight&quot;: {
-          &quot;default&quot;: 0,
-          &quot;description&quot;: &quot;Presentation order.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;workflow&quot;: {
           &quot;description&quot;: &quot;One line: how work flows for them.&quot;,
@@ -553,58 +546,27 @@ rest of the index, so two runs over one tree agree.</td>
             &quot;string&quot;,
             &quot;null&quot;
           ]
+        },
+        &quot;body&quot;: {
+          &quot;description&quot;: &quot;The Markdown body.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;weight&quot;: {
+          &quot;default&quot;: 0,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;description&quot;: &quot;Presentation order.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;count&quot;: {
+          &quot;description&quot;: &quot;Derived: how many.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;summary&quot;,
-        &quot;status&quot;,
-        &quot;moments&quot;,
-        &quot;count&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
     },
     &quot;Counts&quot;: {
-      &quot;description&quot;: &quot;How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down.&quot;,
-      &quot;properties&quot;: {
-        &quot;areas&quot;: {
-          &quot;description&quot;: &quot;Public areas.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;audiences&quot;: {
-          &quot;description&quot;: &quot;Public audiences.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;examples&quot;: {
-          &quot;description&quot;: &quot;Concrete situations across the public moments.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;moments&quot;: {
-          &quot;description&quot;: &quot;Public moments.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;moments_all&quot;: {
-          &quot;description&quot;: &quot;Moments of every status, drafts included.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;signals&quot;: {
-          &quot;description&quot;: &quot;Signals across the public moments: the size of the questionnaire.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;moments&quot;,
         &quot;moments_all&quot;,
@@ -613,188 +575,48 @@ rest of the index, so two runs over one tree agree.</td>
         &quot;signals&quot;,
         &quot;examples&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;FacetValue&quot;: {
-      &quot;description&quot;: &quot;One selectable value of one facet, with how many public moments carry it. Every filter\na reader is offered is one of these; nothing anywhere lists the values by hand.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down.&quot;,
       &quot;properties&quot;: {
-        &quot;count&quot;: {
-          &quot;description&quot;: &quot;How many public moments carry it.&quot;,
+        &quot;areas&quot;: {
+          &quot;description&quot;: &quot;Public areas.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
         },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name to show; the value itself when the taxonomy holds no title for it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;value&quot;: {
-          &quot;description&quot;: &quot;The value as a moment declares it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;value&quot;,
-        &quot;label&quot;,
-        &quot;count&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Facets&quot;: {
-      &quot;description&quot;: &quot;The filters the catalogue offers, derived from the records rather than declared.&quot;,
-      &quot;properties&quot;: {
-        &quot;areas&quot;: {
-          &quot;description&quot;: &quot;By operational area.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;audiences&quot;: {
-          &quot;description&quot;: &quot;By audience.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;capabilities&quot;: {
-          &quot;description&quot;: &quot;By capability of the executable.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;commands&quot;: {
-          &quot;description&quot;: &quot;By command.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;frequencies&quot;: {
-          &quot;description&quot;: &quot;By frequency.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;lifecycle&quot;: {
-          &quot;description&quot;: &quot;By stage of work.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;severities&quot;: {
-          &quot;description&quot;: &quot;By severity.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;tags&quot;: {
-          &quot;description&quot;: &quot;By tag.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;audiences&quot;,
-        &quot;areas&quot;,
-        &quot;tags&quot;,
-        &quot;severities&quot;,
-        &quot;frequencies&quot;,
-        &quot;lifecycle&quot;,
-        &quot;capabilities&quot;,
-        &quot;commands&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;MomentSummary&quot;: {
-      &quot;description&quot;: &quot;One moment as a listing shows it: everything a card needs and nothing a page needs.&quot;,
-      &quot;properties&quot;: {
-        &quot;areas&quot;: {
-          &quot;description&quot;: &quot;The operational areas it falls under.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;audiences&quot;: {
-          &quot;description&quot;: &quot;The audiences that recognise it.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;moments&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Public moments.&quot;,
+          &quot;minimum&quot;: 0
         },
         &quot;examples&quot;: {
-          &quot;description&quot;: &quot;How many concrete situations it carries.&quot;,
+          &quot;description&quot;: &quot;Concrete situations across the public moments.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;featured&quot;: {
-          &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;frequency&quot;: {
-          &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;hook&quot;: {
-          &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity and the slug.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
         },
         &quot;signals&quot;: {
-          &quot;description&quot;: &quot;How many observable symptoms it declares.&quot;,
+          &quot;description&quot;: &quot;Signals across the public moments: the size of the questionnaire.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;audiences&quot;: {
+          &quot;description&quot;: &quot;Public audiences.&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
         },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line: what is actually wrong.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;tags&quot;: {
-          &quot;description&quot;: &quot;Free tags.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The moment as a heading.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;weight&quot;: {
-          &quot;description&quot;: &quot;Presentation order.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
+        &quot;moments_all&quot;: {
+          &quot;description&quot;: &quot;Moments of every status, drafts included.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         }
-      },
+      }
+    },
+    &quot;MomentSummary&quot;: {
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
@@ -813,47 +635,186 @@ rest of the index, so two runs over one tree agree.</td>
         &quot;signals&quot;,
         &quot;examples&quot;
       ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One moment as a listing shows it: everything a card needs and nothing a page needs.&quot;,
+      &quot;properties&quot;: {
+        &quot;tags&quot;: {
+          &quot;description&quot;: &quot;Free tags.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;label&quot;: {
+          &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;featured&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether the homepage shows it.&quot;
+        },
+        &quot;signals&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many observable symptoms it declares.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The moment as a heading.&quot;
+        },
+        &quot;weight&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Presentation order.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line: what is actually wrong.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;
+        },
+        &quot;areas&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The operational areas it falls under.&quot;
+        },
+        &quot;audiences&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The audiences that recognise it.&quot;
+        },
+        &quot;hook&quot;: {
+          &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The identity and the slug.&quot;
+        },
+        &quot;frequency&quot;: {
+          &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;examples&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many concrete situations it carries.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        }
+      }
+    },
+    &quot;FacetValue&quot;: {
+      &quot;required&quot;: [
+        &quot;value&quot;,
+        &quot;label&quot;,
+        &quot;count&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One selectable value of one facet, with how many public moments carry it. Every filter\na reader is offered is one of these; nothing anywhere lists the values by hand.&quot;,
+      &quot;properties&quot;: {
+        &quot;label&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The name to show; the value itself when the taxonomy holds no title for it.&quot;
+        },
+        &quot;value&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The value as a moment declares it.&quot;
+        },
+        &quot;count&quot;: {
+          &quot;description&quot;: &quot;How many public moments carry it.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        }
+      }
+    },
+    &quot;Facets&quot;: {
+      &quot;description&quot;: &quot;The filters the catalogue offers, derived from the records rather than declared.&quot;,
+      &quot;properties&quot;: {
+        &quot;capabilities&quot;: {
+          &quot;description&quot;: &quot;By capability of the executable.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
+          }
+        },
+        &quot;severities&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;By severity.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
+          }
+        },
+        &quot;commands&quot;: {
+          &quot;description&quot;: &quot;By command.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;tags&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
+          },
+          &quot;description&quot;: &quot;By tag.&quot;
+        },
+        &quot;audiences&quot;: {
+          &quot;description&quot;: &quot;By audience.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;areas&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;By operational area.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
+          }
+        },
+        &quot;frequencies&quot;: {
+          &quot;description&quot;: &quot;By frequency.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
+          }
+        },
+        &quot;lifecycle&quot;: {
+          &quot;description&quot;: &quot;By stage of work.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FacetValue&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;audiences&quot;,
+        &quot;areas&quot;,
+        &quot;tags&quot;,
+        &quot;severities&quot;,
+        &quot;frequencies&quot;,
+        &quot;lifecycle&quot;,
+        &quot;capabilities&quot;,
+        &quot;commands&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The whole catalogue as a client reads it.&quot;,
-  &quot;properties&quot;: {
-    &quot;areas&quot;: {
-      &quot;description&quot;: &quot;Every area, with its derived membership.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/AreaView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;audiences&quot;: {
-      &quot;description&quot;: &quot;Every audience, with its derived membership.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/AudienceView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;counts&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Counts&quot;,
-      &quot;description&quot;: &quot;The counts.&quot;
-    },
-    &quot;facets&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Facets&quot;,
-      &quot;description&quot;: &quot;The filters, derived from the records.&quot;
-    },
-    &quot;fingerprint&quot;: {
-      &quot;description&quot;: &quot;The hash of the catalogue&#39;s own sources: stable for a tree, and independent of the\nrest of the index, so two runs over one tree agree.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;moments&quot;: {
-      &quot;description&quot;: &quot;The matching moments, in presentation order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/MomentSummary&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
-      &quot;type&quot;: &quot;string&quot;
     }
   },
   &quot;required&quot;: [
@@ -865,8 +826,47 @@ rest of the index, so two runs over one tree agree.</td>
     &quot;areas&quot;,
     &quot;facets&quot;
   ],
-  &quot;title&quot;: &quot;CatalogueView&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;properties&quot;: {
+    &quot;audiences&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/AudienceView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every audience, with its derived membership.&quot;
+    },
+    &quot;facets&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Facets&quot;,
+      &quot;description&quot;: &quot;The filters, derived from the records.&quot;
+    },
+    &quot;moments&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/MomentSummary&quot;
+      },
+      &quot;description&quot;: &quot;The matching moments, in presentation order.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;areas&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/AreaView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every area, with its derived membership.&quot;
+    },
+    &quot;fingerprint&quot;: {
+      &quot;description&quot;: &quot;The hash of the catalogue&#39;s own sources: stable for a tree, and independent of the\nrest of the index, so two runs over one tree agree.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;counts&quot;: {
+      &quot;description&quot;: &quot;The counts.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Counts&quot;
+    }
+  },
+  &quot;description&quot;: &quot;The whole catalogue as a client reads it.&quot;,
+  &quot;title&quot;: &quot;CatalogueView&quot;
 }</pre></div>
   </details>
 </div>

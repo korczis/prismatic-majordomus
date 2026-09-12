@@ -211,8 +211,8 @@ absent.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;Which field&#39;s provenance to explain.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;field&quot;: {
       &quot;description&quot;: &quot;The field in dotted form (`services.url`, `capabilities.objects`); every field when\nabsent.&quot;,
@@ -223,7 +223,7 @@ absent.</td>
     }
   },
   &quot;title&quot;: &quot;ExplainInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -247,44 +247,24 @@ absent.</td>
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;Confidence&quot;: {
-      &quot;description&quot;: &quot;How far a resolved value can be trusted.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;exact&quot;,
-          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cached&quot;,
-          &quot;description&quot;: &quot;Read from a cache whose fingerprint still matches its inputs.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;Not resolved.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;FieldSource&quot;: {
       &quot;description&quot;: &quot;Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \&quot;why does it say that\&quot;\nis answered by the tool rather than by reading its source.&quot;,
       &quot;properties&quot;: {
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What decided it: a file, a command, a compile-time constant, the cache.&quot;
+        },
         &quot;confidence&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Confidence&quot;,
-          &quot;description&quot;: &quot;How certain the value is.&quot;
+          &quot;description&quot;: &quot;How certain the value is.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Confidence&quot;
         },
         &quot;field&quot;: {
           &quot;description&quot;: &quot;The field, in dotted form: `services.cockpit.url`, `vcs.branch`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;resolver&quot;: {
-          &quot;description&quot;: &quot;The part of this executable that read it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;What decided it: a file, a command, a compile-time constant, the cache.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The part of this executable that read it.&quot;
         },
         &quot;value&quot;: {
           &quot;description&quot;: &quot;The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing.&quot;,
@@ -306,13 +286,33 @@ absent.</td>
       &quot;description&quot;: &quot;How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \&quot;there is no server running\&quot; from \&quot;nobody looked\&quot;.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;fast&quot;,
-          &quot;description&quot;: &quot;Only what is cheap enough for a shell prompt; the rest from the cache.&quot;,
+          &quot;description&quot;: &quot;Only what is cheap enough for a shell prompt; the rest from the cache.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
+          &quot;const&quot;: &quot;full&quot;
+        }
+      ]
+    },
+    &quot;Confidence&quot;: {
+      &quot;description&quot;: &quot;How far a resolved value can be trusted.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;exact&quot;,
+          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;full&quot;,
-          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
+          &quot;const&quot;: &quot;cached&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Read from a cache whose fingerprint still matches its inputs.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Not resolved.&quot;,
+          &quot;const&quot;: &quot;unknown&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
@@ -336,8 +336,8 @@ absent.</td>
     &quot;resolution&quot;,
     &quot;fields&quot;
   ],
-  &quot;title&quot;: &quot;EnvironmentProvenance&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;EnvironmentProvenance&quot;
 }</pre></div>
   </details>
 </div>

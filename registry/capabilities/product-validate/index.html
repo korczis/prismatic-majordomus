@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -212,15 +212,15 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">counts</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The counts the model reached.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">errors</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many findings are errors.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">counts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The counts the model reached.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -241,94 +241,54 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;ProductCounts&quot;: {
-      &quot;description&quot;: &quot;How much the model holds. Every count anywhere is one of these.&quot;,
-      &quot;properties&quot;: {
-        &quot;commands&quot;: {
-          &quot;description&quot;: &quot;Public commands of the shell tool.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;commands_covered&quot;: {
-          &quot;description&quot;: &quot;Commands a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;featured&quot;: {
-          &quot;description&quot;: &quot;Stable features the homepage shows.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;features&quot;: {
-          &quot;description&quot;: &quot;Stable features.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;features_all&quot;: {
-          &quot;description&quot;: &quot;Features of every status, drafts included.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;kinds&quot;: {
-          &quot;description&quot;: &quot;Kinds of the layer a feature can present.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;kinds_covered&quot;: {
-          &quot;description&quot;: &quot;Kinds a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;modules&quot;: {
-          &quot;description&quot;: &quot;Builtin modules of the executable, and how many a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;modules_covered&quot;: {
-          &quot;description&quot;: &quot;Modules a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;providers&quot;: {
-          &quot;description&quot;: &quot;Providers the tool has an adapter for.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;features&quot;,
-        &quot;features_all&quot;,
-        &quot;featured&quot;,
-        &quot;providers&quot;,
-        &quot;modules&quot;,
-        &quot;modules_covered&quot;,
-        &quot;commands&quot;,
-        &quot;commands_covered&quot;,
-        &quot;kinds&quot;,
-        &quot;kinds_covered&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+  &quot;properties&quot;: {
+    &quot;errors&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many findings are errors.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;
     },
+    &quot;counts&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ProductCounts&quot;,
+      &quot;description&quot;: &quot;The counts the model reached.&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;The findings, errors first, then by file.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ProductFinding&quot;
+      }
+    },
+    &quot;valid&quot;: {
+      &quot;description&quot;: &quot;True when nothing is an error. Warnings do not make it false.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;warnings&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many findings are warnings.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0
+    }
+  },
+  &quot;required&quot;: [
+    &quot;valid&quot;,
+    &quot;errors&quot;,
+    &quot;warnings&quot;,
+    &quot;counts&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;title&quot;: &quot;ProductValidationReport&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;$defs&quot;: {
     &quot;ProductFinding&quot;: {
       &quot;description&quot;: &quot;One thing wrong with the product model, named where it is, with the nearest candidate\nwhen there is one.&quot;,
       &quot;properties&quot;: {
         &quot;code&quot;: {
-          &quot;description&quot;: &quot;`unknown_reference`, `duplicate_identity`, `missing_content`, `uncovered`, ...&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`unknown_reference`, `duplicate_identity`, `missing_content`, `uncovered`, ...&quot;
         },
-        &quot;did_you_mean&quot;: {
-          &quot;description&quot;: &quot;The nearest existing name, when the value looks like a typo of one.&quot;,
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The record&#39;s identity, when one record owns the finding.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
@@ -341,20 +301,20 @@
             &quot;null&quot;
           ]
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The record&#39;s identity, when one record owns the finding.&quot;,
+        &quot;did_you_mean&quot;: {
+          &quot;description&quot;: &quot;The nearest existing name, when the value looks like a typo of one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
         &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;
         },
         &quot;path&quot;: {
-          &quot;description&quot;: &quot;The repository-relative file the finding is in, or the registry it is about.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The repository-relative file the finding is in, or the registry it is about.&quot;
         },
         &quot;severity&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
@@ -369,66 +329,106 @@
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;ProductCounts&quot;: {
+      &quot;required&quot;: [
+        &quot;features&quot;,
+        &quot;features_all&quot;,
+        &quot;featured&quot;,
+        &quot;providers&quot;,
+        &quot;modules&quot;,
+        &quot;modules_covered&quot;,
+        &quot;commands&quot;,
+        &quot;commands_covered&quot;,
+        &quot;kinds&quot;,
+        &quot;kinds_covered&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;featured&quot;: {
+          &quot;description&quot;: &quot;Stable features the homepage shows.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;modules&quot;: {
+          &quot;description&quot;: &quot;Builtin modules of the executable, and how many a stable feature names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;commands&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Public commands of the shell tool.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;features&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Stable features.&quot;
+        },
+        &quot;providers&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Providers the tool has an adapter for.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;commands_covered&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Commands a stable feature names.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;features_all&quot;: {
+          &quot;description&quot;: &quot;Features of every status, drafts included.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;kinds_covered&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Kinds a stable feature names.&quot;
+        },
+        &quot;modules_covered&quot;: {
+          &quot;description&quot;: &quot;Modules a stable feature names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;kinds&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Kinds of the layer a feature can present.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        }
+      },
+      &quot;description&quot;: &quot;How much the model holds. Every count anywhere is one of these.&quot;
+    },
     &quot;Severity&quot;: {
       &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;info&quot;,
           &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;const&quot;: &quot;info&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;warning&quot;,
           &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;const&quot;: &quot;warning&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;error&quot;,
           &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;const&quot;: &quot;error&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
   },
-  &quot;description&quot;: &quot;What the model&#39;s own validation found.&quot;,
-  &quot;properties&quot;: {
-    &quot;counts&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ProductCounts&quot;,
-      &quot;description&quot;: &quot;The counts the model reached.&quot;
-    },
-    &quot;errors&quot;: {
-      &quot;description&quot;: &quot;How many findings are errors.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;The findings, errors first, then by file.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ProductFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;valid&quot;: {
-      &quot;description&quot;: &quot;True when nothing is an error. Warnings do not make it false.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;warnings&quot;: {
-      &quot;description&quot;: &quot;How many findings are warnings.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;valid&quot;,
-    &quot;errors&quot;,
-    &quot;warnings&quot;,
-    &quot;counts&quot;,
-    &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;ProductValidationReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;What the model&#39;s own validation found.&quot;
 }</pre></div>
   </details>
 </div>

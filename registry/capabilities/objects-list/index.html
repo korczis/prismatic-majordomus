@@ -216,8 +216,6 @@ the repository does not have is an invalid input, not an empty answer. <span cla
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Filters; both optional.&quot;,
   &quot;properties&quot;: {
     &quot;kind&quot;: {
       &quot;default&quot;: null,
@@ -228,16 +226,18 @@ the repository does not have is an invalid input, not an empty answer. <span cla
       ]
     },
     &quot;tag&quot;: {
-      &quot;default&quot;: null,
       &quot;description&quot;: &quot;Only objects whose metadata tags include this tag.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;default&quot;: null
     }
   },
   &quot;title&quot;: &quot;ListInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;Filters; both optional.&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -260,69 +260,21 @@ the repository does not have is an invalid input, not an empty answer. <span cla
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;ObjectSummary&quot;: {
-      &quot;description&quot;: &quot;One object, summarised for a listing.&quot;,
-      &quot;properties&quot;: {
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;The one-line description, when the kind holds one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;identity&quot;: {
-          &quot;description&quot;: &quot;The identity within the kind.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;The kind the object was read as.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative source path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title, when the kind&#39;s title rule found one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;uri&quot;,
-        &quot;id&quot;,
-        &quot;kind&quot;,
-        &quot;identity&quot;,
-        &quot;path&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
   &quot;description&quot;: &quot;The answer of `objects.list`: the matching objects, summarised, in URI order.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;count&quot;: {
+      &quot;minimum&quot;: 0,
       &quot;description&quot;: &quot;How many objects matched.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
     &quot;objects&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;The objects, one summary each.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ObjectSummary&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
     }
   },
   &quot;required&quot;: [
@@ -330,7 +282,55 @@ the repository does not have is an invalid input, not an empty answer. <span cla
     &quot;objects&quot;
   ],
   &quot;title&quot;: &quot;ObjectList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;$defs&quot;: {
+    &quot;ObjectSummary&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One object, summarised for a listing.&quot;,
+      &quot;required&quot;: [
+        &quot;uri&quot;,
+        &quot;id&quot;,
+        &quot;kind&quot;,
+        &quot;identity&quot;,
+        &quot;path&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;
+        },
+        &quot;identity&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The identity within the kind.&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;The kind the object was read as.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Repository-relative source path.&quot;
+        },
+        &quot;uri&quot;: {
+          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;The one-line description, when the kind holds one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title, when the kind&#39;s title rule found one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      }
+    }
+  }
 }</pre></div>
   </details>
 </div>

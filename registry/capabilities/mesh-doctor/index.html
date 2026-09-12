@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -226,39 +226,41 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;MeshDoctorReport&quot;,
   &quot;$defs&quot;: {
     &quot;DoctorCheck&quot;: {
-      &quot;description&quot;: &quot;One check&#39;s verdict.&quot;,
       &quot;properties&quot;: {
+        &quot;ok&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether it holds.&quot;
+        },
         &quot;check&quot;: {
-          &quot;description&quot;: &quot;What was checked.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What was checked.&quot;
         },
         &quot;detail&quot;: {
           &quot;description&quot;: &quot;The evidence: a path, an address, an error.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;ok&quot;: {
-          &quot;description&quot;: &quot;Whether it holds.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;check&quot;,
         &quot;ok&quot;,
         &quot;detail&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;One check&#39;s verdict.&quot;
     }
   },
   &quot;description&quot;: &quot;The whole self-check.&quot;,
   &quot;properties&quot;: {
     &quot;checks&quot;: {
-      &quot;description&quot;: &quot;The checks, in the order they ran.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/DoctorCheck&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;description&quot;: &quot;The checks, in the order they ran.&quot;
     },
     &quot;ok&quot;: {
       &quot;description&quot;: &quot;Whether every check holds.&quot;,
@@ -268,9 +270,7 @@
   &quot;required&quot;: [
     &quot;ok&quot;,
     &quot;checks&quot;
-  ],
-  &quot;title&quot;: &quot;MeshDoctorReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>

@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -212,6 +212,11 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tallies</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many checks stand where, by status word.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">checks</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -221,53 +226,77 @@
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The worst check&#39;s status.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tallies</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many checks stand where, by status word.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;The health of what this process serves.&quot;,
+  &quot;properties&quot;: {
+    &quot;tallies&quot;: {
+      &quot;description&quot;: &quot;How many checks stand where, by status word.&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 0
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;checks&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every dimension, in a stable order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/HealthCheck&quot;
+      }
+    },
+    &quot;status&quot;: {
+      &quot;description&quot;: &quot;The worst check&#39;s status.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;status&quot;,
+    &quot;tallies&quot;,
+    &quot;checks&quot;
+  ],
+  &quot;title&quot;: &quot;Health&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
     &quot;HealthCheck&quot;: {
-      &quot;description&quot;: &quot;One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves.&quot;,
       &quot;properties&quot;: {
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The short name.&quot;
+        },
         &quot;decided_by&quot;: {
-          &quot;description&quot;: &quot;The engine that decided it, named so the reader knows what to fix.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The engine that decided it, named so the reader knows what to fix.&quot;
         },
         &quot;detail&quot;: {
-          &quot;description&quot;: &quot;One line: what the engine decided and on what.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line: what the engine decided and on what.&quot;
         },
         &quot;evidence&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;What reproduces the verdict: a command, or a path.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
         &quot;findings&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
         &quot;id&quot;: {
-          &quot;description&quot;: &quot;A stable id, `[a-z][a-z0-9-]*`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A stable id, `[a-z][a-z0-9-]*`.&quot;
         },
         &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The short name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Where it stands.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;
         }
       },
       &quot;required&quot;: [
@@ -277,64 +306,35 @@
         &quot;detail&quot;,
         &quot;decided_by&quot;
       ],
+      &quot;description&quot;: &quot;One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves.&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;HealthStatus&quot;: {
-      &quot;description&quot;: &quot;Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;ok&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The engine that decides this dimension is satisfied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;ok&quot;
         },
         {
-          &quot;const&quot;: &quot;warn&quot;,
           &quot;description&quot;: &quot;Nothing is broken and something is worth looking at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warn&quot;
         },
         {
           &quot;const&quot;: &quot;fail&quot;,
-          &quot;description&quot;: &quot;The engine that decides this dimension is not satisfied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The engine that decides this dimension is not satisfied.&quot;
         },
         {
-          &quot;const&quot;: &quot;unknown&quot;,
           &quot;description&quot;: &quot;This process cannot decide it, and says so rather than reporting `ok`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unknown&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.&quot;
     }
-  },
-  &quot;description&quot;: &quot;The health of what this process serves.&quot;,
-  &quot;properties&quot;: {
-    &quot;checks&quot;: {
-      &quot;description&quot;: &quot;Every dimension, in a stable order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/HealthCheck&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;status&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;,
-      &quot;description&quot;: &quot;The worst check&#39;s status.&quot;
-    },
-    &quot;tallies&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
-      },
-      &quot;description&quot;: &quot;How many checks stand where, by status word.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;status&quot;,
-    &quot;tallies&quot;,
-    &quot;checks&quot;
-  ],
-  &quot;title&quot;: &quot;Health&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>

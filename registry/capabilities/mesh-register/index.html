@@ -211,7 +211,6 @@ signature — before anything is recorded.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `mesh.register`: one signed envelope, exactly as the wire carries it.&quot;,
   &quot;properties&quot;: {
     &quot;envelope&quot;: {
@@ -222,6 +221,7 @@ signature — before anything is recorded.</td>
     &quot;envelope&quot;
   ],
   &quot;title&quot;: &quot;RegisterInput&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -232,6 +232,11 @@ the rendezvous holds. Defined here beside the client; the capability re-exports 
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">refusal</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Why not, when it was not.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">accepted</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -243,85 +248,45 @@ the rendezvous holds. Defined here beside the client; the capability re-exports 
         <td class="px-3 py-2 text-body">The signed envelopes of the nodes this rendezvous currently holds, the answering
 node&#39;s own included. Each verifies on its own signature; the rendezvous vouches
 for nothing.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">refusal</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Why not, when it was not.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;RegisterAnswer&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;What a registration answers: whether the envelope was accepted, and the candidates\nthe rendezvous holds. Defined here beside the client; the capability re-exports it.&quot;,
+  &quot;properties&quot;: {
+    &quot;refusal&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Why not, when it was not.&quot;
+    },
+    &quot;accepted&quot;: {
+      &quot;description&quot;: &quot;Whether the presented envelope was accepted into the local registry.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;candidates&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Envelope&quot;
+      },
+      &quot;description&quot;: &quot;The signed envelopes of the nodes this rendezvous currently holds, the answering\nnode&#39;s own included. Each verifies on its own signature; the rendezvous vouches\nfor nothing.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;accepted&quot;,
+    &quot;candidates&quot;
+  ],
   &quot;$defs&quot;: {
+    &quot;InstanceId&quot;: {
+      &quot;description&quot;: &quot;One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \&quot;the same\nnode came back\&quot; from \&quot;the same process is still there\&quot;.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
     &quot;Envelope&quot;: {
       &quot;description&quot;: &quot;The wire envelope: the advertisement plus its signature.&quot;,
-      &quot;properties&quot;: {
-        &quot;caps&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;The transports the node serves: `http`, `mcp`, `ws`. Sanitized capability\nawareness, never an authorization.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;ep&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;Where this node answers HTTP, as `host:port` authorities, at most\n[`MAX_ENDPOINTS`]. Advisory: an endpoint is where to *try*, identity is the key.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;inst&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
-          &quot;description&quot;: &quot;This run of the node.&quot;
-        },
-        &quot;name&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;A human name for the node. Presentation only.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;pk&quot;: {
-          &quot;description&quot;: &quot;The Ed25519 public key, hex. The node id is derived from it, never carried:\na field that could disagree with the key is a field somebody will forge.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;repos&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;The repositories this node serves, as the same 32-hex git-repository digests\n`server.status` reports. A digest discloses nothing about a path; a reader that\nserves the same repository recognises it, anyone else learns only \&quot;some repo\&quot;.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;seq&quot;: {
-          &quot;description&quot;: &quot;Monotonic per instance: a replayed datagram carries a counter the reader has\nalready seen and is dropped.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;sig&quot;: {
-          &quot;description&quot;: &quot;Ed25519 over [`Advertisement::signing_bytes`], hex.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;ts&quot;: {
-          &quot;description&quot;: &quot;Seconds since the Unix epoch at signing time.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;v&quot;: {
-          &quot;description&quot;: &quot;Protocol version.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;ver&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;The executable version, informational.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;v&quot;,
         &quot;pk&quot;,
@@ -330,40 +295,75 @@ for nothing.</td>
         &quot;ts&quot;,
         &quot;sig&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;InstanceId&quot;: {
-      &quot;description&quot;: &quot;One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \&quot;the same\nnode came back\&quot; from \&quot;the same process is still there\&quot;.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;sig&quot;: {
+          &quot;description&quot;: &quot;Ed25519 over [`Advertisement::signing_bytes`], hex.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;ts&quot;: {
+          &quot;description&quot;: &quot;Seconds since the Unix epoch at signing time.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;pk&quot;: {
+          &quot;description&quot;: &quot;The Ed25519 public key, hex. The node id is derived from it, never carried:\na field that could disagree with the key is a field somebody will forge.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;caps&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The transports the node serves: `http`, `mcp`, `ws`. Sanitized capability\nawareness, never an authorization.&quot;,
+          &quot;default&quot;: []
+        },
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A human name for the node. Presentation only.&quot;,
+          &quot;default&quot;: &quot;&quot;
+        },
+        &quot;ep&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Where this node answers HTTP, as `host:port` authorities, at most\n[`MAX_ENDPOINTS`]. Advisory: an endpoint is where to *try*, identity is the key.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;default&quot;: []
+        },
+        &quot;seq&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Monotonic per instance: a replayed datagram carries a counter the reader has\nalready seen and is dropped.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;ver&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;default&quot;: &quot;&quot;,
+          &quot;description&quot;: &quot;The executable version, informational.&quot;
+        },
+        &quot;v&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Protocol version.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
+        },
+        &quot;inst&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
+          &quot;description&quot;: &quot;This run of the node.&quot;
+        },
+        &quot;repos&quot;: {
+          &quot;description&quot;: &quot;The repositories this node serves, as the same 32-hex git-repository digests\n`server.status` reports. A digest discloses nothing about a path; a reader that\nserves the same repository recognises it, anyone else learns only \&quot;some repo\&quot;.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;default&quot;: [],
+          &quot;type&quot;: &quot;array&quot;
+        }
+      }
     }
-  },
-  &quot;description&quot;: &quot;What a registration answers: whether the envelope was accepted, and the candidates\nthe rendezvous holds. Defined here beside the client; the capability re-exports it.&quot;,
-  &quot;properties&quot;: {
-    &quot;accepted&quot;: {
-      &quot;description&quot;: &quot;Whether the presented envelope was accepted into the local registry.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;candidates&quot;: {
-      &quot;description&quot;: &quot;The signed envelopes of the nodes this rendezvous currently holds, the answering\nnode&#39;s own included. Each verifies on its own signature; the rendezvous vouches\nfor nothing.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Envelope&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;refusal&quot;: {
-      &quot;description&quot;: &quot;Why not, when it was not.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    }
-  },
-  &quot;required&quot;: [
-    &quot;accepted&quot;,
-    &quot;candidates&quot;
-  ],
-  &quot;title&quot;: &quot;RegisterAnswer&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>

@@ -201,15 +201,15 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">document</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">format</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only the artifacts written in this encoding.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">document</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -221,12 +221,12 @@
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;json&quot;,
-          &quot;description&quot;: &quot;A JSON document: pretty-printed, one trailing newline, provenance as members.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A JSON document: pretty-printed, one trailing newline, provenance as members.&quot;
         },
         {
-          &quot;const&quot;: &quot;yaml&quot;,
           &quot;description&quot;: &quot;The same document in the layer&#39;s YAML, provenance as a comment banner.&quot;,
+          &quot;const&quot;: &quot;yaml&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -235,24 +235,20 @@
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;text&quot;,
-          &quot;description&quot;: &quot;Line-oriented text another program reads: the shell tool&#39;s allow-lists,\nprovenance as `#` comments.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Line-oriented text another program reads: the shell tool&#39;s allow-lists,\nprovenance as `#` comments.&quot;
         }
       ]
     }
   },
-  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;ArtifactsInput&quot;,
   &quot;description&quot;: &quot;The input of `artifacts.list`: the whole manifest, or one slice of it.&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
-    &quot;document&quot;: {
-      &quot;description&quot;: &quot;Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
     &quot;format&quot;: {
+      &quot;description&quot;: &quot;Only the artifacts written in this encoding.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/ArtifactFormat&quot;
@@ -260,12 +256,16 @@
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Only the artifacts written in this encoding.&quot;
+      ]
+    },
+    &quot;document&quot;: {
+      &quot;description&quot;: &quot;Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     }
-  },
-  &quot;title&quot;: &quot;ArtifactsInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -274,20 +274,25 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">artifacts</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">regenerate</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The files, in the manifest&#39;s order, after any filter.</td>
+        <td class="px-3 py-2 text-body">The command that rewrites every one of them.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">manifest</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The manifest this was read from, repository-relative.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">documents</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The documents, in the manifest&#39;s order.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">manifest</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">artifacts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The manifest this was read from, repository-relative.</td>
+        <td class="px-3 py-2 text-body">The files, in the manifest&#39;s order, after any filter.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -295,16 +300,6 @@
         <td class="px-3 py-2 text-body">Whether the manifest is committed in this repository at all. A repository that has
 never run `majordomus generate` has no generated tree, which is a fact about it and
 not a failure of this call: every list below is then empty and every tally zero.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">regenerate</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The command that rewrites every one of them.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">schema</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The schema the manifest carries, empty when there is none to read.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tallies</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -315,12 +310,62 @@ not a failure of this call: every list below is then empty and every tally zero.
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The command that decides staleness byte for byte, which is stronger than the hash.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">schema</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The schema the manifest carries, empty when there is none to read.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;ArtifactReport&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;manifest&quot;,
+    &quot;present&quot;,
+    &quot;schema&quot;,
+    &quot;documents&quot;,
+    &quot;artifacts&quot;,
+    &quot;tallies&quot;,
+    &quot;regenerate&quot;,
+    &quot;verify&quot;
+  ],
   &quot;$defs&quot;: {
+    &quot;DocumentView&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;source&quot;,
+        &quot;formats&quot;
+      ],
+      &quot;description&quot;: &quot;One document, and the encodings it is committed in.&quot;,
+      &quot;properties&quot;: {
+        &quot;formats&quot;: {
+          &quot;description&quot;: &quot;The encodings, in the manifest&#39;s order.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ArtifactFormat&quot;
+          }
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The document id, shared by every encoding of it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line: what it was derived from.&quot;
+        },
+        &quot;schema&quot;: {
+          &quot;description&quot;: &quot;The schema id its structured encodings carry.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;ArtifactFormat&quot;: {
       &quot;description&quot;: &quot;The encoding one generated artifact is written in.&quot;,
       &quot;oneOf&quot;: [
@@ -330,87 +375,23 @@ not a failure of this call: every list below is then empty and every tally zero.
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;yaml&quot;,
           &quot;description&quot;: &quot;The same document in the layer&#39;s YAML, provenance as a comment banner.&quot;,
+          &quot;const&quot;: &quot;yaml&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;markdown&quot;,
-          &quot;description&quot;: &quot;Markdown for a reader, provenance as an HTML comment.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Markdown for a reader, provenance as an HTML comment.&quot;
         },
         {
-          &quot;const&quot;: &quot;text&quot;,
           &quot;description&quot;: &quot;Line-oriented text another program reads: the shell tool&#39;s allow-lists,\nprovenance as `#` comments.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ArtifactState&quot;: {
-      &quot;description&quot;: &quot;Where one generated file stands against the tree it is committed in.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;current&quot;,
-          &quot;description&quot;: &quot;The file is there and its bytes hash to what the manifest recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;The file is there and its bytes differ: it was edited, or the generator moved on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;missing&quot;,
-          &quot;description&quot;: &quot;The manifest names it and the tree does not have it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;present&quot;,
-          &quot;description&quot;: &quot;The file is there and the manifest records no hash for it: the manifest&#39;s own\nencodings, which cannot hash themselves. `generate --check` compares them.&quot;,
+          &quot;const&quot;: &quot;text&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;ArtifactTallies&quot;: {
-      &quot;description&quot;: &quot;How many of each, so a caller needs no arithmetic of its own.&quot;,
-      &quot;properties&quot;: {
-        &quot;artifacts&quot;: {
-          &quot;description&quot;: &quot;Files in the manifest, after any filter.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;current&quot;: {
-          &quot;description&quot;: &quot;Hashes that match.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;documents&quot;: {
-          &quot;description&quot;: &quot;Documents in the manifest.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;missing&quot;: {
-          &quot;description&quot;: &quot;Files the manifest names and the tree lacks.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;present&quot;: {
-          &quot;description&quot;: &quot;Files the manifest records no hash for.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;stale&quot;: {
-          &quot;description&quot;: &quot;Hashes that do not.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;documents&quot;,
         &quot;artifacts&quot;,
@@ -419,11 +400,72 @@ not a failure of this call: every list below is then empty and every tally zero.
         &quot;missing&quot;,
         &quot;present&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;How many of each, so a caller needs no arithmetic of its own.&quot;,
+      &quot;properties&quot;: {
+        &quot;current&quot;: {
+          &quot;description&quot;: &quot;Hashes that match.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;stale&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Hashes that do not.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;artifacts&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Files in the manifest, after any filter.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;documents&quot;: {
+          &quot;description&quot;: &quot;Documents in the manifest.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;missing&quot;: {
+          &quot;description&quot;: &quot;Files the manifest names and the tree lacks.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;present&quot;: {
+          &quot;description&quot;: &quot;Files the manifest records no hash for.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      }
     },
     &quot;ArtifactView&quot;: {
       &quot;description&quot;: &quot;One generated file, as the manifest declares it and as the tree has it.&quot;,
       &quot;properties&quot;: {
+        &quot;sha256&quot;: {
+          &quot;description&quot;: &quot;The hash the manifest recorded.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line: what it was derived from.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ArtifactState&quot;,
+          &quot;description&quot;: &quot;Where the file stands against it.&quot;
+        },
+        &quot;schema&quot;: {
+          &quot;description&quot;: &quot;The JSON Schema its content satisfies, when it declares one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
         &quot;bytes&quot;: {
           &quot;description&quot;: &quot;The size the manifest recorded.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
@@ -433,39 +475,17 @@ not a failure of this call: every list below is then empty and every tally zero.
             &quot;null&quot;
           ]
         },
-        &quot;document&quot;: {
-          &quot;description&quot;: &quot;The document it projects.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;format&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ArtifactFormat&quot;,
           &quot;description&quot;: &quot;The encoding.&quot;
         },
+        &quot;document&quot;: {
+          &quot;description&quot;: &quot;The document it projects.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;path&quot;: {
           &quot;description&quot;: &quot;Repository-relative path.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;schema&quot;: {
-          &quot;description&quot;: &quot;The JSON Schema its content satisfies, when it declares one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;sha256&quot;: {
-          &quot;description&quot;: &quot;The hash the manifest recorded.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;One line: what it was derived from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ArtifactState&quot;,
-          &quot;description&quot;: &quot;Where the file stands against it.&quot;
         }
       },
       &quot;required&quot;: [
@@ -477,93 +497,73 @@ not a failure of this call: every list below is then empty and every tally zero.
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;DocumentView&quot;: {
-      &quot;description&quot;: &quot;One document, and the encodings it is committed in.&quot;,
-      &quot;properties&quot;: {
-        &quot;formats&quot;: {
-          &quot;description&quot;: &quot;The encodings, in the manifest&#39;s order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ArtifactFormat&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+    &quot;ArtifactState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file is there and its bytes hash to what the manifest recorded.&quot;
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The document id, shared by every encoding of it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;The file is there and its bytes differ: it was edited, or the generator moved on.&quot;
         },
-        &quot;schema&quot;: {
-          &quot;description&quot;: &quot;The schema id its structured encodings carry.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        {
+          &quot;description&quot;: &quot;The manifest names it and the tree does not have it.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;missing&quot;
         },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;One line: what it was derived from.&quot;,
+        {
+          &quot;const&quot;: &quot;present&quot;,
+          &quot;description&quot;: &quot;The file is there and the manifest records no hash for it: the manifest&#39;s own\nencodings, which cannot hash themselves. `generate --check` compares them.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;source&quot;,
-        &quot;formats&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;Where one generated file stands against the tree it is committed in.&quot;
     }
   },
   &quot;description&quot;: &quot;The answer of `artifacts.list`.&quot;,
   &quot;properties&quot;: {
-    &quot;artifacts&quot;: {
-      &quot;description&quot;: &quot;The files, in the manifest&#39;s order, after any filter.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ArtifactView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;documents&quot;: {
-      &quot;description&quot;: &quot;The documents, in the manifest&#39;s order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/DocumentView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;regenerate&quot;: {
+      &quot;description&quot;: &quot;The command that rewrites every one of them.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;manifest&quot;: {
       &quot;description&quot;: &quot;The manifest this was read from, repository-relative.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
+    &quot;documents&quot;: {
+      &quot;description&quot;: &quot;The documents, in the manifest&#39;s order.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/DocumentView&quot;
+      }
+    },
+    &quot;artifacts&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The files, in the manifest&#39;s order, after any filter.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ArtifactView&quot;
+      }
+    },
     &quot;present&quot;: {
       &quot;description&quot;: &quot;Whether the manifest is committed in this repository at all. A repository that has\nnever run `majordomus generate` has no generated tree, which is a fact about it and\nnot a failure of this call: every list below is then empty and every tally zero.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
-    &quot;regenerate&quot;: {
-      &quot;description&quot;: &quot;The command that rewrites every one of them.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;The schema the manifest carries, empty when there is none to read.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;tallies&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ArtifactTallies&quot;,
-      &quot;description&quot;: &quot;The counts.&quot;
+      &quot;description&quot;: &quot;The counts.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ArtifactTallies&quot;
     },
     &quot;verify&quot;: {
-      &quot;description&quot;: &quot;The command that decides staleness byte for byte, which is stronger than the hash.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The command that decides staleness byte for byte, which is stronger than the hash.&quot;
+    },
+    &quot;schema&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The schema the manifest carries, empty when there is none to read.&quot;
     }
-  },
-  &quot;required&quot;: [
-    &quot;manifest&quot;,
-    &quot;present&quot;,
-    &quot;schema&quot;,
-    &quot;documents&quot;,
-    &quot;artifacts&quot;,
-    &quot;tallies&quot;,
-    &quot;regenerate&quot;,
-    &quot;verify&quot;
-  ],
-  &quot;title&quot;: &quot;ArtifactReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>

@@ -201,9 +201,9 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -212,30 +212,20 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">next_command</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What a person runs next.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">targets</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every declared target, in the model&#39;s order.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">binary</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The command a person types after installing.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checksum</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The digest algorithm the installer verifies.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">install_and_init_command</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The same, initialising the repository afterwards.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">install_command</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The one-line install command, composed from its parts.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">install_dir</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where the launchers go by default.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">installer_url</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -247,15 +237,25 @@
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Where the stable release metadata is published.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">next_command</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What a person runs next.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">prefix</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Where the versioned trees go by default.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">install_command</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The one-line install command, composed from its parts.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checksum</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The digest algorithm the installer verifies.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">install_dir</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where the launchers go by default.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repository</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -267,10 +267,10 @@
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many targets a release builds.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">targets</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">install_and_init_command</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every declared target, in the model&#39;s order.</td>
+        <td class="px-3 py-2 text-body">The same, initialising the repository afterwards.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -281,86 +281,36 @@
       &quot;description&quot;: &quot;A processor architecture.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;x86_64&quot;,
           &quot;description&quot;: &quot;64-bit x86, detected as `x86_64` or `amd64`.&quot;,
+          &quot;const&quot;: &quot;x86_64&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;aarch64&quot;,
           &quot;description&quot;: &quot;64-bit ARM, detected as `aarch64` or `arm64`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Libc&quot;: {
-      &quot;description&quot;: &quot;The C library a Linux artifact is linked against.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;gnu&quot;,
-          &quot;description&quot;: &quot;GNU libc: the ordinary distributions.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;musl&quot;,
-          &quot;description&quot;: &quot;musl: Alpine, and any statically linked artifact.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Os&quot;: {
-      &quot;description&quot;: &quot;An operating system a target runs on.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;macos&quot;,
-          &quot;description&quot;: &quot;Apple&#39;s, detected as `Darwin`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;linux&quot;,
-          &quot;description&quot;: &quot;Linux, detected as `Linux`, and the only one where the C library matters.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;windows&quot;,
-          &quot;description&quot;: &quot;Windows; representable, and not built today.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;TargetStatus&quot;: {
-      &quot;description&quot;: &quot;What the project promises about a target.\n\nSee [`crate::deploy::Status`]: both are `Status` in their own module and neither is in\nthe one component namespace the schema document has.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;supported&quot;,
-          &quot;description&quot;: &quot;Built by every release, offered by the installer, listed as supported. A release\nthat is missing this artifact is not published.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;experimental&quot;,
-          &quot;description&quot;: &quot;Built and offered, and documented as not yet proven.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unavailable&quot;,
-          &quot;description&quot;: &quot;Documented, never built, refused by the installer with its recorded reason.&quot;,
+          &quot;const&quot;: &quot;aarch64&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;TargetView&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen.&quot;,
       &quot;properties&quot;: {
         &quot;arch&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Arch&quot;,
-          &quot;description&quot;: &quot;The architecture.&quot;
+          &quot;description&quot;: &quot;The architecture.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Arch&quot;
         },
-        &quot;artifact&quot;: {
-          &quot;description&quot;: &quot;The artifact name, with `{tag}` where a release&#39;s tag goes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;os&quot;: {
+          &quot;description&quot;: &quot;The operating system.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Os&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The target&#39;s id in the model.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;rust_target&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The Rust target triple.&quot;
         },
         &quot;libc&quot;: {
           &quot;anyOf&quot;: [
@@ -373,9 +323,17 @@
           ],
           &quot;description&quot;: &quot;The C library, on Linux.&quot;
         },
-        &quot;os&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Os&quot;,
-          &quot;description&quot;: &quot;The operating system.&quot;
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;What the project promises about it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TargetStatus&quot;
+        },
+        &quot;artifact&quot;: {
+          &quot;description&quot;: &quot;The artifact name, with `{tag}` where a release&#39;s tag goes.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;How it is written in prose: `Linux x86_64 musl`.&quot;
         },
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;Why, when it is not built.&quot;,
@@ -383,18 +341,6 @@
             &quot;string&quot;,
             &quot;null&quot;
           ]
-        },
-        &quot;rust_target&quot;: {
-          &quot;description&quot;: &quot;The Rust target triple.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TargetStatus&quot;,
-          &quot;description&quot;: &quot;What the project promises about it.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;How it is written in prose: `Linux x86_64 musl`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -405,31 +351,79 @@
         &quot;rust_target&quot;,
         &quot;status&quot;,
         &quot;artifact&quot;
+      ]
+    },
+    &quot;TargetStatus&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Built by every release, offered by the installer, listed as supported. A release\nthat is missing this artifact is not published.&quot;,
+          &quot;const&quot;: &quot;supported&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Built and offered, and documented as not yet proven.&quot;,
+          &quot;const&quot;: &quot;experimental&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unavailable&quot;,
+          &quot;description&quot;: &quot;Documented, never built, refused by the installer with its recorded reason.&quot;
+        }
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;What the project promises about a target.\n\nSee [`crate::deploy::Status`]: both are `Status` in their own module and neither is in\nthe one component namespace the schema document has.&quot;
+    },
+    &quot;Os&quot;: {
+      &quot;description&quot;: &quot;An operating system a target runs on.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Apple&#39;s, detected as `Darwin`.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;macos&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;linux&quot;,
+          &quot;description&quot;: &quot;Linux, detected as `Linux`, and the only one where the C library matters.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;windows&quot;,
+          &quot;description&quot;: &quot;Windows; representable, and not built today.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Libc&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;gnu&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;GNU libc: the ordinary distributions.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;musl&quot;,
+          &quot;description&quot;: &quot;musl: Alpine, and any statically linked artifact.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The C library a Linux artifact is linked against.&quot;
     }
   },
-  &quot;description&quot;: &quot;The distribution, as a person or a script asks for it.&quot;,
   &quot;properties&quot;: {
+    &quot;next_command&quot;: {
+      &quot;description&quot;: &quot;What a person runs next.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;targets&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/TargetView&quot;
+      },
+      &quot;description&quot;: &quot;Every declared target, in the model&#39;s order.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
     &quot;binary&quot;: {
-      &quot;description&quot;: &quot;The command a person types after installing.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;checksum&quot;: {
-      &quot;description&quot;: &quot;The digest algorithm the installer verifies.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;install_and_init_command&quot;: {
-      &quot;description&quot;: &quot;The same, initialising the repository afterwards.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;install_command&quot;: {
-      &quot;description&quot;: &quot;The one-line install command, composed from its parts.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;install_dir&quot;: {
-      &quot;description&quot;: &quot;Where the launchers go by default.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The command a person types after installing.&quot;
     },
     &quot;installer_url&quot;: {
       &quot;description&quot;: &quot;The installer&#39;s canonical URL.&quot;,
@@ -439,17 +433,25 @@
       &quot;description&quot;: &quot;Where the stable release metadata is published.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;next_command&quot;: {
-      &quot;description&quot;: &quot;What a person runs next.&quot;,
+    &quot;prefix&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;Where the versioned trees go by default.&quot;
+    },
+    &quot;install_command&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The one-line install command, composed from its parts.&quot;
+    },
+    &quot;checksum&quot;: {
+      &quot;description&quot;: &quot;The digest algorithm the installer verifies.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;prefix&quot;: {
-      &quot;description&quot;: &quot;Where the versioned trees go by default.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;install_dir&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;Where the launchers go by default.&quot;
     },
     &quot;repository&quot;: {
-      &quot;description&quot;: &quot;`owner/name`, the only host release assets come from.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;`owner/name`, the only host release assets come from.&quot;
     },
     &quot;supported&quot;: {
       &quot;description&quot;: &quot;How many targets a release builds.&quot;,
@@ -457,14 +459,13 @@
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
-    &quot;targets&quot;: {
-      &quot;description&quot;: &quot;Every declared target, in the model&#39;s order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/TargetView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;install_and_init_command&quot;: {
+      &quot;description&quot;: &quot;The same, initialising the repository afterwards.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;DistributionReport&quot;,
   &quot;required&quot;: [
     &quot;binary&quot;,
     &quot;repository&quot;,
@@ -479,8 +480,7 @@
     &quot;supported&quot;,
     &quot;targets&quot;
   ],
-  &quot;title&quot;: &quot;DistributionReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The distribution, as a person or a script asks for it.&quot;
 }</pre></div>
   </details>
 </div>

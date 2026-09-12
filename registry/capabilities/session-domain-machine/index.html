@@ -200,9 +200,9 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;Empty&quot;,
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -224,6 +224,11 @@ assert!(report.decision.contains(&quot;0047&quot;));
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">transitions</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every transition, with the states it runs between.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">decision</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -240,158 +245,37 @@ have to infer an absence. One entry today: task state.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every state, with what it means and whether it is terminal.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">transitions</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every transition, with the states it runs between.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;EpisodeState&quot;: {
-      &quot;description&quot;: &quot;Where an episode is: minted, open, detached from the connection that held it, or closed\ninto the immutable record.\n\n```\nuse majordomus_cli::session::EpisodeState;\n\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Closed));\nassert!(!EpisodeState::Closed.may_move_to(EpisodeState::Open), \&quot;a record is immutable\&quot;);\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open), \&quot;a resume is not a move\&quot;);\nassert!(EpisodeState::Closed.is_final());\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;opening&quot;,
-          &quot;description&quot;: &quot;An identity has been minted and nothing durable has been written yet. It exists so\nthat a crash between minting an id and writing the open record is a state the model\ncan name rather than an episode that never happened.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;open&quot;,
-          &quot;description&quot;: &quot;The open record stands. The worker is here, or was recently.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;detached&quot;,
-          &quot;description&quot;: &quot;The connection that held the episode went away, and the episode did not. A dropped\nsocket is the most ordinary thing that happens to a session; an episode that closed\nitself on every disconnect would lose the work of every worker whose network\nhiccuped. It is still resumable, and it is still recoverable if nobody resumes it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;closed&quot;,
-          &quot;description&quot;: &quot;The immutable record has been published. Terminal, and terminal is the point: the\nfour records of `s-20260909152316-024f` all exist because nothing in the previous\nrepresentation could say this.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;StateView&quot;: {
-      &quot;description&quot;: &quot;One state of the machine: its word, whether an episode ever leaves it, and where it may\ngo from there.\n\n```\nuse majordomus_cli::session::{EpisodeState, Machine, StateView};\n\nlet m = Machine::describe();\nlet closed: &amp;StateView =\n    m.states.iter().find(|s| s.state == EpisodeState::Closed).expect(\&quot;a state\&quot;);\nassert!(closed.terminal &amp;&amp; closed.may_move_to.is_empty());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;may_move_to&quot;: {
-          &quot;description&quot;: &quot;The states an episode in this one may move to, in canonical order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/EpisodeState&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EpisodeState&quot;,
-          &quot;description&quot;: &quot;The state&#39;s word.&quot;
-        },
-        &quot;terminal&quot;: {
-          &quot;description&quot;: &quot;Whether an episode ever leaves it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;state&quot;,
-        &quot;terminal&quot;,
-        &quot;may_move_to&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Transition&quot;: {
-      &quot;description&quot;: &quot;What moved an episode. The vocabulary the ADR 0052 audit needs: `open`, `resume`,\n`checkpoint`, `detach`, `close`, `recover`.\n\nOne of them does not change the state, and it is a transition anyway. A checkpoint\nleaves an open episode open — but it is one of the two events whose *absence* is what\nthe audit was looking for, and an event that is modelled as \&quot;nothing happened\&quot; cannot\nbe counted. The six days of silence were six days in which `session.started` and\n`session.closed` kept arriving and the two events that produce the records a worker\nresumes from did not. A vocabulary in which those two are not events is a vocabulary in\nwhich that outage is invisible.\n\n```\nuse majordomus_cli::session::{EpisodeState, Transition};\n\n// a checkpoint is a transition that does not move the state, and says so\nlet c = Transition::Checkpoint;\nassert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));\nassert!(!c.moves_state());\n\n// a resume is canonically the return to a detached episode; a provider&#39;s start event\n// arriving at one that is already open is the same transition seen from `Open`, which\n// the machine allows without a move\nassert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open));\n\n// and every transition&#39;s own move is one the machine allows\nfor t in Transition::ALL {\n    let (from, to) = t.from_to();\n    assert!(from.may_move_to(to), \&quot;{} is not a legal move\&quot;, t.as_str());\n}\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;open&quot;,
-          &quot;description&quot;: &quot;The episode begins: an id is minted and the open record is written.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;resume&quot;,
-          &quot;description&quot;: &quot;The worker came back to a detached episode. A provider&#39;s start event also fires\nagain on a resume and on a compaction against an episode that is still open; that\nis the same transition observed from `Open`, and the honest answer to \&quot;your episode\nis already open\&quot; is to keep it rather than to open a second one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;checkpoint&quot;,
-          &quot;description&quot;: &quot;A progress note was recorded against the episode. An artefact of the episode and\nnot of a task (ADR 0052): a checkpoint outside a task records `task: none` and is a\nnormal record, not a refusal.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;detach&quot;,
-          &quot;description&quot;: &quot;The connection went away without an end event.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;close&quot;,
-          &quot;description&quot;: &quot;The worker ended the episode and the immutable record was published.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;recover&quot;,
-          &quot;description&quot;: &quot;Nobody ended it and its last sign of life is older than the stranded threshold, so\nmaintenance closed it. The record says so: an episode closed this way is\n`interrupted`, because a reader resuming from it needs to know it may be incomplete.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;TransitionView&quot;: {
-      &quot;description&quot;: &quot;One transition of the machine: its word, the states it runs between, and whether it\nmoves the state at all.\n\n```\nuse majordomus_cli::session::{Machine, Transition, TransitionView};\n\nlet m = Machine::describe();\nlet close: &amp;TransitionView = m\n    .transitions\n    .iter()\n    .find(|t| t.transition == Transition::Close)\n    .expect(\&quot;a transition\&quot;);\nassert!(close.moves_state);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;from&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EpisodeState&quot;,
-          &quot;description&quot;: &quot;Where it starts.&quot;
-        },
-        &quot;moves_state&quot;: {
-          &quot;description&quot;: &quot;False for `resume` and `checkpoint`, which are events inside a state.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;to&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EpisodeState&quot;,
-          &quot;description&quot;: &quot;Where it ends.&quot;
-        },
-        &quot;transition&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Transition&quot;,
-          &quot;description&quot;: &quot;The transition&#39;s word.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;transition&quot;,
-        &quot;from&quot;,
-        &quot;to&quot;,
-        &quot;moves_state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The lifecycle machine, with the decision it implements, so that a reader meeting it in\na projection can go and read why it is shaped this way.\n\n```\nuse majordomus_cli::capability::builtin::MachineReport;\nuse majordomus_cli::session::Machine;\n\n// the report is the machine plus one citation; the machine itself is derived from the\n// types and carries no second list\nlet report = MachineReport { machine: Machine::describe(), decision: \&quot;adr-0047\&quot;.into() };\nassert!(report.machine.transitions.iter().any(|t| !t.moves_state), \&quot;a checkpoint is an event\&quot;);\nassert!(report.decision.contains(\&quot;0047\&quot;));\n```&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
+    &quot;transitions&quot;: {
+      &quot;description&quot;: &quot;Every transition, with the states it runs between.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/TransitionView&quot;
+      }
+    },
     &quot;decision&quot;: {
-      &quot;description&quot;: &quot;The decision this machine is the implementation of, so a reader meeting it in a\nprojection can go and read why it is shaped this way.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The decision this machine is the implementation of, so a reader meeting it in a\nprojection can go and read why it is shaped this way.&quot;
     },
     &quot;independent_of&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;What the machine deliberately does not depend on, stated so that a reader does not\nhave to infer an absence. One entry today: task state.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
     },
     &quot;states&quot;: {
       &quot;description&quot;: &quot;Every state, with what it means and whether it is terminal.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/StateView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;transitions&quot;: {
-      &quot;description&quot;: &quot;Every transition, with the states it runs between.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/TransitionView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
     }
   },
   &quot;required&quot;: [
@@ -401,7 +285,123 @@ have to infer an absence. One entry today: task state.</td>
     &quot;decision&quot;
   ],
   &quot;title&quot;: &quot;MachineReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;$defs&quot;: {
+    &quot;EpisodeState&quot;: {
+      &quot;description&quot;: &quot;Where an episode is: minted, open, detached from the connection that held it, or closed\ninto the immutable record.\n\n```\nuse majordomus_cli::session::EpisodeState;\n\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Closed));\nassert!(!EpisodeState::Closed.may_move_to(EpisodeState::Open), \&quot;a record is immutable\&quot;);\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open), \&quot;a resume is not a move\&quot;);\nassert!(EpisodeState::Closed.is_final());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;opening&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An identity has been minted and nothing durable has been written yet. It exists so\nthat a crash between minting an id and writing the open record is a state the model\ncan name rather than an episode that never happened.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;open&quot;,
+          &quot;description&quot;: &quot;The open record stands. The worker is here, or was recently.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;detached&quot;,
+          &quot;description&quot;: &quot;The connection that held the episode went away, and the episode did not. A dropped\nsocket is the most ordinary thing that happens to a session; an episode that closed\nitself on every disconnect would lose the work of every worker whose network\nhiccuped. It is still resumable, and it is still recoverable if nobody resumes it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;closed&quot;,
+          &quot;description&quot;: &quot;The immutable record has been published. Terminal, and terminal is the point: the\nfour records of `s-20260909152316-024f` all exist because nothing in the previous\nrepresentation could say this.&quot;
+        }
+      ]
+    },
+    &quot;StateView&quot;: {
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;terminal&quot;,
+        &quot;may_move_to&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EpisodeState&quot;,
+          &quot;description&quot;: &quot;The state&#39;s word.&quot;
+        },
+        &quot;terminal&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether an episode ever leaves it.&quot;
+        },
+        &quot;may_move_to&quot;: {
+          &quot;description&quot;: &quot;The states an episode in this one may move to, in canonical order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/EpisodeState&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One state of the machine: its word, whether an episode ever leaves it, and where it may\ngo from there.\n\n```\nuse majordomus_cli::session::{EpisodeState, Machine, StateView};\n\nlet m = Machine::describe();\nlet closed: &amp;StateView =\n    m.states.iter().find(|s| s.state == EpisodeState::Closed).expect(\&quot;a state\&quot;);\nassert!(closed.terminal &amp;&amp; closed.may_move_to.is_empty());\n```&quot;
+    },
+    &quot;TransitionView&quot;: {
+      &quot;required&quot;: [
+        &quot;transition&quot;,
+        &quot;from&quot;,
+        &quot;to&quot;,
+        &quot;moves_state&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;moves_state&quot;: {
+          &quot;description&quot;: &quot;False for `resume` and `checkpoint`, which are events inside a state.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;to&quot;: {
+          &quot;description&quot;: &quot;Where it ends.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/EpisodeState&quot;
+        },
+        &quot;transition&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Transition&quot;,
+          &quot;description&quot;: &quot;The transition&#39;s word.&quot;
+        },
+        &quot;from&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EpisodeState&quot;,
+          &quot;description&quot;: &quot;Where it starts.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One transition of the machine: its word, the states it runs between, and whether it\nmoves the state at all.\n\n```\nuse majordomus_cli::session::{Machine, Transition, TransitionView};\n\nlet m = Machine::describe();\nlet close: &amp;TransitionView = m\n    .transitions\n    .iter()\n    .find(|t| t.transition == Transition::Close)\n    .expect(\&quot;a transition\&quot;);\nassert!(close.moves_state);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Transition&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The episode begins: an id is minted and the open record is written.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;open&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The worker came back to a detached episode. A provider&#39;s start event also fires\nagain on a resume and on a compaction against an episode that is still open; that\nis the same transition observed from `Open`, and the honest answer to \&quot;your episode\nis already open\&quot; is to keep it rather than to open a second one.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;resume&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;checkpoint&quot;,
+          &quot;description&quot;: &quot;A progress note was recorded against the episode. An artefact of the episode and\nnot of a task (ADR 0052): a checkpoint outside a task records `task: none` and is a\nnormal record, not a refusal.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;detach&quot;,
+          &quot;description&quot;: &quot;The connection went away without an end event.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The worker ended the episode and the immutable record was published.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;close&quot;
+        },
+        {
+          &quot;const&quot;: &quot;recover&quot;,
+          &quot;description&quot;: &quot;Nobody ended it and its last sign of life is older than the stranded threshold, so\nmaintenance closed it. The record says so: an episode closed this way is\n`interrupted`, because a reader resuming from it needs to know it may be incomplete.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;What moved an episode. The vocabulary the ADR 0052 audit needs: `open`, `resume`,\n`checkpoint`, `detach`, `close`, `recover`.\n\nOne of them does not change the state, and it is a transition anyway. A checkpoint\nleaves an open episode open — but it is one of the two events whose *absence* is what\nthe audit was looking for, and an event that is modelled as \&quot;nothing happened\&quot; cannot\nbe counted. The six days of silence were six days in which `session.started` and\n`session.closed` kept arriving and the two events that produce the records a worker\nresumes from did not. A vocabulary in which those two are not events is a vocabulary in\nwhich that outage is invisible.\n\n```\nuse majordomus_cli::session::{EpisodeState, Transition};\n\n// a checkpoint is a transition that does not move the state, and says so\nlet c = Transition::Checkpoint;\nassert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));\nassert!(!c.moves_state());\n\n// a resume is canonically the return to a detached episode; a provider&#39;s start event\n// arriving at one that is already open is the same transition seen from `Open`, which\n// the machine allows without a move\nassert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open));\n\n// and every transition&#39;s own move is one the machine allows\nfor t in Transition::ALL {\n    let (from, to) = t.from_to();\n    assert!(from.may_move_to(to), \&quot;{} is not a legal move\&quot;, t.as_str());\n}\n```&quot;
+    }
+  },
+  &quot;description&quot;: &quot;The lifecycle machine, with the decision it implements, so that a reader meeting it in\na projection can go and read why it is shaped this way.\n\n```\nuse majordomus_cli::capability::builtin::MachineReport;\nuse majordomus_cli::session::Machine;\n\n// the report is the machine plus one citation; the machine itself is derived from the\n// types and carries no second list\nlet report = MachineReport { machine: Machine::describe(), decision: \&quot;adr-0047\&quot;.into() };\nassert!(report.machine.transitions.iter().any(|t| !t.moves_state), \&quot;a checkpoint is an event\&quot;);\nassert!(report.decision.contains(\&quot;0047\&quot;));\n```&quot;
 }</pre></div>
   </details>
 </div>

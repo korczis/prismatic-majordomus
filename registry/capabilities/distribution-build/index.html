@@ -201,9 +201,9 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -216,6 +216,11 @@
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The commit, or `unknown` when it was built outside a work tree.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The version of the crate this executable was built from.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">distribution_target</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -231,28 +236,33 @@
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The Rust target triple it was built for; the model names a target by the same string.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">version</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The version of the crate this executable was built from.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;description&quot;: &quot;What this executable is: enough to tell two builds apart without asking a repository.&quot;,
+  &quot;required&quot;: [
+    &quot;version&quot;,
+    &quot;target&quot;,
+    &quot;profile&quot;,
+    &quot;commit&quot;
+  ],
   &quot;properties&quot;: {
     &quot;commit&quot;: {
       &quot;description&quot;: &quot;The commit, or `unknown` when it was built outside a work tree.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
+    &quot;version&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The version of the crate this executable was built from.&quot;
+    },
     &quot;distribution_target&quot;: {
-      &quot;description&quot;: &quot;The target of the model this build matches, when the model declares one for the triple.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;The target of the model this build matches, when the model declares one for the triple.&quot;
     },
     &quot;profile&quot;: {
       &quot;description&quot;: &quot;The cargo profile.&quot;,
@@ -261,18 +271,8 @@
     &quot;target&quot;: {
       &quot;description&quot;: &quot;The Rust target triple it was built for; the model names a target by the same string.&quot;,
       &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;version&quot;: {
-      &quot;description&quot;: &quot;The version of the crate this executable was built from.&quot;,
-      &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;version&quot;,
-    &quot;target&quot;,
-    &quot;profile&quot;,
-    &quot;commit&quot;
-  ],
   &quot;title&quot;: &quot;BuildReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>

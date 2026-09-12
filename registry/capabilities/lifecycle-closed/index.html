@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -242,11 +242,6 @@ assert!(c.on_this_branch &lt;= c.total);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">newest</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The newest `CLOSED_WINDOW`, newest first.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">on_this_branch</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -261,91 +256,96 @@ assert!(c.on_this_branch &lt;= c.total);
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many are carried in `newest`, against the total.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">newest</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The newest `CLOSED_WINDOW`, newest first.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;ClosedSession&quot;: {
-      &quot;description&quot;: &quot;One closed episode of the tracked, durable projection — the half of this subsystem that\nsurvives a clone.\n\nIt carries both a `path` and a `uri` because they answer different questions: the path\nis where the record is in this checkout, and the `majordomus://session/&lt;identity&gt;`\nidentifier is what every other surface addresses the same record by, so a reader can\nfollow it to the object page without constructing one.\n\nEverything but the identity, the identifier and the path is optional, because a record\nwritten by an older close carries fewer fields and is still a record.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ClosedSession;\nuse serde_json::json;\n\nlet s: ClosedSession = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0042\&quot;,\n    \&quot;uri\&quot;: \&quot;majordomus://session/2026-09-12-s-0042\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/repo/project/sessions/2026-09-12-s-0042.md\&quot;,\n    \&quot;created_at\&quot;: \&quot;2026-09-12T15:44:00Z\&quot;,\n    \&quot;branch\&quot;: \&quot;master\&quot;,\n    \&quot;head\&quot;: \&quot;cd04012f1\&quot;,\n    \&quot;outcome\&quot;: \&quot;landed\&quot;,\n})).unwrap();\n\nassert!(s.uri.starts_with(\&quot;majordomus://session/\&quot;), \&quot;addressable as an object\&quot;);\nassert_eq!(s.outcome, \&quot;landed\&quot;);\n\n// an older record with less in it is still one, and says so by absence\nlet sparse: ClosedSession = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0001\&quot;,\n    \&quot;uri\&quot;: \&quot;majordomus://session/2026-08-01-s-0001\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/repo/project/sessions/2026-08-01-s-0001.md\&quot;,\n})).unwrap();\nassert!(sparse.outcome.is_empty() &amp;&amp; sparse.title.is_empty());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it closed on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;created_at&quot;: {
-          &quot;description&quot;: &quot;When it closed, as recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it closed at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;outcome&quot;: {
-          &quot;description&quot;: &quot;The typed outcome the close recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session_id&quot;: {
-          &quot;description&quot;: &quot;The episode id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;Its title, when the record carries one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;`majordomus://session/&lt;identity&gt;`, for the object page.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;session_id&quot;,
-        &quot;uri&quot;,
-        &quot;path&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
   &quot;description&quot;: &quot;The tracked half of the subsystem: the records a clone receives.\n\n`total` is exact and `newest` is a window, and keeping them as two numbers is the whole\ndesign of this type. The tracked directory grows without bound and a Cockpit card is not\na listing page, so the rows are capped — but a capped list that did not carry the true\ntotal would quietly understate the repository, which is the shape of defect this\nrepository has been bitten by often enough to name. `window` says how many rows came\nback, so a reader can see the cap rather than infer it.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ClosedSessions;\nuse serde_json::json;\n\nlet row = |id: &amp;str| json!({\n    \&quot;session_id\&quot;: id,\n    \&quot;uri\&quot;: format!(\&quot;majordomus://session/{id}\&quot;),\n    \&quot;path\&quot;: format!(\&quot;.ai/repo/project/sessions/{id}.md\&quot;),\n    \&quot;branch\&quot;: \&quot;master\&quot;,\n});\nlet c: ClosedSessions = serde_json::from_value(json!({\n    \&quot;total\&quot;: 137,\n    \&quot;on_this_branch\&quot;: 41,\n    \&quot;newest\&quot;: [row(\&quot;s-0137\&quot;), row(\&quot;s-0136\&quot;)],\n    \&quot;window\&quot;: 2,\n})).unwrap();\n\n// the window is what came back; the total is what exists\nassert_eq!(c.window, c.newest.len());\nassert!(c.total &gt; c.window, \&quot;the rows are capped and the total is not\&quot;);\nassert!(c.on_this_branch &lt;= c.total);\n```&quot;,
+  &quot;required&quot;: [
+    &quot;total&quot;,
+    &quot;on_this_branch&quot;,
+    &quot;window&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
+    &quot;on_this_branch&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many of them closed on the branch this checkout is on.&quot;
+    },
+    &quot;total&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many closed records the index holds. Exact.&quot;
+    },
+    &quot;window&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many are carried in `newest`, against the total.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
     &quot;newest&quot;: {
       &quot;description&quot;: &quot;The newest `CLOSED_WINDOW`, newest first.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ClosedSession&quot;
       },
       &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;on_this_branch&quot;: {
-      &quot;description&quot;: &quot;How many of them closed on the branch this checkout is on.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;total&quot;: {
-      &quot;description&quot;: &quot;How many closed records the index holds. Exact.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;window&quot;: {
-      &quot;description&quot;: &quot;How many are carried in `newest`, against the total.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;total&quot;,
-    &quot;on_this_branch&quot;,
-    &quot;window&quot;
-  ],
-  &quot;title&quot;: &quot;ClosedSessions&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;$defs&quot;: {
+    &quot;ClosedSession&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One closed episode of the tracked, durable projection — the half of this subsystem that\nsurvives a clone.\n\nIt carries both a `path` and a `uri` because they answer different questions: the path\nis where the record is in this checkout, and the `majordomus://session/&lt;identity&gt;`\nidentifier is what every other surface addresses the same record by, so a reader can\nfollow it to the object page without constructing one.\n\nEverything but the identity, the identifier and the path is optional, because a record\nwritten by an older close carries fewer fields and is still a record.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ClosedSession;\nuse serde_json::json;\n\nlet s: ClosedSession = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0042\&quot;,\n    \&quot;uri\&quot;: \&quot;majordomus://session/2026-09-12-s-0042\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/repo/project/sessions/2026-09-12-s-0042.md\&quot;,\n    \&quot;created_at\&quot;: \&quot;2026-09-12T15:44:00Z\&quot;,\n    \&quot;branch\&quot;: \&quot;master\&quot;,\n    \&quot;head\&quot;: \&quot;cd04012f1\&quot;,\n    \&quot;outcome\&quot;: \&quot;landed\&quot;,\n})).unwrap();\n\nassert!(s.uri.starts_with(\&quot;majordomus://session/\&quot;), \&quot;addressable as an object\&quot;);\nassert_eq!(s.outcome, \&quot;landed\&quot;);\n\n// an older record with less in it is still one, and says so by absence\nlet sparse: ClosedSession = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0001\&quot;,\n    \&quot;uri\&quot;: \&quot;majordomus://session/2026-08-01-s-0001\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/repo/project/sessions/2026-08-01-s-0001.md\&quot;,\n})).unwrap();\nassert!(sparse.outcome.is_empty() &amp;&amp; sparse.title.is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;session_id&quot;: {
+          &quot;description&quot;: &quot;The episode id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it closed on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it closed at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;created_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it closed, as recorded.&quot;
+        },
+        &quot;uri&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`majordomus://session/&lt;identity&gt;`, for the object page.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;outcome&quot;: {
+          &quot;description&quot;: &quot;The typed outcome the close recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its title, when the record carries one.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;session_id&quot;,
+        &quot;uri&quot;,
+        &quot;path&quot;
+      ]
+    }
+  },
+  &quot;title&quot;: &quot;ClosedSessions&quot;
 }</pre></div>
   </details>
 </div>

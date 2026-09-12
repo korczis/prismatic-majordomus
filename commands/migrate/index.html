@@ -187,10 +187,10 @@
           :class="s === 'refuses-nothing' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Nothing to migrate and no layer</button></div><div x-show="s === 'plans'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <h3 class="text-base font-semibold text-heading">The plan, and nothing written</h3>
         <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
-            <dt class="text-body">--dry-run</dt>
+            <dt class="text-body">legacy layout</dt>
             <dd class="font-mono font-medium text-fg-success-strong">yes</dd>
           </div><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
-            <dt class="text-body">legacy layout</dt>
+            <dt class="text-body">--dry-run</dt>
             <dd class="font-mono font-medium text-fg-success-strong">yes</dd>
           </div></dl>
 
@@ -215,12 +215,12 @@ git add -A &amp;&amp; git commit -qm legacy</pre></div><p class="mt-4 font-mono 
         <p class="mt-4 text-sm text-body">Every file and where it goes, before anything moves. A plan that surprises is a plan to read again, not to run.</p>
       </div><div x-show="s === 'migrates'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <h3 class="text-base font-semibold text-heading">The move itself</h3>
-        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
-            <dt class="text-body">--dry-run</dt>
-            <dd class="font-mono font-medium text-body-subtle">no</dd>
-          </div><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
             <dt class="text-body">legacy layout</dt>
             <dd class="font-mono font-medium text-fg-success-strong">yes</dd>
+          </div><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
+            <dt class="text-body">--dry-run</dt>
+            <dd class="font-mono font-medium text-body-subtle">no</dd>
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>

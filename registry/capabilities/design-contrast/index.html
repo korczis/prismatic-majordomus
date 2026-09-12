@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -212,133 +212,131 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">composed</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Declarations skipped because their value is composed at run time.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">One line per enforced pair that falls short, naming role, ground, theme, measured
 ratio and required ratio.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">sources</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The fingerprint of the declaration measured.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">measured</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many pairs were derived and measured.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">minimum_non_text</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">number</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The ratio asked of a non-text element that carries meaning.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">minimum_text</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">number</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The ratio asked of text.</td>
+        <td class="px-3 py-2 text-body">The stylesheets read, and whether each was found.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">pairs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every pair, in a stable order: theme, then what it carries, then the two tokens.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">readable</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-heading">measured</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether every enforced pair reaches its threshold.</td>
+        <td class="px-3 py-2 text-body">How many pairs were derived and measured.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">sources</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">composed</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The stylesheets read, and whether each was found.</td>
+        <td class="px-3 py-2 text-body">Declarations skipped because their value is composed at run time.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">standard</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The standard the thresholds come from.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">readable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether every enforced pair reaches its threshold.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The fingerprint of the declaration measured.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">minimum_text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">number</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The ratio asked of text.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">minimum_non_text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">number</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The ratio asked of a non-text element that carries meaning.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;fingerprint&quot;,
+    &quot;standard&quot;,
+    &quot;minimum_text&quot;,
+    &quot;minimum_non_text&quot;,
+    &quot;sources&quot;,
+    &quot;measured&quot;,
+    &quot;pairs&quot;,
+    &quot;composed&quot;,
+    &quot;findings&quot;,
+    &quot;readable&quot;
+  ],
+  &quot;title&quot;: &quot;ContrastReport&quot;,
   &quot;$defs&quot;: {
-    &quot;Carries&quot;: {
-      &quot;description&quot;: &quot;What a colour is doing where it was found.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;text&quot;,
-          &quot;description&quot;: &quot;Text: held to [`MINIMUM_TEXT`].&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;non_text&quot;,
-          &quot;description&quot;: &quot;A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;Measured&quot;: {
       &quot;description&quot;: &quot;One measured pair: a foreground on a ground, in one theme.&quot;,
       &quot;properties&quot;: {
+        &quot;ground&quot;: {
+          &quot;description&quot;: &quot;The ground token.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;foreground&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The foreground token, as the declaration names it (`muted`, `ok`).&quot;
+        },
+        &quot;foreground_value&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The literal that entry holds.&quot;
+        },
         &quot;carries&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Carries&quot;,
-          &quot;description&quot;: &quot;Text, or a border.&quot;
+          &quot;description&quot;: &quot;Text, or a border.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Carries&quot;
+        },
+        &quot;foreground_entry&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The palette entry it resolves to in this theme.&quot;
+        },
+        &quot;ground_value&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The literal that entry holds.&quot;
+        },
+        &quot;passes&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether it reaches it.&quot;
+        },
+        &quot;required&quot;: {
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;description&quot;: &quot;What the standard asks of this pair.&quot;,
+          &quot;format&quot;: &quot;double&quot;
+        },
+        &quot;seen&quot;: {
+          &quot;description&quot;: &quot;Where the pair was read: the stylesheet and the selector that states it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;enforced&quot;: {
           &quot;description&quot;: &quot;Whether falling short is a finding. False for a border; see the module documentation.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;foreground&quot;: {
-          &quot;description&quot;: &quot;The foreground token, as the declaration names it (`muted`, `ok`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;foreground_entry&quot;: {
-          &quot;description&quot;: &quot;The palette entry it resolves to in this theme.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;foreground_value&quot;: {
-          &quot;description&quot;: &quot;The literal that entry holds.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;ground&quot;: {
-          &quot;description&quot;: &quot;The ground token.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;ground_entry&quot;: {
-          &quot;description&quot;: &quot;The palette entry the ground resolves to in this theme.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;ground_value&quot;: {
-          &quot;description&quot;: &quot;The literal that entry holds.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;passes&quot;: {
-          &quot;description&quot;: &quot;Whether it reaches it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The palette entry the ground resolves to in this theme.&quot;
         },
         &quot;ratio&quot;: {
           &quot;description&quot;: &quot;The measured ratio, to two decimal places.&quot;,
           &quot;format&quot;: &quot;double&quot;,
           &quot;type&quot;: &quot;number&quot;
         },
-        &quot;required&quot;: {
-          &quot;description&quot;: &quot;What the standard asks of this pair.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;seen&quot;: {
-          &quot;description&quot;: &quot;Where the pair was read: the stylesheet and the selector that states it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;theme&quot;: {
-          &quot;description&quot;: &quot;`light` or `dark`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`light` or `dark`.&quot;
         }
       },
       &quot;required&quot;: [
@@ -359,34 +357,43 @@ ratio and required ratio.</td>
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Source&quot;: {
-      &quot;description&quot;: &quot;One stylesheet the pair set was derived from.&quot;,
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;rules&quot;
+      ],
       &quot;properties&quot;: {
         &quot;path&quot;: {
           &quot;description&quot;: &quot;Where it was read from, as the caller named it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;rules&quot;: {
-          &quot;description&quot;: &quot;How many rules of it state a colour.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;How many rules of it state a colour.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;rules&quot;
-      ],
+      &quot;description&quot;: &quot;One stylesheet the pair set was derived from.&quot;,
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Carries&quot;: {
+      &quot;description&quot;: &quot;What a colour is doing where it was found.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;text&quot;,
+          &quot;description&quot;: &quot;Text: held to [`MINIMUM_TEXT`].&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced.&quot;,
+          &quot;const&quot;: &quot;non_text&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     }
   },
   &quot;description&quot;: &quot;Every pair the declaration and its consumers state, measured.&quot;,
   &quot;properties&quot;: {
-    &quot;composed&quot;: {
-      &quot;description&quot;: &quot;Declarations skipped because their value is composed at run time.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;findings&quot;: {
       &quot;description&quot;: &quot;One line per enforced pair that falls short, naming role, ground, theme, measured\nratio and required ratio.&quot;,
       &quot;items&quot;: {
@@ -394,62 +401,55 @@ ratio and required ratio.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;fingerprint&quot;: {
-      &quot;description&quot;: &quot;The fingerprint of the declaration measured.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;measured&quot;: {
-      &quot;description&quot;: &quot;How many pairs were derived and measured.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;minimum_non_text&quot;: {
-      &quot;description&quot;: &quot;The ratio asked of a non-text element that carries meaning.&quot;,
-      &quot;format&quot;: &quot;double&quot;,
-      &quot;type&quot;: &quot;number&quot;
-    },
-    &quot;minimum_text&quot;: {
-      &quot;description&quot;: &quot;The ratio asked of text.&quot;,
-      &quot;format&quot;: &quot;double&quot;,
-      &quot;type&quot;: &quot;number&quot;
+    &quot;sources&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The stylesheets read, and whether each was found.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Source&quot;
+      }
     },
     &quot;pairs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;Every pair, in a stable order: theme, then what it carries, then the two tokens.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Measured&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
+    },
+    &quot;measured&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many pairs were derived and measured.&quot;
+    },
+    &quot;composed&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;Declarations skipped because their value is composed at run time.&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;standard&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The standard the thresholds come from.&quot;
     },
     &quot;readable&quot;: {
       &quot;description&quot;: &quot;Whether every enforced pair reaches its threshold.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
-    &quot;sources&quot;: {
-      &quot;description&quot;: &quot;The stylesheets read, and whether each was found.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Source&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;standard&quot;: {
-      &quot;description&quot;: &quot;The standard the thresholds come from.&quot;,
+    &quot;fingerprint&quot;: {
+      &quot;description&quot;: &quot;The fingerprint of the declaration measured.&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;minimum_text&quot;: {
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;description&quot;: &quot;The ratio asked of text.&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;minimum_non_text&quot;: {
+      &quot;description&quot;: &quot;The ratio asked of a non-text element that carries meaning.&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;type&quot;: &quot;number&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;fingerprint&quot;,
-    &quot;standard&quot;,
-    &quot;minimum_text&quot;,
-    &quot;minimum_non_text&quot;,
-    &quot;sources&quot;,
-    &quot;measured&quot;,
-    &quot;pairs&quot;,
-    &quot;composed&quot;,
-    &quot;findings&quot;,
-    &quot;readable&quot;
-  ],
-  &quot;title&quot;: &quot;ContrastReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>

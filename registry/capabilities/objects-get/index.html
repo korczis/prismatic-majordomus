@@ -211,18 +211,18 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `objects.get`: which object.&quot;,
   &quot;properties&quot;: {
     &quot;uri&quot;: {
       &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`, or a URI a query projects\n(`majordomus://repository`).&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;description&quot;: &quot;The input of `objects.get`: which object.&quot;,
   &quot;required&quot;: [
     &quot;uri&quot;
   ],
   &quot;title&quot;: &quot;GetInput&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -233,15 +233,93 @@ capability&#39;s provenance is.</p><p class="mt-2 text-sm text-body-subtle">No p
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;AnswerView&quot;: {
-      &quot;description&quot;: &quot;A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI.&quot;,
-      &quot;properties&quot;: {
-        &quot;answer&quot;: {
-          &quot;description&quot;: &quot;The answer, as the capability&#39;s output schema describes it (`capabilities.describe`\ncarries that schema).&quot;
+    &quot;CapabilityProvenance&quot;: {
+      &quot;description&quot;: &quot;Where a capability came from. Never an absolute path.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;required&quot;: [
+            &quot;source&quot;,
+            &quot;module&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;module&quot;: {
+              &quot;description&quot;: &quot;The Rust module the descriptor was composed in.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;source&quot;: {
+              &quot;const&quot;: &quot;builtin&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Written in Rust, in the named module of this executable.\nWritten in Rust, composed in `builtin.rs`.&quot;
         },
+        {
+          &quot;properties&quot;: {
+            &quot;directory&quot;: {
+              &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;path&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;Repository-relative path.&quot;
+            },
+            &quot;member&quot;: {
+              &quot;description&quot;: &quot;For one member of a collection file, its key path in the file (`claims.3`).&quot;,
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ]
+            },
+            &quot;section&quot;: {
+              &quot;description&quot;: &quot;The manifest section the path falls under, when it falls under one.&quot;,
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ]
+            },
+            &quot;source_class&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;The `sources.yaml` class that discovered the file.&quot;
+            },
+            &quot;media_type&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;IANA media type of the object&#39;s content.&quot;
+            },
+            &quot;source&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;declarative&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;source&quot;,
+            &quot;path&quot;,
+            &quot;directory&quot;,
+            &quot;source_class&quot;,
+            &quot;media_type&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Read from the repository&#39;s layer.&quot;
+        }
+      ]
+    },
+    &quot;AnswerView&quot;: {
+      &quot;properties&quot;: {
         &quot;content&quot;: {
-          &quot;description&quot;: &quot;The answer as text: byte for byte what `resources/read` returns for the URI.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The answer as text: byte for byte what `resources/read` returns for the URI.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The capability&#39;s title.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;media_type&quot;: {
+          &quot;description&quot;: &quot;`application/json`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CapabilityKind&quot;,
+          &quot;description&quot;: &quot;Its kind: `query`.&quot;
         },
         &quot;description&quot;: {
           &quot;description&quot;: &quot;The capability&#39;s description, when it has one.&quot;,
@@ -250,35 +328,27 @@ capability&#39;s provenance is.</p><p class="mt-2 text-sm text-body-subtle">No p
             &quot;null&quot;
           ]
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The capability that answered (`repository.info`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;identity&quot;: {
           &quot;description&quot;: &quot;The resource name a client lists (`repository`).&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CapabilityKind&quot;,
-          &quot;description&quot;: &quot;Its kind: `query`.&quot;
+        &quot;uri&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The URI as given.&quot;
         },
-        &quot;media_type&quot;: {
-          &quot;description&quot;: &quot;`application/json`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;answer&quot;: {
+          &quot;description&quot;: &quot;The answer, as the capability&#39;s output schema describes it (`capabilities.describe`\ncarries that schema).&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The capability that answered (`repository.info`).&quot;
         },
         &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CapabilityProvenance&quot;,
-          &quot;description&quot;: &quot;Where the capability comes from: the Rust module it is composed in.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The capability&#39;s title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;The URI as given.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Where the capability comes from: the Rust module it is composed in.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/CapabilityProvenance&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;uri&quot;,
         &quot;id&quot;,
@@ -290,110 +360,35 @@ capability&#39;s provenance is.</p><p class="mt-2 text-sm text-body-subtle">No p
         &quot;media_type&quot;,
         &quot;content&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI.&quot;
     },
     &quot;CapabilityKind&quot;: {
-      &quot;description&quot;: &quot;What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process&#39;s\nown memory, and something that is read. A command may also write the repository&#39;s own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;query&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Executable and read-only: a typed handler, an input schema, an output schema.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;query&quot;
         },
         {
           &quot;const&quot;: &quot;command&quot;,
-          &quot;description&quot;: &quot;Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process&#39;s\nown memory (a peer announcing itself); one that writes the repository&#39;s tracked\nrecords says so on its execution policy, which is where a projection reads it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process&#39;s\nown memory (a peer announcing itself); one that writes the repository&#39;s tracked\nrecords says so on its execution policy, which is where a projection reads it.&quot;
         },
         {
-          &quot;const&quot;: &quot;resource&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Declarative content the repository holds: read as it is, never executed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;resource&quot;
         }
-      ]
-    },
-    &quot;CapabilityProvenance&quot;: {
-      &quot;description&quot;: &quot;Where a capability came from. Never an absolute path.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Written in Rust, in the named module of this executable.\nWritten in Rust, composed in `builtin.rs`.&quot;,
-          &quot;properties&quot;: {
-            &quot;module&quot;: {
-              &quot;description&quot;: &quot;The Rust module the descriptor was composed in.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;source&quot;: {
-              &quot;const&quot;: &quot;builtin&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;source&quot;,
-            &quot;module&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Read from the repository&#39;s layer.&quot;,
-          &quot;properties&quot;: {
-            &quot;directory&quot;: {
-              &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;media_type&quot;: {
-              &quot;description&quot;: &quot;IANA media type of the object&#39;s content.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;member&quot;: {
-              &quot;description&quot;: &quot;For one member of a collection file, its key path in the file (`claims.3`).&quot;,
-              &quot;type&quot;: [
-                &quot;string&quot;,
-                &quot;null&quot;
-              ]
-            },
-            &quot;path&quot;: {
-              &quot;description&quot;: &quot;Repository-relative path.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;section&quot;: {
-              &quot;description&quot;: &quot;The manifest section the path falls under, when it falls under one.&quot;,
-              &quot;type&quot;: [
-                &quot;string&quot;,
-                &quot;null&quot;
-              ]
-            },
-            &quot;source&quot;: {
-              &quot;const&quot;: &quot;declarative&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;source_class&quot;: {
-              &quot;description&quot;: &quot;The `sources.yaml` class that discovered the file.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;source&quot;,
-            &quot;path&quot;,
-            &quot;directory&quot;,
-            &quot;source_class&quot;,
-            &quot;media_type&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        }
-      ]
+      ],
+      &quot;description&quot;: &quot;What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process&#39;s\nown memory, and something that is read. A command may also write the repository&#39;s own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].&quot;
     },
     &quot;ObjectProvenance&quot;: {
-      &quot;description&quot;: &quot;Where an object came from. Every field is computed from the repository, never authored.&quot;,
       &quot;properties&quot;: {
         &quot;bytes&quot;: {
-          &quot;description&quot;: &quot;Size of the file in bytes.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;directory&quot;: {
-          &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Size of the file in bytes.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
         },
         &quot;member&quot;: {
           &quot;description&quot;: &quot;For an object that is one member of a collection file: the member&#39;s key path in\nthe file (`claims.3`).&quot;,
@@ -402,9 +397,13 @@ capability&#39;s provenance is.</p><p class="mt-2 text-sm text-body-subtle">No p
             &quot;null&quot;
           ]
         },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path, forward slashes, as the version-control index names it.&quot;,
+        &quot;directory&quot;: {
+          &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Repository-relative path, forward slashes, as the version-control index names it.&quot;
         },
         &quot;section&quot;: {
           &quot;description&quot;: &quot;The manifest section the path falls under (`rules`, `prompts`, ...), when it falls\nunder one; a root `README.md` falls under none.&quot;,
@@ -418,6 +417,7 @@ capability&#39;s provenance is.</p><p class="mt-2 text-sm text-body-subtle">No p
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;description&quot;: &quot;Where an object came from. Every field is computed from the repository, never authored.&quot;,
       &quot;required&quot;: [
         &quot;path&quot;,
         &quot;directory&quot;,
@@ -427,52 +427,51 @@ capability&#39;s provenance is.</p><p class="mt-2 text-sm text-body-subtle">No p
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ObjectView&quot;: {
-      &quot;description&quot;: &quot;One declarative object of the repository&#39;s layer, as a client reads it.&quot;,
       &quot;properties&quot;: {
-        &quot;content&quot;: {
-          &quot;description&quot;: &quot;The file as read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;The one-line description the kind&#39;s description field held, when it held one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;identity&quot;: {
           &quot;description&quot;: &quot;The identity within the kind (`majordomus.scope-integrity@1`, `continue`, a path).&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;description&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The one-line description the kind&#39;s description field held, when it held one.&quot;
+        },
         &quot;kind&quot;: {
-          &quot;description&quot;: &quot;The kind the object was read as (`rule`, `prompt`, `document`, ...).&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The kind the object was read as (`rule`, `prompt`, `document`, ...).&quot;
+        },
+        &quot;content&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file as read.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;
         },
         &quot;media_type&quot;: {
-          &quot;description&quot;: &quot;IANA media type of `content` (`text/markdown`, `application/yaml`, `application/json`, `text/plain`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;IANA media type of `content` (`text/markdown`, `application/yaml`, `application/json`, `text/plain`).&quot;
+        },
+        &quot;provenance&quot;: {
+          &quot;description&quot;: &quot;Where the object came from: path, directory, source class, section, size, member.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ObjectProvenance&quot;
+        },
+        &quot;uri&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;
         },
         &quot;metadata&quot;: {
           &quot;description&quot;: &quot;The parsed front matter or YAML, keys in the file&#39;s order.&quot;
         },
-        &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ObjectProvenance&quot;,
-          &quot;description&quot;: &quot;Where the object came from: path, directory, source class, section, size, member.&quot;
-        },
         &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title the kind&#39;s title rule found, when it found one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          ],
+          &quot;description&quot;: &quot;The title the kind&#39;s title rule found, when it found one.&quot;
         }
       },
       &quot;required&quot;: [
@@ -485,18 +484,19 @@ capability&#39;s provenance is.</p><p class="mt-2 text-sm text-body-subtle">No p
         &quot;media_type&quot;,
         &quot;content&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One declarative object of the repository&#39;s layer, as a client reads it.&quot;
     }
   },
-  &quot;description&quot;: &quot;The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability&#39;s provenance is.&quot;,
+  &quot;title&quot;: &quot;ResourceView&quot;,
   &quot;oneOf&quot;: [
     {
-      &quot;$ref&quot;: &quot;#/$defs/ObjectView&quot;,
       &quot;description&quot;: &quot;A file of the layer, read as it is.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ObjectView&quot;,
       &quot;properties&quot;: {
         &quot;source&quot;: {
-          &quot;const&quot;: &quot;declarative&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;declarative&quot;
         }
       },
       &quot;required&quot;: [
@@ -505,21 +505,21 @@ capability&#39;s provenance is.</p><p class="mt-2 text-sm text-body-subtle">No p
       &quot;type&quot;: &quot;object&quot;
     },
     {
-      &quot;$ref&quot;: &quot;#/$defs/AnswerView&quot;,
-      &quot;description&quot;: &quot;A query with a resource exposure, executed and rendered as a JSON document.&quot;,
       &quot;properties&quot;: {
         &quot;source&quot;: {
           &quot;const&quot;: &quot;builtin&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A query with a resource exposure, executed and rendered as a JSON document.&quot;,
       &quot;required&quot;: [
         &quot;source&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;$ref&quot;: &quot;#/$defs/AnswerView&quot;
     }
   ],
-  &quot;title&quot;: &quot;ResourceView&quot;
+  &quot;description&quot;: &quot;The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability&#39;s provenance is.&quot;
 }</pre></div>
   </details>
 </div>

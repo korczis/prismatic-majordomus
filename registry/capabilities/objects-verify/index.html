@@ -201,42 +201,42 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">kind</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only objects of this kind.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">limit</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">How many objects to read at most; every one of them when absent.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kind</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Only objects of this kind.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `objects.verify`.&quot;,
   &quot;properties&quot;: {
+    &quot;limit&quot;: {
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;How many objects to read at most; every one of them when absent.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0
+    },
     &quot;kind&quot;: {
       &quot;description&quot;: &quot;Only objects of this kind.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
-    },
-    &quot;limit&quot;: {
-      &quot;description&quot;: &quot;How many objects to read at most; every one of them when absent.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ]
     }
   },
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;title&quot;: &quot;VerifyInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The input of `objects.verify`.&quot;
 }</pre></div>
   </details>
 </div>
@@ -245,35 +245,30 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">compared_by_content</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many were compared byte for byte rather than by size.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">current</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many of them are what the index read.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">drifted</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many are not, of any kind of not.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">files</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many files were read.</td>
+        <td class="px-3 py-2 text-body">The index fingerprint this process is serving.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The files that are not, with what is wrong with each.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">compared_by_content</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The index fingerprint this process is serving.</td>
+        <td class="px-3 py-2 text-body">How many were compared byte for byte rather than by size.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">drifted</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many are not, of any kind of not.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">objects</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many objects of the index those files carry.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">index_is_current</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -281,59 +276,49 @@
         <td class="px-3 py-2 text-body">Whether the index is still a true picture of the working tree, as far as this
 comparison can tell.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">objects</td>
+        <td class="px-3 py-2 font-mono text-heading">current</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many objects of the index those files carry.</td>
+        <td class="px-3 py-2 text-body">How many of them are what the index read.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">files</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many files were read.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;Comparison&quot;: {
-      &quot;description&quot;: &quot;How closely a file could be compared with what the index holds.\n\nA file that is one object is compared byte for byte, because the index kept its whole\ncontent. A collection file holds one object per member, and what the index kept for each\nis that member as JSON rather than the file&#39;s text — so the strongest thing that can be\nsaid without re-parsing it is whether its size is what it was. The report says which\ncomparison was made rather than implying the stronger one.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;content&quot;,
-          &quot;description&quot;: &quot;Byte for byte against the content the index holds.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;size&quot;,
-          &quot;description&quot;: &quot;By size against the size the index recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;DriftedObject&quot;: {
       &quot;description&quot;: &quot;One file of the layer that is no longer what the index read.&quot;,
       &quot;properties&quot;: {
-        &quot;comparison&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Comparison&quot;,
-          &quot;description&quot;: &quot;How it was compared.&quot;
-        },
         &quot;detail&quot;: {
           &quot;description&quot;: &quot;What is wrong, for a person.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;example_uri&quot;: {
-          &quot;description&quot;: &quot;One of the URIs it holds, so a reader can see what is affected.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;objects&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;description&quot;: &quot;How many objects of the index came from it.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;format&quot;: &quot;uint&quot;
         },
         &quot;path&quot;: {
-          &quot;description&quot;: &quot;Its repository-relative path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its repository-relative path.&quot;
+        },
+        &quot;example_uri&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One of the URIs it holds, so a reader can see what is affected.&quot;
         },
         &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ObjectStanding&quot;,
-          &quot;description&quot;: &quot;How it stands.&quot;
+          &quot;description&quot;: &quot;How it stands.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ObjectStanding&quot;
+        },
+        &quot;comparison&quot;: {
+          &quot;description&quot;: &quot;How it was compared.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Comparison&quot;
         }
       },
       &quot;required&quot;: [
@@ -350,53 +335,48 @@ comparison can tell.</td>
       &quot;description&quot;: &quot;How one file stands against what the index read from it.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;current&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;It is what the index read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;current&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;changed&quot;,
-          &quot;description&quot;: &quot;It is there and it has changed since the index was built.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;It is there and it has changed since the index was built.&quot;
         },
         {
           &quot;const&quot;: &quot;missing&quot;,
-          &quot;description&quot;: &quot;The file the index read is no longer there.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file the index read is no longer there.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unreadable&quot;,
-          &quot;description&quot;: &quot;It is there and could not be read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;It is there and could not be read.&quot;
         }
       ]
+    },
+    &quot;Comparison&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;content&quot;,
+          &quot;description&quot;: &quot;Byte for byte against the content the index holds.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;size&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;By size against the size the index recorded.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How closely a file could be compared with what the index holds.\n\nA file that is one object is compared byte for byte, because the index kept its whole\ncontent. A collection file holds one object per member, and what the index kept for each\nis that member as JSON rather than the file&#39;s text — so the strongest thing that can be\nsaid without re-parsing it is whether its size is what it was. The report says which\ncomparison was made rather than implying the stronger one.&quot;
     }
   },
   &quot;description&quot;: &quot;The answer of `objects.verify`.&quot;,
   &quot;properties&quot;: {
-    &quot;compared_by_content&quot;: {
-      &quot;description&quot;: &quot;How many were compared byte for byte rather than by size.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;current&quot;: {
-      &quot;description&quot;: &quot;How many of them are what the index read.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;drifted&quot;: {
-      &quot;description&quot;: &quot;How many are not, of any kind of not.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;files&quot;: {
-      &quot;description&quot;: &quot;How many files were read.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+    &quot;fingerprint&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The index fingerprint this process is serving.&quot;
     },
     &quot;findings&quot;: {
       &quot;description&quot;: &quot;The files that are not, with what is wrong with each.&quot;,
@@ -405,19 +385,39 @@ comparison can tell.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;fingerprint&quot;: {
-      &quot;description&quot;: &quot;The index fingerprint this process is serving.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;index_is_current&quot;: {
-      &quot;description&quot;: &quot;Whether the index is still a true picture of the working tree, as far as this\ncomparison can tell.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;objects&quot;: {
-      &quot;description&quot;: &quot;How many objects of the index those files carry.&quot;,
+    &quot;compared_by_content&quot;: {
+      &quot;description&quot;: &quot;How many were compared byte for byte rather than by size.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;drifted&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many are not, of any kind of not.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;objects&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many objects of the index those files carry.&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;index_is_current&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the index is still a true picture of the working tree, as far as this\ncomparison can tell.&quot;
+    },
+    &quot;current&quot;: {
+      &quot;description&quot;: &quot;How many of them are what the index read.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;files&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many files were read.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;
     }
   },
   &quot;required&quot;: [

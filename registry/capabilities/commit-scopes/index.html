@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -232,44 +232,12 @@ assert_eq!(r.sample, majordomus_cli::commit::scopes::SAMPLE);
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;ScopesReport&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;ScopeUse&quot;: {
-      &quot;description&quot;: &quot;One scope the history uses, and how much.\n```\nuse majordomus_cli::commit::scopes::ScopeUse;\nlet u = ScopeUse { scope: \&quot;commit\&quot;.into(), commits: 40, directories: vec![\&quot;src/commit\&quot;.into()] };\nassert_eq!(u.commits, 40);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;commits&quot;: {
-          &quot;description&quot;: &quot;How many of the sampled commits used it.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;directories&quot;: {
-          &quot;description&quot;: &quot;The directory prefixes those commits touched, most often first, at most five.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The scope word, as commits spell it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;scope&quot;,
-        &quot;commits&quot;,
-        &quot;directories&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;ScopeVocabulary&quot;: {
-      &quot;description&quot;: &quot;The vocabulary as observed, with what was observed.\n```\nuse majordomus_cli::commit::ScopeVocabulary;\n// an empty vocabulary knows nothing and says so, rather than guessing\nlet v = ScopeVocabulary::default();\nassert!(!v.knows(\&quot;anything\&quot;));\nassert!(v.words().is_empty());\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;sampled&quot;: {
-          &quot;description&quot;: &quot;How many commits were read to learn it.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
         &quot;scopes&quot;: {
           &quot;description&quot;: &quot;Every scope, by how often it is used, then by name. The order is the answer to\n\&quot;which scopes does this repository use\&quot;, so it is the order a person reads.&quot;,
           &quot;items&quot;: {
@@ -278,27 +246,61 @@ assert_eq!(r.sample, majordomus_cli::commit::scopes::SAMPLE);
           &quot;type&quot;: &quot;array&quot;
         },
         &quot;unavailable&quot;: {
-          &quot;description&quot;: &quot;Set when git could not be asked; the vocabulary is then empty rather than wrong.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;Set when git could not be asked; the vocabulary is then empty rather than wrong.&quot;
+        },
+        &quot;sampled&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many commits were read to learn it.&quot;
         }
       },
+      &quot;description&quot;: &quot;The vocabulary as observed, with what was observed.\n```\nuse majordomus_cli::commit::ScopeVocabulary;\n// an empty vocabulary knows nothing and says so, rather than guessing\nlet v = ScopeVocabulary::default();\nassert!(!v.knows(\&quot;anything\&quot;));\nassert!(v.words().is_empty());\n```&quot;,
       &quot;required&quot;: [
         &quot;scopes&quot;,
         &quot;sampled&quot;
+      ]
+    },
+    &quot;ScopeUse&quot;: {
+      &quot;required&quot;: [
+        &quot;scope&quot;,
+        &quot;commits&quot;,
+        &quot;directories&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;One scope the history uses, and how much.\n```\nuse majordomus_cli::commit::scopes::ScopeUse;\nlet u = ScopeUse { scope: \&quot;commit\&quot;.into(), commits: 40, directories: vec![\&quot;src/commit\&quot;.into()] };\nassert_eq!(u.commits, 40);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;commits&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many of the sampled commits used it.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;directories&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The directory prefixes those commits touched, most often first, at most five.&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The scope word, as commits spell it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      }
     }
   },
   &quot;description&quot;: &quot;The vocabulary, with the policy that reads it.\n```\nuse majordomus_cli::capability::builtin::commit::ScopesReport;\nuse majordomus_cli::commit::ScopeVocabulary;\nlet r = ScopesReport { vocabulary: ScopeVocabulary::default(), sample: 1500 };\nassert_eq!(r.sample, majordomus_cli::commit::scopes::SAMPLE);\n```&quot;,
   &quot;properties&quot;: {
     &quot;sample&quot;: {
       &quot;description&quot;: &quot;How many commits back the vocabulary is learned from.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;minimum&quot;: 0
     },
     &quot;vocabulary&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/ScopeVocabulary&quot;,
@@ -308,9 +310,7 @@ assert_eq!(r.sample, majordomus_cli::commit::scopes::SAMPLE);
   &quot;required&quot;: [
     &quot;vocabulary&quot;,
     &quot;sample&quot;
-  ],
-  &quot;title&quot;: &quot;ScopesReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>

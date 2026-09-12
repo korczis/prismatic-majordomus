@@ -226,23 +226,24 @@ always resolved. Absent means every directory of the layer.</td>
       &quot;description&quot;: &quot;Whether a directory of the layer carries the contract it owes.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;documented&quot;,
           &quot;description&quot;: &quot;It carries a context document of its own.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;documented&quot;
         },
         {
-          &quot;const&quot;: &quot;exempt&quot;,
           &quot;description&quot;: &quot;It owes none, because a contract above it says so.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;exempt&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;owed&quot;,
-          &quot;description&quot;: &quot;It owes one and has none.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;It owes one and has none.&quot;
         }
       ]
     }
   },
+  &quot;type&quot;: &quot;object&quot;,
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;Which directories to answer for, and how much of the hierarchy to resolve.&quot;,
   &quot;properties&quot;: {
@@ -261,6 +262,7 @@ always resolved. Absent means every directory of the layer.</td>
       ]
     },
     &quot;state&quot;: {
+      &quot;description&quot;: &quot;Only directories in this state: `documented`, `exempt` or `owed`.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/DirectoryState&quot;
@@ -268,12 +270,10 @@ always resolved. Absent means every directory of the layer.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Only directories in this state: `documented`, `exempt` or `owed`.&quot;
+      ]
     }
   },
-  &quot;title&quot;: &quot;DirectoriesInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;DirectoriesInput&quot;
 }</pre></div>
   </details>
 </div>
@@ -301,106 +301,55 @@ always resolved. Absent means every directory of the layer.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;DirectoryReport&quot;,
   &quot;$defs&quot;: {
-    &quot;ContractView&quot;: {
-      &quot;description&quot;: &quot;A directory contract as the document declares it, before anything is inherited.&quot;,
+    &quot;DirectoryTallies&quot;: {
+      &quot;description&quot;: &quot;How many directories are in each state.&quot;,
       &quot;properties&quot;: {
-        &quot;audience&quot;: {
-          &quot;description&quot;: &quot;Who it addresses; both when it says nothing.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;children_exempt&quot;: {
-          &quot;description&quot;: &quot;Subtrees below this one that owe nothing: carried, not authored here.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;children_require_contract&quot;: {
-          &quot;description&quot;: &quot;Whether the directories below owe a contract, when this document says.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;composition&quot;: {
-          &quot;description&quot;: &quot;`extend`, `replace` or `final`: how it composes with what is above it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;One line saying what the directory is for.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The document&#39;s identity; it survives a move, the file name does not.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;order&quot;: {
-          &quot;description&quot;: &quot;Ties within one depth are broken by this, then by path.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
+        &quot;documented&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Carrying a contract of their own.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The document&#39;s path, repository-relative.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;owed&quot;: {
+          &quot;description&quot;: &quot;Owing a contract and carrying none.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;providers&quot;: {
-          &quot;description&quot;: &quot;`*`, or the providers the document is written for.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;directories&quot;: {
+          &quot;description&quot;: &quot;Every directory of the layer the index knows.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
         },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;`directory`, `subtree` or `explicit`: how far the document reaches.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`active` or `deprecated`; a deprecated document is listed and never applied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;One line naming the directory.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;tracks&quot;: {
-          &quot;description&quot;: &quot;Pathspecs whose change names this document for review.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;exempt&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Released by a contract above them.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;path&quot;,
-        &quot;status&quot;,
-        &quot;scope&quot;,
-        &quot;composition&quot;,
-        &quot;order&quot;,
-        &quot;providers&quot;,
-        &quot;audience&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+        &quot;directories&quot;,
+        &quot;documented&quot;,
+        &quot;exempt&quot;,
+        &quot;owed&quot;
+      ]
     },
     &quot;DirectoryNode&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One directory of the layer, what it owes, and what applies to it.&quot;,
       &quot;properties&quot;: {
-        &quot;children&quot;: {
-          &quot;description&quot;: &quot;The directories immediately below, sorted.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;Whether it carries the contract it owes.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/DirectoryState&quot;
+        },
+        &quot;requires_contract&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether a contract is owed here at all.&quot;
         },
         &quot;contract&quot;: {
           &quot;anyOf&quot;: [
@@ -414,17 +363,48 @@ always resolved. Absent means every directory of the layer.</td>
           &quot;description&quot;: &quot;The contract this directory declares, before inheritance.&quot;
         },
         &quot;depth&quot;: {
-          &quot;description&quot;: &quot;Segments below the layer root; the root itself is 0.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;description&quot;: &quot;Segments below the layer root; the root itself is 0.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
         },
         &quot;effective&quot;: {
-          &quot;description&quot;: &quot;The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/EffectiveEntry&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path.&quot;
+        },
+        &quot;objects&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many objects of any kind the index holds directly in this directory.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Repository-relative, forward slashes.&quot;
+        },
+        &quot;children&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The directories immediately below, sorted.&quot;
+        },
+        &quot;governed_by&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The contract that made the requirement explicit, when one did.&quot;
+        },
+        &quot;parent&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The directory above, when it is inside the layer.&quot;
         },
         &quot;exempted_by&quot;: {
           &quot;description&quot;: &quot;The contract that released this subtree, when one did.&quot;,
@@ -432,38 +412,6 @@ always resolved. Absent means every directory of the layer.</td>
             &quot;string&quot;,
             &quot;null&quot;
           ]
-        },
-        &quot;governed_by&quot;: {
-          &quot;description&quot;: &quot;The contract that made the requirement explicit, when one did.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;objects&quot;: {
-          &quot;description&quot;: &quot;How many objects of any kind the index holds directly in this directory.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;parent&quot;: {
-          &quot;description&quot;: &quot;The directory above, when it is inside the layer.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative, forward slashes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;requires_contract&quot;: {
-          &quot;description&quot;: &quot;Whether a contract is owed here at all.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DirectoryState&quot;,
-          &quot;description&quot;: &quot;Whether it carries the contract it owes.&quot;
         }
       },
       &quot;required&quot;: [
@@ -472,100 +420,11 @@ always resolved. Absent means every directory of the layer.</td>
         &quot;state&quot;,
         &quot;requires_contract&quot;,
         &quot;objects&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DirectoryState&quot;: {
-      &quot;description&quot;: &quot;Whether a directory of the layer carries the contract it owes.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;documented&quot;,
-          &quot;description&quot;: &quot;It carries a context document of its own.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;exempt&quot;,
-          &quot;description&quot;: &quot;It owes none, because a contract above it says so.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;owed&quot;,
-          &quot;description&quot;: &quot;It owes one and has none.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
-    },
-    &quot;DirectoryTallies&quot;: {
-      &quot;description&quot;: &quot;How many directories are in each state.&quot;,
-      &quot;properties&quot;: {
-        &quot;directories&quot;: {
-          &quot;description&quot;: &quot;Every directory of the layer the index knows.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;documented&quot;: {
-          &quot;description&quot;: &quot;Carrying a contract of their own.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;exempt&quot;: {
-          &quot;description&quot;: &quot;Released by a contract above them.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;owed&quot;: {
-          &quot;description&quot;: &quot;Owing a contract and carrying none.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;directories&quot;,
-        &quot;documented&quot;,
-        &quot;exempt&quot;,
-        &quot;owed&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
     },
     &quot;EffectiveEntry&quot;: {
       &quot;description&quot;: &quot;One contract in a directory&#39;s effective chain, in the order it is applied.&quot;,
-      &quot;properties&quot;: {
-        &quot;composition&quot;: {
-          &quot;description&quot;: &quot;`extend`, `replace` or `final`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;depth&quot;: {
-          &quot;description&quot;: &quot;Depth below the layer root; less is less specific and applies first.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The document&#39;s identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;local&quot;: {
-          &quot;description&quot;: &quot;True for the directory&#39;s own document, false for one it inherits.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;order&quot;: {
-          &quot;description&quot;: &quot;The declared order, the second sort key.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The document&#39;s path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why it applies to this directory, in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;path&quot;,
@@ -575,34 +434,175 @@ always resolved. Absent means every directory of the layer.</td>
         &quot;reason&quot;,
         &quot;local&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The document&#39;s identity.&quot;
+        },
+        &quot;depth&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Depth below the layer root; less is less specific and applies first.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;local&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;True for the directory&#39;s own document, false for one it inherits.&quot;
+        },
+        &quot;composition&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`extend`, `replace` or `final`.&quot;
+        },
+        &quot;order&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The declared order, the second sort key.&quot;,
+          &quot;format&quot;: &quot;int64&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it applies to this directory, in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The document&#39;s path.&quot;
+        }
+      }
+    },
+    &quot;DirectoryState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;documented&quot;,
+          &quot;description&quot;: &quot;It carries a context document of its own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;It owes none, because a contract above it says so.&quot;,
+          &quot;const&quot;: &quot;exempt&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;owed&quot;,
+          &quot;description&quot;: &quot;It owes one and has none.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether a directory of the layer carries the contract it owes.&quot;
+    },
+    &quot;ContractView&quot;: {
+      &quot;description&quot;: &quot;A directory contract as the document declares it, before anything is inherited.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;title&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;One line naming the directory.&quot;
+        },
+        &quot;description&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;One line saying what the directory is for.&quot;
+        },
+        &quot;tracks&quot;: {
+          &quot;description&quot;: &quot;Pathspecs whose change names this document for review.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;audience&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Who it addresses; both when it says nothing.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;children_exempt&quot;: {
+          &quot;description&quot;: &quot;Subtrees below this one that owe nothing: carried, not authored here.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The document&#39;s identity; it survives a move, the file name does not.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;order&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;int64&quot;,
+          &quot;description&quot;: &quot;Ties within one depth are broken by this, then by path.&quot;
+        },
+        &quot;children_require_contract&quot;: {
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Whether the directories below owe a contract, when this document says.&quot;
+        },
+        &quot;composition&quot;: {
+          &quot;description&quot;: &quot;`extend`, `replace` or `final`: how it composes with what is above it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The document&#39;s path, repository-relative.&quot;
+        },
+        &quot;providers&quot;: {
+          &quot;description&quot;: &quot;`*`, or the providers the document is written for.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;scope&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`directory`, `subtree` or `explicit`: how far the document reaches.&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;`active` or `deprecated`; a deprecated document is listed and never applied.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;path&quot;,
+        &quot;status&quot;,
+        &quot;scope&quot;,
+        &quot;composition&quot;,
+        &quot;order&quot;,
+        &quot;providers&quot;,
+        &quot;audience&quot;
+      ]
     }
   },
   &quot;description&quot;: &quot;The layer&#39;s directories, what each owes, and the contracts that apply.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;directories&quot;: {
       &quot;description&quot;: &quot;Every directory asked for, sorted by path.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/DirectoryNode&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
     },
     &quot;root&quot;: {
-      &quot;description&quot;: &quot;The layer root the tree is rooted at.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The layer root the tree is rooted at.&quot;
     },
     &quot;tallies&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/DirectoryTallies&quot;,
-      &quot;description&quot;: &quot;The directories in each state.&quot;
+      &quot;description&quot;: &quot;The directories in each state.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/DirectoryTallies&quot;
     }
   },
   &quot;required&quot;: [
     &quot;root&quot;,
     &quot;tallies&quot;,
     &quot;directories&quot;
-  ],
-  &quot;title&quot;: &quot;DirectoryReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>

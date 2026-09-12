@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -213,6 +213,11 @@ the capability registry this process built and the workspace it sits in.</p><div
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">refusals</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every refusal, in the order the objects and their keys appear.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">decided</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -222,11 +227,6 @@ the capability registry this process built and the workspace it sits in.</p><div
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">True when no deployment earned a refusal.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">refusals</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every refusal, in the order the objects and their keys appear.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -234,27 +234,26 @@ the capability registry this process built and the workspace it sits in.</p><div
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;Refusal&quot;: {
-      &quot;description&quot;: &quot;Why a deployment object is refused: what was read, where, and what to do about it.&quot;,
       &quot;properties&quot;: {
-        &quot;correction&quot;: {
-          &quot;description&quot;: &quot;What to do instead.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;problem&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong with it, in one line.&quot;
         },
         &quot;file&quot;: {
           &quot;description&quot;: &quot;The repository-relative file the value came from.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;correction&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What to do instead.&quot;
+        },
         &quot;found&quot;: {
-          &quot;description&quot;: &quot;The value observed, rendered as it was read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The value observed, rendered as it was read.&quot;
         },
         &quot;key&quot;: {
-          &quot;description&quot;: &quot;The key path within it, as the contract names it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;problem&quot;: {
-          &quot;description&quot;: &quot;What is wrong with it, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The key path within it, as the contract names it.&quot;
         }
       },
       &quot;required&quot;: [
@@ -264,27 +263,27 @@ the capability registry this process built and the workspace it sits in.</p><div
         &quot;problem&quot;,
         &quot;correction&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Why a deployment object is refused: what was read, where, and what to do about it.&quot;
     }
   },
-  &quot;description&quot;: &quot;Whether the deployments this repository declares would work, decided locally: against\nthe capability registry this process built and the workspace it sits in.&quot;,
   &quot;properties&quot;: {
+    &quot;refusals&quot;: {
+      &quot;description&quot;: &quot;Every refusal, in the order the objects and their keys appear.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Refusal&quot;
+      }
+    },
     &quot;decided&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
       &quot;description&quot;: &quot;How many deployments were decided.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;minimum&quot;: 0
     },
     &quot;ok&quot;: {
       &quot;description&quot;: &quot;True when no deployment earned a refusal.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;refusals&quot;: {
-      &quot;description&quot;: &quot;Every refusal, in the order the objects and their keys appear.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Refusal&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
     }
   },
   &quot;required&quot;: [
@@ -293,7 +292,8 @@ the capability registry this process built and the workspace it sits in.</p><div
     &quot;refusals&quot;
   ],
   &quot;title&quot;: &quot;DeploymentCheck&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;Whether the deployments this repository declares would work, decided locally: against\nthe capability registry this process built and the workspace it sits in.&quot;
 }</pre></div>
   </details>
 </div>

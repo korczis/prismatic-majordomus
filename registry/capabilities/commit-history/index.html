@@ -216,16 +216,16 @@ Default `HEAD`, which is the whole history reachable from here. <span class="fon
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which range of history to judge.\n```\nuse majordomus_cli::capability::builtin::commit::HistoryInput;\nlet h: HistoryInput = serde_json::from_str(\&quot;{}\&quot;).expect(\&quot;an empty input\&quot;);\nassert_eq!(h.range, \&quot;HEAD\&quot;, \&quot;the whole history reachable from here\&quot;);\n```&quot;,
   &quot;properties&quot;: {
     &quot;range&quot;: {
-      &quot;default&quot;: &quot;HEAD&quot;,
       &quot;description&quot;: &quot;Anything `git log` accepts: `origin/master..HEAD`, `v0.6.0..`, a bare `HEAD`.\nDefault `HEAD`, which is the whole history reachable from here.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;default&quot;: &quot;HEAD&quot;
     }
   },
+  &quot;additionalProperties&quot;: false,
   &quot;title&quot;: &quot;HistoryInput&quot;,
+  &quot;description&quot;: &quot;Which range of history to judge.\n```\nuse majordomus_cli::capability::builtin::commit::HistoryInput;\nlet h: HistoryInput = serde_json::from_str(\&quot;{}\&quot;).expect(\&quot;an empty input\&quot;);\nassert_eq!(h.range, \&quot;HEAD\&quot;, \&quot;the whole history reachable from here\&quot;);\n```&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -251,6 +251,16 @@ assert_eq!(r.total - r.exempt, 1194);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">range</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The range as asked for.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">total</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many commits were read.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">commits</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -267,21 +277,50 @@ report nobody reads.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many carry a finding of error severity.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">range</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The range as asked for.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">total</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many commits were read.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;range&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The range as asked for.&quot;
+    },
+    &quot;total&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many commits were read.&quot;
+    },
+    &quot;commits&quot;: {
+      &quot;description&quot;: &quot;Every commit that carries a finding, newest first. A commit with nothing to say is\ncounted and not listed: a report that printed a thousand passing commits would be a\nreport nobody reads.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/JudgedCommit&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;exempt&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many were exempt because git composed their subject.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;failing&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many carry a finding of error severity.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    }
+  },
+  &quot;description&quot;: &quot;A range of history, judged.\nA range of history, judged in one pass.\n\n```\nuse majordomus_cli::commit::verdict::HistoryReport;\nlet r = HistoryReport {\n    range: \&quot;HEAD\&quot;.into(),\n    total: 1755,\n    exempt: 561,\n    failing: 54,\n    commits: Vec::new(),\n};\n// a commit with nothing to say is counted and not listed: a report of a thousand\n// passing commits is a report nobody reads\nassert!(r.commits.is_empty());\nassert_eq!(r.total - r.exempt, 1194);\n```&quot;,
+  &quot;required&quot;: [
+    &quot;range&quot;,
+    &quot;total&quot;,
+    &quot;exempt&quot;,
+    &quot;failing&quot;,
+    &quot;commits&quot;
+  ],
   &quot;$defs&quot;: {
     &quot;CommitExemption&quot;: {
       &quot;description&quot;: &quot;Why a commit was not judged.\n```\nuse majordomus_cli::commit::{judge, CommitExemption, CommitPolicy, CommitSubject};\nlet v = judge(&amp;CommitSubject::of(\&quot;Merge pull request #1 from a/b\&quot;), &amp;CommitPolicy::default());\nassert_eq!(v.exempt, Some(CommitExemption::GitAuthored));\n```&quot;,
@@ -294,15 +333,16 @@ report nobody reads.</td>
       ]
     },
     &quot;Diagnostic&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;,
       &quot;properties&quot;: {
         &quot;code&quot;: {
           &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
         },
         &quot;path&quot;: {
           &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;,
@@ -311,42 +351,33 @@ report nobody reads.</td>
             &quot;null&quot;
           ]
         },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How bad.&quot;
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
         &quot;severity&quot;,
         &quot;code&quot;,
         &quot;message&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;JudgedCommit&quot;: {
+      &quot;required&quot;: [
+        &quot;commit&quot;,
+        &quot;subject&quot;,
+        &quot;passed&quot;,
+        &quot;findings&quot;
+      ],
       &quot;description&quot;: &quot;One commit of the history, judged.\n```\nuse majordomus_cli::commit::verdict::JudgedCommit;\n// what a history report lists: only the commits that have something to say\nlet row = JudgedCommit {\n    commit: \&quot;a1b2c3d4e\&quot;.into(),\n    subject: \&quot;update stuff\&quot;.into(),\n    passed: false,\n    exempt: None,\n    findings: Vec::new(),\n};\nassert!(!row.passed);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The commit name, as git gave it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;exempt&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/CommitExemption&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Why it was not judged, when it was not.&quot;
-        },
         &quot;findings&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;Every finding.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
         &quot;passed&quot;: {
           &quot;description&quot;: &quot;Whether it passed.&quot;,
@@ -355,78 +386,47 @@ report nobody reads.</td>
         &quot;subject&quot;: {
           &quot;description&quot;: &quot;Its subject line.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The commit name, as git gave it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;exempt&quot;: {
+          &quot;description&quot;: &quot;Why it was not judged, when it was not.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/CommitExemption&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
         }
-      },
-      &quot;required&quot;: [
-        &quot;commit&quot;,
-        &quot;subject&quot;,
-        &quot;passed&quot;,
-        &quot;findings&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
     },
     &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;
         },
         {
-          &quot;const&quot;: &quot;warning&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;warning&quot;
         },
         {
-          &quot;const&quot;: &quot;error&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;error&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;
     }
   },
-  &quot;description&quot;: &quot;A range of history, judged.\nA range of history, judged in one pass.\n\n```\nuse majordomus_cli::commit::verdict::HistoryReport;\nlet r = HistoryReport {\n    range: \&quot;HEAD\&quot;.into(),\n    total: 1755,\n    exempt: 561,\n    failing: 54,\n    commits: Vec::new(),\n};\n// a commit with nothing to say is counted and not listed: a report of a thousand\n// passing commits is a report nobody reads\nassert!(r.commits.is_empty());\nassert_eq!(r.total - r.exempt, 1194);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;commits&quot;: {
-      &quot;description&quot;: &quot;Every commit that carries a finding, newest first. A commit with nothing to say is\ncounted and not listed: a report that printed a thousand passing commits would be a\nreport nobody reads.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/JudgedCommit&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;exempt&quot;: {
-      &quot;description&quot;: &quot;How many were exempt because git composed their subject.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;failing&quot;: {
-      &quot;description&quot;: &quot;How many carry a finding of error severity.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;range&quot;: {
-      &quot;description&quot;: &quot;The range as asked for.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;total&quot;: {
-      &quot;description&quot;: &quot;How many commits were read.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;range&quot;,
-    &quot;total&quot;,
-    &quot;exempt&quot;,
-    &quot;failing&quot;,
-    &quot;commits&quot;
-  ],
-  &quot;title&quot;: &quot;HistoryReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;HistoryReport&quot;
 }</pre></div>
   </details>
 </div>

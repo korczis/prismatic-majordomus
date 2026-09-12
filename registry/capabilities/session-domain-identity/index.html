@@ -200,9 +200,9 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -251,58 +251,13 @@ the standing note is always present.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;checkout&quot;,
+    &quot;facets&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;description&quot;: &quot;The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec&lt;&amp;str&gt; = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\&quot;repository\&quot;, \&quot;checkout\&quot;, \&quot;episode\&quot;, \&quot;provider_session\&quot;]);\n```&quot;,
   &quot;$defs&quot;: {
-    &quot;IdentityFacet&quot;: {
-      &quot;description&quot;: &quot;One identity of this checkout, as this executable computes it and as each store spells\nit. What `session.identity` answers, and the direct projection of the audit&#39;s table.\n\n```\nuse majordomus_cli::session::{identities, IdentityFacet};\n\nlet dir = tempfile::tempdir().unwrap();\nlet facets: Vec&lt;IdentityFacet&gt; = identities(dir.path());\nlet repository = facets.iter().find(|f| f.subject == \&quot;repository\&quot;).expect(\&quot;a facet\&quot;);\nassert!(repository.spellings.len() &gt;= 2, \&quot;one word, two writers, two values\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;canonical&quot;: {
-          &quot;description&quot;: &quot;The canonical value this executable computes, when it can compute one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;note&quot;: {
-          &quot;description&quot;: &quot;Why the subject needs its own type, in one line, for a reader meeting it in a\nprojection rather than in this module.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;spellings&quot;: {
-          &quot;description&quot;: &quot;How each store spells the same subject, in the order [`crate::order`] gives.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/RecordedSpelling&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;What is being identified: `repository`, `checkout`, `episode`, `provider_session`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;subject&quot;,
-        &quot;note&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RecordedSpelling&quot;: {
-      &quot;description&quot;: &quot;One store&#39;s spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \&quot;mj_git_repo_id (lib/common.sh)\&quot;.into(),\n    value: \&quot;/src/repo/.git\&quot;.into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \&quot;local\&quot;);\nassert!(local.value.starts_with(&#39;/&#39;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;spelling&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Spelling&quot;,
-          &quot;description&quot;: &quot;Which half of the layer wrote it.&quot;
-        },
-        &quot;value&quot;: {
-          &quot;description&quot;: &quot;The value, as this checkout would have it written. Empty when nothing has written\none here yet, which is a fresh clone and not a fault.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;writer&quot;: {
-          &quot;description&quot;: &quot;The writer, named so a reader can go and look at it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;spelling&quot;,
-        &quot;writer&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;Spelling&quot;: {
       &quot;description&quot;: &quot;Which store a recorded identity was read from, kept beside the value.\n\nThe point is not to choose between `mj_git_repo_id` and `mj_repository_id`, or between\n`worktree:` and `worktree_id:`. It is to stop pretending they are one value. A reader\nthat knows a string is the *local* spelling can compare it with other local spellings\nand can refuse to compare it with a shared one, which is precisely the comparison that\nproduced \&quot;these two records are about different repositories\&quot; for records of the same\nrepository written four minutes apart.\n\n```\nuse majordomus_cli::session::Spelling;\n// the two halves are different answers to one question, and are never compared\nassert_ne!(Spelling::Local, Spelling::Shared);\nassert_eq!(Spelling::Canonical.as_str(), \&quot;canonical\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
@@ -312,9 +267,9 @@ the standing note is always present.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;shared&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The shared half&#39;s spelling: a remote URL or a digest, in `.ai/repo/sessions/`. It\nnames the repository and travels with a clone (ADR 0014).&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;shared&quot;
         },
         {
           &quot;const&quot;: &quot;canonical&quot;,
@@ -322,34 +277,79 @@ the standing note is always present.</td>
           &quot;type&quot;: &quot;string&quot;
         }
       ]
+    },
+    &quot;RecordedSpelling&quot;: {
+      &quot;required&quot;: [
+        &quot;spelling&quot;,
+        &quot;writer&quot;
+      ],
+      &quot;description&quot;: &quot;One store&#39;s spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \&quot;mj_git_repo_id (lib/common.sh)\&quot;.into(),\n    value: \&quot;/src/repo/.git\&quot;.into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \&quot;local\&quot;);\nassert!(local.value.starts_with(&#39;/&#39;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;value&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The value, as this checkout would have it written. Empty when nothing has written\none here yet, which is a fresh clone and not a fault.&quot;
+        },
+        &quot;spelling&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Spelling&quot;,
+          &quot;description&quot;: &quot;Which half of the layer wrote it.&quot;
+        },
+        &quot;writer&quot;: {
+          &quot;description&quot;: &quot;The writer, named so a reader can go and look at it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;IdentityFacet&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One identity of this checkout, as this executable computes it and as each store spells\nit. What `session.identity` answers, and the direct projection of the audit&#39;s table.\n\n```\nuse majordomus_cli::session::{identities, IdentityFacet};\n\nlet dir = tempfile::tempdir().unwrap();\nlet facets: Vec&lt;IdentityFacet&gt; = identities(dir.path());\nlet repository = facets.iter().find(|f| f.subject == \&quot;repository\&quot;).expect(\&quot;a facet\&quot;);\nassert!(repository.spellings.len() &gt;= 2, \&quot;one word, two writers, two values\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;spellings&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;How each store spells the same subject, in the order [`crate::order`] gives.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/RecordedSpelling&quot;
+          }
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;What is being identified: `repository`, `checkout`, `episode`, `provider_session`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;note&quot;: {
+          &quot;description&quot;: &quot;Why the subject needs its own type, in one line, for a reader meeting it in a\nprojection rather than in this module.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;canonical&quot;: {
+          &quot;description&quot;: &quot;The canonical value this executable computes, when it can compute one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;subject&quot;,
+        &quot;note&quot;
+      ]
     }
   },
-  &quot;description&quot;: &quot;The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec&lt;&amp;str&gt; = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\&quot;repository\&quot;, \&quot;checkout\&quot;, \&quot;episode\&quot;, \&quot;provider_session\&quot;]);\n```&quot;,
   &quot;properties&quot;: {
     &quot;checkout&quot;: {
-      &quot;description&quot;: &quot;The checkout this answer is about. An absolute path, because this capability is\nserved to the worker in front of this checkout and never published — the same\nexposure rule `continuity.state` follows and for the same reason (ADR 0014).&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The checkout this answer is about. An absolute path, because this capability is\nserved to the worker in front of this checkout and never published — the same\nexposure rule `continuity.state` follows and for the same reason (ADR 0014).&quot;
     },
     &quot;facets&quot;: {
-      &quot;description&quot;: &quot;One entry per subject, in the order a reader meets them: repository, checkout,\nepisode, provider session.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/IdentityFacet&quot;
       },
+      &quot;description&quot;: &quot;One entry per subject, in the order a reader meets them: repository, checkout,\nepisode, provider session.&quot;,
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;findings&quot;: {
       &quot;description&quot;: &quot;What a reader should know before comparing any two of these. Empty is not the good\ncase here — the conflation is a property of the stores, not of this checkout — so\nthe standing note is always present.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
     }
   },
-  &quot;required&quot;: [
-    &quot;checkout&quot;,
-    &quot;facets&quot;,
-    &quot;findings&quot;
-  ],
   &quot;title&quot;: &quot;IdentityReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>

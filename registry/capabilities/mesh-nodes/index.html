@@ -201,9 +201,9 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;No input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -226,120 +226,39 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;count&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many nodes the registry holds.&quot;
+    },
+    &quot;nodes&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The nodes, in node-id order — the one canonical order every surface shows.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/NodeRecord&quot;
+      }
+    }
+  },
+  &quot;description&quot;: &quot;The answer of `mesh.nodes`: every node this process has observed.&quot;,
+  &quot;required&quot;: [
+    &quot;count&quot;,
+    &quot;nodes&quot;
+  ],
   &quot;$defs&quot;: {
     &quot;InstanceId&quot;: {
-      &quot;description&quot;: &quot;One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \&quot;the same\nnode came back\&quot; from \&quot;the same process is still there\&quot;.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;MeshSource&quot;: {
-      &quot;description&quot;: &quot;Where an observation came from. A record accumulates these; provenance is the answer\nto \&quot;why do I see this node\&quot;.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;udp_multicast&quot;,
-          &quot;description&quot;: &quot;A multicast datagram.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;udp_broadcast&quot;,
-          &quot;description&quot;: &quot;A broadcast datagram.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;rendezvous&quot;,
-          &quot;description&quot;: &quot;A rendezvous answer or registration.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;synthetic&quot;,
-          &quot;description&quot;: &quot;A synthetic provider (tests, self-check).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \&quot;the same\nnode came back\&quot; from \&quot;the same process is still there\&quot;.&quot;
     },
     &quot;NodeId&quot;: {
-      &quot;description&quot;: &quot;The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key.&quot;
     },
     &quot;NodeRecord&quot;: {
       &quot;description&quot;: &quot;One discovered node: the canonical record every surface projects.&quot;,
-      &quot;properties&quot;: {
-        &quot;capabilities&quot;: {
-          &quot;description&quot;: &quot;Advertised transports (`http`, `mcp`, `ws`).&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;display_name&quot;: {
-          &quot;description&quot;: &quot;The node&#39;s own display name. Presentation only.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;endpoints&quot;: {
-          &quot;description&quot;: &quot;Advertised `host:port` authorities.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;first_seen&quot;: {
-          &quot;description&quot;: &quot;First seen, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;instance_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
-          &quot;description&quot;: &quot;The node&#39;s current run.&quot;
-        },
-        &quot;last_seen&quot;: {
-          &quot;description&quot;: &quot;Last seen, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;node_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/NodeId&quot;,
-          &quot;description&quot;: &quot;The node id: the digest of the key below.&quot;
-        },
-        &quot;presence&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Presence&quot;,
-          &quot;description&quot;: &quot;Whether the node is answering now.&quot;
-        },
-        &quot;protocol_version&quot;: {
-          &quot;description&quot;: &quot;The advertised protocol version.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;public_key&quot;: {
-          &quot;description&quot;: &quot;The Ed25519 public key that proved this record&#39;s advertisements.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;repositories&quot;: {
-          &quot;description&quot;: &quot;Advertised repository digests.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;restarts&quot;: {
-          &quot;description&quot;: &quot;How many instances this node id has shown (a restart increments it).&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;sources&quot;: {
-          &quot;description&quot;: &quot;Every source this node was seen through, most recent sighting per source.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Sighting&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;trust&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TrustState&quot;,
-          &quot;description&quot;: &quot;What the policy decided.&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;The advertised executable version.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;node_id&quot;,
         &quot;public_key&quot;,
@@ -357,64 +276,126 @@
         &quot;last_seen&quot;,
         &quot;restarts&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Presence&quot;: {
-      &quot;description&quot;: &quot;Whether the node is answering now, by its own announcements.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;present&quot;,
-          &quot;description&quot;: &quot;An advertisement arrived within [`PRESENCE_TTL`].&quot;,
+      &quot;properties&quot;: {
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The advertised executable version.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;absent&quot;,
-          &quot;description&quot;: &quot;Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil [`RETENTION`] passes, then expires out entirely.&quot;,
+        &quot;capabilities&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Advertised transports (`http`, `mcp`, `ws`).&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;last_seen&quot;: {
+          &quot;description&quot;: &quot;Last seen, RFC 3339.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;public_key&quot;: {
+          &quot;description&quot;: &quot;The Ed25519 public key that proved this record&#39;s advertisements.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;trust&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TrustState&quot;,
+          &quot;description&quot;: &quot;What the policy decided.&quot;
+        },
+        &quot;endpoints&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Advertised `host:port` authorities.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;sources&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Sighting&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Every source this node was seen through, most recent sighting per source.&quot;
+        },
+        &quot;instance_id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/InstanceId&quot;,
+          &quot;description&quot;: &quot;The node&#39;s current run.&quot;
+        },
+        &quot;restarts&quot;: {
+          &quot;description&quot;: &quot;How many instances this node id has shown (a restart increments it).&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;node_id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/NodeId&quot;,
+          &quot;description&quot;: &quot;The node id: the digest of the key below.&quot;
+        },
+        &quot;protocol_version&quot;: {
+          &quot;description&quot;: &quot;The advertised protocol version.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;presence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Presence&quot;,
+          &quot;description&quot;: &quot;Whether the node is answering now.&quot;
+        },
+        &quot;display_name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The node&#39;s own display name. Presentation only.&quot;
+        },
+        &quot;repositories&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Advertised repository digests.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;first_seen&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;First seen, RFC 3339.&quot;
         }
-      ]
+      }
     },
     &quot;Sighting&quot;: {
-      &quot;description&quot;: &quot;One provenance entry: a source, and where the observation physically came from.&quot;,
-      &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The network path, as text: a sender address, an interface, a rendezvous URL.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/MeshSource&quot;,
-          &quot;description&quot;: &quot;The provider kind that saw it.&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;source&quot;,
         &quot;path&quot;,
         &quot;at&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One provenance entry: a source, and where the observation physically came from.&quot;,
+      &quot;properties&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The network path, as text: a sender address, an interface, a rendezvous URL.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;The provider kind that saw it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/MeshSource&quot;
+        },
+        &quot;at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When, RFC 3339.&quot;
+        }
+      }
     },
     &quot;TrustState&quot;: {
-      &quot;description&quot;: &quot;What the policy decided about one node.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;Valid, recorded, trusted for nothing. The resting state of an unknown node.&quot;,
-          &quot;properties&quot;: {
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;observed&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
           &quot;required&quot;: [
             &quot;state&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Valid, recorded, trusted for nothing. The resting state of an unknown node.&quot;,
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;observed&quot;
+            }
+          }
         },
         {
           &quot;description&quot;: &quot;The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`).&quot;,
+          &quot;type&quot;: &quot;object&quot;,
           &quot;properties&quot;: {
             &quot;detail&quot;: {
               &quot;type&quot;: &quot;string&quot;
@@ -427,51 +408,70 @@
           &quot;required&quot;: [
             &quot;state&quot;,
             &quot;detail&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
+          ]
         },
         {
-          &quot;description&quot;: &quot;The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence.&quot;,
-          &quot;properties&quot;: {
-            &quot;detail&quot;: {
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;rejected&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
           &quot;required&quot;: [
             &quot;state&quot;,
             &quot;detail&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;
+          &quot;description&quot;: &quot;The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;rejected&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;detail&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        }
+      ],
+      &quot;description&quot;: &quot;What the policy decided about one node.&quot;
+    },
+    &quot;MeshSource&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;udp_multicast&quot;,
+          &quot;description&quot;: &quot;A multicast datagram.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;udp_broadcast&quot;,
+          &quot;description&quot;: &quot;A broadcast datagram.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A rendezvous answer or registration.&quot;,
+          &quot;const&quot;: &quot;rendezvous&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A synthetic provider (tests, self-check).&quot;,
+          &quot;const&quot;: &quot;synthetic&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where an observation came from. A record accumulates these; provenance is the answer\nto \&quot;why do I see this node\&quot;.&quot;
+    },
+    &quot;Presence&quot;: {
+      &quot;description&quot;: &quot;Whether the node is answering now, by its own announcements.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;present&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An advertisement arrived within [`PRESENCE_TTL`].&quot;
+        },
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil [`RETENTION`] passes, then expires out entirely.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
   },
-  &quot;description&quot;: &quot;The answer of `mesh.nodes`: every node this process has observed.&quot;,
-  &quot;properties&quot;: {
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many nodes the registry holds.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;nodes&quot;: {
-      &quot;description&quot;: &quot;The nodes, in node-id order — the one canonical order every surface shows.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/NodeRecord&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;count&quot;,
-    &quot;nodes&quot;
-  ],
-  &quot;title&quot;: &quot;NodeList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;NodeList&quot;
 }</pre></div>
   </details>
 </div>

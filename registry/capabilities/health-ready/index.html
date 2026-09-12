@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -214,23 +214,6 @@ probe fails a deployment because an unrelated service is down.</p><div class="mt
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many capabilities the registry holds; zero would mean nothing to serve.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">layer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the layer read cleanly. A degraded layer is still served — the diagnostics
-are the point — so this reports rather than refuses.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">objects</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many objects the index holds. Read from the index this process built at
-start-up: it is already in memory, and reading it walks nothing.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">ready</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -240,6 +223,23 @@ start-up: it is already in memory, and reading it walks nothing.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">This executable&#39;s version.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">layer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the layer read cleanly. A degraded layer is still served — the diagnostics
+are the point — so this reports rather than refuses.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many capabilities the registry holds; zero would mean nothing to serve.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">objects</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many objects the index holds. Read from the index this process built at
+start-up: it is already in memory, and reading it walks nothing.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -247,7 +247,6 @@ start-up: it is already in memory, and reading it walks nothing.</td>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;HealthStatus&quot;: {
-      &quot;description&quot;: &quot;Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;ok&quot;,
@@ -255,8 +254,8 @@ start-up: it is already in memory, and reading it walks nothing.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;warn&quot;,
           &quot;description&quot;: &quot;Nothing is broken and something is worth looking at.&quot;,
+          &quot;const&quot;: &quot;warn&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -265,38 +264,40 @@ start-up: it is already in memory, and reading it walks nothing.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;unknown&quot;,
           &quot;description&quot;: &quot;This process cannot decide it, and says so rather than reporting `ok`.&quot;,
+          &quot;const&quot;: &quot;unknown&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.&quot;
     }
   },
   &quot;description&quot;: &quot;The answer to \&quot;can this process serve traffic\&quot;: the local initialisation a request\nwould need, and nothing beyond this process. A readiness check that grew a dependency\nprobe fails a deployment because an unrelated service is down.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
-    &quot;capabilities&quot;: {
-      &quot;description&quot;: &quot;How many capabilities the registry holds; zero would mean nothing to serve.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;layer&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;,
-      &quot;description&quot;: &quot;Whether the layer read cleanly. A degraded layer is still served — the diagnostics\nare the point — so this reports rather than refuses.&quot;
-    },
-    &quot;objects&quot;: {
-      &quot;description&quot;: &quot;How many objects the index holds. Read from the index this process built at\nstart-up: it is already in memory, and reading it walks nothing.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;ready&quot;: {
       &quot;description&quot;: &quot;Whether every part below is in place.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;version&quot;: {
-      &quot;description&quot;: &quot;This executable&#39;s version.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;This executable&#39;s version.&quot;
+    },
+    &quot;layer&quot;: {
+      &quot;description&quot;: &quot;Whether the layer read cleanly. A degraded layer is still served — the diagnostics\nare the point — so this reports rather than refuses.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;
+    },
+    &quot;capabilities&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many capabilities the registry holds; zero would mean nothing to serve.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;objects&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many objects the index holds. Read from the index this process built at\nstart-up: it is already in memory, and reading it walks nothing.&quot;,
+      &quot;type&quot;: &quot;integer&quot;
     }
   },
   &quot;required&quot;: [
@@ -306,8 +307,7 @@ start-up: it is already in memory, and reading it walks nothing.</td>
     &quot;objects&quot;,
     &quot;layer&quot;
   ],
-  &quot;title&quot;: &quot;Readiness&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;Readiness&quot;
 }</pre></div>
   </details>
 </div>

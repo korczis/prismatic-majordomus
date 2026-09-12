@@ -211,7 +211,6 @@ derives from the name alone.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;A branch to inspect.&quot;,
   &quot;properties&quot;: {
     &quot;branch&quot;: {
@@ -219,11 +218,12 @@ derives from the name alone.</td>
       &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;type&quot;: &quot;object&quot;,
   &quot;required&quot;: [
     &quot;branch&quot;
   ],
   &quot;title&quot;: &quot;InspectInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -232,25 +232,20 @@ derives from the name alone.</td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">destination_exists</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Something exists at that path.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">branch</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The branch asked about.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">branch_exists</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The branch exists locally.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">canonical</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The branch is checked out at its canonical path.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">destination_exists</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Something exists at that path.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -266,450 +261,45 @@ derives from the name alone.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The work tree that holds the branch, when one does.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">branch_exists</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The branch exists locally.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;DiagnosticCode&quot;: {
-      &quot;description&quot;: &quot;The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;worktree.path_mismatch&quot;,
-          &quot;description&quot;: &quot;A linked work tree is not at its branch&#39;s canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.container_occupied&quot;,
-          &quot;description&quot;: &quot;A linked work tree occupies the container path itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.nested&quot;,
-          &quot;description&quot;: &quot;A linked work tree sits inside the primary checkout or inside another work tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.destination_conflict&quot;,
-          &quot;description&quot;: &quot;The canonical path of a branch is occupied by something that is not its work tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.missing&quot;,
-          &quot;description&quot;: &quot;A registered work tree&#39;s directory does not exist.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.stale_registration&quot;,
-          &quot;description&quot;: &quot;Git reports the registration as prunable.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.branch_already_checked_out&quot;,
-          &quot;description&quot;: &quot;A branch is checked out somewhere other than its canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.detached&quot;,
-          &quot;description&quot;: &quot;A linked work tree has no branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.ephemeral&quot;,
-          &quot;description&quot;: &quot;A linked work tree is a session&#39;s scratch checkout: under the temporary directory or\nunder the primary checkout&#39;s `.claude/worktrees/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.primary_on_non_trunk&quot;,
-          &quot;description&quot;: &quot;The primary checkout holds a branch that is not the trunk.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.trunk_in_linked_worktree&quot;,
-          &quot;description&quot;: &quot;The trunk is checked out in a linked work tree rather than the primary checkout.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.path_escape&quot;,
-          &quot;description&quot;: &quot;A derived path would leave the container. Cannot happen for a valid branch name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.invalid_branch_name&quot;,
-          &quot;description&quot;: &quot;A branch name git accepted that this executable cannot derive a path for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.locked&quot;,
-          &quot;description&quot;: &quot;A work tree is locked, so it cannot be moved until it is unlocked.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.migration_verification_failed&quot;,
-          &quot;description&quot;: &quot;A move happened and the fingerprint after it differs from the one before.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.trunk_unknown&quot;,
-          &quot;description&quot;: &quot;The trunk could not be determined.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.case_collision&quot;,
-          &quot;description&quot;: &quot;Two branch names map to one directory on a case-insensitive filesystem.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.cross_device&quot;,
-          &quot;description&quot;: &quot;A move crossed devices and was made by copy, repair and verification.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;DirtyState&quot;: {
-      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
-      &quot;properties&quot;: {
-        &quot;clean&quot;: {
-          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;conflicted&quot;: {
-          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;in_progress&quot;: {
-          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;staged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;unstaged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;untracked&quot;: {
-          &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;staged&quot;,
-        &quot;unstaged&quot;,
-        &quot;untracked&quot;,
-        &quot;conflicted&quot;,
-        &quot;clean&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Standing&quot;: {
-      &quot;description&quot;: &quot;Where a work tree stands against the topology.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;primary&quot;,
-          &quot;description&quot;: &quot;The primary checkout: exempt from the path rule, held to the trunk rule.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;canonical&quot;,
-          &quot;description&quot;: &quot;A linked work tree at exactly its branch&#39;s canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;misplaced&quot;,
-          &quot;description&quot;: &quot;A linked work tree somewhere else. Migration brings it home.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;detached&quot;,
-          &quot;description&quot;: &quot;A linked work tree with no branch. It has no canonical path and is never moved.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;ephemeral&quot;,
-          &quot;description&quot;: &quot;A linked work tree under the operating system&#39;s temporary directory or under the\nprimary checkout&#39;s `.claude/worktrees/`: a session&#39;s scratch checkout, owned and\nremoved by the harness that made it. Reported; migrated only on request.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;missing&quot;,
-          &quot;description&quot;: &quot;A registration whose directory is gone. Repair drops it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;TopologyDiagnostic&quot;: {
-      &quot;description&quot;: &quot;One thing wrong with, or worth knowing about, the topology.&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch involved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;code&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DiagnosticCode&quot;,
-          &quot;description&quot;: &quot;The stable code.&quot;
-        },
-        &quot;expected&quot;: {
-          &quot;description&quot;: &quot;Where the work tree belongs.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The work tree involved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;The command that addresses it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How serious it is.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;severity&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;UpstreamState&quot;: {
-      &quot;description&quot;: &quot;A branch&#39;s upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.&quot;,
-      &quot;properties&quot;: {
-        &quot;ahead&quot;: {
-          &quot;description&quot;: &quot;Commits here that the upstream lacks.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;behind&quot;: {
-          &quot;description&quot;: &quot;Commits upstream that this branch lacks.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;gone&quot;: {
-          &quot;description&quot;: &quot;The upstream ref no longer exists.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The upstream ref, short (`origin/master`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;gone&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;WorktreeKind&quot;: {
-      &quot;description&quot;: &quot;Whether a work tree is the repository&#39;s own checkout or one linked to it.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;primary&quot;,
-          &quot;description&quot;: &quot;The main work tree. It hosts the trunk, is never moved and is never removed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;linked&quot;,
-          &quot;description&quot;: &quot;A linked work tree. Belongs at its branch&#39;s canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;WorktreeState&quot;: {
-      &quot;description&quot;: &quot;One work tree, as the topology sees it.&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out here, short. Absent when detached.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;current&quot;: {
-          &quot;description&quot;: &quot;The call came from inside this work tree.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;detached&quot;: {
-          &quot;description&quot;: &quot;HEAD is detached here.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;diagnostics&quot;: {
-          &quot;description&quot;: &quot;What is wrong with this work tree, if anything.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;dirty&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Uncommitted work here. Absent when it was not asked for: it costs one subprocess per\nwork tree, and a topology check does not need it.&quot;
-        },
-        &quot;exists&quot;: {
-          &quot;description&quot;: &quot;The directory git registered still exists on disk.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;expected_path&quot;: {
-          &quot;description&quot;: &quot;Where this branch&#39;s work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit checked out here.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue this branch provably names: a path component of the branch equal to an\nissue id of `.ai/repo/project/issues/`, or beginning with it and a hyphen. Nothing\nis inferred from similarity.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/WorktreeKind&quot;,
-          &quot;description&quot;: &quot;Primary or linked.&quot;
-        },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name it is shown under: the branch, or `detached/&lt;short commit&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;locked&quot;: {
-          &quot;description&quot;: &quot;Locked, with git&#39;s reason; an empty string when it recorded none.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Absolute, as git holds it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;prunable&quot;: {
-          &quot;description&quot;: &quot;Prunable, with git&#39;s reason.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Standing&quot;,
-          &quot;description&quot;: &quot;Where it stands against the topology.&quot;
-        },
-        &quot;upstream&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/UpstreamState&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The branch&#39;s upstream and its distance from it.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;kind&quot;,
-        &quot;standing&quot;,
-        &quot;label&quot;,
-        &quot;detached&quot;,
-        &quot;exists&quot;,
-        &quot;current&quot;,
-        &quot;diagnostics&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
+  &quot;required&quot;: [
+    &quot;branch&quot;,
+    &quot;branch_exists&quot;,
+    &quot;expected_path&quot;,
+    &quot;destination_exists&quot;,
+    &quot;canonical&quot;,
+    &quot;diagnostics&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;One branch, inspected: where its work tree belongs and what is there.&quot;,
   &quot;properties&quot;: {
-    &quot;branch&quot;: {
-      &quot;description&quot;: &quot;The branch asked about.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;branch_exists&quot;: {
-      &quot;description&quot;: &quot;The branch exists locally.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;canonical&quot;: {
-      &quot;description&quot;: &quot;The branch is checked out at its canonical path.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
     &quot;destination_exists&quot;: {
       &quot;description&quot;: &quot;Something exists at that path.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
+    &quot;branch&quot;: {
+      &quot;description&quot;: &quot;The branch asked about.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;canonical&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;The branch is checked out at its canonical path.&quot;
+    },
     &quot;diagnostics&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;What stands in the way, if anything.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
     },
     &quot;expected_path&quot;: {
       &quot;description&quot;: &quot;Where its work tree belongs.&quot;,
@@ -725,18 +315,428 @@ derives from the name alone.</td>
         }
       ],
       &quot;description&quot;: &quot;The work tree that holds the branch, when one does.&quot;
+    },
+    &quot;branch_exists&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;The branch exists locally.&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;branch&quot;,
-    &quot;branch_exists&quot;,
-    &quot;expected_path&quot;,
-    &quot;destination_exists&quot;,
-    &quot;canonical&quot;,
-    &quot;diagnostics&quot;
-  ],
-  &quot;title&quot;: &quot;InspectReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;$defs&quot;: {
+    &quot;Standing&quot;: {
+      &quot;description&quot;: &quot;Where a work tree stands against the topology.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;primary&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The primary checkout: exempt from the path rule, held to the trunk rule.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;canonical&quot;,
+          &quot;description&quot;: &quot;A linked work tree at exactly its branch&#39;s canonical path.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;misplaced&quot;,
+          &quot;description&quot;: &quot;A linked work tree somewhere else. Migration brings it home.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;detached&quot;,
+          &quot;description&quot;: &quot;A linked work tree with no branch. It has no canonical path and is never moved.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree under the operating system&#39;s temporary directory or under the\nprimary checkout&#39;s `.claude/worktrees/`: a session&#39;s scratch checkout, owned and\nremoved by the harness that made it. Reported; migrated only on request.&quot;,
+          &quot;const&quot;: &quot;ephemeral&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A registration whose directory is gone. Repair drops it.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;missing&quot;
+        }
+      ]
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TopologyDiagnostic&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;severity&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How serious it is.&quot;
+        },
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;The stable code.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/DiagnosticCode&quot;
+        },
+        &quot;expected&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Where the work tree belongs.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The branch involved.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The work tree involved.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;The command that addresses it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One thing wrong with, or worth knowing about, the topology.&quot;
+    },
+    &quot;WorktreeState&quot;: {
+      &quot;description&quot;: &quot;One work tree, as the topology sees it.&quot;,
+      &quot;properties&quot;: {
+        &quot;upstream&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/UpstreamState&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The branch&#39;s upstream and its distance from it.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out here, short. Absent when detached.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;exists&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The directory git registered still exists on disk.&quot;
+        },
+        &quot;expected_path&quot;: {
+          &quot;description&quot;: &quot;Where this branch&#39;s work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit checked out here.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;label&quot;: {
+          &quot;description&quot;: &quot;The name it is shown under: the branch, or `detached/&lt;short commit&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;locked&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Locked, with git&#39;s reason; an empty string when it recorded none.&quot;
+        },
+        &quot;current&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The call came from inside this work tree.&quot;
+        },
+        &quot;detached&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;HEAD is detached here.&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The issue this branch provably names: a path component of the branch equal to an\nissue id of `.ai/repo/project/issues/`, or beginning with it and a hyphen. Nothing\nis inferred from similarity.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Absolute, as git holds it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Standing&quot;,
+          &quot;description&quot;: &quot;Where it stands against the topology.&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Primary or linked.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/WorktreeKind&quot;
+        },
+        &quot;diagnostics&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;What is wrong with this work tree, if anything.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
+          }
+        },
+        &quot;dirty&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Uncommitted work here. Absent when it was not asked for: it costs one subprocess per\nwork tree, and a topology check does not need it.&quot;
+        },
+        &quot;prunable&quot;: {
+          &quot;description&quot;: &quot;Prunable, with git&#39;s reason.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;kind&quot;,
+        &quot;standing&quot;,
+        &quot;label&quot;,
+        &quot;detached&quot;,
+        &quot;exists&quot;,
+        &quot;current&quot;,
+        &quot;diagnostics&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;UpstreamState&quot;: {
+      &quot;description&quot;: &quot;A branch&#39;s upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.&quot;,
+      &quot;properties&quot;: {
+        &quot;ahead&quot;: {
+          &quot;description&quot;: &quot;Commits here that the upstream lacks.&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;gone&quot;: {
+          &quot;description&quot;: &quot;The upstream ref no longer exists.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;behind&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Commits upstream that this branch lacks.&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The upstream ref, short (`origin/master`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;gone&quot;
+      ]
+    },
+    &quot;WorktreeKind&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;primary&quot;,
+          &quot;description&quot;: &quot;The main work tree. It hosts the trunk, is never moved and is never removed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A linked work tree. Belongs at its branch&#39;s canonical path.&quot;,
+          &quot;const&quot;: &quot;linked&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether a work tree is the repository&#39;s own checkout or one linked to it.&quot;
+    },
+    &quot;DiagnosticCode&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A linked work tree is not at its branch&#39;s canonical path.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.path_mismatch&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.container_occupied&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree occupies the container path itself.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.nested&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree sits inside the primary checkout or inside another work tree.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.destination_conflict&quot;,
+          &quot;description&quot;: &quot;The canonical path of a branch is occupied by something that is not its work tree.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A registered work tree&#39;s directory does not exist.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.missing&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Git reports the registration as prunable.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.stale_registration&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A branch is checked out somewhere other than its canonical path.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.branch_already_checked_out&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.detached&quot;,
+          &quot;description&quot;: &quot;A linked work tree has no branch.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.ephemeral&quot;,
+          &quot;description&quot;: &quot;A linked work tree is a session&#39;s scratch checkout: under the temporary directory or\nunder the primary checkout&#39;s `.claude/worktrees/`.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The primary checkout holds a branch that is not the trunk.&quot;,
+          &quot;const&quot;: &quot;worktree.primary_on_non_trunk&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The trunk is checked out in a linked work tree rather than the primary checkout.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.trunk_in_linked_worktree&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A derived path would leave the container. Cannot happen for a valid branch name.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.path_escape&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.invalid_branch_name&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A branch name git accepted that this executable cannot derive a path for.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A work tree is locked, so it cannot be moved until it is unlocked.&quot;,
+          &quot;const&quot;: &quot;worktree.locked&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A move happened and the fingerprint after it differs from the one before.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.migration_verification_failed&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The trunk could not be determined.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.trunk_unknown&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Two branch names map to one directory on a case-insensitive filesystem.&quot;,
+          &quot;const&quot;: &quot;worktree.case_collision&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A move crossed devices and was made by copy, repair and verification.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.cross_device&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state.&quot;
+    },
+    &quot;DirtyState&quot;: {
+      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
+      &quot;properties&quot;: {
+        &quot;unstaged&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;
+        },
+        &quot;untracked&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;in_progress&quot;: {
+          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;clean&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;
+        },
+        &quot;staged&quot;: {
+          &quot;description&quot;: &quot;Entries with a change in the index.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;conflicted&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;staged&quot;,
+        &quot;unstaged&quot;,
+        &quot;untracked&quot;,
+        &quot;conflicted&quot;,
+        &quot;clean&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;title&quot;: &quot;InspectReport&quot;
 }</pre></div>
   </details>
 </div>
