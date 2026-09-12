@@ -219,9 +219,7 @@ fn active_task(root: &Path) -> Option<TaskId> {
 /// the only answer that is right in every checkout this tool runs in. One call per reading
 /// of a capability whose cache is two seconds wide.
 fn remote_url(root: &Path) -> Option<String> {
-    let out = std::process::Command::new("git")
-        .arg("-C")
-        .arg(root)
+    let out = crate::git::read_only(root)
         .args(["config", "--get", "remote.origin.url"])
         .output()
         .ok()?;
