@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh nodes"
 description = "Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance"
-weight = 108
+weight = 113
 [extra]
 route = "/docs/cli/mesh/nodes/"
 command = "majordomus mesh nodes"

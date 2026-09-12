@@ -1,7 +1,7 @@
 +++
 title = "The release"
 description = "the release: the changelog composed from the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the two statements of the version and the one command that writes them; the bump the commits imply and the evidence for it; and every surface derived from both"
-weight = 24
+weight = 25
 [extra]
 source = "docs/RELEASE.md"
 +++
@@ -201,8 +201,11 @@ whole rather than split at a colon that was part of the sentence. This is the on
 decision in the parser worth arguing about, and it goes the other way from most changelog
 generators: a changelog that silently drops what it cannot classify lies by omission, and
 the commits it drops are exactly the ones nobody was paying attention to when they landed.
-`project.conventional-commits` is advisory, so a repository following it will always have
-some subjects that do not parse.
+`project.conventional-commits` is blocking since version 2 and the `commit-msg` hook
+refuses a subject that does not parse, so new commits arrive conventional. The history still
+holds 54 that predate the policy — recorded in `.ai/repo/commit-policy-baseline.txt`, every
+one of them published, none of them rewritable — and those are what the parser is lenient
+for. See [COMMIT.md](@/docs/commit.md).
 
 The kinds and the headings they render under, in the order a reader of a changelog wants
 them — what is new, what is fixed, what is faster, then the rest:

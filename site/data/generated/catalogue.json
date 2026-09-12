@@ -618,7 +618,7 @@
         "trust-the-policy-before-reading-it",
         "read-the-rules-the-tool-applies",
         "adopt-an-existing-repository",
-        "prove-performance-with-benchmarks"
+        "plan-a-commit-and-judge-its-message"
       ]
     },
     {
@@ -3623,9 +3623,56 @@
         "prove-a-rule-is-enforced",
         "trust-the-policy-before-reading-it",
         "read-the-rules-the-tool-applies",
-        "prove-performance-with-benchmarks",
-        "find-out-what-drifted"
+        "plan-a-commit-and-judge-its-message",
+        "prove-performance-with-benchmarks"
       ]
+    },
+    {
+      "id": "plan-a-commit-and-judge-its-message",
+      "kind": "use-case",
+      "title": "Divide a working tree into commits, and hold every message to a policy",
+      "summary": "Ask what this tree would commit and why, learn the scope vocabulary from the history rather than a table, and get a verdict on one message or on a whole range before a reviewer has to give one.",
+      "category": "policy",
+      "status": "active",
+      "target": "advisory",
+      "weight": 45,
+      "actors": [
+        "maintainer",
+        "contributor",
+        "agent"
+      ],
+      "difficulty": "intermediate",
+      "commands": [
+        "doctrine"
+      ],
+      "mcp_tools": [
+        "majordomus_commit_plan",
+        "majordomus_commit_scopes",
+        "majordomus_commit_validate",
+        "majordomus_commit_history"
+      ],
+      "doctrines": [
+        "majordomus.enforcement-wiring"
+      ],
+      "claims": [
+        "commit-message-is-judged",
+        "commit-scopes-are-learned",
+        "commit-plan-is-refusable"
+      ],
+      "responsibilities": [
+        "policy"
+      ],
+      "path": ".ai/repo/use-cases/plan-a-commit-and-judge-its-message.md",
+      "maturity": "described",
+      "evidence": null,
+      "related_ids": [
+        "gate-ci-on-the-tool-itself",
+        "prove-a-rule-is-enforced",
+        "trust-the-policy-before-reading-it",
+        "read-the-rules-the-tool-applies",
+        "adopt-an-existing-repository"
+      ],
+      "applications": []
     },
     {
       "id": "block-acceptance-on-an-open-question",
@@ -7216,8 +7263,8 @@
         "prove-a-rule-is-enforced",
         "gate-ci-on-the-tool-itself",
         "trust-the-policy-before-reading-it",
-        "add-a-use-case-and-prove-it",
-        "accept-or-refuse-finished-work"
+        "plan-a-commit-and-judge-its-message",
+        "add-a-use-case-and-prove-it"
       ]
     },
     {
@@ -7973,15 +8020,16 @@
       "title": "Policy and enforcement",
       "summary": "Declaring rules, proving they are wired, and reproducing a finding.",
       "order": 40,
-      "count": 4,
+      "count": 5,
       "use_cases": [
         "gate-ci-on-the-tool-itself",
+        "plan-a-commit-and-judge-its-message",
         "prove-a-rule-is-enforced",
         "read-the-rules-the-tool-applies",
         "trust-the-policy-before-reading-it"
       ],
       "maturity": {
-        "described": 4
+        "described": 5
       },
       "applications": [
         "ci-gated-project",
@@ -8303,7 +8351,7 @@
       {
         "class": "command",
         "id": "doctrine",
-        "use_cases": 3,
+        "use_cases": 4,
         "executable": 3,
         "evidence": 3,
         "status": "covered",
@@ -9237,6 +9285,33 @@
         "policy": "advisory"
       },
       {
+        "class": "claim",
+        "id": "commit-message-is-judged",
+        "use_cases": 1,
+        "executable": 0,
+        "evidence": 0,
+        "status": "partial",
+        "policy": "advisory"
+      },
+      {
+        "class": "claim",
+        "id": "commit-scopes-are-learned",
+        "use_cases": 1,
+        "executable": 0,
+        "evidence": 0,
+        "status": "partial",
+        "policy": "advisory"
+      },
+      {
+        "class": "claim",
+        "id": "commit-plan-is-refusable",
+        "use_cases": 1,
+        "executable": 0,
+        "evidence": 0,
+        "status": "partial",
+        "policy": "advisory"
+      },
+      {
         "class": "mcp_tool",
         "id": "majordomus_announce",
         "use_cases": 1,
@@ -9324,6 +9399,42 @@
         "executable": 0,
         "evidence": 0,
         "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_commit_history",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_commit_plan",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_commit_scopes",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_commit_validate",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
         "policy": "advisory"
       },
       {
@@ -10182,18 +10293,18 @@
         "policy": "advisory"
       }
     ],
-    "total": 227,
-    "covered": 141,
-    "partial": 0,
+    "total": 234,
+    "covered": 145,
+    "partial": 3,
     "gaps_required": 0
   },
   "counts": {
-    "use_cases": 45,
+    "use_cases": 46,
     "drafts": 0,
     "applications": 5,
     "categories": 10,
     "maturity": {
-      "described": 45
+      "described": 46
     }
   },
   "uc_index": {
@@ -10221,27 +10332,28 @@
     "trust-the-policy-before-reading-it": 21,
     "keep-the-bootstrap-thin-and-within-budget": 22,
     "gate-ci-on-the-tool-itself": 23,
-    "block-acceptance-on-an-open-question": 24,
-    "complete-an-issue-only-with-its-evidence": 25,
-    "hand-the-repository-to-a-reader": 26,
-    "document-every-directory-of-the-layer": 27,
-    "trace-a-change-to-the-context-it-affects": 28,
-    "read-back-what-happened": 29,
-    "deliver-issues-in-waves": 30,
-    "classify-what-belongs-in-the-context": 31,
-    "find-an-object-without-reading-everything": 32,
-    "add-a-use-case-and-prove-it": 33,
-    "capture-the-prompts-that-started-the-work": 34,
-    "follow-a-skill-the-repository-defines": 35,
-    "keep-decisions-out-of-the-transcript": 36,
-    "know-which-tool-is-running": 37,
-    "let-the-provider-draw-the-episode-boundary": 38,
-    "migrate-from-the-old-layout": 39,
-    "open-and-close-a-session": 40,
-    "plan-the-work-as-data": 41,
-    "read-the-rules-the-tool-applies": 42,
-    "record-a-decision-before-it-is-forgotten": 43,
-    "resume-from-a-prompt-asset": 44
+    "plan-a-commit-and-judge-its-message": 24,
+    "block-acceptance-on-an-open-question": 25,
+    "complete-an-issue-only-with-its-evidence": 26,
+    "hand-the-repository-to-a-reader": 27,
+    "document-every-directory-of-the-layer": 28,
+    "trace-a-change-to-the-context-it-affects": 29,
+    "read-back-what-happened": 30,
+    "deliver-issues-in-waves": 31,
+    "classify-what-belongs-in-the-context": 32,
+    "find-an-object-without-reading-everything": 33,
+    "add-a-use-case-and-prove-it": 34,
+    "capture-the-prompts-that-started-the-work": 35,
+    "follow-a-skill-the-repository-defines": 36,
+    "keep-decisions-out-of-the-transcript": 37,
+    "know-which-tool-is-running": 38,
+    "let-the-provider-draw-the-episode-boundary": 39,
+    "migrate-from-the-old-layout": 40,
+    "open-and-close-a-session": 41,
+    "plan-the-work-as-data": 42,
+    "read-the-rules-the-tool-applies": 43,
+    "record-a-decision-before-it-is-forgotten": 44,
+    "resume-from-a-prompt-asset": 45
   },
   "ap_index": {
     "repository-with-authored-governance": 0,

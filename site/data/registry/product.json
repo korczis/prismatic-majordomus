@@ -5,15 +5,15 @@
     "id": "majordomus-cli",
     "version": "0.6.0"
   },
-  "fingerprint": "3d25bbc3a81fdfb4588dfa381f0d24d9572c40e102948eda5ff77a2437214120",
+  "fingerprint": "f4cd92771af3a735df145fcdd7ebb6f4d418058694c4eb4ca524b03869784a4b",
   "route": "/features/",
   "counts": {
-    "features": 23,
-    "features_all": 24,
+    "features": 24,
+    "features_all": 25,
     "featured": 11,
     "providers": 6,
-    "modules": 35,
-    "modules_covered": 21,
+    "modules": 36,
+    "modules_covered": 22,
     "commands": 30,
     "commands_covered": 28,
     "kinds": 26,
@@ -24,31 +24,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 21
+      "features": 22
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 16
+      "features": 17
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 20
+      "features": 21
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 17
+      "features": 18
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 23
+      "features": 24
     }
   ],
   "features": [
@@ -266,7 +266,7 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 24
+          "objects": 25
         },
         {
           "name": "command",
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 170
+          "objects": 173
         }
       ],
       "rule_refs": [
@@ -528,6 +528,7 @@
       "backlinks": [
         "benchmarks",
         "cockpit",
+        "commit",
         "evidence",
         "interfaces",
         "policy",
@@ -537,11 +538,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 229,
+        "mcp_resources": 233,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 225,
+        "objects": 229,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -2803,7 +2804,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 50
+          "objects": 51
         },
         {
           "name": "knowledge",
@@ -2811,7 +2812,7 @@
         },
         {
           "name": "document",
-          "objects": 243
+          "objects": 247
         }
       ],
       "rule_refs": [
@@ -3060,11 +3061,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 295,
+        "mcp_resources": 300,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 294,
+        "objects": 299,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3628,6 +3629,7 @@
       ],
       "backlinks": [
         "ci",
+        "commit",
         "coverage",
         "finish-contract",
         "knowledge",
@@ -5186,6 +5188,7 @@
         }
       ],
       "backlinks": [
+        "commit",
         "continuity"
       ],
       "counts": {
@@ -6317,7 +6320,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 45
+          "objects": 46
         },
         {
           "name": "application",
@@ -6429,11 +6432,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 60,
+        "mcp_resources": 61,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 60,
+        "objects": 61,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -7699,6 +7702,238 @@
           "behaviorally_verified": 1
         }
       }
+    },
+    {
+      "id": "commit",
+      "title": "A commit message is a value this repository judges, not a convention it hopes for",
+      "short_title": "Commits",
+      "headline": "The commit message has one grammar, one policy and one verdict; the scope it is written under is learned from the repository's own history rather than kept in a table, and a message that does not satisfy the policy is refused while it is still being written.",
+      "summary": "The same parse the changelog reads the history with decides whether a new message passes. The policy is data in the repository's own policy file, its subject width measured from the history rather than taken from the convention. The scope vocabulary is observed from at most 1500 commits of the log, so a subsystem committed today is in it today and a scope nobody uses sinks on its own. A plan over the working tree carries a fingerprint of repository, worktree, HEAD and change set, so a plan acted on after the tree moved is refused rather than applied - and a change set holding generated files is one commit, because only the last of several could carry current derived data.",
+      "status": "stable",
+      "weight": 205,
+      "featured": false,
+      "areas": [
+        "governance",
+        "work-tracking"
+      ],
+      "audiences": [],
+      "modules": [
+        "commit"
+      ],
+      "commands": [],
+      "kinds": [],
+      "rules": [
+        "project.conventional-commits",
+        "project.derived-files-regenerated",
+        "project.interfaces-are-projections"
+      ],
+      "docs": [
+        "docs/COMMIT.md"
+      ],
+      "adrs": [
+        "adr-0054"
+      ],
+      "claims": [
+        "commit-message-is-judged",
+        "commit-scopes-are-learned",
+        "commit-plan-is-refusable"
+      ],
+      "use_cases": [],
+      "cockpit": [],
+      "web": [],
+      "related": [
+        "doctrine",
+        "declare-once",
+        "provenance"
+      ],
+      "tags": [
+        "git",
+        "commit",
+        "governance"
+      ],
+      "route": "/features/commit/",
+      "source": ".ai/repo/features/commit.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "commit",
+          "title": "Commit",
+          "description": "The commit as a value: the scope vocabulary this repository's own history yields, what the working tree would commit and how it divides, and the verdict on one message against the repository's commit policy.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+          "capabilities": [
+            {
+              "id": "commit.history",
+              "title": "Judge a range of history",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_commit_history",
+              "route": "GET /api/v1/commit/history",
+              "cli": "majordomus commit history"
+            },
+            {
+              "id": "commit.plan",
+              "title": "What the working tree would commit",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_commit_plan",
+              "resource": "majordomus://commit/plan",
+              "route": "GET /api/v1/commit/plan",
+              "cli": "majordomus commit plan"
+            },
+            {
+              "id": "commit.scopes",
+              "title": "The scope vocabulary",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_commit_scopes",
+              "resource": "majordomus://commit/scopes",
+              "route": "GET /api/v1/commit/scopes",
+              "cli": "majordomus commit scopes"
+            },
+            {
+              "id": "commit.validate",
+              "title": "Judge one commit message",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_commit_validate",
+              "route": "GET /api/v1/commit/validate",
+              "cli": "majordomus commit validate"
+            }
+          ]
+        }
+      ],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [
+        {
+          "id": "project.conventional-commits",
+          "identity": "project.conventional-commits@2",
+          "title": "A commit message is a value this repository judges, not a convention it hopes for",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/conventional-commits.v2.md"
+        },
+        {
+          "id": "project.derived-files-regenerated",
+          "identity": "project.derived-files-regenerated@1",
+          "title": "Derived files are regenerated, never edited",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/derived-files-regenerated.v1.md"
+        },
+        {
+          "id": "project.interfaces-are-projections",
+          "identity": "project.interfaces-are-projections@1",
+          "title": "External interfaces are projections of one capability definition",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
+        }
+      ],
+      "doc_refs": [
+        {
+          "path": "docs/COMMIT.md",
+          "title": "The commit"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0054",
+          "title": "A commit message is a judged value, not a convention and not a prompt",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0054-a-commit-message-is-a-judged-value-not-a-convention-and-not-a-prompt.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "commit-message-is-judged",
+          "claim": "A commit message that does not satisfy the repository's declared commit policy is refused at the moment it is written, and the history's existing debt is recorded and may not grow",
+          "status": "guaranteed"
+        },
+        {
+          "id": "commit-scopes-are-learned",
+          "claim": "The scope vocabulary a commit is judged against is learned from this repository's own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal",
+          "status": "guaranteed"
+        },
+        {
+          "id": "commit-plan-is-refusable",
+          "claim": "A commit plan carries a fingerprint of the repository, the worktree, HEAD and the exact change set it was derived from, so a plan acted on after the tree moved is refused with the reason rather than applied",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [],
+      "web_refs": [],
+      "moments": [
+        {
+          "id": "three-roadmaps-none-of-them-true",
+          "title": "Three roadmaps, and none of them true",
+          "hook": "read three roadmaps for one project and believed none of them",
+          "route": "/why/three-roadmaps-none-of-them-true/"
+        },
+        {
+          "id": "policy-changed-projection-stale",
+          "title": "The policy changed and its four copies did not",
+          "hook": "changed a policy in one place and found the old one still in force in three others",
+          "route": "/why/policy-changed-projection-stale/"
+        },
+        {
+          "id": "api-changed-contract-did-not",
+          "title": "The interface changed and its contract document did not",
+          "hook": "shipped an interface change whose contract document still described the old one",
+          "route": "/why/api-changed-contract-did-not/"
+        },
+        {
+          "id": "generated-artifacts-stale",
+          "title": "Green tests over stale generated files",
+          "hook": "had a green pipeline over generated files that no longer matched their sources",
+          "route": "/why/generated-artifacts-stale/"
+        },
+        {
+          "id": "three-copies-of-one-explanation",
+          "title": "Three copies of one explanation, and no way to tell which is current",
+          "hook": "found the same thing explained three times, slightly differently",
+          "route": "/why/three-copies-of-one-explanation/"
+        },
+        {
+          "id": "site-claims-nothing-proves",
+          "title": "A public page promising something nothing tests",
+          "hook": "published a page that promised more than any test could support",
+          "route": "/why/site-claims-nothing-proves/"
+        }
+      ],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 4,
+        "mcp_tools": 4,
+        "mcp_resources": 2,
+        "http_routes": 4,
+        "cli_paths": 4,
+        "commands": 0,
+        "objects": 0,
+        "rules": 3,
+        "enforced_rules": 3,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 3,
+        "use_cases": 0,
+        "moments": 6
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 3
+        },
+        "modules": {
+          "behaviorally_verified": 1
+        }
+      }
     }
   ],
   "matrix": {
@@ -8162,6 +8397,26 @@
           "mcp",
           "cockpit"
         ]
+      },
+      {
+        "id": "commit",
+        "label": "Commits",
+        "route": "/features/commit/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
       }
     ],
     "modules": [
@@ -8183,6 +8438,13 @@
         "id": "commands",
         "title": "Command graph",
         "features": []
+      },
+      {
+        "id": "commit",
+        "title": "Commit",
+        "features": [
+          "commit"
+        ]
       },
       {
         "id": "continuity",
@@ -8613,7 +8875,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (50)",
+        "title": "adr (51)",
         "features": [
           "knowledge"
         ]
@@ -8641,7 +8903,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (170)",
+        "title": "claim (173)",
         "features": [
           "declare-once"
         ]
@@ -8674,7 +8936,7 @@
       },
       {
         "id": "feature",
-        "title": "feature (24)",
+        "title": "feature (25)",
         "features": [
           "declare-once"
         ]
@@ -8776,7 +9038,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (45)",
+        "title": "use-case (46)",
         "features": [
           "use-cases"
         ]
@@ -9214,6 +9476,14 @@
       "path": ".ai/repo/rules/project/context-locality.v1.md"
     },
     {
+      "id": "project.conventional-commits",
+      "identity": "project.conventional-commits@2",
+      "title": "A commit message is a value this repository judges, not a convention it hopes for",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/conventional-commits.v2.md"
+    },
+    {
       "id": "project.derived-files-regenerated",
       "identity": "project.derived-files-regenerated@1",
       "title": "Derived files are regenerated, never edited",
@@ -9556,29 +9826,29 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1434,
-    "builtin": 108,
-    "declarative": 1326,
-    "modules": 35,
-    "mcp_tools": 105,
-    "mcp_resources": 1365,
-    "http_routes": 107,
-    "cli_commands": 111,
+    "capabilities": 1449,
+    "builtin": 112,
+    "declarative": 1337,
+    "modules": 36,
+    "mcp_tools": 109,
+    "mcp_resources": 1378,
+    "http_routes": 111,
+    "cli_commands": 116,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1326,
+    "objects": 1337,
     "by_kind": {
-      "adr": 50,
+      "adr": 51,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 170,
+      "claim": 173,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 243,
-      "feature": 24,
+      "document": 247,
+      "feature": 25,
       "implementation": 49,
       "issue": 215,
       "knowledge": 1,
@@ -9594,12 +9864,12 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 204,
-      "use-case": 45,
+      "test": 205,
+      "use-case": 46,
       "workspace": 1
     },
     "providers": 6,
-    "features": 23,
+    "features": 24,
     "web_surfaces": 9
   },
   "valid": true

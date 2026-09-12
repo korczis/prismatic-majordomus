@@ -39,6 +39,10 @@
       "description": "Every command this repository offers, from whichever program offers it: the Rust executable, the shell tool that carries the task lifecycle, and the workflows the repository declares for a person to run. Composed from the three declarations that already exist — the clap tree, the shipped command registry and the workflow runner's own dump — never from a list. Each command carries what running it changes, what it needs, where its argument values come from, and every surface that carries it, with the reason when one does not."
     },
     {
+      "name": "commit",
+      "description": "The commit as a value: the scope vocabulary this repository's own history yields, what the working tree would commit and how it divides, and the verdict on one message against the repository's commit policy."
+    },
+    {
       "name": "continuity",
       "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
     },
@@ -983,6 +987,383 @@
         "x-majordomus-mcp": {
           "tool": "majordomus_command_graph"
         }
+      }
+    },
+    "/api/v1/commit/history": {
+      "get": {
+        "operationId": "commit.history",
+        "summary": "Judge a range of history",
+        "description": "Every commit in a git range against the commit policy, in one pass: how many were read, how many git composed and are exempt, how many carry an error, and every commit that has a finding with what it is. What the gate reads to refuse new debt, and what answers `is the history of this branch clean?` without a process per commit.",
+        "tags": [
+          "commit"
+        ],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "HEAD"
+            },
+            "description": "Anything `git log` accepts: `origin/master..HEAD`, `v0.6.0..`, a bare `HEAD`.\nDefault `HEAD`, which is the whole history reachable from here.",
+            "examples": {
+              "whole-history": {
+                "value": "HEAD"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Judge a range of history: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "commit.history",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::commit"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_commit_history"
+        },
+        "x-majordomus-cli": "commit history"
+      }
+    },
+    "/api/v1/commit/plan": {
+      "get": {
+        "operationId": "commit.plan",
+        "summary": "What the working tree would commit",
+        "description": "The working tree as git reports it — branch, upstream, divergence, every staged, unstaged and untracked path, and any merge or rebase in progress — divided into the commits the history's own scoping supports, each with the evidence for it, under a fingerprint of the repository, the worktree, HEAD and the exact change set, so that a plan acted on later can be refused rather than applied to a tree it was not made for.",
+        "tags": [
+          "commit"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "What the working tree would commit: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitPlan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "commit.plan",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::commit"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_commit_plan",
+          "resource": {
+            "uri": "majordomus://commit/plan",
+            "name": "commit-plan"
+          }
+        },
+        "x-majordomus-cli": "commit plan"
+      }
+    },
+    "/api/v1/commit/scopes": {
+      "get": {
+        "operationId": "commit.scopes",
+        "summary": "The scope vocabulary",
+        "description": "Every scope this repository's commit history uses, how often, and the directories each one is written about — learned from the history rather than declared in a table, so that a subsystem committed today is in the vocabulary today and one nobody has touched falls to the bottom on its own.",
+        "tags": [
+          "commit"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The scope vocabulary: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScopesReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "commit.scopes",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::commit"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_commit_scopes",
+          "resource": {
+            "uri": "majordomus://commit/scopes",
+            "name": "commit-scopes"
+          }
+        },
+        "x-majordomus-cli": "commit scopes"
+      }
+    },
+    "/api/v1/commit/validate": {
+      "get": {
+        "operationId": "commit.validate",
+        "summary": "Judge one commit message",
+        "description": "One message against this repository's commit policy: the grammar, the subject width, whether the scope is one the history uses, whether every record the message names exists, whether a fix carries a test, and whether a breaking change explains itself — as typed findings with severities, or an exemption for a subject git composed. The same verdict the commit-msg hook refuses with and the gate reads the history through.",
+        "tags": [
+          "commit"
+        ],
+        "parameters": [
+          {
+            "name": "message",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The commit message, as it would be stored. Comment lines are ignored, as git ignores\nthem, so what is judged is what would be committed.",
+            "examples": {
+              "conventional": {
+                "value": "feat(commit): the rule is decided by a command"
+              },
+              "merge": {
+                "value": "Merge pull request #249 from korczis/fix"
+              },
+              "not-conventional": {
+                "value": "update stuff"
+              }
+            }
+          },
+          {
+            "name": "paths",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "The paths the commit would contain. Omit them and the judgements that need them —\nwhether a fix carries a test — are not made rather than guessed."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Judge one commit message: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitVerdict"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "commit.validate",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::commit"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_commit_validate"
+        },
+        "x-majordomus-cli": "commit validate"
       }
     },
     "/api/v1/continuity": {
@@ -12743,6 +13124,26 @@
         },
         "description": "One category of `out`: pathspecs and file-name patterns."
       },
+      "ChangeStage": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "staged",
+            "description": "Different in the index from HEAD: it would be in the next commit."
+          },
+          {
+            "type": "string",
+            "const": "unstaged",
+            "description": "Different in the working tree from the index: it would not."
+          },
+          {
+            "type": "string",
+            "const": "untracked",
+            "description": "Not tracked at all."
+          }
+        ],
+        "description": "Where one path stands between the index and the working tree.\n```\nuse majordomus_cli::commit::ChangeStage;\n// ordered so that what would be in the next commit sorts first\nassert!(ChangeStage::Staged < ChangeStage::Unstaged);\nassert!(ChangeStage::Unstaged < ChangeStage::Untracked);\n```"
+      },
       "Channel": {
         "oneOf": [
           {
@@ -14226,6 +14627,148 @@
         ],
         "description": "One commit and the contract it served, or the fact that none can be found."
       },
+      "CommitExemption": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "git_authored",
+            "description": "git composed the subject: a merge, a revert, a fixup."
+          }
+        ],
+        "description": "Why a commit was not judged.\n```\nuse majordomus_cli::commit::{judge, CommitExemption, CommitPolicy, CommitSubject};\nlet v = judge(&CommitSubject::of(\"Merge pull request #1 from a/b\"), &CommitPolicy::default());\nassert_eq!(v.exempt, Some(CommitExemption::GitAuthored));\n```"
+      },
+      "CommitGroup": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/CommitMessage",
+            "description": "The message as proposed. The summary is the one field a person is expected to\nreplace: nothing here can know *why* a change was made, and a planner that wrote a\nconfident sentence about it would be writing fiction into the history."
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The paths, in order."
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Why these paths are one commit, in evidence a reader can check."
+          },
+          "scope_from": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScopeSuggestion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The scope suggestion and what it was derived from, when there was one."
+          }
+        },
+        "required": [
+          "message",
+          "paths",
+          "rationale"
+        ],
+        "description": "One commit a plan proposes.\nOne commit a plan proposes: its message, its paths, and why those paths are one commit.\n\n```\nuse majordomus_cli::commit::{plan::group, CommitGroup, ScopeVocabulary};\nlet mut v = ScopeVocabulary::default();\nv.learn(\"commit\", \"src/commit\", 40);\nlet g: Vec<CommitGroup> = group(&[\"src/commit/a.rs\".into()], &v, &[]);\n// the subject is empty on purpose: what a change did is the one thing no evidence in\n// the tree can state\nassert_eq!(g[0].message.header.subject, \"\");\nassert_eq!(g[0].message.header.scope.as_deref(), Some(\"commit\"));\nassert!(g[0].rationale.contains(\"40 prior commit\"), \"{}\", g[0].rationale);\n```"
+      },
+      "CommitHeader": {
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string",
+            "description": "The type as written: `feat`, `fix`, `wip`, or the empty string when the subject\ncarries no `type: ` head at all."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ReleaseChangeKind",
+            "description": "What [`Self::word`] names; [`ChangeKind::Other`] for a word the convention does not\ndefine, and for a subject with no head."
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The parenthesised scope, when there is one."
+          },
+          "breaking": {
+            "type": "boolean",
+            "description": "Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by [`crate::commit::CommitMessage`]."
+          },
+          "subject": {
+            "type": "string",
+            "description": "What the commit says it did. For a header that does not parse this is the whole\nfirst line, unchanged, and for an unknown type word it keeps the word: nothing that\nthe author wrote is dropped on the way through."
+          }
+        },
+        "required": [
+          "word",
+          "kind",
+          "breaking",
+          "subject"
+        ],
+        "description": "The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type.\n```\nuse majordomus_cli::commit::CommitHeader;\nuse majordomus_cli::release::ChangeKind;\nlet h = CommitHeader::parse(\"fix(plan): the fingerprint names what moved\");\nassert_eq!(h.word, \"fix\");\nassert_eq!(h.kind, ChangeKind::Fix);\nassert_eq!(h.scope.as_deref(), Some(\"plan\"));\nassert!(!h.breaking);\nassert_eq!(h.subject, \"the fingerprint names what moved\");\n```"
+      },
+      "CommitMessage": {
+        "type": "object",
+        "properties": {
+          "header": {
+            "$ref": "#/components/schemas/CommitHeader",
+            "description": "The first line, parsed."
+          },
+          "body": {
+            "type": "string",
+            "description": "Everything between the header and the trailer block, with surrounding blank lines\nremoved. Empty when the message is a subject alone."
+          },
+          "trailers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommitTrailer"
+            },
+            "description": "The `Key: value` lines of the final paragraph, in the order they were written."
+          }
+        },
+        "required": [
+          "header",
+          "body",
+          "trailers"
+        ],
+        "description": "A commit message taken apart: header, body, trailers.\n```\nuse majordomus_cli::commit::CommitMessage;\nlet m = CommitMessage::parse(\"feat(a): a thing\\n\\nThe body.\\n\\nRefs: I1305\\n\");\nassert_eq!(m.header.subject, \"a thing\");\nassert_eq!(m.body, \"The body.\");\nassert_eq!(m.trailers.len(), 1);\n```"
+      },
+      "CommitPlan": {
+        "type": "object",
+        "properties": {
+          "fingerprint": {
+            "$ref": "#/components/schemas/PlanFingerprint",
+            "description": "What the plan was derived from, and what makes it stale."
+          },
+          "tree": {
+            "$ref": "#/components/schemas/WorkingTreeState",
+            "description": "The tree as it stood."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommitGroup"
+            },
+            "description": "The commits proposed, in the order they should be made."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            },
+            "description": "What a person should know before acting on it."
+          }
+        },
+        "required": [
+          "fingerprint",
+          "tree",
+          "groups",
+          "diagnostics"
+        ],
+        "description": "A plan over a working tree.\n```\nuse majordomus_cli::commit::{CommitPlan, PlanFingerprint, WorkingTreeState};\nlet plan = CommitPlan {\n    fingerprint: PlanFingerprint::of(\"/r/.git\", \"/r\", &WorkingTreeState::default()),\n    tree: WorkingTreeState::default(),\n    groups: Vec::new(),\n    diagnostics: Vec::new(),\n};\nassert!(plan.groups.is_empty(), \"a clean tree proposes nothing\");\n```"
+      },
       "CommitRef": {
         "type": "object",
         "properties": {
@@ -14283,6 +14826,61 @@
           "named_by"
         ],
         "description": "One commit the layer itself names, and the record that named it.\n\nThe pair is the fact, not the commit alone. One commit named by three records is three\nreferences, because each record is a separate claim about what that commit was for, and\nfolding them would lose the attribution — which is the only reason to carry a commit here\nat all. So `named_by` ends the ordering key, and two references to one commit both\nsurvive.\n\n```\nuse majordomus_cli::devcontext::CommitReference;\nuse majordomus_cli::order::canonical;\nuse serde_json::json;\n\nlet by = |commit: &str, record: &str| -> CommitReference {\n    serde_json::from_value(json!({\"commit\": commit, \"named_by\": record})).unwrap()\n};\n\nlet mut commits = vec![\n    by(\"cd04012\", \"majordomus://session/b\"),\n    by(\"cd04012\", \"majordomus://session/a\"),\n    by(\"5e31dd4\", \"majordomus://issue/I0301\"),\n];\ncanonical(&mut commits);\n\n// filed under the commit, which is what a reader looks for\nlet order: Vec<&str> = commits.iter().map(|c| c.commit.as_str()).collect();\nassert_eq!(order, [\"5e31dd4\", \"cd04012\", \"cd04012\"]);\n\n// and the record ends the key, so one commit named twice stays two facts\nassert_eq!(commits[1].named_by, \"majordomus://session/a\");\nassert_eq!(commits[2].named_by, \"majordomus://session/b\");\n\n// `covers` is what the record said the commit was for, when it said\nlet with_reason = by(\"cd04012\", \"majordomus://session/a\");\nassert!(with_reason.covers.is_none(), \"absent rather than an empty sentence\");\n```"
+      },
+      "CommitTrailer": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The key, as written: `Refs`, `Co-Authored-By`, `BREAKING CHANGE`."
+          },
+          "value": {
+            "type": "string",
+            "description": "Everything after the colon and one space."
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "description": "One `Key: value` line in the trailer block at the end of a commit message.\n```\nuse majordomus_cli::commit::CommitMessage;\nuse majordomus_cli::commit::CommitTrailer;\nlet m = CommitMessage::parse(\"fix(x): a thing\\n\\nWhy.\\n\\nRefs: I1305\\n\");\nlet t: &CommitTrailer = &m.trailers[0];\nassert_eq!(t.key, \"Refs\");\nassert_eq!(t.value, \"I1305\");\n```"
+      },
+      "CommitVerdict": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/CommitMessage",
+            "description": "The message as parsed; what was judged, not what was typed."
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Whether nothing of error severity was found."
+          },
+          "exempt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommitExemption"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the commit was not judged, when it was not."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            },
+            "description": "Every finding, in [`CommitRule::ALL`] order."
+          }
+        },
+        "required": [
+          "message",
+          "passed",
+          "findings"
+        ],
+        "description": "What the judge concluded: the message as it was parsed, whether anything of error\nseverity was found, the exemption when git composed the subject rather than a person, and\nevery finding in [`CommitRule::ALL`] order — which is the order the evidence for them\nappears in the message, so a person reads them in the order they would fix them.\n\n```\nuse majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};\nlet v: CommitVerdict = judge(&CommitSubject::of(\"update stuff\"), &CommitPolicy::default());\nassert!(!v.passed);\nassert_eq!(v.findings[0].code, \"commit.not_conventional\");\nassert_eq!(v.message.header.subject, \"update stuff\", \"what was judged, not what was typed\");\n```"
       },
       "Comparison": {
         "oneOf": [
@@ -20492,6 +21090,48 @@
         ],
         "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
       },
+      "HistoryReport": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "string",
+            "description": "The range as asked for."
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many commits were read."
+          },
+          "exempt": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many were exempt because git composed their subject."
+          },
+          "failing": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many carry a finding of error severity."
+          },
+          "commits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JudgedCommit"
+            },
+            "description": "Every commit that carries a finding, newest first. A commit with nothing to say is\ncounted and not listed: a report that printed a thousand passing commits would be a\nreport nobody reads."
+          }
+        },
+        "required": [
+          "range",
+          "total",
+          "exempt",
+          "failing",
+          "commits"
+        ],
+        "description": "A range of history, judged.\nA range of history, judged in one pass.\n\n```\nuse majordomus_cli::commit::verdict::HistoryReport;\nlet r = HistoryReport {\n    range: \"HEAD\".into(),\n    total: 1755,\n    exempt: 561,\n    failing: 54,\n    commits: Vec::new(),\n};\n// a commit with nothing to say is counted and not listed: a report of a thousand\n// passing commits is a report nobody reads\nassert!(r.commits.is_empty());\nassert_eq!(r.total - r.exempt, 1194);\n```"
+      },
       "HttpExposure": {
         "type": "object",
         "properties": {
@@ -20923,6 +21563,48 @@
           "complete"
         ],
         "description": "Everything git knows about one issue's realisation."
+      },
+      "JudgedCommit": {
+        "type": "object",
+        "properties": {
+          "commit": {
+            "type": "string",
+            "description": "The commit name, as git gave it."
+          },
+          "subject": {
+            "type": "string",
+            "description": "Its subject line."
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Whether it passed."
+          },
+          "exempt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommitExemption"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why it was not judged, when it was not."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            },
+            "description": "Every finding."
+          }
+        },
+        "required": [
+          "commit",
+          "subject",
+          "passed",
+          "findings"
+        ],
+        "description": "One commit of the history, judged.\n```\nuse majordomus_cli::commit::verdict::JudgedCommit;\n// what a history report lists: only the commits that have something to say\nlet row = JudgedCommit {\n    commit: \"a1b2c3d4e\".into(),\n    subject: \"update stuff\".into(),\n    passed: false,\n    exempt: None,\n    findings: Vec::new(),\n};\nassert!(!row.passed);\n```"
       },
       "KindCount": {
         "type": "object",
@@ -23683,6 +24365,33 @@
         ],
         "description": "One query parameter of the live channel."
       },
+      "PathChange": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative, forward slashes."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/ChangeStage",
+            "description": "Whether it is staged, unstaged or untracked. A path modified both in the index and\nin the working tree appears once, as [`ChangeStage::Staged`], with `partial` set."
+          },
+          "status": {
+            "type": "string",
+            "description": "The two-letter status git reported, verbatim."
+          },
+          "partial": {
+            "type": "boolean",
+            "description": "Set when the path is staged *and* modified again since: committing it commits the\nstaged half only, which is a thing a person should be told rather than discover."
+          }
+        },
+        "required": [
+          "path",
+          "stage",
+          "status"
+        ],
+        "description": "One path, and where it stands.\n```\nuse majordomus_cli::commit::ChangeStage;\nuse majordomus_cli::commit::plan::PathChange;\n// staged and modified again since: the commit would carry the staged half only\nlet c = PathChange {\n    path: \"src/a.rs\".into(), stage: ChangeStage::Staged, status: \"MM\".into(), partial: true,\n};\nassert!(c.partial);\n```"
+      },
       "Peer": {
         "type": "object",
         "properties": {
@@ -24005,6 +24714,34 @@
           "message"
         ],
         "description": "One validation finding, in the shape `project.finding-carries-reproduce` asks for."
+      },
+      "PlanFingerprint": {
+        "type": "object",
+        "properties": {
+          "repository": {
+            "type": "string",
+            "description": "The repository: git's common directory, which every worktree of one repository\nshares and no two repositories do."
+          },
+          "worktree": {
+            "type": "string",
+            "description": "The worktree: this checkout's own path. Two worktrees of one repository have the\nsame repository and different worktrees, which is what keeps their plans apart."
+          },
+          "head": {
+            "type": "string",
+            "description": "HEAD when the plan was derived, or `unborn`."
+          },
+          "changes": {
+            "type": "string",
+            "description": "SHA-256 over every change, its stage and its status, in order. Restaging one file\nchanges it; touching a file the plan does not contain does not."
+          }
+        },
+        "required": [
+          "repository",
+          "worktree",
+          "head",
+          "changes"
+        ],
+        "description": "What a plan was derived from.\n\nCompared, never trusted: a plan whose fingerprint differs from the tree in front of it\ndescribes a tree that no longer exists.\n```\nuse majordomus_cli::commit::{PlanFingerprint, WorkingTreeState};\nlet f = PlanFingerprint::of(\"/repo/.git\", \"/repo\", &WorkingTreeState::default());\nassert_eq!(f.head, \"unborn\", \"a repository with no commits says so\");\n```"
       },
       "PlanIssue": {
         "type": "object",
@@ -26415,6 +27152,11 @@
           },
           {
             "type": "string",
+            "const": "merge",
+            "description": "An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository's history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled."
+          },
+          {
+            "type": "string",
             "const": "other",
             "description": "A commit whose subject does not parse as a conventional commit."
           }
@@ -28804,6 +29546,114 @@
           "tracked"
         ],
         "description": "The scope: the declaration as read, its origin, and every tracked file against it."
+      },
+      "ScopeSuggestion": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "The scope."
+          },
+          "commits": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many prior commits associate this scope with directories these paths are in."
+          },
+          "directory": {
+            "type": "string",
+            "description": "The directory prefix the association was strongest at."
+          },
+          "ambiguous": {
+            "type": "boolean",
+            "description": "Whether another scope was as strongly associated. A tie is reported rather than\nbroken silently: a planner that guessed would be inventing the one field of a commit\nmessage that a reader uses to navigate."
+          }
+        },
+        "required": [
+          "scope",
+          "commits",
+          "directory",
+          "ambiguous"
+        ],
+        "description": "Which scope a set of paths belongs to, and the evidence for it.\n```\nuse majordomus_cli::commit::{ScopeSuggestion, ScopeVocabulary};\nlet mut v = ScopeVocabulary::default();\n// two scopes with equal claim to one directory: reported, never broken silently\nv.learn(\"a\", \"src\", 7);\nv.learn(\"b\", \"src\", 7);\nlet s: ScopeSuggestion = v.suggest(&[\"src/x.rs\".into()]).expect(\"a tie\");\nassert!(s.ambiguous);\n```"
+      },
+      "ScopeUse": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "The scope word, as commits spell it."
+          },
+          "commits": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of the sampled commits used it."
+          },
+          "directories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The directory prefixes those commits touched, most often first, at most five."
+          }
+        },
+        "required": [
+          "scope",
+          "commits",
+          "directories"
+        ],
+        "description": "One scope the history uses, and how much.\n```\nuse majordomus_cli::commit::scopes::ScopeUse;\nlet u = ScopeUse { scope: \"commit\".into(), commits: 40, directories: vec![\"src/commit\".into()] };\nassert_eq!(u.commits, 40);\n```"
+      },
+      "ScopeVocabulary": {
+        "type": "object",
+        "properties": {
+          "scopes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScopeUse"
+            },
+            "description": "Every scope, by how often it is used, then by name. The order is the answer to\n\"which scopes does this repository use\", so it is the order a person reads."
+          },
+          "sampled": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many commits were read to learn it."
+          },
+          "unavailable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Set when git could not be asked; the vocabulary is then empty rather than wrong."
+          }
+        },
+        "required": [
+          "scopes",
+          "sampled"
+        ],
+        "description": "The vocabulary as observed, with what was observed.\n```\nuse majordomus_cli::commit::ScopeVocabulary;\n// an empty vocabulary knows nothing and says so, rather than guessing\nlet v = ScopeVocabulary::default();\nassert!(!v.knows(\"anything\"));\nassert!(v.words().is_empty());\n```"
+      },
+      "ScopesReport": {
+        "type": "object",
+        "properties": {
+          "vocabulary": {
+            "$ref": "#/components/schemas/ScopeVocabulary",
+            "description": "Every scope the history uses, most used first, with the directories it is used about."
+          },
+          "sample": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many commits back the vocabulary is learned from."
+          }
+        },
+        "required": [
+          "vocabulary",
+          "sample"
+        ],
+        "description": "The vocabulary, with the policy that reads it.\n```\nuse majordomus_cli::capability::builtin::commit::ScopesReport;\nuse majordomus_cli::commit::ScopeVocabulary;\nlet r = ScopesReport { vocabulary: ScopeVocabulary::default(), sample: 1500 };\nassert_eq!(r.sample, majordomus_cli::commit::scopes::SAMPLE);\n```"
       },
       "SearchHit": {
         "type": "object",
@@ -31845,6 +32695,64 @@
           "required"
         ],
         "description": "One parameter of a workflow."
+      },
+      "WorkingTreeState": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branch, or `None` when HEAD is detached."
+          },
+          "head": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "HEAD's full name, or `None` in a repository with no commits."
+          },
+          "upstream": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The upstream ref, when the branch has one."
+          },
+          "ahead": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Commits this branch has that its upstream does not."
+          },
+          "behind": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Commits the upstream has that this branch does not."
+          },
+          "in_progress": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A merge, rebase, cherry-pick or bisect in progress, when there is one."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PathChange"
+            },
+            "description": "Every change, ordered by stage then path."
+          }
+        },
+        "required": [
+          "ahead",
+          "behind",
+          "changes"
+        ],
+        "description": "What git says about the working tree right now.\n```\nuse majordomus_cli::commit::WorkingTreeState;\nlet clean = WorkingTreeState::default();\nassert!(clean.is_clean());\nassert!(clean.staged().is_empty());\n```"
       },
       "WorktreeFingerprint": {
         "type": "object",
