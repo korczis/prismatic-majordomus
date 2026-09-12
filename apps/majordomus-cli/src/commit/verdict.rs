@@ -309,7 +309,7 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
             "the commit is marked breaking and explains nothing; write a body or a BREAKING CHANGE trailer".into(),
         );
     }
-    for candidate in record_candidates(&subject.text) {
+    for candidate in record_candidates(&without_code_spans(&subject.text)) {
         if !subject.records.contains(&candidate) {
             add(
                 CommitRule::UnresolvedReference,
@@ -639,4 +639,30 @@ pub struct HistoryReport {
     /// counted and not listed: a report that printed a thousand passing commits would be a
     /// report nobody reads.
     pub commits: Vec<JudgedCommit>,
+}
+
+/// A record id inside a backticked code span is being *shown*, not cited: a message that
+/// writes ``I9999 — Gone from the model`` is illustrating the shape of a reference, and the
+/// layer is not expected to hold it. Blanking the spans before the scan keeps a real
+/// citation in prose readable while an example stops being one.
+///
+/// ```
+/// use majordomus_cli::commit::verdict::without_code_spans;
+/// assert_eq!(without_code_spans("names `I9999` here"), "names         here");
+/// assert_eq!(without_code_spans("names I9999 here"), "names I9999 here");
+/// ```
+pub fn without_code_spans(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut inside = false;
+    for ch in text.chars() {
+        if ch == '`' {
+            inside = !inside;
+            out.push(' ');
+        } else if inside && ch != '\n' {
+            out.push(' ');
+        } else {
+            out.push(ch);
+        }
+    }
+    out
 }
