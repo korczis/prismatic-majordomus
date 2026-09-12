@@ -98,7 +98,11 @@ git rm -q "$(ls .ai/repo/adrs/0002-*.md)"
 git commit -qm "the second decision withdrawn"
 expect_exit 0 "$MJ" adr next
 expect_grep 'next free identity: adr-0004'
-expect_no_grep '^  0002 '
+# and it is not a hole either: a hole is an identity nothing claims, and `other` still
+# carries this one. (The holes section is what this asserts; the outstanding-allocations
+# section below reports the same identity as held by that branch, which is the other half
+# of the same fact.)
+expect_no_grep '^  0002  (cited by|nothing cites it here)'
 
 # ---------------------------------------------------------------- the refusal
 # a clean branch passes, and says what it measured rather than nothing
@@ -155,6 +159,54 @@ LAST_OUT="$(MJ_ADR_BASE=refs/nothing/here "$MJ" adr check --json 2>&1)"
 expect_grep '"surveyed":false'
 LAST_OUT="$("$MJ" adr check --json 2>&1)"
 expect_grep '"surveyed":true'
+
+# ------------------------------------------------------- allocated, and not landed
+# The half of the survey a high-water mark cannot express. On 2026-09-12 this repository's
+# decisions ran to 0055 on master and to 0059 on the refs, and that gap was measured twice
+# within one hour — once as four unlanded identities, once as seven — because each reading
+# scanned only the branches its author already knew about. `next` answered 0060 both times,
+# correctly, and said nothing about the identities in between: a high-water mark is one
+# number and hides every one of them.
+#
+# So the identities the base ref does not carry are named, with who holds each. Nothing is
+# decided: an identity on an open branch and one on an abandoned branch are the same bytes
+# to any survey, and which of the two a number is can only be settled by a person.
+git checkout -q "$trunk"
+expect_exit 0 "$MJ" adr next
+# the base is named, because a count of what is missing from an unnamed ref is not a fact
+expect_grep 'allocated and not landed on (master|main)'
+expect_grep '3 allocated and not landed on'
+# each outstanding identity names a holder a person can go and open: the branch that carries
+# it, or this tree when the claim has not been committed anywhere yet
+expect_grep '^  0003 +held by: .*other'
+expect_grep '^  0004 +held by: this working tree'
+# a ref that once ADDED a decision and has since dropped it is not one of its holders. 0002
+# was withdrawn on the trunk and survives on `other`, so `other` holds it and the trunk does
+# not — answering "who holds this now" from the add-log would name the branch that deleted it.
+expect_grep '^  0002 +held by: other'
+expect_no_grep '^  0002 +held by:.*(master|main)'
+# an identity the base already carries is nobody's outstanding allocation
+expect_no_grep '^  0001 +held by'
+# and the survey states what it cannot reach at all, rather than presenting its number as a
+# guarantee: a ref scan sees what was pushed and the board forgets on reconnect, so two
+# sessions allocating in the same minute are invisible to both
+# (project.a-verdict-states-its-subject)
+expect_grep 'not surveyed, and not surveyable'
+expect_grep 'same minute'
+LAST_OUT="$("$MJ" adr next --json 2>&1)"
+expect_grep '"outstanding_base":"(master|main)"'
+expect_grep '"id":"0003","held_by":"[^"]*other'
+expect_grep '"id":"0004","held_by":"this working tree'
+
+# A survey that cannot resolve a base has not established that anything is outstanding, and
+# says so rather than reporting an empty list as an answer (project.empty-is-not-failure).
+expect_exit 0 env MJ_ADR_BASE=refs/nothing/here "$MJ" adr next
+expect_grep 'outstanding allocations were NOT surveyed'
+expect_no_grep 'allocated and not landed on'
+# the number itself still comes out: the high-water mark needs no base
+expect_grep 'next free identity: adr-'
+LAST_OUT="$(MJ_ADR_BASE=refs/nothing/here "$MJ" adr next --json 2>&1)"
+expect_grep '"outstanding_base":null'
 
 # the identical identity at the identical path is an edit, not a competing claim: two
 # branches revising one decision is resolved by merging and is nobody's collision
