@@ -96,4 +96,10 @@ step_done
 step "stage C: majordomus generate (the site dataset and the benchmark matrix over the index)"
 "$RB" generate --repo "$ROOT" --strict >/dev/null
 step_done
+step "stage D: scripts/gitattributes (the merge policy, from the generators)"
+# Last, because it reads stage A's artifact manifest and stage B's published content tree:
+# the set of files a merge must not try to merge is exactly the set the stages above write,
+# and until this ran it was a hand list that was wrong in both directions.
+"$ROOT/scripts/gitattributes" >/dev/null
+step_done
 printf '==> derive: done in %ss; scripts/derive-check proves it\n' "$(( $(now) - RUN_T0 ))" >&2
