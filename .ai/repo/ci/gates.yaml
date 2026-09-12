@@ -383,6 +383,15 @@ gates:
     runs: scripts/ci/diagram-check
     summary: no architectural relationship in a published document is typed in box art — every one is a mermaid block, with literal terminal output, file listings and quoted file content exempt by declaration
 
+  # The site's navigation is one declaration — site/data/nav.toml — and the navbar and the
+  # footer are projections of it. Both halves of that have failed here: the footer rendered
+  # five links it typed itself while the file's own header said otherwise, and two routes sat
+  # in two groups under two labels. File reads only, so it belongs in the structure job.
+  - id: nav-check
+    job: structure
+    runs: scripts/ci/nav-check
+    summary: the site's navigation is declared once in site/data/nav.toml — no href is written twice, the primary navigation stays small, every template that renders navigation reads nav.groups and types no route the declaration does not carry, and the call to action resolves
+
   - id: release-check
     job: structure
     runs: scripts/ci/release-check
@@ -478,7 +487,7 @@ classes:
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
     paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design, nav-check]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and
