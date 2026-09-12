@@ -192,7 +192,7 @@
     ]
   },
   "provenance": {
-    "available": false,
+    "available": true,
     "baseline": {
       "channel": "stable",
       "commit": "3a032c1e033ba437325f64f883356269d7a6c73e",
@@ -218,9 +218,37 @@
         "title": "The Majordomus layer, served from one machine"
       }
     ],
-    "reason": "the executable could not answer the completion policy",
-    "surfaces": [],
-    "version": null
+    "derived_from": "derived from the tree alone",
+    "surfaces": [
+      {
+        "id": "pages",
+        "identity_url": "https://majordomus.dev/build.json",
+        "kind": "pages",
+        "url": "https://majordomus.dev",
+        "verifiable": true
+      },
+      {
+        "id": "release",
+        "identity_url": "https://majordomus.dev/releases/latest.json",
+        "kind": "release",
+        "url": "https://majordomus.dev/releases/",
+        "verifiable": true
+      },
+      {
+        "id": "majordomus",
+        "identity_url": null,
+        "kind": "application",
+        "url": null,
+        "verifiable": false
+      }
+    ],
+    "version": {
+      "baseline_reference": "v0.5.0",
+      "baseline_version": "0.5.0",
+      "declared_version": "0.6.0",
+      "measured": false,
+      "measured_by": "majordomus release analyze"
+    }
   },
   "schema": 1,
   "source": "share/completion.yaml"

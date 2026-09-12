@@ -1267,12 +1267,15 @@ COMPLETION_REASON=""
 # the absolute path of the file on the machine that ran it, and a published projection may
 # carry no local path. The repository-relative name is stated once, in the dataset, as the
 # input it is.
-mj_run_capability gates.policy '{}' > "$STAGE/completion-policy.json" \
-  || COMPLETION_REASON="the executable could not answer the completion policy"
-if [ -z "$COMPLETION_REASON" ] && ! jq -e '(.stages | length) > 0 and (.questions | length) > 0' "$STAGE/completion-policy.json" >/dev/null 2>&1; then
-  COMPLETION_REASON="the completion policy the executable answered carries no stage"
-fi
-if [ -n "$COMPLETION_REASON" ]; then
+# A committed projection is a function of the tree and of nothing else. The executable's
+# answer to `gates.policy` is the same file read by a faster road, but whether an executable
+# of this tree's generation is present differs between a fresh clone, a shallow CI checkout
+# and a developer's worktree — and a dataset that changed shape with that presence moved the
+# checkout underneath the suite once (case run.sh's parallel-phase check) and refused
+# derive-check on the next pass. So the policy is read from the file here, always; the
+# executable's answer is what the Cockpit and `majordomus check` show, live.
+COMPLETION_REASON="derived from the tree alone"
+if true; then
   # No executable, or one that could not answer: the stages and the questions are read from
   # the canonical file itself. It is the same YAML the tool parses, through the repository's
   # own flattener, so this is the same value by a slower road — never a second definition.
@@ -1321,15 +1324,16 @@ fi
 # the structural version analysis (ADR 0051), reduced to the summary a reader needs: what the
 # public surface implies, what the policy therefore requires, what the tree declares, and
 # whether those agree. The atoms, the fingerprints and the change list stay in the tool.
-COMPLETION_VERSION=null
-if [ -z "$COMPLETION_REASON" ]; then
-  mj_run_capability release.analysis '{}' > "$STAGE/completion-analysis.json" \
-    || COMPLETION_REASON="the executable could not answer the structural version analysis"
-  [ -n "$COMPLETION_REASON" ] || COMPLETION_VERSION="$(jq '{implied, required, declared, declared_version,
-      required_version, status, breaking, changes: ((.changes // []) | length),
-      baseline_version: (.baseline.version // null), baseline_reference: (.baseline.reference // null),
-      policy_mode: (.policy.mode // null)}' "$STAGE/completion-analysis.json")"
-fi
+# What the tree states of its own version: the declared version (`bin/majordomus`,
+# MJ_VERSION, one of the two writers `majordomus release version` holds together) and the
+# baseline record it will be measured against. The measurement itself — implied, required,
+# breaking, the change count — needs the executable and the git history of the last release,
+# which a committed projection may not depend on; `measured: false` says so and names the
+# command that does it, and the Cockpit and `majordomus check` show the live answer.
+COMPLETION_VERSION="$(jq -n --arg declared "$VERSION" --argjson baseline "$COMPLETION_BASELINE" \
+  '{declared_version: $declared, baseline_version: ($baseline.version // null),
+    baseline_reference: ($baseline.tag // null), measured: false,
+    measured_by: "majordomus release analyze"}')"
 # the deployment surfaces a change in this repository has to reach, from the completion
 # report run over this checkout with the live probes off — a generator may not depend on a
 # network, and an address that answered once is not evidence a page may keep.
@@ -1340,14 +1344,17 @@ fi
 # generator over the same commit, and a page derived from them would be stale the moment it
 # was written. What is stable is whether a surface has an identity address at all — the
 # difference between a deployment that can be verified and one that can only be declared.
-COMPLETION_SURFACES='[]'
-if [ -z "$COMPLETION_REASON" ]; then
-  mj_run_capability gates.completion '{"live":false}' > "$STAGE/completion-report.json" \
-    || COMPLETION_REASON="the executable could not answer the completion report"
-  [ -n "$COMPLETION_REASON" ] || COMPLETION_SURFACES="$(jq '[(.deployment.targets // [])[]
-      | {id, kind, url: (.url // null), identity_url: (.identity_url // null),
-         verifiable: ((.identity_url // null) != null)}]' "$STAGE/completion-report.json")"
-fi
+# From the same declarations the executable's deployment plan reads (deploy::targets): the
+# site's published origin, the release records, the deployment objects. Stated here from the
+# files so that the projection is a function of the tree; the plan's applicability to a
+# change set is the executable's, live.
+COMPLETION_SURFACES="$(jq -n --arg base "$SITE_BASE" --argjson baseline "$COMPLETION_BASELINE" \
+  --slurpfile deployments <(ls "$ROOT"/.ai/repo/deployments/*.yaml >/dev/null 2>&1 && for d in "$ROOT"/.ai/repo/deployments/*.yaml; do DF="$(flat "$d")"; printf '{"id":%s,"status":%s,"url":%s}\n' "$(jstr "$(mj_yget "$DF" id)")" "$(jstr "$(mj_yget "$DF" status)")" "$(jstr "$(mj_yget "$DF" url)")"; rm -f "$DF"; done) \
+  '([ if $base != "" then {id: "pages", kind: "pages", url: $base, identity_url: ($base + "/build.json"), verifiable: true} else empty end,
+     if ($base != "" and $baseline != null) then {id: "release", kind: "release", url: ($base + "/releases/"), identity_url: ($base + "/releases/latest.json"), verifiable: true} else empty end ]
+    + [ $deployments[] | select(.id != "") | {id, kind: "application", url: (if .url == "" then null else .url end),
+        identity_url: (if (.status == "active" and .url != "") then (.url + "/api/v1/distribution/build") else null end),
+        verifiable: (.status == "active" and .url != "")} ])')"
 # the deployment objects the layer declares, with the status each one declares for itself.
 # A `declared` deployment describes something nobody is running yet, and the page says so in
 # the object's own word rather than inferring a state from an absence.
@@ -1373,20 +1380,14 @@ jq -S --slurpfile policy "$STAGE/completion-policy.json" \
         policy: {stages: $policy[0].stages,
                  questions: $policy[0].questions,
                  counts: {stages: ($policy[0].stages | length), questions: ($policy[0].questions | length)}},
-        provenance: (if $reason == "" then
-                       {available: true, baseline: $baseline, version: $version,
-                        surfaces: $surfaces, deployments: $deployments}
-                     else
-                       {available: false, reason: $reason, baseline: $baseline,
-                        version: null, surfaces: [], deployments: $deployments}
-                     end)}' > "$OUT/completion.json"
+        provenance: {available: true, derived_from: $reason, baseline: $baseline, version: $version,
+                     surfaces: $surfaces, deployments: $deployments}}' > "$OUT/completion.json"
 # every question names a stage the policy declares. A question filed under a stage that is
 # not in the lifecycle would render nowhere, which is the one way this page could lose a fact
 # without anybody noticing.
 COMPLETION_ORPHANS="$(jq -r '.policy as $p | ([$p.stages[].id]) as $ids | [$p.questions[] | select(.stage as $s | $ids | index($s) | not) | .id] | join(", ")' "$OUT/completion.json")"
 [ -z "$COMPLETION_ORPHANS" ] \
   || { echo "generate-site-data: completion questions name a stage the policy does not declare: $COMPLETION_ORPHANS" >&2; exit 10; }
-[ -n "$COMPLETION_REASON" ] && echo "generate-site-data: the lifecycle provenance was not derived ($COMPLETION_REASON); the policy is published without it" >&2
 mj_phase_end "gen:completion.json" "$GEN_T0"
 
 # ---------------------------------------------------------------- openapi.json (the HTTP API, as data)
