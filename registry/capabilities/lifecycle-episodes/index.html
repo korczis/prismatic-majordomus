@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=dac23a2c3bb3917f7fd8">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -207,7 +207,47 @@
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · Episodes</h3><p class="mt-1 break-words text-sm text-body">Every open episode of this checkout&#39;s store.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · Episodes</h3><p class="mt-1 break-words text-sm text-body">Every open episode of this checkout&#39;s store — the answer `continuity.state` cannot give,
+because it reads the pointer and this reads the store.
+
+`current` is the one episode the pointer resolves to, and it is one row of `episodes`
+rather than a separate thing: the whole correction this type carries is that the pointed-at
+episode is *a* member of the set and not the set. On the day this was written the store
+held five open episodes in one checkout and every surface could name one of them.
+
+`present: false` is a fresh clone, which is not a fault — nobody has opened an episode
+here yet — and is reported as itself rather than as an error.
+
+```
+use majordomus_cli::capability::builtin::lifecycle::Episodes;
+use serde_json::json;
+
+// a clone in which no episode has ever been opened: absence, answered as absence
+let fresh: Episodes = serde_json::from_value(json!({
+    &quot;present&quot;: false,
+    &quot;store&quot;: &quot;.ai/local/state/sessions-open&quot;,
+    &quot;worktree&quot;: &quot;example/a-fresh-clone&quot;,
+})).unwrap();
+assert!(!fresh.present);
+assert!(fresh.episodes.is_empty() &amp;&amp; fresh.current.is_empty());
+assert!(fresh.findings.is_empty(), &quot;nothing to warn about; it is simply new&quot;);
+
+// and a store with work in it: `current` names one of the rows, never a sixth thing
+let busy: Episodes = serde_json::from_value(json!({
+    &quot;present&quot;: true,
+    &quot;store&quot;: &quot;.ai/local/state/sessions-open&quot;,
+    &quot;worktree&quot;: &quot;example/wt&quot;,
+    &quot;current&quot;: &quot;s-0002&quot;,
+    &quot;episodes&quot;: [
+        {&quot;session_id&quot;: &quot;s-0001&quot;, &quot;path&quot;: &quot;a.yaml&quot;, &quot;standing&quot;: &quot;open&quot;,
+         &quot;events&quot;: 3, &quot;note&quot;: &quot;this worktree, not pointed at&quot;},
+        {&quot;session_id&quot;: &quot;s-0002&quot;, &quot;path&quot;: &quot;b.yaml&quot;, &quot;standing&quot;: &quot;current&quot;,
+         &quot;events&quot;: 9, &quot;note&quot;: &quot;the pointer resolves to it&quot;},
+    ],
+})).unwrap();
+assert_eq!(busy.episodes.len(), 2, &quot;the pointer is blind to the first of these&quot;);
+assert!(busy.episodes.iter().any(|e| e.session_id == busy.current));
+```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
@@ -248,7 +288,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;Episode&quot;: {
-      &quot;description&quot;: &quot;One open episode, as its file records it and as the ledger has seen it.&quot;,
+      &quot;description&quot;: &quot;One open episode, as its file records it and as the ledger has seen it.\n\nEverything here is recorded rather than derived, and almost everything is optional,\nwhich is the point: an episode opened by hand has no provider, a worker that supplied no\nidentity has none, and an episode that opened and did nothing has no ledger line and so\nno `last_activity`. Each of those is ordinary and none is a fault, so each is carried as\nabsence — the empty fields are skipped on the wire — and a reader must handle their\nabsence rather than expect a placeholder.\n\nThe two fields that are always there are `standing` and `note`: where the episode stands,\nand why it stands there in words. A standing a reader cannot act on is the failure this\nsubsystem was corrected for, so `note` is never empty.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::{Episode, EpisodeStanding};\nuse serde_json::json;\n\n// the smallest true record: an episode opened by hand that has written nothing yet\nlet e: Episode = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0001\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/local/state/sessions-open/by-hand.yaml\&quot;,\n    \&quot;standing\&quot;: \&quot;open\&quot;,\n    \&quot;events\&quot;: 0,\n    \&quot;note\&quot;: \&quot;open in this worktree; the pointer names another episode\&quot;,\n})).unwrap();\n\nassert_eq!(e.standing, EpisodeStanding::Open);\nassert!(e.provider.is_empty(), \&quot;no provider session owns a hand-opened episode\&quot;);\nassert!(e.last_activity.is_empty(), \&quot;it has written no ledger line\&quot;);\nassert!(e.tasks.is_empty(), \&quot;work outside a task is permitted\&quot;);\nassert!(!e.note.is_empty(), \&quot;a standing always says why\&quot;);\n\n// and absence stays absence: the empty fields are not serialised back as \&quot;\&quot;\nlet wire = serde_json::to_value(&amp;e).unwrap();\nassert!(wire.get(\&quot;provider\&quot;).is_none());\nassert_eq!(wire[\&quot;events\&quot;], 0, \&quot;a count of zero is a measurement, so it is kept\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;branch&quot;: {
           &quot;description&quot;: &quot;The branch it opened on.&quot;,
@@ -330,7 +370,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;EpisodeStanding&quot;: {
-      &quot;description&quot;: &quot;Where an open episode stands, as far as the repository can observe it.\n\nIt is worth being precise about what is *not* here. Whether the provider that opened an\nepisode is still attached to its conversation is not a fact of this repository: the\nepisode file records no pid, the peer board records no episode id, and a client that\nexits without firing its end event leaves a file identical to one a live worker is using.\nGuessing would produce exactly the confident-and-wrong answer this subsystem exists to\navoid, so the vocabulary below is the observable one — where the file is, whose worktree\nit names, and whether the pointer follows it — and `note` always says which.&quot;,
+      &quot;description&quot;: &quot;Where an open episode stands, as far as the repository can observe it.\n\nIt is worth being precise about what is *not* here. Whether the provider that opened an\nepisode is still attached to its conversation is not a fact of this repository: the\nepisode file records no pid, the peer board records no episode id, and a client that\nexits without firing its end event leaves a file identical to one a live worker is using.\nGuessing would produce exactly the confident-and-wrong answer this subsystem exists to\navoid, so the vocabulary below is the observable one — where the file is, whose worktree\nit names, and whether the pointer follows it — and `note` always says which.\n\nRead as a scale, the four run from \&quot;this checkout&#39;s own work\&quot; to \&quot;nobody&#39;s work any\nmore\&quot;, and only the last is a fault: `current` and `open` are both this worktree&#39;s live\nepisodes and differ only in which one the pointer happens to aim at, `foreign` belongs to\nanother worktree and is reported rather than adopted, and `stranded` is the one that\nneeds a person, because nothing can close it.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::EpisodeStanding;\n\n// the standings that are somebody&#39;s live work, against the one that is nobody&#39;s\nlet live = [EpisodeStanding::Current, EpisodeStanding::Open, EpisodeStanding::Foreign];\nassert!(live.iter().all(|s| *s != EpisodeStanding::Stranded));\n\n// serialised as the word `as_str` gives, so the two renderings cannot drift apart\nfor s in [EpisodeStanding::Current, EpisodeStanding::Foreign, EpisodeStanding::Stranded] {\n    assert_eq!(serde_json::to_value(s).unwrap(), serde_json::json!(s.as_str()));\n}\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;current&quot;,
@@ -355,7 +395,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
       ]
     }
   },
-  &quot;description&quot;: &quot;Every open episode of this checkout&#39;s store.&quot;,
+  &quot;description&quot;: &quot;Every open episode of this checkout&#39;s store — the answer `continuity.state` cannot give,\nbecause it reads the pointer and this reads the store.\n\n`current` is the one episode the pointer resolves to, and it is one row of `episodes`\nrather than a separate thing: the whole correction this type carries is that the pointed-at\nepisode is *a* member of the set and not the set. On the day this was written the store\nheld five open episodes in one checkout and every surface could name one of them.\n\n`present: false` is a fresh clone, which is not a fault — nobody has opened an episode\nhere yet — and is reported as itself rather than as an error.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::Episodes;\nuse serde_json::json;\n\n// a clone in which no episode has ever been opened: absence, answered as absence\nlet fresh: Episodes = serde_json::from_value(json!({\n    \&quot;present\&quot;: false,\n    \&quot;store\&quot;: \&quot;.ai/local/state/sessions-open\&quot;,\n    \&quot;worktree\&quot;: \&quot;example/a-fresh-clone\&quot;,\n})).unwrap();\nassert!(!fresh.present);\nassert!(fresh.episodes.is_empty() &amp;&amp; fresh.current.is_empty());\nassert!(fresh.findings.is_empty(), \&quot;nothing to warn about; it is simply new\&quot;);\n\n// and a store with work in it: `current` names one of the rows, never a sixth thing\nlet busy: Episodes = serde_json::from_value(json!({\n    \&quot;present\&quot;: true,\n    \&quot;store\&quot;: \&quot;.ai/local/state/sessions-open\&quot;,\n    \&quot;worktree\&quot;: \&quot;example/wt\&quot;,\n    \&quot;current\&quot;: \&quot;s-0002\&quot;,\n    \&quot;episodes\&quot;: [\n        {\&quot;session_id\&quot;: \&quot;s-0001\&quot;, \&quot;path\&quot;: \&quot;a.yaml\&quot;, \&quot;standing\&quot;: \&quot;open\&quot;,\n         \&quot;events\&quot;: 3, \&quot;note\&quot;: \&quot;this worktree, not pointed at\&quot;},\n        {\&quot;session_id\&quot;: \&quot;s-0002\&quot;, \&quot;path\&quot;: \&quot;b.yaml\&quot;, \&quot;standing\&quot;: \&quot;current\&quot;,\n         \&quot;events\&quot;: 9, \&quot;note\&quot;: \&quot;the pointer resolves to it\&quot;},\n    ],\n})).unwrap();\nassert_eq!(busy.episodes.len(), 2, \&quot;the pointer is blind to the first of these\&quot;);\nassert!(busy.episodes.iter().any(|e| e.session_id == busy.current));\n```&quot;,
   &quot;properties&quot;: {
     &quot;current&quot;: {
       &quot;description&quot;: &quot;The episode id the pointer resolves to, when it resolves to one.&quot;,
@@ -428,7 +468,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::lifecycle</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Episodes</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">e8140aa860db795c02142907ffca5f52f2de055295de753fbf1a8331ce595581</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">819930477a6002160548a413cefacec52f7d3dc7f14461338094e03296bb601f</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -500,7 +540,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/acebf3d7e787c5d8399377f156ec585584283712" class="font-mono underline">acebf3d</a> · inputs <span class="font-mono">6d163cafa01e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a77c35a740530f8475d63b7f22fad90bceed0b01" class="font-mono underline">a77c35a</a> · inputs <span class="font-mono">70e54b389234</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

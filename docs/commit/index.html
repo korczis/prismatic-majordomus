@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The commit — Prismatic Majordomus</title>
+<meta name="description" content="the commit as a value: the one grammar the changelog and the judge share, the policy declared as data with its subject width measured from this history, the scope vocabulary learned from the log rather than kept in a table, the plan fingerprinted against repository, worktree, HEAD and change set, and where each of the three moments enforces it">
+<link rel="canonical" href="https://majordomus.dev/docs/commit/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="The commit — Prismatic Majordomus">
+<meta property="og:description" content="the commit as a value: the one grammar the changelog and the judge share, the policy declared as data with its subject width measured from this history, the scope vocabulary learned from the log rather than kept in a table, the plan fingerprinted against repository, worktree, HEAD and change set, and where each of the three moments enforces it">
+<meta property="og:url" content="https://majordomus.dev/docs/commit/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=dac23a2c3bb3917f7fd8">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.6.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.6.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">The commit</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">The commit</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">the commit as a value: the one grammar the changelog and the judge share, the policy declared as data with its subject width measured from this history, the scope vocabulary learned from the log rather than kept in a table, the plan fingerprinted against repository, worktree, HEAD and change set, and where each of the three moments enforces it</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/archive/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Archiving the repository</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/commit/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">The commit</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/cockpit-ide-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit as a development surface: baseline, archaeology and gap matrix</a></li><li><a href="https://majordomus.dev/docs/development-runtime/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The development runtime</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/backlog/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Backlog</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The mesh: discovery of running Majordomus instances</a></li><li><a href="https://majordomus.dev/docs/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The model catalogue</a></li><li><a href="https://majordomus.dev/docs/coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Coverage: one measurement, two questions</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Evidence</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/COMMIT.md" class="font-mono underline">docs/COMMIT.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>A commit message in this repository is a value with a grammar, a policy and a verdict, not a
+convention people are reminded of. This page is what that means, what it costs, and where
+each half lives.</p>
+<h2 id="the-problem-it-was-written-for"><a class="zola-anchor" href="#the-problem-it-was-written-for" aria-label="Anchor link for: the-problem-it-was-written-for">The problem it was written for</a></h2>
+<p>Two halves of this subject existed and did not know about each other.</p>
+<p>The repository could <strong>read</strong> a commit: <code>release::commits</code> has parsed conventional subjects
+out of the log to build the changelog since the changelog existed, resolving <code>I1305</code> and
+<code>M000</code> against what the layer holds and dropping an id that resolves to nothing.</p>
+<p>The repository could not <strong>judge</strong> one. <code>project.conventional-commits</code> stated the convention
+and its failure behaviour read <em>"No command decides this rule; a reviewer does."</em> The
+measurement, taken the day this was written: over 1161 non-merge commits, 48 subjects exceed
+the width this project declares for a line of anything and 38 carry a type word no
+vocabulary contains. Nothing had noticed, because nothing was looking.</p>
+<p>The third half was outside the repository altogether. The <em>procedure</em> for writing a commit —
+derive a scope from the path, link the work, do not invent an issue number, a fix needs a
+test — lived in prose that an AI client read and carried out by hand, one file per client,
+with a path-to-scope table maintained by a person. A workflow whose semantics live in a
+prompt is unversioned, unenforceable, untestable, and true for exactly one tool.</p>
+<h2 id="what-there-is-now"><a class="zola-anchor" href="#what-there-is-now" aria-label="Anchor link for: what-there-is-now">What there is now</a></h2>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+    policy["&lt;b&gt;.ai/repo/policy.yaml&lt;/b&gt;&lt;br/&gt;&lt;code&gt;commit:&lt;/code&gt;&lt;br/&gt;the width, three levels"]
+    log["&lt;b&gt;git log&lt;/b&gt;&lt;br/&gt;at most 1500 commits"]
+    status["&lt;b&gt;git status&lt;/b&gt;&lt;br/&gt;this working tree"]
+
+    subgraph domain["apps/majordomus-cli/src/commit/"]
+        direction TB
+        header["&lt;b&gt;header&lt;/b&gt; · the one grammar&lt;br/&gt;&lt;b&gt;message&lt;/b&gt; · header, body, trailers"]
+        pol["&lt;b&gt;policy&lt;/b&gt; · what a commit is held to"]
+        scopes["&lt;b&gt;scopes&lt;/b&gt; · the vocabulary, learned"]
+        plan["&lt;b&gt;plan&lt;/b&gt; · the tree, grouped, fingerprinted"]
+        verdict["&lt;b&gt;verdict&lt;/b&gt; · the judge"]
+    end
+
+    policy --&gt; pol
+    log --&gt; scopes
+    status --&gt; plan
+    header --&gt; verdict
+    pol --&gt; verdict
+    scopes --&gt; verdict
+    plan --&gt; verdict
+
+    hook["&lt;b&gt;commit-msg hook&lt;/b&gt;&lt;br/&gt;one message, with its paths"]
+    gate["&lt;b&gt;scripts/ci/commit-policy&lt;/b&gt;&lt;br/&gt;the history, ratcheted"]
+    cli["&lt;b&gt;majordomus commit&lt;/b&gt;&lt;br/&gt;a person"]
+    mcp["&lt;b&gt;MCP tools + resources&lt;/b&gt;&lt;br/&gt;an agent"]
+    api["&lt;b&gt;GET /api/v1/commit/…&lt;/b&gt;&lt;br/&gt;a program"]
+
+    verdict --&gt; hook
+    verdict --&gt; gate
+    domain --&gt; cli
+    domain --&gt; mcp
+    domain --&gt; api
+
+    classDef source fill:#eef2ff,stroke:#4f46e5,color:#1e1b4b
+    classDef surface fill:#ecfdf5,stroke:#059669,color:#064e3b
+    class policy,log,status source
+    class hook,gate,cli,mcp,api surface
+</pre>
+<p>Four capabilities, declared once in
+<code>apps/majordomus-cli/src/capability/builtin/commit.rs</code>, each projected onto every surface
+the exposure policy admits:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>capability</th><th>what it answers</th><th>CLI</th><th>MCP</th><th>HTTP</th></tr></thead><tbody>
+<tr><td><code>commit.scopes</code></td><td>which scopes this history uses, how often, about which directories</td><td><code>majordomus commit scopes</code></td><td><code>majordomus_commit_scopes</code>, <code>majordomus://commit/scopes</code></td><td><code>GET /api/v1/commit/scopes</code></td></tr>
+<tr><td><code>commit.plan</code></td><td>what the working tree would commit, divided, fingerprinted</td><td><code>majordomus commit plan</code></td><td><code>majordomus_commit_plan</code>, <code>majordomus://commit/plan</code></td><td><code>GET /api/v1/commit/plan</code></td></tr>
+<tr><td><code>commit.validate</code></td><td>the verdict on one message</td><td><code>majordomus commit validate</code></td><td><code>majordomus_commit_validate</code></td><td><code>GET /api/v1/commit/validate</code></td></tr>
+<tr><td><code>commit.history</code></td><td>every commit in a range, in one pass</td><td><code>majordomus commit history</code></td><td><code>majordomus_commit_history</code></td><td><code>GET /api/v1/commit/history</code></td></tr>
+</tbody></table>
+</div>
+<p>Nothing in that table is registered anywhere twice. The MCP tool name, the route and the
+command line are fields of the capability declaration; the OpenAPI operation, the Cockpit
+payload, the shell completion and <code>docs/generated/capabilities.md</code> are derived from it, and
+<code>majordomus capabilities projections --unmet</code> fails the build when a declaration claims a
+command line the executable does not have.</p>
+<p><strong>Making the commit is deliberately not here.</strong> <code>git commit</code> is a repository mutation, and
+the exposure policy (<code>command_graph::policy</code>) stops every machine surface at local mutation.
+An agent may ask what a commit <em>would</em> be and whether a message passes; a person commits. The
+subsystem is shaped to that: the planner and the judge are pure functions of a tree and a
+message.</p>
+<h2 id="the-grammar"><a class="zola-anchor" href="#the-grammar" aria-label="Anchor link for: the-grammar">The grammar</a></h2>
+<p>One parser, <code>commit::CommitHeader::parse</code>, total and never failing:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>  feat(commit)!: the header is parsed once</span></span>
+<span class="giallo-l"><span>  ^^^^ ^^^^^^ ^  ^^^^^^^^^^^^^^^^^^^^^^^^</span></span>
+<span class="giallo-l"><span>  word scope  breaking            subject</span></span></code></pre>
+<p>The changelog and the judge read the same parse and disagree only about what to <em>do</em> with a
+header that is not conventional. For the changelog that is not a failure — a commit nobody
+spelled conventionally still happened, and a changelog that dropped it would lie about what
+the release contains. For the judge it is one finding, <code>commit.not_conventional</code>, and the
+consequences of it are deliberately not reported as findings of their own: somebody fixing
+<code>update stuff</code> does not also need to be told its scope is unknown.</p>
+<p>The type words are <code>ChangeKind</code>'s, which the changelog already renders headings from. There
+is no <code>types:</code> key in the policy, because a second copy of those words is exactly the
+duplication this subsystem removes. <code>merge</code> is among them: this repository writes
+<code>merge: bring origin/master into feature/x</code> by hand for integrations, so those subjects are
+held to the same width and the same references as every other rather than exempted from
+being checked at all.</p>
+<h2 id="the-policy"><a class="zola-anchor" href="#the-policy" aria-label="Anchor link for: the-policy">The policy</a></h2>
+<p><code>commit:</code> in <code>.ai/repo/policy.yaml</code>, whose shape the schema <code>majordomus.policy/v1</code> owns and
+from which <code>share/allow/policy.txt</code> is generated:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ommit</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">ubject_max_chars</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 100</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">cope_unknown</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> w</span><span class="z-l-8 z-d-8">arning</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  f</span><span class="z-l-4 z-d-1">ix_requires_test</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> w</span><span class="z-l-8 z-d-8">arning</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">eference_unresolved</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> e</span><span class="z-l-8 z-d-8">rror</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  b</span><span class="z-l-4 z-d-1">reaking_unexplained</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> e</span><span class="z-l-8 z-d-8">rror</span></span></code></pre>
+<p><code>subject_max_chars</code> is measured, not chosen. The git convention is 72; over 1161 non-merge
+commits of this repository the median subject is 73 characters and the 95th percentile is 98.
+100 is what this project declares for a line of anything and a width this history can meet. A
+limit half the history violates is not a limit — it is noise that teaches people to ignore
+the check.</p>
+<p>The three levels are the judgements a repository can reasonably disagree about. <code>off</code> is a
+value, not an absence: a repository that has decided a check does not apply to it has made a
+decision, and a decision is worth reading back.</p>
+<h2 id="findings"><a class="zola-anchor" href="#findings" aria-label="Anchor link for: findings">Findings</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>code</th><th>severity</th><th>what it means</th></tr></thead><tbody>
+<tr><td><code>commit.not_conventional</code></td><td>error</td><td>the header is not <code>type(scope): subject</code></td></tr>
+<tr><td><code>commit.subject_empty</code></td><td>error</td><td>nothing after the colon</td></tr>
+<tr><td><code>commit.subject_too_long</code></td><td>error</td><td>wider than <code>subject_max_chars</code>, measured whole</td></tr>
+<tr><td><code>commit.subject_trailing_period</code></td><td>error</td><td>a subject is a title, not a sentence</td></tr>
+<tr><td><code>commit.unknown_scope</code></td><td>policy</td><td>a scope the history has not used</td></tr>
+<tr><td><code>commit.breaking_unexplained</code></td><td>policy</td><td><code>!</code> with no body and no <code>BREAKING CHANGE:</code></td></tr>
+<tr><td><code>commit.unresolved_reference</code></td><td>policy</td><td>a record id the layer does not hold</td></tr>
+<tr><td><code>commit.fix_without_test</code></td><td>policy</td><td>a <code>fix</code> with no test among its files</td></tr>
+</tbody></table>
+</div>
+<p>Every one is a <code>Diagnostic</code> — the same severity, code and message the rest of this executable
+reports with, so a finding reaches a terminal, a JSON consumer and an MCP client the same way.</p>
+<h2 id="the-scope-vocabulary-learned-rather-than-declared"><a class="zola-anchor" href="#the-scope-vocabulary-learned-rather-than-declared" aria-label="Anchor link for: the-scope-vocabulary-learned-rather-than-declared">The scope vocabulary, learned rather than declared</a></h2>
+<p>The usual way to answer <em>"what scope does this change belong to?"</em> is a table of path
+patterns. It is correct on the day it is written; then a directory is added, or renamed, or a
+subsystem splits, and the table names a scope the history stopped using months ago, with
+nothing to notice — a table has no way to be wrong.</p>
+<p><code>commit.scopes</code> reads the answer out of the history instead. Every commit is a worked example
+of which scope a set of paths belongs to, decided by whoever made the change and kept by
+whoever reviewed it. At most 1500 commits are read; scopes are counted, and each scope's
+association with directory prefixes four segments deep is counted with it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus commit scopes</span></span>
+<span class="giallo-l"><span>learned from 1161 commit(s), at most 1500</span></span>
+<span class="giallo-l"><span>  derive                211  site, site/data, site/data/registry</span></span>
+<span class="giallo-l"><span>  site                  134  site, site/data, scripts</span></span>
+<span class="giallo-l"><span>  ci                     60  docs, scripts, site</span></span>
+<span class="giallo-l"><span>  plan                   44  site, site/data, site/data/generated</span></span>
+<span class="giallo-l"><span>  …</span></span></code></pre>
+<p>A scope outside the vocabulary is a <strong>warning</strong>, never a refusal: inference must not refuse
+the first commit of a subsystem it has never seen. The vocabulary needs no maintenance — a
+subsystem committed today is in it today, and one nobody has touched for a year sinks on its
+own.</p>
+<p>Four segments is measured too. This repository's source lives at
+<code>apps/majordomus-cli/src/&lt;subsystem&gt;/</code>; three segments stop one level above the subsystem,
+where a dozen scopes all have commits and no path can be told from another.</p>
+<h2 id="the-plan"><a class="zola-anchor" href="#the-plan" aria-label="Anchor link for: the-plan">The plan</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus commit plan</span></span>
+<span class="giallo-l"><span>branch       feature/the-commit-is-an-intent · no upstream</span></span>
+<span class="giallo-l"><span>tree         16 staged, 0 unstaged, 0 untracked</span></span>
+<span class="giallo-l"><span>fingerprint  11a032984c6f @ 8998e11fd</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>commit 1    &lt;type&gt;(release): &lt;subject&gt;</span></span>
+<span class="giallo-l"><span>  why        4 file(s) under apps/majordomus-cli/src/release, which 8 prior commit(s) scoped `release`</span></span>
+<span class="giallo-l"><span>  …</span></span></code></pre>
+<p>Three things are worth saying about that output.</p>
+<p><strong>The subject is empty on purpose.</strong> What a change <em>did</em> is the one thing no evidence in the
+tree can state, and a planner that wrote a confident sentence about it would be writing
+fiction into the history. The scope and the kind are derived where the evidence decides them;
+the sentence is yours.</p>
+<p><strong>The grouping is a recommendation with its reasoning attached</strong>, never an automatic split.
+Paths the history scopes alike are one commit and the rationale says how many prior commits
+say so. Paths in directories several scopes have equal claim to are one group and the
+rationale says that, which is a different situation from a directory the history has never
+scoped and leads to a different next step. Nothing is split on low confidence.</p>
+<p><strong>The fingerprint is the multi-agent half.</strong> A plan is derived from a tree at a moment. In a
+repository worked by one person that is a detail; in this one, where several workers share a
+checkout and more share a repository, a plan computed at one HEAD and executed at another
+commits files somebody else staged under a message about work that is no longer what changed.
+The fingerprint is the repository (git's common directory), the worktree (this checkout's
+path), HEAD, and a hash over every change with its stage and status. Anything acting on a
+plan compares it with the tree in front of it first, and what it reports is a sentence:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>HEAD moved from a1b2c3d4e to e4f5a6b70 since the plan was made</span></span>
+<span class="giallo-l"><span>the plan is of another worktree (/repo-wt/feature/x rather than /repo)</span></span></code></pre>
+<p>It is not a lock and it does not prevent the race. It refuses to be the one that loses it
+silently.</p>
+<h2 id="where-it-is-enforced"><a class="zola-anchor" href="#where-it-is-enforced" aria-label="Anchor link for: where-it-is-enforced">Where it is enforced</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>moment</th><th>what runs</th><th>measured</th></tr></thead><tbody>
+<tr><td><code>commit-msg</code></td><td><code>.githooks/commit-msg</code> → <code>commit.validate</code> with the staged paths</td><td>806 ms</td></tr>
+<tr><td>a gate</td><td><code>scripts/ci/commit-policy</code> → <code>commit.history</code>, twice: the branch and the history</td><td>1720 ms</td></tr>
+<tr><td>CI</td><td>the <code>commit-policy</code> gate, in the <code>structure</code> job</td><td>as above</td></tr>
+</tbody></table>
+</div>
+<p>Those are debug-build numbers on a loaded machine, which is the worst case a person meets.
+The three history-reading commands cost about a second each — <code>commit scopes</code> 957 ms,
+<code>commit plan</code> 926 ms, <code>commit history</code> 992 ms over 1788 commits — and <strong>nothing on a hot path
+pays any of it</strong>: <code>env enter</code> is 38 ms against a 750 ms budget, <code>completion query</code> 11 ms,
+<code>--help</code> 10 ms, none of them touching the log. The history is read only where a person is
+already waiting for git.</p>
+<p>The hook runs at the one moment the message and the files both exist, which is why
+<code>fix_requires_test</code> can be asked there and nowhere else: a fix with no test among its files
+is worth noticing while adding one is still cheap. The gate reading the history knows no
+paths and therefore does not make that finding — a judgement whose evidence is absent is not
+made rather than guessed.</p>
+<p>The hook is registered under <code>enforcement:</code> in <code>.ai/repo/policy.yaml</code> as
+<code>commit-policy-on-message</code>, which is what makes <code>majordomus doctor</code> reconcile it: the path
+must resolve, be executable, and be invoked by <code>.githooks/commit-msg</code> without its exit code
+being swallowed.</p>
+<h3 id="the-baseline"><a class="zola-anchor" href="#the-baseline" aria-label="Anchor link for: the-baseline">The baseline</a></h3>
+<p>54 commits of this history do not satisfy the policy. Every one is published, so rewriting
+them is not on the table. The count lives in <code>.ai/repo/commit-policy-baseline.txt</code>; the gate
+fails when it rises and reports when it falls. Commits a branch <em>adds</em> are held to the policy
+outright with no baseline, because the hook refused those messages while they were being
+written — a failure there means the hook was bypassed or the policy moved.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> scripts/ci/commit-policy</span></span>
+<span class="giallo-l"><span>commit-policy: branch 8998e11fd..HEAD, 0 failing</span></span>
+<span class="giallo-l"><span>commit-policy: history 54 failing, baseline 54</span></span></code></pre>
+<p>A checkout with no trunk to compare against reports that it measured nothing rather than
+reporting a pass.</p>
+<h2 id="using-it"><a class="zola-anchor" href="#using-it" aria-label="Anchor link for: using-it">Using it</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus commit plan</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what this tree would commit, and why</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus commit scopes</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the vocabulary, and what it was learned from</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus commit validate </span><span class="z-l-16 z-d-16">&lt;&lt;</span><span>&#39;</span><span>EOF</span><span>&#39;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> one message, before writing it</span></span>
+<span class="giallo-l"><span>feat(commit): a subject</span></span>
+<span class="giallo-l"><span>EOF</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus commit validate --rev HEAD</span><span class="z-l-10 z-l-i z-d-4 z-d-i">           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the message of a commit already made</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus commit history origin/master..HEAD</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> this branch&#39;s commits</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus commit plan --format json</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the same answer, for a program</span></span></code></pre>
+<p>Everything above works offline. Nothing in this subsystem reaches a network, and nothing
+about entering the repository, completing a word or answering <code>--help</code> reads the history —
+the vocabulary is learned at the moment a commit is being planned or judged, which is a
+moment that already involves waiting for git.</p>
+<h2 id="proof"><a class="zola-anchor" href="#proof" aria-label="Anchor link for: proof">Proof</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>what</th><th>where</th></tr></thead><tbody>
+<tr><td>rule</td><td><code>.ai/repo/rules/project/conventional-commits.v2.md</code> (blocking)</td></tr>
+<tr><td>unit</td><td><code>apps/majordomus-cli/src/commit/</code> — 46 tests beside the code they judge</td></tr>
+<tr><td>behavioural</td><td><code>test/cases/274_commit_policy.sh</code> — real repositories, real worktrees, the real hook</td></tr>
+<tr><td>gate</td><td><code>scripts/ci/commit-policy</code>, declared in <code>.ai/repo/ci/gates.yaml</code></td></tr>
+<tr><td>declaration</td><td><code>apps/majordomus-cli/src/capability/builtin/commit.rs</code></td></tr>
+</tbody></table>
+</div>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-8 z-d-8"> 274_commit_policy</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/commit-policy</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> test</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-manifest-path</span><span class="z-l-8 z-d-8"> apps/majordomus-cli/Cargo.toml</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-lib</span><span class="z-l-8 z-d-8"> commit::</span></span></code></pre><h2 id="what-it-deliberately-does-not-do"><a class="zola-anchor" href="#what-it-deliberately-does-not-do" aria-label="Anchor link for: what-it-deliberately-does-not-do">What it deliberately does not do</a></h2>
+<p>It does not judge whether the subject is a good sentence, whether the change is atomic, or
+whether the work was worth doing. A reviewer decides those, and a validator that pretended to
+is a validator nobody trusts.</p>
+<p>It does not create issues, push, or open pull requests. Those are remote mutations with their
+own failure modes, and this subsystem's whole value is that it is a pure function of a tree
+and a message: it works offline, it cannot half-succeed, and every answer it gives can be
+recomputed and checked.</p>
+</article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/commit-message-is-judged/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A commit message that does not satisfy the repository&#39;s declared commit policy is refused at the moment it is written, and the history&#39;s existing debt is recorded and may not grow</span></a></li><li><a href="https://majordomus.dev/guarantees/commit-scopes-are-learned/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">The scope vocabulary a commit is judged against is learned from this repository&#39;s own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal</span></a></li><li><a href="https://majordomus.dev/guarantees/commit-plan-is-refusable/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A commit plan carries a fingerprint of the repository, the worktree, HEAD and the exact change set it was derived from, so a plan acted on after the tree moved is refused with the reason rather than applied</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a77c35a740530f8475d63b7f22fad90bceed0b01" class="font-mono underline">a77c35a</a> · inputs <span class="font-mono">70e54b389234</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://majordomus.dev/js/mermaid.min.js"></script>
+<script src="https://majordomus.dev/js/diagrams.js"></script>
+
+</body>
+</html>

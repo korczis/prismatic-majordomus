@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=684c3a56032d5ad6f510">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=dac23a2c3bb3917f7fd8">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -207,7 +207,37 @@
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · ClosedSessions</h3><p class="mt-1 break-words text-sm text-body">The tracked half of the subsystem: the records a clone receives.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · ClosedSessions</h3><p class="mt-1 break-words text-sm text-body">The tracked half of the subsystem: the records a clone receives.
+
+`total` is exact and `newest` is a window, and keeping them as two numbers is the whole
+design of this type. The tracked directory grows without bound and a Cockpit card is not
+a listing page, so the rows are capped — but a capped list that did not carry the true
+total would quietly understate the repository, which is the shape of defect this
+repository has been bitten by often enough to name. `window` says how many rows came
+back, so a reader can see the cap rather than infer it.
+
+```
+use majordomus_cli::capability::builtin::lifecycle::ClosedSessions;
+use serde_json::json;
+
+let row = |id: &amp;str| json!({
+    &quot;session_id&quot;: id,
+    &quot;uri&quot;: format!(&quot;majordomus://session/{id}&quot;),
+    &quot;path&quot;: format!(&quot;.ai/repo/project/sessions/{id}.md&quot;),
+    &quot;branch&quot;: &quot;master&quot;,
+});
+let c: ClosedSessions = serde_json::from_value(json!({
+    &quot;total&quot;: 137,
+    &quot;on_this_branch&quot;: 41,
+    &quot;newest&quot;: [row(&quot;s-0137&quot;), row(&quot;s-0136&quot;)],
+    &quot;window&quot;: 2,
+})).unwrap();
+
+// the window is what came back; the total is what exists
+assert_eq!(c.window, c.newest.len());
+assert!(c.total &gt; c.window, &quot;the rows are capped and the total is not&quot;);
+assert!(c.on_this_branch &lt;= c.total);
+```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
@@ -237,7 +267,7 @@
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;ClosedSession&quot;: {
-      &quot;description&quot;: &quot;One closed episode of the tracked, durable projection.&quot;,
+      &quot;description&quot;: &quot;One closed episode of the tracked, durable projection — the half of this subsystem that\nsurvives a clone.\n\nIt carries both a `path` and a `uri` because they answer different questions: the path\nis where the record is in this checkout, and the `majordomus://session/&lt;identity&gt;`\nidentifier is what every other surface addresses the same record by, so a reader can\nfollow it to the object page without constructing one.\n\nEverything but the identity, the identifier and the path is optional, because a record\nwritten by an older close carries fewer fields and is still a record.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ClosedSession;\nuse serde_json::json;\n\nlet s: ClosedSession = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0042\&quot;,\n    \&quot;uri\&quot;: \&quot;majordomus://session/2026-09-12-s-0042\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/repo/project/sessions/2026-09-12-s-0042.md\&quot;,\n    \&quot;created_at\&quot;: \&quot;2026-09-12T15:44:00Z\&quot;,\n    \&quot;branch\&quot;: \&quot;master\&quot;,\n    \&quot;head\&quot;: \&quot;cd04012f1\&quot;,\n    \&quot;outcome\&quot;: \&quot;landed\&quot;,\n})).unwrap();\n\nassert!(s.uri.starts_with(\&quot;majordomus://session/\&quot;), \&quot;addressable as an object\&quot;);\nassert_eq!(s.outcome, \&quot;landed\&quot;);\n\n// an older record with less in it is still one, and says so by absence\nlet sparse: ClosedSession = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0001\&quot;,\n    \&quot;uri\&quot;: \&quot;majordomus://session/2026-08-01-s-0001\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/repo/project/sessions/2026-08-01-s-0001.md\&quot;,\n})).unwrap();\nassert!(sparse.outcome.is_empty() &amp;&amp; sparse.title.is_empty());\n```&quot;,
       &quot;properties&quot;: {
         &quot;branch&quot;: {
           &quot;description&quot;: &quot;The branch it closed on.&quot;,
@@ -280,7 +310,7 @@
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;The tracked half of the subsystem: the records a clone receives.&quot;,
+  &quot;description&quot;: &quot;The tracked half of the subsystem: the records a clone receives.\n\n`total` is exact and `newest` is a window, and keeping them as two numbers is the whole\ndesign of this type. The tracked directory grows without bound and a Cockpit card is not\na listing page, so the rows are capped — but a capped list that did not carry the true\ntotal would quietly understate the repository, which is the shape of defect this\nrepository has been bitten by often enough to name. `window` says how many rows came\nback, so a reader can see the cap rather than infer it.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ClosedSessions;\nuse serde_json::json;\n\nlet row = |id: &amp;str| json!({\n    \&quot;session_id\&quot;: id,\n    \&quot;uri\&quot;: format!(\&quot;majordomus://session/{id}\&quot;),\n    \&quot;path\&quot;: format!(\&quot;.ai/repo/project/sessions/{id}.md\&quot;),\n    \&quot;branch\&quot;: \&quot;master\&quot;,\n});\nlet c: ClosedSessions = serde_json::from_value(json!({\n    \&quot;total\&quot;: 137,\n    \&quot;on_this_branch\&quot;: 41,\n    \&quot;newest\&quot;: [row(\&quot;s-0137\&quot;), row(\&quot;s-0136\&quot;)],\n    \&quot;window\&quot;: 2,\n})).unwrap();\n\n// the window is what came back; the total is what exists\nassert_eq!(c.window, c.newest.len());\nassert!(c.total &gt; c.window, \&quot;the rows are capped and the total is not\&quot;);\nassert!(c.on_this_branch &lt;= c.total);\n```&quot;,
   &quot;properties&quot;: {
     &quot;newest&quot;: {
       &quot;description&quot;: &quot;The newest [`CLOSED_WINDOW`], newest first.&quot;,
@@ -348,7 +378,7 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::lifecycle</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ClosedSessions</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">e8140aa860db795c02142907ffca5f52f2de055295de753fbf1a8331ce595581</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">819930477a6002160548a413cefacec52f7d3dc7f14461338094e03296bb601f</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -420,7 +450,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/acebf3d7e787c5d8399377f156ec585584283712" class="font-mono underline">acebf3d</a> · inputs <span class="font-mono">6d163cafa01e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a77c35a740530f8475d63b7f22fad90bceed0b01" class="font-mono underline">a77c35a</a> · inputs <span class="font-mono">70e54b389234</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
