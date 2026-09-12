@@ -247,16 +247,25 @@ fn head() -> String {
 
 impl BenchmarkCases for HistoryInput {
     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        vec![
-            // Bounded, because a benchmark that reads the whole history measures how old
-            // the repository is rather than how fast the judge is.
-            NamedCase::new(
-                "recent",
-                HistoryInput {
-                    range: "HEAD~50..HEAD".into(),
-                },
-            ),
-        ]
+        // `HEAD`, and deliberately not a bounded range like `HEAD~50..HEAD`.
+        //
+        // The bounded form was the first instinct — a benchmark that reads the whole history
+        // measures how old the repository is rather than how fast the judge is — and it was
+        // wrong for a reason worth recording: a benchmark case is executed against a
+        // *disposable* repository, which has two commits. `HEAD~50` does not resolve there,
+        // the capability correctly refuses the range as invalid input, and the route answers
+        // 400. It failed in `http_serve` behind a job name and a target name that both
+        // matched master's own failures, which is exactly how a defect of one's own gets
+        // read as inherited.
+        //
+        // `HEAD` resolves in every repository that has a commit, which is the property a
+        // benchmark case needs before any other. That its cost grows with the history is not
+        // a flaw in the measurement: judging every commit *is* the operation, and a number
+        // that grows with the subject is the honest one.
+        vec![NamedCase::new(
+            "whole-history",
+            HistoryInput { range: head() },
+        )]
     }
 }
 

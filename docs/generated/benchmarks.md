@@ -26,7 +26,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commands.get` | commands | query | — | covered | covered | covered | `worktree-status` |
 | `commands.graph` | commands | query | — | covered | covered | covered | `default` |
 | `commands.list` | commands | query | — | covered | covered | covered | `all`, `read-only`, `one-program` |
-| `commit.history` | commit | query | — | covered | covered | covered | `recent` |
+| `commit.history` | commit | query | — | covered | covered | covered | `whole-history` |
 | `commit.plan` | commit | query | — | covered | covered | covered | `default` |
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |

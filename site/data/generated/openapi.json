@@ -28870,7 +28870,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "commit history",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commit/history?range=HEAD~50..HEAD\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commit/history?range=HEAD\"",
           "description": "Every commit in a git range against the commit policy, in one pass: how many were read, how many git composed and are exempt, how many carry an error, and every commit that has a finding with what it is. What the gate reads to refuse new debt, and what answers `is the history of this branch clean?` without a process per commit.",
           "id": "commit.history",
           "kind": "query",
@@ -28882,8 +28882,8 @@
               "description": "Anything `git log` accepts: `origin/master..HEAD`, `v0.6.0..`, a bare `HEAD`.\nDefault `HEAD`, which is the whole history reachable from here.",
               "examples": [
                 {
-                  "case": "recent",
-                  "value": "\"HEAD~50..HEAD\""
+                  "case": "whole-history",
+                  "value": "\"HEAD\""
                 }
               ],
               "name": "range",
