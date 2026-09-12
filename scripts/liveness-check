@@ -112,9 +112,19 @@ scan() {
         if (inheredoc[i] != "") continue
         if (L ~ /^[[:space:]]*#/) continue
         if (L !~ /[^&|>][[:space:]]*&[[:space:]]*$/) continue
-        supervised = 0
-        for (j = i; j <= i + W && j <= NR; j++)
+        # The window is six lines of *code*, not six lines of file. A spawn whose command
+        # carries a heredoc puts its body between the `&` and the `$!` that captures it,
+        # and a window counted in raw lines is spent on text the shell never runs:
+        # `test/cases/191` captures `$!` on the first line after the terminator and was
+        # reported unsupervised because ten lines of Python stood in between. Heredoc lines
+        # are stepped over rather than counted, so the window reaches the same distance in
+        # commands whether or not one of them is written inline.
+        supervised = 0; seen = 0
+        for (j = i; j <= NR && seen <= W; j++) {
+          if (j > i && inheredoc[j] != "") continue
           if (line[j] ~ /\$!/ || line[j] ~ /(^|[;&|() ])wait([ ;)]|$)/) { supervised = 1; break }
+          seen++
+        }
         if (supervised) continue
         t = L; sub(/^[[:space:]]+/, "", t)
         printf "%s:%d:unsupervised-spawn:%s\n", f, i, substr(t, 1, 100)
