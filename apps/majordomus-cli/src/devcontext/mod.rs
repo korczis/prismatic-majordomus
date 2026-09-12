@@ -500,8 +500,14 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
             });
         }
     }
-    commits.sort();
-    commits.dedup();
+    // One BTreeSet folds the repeats — a commit named twice by the same record is one fact
+    // — and the canonical order is what the answer is read in.
+    let mut commits: Vec<CommitReference> = commits
+        .into_iter()
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    crate::order::canonical(&mut commits);
 
     let git = match &index.repository.git {
         crate::git::GitState::Available(info) => GitContext {

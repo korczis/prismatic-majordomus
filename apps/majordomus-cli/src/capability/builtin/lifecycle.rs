@@ -308,6 +308,14 @@ pub struct Orphan {
     pub bytes: u64,
 }
 
+/// A path names one file, so it is both what a reader looks for and the identity that makes
+/// the orphan list total.
+impl crate::order::Ordered for Orphan {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.path, &self.path)
+    }
+}
+
 /// What the ledger says about episode lifecycle against what the store holds.
 ///
 /// The invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode
@@ -770,22 +778,16 @@ fn recovery(ctx: &Context, _: Empty) -> Result<Recovery, CapabilityError> {
     if let Some(section) = ctx.index.repository.sections.get("sessions") {
         let sessions = root.join(section);
         if let Ok(entries) = std::fs::read_dir(&sessions) {
-            let mut found: Vec<(String, u64)> = entries
+            let mut found: Vec<Orphan> = entries
                 .flatten()
                 .filter(|e| e.file_name().to_string_lossy().starts_with(".tmp."))
-                .map(|e| {
-                    (
-                        relative(&root, &e.path()),
-                        e.metadata().map(|m| m.len()).unwrap_or(0),
-                    )
+                .map(|e| Orphan {
+                    path: relative(&root, &e.path()),
+                    bytes: e.metadata().map(|m| m.len()).unwrap_or(0),
                 })
                 .collect();
-            found.sort();
-            orphans.extend(
-                found
-                    .into_iter()
-                    .map(|(path, bytes)| Orphan { path, bytes }),
-            );
+            crate::order::canonical(&mut found);
+            orphans.extend(found);
         }
     }
 
