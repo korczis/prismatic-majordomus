@@ -184,6 +184,9 @@ removal of the open records and stray temps it acted on.
   to a `session close` running now, and a `.mj-stage.XXXXXX` minutes old to a
   `scripts/derive` running now. Both are reported as `live` and neither is touched; one
   whose age cannot be read is skipped and counted.
+- A stale staging directory is reported and **never removed**. This command deletes no
+  directory tree — SECURITY.md states "no recursive deletion" — so a `.mj-stage.XXXXXX`
+  past the threshold is named, counted as skipped, and left for a person to remove.
 - An episode is *stranded* when its last sign of life — the later of its own `started_at`
   and the newest ledger line it stamped — is older than `session.stranded_after`.
   `--older-than <duration>` overrides the policy for one run.
