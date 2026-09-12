@@ -1,0 +1,521 @@
+#!/usr/bin/env bash
+# case-numbers — a case number names one case, and the next one is surveyed rather than guessed.
+#
+#   scripts/case-numbers next [--json]     the next free identity: every source surveyed and what
+#                                          each claimed, the identities spoken for and not landed
+#                                          with who holds each, and what could not be reached
+#   scripts/case-numbers collisions        every identity that more than one distinct file has
+#                                          ever carried, and where each of those files is now
+#   scripts/case-numbers check [--strict]  the gate: refuse a file in this tree that shares its
+#                                          identity with another and is not on the baseline
+#   scripts/case-numbers list              every identity in this tree held by more than one file
+#   scripts/case-numbers write-baseline    record this tree's collisions as accepted debt
+#
+#   MJ_ROOT=DIR          examine that repository instead of this one
+#   MJ_CASE_BASE=REF     what "not landed" is measured against; nothing else is tried when set
+#                        (default: the first of origin/master, origin/main, master, main)
+#   MJ_CASE_NO_BOARD=1   do not ask the peer board, and say that it was not asked
+#   MJ_CASE_BOARD_FILE=F read the board document from F instead of the server (the case does)
+#
+# Exit: 0 answered · 10 check refused a collision · 12 no test/cases/ here · 2 usage.
+#
+# `bash test/run.sh 96_worktree_topology` runs a case by its identity, `test/cases/96_*` is how
+# a gate selects one, and "case 96" is how every rule, claim and commit message here names one.
+# All three assume the identity names one case. On 2026-09-12 it did not: across 812 refs, 55 of
+# the 172 identities ever added had been carried by more than one distinct file, 25 identities
+# of this tree's 164 were held by two to seven files at once, and three sessions took 278 within
+# minutes of each other. Each of them read the tree it branched from, which is the one place the
+# next free number is least likely to be.
+#
+# The survey is `majordomus adr next`'s (lib/adr.sh), applied to a second identifier: four
+# sources, because each answers a question the others cannot.
+#
+#   this working tree     what the person asking can see
+#   the sibling worktrees authored and uncommitted is a real claim, and exists only on a disk
+#   every ref             every identity ever added under test/cases/ on any branch, tag, remote
+#                         or rescue ref, merged or not, in one `git log --all`. A file renamed or
+#                         deleted leaves its identity spent: allocation is max + 1, monotonic, and
+#                         never recycles a hole, because a hole is a number taken and withdrawn or
+#                         taken and not yet written, and no survey can tell those apart
+#   the peer board        the one source that sees a number a session has decided on and has not
+#                         written anywhere. Read through lib/context.sh, which is the repository's
+#                         single declared network call; unreachable is the ordinary case
+#
+# Neither of the two incomplete sources can be completed, and the output says so every time: a
+# ref scan sees only what was pushed, and the board sees an announcement only while its
+# connection lives. A number two sessions take in the same minute, neither pushing nor
+# announcing, is invisible to both. The allocator states that rather than vouching for a number
+# it cannot vouch for (project.a-verdict-states-its-subject).
+#
+# The gate is the other half, and the half that does not depend on anyone having asked: two
+# files with one identity in one tree is a defect a check can see. It is a ratchet in the shape
+# of scripts/ci/rust-command-check, because the collisions of the day it was written are spread
+# across other sessions' branches and renumbering them would break those branches; the baseline
+# records them, a file joining one of them is refused like any other, and an entry that no
+# longer collides is reported so the list can shrink. The identity is the text before the first
+# underscore, verbatim: 87b is the deliberate second half of 87, not a duplicate of it. The
+# rule is project.a-number-names-one-case.
+set -eu
+set -o pipefail
+
+TOOL="$(cd "$(dirname "$0")/.." && pwd -P)"
+ROOT="$(cd "${MJ_ROOT:-$TOOL}" && pwd -P)"
+cd "$ROOT"
+CASES="test/cases"
+BASELINE=".ai/repo/ci/case-numbers-baseline.txt"
+TAB="$(printf '\t')"
+
+usage() { sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; }
+
+sub="${1:-}"; [ $# -gt 0 ] && shift
+STRICT=0; JSON=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --strict) [ "$sub" = check ] || { echo "case-numbers: --strict belongs to check" >&2; exit 2; }; STRICT=1; shift ;;
+    --json) [ "$sub" = next ] || { echo "case-numbers: --json belongs to next" >&2; exit 2; }; JSON=1; shift ;;
+    *) echo "case-numbers: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+case "$sub" in
+  next|collisions|check|list|write-baseline) ;;
+  -h|--help|help) usage; exit 0 ;;
+  '') usage >&2; exit 2 ;;
+  *) echo "case-numbers: unknown subcommand $sub (next, collisions, check, list, write-baseline)" >&2; exit 2 ;;
+esac
+
+[ -d "$CASES" ] || { echo "case-numbers: no $CASES/ in $ROOT" >&2; exit 12; }
+
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/mj.cases.XXXXXX")"
+trap 'rm -rf "$WORK"' EXIT
+
+# The case files of one directory, one basename per line, sorted. A glob rather than `ls`: a
+# name that is not plain ASCII survives a glob and not a pipeline, and a glob that matches
+# nothing stays literal, so each name is tested for existence.
+files_here() {
+  local f
+  for f in "$1"/*.sh; do
+    [ -e "$f" ] || continue
+    f="${f##*/}"
+    case "$f" in [0-9]*_*) printf '%s\n' "$f" ;; esac
+  done | LC_ALL=C sort
+}
+
+# ================================================================ the tree: check, list, baseline
+
+# every file of this tree that shares its identity with another, sorted
+colliding_here() {
+  files_here "$CASES" \
+    | awk -F_ '{ id[NR] = $1; f[NR] = $0; n[$1]++ } END { for (k = 1; k <= NR; k++) if (n[id[k]] > 1) print f[k] }' \
+    | LC_ALL=C sort
+}
+count_lines() { awk 'NF { n++ } END { print n + 0 }'; }
+
+if [ "$sub" = list ]; then
+  files_here "$CASES" > "$WORK/files"
+  # sorted in C order, the files of one identity are adjacent: `10_` sorts after `100_` and
+  # before any identity that follows it, because `_` is above every digit
+  awk -F_ '
+    $1 != prev { if (c > 1) print line; line = sprintf("%-5s", $1); c = 0; prev = $1 }
+    { line = line " " $0; c++ }
+    END { if (c > 1) print line }' "$WORK/files"
+  awk -F_ '{ n[$1]++ } END { for (i in n) { ids++; if (n[i] > 1) { dup++; files += n[i] } }
+    printf "%d of %d identities in this tree are held by more than one file (%d of %d files)\n",
+      dup, ids, files, NR }' "$WORK/files"
+  exit 0
+fi
+
+if [ "$sub" = write-baseline ]; then
+  mkdir -p "$(dirname "$BASELINE")"
+  colliding_here > "$WORK/colliding"
+  {
+    printf '# The case files that shared an identity with another file of this tree on the day this\n'
+    printf '# was written, and may keep sharing it. Nothing may be added: a new file that collides\n'
+    printf '# is refused, including one that joins a collision listed here.\n'
+    printf '#\n'
+    printf '# Written by: scripts/case-numbers write-baseline (a deliberate act; the rule is\n'
+    printf '# project.a-number-names-one-case). A renumbering removes its lines; shrinking this\n'
+    printf '# list needs no permission, and `scripts/case-numbers check` names the entries that\n'
+    printf '# no longer collide.\n'
+    cat "$WORK/colliding"
+  } > "$BASELINE"
+  printf 'case-numbers: recorded %s file(s) across %s identit(ies) in %s\n' \
+    "$(count_lines < "$WORK/colliding")" \
+    "$(awk -F_ '{ n[$1] = 1 } END { print length(n) + 0 }' "$WORK/colliding")" "$BASELINE"
+  exit 0
+fi
+
+if [ "$sub" = check ]; then
+  files_here "$CASES" > "$WORK/files"
+  colliding_here > "$WORK/colliding"
+  : > "$WORK/accepted"
+  if [ "$STRICT" = 0 ] && [ -f "$BASELINE" ]; then
+    awk '!/^#/ && NF' "$BASELINE" | LC_ALL=C sort -u > "$WORK/accepted"
+  fi
+  LC_ALL=C comm -23 "$WORK/colliding" "$WORK/accepted" > "$WORK/new"
+  LC_ALL=C comm -13 "$WORK/colliding" "$WORK/accepted" > "$WORK/stale"
+  n_files="$(count_lines < "$WORK/files")"
+  n_ids="$(awk -F_ '{ n[$1] = 1 } END { print length(n) + 0 }' "$WORK/files")"
+  if [ -s "$WORK/new" ]; then
+    printf 'REFUSE a case identity names one case, and these files share one:\n\n'
+    while IFS= read -r f; do
+      id="${f%%_*}"
+      printf '  %-44s shares %s with: %s\n' "$f" "$id" \
+        "$(awk -F_ -v id="$id" -v me="$f" '$1 == id && $0 != me { printf "%s ", $0 }' "$WORK/files")"
+    done < "$WORK/new"
+    printf '\n  examined %s files, %s identities, under %s/' "$n_files" "$n_ids" "$CASES"
+    if [ "$STRICT" = 1 ]; then printf ' (--strict: the baseline is not consulted)\n'
+    else printf '; %s file(s) are accepted debt on %s\n' "$(count_lines < "$WORK/accepted")" "$BASELINE"; fi
+    printf '\n  `bash test/run.sh <identity>_...` and every "case <identity>" assume the identity names\n'
+    printf '  one case. Take a free one from a survey rather than from this tree alone:\n'
+    printf '    scripts/case-numbers next\n'
+    exit 10
+  fi
+  if [ "$STRICT" = 1 ]; then
+    printf 'ok  every case identity names one case: %s files, %s identities under %s/\n' "$n_files" "$n_ids" "$CASES"
+  else
+    printf 'ok  no case identity is newly shared: %s files, %s identities under %s/; %s file(s) across %s identit(ies) are accepted debt on %s\n' \
+      "$n_files" "$n_ids" "$CASES" "$(count_lines < "$WORK/accepted")" \
+      "$(awk -F_ '{ n[$1] = 1 } END { print length(n) + 0 }' "$WORK/accepted")" "$BASELINE"
+  fi
+  if [ -s "$WORK/stale" ]; then
+    printf '    %s baseline entr(ies) no longer collide and may be removed:\n' "$(count_lines < "$WORK/stale")"
+    sed 's/^/      /' "$WORK/stale"
+  fi
+  exit 0
+fi
+
+# ================================================================ the survey: next, collisions
+#
+# Rows of $WORK/claims:   <identity> TAB <source> TAB <where> TAB <file>
+#   source: tree | worktree | ref (every file ever added, from history) | peer (no file)
+# Rows of $WORK/holders:  <file> TAB <kind> TAB <where>
+#   kind:   tree | worktree | ref — who carries that file NOW, which is what "held by" means
+
+: > "$WORK/claims"; : > "$WORK/holders"
+
+# ---------------------------------------------------------------- this working tree
+files_here "$CASES" > "$WORK/tree"
+awk -F_ -v OFS="$TAB" '{ print $1, "tree", "this working tree", $0 }' "$WORK/tree" >> "$WORK/claims"
+awk -v OFS="$TAB" '{ print $0, "tree", "this working tree" }' "$WORK/tree" >> "$WORK/holders"
+
+# ---------------------------------------------------------------- every sibling worktree
+WT_LISTED=0; WT_READ=0; WT_GONE=0; WT_NOCASES=0
+if git -C "$ROOT" worktree list --porcelain > "$WORK/wt.porcelain" 2>/dev/null; then
+  sed -n 's/^worktree //p' "$WORK/wt.porcelain" > "$WORK/wt.paths"
+  while IFS= read -r w; do
+    wp="$(cd "$w" 2>/dev/null && pwd -P)" || { WT_LISTED=$((WT_LISTED + 1)); WT_GONE=$((WT_GONE + 1)); continue; }
+    [ "$wp" = "$ROOT" ] && continue
+    WT_LISTED=$((WT_LISTED + 1))
+    [ -d "$wp/$CASES" ] || { WT_NOCASES=$((WT_NOCASES + 1)); continue; }
+    WT_READ=$((WT_READ + 1))
+    files_here "$wp/$CASES" > "$WORK/wt.one"
+    awk -F_ -v OFS="$TAB" -v w="$w" '{ print $1, "worktree", w, $0 }' "$WORK/wt.one" >> "$WORK/claims"
+    awk -v OFS="$TAB" -v w="$w" '{ print $0, "worktree", w }' "$WORK/wt.one" >> "$WORK/holders"
+  done < "$WORK/wt.paths"
+  WT_OK=1
+else
+  WT_OK=0
+fi
+
+# ---------------------------------------------------------------- every ref, as history
+# `--all` is every branch, tag, remote-tracking and rescue ref and the HEAD of every linked
+# worktree, in one process. `--no-renames` is load-bearing: rename detection is on by default,
+# and a case whose slug was edited then arrives as R rather than A and its identity is missed.
+REFS_N=0
+if git -C "$ROOT" for-each-ref --format='%(refname)' > "$WORK/refs" 2>/dev/null \
+   && git -C "$ROOT" log --all --no-renames --pretty=format: --name-only --diff-filter=A -- "$CASES/" \
+        > "$WORK/log" 2>/dev/null; then
+  REFS_OK=1
+  REFS_N="$(count_lines < "$WORK/refs")"
+  sed -n "s|^$CASES/\\([0-9][^/]*_[^/]*\\.sh\\)\$|\\1|p" "$WORK/log" | LC_ALL=C sort -u \
+    | awk -F_ -v OFS="$TAB" '{ print $1, "ref", "git log --all --no-renames --diff-filter=A", $0 }' >> "$WORK/claims"
+
+  # ...and who carries each file now: one batch lookup of every ref's test/cases tree, then one
+  # listing per distinct tree. Most of 800 refs share a handful of trees, so this is a few
+  # hundred small processes rather than one per ref.
+  sed "s|\$|:$CASES|" "$WORK/refs" \
+    | git -C "$ROOT" cat-file --batch-check='%(objectname) %(objecttype)' > "$WORK/reftrees" 2>/dev/null || true
+  paste -d "$TAB" "$WORK/refs" "$WORK/reftrees" \
+    | awk -F"$TAB" -v OFS="$TAB" '{ split($2, o, " "); if (o[2] == "tree") print $1, o[1] }' > "$WORK/ref.tree"
+  cut -f2 "$WORK/ref.tree" | LC_ALL=C sort -u > "$WORK/trees"
+  : > "$WORK/tree.files"
+  while IFS= read -r t; do
+    git -C "$ROOT" ls-tree --name-only "$t" 2>/dev/null \
+      | awk -v OFS="$TAB" -v t="$t" '/^[0-9][^\/]*_.*\.sh$/ { print t, $0 }' >> "$WORK/tree.files" || true
+  done < "$WORK/trees"
+  awk -F"$TAB" -v OFS="$TAB" '
+    NR == FNR { files[$1] = files[$1] "\n" $2; next }
+    { r = $1; sub(/^refs\/(heads|remotes|tags)\//, "", r); sub(/^refs\//, "", r)
+      n = split(files[$2], fs, "\n"); for (i = 2; i <= n; i++) print fs[i], "ref", r }' \
+    "$WORK/tree.files" "$WORK/ref.tree" >> "$WORK/holders"
+else
+  REFS_OK=0
+fi
+
+# ---------------------------------------------------------------- the peer board
+# Every token of what a peer announced — its scope paths and its intent — with punctuation
+# turned into space, so `case 291`, `case-291` and `test/cases/291_x.sh` all read as the word
+# `case` or `cases` followed by the identity.
+BOARD="unasked"
+if [ "${MJ_CASE_NO_BOARD:-0}" = 1 ]; then
+  BOARD="unasked"
+elif ! command -v jq >/dev/null 2>&1; then
+  BOARD="unreachable"
+elif [ -n "${MJ_CASE_BOARD_FILE:-}" ]; then
+  # the document the server would have answered, from a file: how the case proves the parse
+  if cp "$MJ_CASE_BOARD_FILE" "$WORK/board" 2>/dev/null && jq -e '.peers' "$WORK/board" >/dev/null 2>&1; then
+    BOARD="read"
+  else
+    BOARD="unreachable"
+  fi
+elif ( set +eu
+       MJ_BIN_DIR="$TOOL/bin"; MJ_LIB_DIR="$TOOL/lib"; MJ_ROOT="$ROOT"
+       MJ_VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$TOOL/bin/majordomus")"
+       export MJ_BIN_DIR MJ_LIB_DIR MJ_ROOT MJ_VERSION
+       # shellcheck source=../lib/common.sh
+       . "$TOOL/lib/common.sh" || exit 1
+       # shellcheck source=../lib/context.sh
+       . "$TOOL/lib/context.sh" || exit 1
+       mj_peer_board ) > "$WORK/board" 2>/dev/null; then
+  BOARD="read"
+else
+  BOARD="unreachable"
+fi
+if [ "$BOARD" = read ]; then
+    jq -r '.peers[] as $p
+      | ( $p.claims // (if $p.announcement then [$p.announcement] else [] end) )[]?
+      | [ $p.id, (.name // "-"), (((.scope // []) | join(" ")) + " " + (.intent // "")) ] | @tsv' \
+      "$WORK/board" > "$WORK/board.rows" 2>/dev/null || : > "$WORK/board.rows"
+    while IFS="$TAB" read -r pid name text; do
+      [ -n "$pid" ] || continue
+      printf '%s\n' "$text" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9]\{1,\}/ /g' \
+        | awk '{ for (i = 1; i < NF; i++) if (($i == "case" || $i == "cases") && $(i+1) ~ /^[0-9]+[a-z]?$/) print $(i+1) }' \
+        | LC_ALL=C sort -u \
+        | awk -v OFS="$TAB" -v who="$pid ($name)" '{ print $1, "peer", who, "" }' >> "$WORK/claims"
+    done < "$WORK/board.rows"
+fi
+
+# ---------------------------------------------------------------- the base
+# What a merge lands on. MJ_CASE_BASE, when set, is the base and nothing else is tried: an
+# override that silently fell back would be an override nobody could test.
+BASE=""
+if [ -n "${MJ_CASE_BASE:-}" ]; then
+  git -C "$ROOT" rev-parse --verify -q "${MJ_CASE_BASE}^{commit}" >/dev/null 2>&1 && BASE="$MJ_CASE_BASE"
+else
+  for b in origin/master origin/main master main; do
+    git -C "$ROOT" rev-parse --verify -q "${b}^{commit}" >/dev/null 2>&1 && { BASE="$b"; break; }
+  done
+fi
+: > "$WORK/base.files"; : > "$WORK/base.history"
+if [ -n "$BASE" ]; then
+  git -C "$ROOT" ls-tree --name-only "$BASE" -- "$CASES/" 2>/dev/null \
+    | sed -n "s|^$CASES/||p" | LC_ALL=C sort -u > "$WORK/base.files" || true
+  # every file the base's own history ever added: a stale branch still carrying a generation
+  # the base has since renamed or deleted is not a new allocation, and must not read as one
+  git -C "$ROOT" log "$BASE" --no-renames --pretty=format: --name-only --diff-filter=A -- "$CASES/" 2>/dev/null \
+    | sed -n "s|^$CASES/||p" | LC_ALL=C sort -u > "$WORK/base.history" || true
+fi
+
+# ================================================================ collisions
+if [ "$sub" = collisions ]; then
+  awk -F"$TAB" -v OFS="$TAB" \
+      -v basef="$WORK/base.files" -v histf="$WORK/base.history" -v holdf="$WORK/holders" -v base="${BASE:-}" '
+    BEGIN {
+      while ((getline l < basef) > 0) onbase[l] = 1
+      while ((getline l < histf) > 0) wasbase[l] = 1
+      while ((getline l < holdf) > 0) {
+        split(l, h, "\t")
+        if (h[2] == "ref") { rn[h[1]]++; if (rn[h[1]] <= 3) rl[h[1]] = rl[h[1]] (rn[h[1]] > 1 ? ", " : "") h[3] }
+        else if (h[2] == "worktree") wn[h[1]]++
+        else if (h[2] == "tree") tr[h[1]] = 1
+      }
+    }
+    $2 != "peer" && $4 != "" && !seen[$4]++ { files[$1] = files[$1] "\n" $4; nf[$1]++; ids[$1] = 1 }
+    END {
+      for (i in ids) { total++; if (nf[i] > 1) { multi++; list[multi] = i } }
+      # identities in numeric order, a suffix after its number
+      for (a = 1; a <= multi; a++) for (b = a + 1; b <= multi; b++)
+        if (list[b] + 0 < list[a] + 0 || (list[b] + 0 == list[a] + 0 && list[b] < list[a])) { t = list[a]; list[a] = list[b]; list[b] = t }
+      live = 0
+      for (a = 1; a <= multi; a++) {
+        i = list[a]; n = split(files[i], fs, "\n"); held = 0
+        printf "%s  %d files\n", i, nf[i]
+        for (k = 2; k <= n; k++) {
+          f = fs[k]; where = ""
+          if (base != "" && (f in onbase)) where = "on " base
+          else if (base != "" && (f in wasbase)) where = "was on " base ", since renamed or removed"
+          else where = "not on " (base == "" ? "any base" : base)
+          carried = ""
+          if (f in tr) carried = "this working tree"
+          if (rn[f] > 0) carried = carried (carried == "" ? "" : "; ") rn[f] " ref" (rn[f] > 1 ? "s" : "") " (" rl[f] (rn[f] > 3 ? ", ..." : "") ")"
+          if (wn[f] > 0) carried = carried (carried == "" ? "" : "; ") wn[f] " worktree" (wn[f] > 1 ? "s" : "")
+          if (carried == "") carried = "no ref or worktree carries it now: history only"
+          else held++
+          printf "  %-48s %s — %s\n", f, where, carried
+        }
+        if (held > 1) live++
+      }
+      printf "\n%d of %d identities ever claimed have been carried by more than one distinct file;\n", multi, total
+      printf "%d of those %d are carried by more than one file somewhere right now.\n", live, multi
+      printf "surveyed: this working tree, every sibling worktree on disk, and every ref; a file on an\n"
+      printf "open branch and one on an abandoned branch are the same bytes to this survey.\n"
+    }' "$WORK/claims"
+  [ "$REFS_OK" = 1 ] || printf 'the refs were NOT surveyed: git log --all failed in %s\n' "$ROOT"
+  [ -n "$BASE" ] || printf 'no base ref resolves here (%s): "on the base" was not measured\n' "${MJ_CASE_BASE:-origin/master, origin/main, master, main}"
+  exit 0
+fi
+
+# ================================================================ next
+MAX="$(awk -F"$TAB" '{ n = $1 + 0; if (n > m) m = n } END { print m + 0 }' "$WORK/claims")"
+NEXT=$((MAX + 1))
+HOLDER="$(awk -F"$TAB" -v m="$MAX" '($1 + 0) == m + 0 { if ($4 != "") printf "%s: %s", $2, $4; else printf "%s: %s", $2, $3; exit }' "$WORK/claims")"
+# the holes below the high-water mark, as ranges: spent, never free
+HOLES="$(awk -F"$TAB" -v m="$MAX" '{ seen[$1 + 0] = 1 }
+  END { c = 0; out = ""; i = 0
+    while (i < m) { if (!(i in seen)) { j = i; while (j + 1 < m && !((j + 1) in seen)) j++
+        c += j - i + 1; out = out (out == "" ? "" : " ") (i == j ? i : i "-" j); i = j + 1 } else i++ }
+    printf "%d\t%s\n", c, out }' "$WORK/claims")"
+N_HOLES="${HOLES%%"$TAB"*}"; HOLE_RANGES="${HOLES#*"$TAB"}"
+
+# per source: distinct identities, and distinct files where the source has files
+awk -F"$TAB" -v OFS="$TAB" '!s[$2 FS $1]++ { ni[$2]++ } $4 != "" && !f[$2 FS $4]++ { nf[$2]++ }
+  END { split("tree worktree ref peer", o, " "); for (i = 1; i <= 4; i++) print o[i], ni[o[i]] + 0, nf[o[i]] + 0 }' \
+  "$WORK/claims" > "$WORK/counted"
+
+# Outstanding: an identity something claims now that the base carries no file of. Held by the
+# tree, a worktree or the board, or by a ref that still carries one of its files — and a file
+# the base's own history once added is a generation of the base, not an allocation. An
+# identity with no current holder was taken and withdrawn: it is spent, and the holes say so.
+awk -F"$TAB" -v OFS="$TAB" \
+    -v basef="$WORK/base.files" -v histf="$WORK/base.history" -v holdf="$WORK/holders" '
+  BEGIN {
+    while ((getline l < basef) > 0) { split(l, p, "_"); baseid[p[1]] = 1 }
+    while ((getline l < histf) > 0) wasbase[l] = 1
+    while ((getline l < holdf) > 0) {
+      split(l, h, "\t"); if (h[1] in wasbase) continue
+      if (h[2] == "ref") { rn[h[1]]++; if (rn[h[1]] <= 3) rl[h[1]] = rl[h[1]] (rn[h[1]] > 1 ? ", " : "") h[3] }
+      else if (h[2] == "worktree") { wn[h[1]]++; if (wn[h[1]] <= 2) wl[h[1]] = wl[h[1]] (wn[h[1]] > 1 ? ", " : "") h[3] }
+      else if (h[2] == "tree") tr[h[1]] = 1
+    }
+  }
+  ($1 in baseid) { next }
+  $2 == "peer" { peer[$1] = peer[$1] (peer[$1] == "" ? "" : ", ") "board " $3; ids[$1] = 1; next }
+  $4 != "" && !seen[$1 FS $4]++ { files[$1] = files[$1] "\n" $4; ids[$1] = 1 }
+  END {
+    for (i in ids) {
+      n = split(files[i], fs, "\n"); line = ""
+      for (k = 2; k <= n; k++) {
+        f = fs[k]; c = ""
+        if (f in tr) c = "this working tree"
+        if (rn[f] > 0) c = c (c == "" ? "" : "; ") rn[f] " ref" (rn[f] > 1 ? "s" : "") " (" rl[f] (rn[f] > 3 ? ", ..." : "") ")"
+        if (wn[f] > 0) c = c (c == "" ? "" : "; ") wn[f] " worktree" (wn[f] > 1 ? "s" : "") " (" wl[f] (wn[f] > 2 ? ", ..." : "") ")"
+        if (c != "") line = line (line == "" ? "" : " | ") f " held by: " c
+      }
+      if (peer[i] != "") line = line (line == "" ? "" : " | ") "announced on the " peer[i]
+      if (line != "") print i, line
+    }
+  }' "$WORK/claims" | LC_ALL=C sort -t "$TAB" -k1,1n > "$WORK/outstanding"
+
+# Contested: an identity the base carries, and a DIFFERENT file of that identity carried now by
+# a ref, a worktree or this tree — each of those collides with the base the day it lands.
+CONTESTED="$(awk -F"$TAB" -v basef="$WORK/base.files" -v histf="$WORK/base.history" '
+  BEGIN { while ((getline l < basef) > 0) { onbase[l] = 1; split(l, p, "_"); baseid[p[1]] = 1 }
+          while ((getline l < histf) > 0) wasbase[l] = 1 }
+  { split($1, p, "_") } (p[1] in baseid) && !($1 in onbase) && !($1 in wasbase) && !s[p[1]]++ { n++ }
+  END { print n + 0 }' "$WORK/holders")"
+N_OUT="$(count_lines < "$WORK/outstanding")"
+
+if [ "$JSON" = 1 ]; then
+  esc() { sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
+  printf '{"schema":1,"next":%s,"highest_claimed":%s,"sources":[' "$NEXT" "$MAX"
+  first=1
+  while IFS="$TAB" read -r src ni nf; do
+    [ "$first" = 1 ] || printf ','; first=0
+    case "$src" in
+      tree) reach=true ;;
+      worktree) [ "$WT_OK" = 1 ] && reach=true || reach=false ;;
+      ref) [ "$REFS_OK" = 1 ] && reach=true || reach=false ;;
+      peer) [ "$BOARD" = read ] && reach=true || reach=false ;;
+    esac
+    printf '{"source":"%s","identities":%s,"files":%s,"reachable":%s}' "$src" "$ni" "$nf" "$reach"
+  done < "$WORK/counted"
+  printf '],"board":"%s","refs":%s,"worktrees":%s,"spent_holes":%s,' "$BOARD" "$REFS_N" "$WT_LISTED" "$N_HOLES"
+  printf '"base":%s,"outstanding":[' "$([ -n "$BASE" ] && printf '"%s"' "$BASE" || printf null)"
+  first=1
+  while IFS="$TAB" read -r oid oline; do
+    [ -n "$oid" ] || continue
+    [ "$first" = 1 ] || printf ','; first=0
+    printf '{"id":"%s","held_by":"%s"}' "$oid" "$(printf '%s' "$oline" | esc)"
+  done < "$WORK/outstanding"
+  printf '],"contested_on_base":%s}\n' "$CONTESTED"
+  exit 0
+fi
+
+printf 'next free identity: case %s\n\n' "$NEXT"
+printf 'surveyed, and what each claimed:\n'
+while IFS="$TAB" read -r src ni nf; do
+  case "$src" in
+    tree)
+      printf '  %-52s %s identities, %s files\n' "this working tree" "$ni" "$nf" ;;
+    worktree)
+      if [ "$WT_OK" = 1 ]; then
+        printf '  %-52s %s identities, from %s of %s worktrees' "every sibling worktree, as it stands on disk" "$ni" "$WT_READ" "$WT_LISTED"
+        [ "$WT_GONE" = 0 ] || printf ' (%s registered and gone from disk)' "$WT_GONE"
+        [ "$WT_NOCASES" = 0 ] || printf ' (%s without %s/)' "$WT_NOCASES" "$CASES"
+        printf '\n'
+      else
+        printf '  %-52s NOT surveyed: git worktree list failed\n' "every sibling worktree, as it stands on disk"
+      fi ;;
+    ref)
+      if [ "$REFS_OK" = 1 ]; then
+        printf '  %-52s %s identities ever added, across %s refs\n' "every ref: branches, tags, remotes, rescue refs" "$ni" "$REFS_N"
+      else
+        printf '  %-52s NOT surveyed: git log --all failed\n' "every ref: branches, tags, remotes, rescue refs"
+      fi ;;
+    peer)
+      case "$BOARD" in
+        read) printf '  %-52s %s identities announced\n' "the peer board of the shared server" "$ni" ;;
+        unasked) printf '  %-52s not asked (MJ_CASE_NO_BOARD=1)\n' "the peer board of the shared server" ;;
+        *) printf '  %-52s not reachable: no server answering, or no jq/curl\n' "the peer board of the shared server" ;;
+      esac ;;
+  esac
+done < "$WORK/counted"
+
+printf '\nhighest claimed: case %s' "$MAX"
+[ -z "$HOLDER" ] || printf '  (%s)' "$HOLDER"
+printf '\n'
+case "$HOLDER" in peer*) printf 'that is a board claim, not a file; it may be your own announcement\n' ;; esac
+
+if [ "$N_HOLES" -gt 0 ]; then
+  printf '\n%s of %s identities below it (0-%s) are claimed by nothing: spent, not free.\n' "$N_HOLES" "$MAX" "$((MAX - 1))"
+  printf 'allocation is monotonic and never recycles a hole: a hole is a number taken and withdrawn,\n'
+  printf 'or taken and not yet written, and no survey can tell those apart.\n'
+  printf '%s\n' "$HOLE_RANGES" | fold -s -w 96 | sed 's/^/  /'
+fi
+
+if [ -z "$BASE" ]; then
+  printf '\noutstanding allocations were NOT surveyed: no base ref resolves here (%s); fetch first\n' \
+    "${MJ_CASE_BASE:-origin/master, origin/main, master, main}"
+else
+  if [ "$N_OUT" -gt 0 ]; then
+    printf '\n%s identit(ies) allocated and not landed on %s: spoken for, and invisible to anyone reading %s:\n' \
+      "$N_OUT" "$BASE" "$BASE"
+    while IFS="$TAB" read -r oid oline; do
+      printf '  %-5s %s\n' "$oid" "$oline"
+    done < "$WORK/outstanding"
+    printf 'whether each lands, or its number is released, is a person'"'"'s call: an identity on an open\n'
+    printf 'branch and one on an abandoned branch are the same bytes to this survey.\n'
+  else
+    printf '\nnothing is allocated and not landed on %s, as far as the sources above reach.\n' "$BASE"
+  fi
+  if [ "$CONTESTED" -gt 0 ]; then
+    printf '\n%s identit(ies) that %s carries are also carried, under a different file, by a ref or\n' "$CONTESTED" "$BASE"
+    printf 'worktree that has not landed: each collides the day it lands. scripts/case-numbers collisions\n'
+  fi
+fi
+
+printf '\nnot surveyed, and not surveyable: an identity a session has taken but neither pushed nor\n'
+printf 'announced. A ref scan sees what was pushed; the board sees what was announced on a live\n'
+printf 'connection and forgets it on reconnect. Two sessions allocating in the same minute are\n'
+printf 'invisible to both, so case %s is the best reading of what could be reached, not a reservation.\n' "$NEXT"
+printf '\nannounce it before you write it: majordomus_announce, naming the identity as well as the paths\n'

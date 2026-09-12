@@ -102,6 +102,15 @@ gates:
     runs: bin/majordomus adr check
     summary: every decision valid and its references resolving, and no identity this branch adds is already carried by a different decision on another ref
 
+  # The second identifier this repository allocates by hand: a behavioural case's number. Two
+  # files of one identity in one tree is the defect this refuses; the collisions of the day it
+  # was written sit on the baseline, because they are spread across other sessions' branches
+  # and renumbering them would break those. File reads only, no build, no git.
+  - id: case-numbers
+    job: structure
+    runs: scripts/case-numbers check
+    summary: no file under test/cases/ shares its identity with another, beyond the collisions recorded on the baseline
+
   - id: shell-suite
     job: suite
     runs: MJ_TEST_JOBS=4 bash test/run.sh
@@ -514,6 +523,13 @@ classes:
   - id: decisions
     paths: [.ai/repo/adrs/**, lib/adr.sh, test/cases/271_adr_allocation.sh, test/cases/99_adr.sh]
     gates: [adr-collision, core-check, shell-suite]
+
+  # the case identities and the allocator that surveys them. `shell` already selects the suite
+  # for anything under test/; this class adds the one gate that reads the cases as a set of
+  # identities, and names the allocator, whose edits would otherwise escalate the whole plan.
+  - id: cases
+    paths: [test/cases/**, scripts/case-numbers, .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/rules/project/a-number-names-one-case.v1.md]
+    gates: [case-numbers, shell-lint, shell-suite]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
