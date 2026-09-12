@@ -541,7 +541,7 @@ pub struct EvidenceArgs {
     #[command(subcommand)]
     /// `show`, `claim`, `proves` or `record`. Required: the group runs nothing of its own,
     /// so that every runnable path here is one a capability declares
-    /// (`.ai/repo/projection-baseline.txt` may only shrink).
+    /// rather than one classified command-line-only in `cli::local`.
     pub command: EvidenceCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -654,7 +654,7 @@ pub struct RulesArgs {
     #[command(subcommand)]
     /// `report`, `show` or `proves`. Required: the group runs nothing of its own, so that
     /// every runnable path here is one a capability declares
-    /// (`.ai/repo/projection-baseline.txt` may only shrink).
+    /// rather than one classified command-line-only in `cli::local`.
     pub command: RulesCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]

@@ -276,7 +276,7 @@ H
     else
       printf 'without a test file:  %s\n' "$uc"
     fi
-    printf '\nthe registry is the enforced subset of the effective rule set: majordomus rules list\nwiring is verified by: majordomus doctor\nthe rules outside it: scripts/ci/enforcement-check\n'
+    printf '\nthe registry is the enforced subset of the effective rule set: majordomus rules list\nwiring is verified by: majordomus doctor\nthe rules outside it: scripts/ci/rule-proof-check\n'
   fi
   [ "$un" = 0 ] && [ "$uc" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
 }

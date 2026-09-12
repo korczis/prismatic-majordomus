@@ -360,6 +360,13 @@ pub const WORKFLOW_ALIASES: &[WorkflowAlias] = &[
         arguments: &["impact"],
         reason: "the recipe that spelled one subcommand of the shell tool's `usecase`",
     },
+    WorkflowAlias {
+        alias: "mcp-status",
+        command: "executable.serve.status",
+        arguments: &[],
+        reason:
+            "the recipe that read this checkout's lease before the bridge derived `serve-status`",
+    },
 ];
 
 /// Every alias that names a command the graph does not carry.

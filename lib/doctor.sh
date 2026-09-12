@@ -674,7 +674,7 @@ mj_validate_rule_package() {
   # The number the doctrine check cannot report, because those rules are not in its
   # registry at all: a rule declared blocking with no x-majordomus block. Nothing in this
   # tool runs for it. It may still be held by a CI gate, a behavioural case or a reviewer,
-  # and scripts/ci/enforcement-check is what decides that; what is certain from here is
+  # and scripts/ci/rule-proof-check is what decides that; what is certain from here is
   # only that the dispatcher will never stop a command on its behalf. Reported rather than
   # failed, because the honest count is large and predates the report; the gate ratchets it.
   if [ "$blocking_unenforced" -gt 0 ]; then
