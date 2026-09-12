@@ -18,8 +18,11 @@
 {%- set sec = get_section(path=meta.dir ~ "/_index.md") -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <div class="mb-6 flex flex-wrap items-center gap-2 text-sm">
-      <code class="font-mono text-heading">{{ e.id }}</code>
+    {#- min-w-0 and break-all on the URI: a `majordomus://rule/project.a-long-identity@1` is
+        one unbreakable token, and a flex item's default min-width is its content, so without
+        both it pushes a 320px page sideways. The probe measured exactly that. -#}
+    <div class="mb-6 flex min-w-0 flex-wrap items-center gap-2 text-sm">
+      <code class="min-w-0 break-all font-mono text-heading">{{ e.id }}</code>
       {%- if e.status %}{{ <badge status={e.status} /> }}{% endif %}
       {%- for t in e.tags %}<span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ t }}</span>{% endfor %}
     </div>

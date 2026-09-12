@@ -39,7 +39,7 @@
       {%- for e in rows -%}
       <li x-show="(status === 'all' || status === '{{ e.status }}') && ('{{ e.identity }} {{ e.title | lower | replace(from="'", to="") }} {{ e.tags | join(sep=" ") }}'.includes(q.toLowerCase()))">
         <a href="{{ get_url(path=meta.route ~ e.slug ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-          <span class="mb-2 flex flex-wrap items-center gap-2"><code class="font-mono text-sm font-medium text-fg-brand">{{ e.identity }}</code>{%- if e.status %}{{ <badge status={e.status} /> }}{% endif %}</span>
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">{{ e.identity }}</code>{%- if e.status %}{{ <badge status={e.status} /> }}{% endif %}</span>
           <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">{{ e.title }}</h2>
           <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
             <span>{{ e.references | length }} outgoing</span>
