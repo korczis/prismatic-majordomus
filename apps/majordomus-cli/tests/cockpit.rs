@@ -687,26 +687,51 @@ fn repository_content_reaches_the_page_as_text_and_never_as_markup() {
 
 #[test]
 fn a_page_costs_no_rebuild_of_anything_canonical() {
-    let f = Fixture::new();
-    let s = Served::start(&f.root(), &[]);
-
-    let before = s.get("/api/v1/perf").1;
-    for page in PAGES {
-        let (status, _, _) = s.request("GET", page, None);
-        assert_eq!(status, 200, "{page}");
-    }
-    let after = s.get("/api/v1/perf").1;
-
-    for counter in [
+    const CANONICAL: [&str; 5] = [
         "repository_scans",
         "index_builds",
         "registry_builds",
         "schema_generations",
         "http_projection_builds",
-    ] {
+    ];
+    let f = Fixture::new();
+    let root = f.root();
+    let s = Served::start(&root, &[]);
+
+    // The mechanism, asserted as itself rather than only through its consequence. The
+    // server decides the repository has moved from the size and modification time of
+    // git's control files, `.git/index` among them (`live::WORKTREE_FILES`). A plain
+    // `git status` or `git diff` rewrites that file to store refreshed stat data, so a
+    // page that asked git anything moved the server's own move detector and the *next*
+    // request paid a whole `App::load` for a repository that had not moved. Reading it
+    // here means a regression names the cause instead of leaving the next reader to
+    // rediscover it: measured at 0/30 passes before `git::read_only`, 30/30 after.
+    let index = root.join(".git/index");
+    let control = || {
+        let m = std::fs::metadata(&index).expect(".git/index exists in a committed fixture");
+        (m.len(), m.modified().expect("a modification time"))
+    };
+    let control_before = control();
+
+    let before = s.get("/api/v1/perf").1;
+    // Page by page, so that a failure names the page that paid. Compared against the one
+    // reading taken before the sweep, so a counter that moves stays failed for every page
+    // after it rather than being forgiven by the next comparison.
+    for page in PAGES {
+        let (status, _, _) = s.request("GET", page, None);
+        assert_eq!(status, 200, "{page}");
+        let after = s.get("/api/v1/perf").1;
+        for counter in CANONICAL {
+            assert_eq!(
+                before[counter], after[counter],
+                "serving {page} moved {counter}: a page rebuilt canonical state"
+            );
+        }
         assert_eq!(
-            before[counter], after[counter],
-            "serving the Cockpit moved {counter}: a page rebuilt canonical state"
+            control_before,
+            control(),
+            "serving {page} rewrote .git/index: a read took an optional lock, and the \
+             next request will rebuild the layer for a repository that never moved"
         );
     }
 }

@@ -166,6 +166,17 @@ title = "An agent does not get to declare success because its patch applied"
 lead = "Close the same stages and you have a control system rather than an assistant: context would observe, the plan would compute the difference, execution would act, verification would measure, and the result would be compared against the intent rather than against the diff — replanning until it is satisfied. Only the last of those runs here today. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, and that comparator is the part of the loop that exists."
 votes_title = "Who gets a vote"
 closing = "Evidence gets the final one."
+diagram_caption = "the control loop, drawn from the stages above"
+
+# The edge that makes the stages a loop rather than a line: verification that is not
+# satisfied does not proceed to proof, it returns to planning. It is declared here, once,
+# because it belongs to the loop and not to any one stage — and the picture on the page is
+# rendered from `pipeline.stages` plus this edge, so a stage added to the list above is a
+# stage in the drawing without anyone redrawing it. `from` and `to` are stage ids.
+[loop.back_edge]
+from = "verify"
+to = "plan"
+label = "not satisfied"
 
 [direction]
 kicker = "direction"

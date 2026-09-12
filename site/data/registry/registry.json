@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "68353ddc822ad16136fb1399f4e14c991a8e818d0345a434951d9d0003e69852",
+    "fingerprint": "d87eb5c032ea2e6725dc090191a4d02e0874298a8950619558ea49e08cf3e607",
     "summary": {
-      "total": 1437,
+      "total": 1439,
       "builtin": 110,
-      "declarative": 1327,
+      "declarative": 1329,
       "by_kind": {
         "command": 6,
         "query": 104,
-        "resource": 1327
+        "resource": 1329
       },
       "by_stability": {
         "behaviorally_verified": 97,
         "experimental": 7,
-        "implemented": 1333
+        "implemented": 1335
       },
       "mcp_tools": 107,
-      "mcp_resources": 1367,
+      "mcp_resources": 1369,
       "http_routes": 109,
       "cli_commands": 48,
       "modules": 64,
@@ -18281,6 +18281,11 @@
                   "on-demand": {
                     "type": "boolean",
                     "description": "True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.",
+                    "default": false
+                  },
+                  "at-finish": {
+                    "type": "boolean",
+                    "description": "True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \"is what the public is being served still a projection of\nthe trunk\" has no answer a commit can give, and its moment is when a session\nclaims to be done.",
                     "default": false
                   },
                   "implies": {
@@ -40247,7 +40252,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 136,
+        "capabilities": 137,
         "capability_ids": []
       },
       {
@@ -40326,7 +40331,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 198,
+        "capabilities": 199,
         "capability_ids": []
       },
       {
@@ -40406,7 +40411,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4df373348c0b0e65d8f60b6425bfcac8d748695cb81de4ebe3c07e44c7164f5c",
+    "fingerprint": "7a0410ebef8e263fa8f4cd515945ecd58919d7234613cf5a5daf00948a217599",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40450,12 +40455,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 136,
+      "rule": 137,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 198,
+      "test": 199,
       "use-case": 45,
       "workspace": 1
     },
@@ -41630,7 +41635,7 @@
         "description": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller''s business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/adr-catalogue",
@@ -41640,7 +41645,7 @@
         "description": "share/kinds.yaml declares the kind, share/schemas/majordomus/adr/adr.v1.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/adr-propose",
@@ -41650,7 +41655,7 @@
         "description": "Acceptance is the person's act — a tool that can write `accepted` turns its own inference into repository truth and a later reader cannot tell which, so propose has no flag for it and an extracted record claiming it is a finding. An extracted record must name its evidence in provenance.derived_from, whose references are typed and whose file and test references must resolve; it may still be superseded, because that is something a later record did to it. The identity is allocated under a lock over the section directory, and the case proves it with real concurrent processes, because this repository shipped two 0005s and two 0007s before anything checked.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/adr-traceability",
@@ -41660,7 +41665,7 @@
         "description": "The forward edge is `related` in the decision's front matter - rule:<id>, claim:<id>, file:<path>, test:<path>. Validation refuses a rule the effective set does not have, a claim the matrix does not have and a path the repository does not contain. The extractor turns each into a graph edge (declares, supports, references, tested_by) whose provenance is the front-matter key that stated it, so `knowledge edges` answers both directions from one authored fact.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/advertised-install-command-works",
@@ -41670,7 +41675,7 @@
         "description": "The line is run as it is written, pipe included, on Linux and macOS, into a home directory of the run's own. It proves the metadata resolves, the tool reports the version that was resolved, the MCP launcher runs with no toolchain, and a repository can be initialised. A release proves the same thing once at publication; this keeps proving it afterwards. ADR 0037 plans it on demand, because its job has a macOS leg and those runners queued for hours: the nightly schedule, a dispatch and a pull request labelled ci:full ask for it, a routine push does not.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/ai-layer-manifest",
@@ -41680,7 +41685,7 @@
         "description": "init seeds .ai/ from the skeleton and nothing else; no hook, no shell file, no tool installation. doctor fails on a section the manifest names that is absent, and on a manifest key nothing reads.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/archive-fidelity",
@@ -41690,7 +41695,7 @@
         "description": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/authored-files-are-english",
@@ -41700,7 +41705,7 @@
         "description": "The check is an alphabet test and says so: a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, is not English whatever else is true of the file. English prose carrying a sentence of another language spelled in ASCII passes it, and always will — the rule stays wider than the gate, which is the honest relation between the two. The two exemptions are declared with a reason: `name` for a proper noun, `fixture` for a file that uses a foreign string as data to prove the program handles one.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/benchmark-coverage-derived",
@@ -41710,7 +41715,7 @@
         "description": "Each required executable is a target directly and on every transport its exposure declares, with the cases its input type provides; the transports' own operations are targets declared once; waivers are typed and never counted. Runners time the executor, a real loopback socket and a real majordomus mcp child; results are majordomus/benchmark-result/v1; the baseline is per platform under .ai/repo/benchmarks/rust/ and the policy is data.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/blocker-store",
@@ -41720,7 +41725,7 @@
         "description": "A gate that cannot read an entry can be bypassed by mistyping one, so an unreadable question is not a lesser problem than an open one.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/blocker-survives-handover",
@@ -41730,7 +41735,7 @@
         "description": "The gate reads every unresolved entry in the store rather than only the active task's, so a handover cannot launder a blocker. The store is checkout-local, so the questions a gate can see are the ones asked in this working copy. Only a completed finish is refused; blocked, partial, no_match and failed are honest non-completions and are not. Any task may resolve any question. The alternatives — transferring the question with the handover, or gating on scope overlap — were rejected in M001 with the case each gets wrong.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/bootstrap-chain",
@@ -41740,7 +41745,7 @@
         "description": "Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own. A person and a worker reach the same layer by the same two hops.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/capability-class",
@@ -41750,7 +41755,7 @@
         "description": "Mapping a class to a concrete model is left to whoever runs the worker. Majordomus never selects or invokes a model.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/capability-modules",
@@ -41760,7 +41765,7 @@
         "description": "capability!, module! and compose_modules! build plain values handed to the registry builder; adding a capability to an existing module touches that module's file alone, and MCP, HTTP, OpenAPI, Swagger UI, the CLI, the benchmark targets, the cache and the generated reference follow. The crate's tests/registry.rs holds the invariants, tests/projections.rs the propagation.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/capability-registry",
@@ -41770,7 +41775,7 @@
         "description": "Two sources, builtin executables and the layer's objects, meet in one registry built at one place; ids, MCP names and URIs, HTTP routes and CLI paths are each unique or the registry does not build. The crate's tests/registry.rs covers every collision.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/catalogue-resolves",
@@ -41780,7 +41785,7 @@
         "description": "Prose describing the tool is checked the same way the tool checks itself. Cross-references are verified in both directions, so a use case naming an application that does not name it back is a failure rather than a silent asymmetry. An application declaring no does_not_fit_when is refused, because a catalogue that only lists fits is marketing.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/checkpoint-interval",
@@ -41790,7 +41795,7 @@
         "description": "The staleness report is guaranteed. Whether the worker checkpoints is not.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/checkpoint-record",
@@ -41800,7 +41805,7 @@
         "description": "The cap is what keeps a checkpoint distinct from a handover. Mode 0600, created atomically, never staged.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/ci-planned-gates",
@@ -41810,7 +41815,7 @@
         "description": "The gates that always run are in every plan; a changed path selects the gates of every class it matches, as a union; a class may escalate; a gate brings what it implies and what it requires; the plan is deterministic and says for every gate why it ran or did not. The workflow reads the plan's outputs and carries no path list of its own; test/cases/26_ci_wiring.sh proves every gate's job exists, is gated on the plan and is needed by the verdict.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/ci-verdict",
@@ -41820,7 +41825,7 @@
         "description": "The verdict job always runs, so the status is never left pending by a job the plan skipped, and it writes a table of every gate with its job's result and the reason it was or was not planned. The case drives it with fixture plans and needs contexts through every red condition. This claim was worded \"the one status a branch rule requires\" until 2026-09-11, which asserted a branch rule that does not exist - see ci-verdict-is-required below. What scripts/ci/verdict computes was always true; what gated a merge on it was not.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/ci-verdict-is-required",
@@ -41830,7 +41835,7 @@
         "description": "Named so the omission is visible rather than implied by the claim above, which asserted it. Measured on 2026-09-11 - `gh api repos/korczis/prismatic-majordomus/branches/master/protection` answers 404 Branch not protected and `gh api repos/korczis/prismatic-majordomus/rulesets` answers []. There is therefore no required status on master and every gate in this repository is advisory at the merge, which is why a red trunk can persist, why derived data can go stale across a server-side merge (docs/CI.md records both), and why the honest reading of a green run is \"nothing objected\" rather than \"nothing could object\". Closing this is a repository-settings act an operator takes, not a change to this tree; it is recorded here because a promise nobody keeps is worse when nobody can see it is unkept.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/cli-documentation-executable",
@@ -41840,7 +41845,7 @@
         "description": "The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/command-coverage",
@@ -41850,7 +41855,7 @@
         "description": "The requirement is derived from the registry, so a command added tomorrow is owed coverage from that moment. Coverage is declared in per-case headers rather than inferred, because the negative assertions that use stdin and the surface case's loop are invisible to any scan.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/command-surface",
@@ -41860,7 +41865,7 @@
         "description": "The registry is authority for what a command means; bin/majordomus stays authority for what runs. A command dispatched with no entry, and an entry nothing dispatches, both fail. A command is public exactly when the usage text lists it, checked in both directions.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/completion-is-proved",
@@ -41870,7 +41875,7 @@
         "description": "share/completion.yaml is the one definition of done; gates.policy answers it and gates.completion answers each question from the source it names. The policy key verification.completed_means_complete turns the refusal on (this repository) or off (the skeleton, with the reason); with it off the same questions are reported and never refused. `majordomus evidence --run-gates` runs the selected gates through scripts/ci/run-plan and records each exit, and a weaker outcome records the stage it stopped at.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/consistency-check",
@@ -41879,7 +41884,7 @@
         "title": "check reports whether state, scope, blockers and checkpoint age are consistent right now",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/context-assembly",
@@ -41889,7 +41894,7 @@
         "description": "Git first, then task and profile, then blockers, then authored records, then history. The profile's context block decides what is offered; it is the only code that reads those fields.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/context-budget",
@@ -41899,7 +41904,7 @@
         "description": "Over budget, nothing is written at all.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/context-coverage",
@@ -41909,7 +41914,7 @@
         "description": "A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the half the manifest declares untracked; nothing else is skipped by name, and a subtree the layer carries but does not author is released by children.exempt on the contract that governs it, which may name only directories inside its own scope.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/context-documents",
@@ -41919,7 +41924,7 @@
         "description": "A document is a Markdown file under .ai/ whose front matter carries schema context/v1; the file name is a convention and the id is the identity. Ordering is depth, then declared order, then path. Providers and audience filter; extend, replace and final compose; a duplicate id, a dangling reference, a superseded final document or a cycle is refused by name.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/context-impact",
@@ -41929,7 +41934,7 @@
         "description": "context affected reads the working tree, the index, or a base ref, with renames detected; a tracked source change is a WARN to review and never an exit code, because the tool cannot decide whether prose still describes code. context check-sync is validate, then every projection against its stamp, then affected; test/cases/71_context_sync.sh proves the exit codes.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/context-selection-budget",
@@ -41939,7 +41944,7 @@
         "description": "The count is of the printed document, not of its sections. Git, task, profile and open blockers are never dropped; record bodies degrade to a pointer before they disappear.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/continuity-reachable",
@@ -41949,7 +41954,7 @@
         "description": "doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/cost-per-outcome",
@@ -41958,7 +41963,7 @@
         "title": "Cost per accepted outcome will be reported from measured data only",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/dag-validation",
@@ -41968,7 +41973,7 @@
         "description": "Kahn layering; the issues that never leave the graph are the ones reported. A malformed graph fails doctor and is reported by watch as drift.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/decision-attribution",
@@ -41978,7 +41983,7 @@
         "description": "decisions.md is hand-editable by design, so an unattributable entry is a warning. finish still refuses when a profile requires a record it cannot find.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/decision-record",
@@ -41988,7 +41993,7 @@
         "description": "--why is required. --supersedes refuses text matching no recorded decision. Task and head are computed.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/deployment-verified-live",
@@ -41998,7 +42003,7 @@
         "description": "deploy.verify derives the targets from the CI model's path classes, site/config.toml, the release records and the deployment objects; the deploy and verify obligations are established live by it once the trunk reaches the task's commit. The request carries no header and the evidence no body beyond the fields compared. A declared deployment object is named as not asked, never pretended about.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/derivation-one-graph",
@@ -42008,7 +42013,7 @@
         "description": "scripts/derive runs majordomus generate (the code-only projections), scripts/generate-site-data (the site's data and content and the derived documents, reading the registry manifest and the OpenAPI document), and majordomus generate again (the site dataset and the benchmark matrix over the index the documents joined); no stage reads its own output. scripts/derive-check composes generate --check and generate-site-data --check and exits 10 with both reports. The commit a page was built from is a fact of the build (site/data/build.json, served at /build.json, never committed), so source.json no longer carries it and the generator is idempotent on a clean tree. just derive, just derive-check and the Pages workflow call the scripts; just test runs the check.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/derived-data-current",
@@ -42018,7 +42023,7 @@
         "description": "The generator records the input hash in site/data/generated/source.json, so `pages current` answers \"must this be regenerated?\" in a fifth of a second without generating anything, which is what lets it run on every commit rather than only in CI. It is declared in the policy's enforcement list as derived-current, wired by git-hook:pre-commit, and doctor verifies that wiring the way it verifies the others - so the gate refuses the stale commit and the doctrine refuses the repository that removes the gate. Before this, staleness surfaced only after a merge, and the person it stopped was never the person who caused it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/derived-not-declared",
@@ -42028,7 +42033,7 @@
         "description": "Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/dispatcher-wiring",
@@ -42038,7 +42043,7 @@
         "description": "The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/distribution-canonical-model",
@@ -42048,7 +42053,7 @@
         "description": "share/distribution.yaml is the model. The installer's platform table, the release build matrix, the documentation's table, the website's dataset and the public release metadata are generated from it, and `majordomus generate --check` exits 10 naming any that has fallen behind.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/divergence-label",
@@ -42057,7 +42062,7 @@
         "title": "State read back is labelled exact, advanced, diverged or different_context against git",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/doctrine-class-decides",
@@ -42067,7 +42072,7 @@
         "description": "The test changes checkpoint freshness from advisory to blocking in a copy of the vendored rule file and asserts that check's exit code moves from 0 to 10. There are two classes and no override.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/doctrine-registry",
@@ -42077,7 +42082,7 @@
         "description": "A doctrine whose validator does not exist, a validator no doctrine declares, a command that never dispatches, a blocking rule whose command cannot exit non-zero, a missing test, and CI that swallows the suite are six separate failures with six separate messages. Each is mutation-tested.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/drift-watch",
@@ -42086,7 +42091,7 @@
         "title": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/effort-escalation",
@@ -42095,7 +42100,7 @@
         "title": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/event-vocabulary",
@@ -42105,7 +42110,7 @@
         "description": "share/events.yaml declares every name, its emitting command and its required payload keys. An unregistered name is refused on write, refused as a history filter, and reported by history --validate when already stored.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/evidence-currency-is-not-collapsed",
@@ -42115,7 +42120,7 @@
         "description": "`proven` means the diff between the execution''s own commit and the working tree is empty, excluding the ledger''s own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/evidence-gates-done",
@@ -42125,7 +42130,7 @@
         "description": "Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/evidence-navigates-both-ways",
@@ -42135,7 +42140,7 @@
         "description": "`evidence claim` answers what proves a claim and `evidence proves` answers what a test proves, including the other claims that share it. Both read the same join, so the two directions cannot disagree; a relation that could only be walked one way is half a relation.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/evidence-partial-run-preserves-the-rest",
@@ -42145,7 +42150,7 @@
         "description": "The ledger is merged per test, not rewritten per run, so `bash test/run.sh 84_distribution_model` followed by a recording updates exactly that one entry. A whole-ledger write would turn a one-case run into a repository that has proven one thing, which is worse than one that has proven nothing because it looks deliberate.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/evidence-proof-is-an-execution",
@@ -42155,17 +42160,17 @@
         "description": "The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/evidence-unsupported-guarantee-is-reported",
         "kind": "claim",
         "identity": "evidence-unsupported-guarantee-is-reported",
         "title": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
-        "description": "`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt so existing debt is known rather than blocking. The gate is advisory while the baseline is non-empty and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.",
+        "description": "`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt, which records the state per claim rather than a list of names. Two things fail: a guarantee the baseline recorded as supported that no longer is, and a supported guarantee that left the matrix. A claim the baseline never knew, with no recorded run, is new debt — named and counted, never a regression — because a ratchet that fired on growth taxed writing claims down. The gate is advisory while the baseline carries unsupported lines and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/executable-reference-derived",
@@ -42175,7 +42180,7 @@
         "description": "scripts/generate-site-data reads docs/generated/registry.json — a code-only projection, so no cycle runs through the index — for the ids it turns into routes, and writes site/data/generated/executable.json (routes, module and API links, source on GitHub, the claims attached to each surface by the path of their implementation) and the content stubs under site/content/registry/; the templates read every other fact from site/data/registry/registry.json. A manifest naming a module the registry does not hold, a source file the tree does not have, or another schema is refused and nothing is published. scripts/site-check proves the rendered side, every module and capability a page and no page without its entry, the CLI, MCP and benchmark pages rendering every command, tool, target and baseline, every capability page linking its module and its operation, and no template, generator or navigation file naming a capability. The manifest is among the site's inputs, so its hash moves with the executable's code.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/execution-cache-equivalence",
@@ -42185,7 +42190,7 @@
         "description": "One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/execution-waves",
@@ -42195,7 +42200,7 @@
         "description": "Sharing a wave is necessary for concurrency, not sufficient. Overlapping declared scope serialises conservatively, because a false serialisation costs time and a false parallel costs a conflict.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/exit-code-contract",
@@ -42204,7 +42209,7 @@
         "title": "Exit codes are a contract, and no code means \"warn and continue\"",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/finish-contract",
@@ -42213,7 +42218,7 @@
         "title": "finish evaluates the finish contract line by line and refuses when any line is unmet",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/generated-artifacts-typed",
@@ -42223,7 +42228,7 @@
         "description": "JSON, YAML and Markdown of a document are renderings of one value, so they cannot disagree; each carries a provenance header in the form its encoding allows; the index of the whole set, docs/generated/artifacts.json, is itself generated and is read back by artifacts.list.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/generated-projections-checked",
@@ -42233,7 +42238,7 @@
         "description": "Byte-identical on regeneration, no timestamps, no absolute paths; --check writes nothing and exits 10 naming every file that differs or is missing. CI runs it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/git-identity",
@@ -42243,7 +42248,7 @@
         "description": "A handover body that tries to set one is rejected rather than merged.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/github-projection",
@@ -42253,7 +42258,7 @@
         "description": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit; a second marker carries the record's identity, so a title a person rewrites cannot orphan it. This claim is about what the adapter renders and refuses. Whether the remote has actually received it is a different question, and github-projection-gated is the claim that answers it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/github-projection-gated",
@@ -42263,7 +42268,7 @@
         "description": "The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/handover-record",
@@ -42273,7 +42278,7 @@
         "description": "A body with a missing or empty required section is refused and names the sections.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/history-ledger-read",
@@ -42283,7 +42288,7 @@
         "description": "What happened, when, for which task, at which head, and what outcome was accepted. Never what anyone said.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/hot-path-no-rebuild",
@@ -42293,7 +42298,7 @@
         "description": "Process-wide counters, each incremented at one named place, answered as perf.counters over every transport; tests/hot_path.rs sends hundreds of requests through the real transports and requires the startup counters unchanged; the MCP listings and the OpenAPI document are prepared once.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/init-refuses",
@@ -42302,7 +42307,7 @@
         "title": "Installing into a repository that already has an installation is refused",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/install-command-is-derived",
@@ -42312,7 +42317,7 @@
         "description": "The download command, the base URL, the script name and the shell are four fields; the command is their composition. README.md and the installation guide are checked against it rather than trusted.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/installer-verifies-before-installing",
@@ -42322,7 +42327,7 @@
         "description": "A wrong digest, a truncated download, an archive that escapes its own directory or carries a link, and an executable that reports another version are each refused by name, before the launcher is replaced. There is no warn-and-continue path and sudo appears nowhere.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/interfaces-are-projections",
@@ -42332,7 +42337,7 @@
         "description": "No projection declares a name, a description, a schema or a route of its own; tests/projections.rs proves every declared projection present and none orphan, and that a changed input type and description reach the MCP schema, the OpenAPI operation and the reference. MCP and HTTP answer the same handler identically.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/landing-page-is-a-projection",
@@ -42342,7 +42347,7 @@
         "description": "scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/ledger-integrity",
@@ -42352,7 +42357,7 @@
         "description": "The reader skips a bad line rather than crashing, and check, doctor and watch all report it. The ledger is the one durable record nothing else can reconstruct.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/legacy-migration",
@@ -42362,7 +42367,7 @@
         "description": "Every other command refuses the legacy layout and names migrate. --dry-run prints the plan and writes nothing. A file the version does not know is reported, never deleted; a destination that already exists refuses the whole run.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/local-state-ignored",
@@ -42372,7 +42377,7 @@
         "description": "The task record, ledger, decisions, questions, checkpoints and handovers never travel through git. A record that arrives in another checkout by other means names the checkout it belongs to and is enforced nowhere else, which test/cases/27_foreign_task.sh proves.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-client-autostart",
@@ -42382,7 +42387,7 @@
         "description": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-data-driven",
@@ -42392,7 +42397,7 @@
         "description": "The add, remove and break sequence through the built binary is tests/external_extension.rs in the crate; the shell case proves the layer init writes is served, and that a rule added to it appears.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-degraded-not-silent",
@@ -42402,7 +42407,7 @@
         "description": "Two files of one kind claiming one identity are both excluded and both named. --strict refuses to serve a degraded layer; --inspect exits 10 on one.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-lease-lost",
@@ -42412,7 +42417,7 @@
         "description": "The takeover itself is correct, the stale-executable guard doing its job; what was unowned was the aftermath. The superseded process kept its socket, its peer board and its generation of the layer, and answered GET / with the same name and repository_id as the leaseholder, so every liveness test in the system passed on it. Measured on 2026-09-10 - two servers of one checkout, one lease, and a session whose environment carried the older address reading a board with one peer where the shared board had two. GET / now carries leaseholder (lease::LEASEHOLDER_KEY, read by lease::probe, so writer and reader cannot drift), a new initialize is refused 409 lease_lost naming the launcher, and health.report's server check warns that this process is not the server it describes. A server too old to answer the question is accepted by the probe on purpose - refusing it would take over a live server, which is how one checkout comes to have two. The doctrine is project.shared-server-resilience.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-lease-resilience",
@@ -42422,7 +42427,7 @@
         "description": "The election classifies the lease on every attempt and is bounded by time; commands/mcp.rs degrades to a standalone session when the lease or the server cannot be used; SIGTERM, SIGINT and SIGHUP unlink the lease in the handler. The crate's tests/mcp_shared.rs proves each path over real processes, and case 90 plants a corrupt lease behind the launcher. The doctrine is project.shared-server-resilience.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-peers",
@@ -42432,7 +42437,7 @@
         "description": "Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; each board is one process's memory and is gone with it. peers.list gathers - it enumerates the checkouts git registers, reads its own board from memory and asks every other checkout's server for its own board (checkouts=this, which is what keeps the gather one hop deep), and reports in boards and complete which checkouts it covered and whether it could read them all. Before ADR 0044 it answered one checkout's board while the bootstrap told every worker it had seen the repository; measured on 2026-09-11, nine agents across sixty worktrees each read a board that held only itself. A peer id is a position on one board and is reassigned on reconnect; the checkout a peer carries is the durable half. Announcements are informational and die with the connection; scope is enforced by the shell tool's task record, not here.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-shared-server",
@@ -42442,7 +42447,7 @@
         "description": "The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client. A checkout, not a repository - a linked worktree is a checkout of its own and elects a server of its own (ADR 0035), which measured on 2026-09-11 meant seven live servers over one git repository. The word was wrong here until ADR 0044; what makes cooperation repository-wide is the gathered board of mcp-peers, not a shared process.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-stdio-surface",
@@ -42452,7 +42457,7 @@
         "description": "One process per client, alive as long as its pipe; diagnostics go to stderr; a session leaves the repository byte-identical. The crate's own suite, tests/mcp_stdio.rs, holds the same frames to the same rules.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mcp-uri-resolution",
@@ -42462,7 +42467,7 @@
         "description": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects.rs covers every branch at the library level.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mesh-observation-not-authority",
@@ -42472,7 +42477,7 @@
         "description": "The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. The capabilities the mesh exposes are read-only projections plus one registration command that changes process memory only.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mesh-off-by-default",
@@ -42482,7 +42487,7 @@
         "description": "The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The committed default of this repository is enabled false (ADR 0050).",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/mesh-one-registry",
@@ -42492,7 +42497,7 @@
         "description": "The registry unit tests prove multi-source convergence, replay drops, restart handling and the eviction bound; tests/mesh.rs proves it over a real socket; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/minimum-context",
@@ -42502,7 +42507,7 @@
         "description": "majordomus context now assembles a briefing from those toggles, and that selection is guaranteed (see context-assembly). This claim stays advisory because nothing measures what the worker actually read once it has been handed the briefing.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/models-no-secret-fields",
@@ -42512,7 +42517,7 @@
         "description": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/models-one-declaration",
@@ -42522,7 +42527,7 @@
         "description": "models.list and models.route are capability declarations, so every surface is a projection; the catalogue's own diagnostics report a duplicate alias or an undeclared vendor at first read. Declaration order is routing's preference order, verifiable by reading the file.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/models-routing-explains-itself",
@@ -42532,7 +42537,7 @@
         "description": "Routing is a pure function over the declared catalogue and the stated need; the unit tests prove the preference order, the fixed check order behind every exclusion reason, and that a model named outright is still checked against the requirements.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/no-counts-in-context",
@@ -42541,7 +42546,7 @@
         "title": "A hardcoded count in the always-loaded file is a failure",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/no-network",
@@ -42550,7 +42555,7 @@
         "title": "Nothing performs a network call, evaluates generated text, or deletes recursively",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/no-silent-overwrite",
@@ -42560,7 +42565,7 @@
         "description": "update refuses, offers a diff, and overwrites only under an explicit flag.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/no-transcripts",
@@ -42569,7 +42574,7 @@
         "title": "Handovers carry durable facts, never conversation transcripts",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/obligation-closure",
@@ -42579,7 +42584,7 @@
         "description": "The obligation vocabulary is share/obligations.yaml, so a token is added there and not in shell. Evidence is a task.evidence ledger line carrying the hash of the tracked files the obligation names; the validator recomputes that hash and reports both values when they differ, the way the site's own currency check already does. An obligation whose fact is remote is bound to the commit it was taken at instead, and judged with mj_git_label rather than a fifth staleness vocabulary. An outcome other than completed is never refused for owing something.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/obligation-establishment",
@@ -42589,7 +42594,7 @@
         "description": "share/obligations.yaml gives every token an established_by, and one of `none` obliges it to say in `unestablished` why nothing here can settle it. commit, push and target are settled from git without fetching, so a stale tracking ref can only say \"not yet\" and never \"yes\"; pages is settled by scripts/pages verify with --timeout 0, the single probe of the publication check the Pages workflow already runs, which now exits 12 rather than 10 when the site never answered — unreachable and unpublished are different findings. A fact established this way is taken at HEAD, which is mj_git_label's `exact`; the other three labels keep their meaning on the fallback path, and deploy and verify stay hand-recorded because a deployment is a fact about a machine this repository never contacts.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/open-question-gate",
@@ -42599,7 +42604,7 @@
         "description": "A gate that cannot read an entry can be bypassed by mistyping one, so check, doctor and watch all fail on a malformed entry.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/openapi-inferred",
@@ -42609,7 +42614,7 @@
         "description": "Tags from registry.modules(), examples from the capabilities' BenchmarkCases against the repository's index, responses from one status table keyed by kind, info from about.rs and the crate manifest; benches/routes.rs times every route with the same cases; the site projects the committed document, renders /docs/api/ and serves /openapi.json raw, and site-check refuses a build without them.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/overlap-report",
@@ -42619,7 +42624,7 @@
         "description": "Reported, never blocking. Work in progress is reported and never blocked.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/pointer-integrity",
@@ -42628,7 +42633,7 @@
         "title": "Every repository-relative reference in the always-loaded file is proven to resolve",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/policy-parse",
@@ -42638,7 +42643,7 @@
         "description": "A restricted YAML subset. Tabs, anchors, flow maps and multi-line scalars are refused rather than guessed at.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/product-features-discovered",
@@ -42648,7 +42653,7 @@
         "description": "Removing the file removes it from all of them, which is what a hidden registry would fail. The kind, its schema and its source class are declarations, so discovery, validation, identity, the index and the MCP resource needed no code of their own.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/product-projection-public-safe",
@@ -42658,7 +42663,7 @@
         "description": "The boundary is a field-by-field copy through PUBLIC_FEATURE_FIELDS, not an exclusion that could be forgotten: a field added to the model is absent from the site until somebody names it. The test asserts no un-allow-listed key, no body, no fixture root and no temporary path; scripts/generate-site-data refuses the artifact again before rendering anything from it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/product-references-resolve",
@@ -42668,7 +42673,7 @@
         "description": "A capability module, a public command or an object kind that no stable feature names is reported as a gap and shown on the matrix rather than refused: a thing the product does that the product page does not mention is what the model exists to make visible.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/product-surfaces-derived",
@@ -42678,7 +42683,7 @@
         "description": "A feature file holds references and editorial decisions only. The surfaces come from what its modules, commands and kinds are projected onto, the counts from the registry and the index, the moments from the why catalogue, the route from the id. The schema sets additionalProperties false, so `surfaces:` or `route:` in a feature is a validation error rather than a claim a page believes.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/profile-axes",
@@ -42688,7 +42693,7 @@
         "description": "The axes are validated and projected into the worker's instructions. Whether a worker honours them is not observable from outside the worker.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/profile-validate",
@@ -42697,7 +42702,7 @@
         "title": "Every profile is parsed, its unknown keys rejected, and the default profile proven to exist",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/project-schema",
@@ -42707,7 +42712,7 @@
         "description": "The same allowlist rule the policy and the profiles live under. The filename is the id; a record that disagrees with its own filename is refused rather than reconciled.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/project-status-derived",
@@ -42717,7 +42722,7 @@
         "description": "An issue records started_at, verified_at, completed_at, cancelled and its evidence. BLOCKED, READY, ACTIVE, VERIFY, DONE and CANCELLED follow from those and from the state of its dependencies. `status` is not a field, so writing one is an unknown key.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/projection-fingerprint",
@@ -42726,7 +42731,7 @@
         "title": "Every generated instruction file carries its own stamp, and a hand edit is detected",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/projection-generation",
@@ -42736,7 +42741,7 @@
         "description": "Running update twice leaves the byte-identical file. The test asserts the hash.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/prompt-asset",
@@ -42746,7 +42751,7 @@
         "description": "No conditionals, loops, includes or shell. A prompt that silently renders a misspelled token as literal text is worse than one that refuses.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/prompt-assets",
@@ -42756,7 +42761,7 @@
         "description": "Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/prompt-capture",
@@ -42766,7 +42771,7 @@
         "description": "Covers the five states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, a record set that cannot carry model output, the record-and-rendering pair every prompt is kept as, and the schema identifier resolving to the two files that describe both halves.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/prompt-continuity",
@@ -42776,7 +42781,7 @@
         "description": "The mapping from a provider session to an episode used to exist only while the episode was open, so a closed episode's prompts became unattributable at once — 713 of this repository's 974 records. The record now carries the episode, the provider session, the repository and the worktree, with the provenance of the link; the archive is 0600 and bounded by prompts.retention_max_days and prompts.retention_max_bytes, which prune the body and keep the record; and credential shapes are replaced before anything is persisted. The unlinked legacy records stay unlinked: the evidence for them does not exist, and this claim does not pretend otherwise.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/provider-projections-one-renderer",
@@ -42786,7 +42791,7 @@
         "description": "One renderer, two entry points that agree on every stamp; the policy is the only input (its hash and the profiles' is the stamp's first hash). A target outside the repository, a provider without a template, a token the policy cannot fill, and an always_loaded target over the budget are refused with the reason, and nothing is written. Region mode keeps the host document outside the markers. apps/majordomus-cli/tests/providers_projection.rs covers the fixture side; CI runs generate --check on every push.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/record-resolution",
@@ -42796,7 +42801,7 @@
         "description": "Same worktree and branch, else same branch, else nothing. Ties within one second are broken by ledger order. Absence is reported as absence.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/record-retention",
@@ -42806,7 +42811,7 @@
         "description": "Refuses to overwrite an existing archive, and does nothing when the ledger is under its cap.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/record-search",
@@ -42816,7 +42821,7 @@
         "description": "A fixed-string grep in authority order. No ranking, no embedding, no index that could fall out of step with the records it describes.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/region-projection",
@@ -42826,7 +42831,7 @@
         "description": "How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/release-archive-shape",
@@ -42836,7 +42841,7 @@
         "description": "The packer reads back what it wrote and deletes an archive carrying a repeated path or an entry that is not a file or a directory; the verifier checks the same two properties again on the runner that built it. There is no fallback packer, because an archive packed another way is not the one that was verified.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/release-is-complete-or-absent",
@@ -42846,7 +42851,7 @@
         "description": "The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/reproduce-command",
@@ -42855,7 +42860,7 @@
         "title": "Every finding carries the command that reproduces it",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/retention-caps",
@@ -42864,7 +42869,7 @@
         "title": "The append-only ledger and handover store have retention caps that are checked",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/roadmap-derived",
@@ -42874,7 +42879,7 @@
         "description": "The sequence is the topological rank of the milestone graph, so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/routing",
@@ -42884,7 +42889,7 @@
         "description": "Recommendations only. Majordomus does not invoke a model.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/rule-exemption-carries-its-reason",
@@ -42894,7 +42899,7 @@
         "description": "Some rules genuinely have no machine expression: the provenance of what was written, whether a mechanism earns its cost. Before `reviewed_because` those sat in a debt list beside rules that merely had not been got round to, and the two were indistinguishable. The reason is the whole declaration — there is no flag beside it, because a flag can be set and a reason cannot be set without writing one. An executable proof always wins over it, so a rule that acquires a case stops being review-enforced without anyone remembering to delete anything.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/rule-proof-is-named-and-resolves",
@@ -42904,7 +42909,7 @@
         "description": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A blocking rule naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/rule-resolution",
@@ -42914,7 +42919,7 @@
         "description": "A missing or deprecated dependency, a cycle, one identity claimed twice, a project rule in the vendor namespace, malformed front matter, an unknown key and an x-majordomus block missing its binding are each refused by name. Every dependency is listed before the rule that depends on it, and two runs agree.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/rule-state-is-derived-from-what-ran",
@@ -42924,7 +42929,7 @@
         "description": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule''s state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/runtime-adapters",
@@ -42934,7 +42939,7 @@
         "description": "The one implementation studied was rolled back within days because its limits were global constants rather than task-derived.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/rust-binary-artifact",
@@ -42944,7 +42949,7 @@
         "description": "scripts/rust-check --artifact DIR copies the debug executable beside a majordomus-cli.json naming the commit, the target triple, the toolchain and the Cargo.lock digest; the workflow uploads it as majordomus-cli-<target>. rust_bin in test/lib.sh hands a case MAJORDOMUS_BIN when set, refuses one that is not executable, builds once with cargo when unset, and asks the case to skip when there is neither; the launcher bin/majordomus-mcp honours the same variable.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/rust-coverage-floor",
@@ -42954,7 +42959,7 @@
         "description": "cargo-llvm-cov over all targets, exported as JSON and post-processed so that tests/, benches/, examples/ and every inline `#[cfg(test)]` item leave the fraction on both sides. --ignore-filename-regex cannot do the second, which is why this is a script and not a flag. Two floors, each one integer in a file of its own, each read by CI, by scripts/rust-check and by just coverage; the domain the second measures is declared in scripts/session-coverage-domain and the script refuses a domain naming a file the export does not carry, so narrowing it to raise the number is a visible edit. Branch coverage proper needs a nightly toolchain; region coverage stands in for it and is reported under that name. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/rust-evidence-gates",
@@ -42964,7 +42969,7 @@
         "description": "Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, the benchmark coverage complete, and line coverage above the committed floor; --ci adds the benchmark check against the platform's baseline and leaves coverage to its own job, --integration runs the registry checks alone for a change outside the crate. The rust job of the workflow runs the script itself with the mode the plan chose, so there is no second list to fall out of order; the case reads the script, the workflow and the justfile and fails when they disagree; with a toolchain present it also runs the doc examples and builds the benchmarks.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/rust-hot-path-benchmarks",
@@ -42974,7 +42979,7 @@
         "description": "The YAML subset and front matter, glob matching, the index, the registry, the OpenAPI document, one MCP listing and one capability call (benches/projections.rs); the router, the bridge and the shared server (benches/shared.rs). Numbers are reported, not asserted; no latency budget is promised until one is measured on CI. The capability! macro does not compile an executable without benchmark cases, the registry counts the required and the waived, and the case reads the policy of every executable back through capabilities list.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/schema-driven-kinds",
@@ -42984,7 +42989,7 @@
         "description": "share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/scope-declared",
@@ -42994,7 +42999,7 @@
         "description": "The declaration is typed and schema-validated (share/schemas/majordomus/scope/scope.v1.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/scope-enforcement",
@@ -43003,7 +43008,7 @@
         "title": "A touched file outside the claimed scope is a failure, not a warning",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/scoped-task",
@@ -43013,7 +43018,7 @@
         "description": "A scope path that escapes the repository root is refused. Starting a second task while one is active is refused.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/semantic-retrieval",
@@ -43023,7 +43028,7 @@
         "description": "The corpus is a handful of Markdown files and one JSONL. An index or an embedding store would be a second source of truth that has to be kept in step with the first, and a scan is faster than that problem. Revisited only if a repository appears where the scan is measurably too slow.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/session-lifecycle",
@@ -43033,7 +43038,7 @@
         "description": "The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/session-observability",
@@ -43043,7 +43048,7 @@
         "description": "continuity.state answers the worker's question about one episode, which is right for a briefing and blind to the other windows open on the same worktree, because state/session-current.yaml is a symlink the most recent start event re-aims. The five lifecycle capabilities read the store, the ledger and the index instead, decide every standing from what the repository can observe, and carry a remedy with every finding. They never write, they judge no thresholds — age is session.freshness and continuity.state's to report — and they declare no command line, because they read .ai/local/ and are served rather than shipped. The Cockpit's Continuity page is their projection and holds no session model of its own.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/session-records",
@@ -43053,7 +43058,7 @@
         "description": "The record lives under the manifest's sessions section. Every field is derived - times from the clock, heads and commits from git, the reference lists from the ledger's events for the episode - and the body is the only authored part. The repository is named by its remote and the working copy by a hash, so the resolver can tell one checkout's records from another's without disclosing a path. One source class discovers them; the index, MCP, the object routes, the graph and the site follow.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/shared-policy",
@@ -43062,7 +43067,7 @@
         "title": "One policy will be shared across repositories and workers",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/site-deploy-one-path",
@@ -43072,7 +43077,7 @@
         "description": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site/SKILL.md.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/site-deploys-from-verified-run",
@@ -43082,7 +43087,7 @@
         "description": "The publication path proves the committed derived data current by its input hash, builds the site from it, runs every static check over the output and pushes gh-pages, in one job triggered directly by a master push on paths derived from the gate model; superseded runs are cancelled; the suite, the crate gates, coverage, the macOS suite, the benchmark check and the browser probe run in validate.yml on the same commit and gate merging. The case proves the trigger, the derived paths, the cancellation, the permissions, that no heavy gate is on the path and none left validate.yml, and that a build which skips the generation is byte for byte one that does not.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/site-registry-dataset",
@@ -43092,7 +43097,7 @@
         "description": "Every builtin descriptor in full with the file it was composed in, every module with its ids, every object of the layer without its content, every kind with its schema, the declared provider projections, the command line as clap declares it, the MCP tools and resources, the HTTP routes, the benchmark targets, coverage, policy and accepted baselines, and the registry and index fingerprints (majordomus-site-registry/v2); no timestamps of its own, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; an exposure removed from a descriptor moves the routes and the coverage and nothing else; the test follows each mutation to exactly the projection it concerns.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/skill-catalogue",
@@ -43102,7 +43107,7 @@
         "description": "share/kinds.yaml declares the kind, share/schemas/majordomus/skill/skill.v1.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/skill-check",
@@ -43112,7 +43117,7 @@
         "description": "`skills check` and the doctrine majordomus.skill-integrity (dispatched by doctor and watch) run one examination — unknown keys, schema version, integer version, closed status set, id equal to the directory, non-empty Purpose, Procedure and Output sections, duplicate ids, descriptions that do not tell two skills apart, related ids that resolve, examples with a heading — and print the counts of what they examined. The site generator refuses to build from a skill that does not validate.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/skill-site-projection",
@@ -43122,7 +43127,7 @@
         "description": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/suite-parallel",
@@ -43132,7 +43137,7 @@
         "description": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/task-commit-attribution",
@@ -43142,7 +43147,7 @@
         "description": "Today scope is checked with git diff base..HEAD, and a commit range has no author, so another session committing to the same branch in the same checkout has its files counted as this task's work. Recording each commit as it happens turns the question from a heuristic about ranges into an enumeration. The list would be a lookup that git overrules, never authority, and a rewritten commit would be reported as unrecognised rather than resolved to a guess.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/task-dependencies",
@@ -43152,7 +43157,7 @@
         "description": "Refused for task records, and only for them. Issues and milestones do carry dependencies, validated as two graphs — see docs/ROADMAP.md and docs/PLANNING.md. What stays refused is a task, the record of one session's work, waiting on another; one task is active per checkout and coordination between checkouts is the scope overlap report. The original wording said no dependency graph existed anywhere, which stopped being true when the plan model landed.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/telemetry",
@@ -43162,7 +43167,7 @@
         "description": "Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/tool-location-independent",
@@ -43172,7 +43177,7 @@
         "description": "A checkout copy, an unrelated absolute path and a PATH install read the same repository files and write nothing into the distribution, whose hash is the same after every command. The distribution root is derived from the entry point, never from the environment.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/tooling-derived",
@@ -43182,7 +43187,7 @@
         "description": "The fragment is {{COMPLETION_CONTRACT}} in every template under share/providers/ and .ai/repo/providers/, one plain list item per stage with the questions that belong to it; mj_completion_fragment (lib/update.sh) and CompletionPolicy::bootstrap_fragment (apps/majordomus-cli/src/gates/policy.rs) render it, and the stamp of the rendered body is what holds the two to the same bytes.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/typed-outcome",
@@ -43192,7 +43197,7 @@
         "description": "no_match means the work was done and the thing sought does not exist. failed means the work could not be done. They are different facts.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/use-case-coverage",
@@ -43202,7 +43207,7 @@
         "description": "The tally is computed from the command registry, docs/CLAIMS.yaml, the executable's registry and the use cases under .ai/repo/use-cases/; a draft never counts. The doctrine is majordomus.use-case-coverage, gated by policy use_cases.coverage and the finish key use_cases_covered.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/use-case-evidence",
@@ -43212,7 +43217,7 @@
         "description": "majordomus usecase run writes .ai/local/evidence/use-cases/<id>.json; scripts/generate-site-data runs the same scenarios and embeds the evidence into site/data/generated/catalogue.json, so --check proves the pages show what the tool did. Paths, timestamps, ids, hashes and durations are normalised; nothing behavioural is.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/use-case-impact",
@@ -43222,7 +43227,7 @@
         "description": "usecase impact maps paths through docs/RESPONSIBILITIES.yaml, the dispatch table, the rules' identities and the scenarios' fixtures; usecase scaffold writes drafts from the registry, the command fixture and the claims, and never a guarantee.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/vendored-rule-package",
@@ -43232,7 +43237,7 @@
         "description": "rules vendor status reports an edited, missing or stray file; rules vendor update refuses over it until --force, and never touches rules/project/. A newer executable reports a newer package and does not apply it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/web-namespaces-reserved",
@@ -43242,7 +43247,7 @@
         "description": "The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/web-surface-declared-once",
@@ -43252,7 +43257,7 @@
         "description": "A surface is a mount, a producer, a kind, a category, a visibility and the provenance of each; the routes the executable answers come from the capability declarations that already exist, a generated directory declares itself beside its output, and the application's site is read from the site generator's configuration. There is no central list. The case asks the page and the index independently and requires the same set of public mounts, so a link written into the page by hand fails it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/why-catalogue-discovered",
@@ -43262,7 +43267,7 @@
         "description": "Removing the file removes it from all of them, which is what a hidden registry would fail.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/why-diagnosis-explainable",
@@ -43272,7 +43277,7 @@
         "description": "No weighting and no percentage; the questionnaire on the website and `majordomus why diagnose` run the same arithmetic over the same data.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/why-references-resolve",
@@ -43282,7 +43287,7 @@
         "description": "Audiences, areas and related moments against the catalogue; commands, capabilities, claims, rules and use cases against their own registries.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/wiring-reconciliation",
@@ -43292,7 +43297,7 @@
         "description": "The path must exist, be executable, and be invoked by the named dispatcher. A hook that invokes it and discards the exit code counts as not wired.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/worktree-migration-lossless",
@@ -43302,7 +43307,7 @@
         "description": "The plan changes nothing and is recomputed under the repository lock before it is applied. Git moves the directory in one rename; the container's occupant goes out to a staging path and then in; a move across filesystems is refused unless a copy is permitted, and then verified against a manifest of every entry before the original is removed. Nothing is reset, stashed, cleaned, checked out or overwritten: a destination that exists is a named conflict, a locked worktree waits, a detached one is never moved, and a session's scratch checkout is reported and moved only on request.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/worktree-ownership",
@@ -43312,7 +43317,7 @@
         "description": "The record is checkout-local and never tracked, so it does not travel through git; one that arrives by other means is recognised by the worktree it names. check, finish --check and watch report a foreign record and enforce nothing from it; finish refuses to write to it. A record from before the field existed is treated as local, so upgrading does not turn an installation red.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://claim/worktree-topology-derived",
@@ -43322,7 +43327,7 @@
         "description": "The identity is the common git directory and the main worktree git lists first, never the current directory, so a linked worktree does not derive a container inside itself. The branch name is validated by git's reference rules and the derived path is proved on every call to stay below the container. Every registered worktree gets a standing and every condition a stable code with a remedy; the four worktree.* capabilities project the same typed topology to MCP, HTTP, OpenAPI, the Swagger UI and the Cockpit, and the pre-commit hook asks the guard.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 120410
+        "bytes": 120749
       },
       {
         "uri": "majordomus://command/adr",
@@ -44208,7 +44213,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 26060
+        "bytes": 27401
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -44325,7 +44330,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 21560
+        "bytes": 22152
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -44388,7 +44393,7 @@
         "title": "Evidence — what ran, against which commit, and whether it still proves anything",
         "path": "docs/EVIDENCE.md",
         "source_class": "document",
-        "bytes": 30018
+        "bytes": 32184
       },
       {
         "uri": "majordomus://document/docs/EXECUTIONS.md",
@@ -44478,7 +44483,7 @@
         "title": "Performance truth",
         "path": "docs/PERFORMANCE.md",
         "source_class": "document",
-        "bytes": 7420
+        "bytes": 9511
       },
       {
         "uri": "majordomus://document/docs/PLANNING.md",
@@ -44550,7 +44555,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 69093
+        "bytes": 69236
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -45126,7 +45131,7 @@
         "title": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
         "path": "docs/claims/evidence-unsupported-guarantee-is-reported.md",
         "source_class": "claim_page",
-        "bytes": 5324
+        "bytes": 6779
       },
       {
         "uri": "majordomus://document/docs/claims/executable-reference-derived.md",
@@ -46722,7 +46727,7 @@
         "identity": "lib/gates.sh",
         "path": "lib/gates.sh",
         "source_class": "library",
-        "bytes": 16172
+        "bytes": 20466
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -50203,7 +50208,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 9959
+        "bytes": 13961
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -50894,6 +50899,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/majordomus.publication-currency@1",
+        "kind": "rule",
+        "identity": "majordomus.publication-currency@1",
+        "title": "A session does not finish behind its own published site",
+        "description": "A repository that publishes has a second tree — the one the public is being served — and no commit-level gate can measure it, because no change to any file can make it right or wrong. A session that lands work and leaves the publication owed has finished nothing the public can see, and every check stays green while that is true. The gates that measure a deployment are declared as such in the CI model, and finish asks them.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6281,
+        "tags": [
+          "tasks",
+          "completion",
+          "deployment",
+          "evidence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/majordomus.questions-store-integrity@1",
         "kind": "rule",
         "identity": "majordomus.questions-store-integrity@1",
@@ -51143,7 +51165,7 @@
         "path": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5441,
+        "bytes": 6864,
         "tags": [
           "documentation",
           "diagrams",
@@ -53156,7 +53178,7 @@
         "identity": "test/cases/124_evidence.sh",
         "path": "test/cases/124_evidence.sh",
         "source_class": "case",
-        "bytes": 18045
+        "bytes": 25233
       },
       {
         "uri": "majordomus://test/test/cases/125_rule_proof.sh",
@@ -53220,7 +53242,7 @@
         "identity": "test/cases/130_archive.sh",
         "path": "test/cases/130_archive.sh",
         "source_class": "case",
-        "bytes": 7081
+        "bytes": 7326
       },
       {
         "uri": "majordomus://test/test/cases/130_context_compiler.sh",
@@ -53244,7 +53266,7 @@
         "identity": "test/cases/130_mesh.sh",
         "path": "test/cases/130_mesh.sh",
         "source_class": "case",
-        "bytes": 3195
+        "bytes": 3626
       },
       {
         "uri": "majordomus://test/test/cases/131_backlog_hygiene.sh",
@@ -53276,7 +53298,7 @@
         "identity": "test/cases/131_models.sh",
         "path": "test/cases/131_models.sh",
         "source_class": "case",
-        "bytes": 2884
+        "bytes": 3205
       },
       {
         "uri": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
@@ -53300,7 +53322,7 @@
         "identity": "test/cases/133_rule_graph.sh",
         "path": "test/cases/133_rule_graph.sh",
         "source_class": "case",
-        "bytes": 15825
+        "bytes": 16036
       },
       {
         "uri": "majordomus://test/test/cases/135_session_store_recovery.sh",
@@ -53324,7 +53346,7 @@
         "identity": "test/cases/138_governance_gates.sh",
         "path": "test/cases/138_governance_gates.sh",
         "source_class": "case",
-        "bytes": 9439
+        "bytes": 9854
       },
       {
         "uri": "majordomus://test/test/cases/139_release_record_schema.sh",
@@ -53348,7 +53370,7 @@
         "identity": "test/cases/140_prompt_continuity.sh",
         "path": "test/cases/140_prompt_continuity.sh",
         "source_class": "case",
-        "bytes": 15345
+        "bytes": 15872
       },
       {
         "uri": "majordomus://test/test/cases/14_wiring_dispatcher.sh",
@@ -53364,7 +53386,7 @@
         "identity": "test/cases/150_server_sees_the_current_tree.sh",
         "path": "test/cases/150_server_sees_the_current_tree.sh",
         "source_class": "case",
-        "bytes": 7127
+        "bytes": 7229
       },
       {
         "uri": "majordomus://test/test/cases/15_command_surface.sh",
@@ -53396,7 +53418,7 @@
         "identity": "test/cases/171_session_observability.sh",
         "path": "test/cases/171_session_observability.sh",
         "source_class": "case",
-        "bytes": 12369
+        "bytes": 12709
       },
       {
         "uri": "majordomus://test/test/cases/17_doctrine_enforcement.sh",
@@ -53564,7 +53586,7 @@
         "identity": "test/cases/240_the_session_domain_is_typed.sh",
         "path": "test/cases/240_the_session_domain_is_typed.sh",
         "source_class": "case",
-        "bytes": 12373
+        "bytes": 12509
       },
       {
         "uri": "majordomus://test/test/cases/24_prompt_search.sh",
@@ -53612,7 +53634,7 @@
         "identity": "test/cases/272_diagrams_are_drawn.sh",
         "path": "test/cases/272_diagrams_are_drawn.sh",
         "source_class": "case",
-        "bytes": 5154
+        "bytes": 9837
       },
       {
         "uri": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
@@ -53621,6 +53643,14 @@
         "path": "test/cases/273_navigation_is_declared_once.sh",
         "source_class": "case",
         "bytes": 8955
+      },
+      {
+        "uri": "majordomus://test/test/cases/275_publication_is_current.sh",
+        "kind": "test",
+        "identity": "test/cases/275_publication_is_current.sh",
+        "path": "test/cases/275_publication_is_current.sh",
+        "source_class": "case",
+        "bytes": 8129
       },
       {
         "uri": "majordomus://test/test/cases/276_disk_is_bounded.sh",
@@ -54108,7 +54138,7 @@
         "identity": "test/cases/83_doctor_budget.sh",
         "path": "test/cases/83_doctor_budget.sh",
         "source_class": "case",
-        "bytes": 2470
+        "bytes": 2466
       },
       {
         "uri": "majordomus://test/test/cases/84_deployment_contract.sh",
@@ -54252,7 +54282,7 @@
         "identity": "test/cases/93_scope_policy.sh",
         "path": "test/cases/93_scope_policy.sh",
         "source_class": "case",
-        "bytes": 10112
+        "bytes": 10108
       },
       {
         "uri": "majordomus://test/test/cases/93_workspace_kind.sh",
@@ -55148,7 +55178,7 @@
         "id",
         "version"
       ],
-      "objects": 136
+      "objects": 137
     },
     {
       "name": "scope",
@@ -55203,7 +55233,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 198
+      "objects": 199
     },
     {
       "name": "use-case",

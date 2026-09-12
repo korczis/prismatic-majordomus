@@ -1,9 +1,28 @@
-# Claims that declare a guarantee the recorded evidence does not support.
+# Every claim that declares a guarantee, and whether a recorded run supported it
+# when this file was written.
 #
-# Written by scripts/evidence-check --baseline; never by hand. A claim here is
-# known debt and does not fail the gate; a claim not here is a regression and
-# does. The set may only shrink, and it shrinks by recording a run that proves
-# the claim — never by adding a line.
+# Written by scripts/evidence-check --baseline; never by hand. A bare line is a
+# guarantee the recorded evidence did not support — known debt, which does not fail
+# the gate. A line marked '+' is a guarantee it did support — a proof this
+# repository may not lose, and losing it is what the gate refuses.
+#
+# Both halves are here because the ratchet is not membership. A claim this file
+# does not name at all is a claim written after it, not a claim that lost its
+# evidence, and the gate says so instead of reddening the trunk for it.
+#
+# --- supported: a run was recorded, and the gate refuses losing it
++a-finding-names-how-to-see-it-again
++archive-fidelity
++authored-files-are-english
++evidence-currency-is-not-collapsed
++evidence-navigates-both-ways
++evidence-partial-run-preserves-the-rest
++evidence-proof-is-an-execution
++evidence-unsupported-guarantee-is-reported
++rule-exemption-carries-its-reason
++rule-proof-is-named-and-resolves
++rule-state-is-derived-from-what-ran
+# --- unsupported: known debt, paid by recording a run — never by adding a line
 adr-catalogue
 adr-propose
 adr-traceability
@@ -73,6 +92,12 @@ mcp-peers
 mcp-shared-server
 mcp-stdio-surface
 mcp-uri-resolution
+mesh-observation-not-authority
+mesh-off-by-default
+mesh-one-registry
+models-no-secret-fields
+models-one-declaration
+models-routing-explains-itself
 no-counts-in-context
 no-network
 no-silent-overwrite
@@ -96,6 +121,7 @@ projection-generation
 prompt-asset
 prompt-assets
 prompt-capture
+prompt-continuity
 provider-projections-one-renderer
 record-resolution
 record-retention
@@ -116,6 +142,7 @@ scope-declared
 scope-enforcement
 scoped-task
 session-lifecycle
+session-observability
 session-records
 site-deploy-one-path
 site-deploys-from-verified-run
