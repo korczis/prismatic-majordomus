@@ -1092,6 +1092,10 @@ mj_record_front_matter() {
   # record-writing path and nothing else in common.sh needs it.
   [ -n "${MJ_LIB_changed:-}" ] || . "$MJ_LIB_DIR/changed.sh"
   mj_changed_files_block
+  # and what it left out, so that the list carries its own denominator. A record showing
+  # three files where a hundred were dirty is honest only if it says the other ninety-seven
+  # were declared generated; without that, a short list reads as a total.
+  mj_changed_excluded_block
   local extra; for extra in "$@"; do printf '%s\n' "$extra"; done
   printf -- '---\n\n'
 }

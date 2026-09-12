@@ -454,6 +454,11 @@ mj_session_close() {
     # product. lib/changed.sh filters against the declarations that already say what is
     # derived; what remains is what the episode actually wrote.
     mj_changed_files_block
+    # The denominator. The records this repository already carries show two files where
+    # twelve were dirty, and nothing in them says the other ten were sibling records of the
+    # same episode — so the list reads as an episode that did almost nothing rather than as
+    # one whose exhaust was classified out.
+    mj_changed_excluded_block
     printf 'session_id: %s\nstarted_at: %s\nclosed_at: %s\noutcome: %s\n' "$sid" "$started" "$closed_at" "$outcome"
     printf 'title: "%s"\n' "$(printf '%s' "$(mj_session_title "$task" "$sid")" | sed 's/"/\\"/g')"
     [ -n "$(mj_ses worker)" ] && printf 'worker: "%s"\n' "$(printf '%s' "$(mj_ses worker)" | sed 's/"/\\"/g')"

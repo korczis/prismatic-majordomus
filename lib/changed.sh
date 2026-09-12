@@ -42,10 +42,18 @@
 # what changes this, which is the point — a list of its own here would be the next place to
 # forget.
 
-# The declared-derived pathspecs, one per line, cached for the process. Reading them all
-# once per record is cheap; reading them once per *file* in a hundred-file tree is the shape
-# that cost the scope validator a second before it hoisted its own read out of the loop.
+# The declared-derived pathspecs, one `<declaration>\t<pathspec>` per line, cached for the
+# process. Reading them all once per record is cheap; reading them once per *file* in a
+# hundred-file tree is the shape that cost the scope validator a second before it hoisted
+# its own read out of the loop.
+#
+# Each line carries the tag of the declaration it came from, so that a record can say which
+# declaration excluded a path and not merely that something did. The tags are the five
+# declarations above, named; they are not a sixth list of paths, and nothing below can
+# exclude a path the tags alone would cover.
 MJ_DERIVED_PATHS=""; MJ_DERIVED_NAMES=""; MJ_DERIVED_LOADED=0
+# prefix each non-empty line of stdin with a declaration tag
+mj_changed_tag() { awk -v t="$1" 'NF { print t "\t" $0 }'; }
 mj_changed_load_declarations() {
   [ "$MJ_DERIVED_LOADED" = 1 ] && return 0
   MJ_DERIVED_LOADED=1
@@ -57,13 +65,13 @@ mj_changed_load_declarations() {
     # A scope file that does not parse is a finding doctor already reports, and it is not
     # this classifier's to raise a second time. It costs the exclusion, never the record.
     if mj_yaml_flatten "$MJ_SCOPE_FILE" > "$flat" 2>/dev/null; then
-      MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$(mj_ylist "$flat" out.generated.paths)"$'\n'
-      MJ_DERIVED_NAMES="$MJ_DERIVED_NAMES$(mj_ylist "$flat" out.generated.names)"$'\n'
+      MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$(mj_ylist "$flat" out.generated.paths | mj_changed_tag scope-generated)"$'\n'
+      MJ_DERIVED_NAMES="$MJ_DERIVED_NAMES$(mj_ylist "$flat" out.generated.names | mj_changed_tag scope-generated-name)"$'\n'
       # The never-read set, of which .ai/local/ is the entry that matters here. The whole
       # set is taken rather than that one path: a repository that declares another tree
       # unreadable has said the same thing about it, and a work product nobody may read is
       # not a work product.
-      MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$(mj_ylist "$flat" out.paths)"$'\n'
+      MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$(mj_ylist "$flat" out.paths | mj_changed_tag scope-never-read)"$'\n'
     fi
     rm -f "$flat"
   fi
@@ -75,7 +83,7 @@ mj_changed_load_declarations() {
   mj_load_policy 2>/dev/null || true
   j=0
   while t="$(mj_pol "projections.$j.target")"; [ -n "$t" ]; do
-    MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$t"$'\n'; j=$((j + 1))
+    MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS"$'policy-projection\t'"$t"$'\n'; j=$((j + 1))
   done
 
   # 4. the record stores. Nothing declares these as derived because they are not: a closed
@@ -86,17 +94,17 @@ mj_changed_load_declarations() {
   # rather than from a list, so a repository whose manifest puts the sessions section
   # somewhere else gets the right answer without anybody remembering to update this.
   if command -v mj_session_store >/dev/null 2>&1; then
-    MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$(mj_rel "$(mj_session_store)")/"$'\n'
+    MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS"$'record-store\t'"$(mj_rel "$(mj_session_store)")/"$'\n'
   fi
-  MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$(mj_rel "$MJ_STATE_DIR")/checkpoints/"$'\n'
-  MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$(mj_rel "$MJ_STATE_DIR")/handovers/"$'\n'
+  MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS"$'record-store\t'"$(mj_rel "$MJ_STATE_DIR")/checkpoints/"$'\n'
+  MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS"$'record-store\t'"$(mj_rel "$MJ_STATE_DIR")/handovers/"$'\n'
 
   # 5. the repository's own derived trees, from the merge driver's declaration. The
   # attribute line is `<pathspec><whitespace>merge=derived`; a pathspec with a space in it
   # would be quoted, and none is, so the first field is the whole of it.
   if [ -f "$MJ_ROOT/.gitattributes" ]; then
     while IFS= read -r t; do
-      [ -n "$t" ] && MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$t"$'\n'
+      [ -n "$t" ] && MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS"$'gitattributes-derived\t'"$t"$'\n'
     done < <(awk '$0 !~ /^[[:space:]]*#/ && $0 ~ /merge=derived/ { print $1 }' "$MJ_ROOT/.gitattributes")
   fi
   return 0
@@ -109,25 +117,36 @@ mj_changed_load_declarations() {
 # that actually appear: a plain path, a trailing `/` for a directory, and a trailing `/**`
 # or `/*`. Those are matched; anything else is matched literally and therefore excludes
 # nothing, which is the safe direction for a filter that decides what a record omits.
+#
+# MJ_CHANGED_WHY is left holding the tag of the declaration that matched, so that a caller
+# can say which one excluded the path. "Something excluded it" is a sentence nobody can act
+# on; "gitattributes-derived excluded it" names the file to edit if the answer is wrong.
+#
+# It is assigned only on a match, never once per candidate. This loop runs the whole
+# declaration set — about eight hundred pathspecs in this repository — against every changed
+# file, so an assignment per iteration is two hundred thousand of them on the tree that named
+# this work, on the record-writing path.
+MJ_CHANGED_WHY=""
 mj_changed_is_derived() {
-  local f="$1" p n
+  local f="$1" p n tag
   mj_changed_load_declarations
-  while IFS= read -r p; do
+  MJ_CHANGED_WHY=""
+  while IFS=$'\t' read -r tag p; do
     [ -n "$p" ] || continue
     case "$p" in
-      */'**') [ -z "${f##"${p%'**'}"*}" ] && return 0 ;;
-      */'*')  [ -z "${f##"${p%'*'}"*}" ] && return 0 ;;
-      */)     [ -z "${f##"$p"*}" ] && return 0 ;;
-      *)      [ "$f" = "$p" ] && return 0
-              [ -z "${f##"$p"/*}" ] && return 0 ;;
+      */'**') [ -z "${f##"${p%'**'}"*}" ] && { MJ_CHANGED_WHY="$tag"; return 0; } ;;
+      */'*')  [ -z "${f##"${p%'*'}"*}" ] && { MJ_CHANGED_WHY="$tag"; return 0; } ;;
+      */)     [ -z "${f##"$p"*}" ] && { MJ_CHANGED_WHY="$tag"; return 0; } ;;
+      *)      [ "$f" = "$p" ] && { MJ_CHANGED_WHY="$tag"; return 0; }
+              [ -z "${f##"$p"/*}" ] && { MJ_CHANGED_WHY="$tag"; return 0; } ;;
     esac
   done <<EOF
 $MJ_DERIVED_PATHS
 EOF
-  while IFS= read -r n; do
+  while IFS=$'\t' read -r tag n; do
     [ -n "$n" ] || continue
     # shellcheck disable=SC2254  # the pattern is the declaration; that is the whole point
-    case "${f##*/}" in $n) return 0 ;; esac
+    case "${f##*/}" in $n) MJ_CHANGED_WHY="$tag"; return 0 ;; esac
   done <<EOF
 $MJ_DERIVED_NAMES
 EOF
@@ -146,14 +165,21 @@ EOF
 # MJ_CHANGED_EXCLUDED is left holding how many were classified out, so the caller can say so
 # out loud. A filter that silently shortens a list is indistinguishable from a tree that was
 # cleaner than it was.
-MJ_CHANGED_EXCLUDED=0
+MJ_CHANGED_EXCLUDED=0; MJ_CHANGED_KEPT=0; MJ_CHANGED_EXCLUDED_TAGS=""
 mj_changed_files() {
-  local base="${1:-}" f n=0
-  MJ_CHANGED_EXCLUDED=0
+  local base="${1:-}" f
+  MJ_CHANGED_EXCLUDED=0; MJ_CHANGED_KEPT=0; MJ_CHANGED_EXCLUDED_TAGS=""
   while IFS= read -r f; do
     [ -n "$f" ] || continue
-    if mj_changed_is_derived "$f"; then MJ_CHANGED_EXCLUDED=$((MJ_CHANGED_EXCLUDED + 1)); continue; fi
-    printf '%s\n' "$f"; n=$((n + 1))
+    if mj_changed_is_derived "$f"; then
+      MJ_CHANGED_EXCLUDED=$((MJ_CHANGED_EXCLUDED + 1))
+      # One tag appended per exclusion, tallied once at the end. A counter per declaration
+      # would be six variables naming the six declarations twice; a tally per *file* would
+      # be a process per file, which is the shape this file's own header warns about.
+      MJ_CHANGED_EXCLUDED_TAGS="$MJ_CHANGED_EXCLUDED_TAGS$MJ_CHANGED_WHY"$'\n'
+      continue
+    fi
+    printf '%s\n' "$f"; MJ_CHANGED_KEPT=$((MJ_CHANGED_KEPT + 1))
   done <<EOF
 $(if [ -n "$base" ] && [ "$base" != NONE ]; then mj_git_touched "$base"
    else mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | LC_ALL=C sort -u | sed '/^$/d'; fi)
@@ -163,26 +189,63 @@ EOF
 
 # The same list as the block a record's front matter carries. One writer, so that a record
 # and the command that explains it can never disagree about the indentation either.
+#
+# Not a pipeline. `mj_changed_files | sed` ran the classifier in a subshell, so every count
+# it set died with that subshell and MJ_CHANGED_EXCLUDED was readable by nobody: the
+# variable existed, was documented, and was always 0 at every call site. A redirection to a
+# file is not a subshell, which is what lets the caller state the denominator.
 mj_changed_files_block() {
-  mj_changed_files "$@" | sed 's/^/  - /'
+  local t f
+  t="$(mktemp "${TMPDIR:-/tmp}/mj.cb.XXXXXX")"
+  mj_changed_files "$@" > "$t"
+  while IFS= read -r f; do [ -n "$f" ] && printf '  - %s\n' "$f"; done < "$t"
+  rm -f "$t"
+  return 0
+}
+
+# What the classifier left out, as the record states it: the count, and which declaration
+# did it. Printed after the changed_files block by every writer, 0 included — a list shown
+# without its denominator is indistinguishable from a tree that was clean, which is the
+# misreading the whole of this file exists to stop.
+#
+# Call it only after mj_changed_files or mj_changed_files_block, whose counts it renders.
+mj_changed_excluded_block() {
+  printf 'changed_files_excluded: %s\n' "$MJ_CHANGED_EXCLUDED"
+  [ "$MJ_CHANGED_EXCLUDED" = 0 ] && return 0
+  printf 'changed_files_excluded_by:\n'
+  printf '%s' "$MJ_CHANGED_EXCLUDED_TAGS" | sed '/^$/d' | LC_ALL=C sort | uniq -c \
+    | awk '{ printf "  - %s=%s\n", $2, $1 }'
   return 0
 }
 
 # ---------------------------------------------------------------- the doctrine
 # A record names the work, not the exhaust — read back off the records that exist.
 #
-# Advisory, and the reason is not timidity. Every record already written carries the
-# unclassified list, and a record is immutable by contract: rewriting thirteen committed
-# session records so that a check goes green would be fabricating history, which is the one
-# thing the recovery work this validator arrived with refuses to do. So the records that
-# exist are reported and the new ones are held to it by test/cases/136, which fails the
-# build if a record written today names a declared-derived path.
+# Two verdicts, because the corpus holds two populations and one verdict over both can only
+# be wrong in one direction. Every record written before the classifier carries the
+# unclassified list, and a record is immutable by contract: rewriting eighteen committed
+# records so that a check goes green would be fabricating history, which is the one thing
+# the recovery work this validator arrived with refuses to do. So those are reported by name
+# and count, and never block.
 #
-# The count is what makes the finding actionable. "Some records name derived files" is a
+# A record written *by the classifier* that still names a declared-derived path is not a
+# legacy: it is a regression, and it blocks. The two are told apart by the record itself —
+# `changed_files_excluded` is written by every writer on this path, 0 included, and by
+# nothing that came before it — so the grandfather boundary is a property of the object
+# rather than a date constant or a list of eighteen filenames somebody has to maintain. It
+# closes on its own as the old records age out of the stores.
+#
+# The residual is a record produced by neither writer: a hand-authored one would carry no
+# key and be classified legacy. That is why `test/cases/281` asserts the writers always emit
+# the key, and `test/cases/136` asserts what they exclude — a missing key is then only
+# producible by something that is not the tool, which the session-records doctrine already
+# forbids.
+#
+# The counts are what make either finding actionable. "Some records name derived files" is a
 # sentence nobody can act on; "this record names 26 of them, the newest is from today" tells
 # a reader whether the classifier is working.
 mj_validate_record_changed_files() {
-  local d f n bad=0 total=0 worst=0 worst_f="" newest=""
+  local d f n bad=0 total=0 worst=0 worst_f="" newest="" live=0 live_worst=0 live_f=""
   for d in "$(mj_session_store)" "$MJ_STATE_DIR/checkpoints" "$MJ_STATE_DIR/handovers"; do
     [ -d "$d" ] || continue
     for f in "$d"/*.md; do
@@ -196,19 +259,28 @@ mj_validate_record_changed_files() {
       done <<LIST
 $(awk '/^changed_files:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); print; next } c { exit }' "$f")
 LIST
-      if [ "$n" -gt 0 ]; then
+      [ "$n" -gt 0 ] || continue
+      if grep -q '^changed_files_excluded:' "$f"; then
+        # written by the classifier and still naming what a declaration covers
+        live=$((live + 1))
+        [ "$n" -gt "$live_worst" ] && { live_worst="$n"; live_f="$f"; }
+      else
         bad=$((bad + 1))
         [ "$n" -gt "$worst" ] && { worst="$n"; worst_f="$f"; }
         newest="$f"
       fi
     done
   done
-  if [ "$bad" = 0 ]; then
+  if [ "$bad" -gt 0 ]; then
+    mj_warn records "$(mj_rel "$worst_f")" \
+      "$bad of $total record(s) predate lib/changed.sh and name generated or local state as the episode's work product; the worst names $worst, and the newest is $(mj_rel "$newest"). Grandfathered: a record is immutable, and rewriting one to turn a check green would fabricate history"
+  fi
+  if [ "$live" -gt 0 ]; then
+    mj_doctrine_fail records "$(mj_rel "$live_f")" \
+      "$live record(s) written by the classifier still name declared-derived paths as the work product; the worst names $live_worst. This is a regression, not a legacy — the writer emitted changed_files_excluded and kept the paths anyway" \
+      "majordomus doctrine show majordomus.record-changed-files"
+  elif [ "$bad" = 0 ]; then
     mj_doctrine_ok records "$total record(s)" "every changed_files names work, not generated or local state"
-  else
-    mj_doctrine_fail records "$(mj_rel "$worst_f")" \
-      "$bad of $total record(s) name generated or local state as the episode's work product; the worst names $worst, and the newest is $(mj_rel "$newest") — a record written before lib/changed.sh is not rewritten, because a record is immutable" \
-      "majordomus session show \$(sed -n 's/^session_id: //p' $(mj_rel "$worst_f") | head -n 1)"
   fi
   return 0
 }

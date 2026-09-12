@@ -98,7 +98,19 @@
       }
     },
     "changed_files": {
-      "description": "Repository-relative paths the working tree held changed when the episode closed.",
+      "description": "Repository-relative paths the working tree held changed when the episode closed, classified: what the episode produced, with the paths a declaration calls generated, projected or local left out. changed_files_excluded says how many those were.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "changed_files_excluded": {
+      "description": "How many changed paths the classifier kept out of changed_files because a declaration already calls them generated, projected or local. Written on every record, 0 included: it is the list's denominator, and a short list without it cannot be told from a tree that was nearly clean. Its absence marks a record written before the classifier existed.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "changed_files_excluded_by": {
+      "description": "Which declaration excluded them, one `<declaration>=<count>` per entry. The names are the declarations lib/changed.sh reads — scope-generated, scope-generated-name, scope-never-read, policy-projection, gitattributes-derived, record-store — so a wrong exclusion names the file to edit. Absent when nothing was excluded.",
       "type": "array",
       "items": {
         "type": "string"

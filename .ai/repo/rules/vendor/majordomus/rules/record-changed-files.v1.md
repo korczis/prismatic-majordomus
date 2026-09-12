@@ -4,9 +4,9 @@ version: 1
 kind: rule
 title: A record's changed_files names the work, not the tool's exhaust
 description: The changed_files block of a checkpoint, a handover or a closed session names what the episode produced. Paths a declaration already calls generated, projected or local are classified out, and the classification reads those declarations rather than a list of its own.
-statement: A record's changed_files is the working tree classified against the declarations that say what is derived — the scope file's generated and never-read sets, the policy's projection targets, the merge driver's derived trees, and the record stores themselves — never git status verbatim.
+statement: A record's changed_files is the working tree classified against the declarations that say what is derived — the scope file's generated and never-read sets, the policy's projection targets, the merge driver's derived trees, and the record stores themselves — never git status verbatim; and the record states how many paths that classification excluded and by which declaration, so that the list carries its own denominator.
 status: active
-class: advisory
+class: blocking
 depends_on: [majordomus.session-records@1, majordomus.handover-integrity@1]
 tags: [records, session, doctrine]
 
@@ -16,7 +16,7 @@ x-majordomus:
   enforced_by: [doctor]
   exit_code: 10
   claims: []
-  tests: [test/cases/136_changed_files_classifier.sh]
+  tests: [test/cases/136_changed_files_classifier.sh, test/cases/281_record_excluded_accounting.sh]
 ---
 
 # Rationale
@@ -63,25 +63,67 @@ and the list is what it was before. Adding a path to any of those declarations i
 changes the outcome, which is the point — a sixth list inside the classifier would be the
 sixth place to forget.
 
+## The list carries its own denominator
+
+A filter that silently shortens a list is indistinguishable from a tree that was cleaner
+than it was. So the record states the classification as well as its result:
+
+```
+changed_files:
+  - deploy/docs/
+  - scripts/force-merge-all
+changed_files_excluded: 10
+changed_files_excluded_by:
+  - record-store=10
+```
+
+`changed_files_excluded` is written on every record, `0` included — a key that appears only
+when something was excluded would make "nothing was excluded" and "this record predates the
+classifier" the same observation. `changed_files_excluded_by` names the declaration that did
+it, one `<declaration>=<count>` per entry, because "something excluded it" is a sentence
+nobody can act on while `gitattributes-derived` names the file to edit when the answer is
+wrong.
+
+Measured on this repository. The record above is
+`.ai/repo/sessions/20260911T072724Z--s-20260910214152-71cb--…`, which named twelve paths: ten
+were sibling session records of the same episode, one of them a `.tmp.` file the store was
+mid-write on. Classified, the list is two. Two with no denominator is a weaker and
+differently wrong claim than "two, and ten were the store's own".
+
 # Failure behaviour
 
-Advisory, and deliberately so. Every record written before `lib/changed.sh` carries the
-unclassified list, and a record is immutable by contract: rewriting thirteen committed
-session records so that a check goes green would be fabricating history, which is the thing
-the work this rule arrived with exists to refuse. `doctor` reports how many records carry
-derived paths, which one carries the most, and which is the newest — that last number is
-what tells a reader whether the classifier is working, because a record written after it
-landed and still naming derived paths is a regression rather than a legacy.
+Blocking, over two populations the records themselves tell apart.
 
-The blocking half is the behavioural case. `test/cases/136_changed_files_classifier.sh`
-fails the build if a checkpoint, a handover or a closed session written today names a path
-one of the declarations covers.
+Every record written before `lib/changed.sh` carries the unclassified list, and a record is
+immutable by contract: rewriting eighteen committed records so that a check goes green would
+be fabricating history, which is the thing the work this rule arrived with exists to refuse.
+Those are reported by `doctor` — how many, which carries the most, which is the newest — and
+never block. They age out of the stores on their own.
+
+A record written *by the classifier* that still names a declared-derived path is not a
+legacy; it is a regression, and it blocks. The two are separated by the record itself:
+`changed_files_excluded` is written by every writer on this path and by nothing that came
+before it, so the grandfather boundary is a property of the object rather than a date
+constant or a list of eighteen filenames somebody must maintain. The boundary closes itself.
+
+The residual is a record produced by neither writer. A hand-authored one would carry no key
+and be classified as a legacy, which is why `test/cases/281` asserts that the writers always
+emit the key: a missing key is then only producible by something that is not the tool, and
+`majordomus.session-records` already forbids that.
 
 # Verification
 
 `mj_validate_record_changed_files` in `lib/changed.sh`, dispatched from `doctor`, judges the
-records that exist. `test/cases/136_changed_files_classifier.sh` judges the writers: it sets
-each declaration in turn, writes one record of each kind, and asserts both halves — that the
-work is named and that the exhaust is not. Its last section removes a declaration and proves
-the path comes back, which is what shows the exclusion came from the declaration and not
-from a constant in the classifier.
+records that exist, with one verdict per population.
+
+`test/cases/136_changed_files_classifier.sh` judges what the writers exclude: it sets each
+declaration in turn, writes one record of each kind, and asserts both halves — that the work
+is named and that the exhaust is not. Its last section removes a declaration and proves the
+path comes back, which is what shows the exclusion came from the declaration and not from a
+constant in the classifier.
+
+`test/cases/281_record_excluded_accounting.sh` judges what they say about it: that all three
+record kinds carry the count, that the count equals the number actually excluded, that the
+breakdown names two different declarations and sums to the total, that a record with nothing
+to exclude states `0` rather than omitting the key, and that removing a declaration moves
+the kept list and the count in opposite directions together.
