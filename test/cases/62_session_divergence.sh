@@ -100,7 +100,7 @@ o3="$(grep -n "$sid3" list1.txt | cut -d: -f1)"; o4="$(grep -n "$sid4" list1.txt
 [ "$o4" -lt "$o3" ] || {
   echo "    inside one second the order came from the machine-local ledger, not from the"
   echo "    record's own name — and this order is committed, so it must not depend on which"
-  echo "    machine generated it (see test/cases/278_published_order_is_tracked.sh)"
+  echo "    machine generated it (see test/cases/281_published_order_is_tracked.sh)"
   cat list1.txt; exit 1; }
 
 # --- a rewritten history makes every view say `diverged`, and say it loudly
