@@ -257,11 +257,7 @@ pub fn spend(
     // the request asked for it — and the marking becomes a diagnostic instead.
     let stale: Vec<String> = candidates
         .values()
-        .filter(|c| {
-            c.status
-                .as_deref()
-                .is_some_and(|s| STALE.contains(&s))
-        })
+        .filter(|c| c.status.as_deref().is_some_and(|s| STALE.contains(&s)))
         .map(|c| c.uri.clone())
         .collect();
     for uri in stale {
@@ -428,7 +424,10 @@ pub fn spend(
                 .filter(|e| e.tier == *t)
                 .map(|e| e.cost_tokens)
                 .sum(),
-            required: selected.iter().filter(|e| e.tier == *t && e.required).count(),
+            required: selected
+                .iter()
+                .filter(|e| e.tier == *t && e.required)
+                .count(),
         })
         .collect();
 
@@ -484,8 +483,14 @@ mod tests {
 
     #[test]
     fn a_version_is_split_off_the_identity() {
-        assert_eq!(stem("majordomus://rule/project.x@2"), ("majordomus://rule/project.x", Some(2)));
-        assert_eq!(stem("majordomus://adr/adr-0001"), ("majordomus://adr/adr-0001", None));
+        assert_eq!(
+            stem("majordomus://rule/project.x@2"),
+            ("majordomus://rule/project.x", Some(2))
+        );
+        assert_eq!(
+            stem("majordomus://adr/adr-0001"),
+            ("majordomus://adr/adr-0001", None)
+        );
         // an @ with something unparseable after it is not a version
         assert_eq!(stem("a@b").1, None);
     }

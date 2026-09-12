@@ -481,7 +481,10 @@ pub fn select(ctx: &Context, graph: &Graph, req: &Request<'_>) -> Selection {
         }
         sel.unresolved.push((
             u.reference.clone(),
-            format!("{} names it under `{}`; {}", u.declared_in, u.key, u.correction),
+            format!(
+                "{} names it under `{}`; {}",
+                u.declared_in, u.key, u.correction
+            ),
         ));
     }
     sel.unresolved.sort();
@@ -670,21 +673,11 @@ fn paths(
                     confidence: 1.0,
                     weight: 0.8,
                 };
-                offer(
-                    sel,
-                    index,
-                    by_uri,
-                    nodes,
-                    &o.uri,
-                    Tier::Source,
-                    0.8,
-                    1,
-                    d,
-                );
+                offer(sel, index, by_uri, nodes, &o.uri, Tier::Source, 0.8, 1, d);
                 continue;
             }
-            if o.kind != "context" || o.metadata.get("status").and_then(scalar).as_deref()
-                == Some("deprecated")
+            if o.kind != "context"
+                || o.metadata.get("status").and_then(scalar).as_deref() == Some("deprecated")
             {
                 continue;
             }
@@ -909,11 +902,9 @@ fn local_state(ctx: &Context, sel: &mut Selection) {
                 ),
             ));
         }
-        let bytes = std::fs::metadata(
-            std::path::Path::new(&ctx.index.repository.root).join(path),
-        )
-        .map(|m| m.len())
-        .unwrap_or(0);
+        let bytes = std::fs::metadata(std::path::Path::new(&ctx.index.repository.root).join(path))
+            .map(|m| m.len())
+            .unwrap_or(0);
         facts.insert("bytes".into(), bytes.to_string());
         let uri = format!("local:{path}");
         let reason = match record.get("matched").and_then(Value::as_str) {
