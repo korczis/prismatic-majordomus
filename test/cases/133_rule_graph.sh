@@ -108,7 +108,6 @@ rule delta   blocking 'tests: [scripts/not-a-gate.sh]'
 rule epsilon blocking
 rule zeta    blocking 'reviewed_because: the rule is about the provenance of code, which no program in this tree can read'
 git add -A >/dev/null && git commit -qm fixture
-C1="$(git rev-parse HEAD)"
 
 # ---------------------------------------------------------------- 1. the corpus is read
 # Every number below is counted from the tree. A denominator written down anywhere would be
