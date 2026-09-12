@@ -129,6 +129,21 @@ if grep -q 'probe-check' "$T/gate2.out"; then
   echo "    the gate rejected a composition of two commands:"; cat "$T/gate2.out"; exit 1
 fi
 
+# ...and does not reject a recipe that *uses* a command's answer. `just open` reads one
+# value out of `serve status` and then opens a browser — work no command of either program
+# does, so the bridge cannot write it. Spelling a command is what the gate refuses; a
+# program named inside a command substitution is a value the recipe consumed.
+printf '%s\n' '# One value read out of a command, then work no command does.' \
+  "[group('probe')]" 'probe-open:' \
+  '    @url="$(bin/majordomus-cli serve status --format json | head -1)"; \' \
+  '    [ -n "$url" ] || exit 1; echo "$url"' \
+  > "$PROBE/.just/probe.just"
+( cd "$PROBE" && ./scripts/ci/command-graph >"$T/gate3.out" 2>&1 ) || true
+[ -s "$T/gate3.out" ] || { echo "    the gate said nothing at all on the third probe"; exit 1; }
+if grep -q 'probe-open' "$T/gate3.out"; then
+  echo "    the gate rejected a recipe that reads a command's answer:"; cat "$T/gate3.out"; exit 1
+fi
+
 # --- adding a command reaches every projection without editing one
 #
 # The graph is asked for a command that exists only because clap declares it. If a surface
