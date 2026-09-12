@@ -26,7 +26,11 @@
 #                                     technique scripts/ci/backlog-check uses, for the same
 #                                     reason: a hand list falls behind the generator the first
 #                                     time a section is added, which is how the omission lived.
+# pipefail beside set -e: every list below arrives through a pipeline, and without it a jq
+# that fails mid-pipe yields a short list that reads exactly like a correct one — a shorter
+# merge policy, silently, which is the failure this whole script exists to remove.
 set -eu
+set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 CHECK=0; [ "${1:-}" = --check ] && CHECK=1
