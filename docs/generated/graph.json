@@ -1655,6 +1655,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/doctor.rs",
+        "kind": "file",
+        "label": "doctor.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/doctor.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/registry.rs",
         "kind": "file",
         "label": "registry.rs",
@@ -3809,6 +3817,23 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0059",
+        "kind": "adr",
+        "label": "adr-0059",
+        "summary": "The mesh is on for this repository, and every session start holds it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0059",
+        "source": ".ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "tags": [
+            "mesh",
+            "coordination",
+            "operations"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -5704,6 +5729,21 @@
           "responsibility": "none",
           "source": "docs/MCP.md",
           "test": "test/cases/72_rust_mcp.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-declared-is-held",
+        "kind": "claim",
+        "label": "mesh-declared-is-held",
+        "summary": "An enabled mesh declaration whose server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is enabled, allowlisted and names a hub",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmesh-declared-is-held",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/mesh/doctor.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "test/cases/290_the_mesh_is_declared_and_held.sh"
         }
       },
       {
@@ -10166,6 +10206,14 @@
         "summary": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmcp-uri-resolution.md",
         "source": "docs/claims/mcp-uri-resolution.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-declared-is-held.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-declared-is-held.md",
+        "summary": "An enabled mesh declaration whose server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is enabled, allowlisted and names a hub",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmesh-declared-is-held.md",
+        "source": "docs/claims/mesh-declared-is-held.md"
       },
       {
         "id": "majordomus://document/docs/claims/mesh-observation-not-authority.md",
@@ -22484,7 +22532,7 @@
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmesh-declaration%2Fmajordomus",
         "source": ".ai/repo/mesh/majordomus.yaml",
         "facts": {
-          "enabled": false
+          "enabled": true
         }
       },
       {
@@ -31963,6 +32011,13 @@
         "source": "test/cases/28_no_hardcoded_values.sh"
       },
       {
+        "id": "majordomus://test/test/cases/290_the_mesh_is_declared_and_held.sh",
+        "kind": "test",
+        "label": "test/cases/290_the_mesh_is_declared_and_held.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F290_the_mesh_is_declared_and_held.sh",
+        "source": "test/cases/290_the_mesh_is_declared_and_held.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
         "kind": "test",
         "label": "test/cases/29_prompt_capture.sh",
@@ -38141,6 +38196,11 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0059",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -39963,6 +40023,26 @@
       {
         "source": "majordomus://claim/mcp-uri-resolution",
         "target": "majordomus://test/test/cases/72_rust_mcp.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "file:apps/majordomus-cli/src/mesh/doctor.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "majordomus://test/test/cases/290_the_mesh_is_declared_and_held.sh",
         "kind": "tested_by"
       },
       {
@@ -42917,6 +42997,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/mcp-uri-resolution.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-declared-is-held.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -49851,6 +49936,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/290_the_mesh_is_declared_and_held.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/29_prompt_capture.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -53492,8 +53582,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1670,
-      "edges": 3751,
+      "nodes": 1675,
+      "edges": 3758,
       "acyclic": true,
       "truncated": false
     }
