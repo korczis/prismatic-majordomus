@@ -155,6 +155,15 @@
   .mj-list {
     @apply list-disc space-y-0.5 pl-5;
   }
+  /* An identity has no spaces to break at — `$defs.Record.properties.next_action_withheld`
+     is one token and 44 characters, wider than a 320px viewport. `.mj-page-title` already
+     breaks anywhere for the same reason; this is that rule for an identity rendered in a
+     body, where `.mj-prose` sets a measure and no break. Use it on the element that holds
+     the identity, never on the prose around it: breaking anywhere is right for a name and
+     wrong for a sentence. */
+  .mj-identity {
+    @apply min-w-0 [overflow-wrap:anywhere];
+  }
 
   /* --------------------------------------------------------------------- chips */
 

@@ -19,7 +19,7 @@ Current version: **0.6.0**
 - **ADR-0035** A checkout's server is one of the repository's, and its state is served like every other fact _(proposed)_
 - **ADR-0031** The design is one declaration and every surface is a projection of it _(accepted)_
 - **ADR-0030** A task owes obligations, and the evidence that discharges them goes stale _(proposed)_
-- **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(accepted)_
+- **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(proposed)_
 - **ADR-0026** A capability module's area is derived from the features that name it, not declared beside it _(accepted)_
 - **ADR-0025** Presentation order is one total order owned by the crate, not a decision each surface makes _(accepted)_
 - **ADR-0024** An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts _(accepted)_

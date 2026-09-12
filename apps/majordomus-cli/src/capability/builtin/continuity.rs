@@ -256,7 +256,11 @@ impl Thresholds {
                 ),
             )
         } else {
-            (Freshness::Fresh, Some(minutes), format!("{} old", span(minutes)))
+            (
+                Freshness::Fresh,
+                Some(minutes),
+                format!("{} old", span(minutes)),
+            )
         }
     }
 }
@@ -1210,7 +1214,14 @@ mod tests {
             "h/theirs.md",
             &record("2026-01-01T00:00:00Z", &head, "DETACHED", "/other", "No"),
         );
-        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "DETACHED", Some(&head), t, now);
+        let (r, skipped) = resolve(
+            repo.root(),
+            &repo.root().join("h"),
+            "DETACHED",
+            Some(&head),
+            t,
+            now,
+        );
         assert!(
             r.is_none(),
             "a detached checkout was handed another worktree's record"
@@ -1248,7 +1259,14 @@ mod tests {
         );
         // not a record at all, and not counted as a broken one either
         repo.write("h/README.md.yaml", "x\n");
-        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head), t, now);
+        let (r, skipped) = resolve(
+            repo.root(),
+            &repo.root().join("h"),
+            "main",
+            Some(&head),
+            t,
+            now,
+        );
         assert!(r.is_none(), "an unreadable file was offered as a record");
         assert_eq!(skipped, 4);
     }
@@ -1266,7 +1284,14 @@ mod tests {
         let body = record("2026-01-01T00:00:00Z", &head, "main", &root, "Go")
             .replace("task_id: t-1\n", "");
         repo.write("h/no-task.md", &body);
-        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head), t, now);
+        let (r, skipped) = resolve(
+            repo.root(),
+            &repo.root().join("h"),
+            "main",
+            Some(&head),
+            t,
+            now,
+        );
         let r = r.expect("a record without a task is still a record");
         assert_eq!(r.task_id, "none");
         assert_eq!(skipped, 0);
@@ -1287,9 +1312,25 @@ mod tests {
                 &record("2026-01-01T00:00:00Z", &head, "main", &root, name),
             );
         }
-        let first = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head), t, now).0;
+        let first = resolve(
+            repo.root(),
+            &repo.root().join("h"),
+            "main",
+            Some(&head),
+            t,
+            now,
+        )
+        .0;
         for _ in 0..5 {
-            let again = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head), t, now).0;
+            let again = resolve(
+                repo.root(),
+                &repo.root().join("h"),
+                "main",
+                Some(&head),
+                t,
+                now,
+            )
+            .0;
             assert_eq!(first, again);
         }
     }
@@ -1395,7 +1436,10 @@ mod tests {
 
         let (f, _, why) = t.judge("2026-06-15T13:00:00Z", now);
         assert_eq!(f, Freshness::Invalid);
-        assert!(why.contains("future"), "a future timestamp did not say so: {why}");
+        assert!(
+            why.contains("future"),
+            "a future timestamp did not say so: {why}"
+        );
 
         let none = Thresholds::default();
         let (f, age, why) = none.judge("2026-06-01T00:00:00Z", now);
@@ -1406,7 +1450,10 @@ mod tests {
             Some(14 * 1440 + 720),
             "the age is known even when the verdict is not"
         );
-        assert!(why.contains("session.freshness"), "the missing key is not named: {why}");
+        assert!(
+            why.contains("session.freshness"),
+            "the missing key is not named: {why}"
+        );
     }
 
     /// `stale` and `invalid` are the two a reader must refuse to present as current.
@@ -1428,7 +1475,11 @@ mod tests {
             let text = crate::peers::rfc3339(
                 std::time::UNIX_EPOCH + std::time::Duration::from_secs(secs as u64),
             );
-            assert_eq!(epoch_seconds(&text), Some(secs), "round trip failed for {text}");
+            assert_eq!(
+                epoch_seconds(&text),
+                Some(secs),
+                "round trip failed for {text}"
+            );
         }
         for bad in [
             "",

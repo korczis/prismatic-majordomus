@@ -2807,6 +2807,20 @@ pub fn health(ctx: &Context) -> Page {
 
 // --------------------------------------------------------------------- release
 
+/// A digest, cut to what a person compares by eye.
+///
+/// `sha256:` and 64 hex characters is 71, and a 320px viewport is about 40 — so the full
+/// value in a table cell is the whole page's overflow. Two fingerprints that differ do so in
+/// the first bytes with overwhelming probability, which is what this cell is read for; the
+/// whole value stays in the JSON every machine surface answers with, where nothing truncates
+/// it. The commit two rows above is abbreviated for the same reason.
+fn short_digest(digest: &str) -> String {
+    match digest.split_once(':') {
+        Some((algo, hex)) => format!("{algo}:{}…", &hex[..hex.len().min(12)]),
+        None => digest.chars().take(12).collect::<String>() + "…",
+    }
+}
+
 /// What the public contract did since the last release, and the smallest version it allows.
 ///
 /// Every number here is read from `release.analysis` — the one engine the command line, the
@@ -2900,23 +2914,27 @@ pub fn release(ctx: &Context) -> Page {
                         plan.changes
                             .iter()
                             .map(|c| {
-                                // The badge and the atom on one line, the reason on its
-                                // own. An inline note beside a `mono` chip cannot wrap, and
-                                // a change id plus a clause is wider than a 320px viewport.
+                                // Prose, not a `mono` chip. A change id is a dotted path
+                                // with no spaces to break at
+                                // (`$defs.Record.properties.next_action_withheld`), and
+                                // `.mj-mono` does not break — only `a.mj-mono` does — so a
+                                // chip of one overflows a 320px viewport however its row is
+                                // laid out. Rendered as prose beside its reason it wraps,
+                                // and the monospace was decoration rather than meaning.
                                 el("li")
+                                    .child(badge(
+                                        match c.impact {
+                                            Impact::Major => "fail",
+                                            Impact::Minor => "warn",
+                                            _ => "ok",
+                                        },
+                                        c.impact.as_str(),
+                                    ))
                                     .child(
                                         el("div")
-                                            .child(badge(
-                                                match c.impact {
-                                                    Impact::Major => "fail",
-                                                    Impact::Minor => "warn",
-                                                    _ => "ok",
-                                                },
-                                                c.impact.as_str(),
-                                            ))
-                                            .child(mono(c.to_string())),
+                                            .class("mj-identity")
+                                            .text(format!("{c} — {}", c.detail)),
                                     )
-                                    .child(el("div").class("mj-note").text(&c.detail))
                             })
                             .collect::<Vec<_>>(),
                     ),
@@ -2974,7 +2992,13 @@ pub fn release(ctx: &Context) -> Page {
     cards.push(card(
         "Provenance",
         facts(vec![
-            ("Policy", Node::Element(mono(&plan.policy.schema))),
+            // Not `mono`: the schema id is 28 characters with no space to break at, and
+            // `.mj-mono` does not break. Beside a label on one row it is the widest thing
+            // on the page at 320px.
+            (
+                "Policy",
+                Node::Element(el("span").class("mj-prose").text(&plan.policy.schema)),
+            ),
             (
                 "Baseline commit",
                 Node::Element(mono(
@@ -2982,7 +3006,7 @@ pub fn release(ctx: &Context) -> Page {
                 )),
             ),
             (
-                "Baseline recorded",
+                "Recorded",
                 Node::Element(badge(
                     if plan.baseline.recorded { "ok" } else { "warn" },
                     if plan.baseline.recorded {
@@ -2993,12 +3017,15 @@ pub fn release(ctx: &Context) -> Page {
                 )),
             ),
             (
-                "Baseline surface",
-                Node::Element(mono(&plan.baseline.fingerprint)),
+                "Baseline digest",
+                Node::Element(mono(short_digest(&plan.baseline.fingerprint))),
             ),
-            ("This surface", Node::Element(mono(&plan.fingerprint))),
             (
-                "Version writers agree",
+                "This digest",
+                Node::Element(mono(short_digest(&plan.fingerprint))),
+            ),
+            (
+                "Writers agree",
                 Node::Element(badge(
                     if plan.writers_agree { "ok" } else { "fail" },
                     if plan.writers_agree { "yes" } else { "no" },

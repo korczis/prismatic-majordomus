@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0051
 kind: adr
 title: The minimum release version is measured from the public contract, and conventional commits are demoted to evidence
-status: accepted
+status: proposed
 date: 2026-09-12
 tags:
   - release
@@ -27,6 +27,12 @@ provenance:
 ---
 
 # 51. The minimum release version is measured from the public contract, and conventional commits are demoted to evidence
+
+> **Status: proposed.** This record was extracted from the implementation, and
+> `lib/adr.sh` refuses an extracted record that calls itself accepted: acceptance is the
+> maintainer's act, and a tool that writes it turns its own inference into repository truth.
+> The subsystem below is implemented, gated and tested; whether the *decision* stands is not
+> something this record may assert about itself.
 
 ## Context
 

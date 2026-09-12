@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0029
 kind: adr
 title: The changelog is a projection of what the repository already records, and the version has one writer rather than one source
-status: accepted
+status: proposed
 date: 2026-09-09
 tags:
   - release
@@ -31,7 +31,7 @@ provenance:
 
 # 29. The changelog is a projection of what the repository already records, and the version has one writer rather than one source
 
-> **Amended by [ADR 0051](0051-the-minimum-release-version-is-measured-from-the-public-contract.md), 2026-09-12.**
+> **Amended by [ADR 0051](0051-the-minimum-release-version-is-measured-from-the-public-contract.md) (proposed), 2026-09-12.**
 > The fourth decision below — that `release bump` takes by default *the bump the conventional
 > commits imply* — no longer holds. The minimum version is measured from the public capability
 > surface against the last release, and conventional commits are evidence beside that verdict
