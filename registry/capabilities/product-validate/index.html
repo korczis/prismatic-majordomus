@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -263,8 +263,8 @@
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;Empty&quot;
+  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -273,6 +273,21 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">counts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The counts the model reached.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">errors</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many findings are errors.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The findings, errors first, then by file.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">valid</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -282,36 +297,76 @@
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many findings are warnings.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">counts</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The counts the model reached.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The findings, errors first, then by file.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">errors</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many findings are errors.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;required&quot;: [
-    &quot;valid&quot;,
-    &quot;errors&quot;,
-    &quot;warnings&quot;,
-    &quot;counts&quot;,
-    &quot;findings&quot;
-  ],
   &quot;$defs&quot;: {
     &quot;ProductCounts&quot;: {
       &quot;description&quot;: &quot;How much the model holds. Every count anywhere is one of these.&quot;,
+      &quot;properties&quot;: {
+        &quot;commands&quot;: {
+          &quot;description&quot;: &quot;Public commands of the shell tool.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;commands_covered&quot;: {
+          &quot;description&quot;: &quot;Commands a stable feature names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;featured&quot;: {
+          &quot;description&quot;: &quot;Stable features the homepage shows.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;features&quot;: {
+          &quot;description&quot;: &quot;Stable features.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;features_all&quot;: {
+          &quot;description&quot;: &quot;Features of every status, drafts included.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;kinds&quot;: {
+          &quot;description&quot;: &quot;Kinds of the layer a feature can present.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;kinds_covered&quot;: {
+          &quot;description&quot;: &quot;Kinds a stable feature names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;modules&quot;: {
+          &quot;description&quot;: &quot;Builtin modules of the executable, and how many a stable feature names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;modules_covered&quot;: {
+          &quot;description&quot;: &quot;Modules a stable feature names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;providers&quot;: {
+          &quot;description&quot;: &quot;Providers the tool has an adapter for.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
       &quot;required&quot;: [
         &quot;features&quot;,
         &quot;features_all&quot;,
@@ -324,71 +379,59 @@
         &quot;kinds&quot;,
         &quot;kinds_covered&quot;
       ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ProductFinding&quot;: {
+      &quot;description&quot;: &quot;One thing wrong with the product model, named where it is, with the nearest candidate\nwhen there is one.&quot;,
       &quot;properties&quot;: {
-        &quot;features_all&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Features of every status, drafts included.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;`unknown_reference`, `duplicate_identity`, `missing_content`, `uncovered`, ...&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;modules_covered&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Modules a stable feature names.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;did_you_mean&quot;: {
+          &quot;description&quot;: &quot;The nearest existing name, when the value looks like a typo of one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
-        &quot;commands&quot;: {
-          &quot;description&quot;: &quot;Public commands of the shell tool.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
+        &quot;field&quot;: {
+          &quot;description&quot;: &quot;The front-matter key the finding is about, when one key owns it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
-        &quot;providers&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Providers the tool has an adapter for.&quot;
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The record&#39;s identity, when one record owns the finding.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
-        &quot;commands_covered&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;Commands a stable feature names.&quot;,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;features&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Stable features.&quot;
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The repository-relative file the finding is in, or the registry it is about.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;kinds&quot;: {
-          &quot;description&quot;: &quot;Kinds of the layer a feature can present.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;kinds_covered&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Kinds a stable feature names.&quot;
-        },
-        &quot;modules&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;Builtin modules of the executable, and how many a stable feature names.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;featured&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Stable features the homepage shows.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;`error` or `warning`.&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;path&quot;,
+        &quot;message&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;info&quot;,
@@ -405,76 +448,20 @@
           &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;
-    },
-    &quot;ProductFinding&quot;: {
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`unknown_reference`, `duplicate_identity`, `missing_content`, `uncovered`, ...&quot;
-        },
-        &quot;field&quot;: {
-          &quot;description&quot;: &quot;The front-matter key the finding is about, when one key owns it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The record&#39;s identity, when one record owns the finding.&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The repository-relative file the finding is in, or the registry it is about.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;description&quot;: &quot;`error` or `warning`.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;
-        },
-        &quot;did_you_mean&quot;: {
-          &quot;description&quot;: &quot;The nearest existing name, when the value looks like a typo of one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;path&quot;,
-        &quot;message&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One thing wrong with the product model, named where it is, with the nearest candidate\nwhen there is one.&quot;
+      ]
     }
   },
   &quot;description&quot;: &quot;What the model&#39;s own validation found.&quot;,
-  &quot;title&quot;: &quot;ProductValidationReport&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
-    &quot;valid&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;True when nothing is an error. Warnings do not make it false.&quot;
-    },
-    &quot;warnings&quot;: {
-      &quot;description&quot;: &quot;How many findings are warnings.&quot;,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;format&quot;: &quot;uint&quot;
-    },
     &quot;counts&quot;: {
-      &quot;description&quot;: &quot;The counts the model reached.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ProductCounts&quot;
+      &quot;$ref&quot;: &quot;#/$defs/ProductCounts&quot;,
+      &quot;description&quot;: &quot;The counts the model reached.&quot;
+    },
+    &quot;errors&quot;: {
+      &quot;description&quot;: &quot;How many findings are errors.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
     },
     &quot;findings&quot;: {
       &quot;description&quot;: &quot;The findings, errors first, then by file.&quot;,
@@ -483,13 +470,26 @@
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;errors&quot;: {
-      &quot;description&quot;: &quot;How many findings are errors.&quot;,
+    &quot;valid&quot;: {
+      &quot;description&quot;: &quot;True when nothing is an error. Warnings do not make it false.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;warnings&quot;: {
+      &quot;description&quot;: &quot;How many findings are warnings.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;format&quot;: &quot;uint&quot;
+      &quot;type&quot;: &quot;integer&quot;
     }
-  }
+  },
+  &quot;required&quot;: [
+    &quot;valid&quot;,
+    &quot;errors&quot;,
+    &quot;warnings&quot;,
+    &quot;counts&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;title&quot;: &quot;ProductValidationReport&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -520,7 +520,7 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::product</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProductValidationReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -545,7 +545,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

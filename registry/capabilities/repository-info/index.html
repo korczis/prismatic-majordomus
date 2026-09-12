@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -273,239 +273,160 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">objects</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many objects the index holds.</td>
+        <td class="px-3 py-2 text-body">The capability registry, counted.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every diagnostic the index produced.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">state</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">kinds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">`ok` when every discovered file became an object, `degraded` otherwise.</td>
+        <td class="px-3 py-2 text-body">Objects per kind.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">objects</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The capability registry, counted.</td>
+        <td class="px-3 py-2 text-body">How many objects the index holds.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repository</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The repository: root, layer schema, sections, git state, discovery mode, source classes, kind sources.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">kinds</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-heading">state</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Objects per kind.</td>
+        <td class="px-3 py-2 text-body">`ok` when every discovered file became an object, `degraded` otherwise.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;Severity&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;const&quot;: &quot;warning&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+    &quot;Diagnostic&quot;: {
+      &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;
-    },
-    &quot;Summary&quot;: {
-      &quot;properties&quot;: {
-        &quot;declarative&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;Read from the layer.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
         },
-        &quot;benchmark_required&quot;: {
-          &quot;description&quot;: &quot;Executables whose benchmark policy is required.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;modules&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Modules: composed, derived, and one per declarative kind.&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;cli_commands&quot;: {
-          &quot;description&quot;: &quot;With a CLI exposure.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;http_routes&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;With an HTTP exposure.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;mcp_tools&quot;: {
-          &quot;description&quot;: &quot;With an MCP tool exposure.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;total&quot;: {
-          &quot;description&quot;: &quot;Every capability.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;builtin&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Composed in Rust.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;by_stability&quot;: {
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;description&quot;: &quot;By stability.&quot;,
-          &quot;additionalProperties&quot;: {
-            &quot;minimum&quot;: 0,
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;type&quot;: &quot;integer&quot;
-          }
-        },
-        &quot;benchmark_waived&quot;: {
-          &quot;description&quot;: &quot;Executables waived from benchmarking for a typed reason.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;by_kind&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;type&quot;: &quot;integer&quot;,
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;minimum&quot;: 0
-          },
-          &quot;description&quot;: &quot;By kind (`query`, `resource`).&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;mcp_resources&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;With an MCP resource exposure.&quot;
-        },
-        &quot;cached&quot;: {
-          &quot;description&quot;: &quot;Executables the executor caches.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;total&quot;,
-        &quot;builtin&quot;,
-        &quot;declarative&quot;,
-        &quot;by_kind&quot;,
-        &quot;by_stability&quot;,
-        &quot;mcp_tools&quot;,
-        &quot;mcp_resources&quot;,
-        &quot;http_routes&quot;,
-        &quot;cli_commands&quot;,
-        &quot;modules&quot;,
-        &quot;benchmark_required&quot;,
-        &quot;benchmark_waived&quot;,
-        &quot;cached&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;The registry counted: by source, kind, stability and projection.&quot;
-    },
-    &quot;GitInfo&quot;: {
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Branch name, or `None` when detached or unborn.&quot;
+          ]
         },
-        &quot;working_tree&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`clean` or `dirty`, from `git status --porcelain`.&quot;
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GitInfo&quot;: {
+      &quot;description&quot;: &quot;What `git` said about the repository.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;Branch name, or `None` when detached or unborn.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;Full commit id of HEAD, or `None` in an unborn repository.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;toplevel&quot;: {
           &quot;description&quot;: &quot;Absolute path of the work tree top level.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;head&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Full commit id of HEAD, or `None` in an unborn repository.&quot;
+        &quot;working_tree&quot;: {
+          &quot;description&quot;: &quot;`clean` or `dirty`, from `git status --porcelain`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
         &quot;toplevel&quot;,
         &quot;working_tree&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;What `git` said about the repository.&quot;
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GitState&quot;: {
+      &quot;description&quot;: &quot;What git says about the repository, or why it could not be asked.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/GitInfo&quot;,
+          &quot;description&quot;: &quot;`git` answered; the facts follow.&quot;,
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;available&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;state&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;`git` could not be asked, or the root is not a work tree; the reason says which.&quot;,
+          &quot;properties&quot;: {
+            &quot;reason&quot;: {
+              &quot;description&quot;: &quot;What `git` said, or why it could not be run.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;unavailable&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;reason&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        }
+      ]
+    },
+    &quot;Origin&quot;: {
+      &quot;description&quot;: &quot;Where the declaration was read from.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;repository&quot;,
+          &quot;description&quot;: &quot;The repository&#39;s own, named by the manifest&#39;s `scope` section.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;distribution&quot;,
+          &quot;description&quot;: &quot;The distribution&#39;s default, because the repository declares none.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     },
     &quot;RepositoryInfo&quot;: {
-      &quot;required&quot;: [
-        &quot;root&quot;,
-        &quot;layer_schema&quot;,
-        &quot;sections&quot;,
-        &quot;git&quot;,
-        &quot;discovery&quot;,
-        &quot;source_classes&quot;,
-        &quot;kind_sources&quot;,
-        &quot;scope_origin&quot;,
-        &quot;scope_path&quot;
-      ],
       &quot;description&quot;: &quot;What the index knows about the repository it was built from.&quot;,
       &quot;properties&quot;: {
-        &quot;source_classes&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;minItems&quot;: 2,
-            &quot;maxItems&quot;: 2,
-            &quot;type&quot;: &quot;array&quot;,
-            &quot;prefixItems&quot;: [
-              {
-                &quot;type&quot;: &quot;string&quot;
-              },
-              {
-                &quot;type&quot;: &quot;string&quot;
-              }
-            ]
-          },
-          &quot;description&quot;: &quot;Source class id to kind, in declared order.&quot;
-        },
-        &quot;scope_origin&quot;: {
-          &quot;description&quot;: &quot;Where the scope was read from: `repository` or `distribution`.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Origin&quot;
-        },
         &quot;discovery&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`vcs` or `filesystem`.&quot;
-        },
-        &quot;scope_path&quot;: {
-          &quot;description&quot;: &quot;The scope file: repository-relative for the repository&#39;s own, the share path for\nthe distribution&#39;s default.&quot;,
+          &quot;description&quot;: &quot;`vcs` or `filesystem`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;git&quot;: {
@@ -527,17 +448,74 @@
           &quot;description&quot;: &quot;The repository root, absolute.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;scope_origin&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Origin&quot;,
+          &quot;description&quot;: &quot;Where the scope was read from: `repository` or `distribution`.&quot;
+        },
+        &quot;scope_path&quot;: {
+          &quot;description&quot;: &quot;The scope file: repository-relative for the repository&#39;s own, the share path for\nthe distribution&#39;s default.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;sections&quot;: {
-          &quot;type&quot;: &quot;object&quot;,
           &quot;additionalProperties&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;description&quot;: &quot;Manifest section name to repository-relative path.&quot;
+          &quot;description&quot;: &quot;Manifest section name to repository-relative path.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;source_classes&quot;: {
+          &quot;description&quot;: &quot;Source class id to kind, in declared order.&quot;,
+          &quot;items&quot;: {
+            &quot;maxItems&quot;: 2,
+            &quot;minItems&quot;: 2,
+            &quot;prefixItems&quot;: [
+              {
+                &quot;type&quot;: &quot;string&quot;
+              },
+              {
+                &quot;type&quot;: &quot;string&quot;
+              }
+            ],
+            &quot;type&quot;: &quot;array&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;root&quot;,
+        &quot;layer_schema&quot;,
+        &quot;sections&quot;,
+        &quot;git&quot;,
+        &quot;discovery&quot;,
+        &quot;source_classes&quot;,
+        &quot;kind_sources&quot;,
+        &quot;scope_origin&quot;,
+        &quot;scope_path&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;State&quot;: {
+      &quot;description&quot;: &quot;Whether every discovered file became an object.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;ok&quot;,
@@ -549,126 +527,149 @@
           &quot;description&quot;: &quot;At least one file could not be read; the diagnostics say which.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Whether every discovered file became an object.&quot;
+      ]
     },
-    &quot;Diagnostic&quot;: {
+    &quot;Summary&quot;: {
+      &quot;description&quot;: &quot;The registry counted: by source, kind, stability and projection.&quot;,
       &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;
+        &quot;benchmark_required&quot;: {
+          &quot;description&quot;: &quot;Executables whose benchmark policy is required.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How bad.&quot;
+        &quot;benchmark_waived&quot;: {
+          &quot;description&quot;: &quot;Executables waived from benchmarking for a typed reason.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;builtin&quot;: {
+          &quot;description&quot;: &quot;Composed in Rust.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;by_kind&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;description&quot;: &quot;By kind (`query`, `resource`).&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;by_stability&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;description&quot;: &quot;By stability.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;cached&quot;: {
+          &quot;description&quot;: &quot;Executables the executor caches.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;cli_commands&quot;: {
+          &quot;description&quot;: &quot;With a CLI exposure.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;declarative&quot;: {
+          &quot;description&quot;: &quot;Read from the layer.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;http_routes&quot;: {
+          &quot;description&quot;: &quot;With an HTTP exposure.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;mcp_resources&quot;: {
+          &quot;description&quot;: &quot;With an MCP resource exposure.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;mcp_tools&quot;: {
+          &quot;description&quot;: &quot;With an MCP tool exposure.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;modules&quot;: {
+          &quot;description&quot;: &quot;Modules: composed, derived, and one per declarative kind.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;total&quot;: {
+          &quot;description&quot;: &quot;Every capability.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         }
       },
       &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;message&quot;
+        &quot;total&quot;,
+        &quot;builtin&quot;,
+        &quot;declarative&quot;,
+        &quot;by_kind&quot;,
+        &quot;by_stability&quot;,
+        &quot;mcp_tools&quot;,
+        &quot;mcp_resources&quot;,
+        &quot;http_routes&quot;,
+        &quot;cli_commands&quot;,
+        &quot;modules&quot;,
+        &quot;benchmark_required&quot;,
+        &quot;benchmark_waived&quot;,
+        &quot;cached&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;
-    },
-    &quot;Origin&quot;: {
-      &quot;description&quot;: &quot;Where the declaration was read from.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;The repository&#39;s own, named by the manifest&#39;s `scope` section.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;repository&quot;
-        },
-        {
-          &quot;const&quot;: &quot;distribution&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The distribution&#39;s default, because the repository declares none.&quot;
-        }
-      ]
-    },
-    &quot;GitState&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;required&quot;: [
-            &quot;state&quot;
-          ],
-          &quot;description&quot;: &quot;`git` answered; the facts follow.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/GitInfo&quot;,
-          &quot;properties&quot;: {
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;available&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          }
-        },
-        {
-          &quot;description&quot;: &quot;`git` could not be asked, or the root is not a work tree; the reason says which.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;properties&quot;: {
-            &quot;reason&quot;: {
-              &quot;description&quot;: &quot;What `git` said, or why it could not be run.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;unavailable&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;,
-            &quot;reason&quot;
-          ]
-        }
-      ],
-      &quot;description&quot;: &quot;What git says about the repository, or why it could not be asked.&quot;
+      &quot;type&quot;: &quot;object&quot;
     }
   },
+  &quot;description&quot;: &quot;The repository, its layer, its git state, and the state of this process&#39;s index.&quot;,
   &quot;properties&quot;: {
-    &quot;objects&quot;: {
-      &quot;minimum&quot;: 0,
-      &quot;description&quot;: &quot;How many objects the index holds.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;Every diagnostic the index produced.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
-      }
-    },
-    &quot;state&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/State&quot;,
-      &quot;description&quot;: &quot;`ok` when every discovered file became an object, `degraded` otherwise.&quot;
-    },
     &quot;capabilities&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/Summary&quot;,
       &quot;description&quot;: &quot;The capability registry, counted.&quot;
     },
-    &quot;repository&quot;: {
-      &quot;description&quot;: &quot;The repository: root, layer schema, sections, git state, discovery mode, source classes, kind sources.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/RepositoryInfo&quot;
+    &quot;diagnostics&quot;: {
+      &quot;description&quot;: &quot;Every diagnostic the index produced.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;kinds&quot;: {
-      &quot;description&quot;: &quot;Objects per kind.&quot;,
       &quot;additionalProperties&quot;: {
-        &quot;minimum&quot;: 0,
         &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0,
         &quot;type&quot;: &quot;integer&quot;
       },
+      &quot;description&quot;: &quot;Objects per kind.&quot;,
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;objects&quot;: {
+      &quot;description&quot;: &quot;How many objects the index holds.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;repository&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/RepositoryInfo&quot;,
+      &quot;description&quot;: &quot;The repository: root, layer schema, sections, git state, discovery mode, source classes, kind sources.&quot;
+    },
+    &quot;state&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/State&quot;,
+      &quot;description&quot;: &quot;`ok` when every discovered file became an object, `degraded` otherwise.&quot;
     }
   },
   &quot;required&quot;: [
@@ -679,7 +680,6 @@
     &quot;diagnostics&quot;,
     &quot;capabilities&quot;
   ],
-  &quot;description&quot;: &quot;The repository, its layer, its git state, and the state of this process&#39;s index.&quot;,
   &quot;title&quot;: &quot;RepositoryReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -712,7 +712,7 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::repository</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RepositoryReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/repository.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/repository.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/repository.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/repository.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -772,7 +772,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

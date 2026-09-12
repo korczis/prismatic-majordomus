@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,9 +261,9 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;title&quot;: &quot;Empty&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -273,25 +273,21 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tallies</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many records of each kind this checkout holds, against the policy&#39;s caps.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">working_tree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">blockers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">`clean` or `dirty`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">head</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The commit this checkout is on.</td>
+        <td class="px-3 py-2 text-body">Unresolved questions on this branch. Every one refuses `finish --outcome completed`,
+whichever task opened it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">branch</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The branch, or `DETACHED`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checkpoint</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The newest progress note for this worktree and branch, or `None`.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -299,20 +295,15 @@
         <td class="px-3 py-2 text-body">What a reader should know before trusting any of the above: a diverged record, a
 foreign open session, a malformed file that was skipped. Empty is the good case.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">session</td>
+        <td class="px-3 py-2 font-mono text-heading">handover</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The open episode, or `None`.</td>
+        <td class="px-3 py-2 text-body">The record the next worker would resume from, or `None` when nothing resolves here.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">task</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The active task, or `None`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checkpoint</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The newest progress note for this worktree and branch, or `None`.</td>
+        <td class="px-3 py-2 text-body">The commit this checkout is on.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -324,266 +315,50 @@ It is not &quot;the directory exists&quot;. Several things create that directory
 anything has been recorded in it, so a reader that took its presence for evidence
 would be told the lifecycle had run in a checkout where it never had.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">session</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The open episode, or `None`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tallies</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many records of each kind this checkout holds, against the policy&#39;s caps.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">task</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The active task, or `None`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">working_tree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">`clean` or `dirty`.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">worktree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The worktree this answer is about. Every selection below is scoped to it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">handover</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The record the next worker would resume from, or `None` when nothing resolves here.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">blockers</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Unresolved questions on this branch. Every one refuses `finish --outcome completed`,
-whichever task opened it.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;properties&quot;: {
-    &quot;tallies&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;How many records of each kind this checkout holds, against the policy&#39;s caps.&quot;,
-      &quot;additionalProperties&quot;: {
-        &quot;type&quot;: &quot;integer&quot;,
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0
-      }
-    },
-    &quot;working_tree&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;`clean` or `dirty`.&quot;
-    },
-    &quot;head&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The commit this checkout is on.&quot;
-    },
-    &quot;branch&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The branch, or `DETACHED`.&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      }
-    },
-    &quot;session&quot;: {
-      &quot;description&quot;: &quot;The open episode, or `None`.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/OpenSession&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;task&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The active task, or `None`.&quot;
-    },
-    &quot;checkpoint&quot;: {
-      &quot;description&quot;: &quot;The newest progress note for this worktree and branch, or `None`.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/Record&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;present&quot;: {
-      &quot;description&quot;: &quot;Whether this checkout&#39;s lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \&quot;the directory exists\&quot;. Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;worktree&quot;: {
-      &quot;description&quot;: &quot;The worktree this answer is about. Every selection below is scoped to it.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;handover&quot;: {
-      &quot;description&quot;: &quot;The record the next worker would resume from, or `None` when nothing resolves here.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/Record&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;blockers&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;description&quot;: &quot;Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it.&quot;,
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;title&quot;: &quot;Continuity&quot;,
   &quot;$defs&quot;: {
-    &quot;Divergence&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;exact&quot;,
-          &quot;description&quot;: &quot;Written at this commit. Trust it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;advanced&quot;,
-          &quot;description&quot;: &quot;Git has moved forward since. Trust it, and expect some of it to be done.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;diverged&quot;,
-          &quot;description&quot;: &quot;The recorded commit is not an ancestor: history was rewritten. Trust git, not this.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Another branch or another worktree. This record is not about your work.&quot;,
-          &quot;const&quot;: &quot;different_context&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Git could not answer, so this process says so rather than guessing `exact`.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How far a record&#39;s recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool&#39;s, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.&quot;
-    },
-    &quot;Match&quot;: {
-      &quot;description&quot;: &quot;Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Same repository, same worktree, same branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;same_worktree_same_branch&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Same repository, same branch, another worktree of it.&quot;,
-          &quot;const&quot;: &quot;same_branch&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Record&quot;: {
-      &quot;description&quot;: &quot;One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.&quot;,
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;created_at&quot;,
-        &quot;task_id&quot;,
-        &quot;branch&quot;,
-        &quot;head&quot;,
-        &quot;working_tree&quot;,
-        &quot;matched&quot;,
-        &quot;divergence&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;task_id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The task it belongs to, or `none`.&quot;
-        },
-        &quot;matched&quot;: {
-          &quot;description&quot;: &quot;Which tier of the resolution rule matched.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Match&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The branch it was written on.&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it was written at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;divergence&quot;: {
-          &quot;description&quot;: &quot;How far its commit is from this one.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Divergence&quot;
-        },
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Repository-relative path. The body is at the path; it is not copied here.&quot;
-        },
-        &quot;created_at&quot;: {
-          &quot;description&quot;: &quot;When the record says it was written.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;working_tree&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Whether the working tree was clean or dirty then.&quot;
-        },
-        &quot;next_action&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The section a resuming worker acts on, when the record has one. A handover&#39;s `Next\nAction`; empty for a record that carries no sections.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;OpenSession&quot;: {
-      &quot;description&quot;: &quot;The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line.&quot;,
-      &quot;properties&quot;: {
-        &quot;session_id&quot;: {
-          &quot;description&quot;: &quot;The episode&#39;s id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;provider_session&quot;: {
-          &quot;description&quot;: &quot;That provider&#39;s own session identity — the string the prompt archive stamps on the\nsame worker&#39;s records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;When it opened.&quot;
-        },
-        &quot;foreign&quot;: {
-          &quot;description&quot;: &quot;True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout&#39;s episode.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;owner&quot;: {
-          &quot;description&quot;: &quot;Who opened it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;worker&quot;: {
-          &quot;description&quot;: &quot;The worker identity, when one was supplied. Never inferred.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The branch it opened on.&quot;
-        },
-        &quot;provider&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The provider whose event opened it, when one did.&quot;
-        },
-        &quot;start_head&quot;: {
-          &quot;description&quot;: &quot;The commit it opened at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;session_id&quot;,
-        &quot;started_at&quot;,
-        &quot;foreign&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;ActiveTask&quot;: {
+      &quot;description&quot;: &quot;The active task of this checkout, when there is one.&quot;,
       &quot;properties&quot;: {
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it started at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The task id.&quot;
+          &quot;description&quot;: &quot;The task id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;outcome&quot;: {
+          &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;profile&quot;: {
           &quot;description&quot;: &quot;The execution profile it runs under.&quot;,
@@ -603,24 +378,15 @@ whichever task opened it.</td>
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;head&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The commit it started at.&quot;
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;What is being worked on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;started_at&quot;: {
           &quot;description&quot;: &quot;When it started.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;outcome&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;What is being worked on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;description&quot;: &quot;The active task of this checkout, when there is one.&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;task&quot;,
@@ -628,16 +394,250 @@ whichever task opened it.</td>
         &quot;outcome&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Divergence&quot;: {
+      &quot;description&quot;: &quot;How far a record&#39;s recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool&#39;s, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;exact&quot;,
+          &quot;description&quot;: &quot;Written at this commit. Trust it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;advanced&quot;,
+          &quot;description&quot;: &quot;Git has moved forward since. Trust it, and expect some of it to be done.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;diverged&quot;,
+          &quot;description&quot;: &quot;The recorded commit is not an ancestor: history was rewritten. Trust git, not this.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;different_context&quot;,
+          &quot;description&quot;: &quot;Another branch or another worktree. This record is not about your work.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Git could not answer, so this process says so rather than guessing `exact`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Match&quot;: {
+      &quot;description&quot;: &quot;Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;same_worktree_same_branch&quot;,
+          &quot;description&quot;: &quot;Same repository, same worktree, same branch.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;same_branch&quot;,
+          &quot;description&quot;: &quot;Same repository, same branch, another worktree of it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;OpenSession&quot;: {
+      &quot;description&quot;: &quot;The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it opened on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;foreign&quot;: {
+          &quot;description&quot;: &quot;True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout&#39;s episode.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;owner&quot;: {
+          &quot;description&quot;: &quot;Who opened it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider&quot;: {
+          &quot;description&quot;: &quot;The provider whose event opened it, when one did.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider_session&quot;: {
+          &quot;description&quot;: &quot;That provider&#39;s own session identity — the string the prompt archive stamps on the\nsame worker&#39;s records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;session_id&quot;: {
+          &quot;description&quot;: &quot;The episode&#39;s id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;start_head&quot;: {
+          &quot;description&quot;: &quot;The commit it opened at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;When it opened.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;worker&quot;: {
+          &quot;description&quot;: &quot;The worker identity, when one was supplied. Never inferred.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;session_id&quot;,
+        &quot;started_at&quot;,
+        &quot;foreign&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Record&quot;: {
+      &quot;description&quot;: &quot;One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it was written on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;created_at&quot;: {
+          &quot;description&quot;: &quot;When the record says it was written.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;divergence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Divergence&quot;,
+          &quot;description&quot;: &quot;How far its commit is from this one.&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it was written at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;matched&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Match&quot;,
+          &quot;description&quot;: &quot;Which tier of the resolution rule matched.&quot;
+        },
+        &quot;next_action&quot;: {
+          &quot;description&quot;: &quot;The section a resuming worker acts on, when the record has one. A handover&#39;s `Next\nAction`; empty for a record that carries no sections.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path. The body is at the path; it is not copied here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;task_id&quot;: {
+          &quot;description&quot;: &quot;The task it belongs to, or `none`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;working_tree&quot;: {
+          &quot;description&quot;: &quot;Whether the working tree was clean or dirty then.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;created_at&quot;,
+        &quot;task_id&quot;,
+        &quot;branch&quot;,
+        &quot;head&quot;,
+        &quot;working_tree&quot;,
+        &quot;matched&quot;,
+        &quot;divergence&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
   &quot;description&quot;: &quot;What the lifecycle of this checkout is holding.&quot;,
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;blockers&quot;: {
+      &quot;description&quot;: &quot;Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;branch&quot;: {
+      &quot;description&quot;: &quot;The branch, or `DETACHED`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;checkpoint&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/Record&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The newest progress note for this worktree and branch, or `None`.&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;handover&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/Record&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The record the next worker would resume from, or `None` when nothing resolves here.&quot;
+    },
+    &quot;head&quot;: {
+      &quot;description&quot;: &quot;The commit this checkout is on.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;present&quot;: {
+      &quot;description&quot;: &quot;Whether this checkout&#39;s lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \&quot;the directory exists\&quot;. Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;session&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/OpenSession&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The open episode, or `None`.&quot;
+    },
+    &quot;tallies&quot;: {
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;
+      },
+      &quot;description&quot;: &quot;How many records of each kind this checkout holds, against the policy&#39;s caps.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;task&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The active task, or `None`.&quot;
+    },
+    &quot;working_tree&quot;: {
+      &quot;description&quot;: &quot;`clean` or `dirty`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;worktree&quot;: {
+      &quot;description&quot;: &quot;The worktree this answer is about. Every selection below is scoped to it.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
   &quot;required&quot;: [
     &quot;present&quot;,
     &quot;worktree&quot;,
     &quot;branch&quot;,
     &quot;tallies&quot;
-  ]
+  ],
+  &quot;title&quot;: &quot;Continuity&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -668,7 +668,7 @@ whichever task opened it.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::continuity</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Continuity</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -693,7 +693,7 @@ whichever task opened it.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

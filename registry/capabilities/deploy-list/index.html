@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,10 +261,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -293,49 +293,12 @@ malformed object is reported here rather than hidden by being skipped.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;required&quot;: [
-    &quot;count&quot;,
-    &quot;deployments&quot;
-  ],
   &quot;$defs&quot;: {
-    &quot;Machines&quot;: {
-      &quot;properties&quot;: {
-        &quot;min_running&quot;: {
-          &quot;description&quot;: &quot;How many stay running when idle.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;autostart&quot;: {
-          &quot;description&quot;: &quot;Whether a request to a stopped machine starts it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;autostop&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether an idle machine is stopped.&quot;
-        },
-        &quot;count&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
-          &quot;description&quot;: &quot;How many machines the application has.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;count&quot;,
-        &quot;min_running&quot;,
-        &quot;autostart&quot;,
-        &quot;autostop&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
+    &quot;Budgets&quot;: {
       &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;How many machines run, and whether the platform may stop them.&quot;
-    },
-    &quot;HealthRoutes&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;The routes a platform polls, and how often.&quot;,
+      &quot;description&quot;: &quot;The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence.&quot;,
       &quot;properties&quot;: {
-        &quot;interval_seconds&quot;: {
-          &quot;description&quot;: &quot;How often the platform polls liveness.&quot;,
+        &quot;binary_bytes&quot;: {
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
@@ -344,28 +307,10 @@ malformed object is reported here rather than hidden by being skipped.</td>
               &quot;type&quot;: &quot;null&quot;
             }
           ],
-          &quot;default&quot;: null
-        },
-        &quot;readiness&quot;: {
-          &quot;description&quot;: &quot;Can this process serve traffic.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Route&quot;
-        },
-        &quot;grace_seconds&quot;: {
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;uint32&quot;,
           &quot;default&quot;: null,
-          &quot;description&quot;: &quot;How long the platform waits before the first check counts.&quot;,
-          &quot;minimum&quot;: 0
+          &quot;description&quot;: &quot;Largest accepted stripped binary size.&quot;
         },
-        &quot;liveness&quot;: {
-          &quot;description&quot;: &quot;Is this process alive.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Route&quot;
-        },
-        &quot;timeout_seconds&quot;: {
-          &quot;default&quot;: null,
+        &quot;blocking_check_ms&quot;: {
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
@@ -374,190 +319,80 @@ malformed object is reported here rather than hidden by being skipped.</td>
               &quot;type&quot;: &quot;null&quot;
             }
           ],
-          &quot;description&quot;: &quot;How long one check may take before it counts as failed.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;liveness&quot;,
-        &quot;readiness&quot;
-      ]
-    },
-    &quot;Provider&quot;: {
-      &quot;additionalProperties&quot;: false,
-      &quot;required&quot;: [
-        &quot;name&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ProviderName&quot;,
-          &quot;description&quot;: &quot;Which provider.&quot;
-        },
-        &quot;fly&quot;: {
           &quot;default&quot;: null,
-          &quot;description&quot;: &quot;Fly&#39;s own block, when the provider is Fly.&quot;,
+          &quot;description&quot;: &quot;Longest accepted time for one liveness or readiness check.&quot;
+        },
+        &quot;build_context_bytes&quot;: {
           &quot;anyOf&quot;: [
             {
-              &quot;$ref&quot;: &quot;#/$defs/Fly&quot;
+              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
             },
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ]
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;Largest accepted build context.&quot;
+        },
+        &quot;cold_start_ms&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;Longest accepted time from a stopped machine to a served response.&quot;
+        },
+        &quot;image_bytes&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;Largest accepted compressed image size.&quot;
+        },
+        &quot;request_p99_ms&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;Longest accepted p99 for a served request.&quot;
+        },
+        &quot;resident_memory_mb&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;Largest accepted resident set under load.&quot;
         }
       },
-      &quot;description&quot;: &quot;The provider and the facts that belong to it alone.&quot;,
       &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Resources&quot;: {
-      &quot;required&quot;: [
-        &quot;cpu_kind&quot;,
-        &quot;cpus&quot;,
-        &quot;memory_mb&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;What one machine is granted.&quot;,
-      &quot;properties&quot;: {
-        &quot;memory_mb&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
-          &quot;description&quot;: &quot;Memory per machine, in megabytes.&quot;
-        },
-        &quot;cpus&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
-          &quot;description&quot;: &quot;How many CPUs one machine has.&quot;
-        },
-        &quot;cpu_kind&quot;: {
-          &quot;description&quot;: &quot;Shared or dedicated.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/CpuKind&quot;
-        }
-      },
-      &quot;additionalProperties&quot;: false
-    },
-    &quot;Interface&quot;: {
-      &quot;description&quot;: &quot;Which interface a process listens on.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Reachable from this host alone: the local default, and what every local invocation\nkeeps.&quot;,
-          &quot;const&quot;: &quot;loopback&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;all&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning.&quot;
-        }
-      ]
-    },
-    &quot;Port&quot;: {
-      &quot;description&quot;: &quot;A TCP port a deployed process may bind. Privileged ports are not among them: the\nprocess runs as a non-root user and could not bind one.&quot;,
-      &quot;format&quot;: &quot;uint16&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;maximum&quot;: 65535,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;Listen&quot;: {
-      &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;The address the process listens on.&quot;,
-      &quot;required&quot;: [
-        &quot;port&quot;,
-        &quot;interface&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;port&quot;: {
-          &quot;description&quot;: &quot;The port, stated once for the process, the image and the provider configuration.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Port&quot;
-        },
-        &quot;interface&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Interface&quot;,
-          &quot;description&quot;: &quot;Which interface.&quot;
-        }
-      }
-    },
-    &quot;DeploymentStatus&quot;: {
-      &quot;description&quot;: &quot;Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;The object exists and nothing is deployed from it yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;declared&quot;
-        },
-        {
-          &quot;const&quot;: &quot;active&quot;,
-          &quot;description&quot;: &quot;It is deployed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It was, and the object is kept for the record.&quot;,
-          &quot;const&quot;: &quot;retired&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Refusal&quot;: {
-      &quot;properties&quot;: {
-        &quot;file&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The repository-relative file the value came from.&quot;
-        },
-        &quot;problem&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What is wrong with it, in one line.&quot;
-        },
-        &quot;found&quot;: {
-          &quot;description&quot;: &quot;The value observed, rendered as it was read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;key&quot;: {
-          &quot;description&quot;: &quot;The key path within it, as the contract names it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;correction&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What to do instead.&quot;
-        }
-      },
-      &quot;description&quot;: &quot;Why a deployment object is refused: what was read, where, and what to do about it.&quot;,
-      &quot;required&quot;: [
-        &quot;file&quot;,
-        &quot;key&quot;,
-        &quot;found&quot;,
-        &quot;problem&quot;,
-        &quot;correction&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Positive&quot;: {
-      &quot;minimum&quot;: 0,
-      &quot;description&quot;: &quot;A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \&quot;a deployment that cannot run\&quot;.&quot;,
-      &quot;format&quot;: &quot;uint32&quot;,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;Concurrency&quot;: {
-      &quot;properties&quot;: {
-        &quot;hard_limit&quot;: {
-          &quot;description&quot;: &quot;Where it stops sending requests to this one.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
-        },
-        &quot;soft_limit&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
-          &quot;description&quot;: &quot;Where the edge starts preferring another machine.&quot;
-        }
-      },
-      &quot;additionalProperties&quot;: false,
-      &quot;required&quot;: [
-        &quot;soft_limit&quot;,
-        &quot;hard_limit&quot;
-      ],
-      &quot;description&quot;: &quot;When the edge considers a machine loaded, in requests.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Route&quot;: {
-      &quot;description&quot;: &quot;A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment&#39;s to know and not the object&#39;s to state.&quot;,
-      &quot;type&quot;: &quot;string&quot;
     },
     &quot;Build&quot;: {
+      &quot;additionalProperties&quot;: false,
       &quot;description&quot;: &quot;What is shipped and what it is built from.&quot;,
       &quot;properties&quot;: {
+        &quot;binary&quot;: {
+          &quot;description&quot;: &quot;The binary target the image runs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;inputs&quot;: {
           &quot;description&quot;: &quot;The repository-relative paths the build context carries, and the only ones.&quot;,
           &quot;items&quot;: {
@@ -565,17 +400,13 @@ malformed object is reported here rather than hidden by being skipped.</td>
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;binary&quot;: {
-          &quot;description&quot;: &quot;The binary target the image runs.&quot;,
+        &quot;package&quot;: {
+          &quot;description&quot;: &quot;The Cargo package that is built.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;package&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The Cargo package that is built.&quot;
-        },
         &quot;profile&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The Cargo profile the image is built under.&quot;
+          &quot;description&quot;: &quot;The Cargo profile the image is built under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;site&quot;: {
           &quot;default&quot;: null,
@@ -586,14 +417,32 @@ malformed object is reported here rather than hidden by being skipped.</td>
           ]
         }
       },
-      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;package&quot;,
         &quot;binary&quot;,
         &quot;profile&quot;,
         &quot;inputs&quot;
       ],
-      &quot;additionalProperties&quot;: false
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Concurrency&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;When the edge considers a machine loaded, in requests.&quot;,
+      &quot;properties&quot;: {
+        &quot;hard_limit&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
+          &quot;description&quot;: &quot;Where it stops sending requests to this one.&quot;
+        },
+        &quot;soft_limit&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
+          &quot;description&quot;: &quot;Where the edge starts preferring another machine.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;soft_limit&quot;,
+        &quot;hard_limit&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;CpuKind&quot;: {
       &quot;description&quot;: &quot;What a machine&#39;s CPU is.&quot;,
@@ -610,8 +459,131 @@ malformed object is reported here rather than hidden by being skipped.</td>
         }
       ]
     },
+    &quot;DeploymentStatus&quot;: {
+      &quot;description&quot;: &quot;Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;declared&quot;,
+          &quot;description&quot;: &quot;The object exists and nothing is deployed from it yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;active&quot;,
+          &quot;description&quot;: &quot;It is deployed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;retired&quot;,
+          &quot;description&quot;: &quot;It was, and the object is kept for the record.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;DeploymentView&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One deployment as this process reads it, with where it came from.&quot;,
+      &quot;properties&quot;: {
+        &quot;application&quot;: {
+          &quot;description&quot;: &quot;The application&#39;s name at the provider.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;budgets&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Budgets&quot;,
+          &quot;default&quot;: {
+            &quot;binary_bytes&quot;: null,
+            &quot;blocking_check_ms&quot;: null,
+            &quot;build_context_bytes&quot;: null,
+            &quot;cold_start_ms&quot;: null,
+            &quot;image_bytes&quot;: null,
+            &quot;request_p99_ms&quot;: null,
+            &quot;resident_memory_mb&quot;: null
+          },
+          &quot;description&quot;: &quot;The measured figures it is held to.&quot;
+        },
+        &quot;build&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Build&quot;,
+          &quot;description&quot;: &quot;What is shipped and what it is built from.&quot;
+        },
+        &quot;created_at&quot;: {
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;When the object was written.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;description&quot;: {
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;One line: what it serves and to whom.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;file&quot;: {
+          &quot;description&quot;: &quot;The repository-relative file the object lives in.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;health&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/HealthRoutes&quot;,
+          &quot;description&quot;: &quot;The routes a platform polls.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The identity within the repository.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Always `deployment`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;listen&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Listen&quot;,
+          &quot;description&quot;: &quot;The address the process listens on.&quot;
+        },
+        &quot;machines&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Machines&quot;,
+          &quot;description&quot;: &quot;How many machines run.&quot;
+        },
+        &quot;provider&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Provider&quot;,
+          &quot;description&quot;: &quot;The provider and its own facts.&quot;
+        },
+        &quot;region&quot;: {
+          &quot;description&quot;: &quot;The region they run in.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;resources&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Resources&quot;,
+          &quot;description&quot;: &quot;What one machine is granted.&quot;
+        },
+        &quot;schema&quot;: {
+          &quot;description&quot;: &quot;The format version; a version this executable does not read is refused.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/DeploymentStatus&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line naming it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;updated_at&quot;: {
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;When it was last changed.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
       &quot;required&quot;: [
         &quot;file&quot;,
         &quot;schema&quot;,
@@ -627,232 +599,12 @@ malformed object is reported here rather than hidden by being skipped.</td>
         &quot;region&quot;,
         &quot;provider&quot;
       ],
-      &quot;description&quot;: &quot;One deployment as this process reads it, with where it came from.&quot;,
-      &quot;properties&quot;: {
-        &quot;region&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The region they run in.&quot;
-        },
-        &quot;created_at&quot;: {
-          &quot;description&quot;: &quot;When the object was written.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;default&quot;: null
-        },
-        &quot;updated_at&quot;: {
-          &quot;description&quot;: &quot;When it was last changed.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;default&quot;: null
-        },
-        &quot;resources&quot;: {
-          &quot;description&quot;: &quot;What one machine is granted.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Resources&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;Always `deployment`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The identity within the repository.&quot;
-        },
-        &quot;application&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The application&#39;s name at the provider.&quot;
-        },
-        &quot;provider&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Provider&quot;,
-          &quot;description&quot;: &quot;The provider and its own facts.&quot;
-        },
-        &quot;file&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The repository-relative file the object lives in.&quot;
-        },
-        &quot;schema&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The format version; a version this executable does not read is refused.&quot;
-        },
-        &quot;health&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/HealthRoutes&quot;,
-          &quot;description&quot;: &quot;The routes a platform polls.&quot;
-        },
-        &quot;description&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;One line: what it serves and to whom.&quot;,
-          &quot;default&quot;: null
-        },
-        &quot;machines&quot;: {
-          &quot;description&quot;: &quot;How many machines run.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Machines&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;One line naming it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;Where it stands.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/DeploymentStatus&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;default&quot;: null
-        },
-        &quot;budgets&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Budgets&quot;,
-          &quot;default&quot;: {
-            &quot;binary_bytes&quot;: null,
-            &quot;image_bytes&quot;: null,
-            &quot;resident_memory_mb&quot;: null,
-            &quot;build_context_bytes&quot;: null,
-            &quot;cold_start_ms&quot;: null,
-            &quot;blocking_check_ms&quot;: null,
-            &quot;request_p99_ms&quot;: null
-          },
-          &quot;description&quot;: &quot;The measured figures it is held to.&quot;
-        },
-        &quot;build&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Build&quot;,
-          &quot;description&quot;: &quot;What is shipped and what it is built from.&quot;
-        },
-        &quot;listen&quot;: {
-          &quot;description&quot;: &quot;The address the process listens on.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Listen&quot;
-        }
-      }
-    },
-    &quot;ProviderName&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Fly.io.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;fly&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one.&quot;
-    },
-    &quot;Budgets&quot;: {
-      &quot;properties&quot;: {
-        &quot;image_bytes&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;Largest accepted compressed image size.&quot;
-        },
-        &quot;blocking_check_ms&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Longest accepted time for one liveness or readiness check.&quot;,
-          &quot;default&quot;: null
-        },
-        &quot;build_context_bytes&quot;: {
-          &quot;description&quot;: &quot;Largest accepted build context.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;default&quot;: null
-        },
-        &quot;request_p99_ms&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Longest accepted p99 for a served request.&quot;,
-          &quot;default&quot;: null
-        },
-        &quot;resident_memory_mb&quot;: {
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;Largest accepted resident set under load.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;cold_start_ms&quot;: {
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;Longest accepted time from a stopped machine to a served response.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;binary_bytes&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;Largest accepted stripped binary size.&quot;
-        }
-      },
-      &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence.&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Fly&quot;: {
+      &quot;additionalProperties&quot;: false,
       &quot;description&quot;: &quot;Fly.io&#39;s own facts: what has no meaning for any other provider.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;org&quot;: {
-          &quot;description&quot;: &quot;The organisation the application belongs to.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;default&quot;: null
-        },
-        &quot;force_https&quot;: {
-          &quot;default&quot;: null,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Whether the edge redirects plain HTTP to HTTPS.&quot;
-        },
         &quot;concurrency&quot;: {
           &quot;anyOf&quot;: [
             {
@@ -864,14 +616,256 @@ malformed object is reported here rather than hidden by being skipped.</td>
           ],
           &quot;default&quot;: null,
           &quot;description&quot;: &quot;When the edge considers a machine loaded.&quot;
+        },
+        &quot;force_https&quot;: {
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;Whether the edge redirects plain HTTP to HTTPS.&quot;,
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;org&quot;: {
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;The organisation the application belongs to.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
       },
-      &quot;additionalProperties&quot;: false
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;HealthRoutes&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;The routes a platform polls, and how often.&quot;,
+      &quot;properties&quot;: {
+        &quot;grace_seconds&quot;: {
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;How long the platform waits before the first check counts.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;interval_seconds&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;How often the platform polls liveness.&quot;
+        },
+        &quot;liveness&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Route&quot;,
+          &quot;description&quot;: &quot;Is this process alive.&quot;
+        },
+        &quot;readiness&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Route&quot;,
+          &quot;description&quot;: &quot;Can this process serve traffic.&quot;
+        },
+        &quot;timeout_seconds&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Positive&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;How long one check may take before it counts as failed.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;liveness&quot;,
+        &quot;readiness&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Interface&quot;: {
+      &quot;description&quot;: &quot;Which interface a process listens on.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;loopback&quot;,
+          &quot;description&quot;: &quot;Reachable from this host alone: the local default, and what every local invocation\nkeeps.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;all&quot;,
+          &quot;description&quot;: &quot;Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Listen&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;The address the process listens on.&quot;,
+      &quot;properties&quot;: {
+        &quot;interface&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Interface&quot;,
+          &quot;description&quot;: &quot;Which interface.&quot;
+        },
+        &quot;port&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Port&quot;,
+          &quot;description&quot;: &quot;The port, stated once for the process, the image and the provider configuration.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;port&quot;,
+        &quot;interface&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Machines&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;How many machines run, and whether the platform may stop them.&quot;,
+      &quot;properties&quot;: {
+        &quot;autostart&quot;: {
+          &quot;description&quot;: &quot;Whether a request to a stopped machine starts it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;autostop&quot;: {
+          &quot;description&quot;: &quot;Whether an idle machine is stopped.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;count&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
+          &quot;description&quot;: &quot;How many machines the application has.&quot;
+        },
+        &quot;min_running&quot;: {
+          &quot;description&quot;: &quot;How many stay running when idle.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;count&quot;,
+        &quot;min_running&quot;,
+        &quot;autostart&quot;,
+        &quot;autostop&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Port&quot;: {
+      &quot;description&quot;: &quot;A TCP port a deployed process may bind. Privileged ports are not among them: the\nprocess runs as a non-root user and could not bind one.&quot;,
+      &quot;format&quot;: &quot;uint16&quot;,
+      &quot;maximum&quot;: 65535,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;Positive&quot;: {
+      &quot;description&quot;: &quot;A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \&quot;a deployment that cannot run\&quot;.&quot;,
+      &quot;format&quot;: &quot;uint32&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;Provider&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;The provider and the facts that belong to it alone.&quot;,
+      &quot;properties&quot;: {
+        &quot;fly&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Fly&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;Fly&#39;s own block, when the provider is Fly.&quot;
+        },
+        &quot;name&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ProviderName&quot;,
+          &quot;description&quot;: &quot;Which provider.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ProviderName&quot;: {
+      &quot;description&quot;: &quot;The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;fly&quot;,
+          &quot;description&quot;: &quot;Fly.io.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Refusal&quot;: {
+      &quot;description&quot;: &quot;Why a deployment object is refused: what was read, where, and what to do about it.&quot;,
+      &quot;properties&quot;: {
+        &quot;correction&quot;: {
+          &quot;description&quot;: &quot;What to do instead.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;file&quot;: {
+          &quot;description&quot;: &quot;The repository-relative file the value came from.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;found&quot;: {
+          &quot;description&quot;: &quot;The value observed, rendered as it was read.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;The key path within it, as the contract names it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;problem&quot;: {
+          &quot;description&quot;: &quot;What is wrong with it, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;file&quot;,
+        &quot;key&quot;,
+        &quot;found&quot;,
+        &quot;problem&quot;,
+        &quot;correction&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Resources&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;What one machine is granted.&quot;,
+      &quot;properties&quot;: {
+        &quot;cpu_kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CpuKind&quot;,
+          &quot;description&quot;: &quot;Shared or dedicated.&quot;
+        },
+        &quot;cpus&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
+          &quot;description&quot;: &quot;How many CPUs one machine has.&quot;
+        },
+        &quot;memory_mb&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Positive&quot;,
+          &quot;description&quot;: &quot;Memory per machine, in megabytes.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;cpu_kind&quot;,
+        &quot;cpus&quot;,
+        &quot;memory_mb&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Route&quot;: {
+      &quot;description&quot;: &quot;A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment&#39;s to know and not the object&#39;s to state.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
   &quot;description&quot;: &quot;Every deployment the layer declares.&quot;,
-  &quot;title&quot;: &quot;DeploymentList&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;count&quot;: {
       &quot;description&quot;: &quot;How many.&quot;,
@@ -893,7 +887,13 @@ malformed object is reported here rather than hidden by being skipped.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     }
-  }
+  },
+  &quot;required&quot;: [
+    &quot;count&quot;,
+    &quot;deployments&quot;
+  ],
+  &quot;title&quot;: &quot;DeploymentList&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -924,7 +924,7 @@ malformed object is reported here rather than hidden by being skipped.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::deploy</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">DeploymentList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/deploy.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/deploy.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/deploy.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/deploy.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -949,7 +949,7 @@ malformed object is reported here rather than hidden by being skipped.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

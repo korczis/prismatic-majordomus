@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -304,26 +304,24 @@ Absent: every claim.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;EvidenceReportInput&quot;,
   &quot;$defs&quot;: {
     &quot;ProofState&quot;: {
       &quot;description&quot;: &quot;What the repository can say about one claim&#39;s proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven &lt; ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;const&quot;: &quot;proven&quot;,
           &quot;description&quot;: &quot;A passing run, and nothing has changed since it — the diff against the execution&#39;s\nown commit is empty but for the ledger. Proof of the tree in front of you.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;proven&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;inputs_unchanged&quot;,
           &quot;description&quot;: &quot;A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;inputs_unchanged&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;stale&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A passing run, but something this claim names has changed since. The proof is older\nthan its subject.&quot;
+          &quot;description&quot;: &quot;A passing run, but something this claim names has changed since. The proof is older\nthan its subject.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;failing&quot;,
@@ -331,19 +329,19 @@ Absent: every claim.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;not_run&quot;,
           &quot;description&quot;: &quot;The claim names a test a runner owns, and no run of it has ever been recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;not_run&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unrunnable&quot;,
-          &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;
+          &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;no_test&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;
+          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
@@ -352,8 +350,8 @@ Absent: every claim.</td>
   &quot;description&quot;: &quot;Which part of the matrix to answer for.\n\nEvery field narrows, and they compose; saying nothing asks for the whole matrix. A key\nnothing recognises is refused rather than dropped, because a misspelled filter that read\nas \&quot;no filter\&quot; would answer a question nobody asked and look like a clean one.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceReportInput;\nuse majordomus_cli::evidence::ProofState;\n\nlet all: EvidenceReportInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(all.state.is_none() &amp;&amp; all.status.is_none() &amp;&amp; !all.findings_only);\n\nlet narrowed: EvidenceReportInput =\n    serde_json::from_str(r#\&quot;{\&quot;state\&quot;: \&quot;stale\&quot;, \&quot;findings_only\&quot;: true}\&quot;#).unwrap();\nassert_eq!(narrowed.state, Some(ProofState::Stale));\nassert!(narrowed.findings_only);\n\nassert!(serde_json::from_str::&lt;EvidenceReportInput&gt;(r#\&quot;{\&quot;states\&quot;: \&quot;stale\&quot;}\&quot;#).is_err());\n```&quot;,
   &quot;properties&quot;: {
     &quot;findings_only&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Only the claims whose declared status the evidence does not support, with the\nfindings. The tallies still count the whole matrix, so a filtered answer never\nmisreports how much of it was examined.&quot;
+      &quot;description&quot;: &quot;Only the claims whose declared status the evidence does not support, with the\nfindings. The tallies still count the whole matrix, so a filtered answer never\nmisreports how much of it was examined.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;state&quot;: {
       &quot;anyOf&quot;: [
@@ -367,13 +365,15 @@ Absent: every claim.</td>
       &quot;description&quot;: &quot;Only claims in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,\n`not_run`, `unrunnable`, `no_test`). Absent: every claim.&quot;
     },
     &quot;status&quot;: {
+      &quot;description&quot;: &quot;Only claims declaring this status (`guaranteed`, `advisory`, `planned`, `rejected`).\nAbsent: every claim.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;Only claims declaring this status (`guaranteed`, `advisory`, `planned`, `rejected`).\nAbsent: every claim.&quot;
+      ]
     }
-  }
+  },
+  &quot;title&quot;: &quot;EvidenceReportInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -428,25 +428,15 @@ assert!(r.satisfied(), &quot;no claim, so no unsupported guarantee&quot;);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Claims whose declared status the evidence does not support.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">working_tree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">`clean`, `dirty` or `unknown`.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claims</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every claim, in the matrix&#39;s own order.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">totals</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many claims are in each state.</td>
+        <td class="px-3 py-2 text-body">Claims whose declared status the evidence does not support.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">head</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -463,22 +453,50 @@ assert!(r.satisfied(), &quot;no claim, so no unsupported guarantee&quot;);
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">What the report could reach. Read this before reading the tallies: they are counts
 over the claims the index held, and an index that dropped a file holds fewer.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">totals</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many claims are in each state.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">working_tree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">`clean`, `dirty` or `unknown`.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \&quot;unknown\&quot;.into(),\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \&quot;nothing claimed, so nothing unsupported\&quot;);\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \&quot;an absent answer is not a clean one\&quot;);\n\nreport.findings.push(Finding {\n    claim: \&quot;scope-integrity\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    state: ProofState::Failing,\n    reason: \&quot;the claim guarantees a behaviour whose test most recently failed\&quot;.into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&amp;repo.index().unwrap(), &amp;ledger);\nassert!(r.satisfied(), \&quot;no claim, so no unsupported guarantee\&quot;);\n```&quot;,
   &quot;$defs&quot;: {
     &quot;EvidenceClaimProof&quot;: {
       &quot;description&quot;: &quot;One claim, joined to whatever the repository actually recorded about it.\n\nThe claim&#39;s own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \&quot;scope-integrity\&quot;.into(),\n    claim: \&quot;a commit outside the task&#39;s scope is refused\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    source: Some(\&quot;docs/SCOPE.md\&quot;.into()),\n    implementation: Some(\&quot;apps/majordomus-cli/src/scope.rs\&quot;.into()),\n    test_path: Some(\&quot;test/cases/07_scope.sh\&quot;.into()),\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n};\n\nlet json = serde_json::to_value(&amp;proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \&quot;no file changed\&quot; from \&quot;the server did not say\&quot;\nassert_eq!(json[\&quot;changed\&quot;], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\&quot;execution\&quot;).is_none());\nassert_eq!(json[\&quot;meaning\&quot;], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&amp;repo.index().unwrap(), &amp;ledger);\nlet proofs: &amp;[ClaimProof] = &amp;r.claims;\nassert!(proofs.is_empty(), \&quot;a synthetic tree declares no claims\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;The document that defines the behaviour.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;changed&quot;: {
+          &quot;description&quot;: &quot;The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \&quot;no files changed\&quot; from \&quot;the server did not say\&quot;\nis a client reading two different answers as one.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;claim&quot;: {
+          &quot;description&quot;: &quot;The claim sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;execution&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EvidenceExecution&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The execution the state was derived from, when there is one.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The claim&#39;s id, as `docs/CLAIMS.yaml` spells it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;implementation&quot;: {
           &quot;description&quot;: &quot;The file that implements it.&quot;,
@@ -487,39 +505,9 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
             &quot;null&quot;
           ]
         },
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;What the repository can say about the proof.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;
-        },
-        &quot;test&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The test&#39;s stable identity, when a runner owns it.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The claim&#39;s id, as `docs/CLAIMS.yaml` spells it.&quot;
-        },
-        &quot;claim&quot;: {
-          &quot;description&quot;: &quot;The claim sentence.&quot;,
+        &quot;meaning&quot;: {
+          &quot;description&quot;: &quot;That state, in one sentence.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;execution&quot;: {
-          &quot;description&quot;: &quot;The execution the state was derived from, when there is one.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/EvidenceExecution&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;status&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`.&quot;
         },
         &quot;reproduce&quot;: {
           &quot;description&quot;: &quot;The command that produces the proof again, when a runner owns the test.&quot;,
@@ -528,23 +516,34 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
             &quot;null&quot;
           ]
         },
-        &quot;test_path&quot;: {
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;The document that defines the behaviour.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The path the claim names as its test, verbatim.&quot;
+          ]
         },
-        &quot;changed&quot;: {
-          &quot;description&quot;: &quot;The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \&quot;no files changed\&quot; from \&quot;the server did not say\&quot;\nis a client reading two different answers as one.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;,
+          &quot;description&quot;: &quot;What the repository can say about the proof.&quot;
         },
-        &quot;meaning&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;That state, in one sentence.&quot;
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;test&quot;: {
+          &quot;description&quot;: &quot;The test&#39;s stable identity, when a runner owns it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;test_path&quot;: {
+          &quot;description&quot;: &quot;The path the claim names as its test, verbatim.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
       },
       &quot;required&quot;: [
@@ -557,129 +556,54 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;EvidenceFinding&quot;: {
-      &quot;properties&quot;: {
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;What the evidence supports.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why this is a finding.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What the claim says it is.&quot;
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;What to run, when running something would settle it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;claim&quot;: {
-          &quot;description&quot;: &quot;The claim.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;claim&quot;,
-        &quot;status&quot;,
-        &quot;state&quot;,
-        &quot;reason&quot;
-      ],
-      &quot;description&quot;: &quot;A claim whose declared status the evidence does not support.\n\nOnly a `guaranteed` claim can produce one: the other statuses already say that a current\nproof is not what they are claiming. A finding says what was claimed, what the evidence\nsupports instead, and — where running something would settle it — what to run.\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\n\nlet finding = Finding {\n    claim: \&quot;scope-integrity\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    state: ProofState::NotRun,\n    reason: \&quot;the claim guarantees a behaviour and names a test, and no run of that \\\n             test has ever been recorded\&quot;\n        .into(),\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n};\n\n// the gap is the finding: what the matrix declares against what the ledger holds\nassert_ne!(finding.status, finding.state.label());\nassert!(finding.reproduce.unwrap().starts_with(\&quot;bash test/run.sh\&quot;));\n```\n# Example\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\nlet f = Finding {\n    claim: \&quot;some-claim\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    state: ProofState::NotRun,\n    reason: \&quot;the claim names a test nobody has run\&quot;.into(),\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n};\nassert_eq!(f.state, ProofState::NotRun);\n```&quot;
-    },
-    &quot;ProofState&quot;: {
-      &quot;description&quot;: &quot;What the repository can say about one claim&#39;s proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven &lt; ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;proven&quot;,
-          &quot;description&quot;: &quot;A passing run, and nothing has changed since it — the diff against the execution&#39;s\nown commit is empty but for the ledger. Proof of the tree in front of you.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it.&quot;,
-          &quot;const&quot;: &quot;inputs_unchanged&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;A passing run, but something this claim names has changed since. The proof is older\nthan its subject.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The latest run of this claim&#39;s test did not pass.&quot;,
-          &quot;const&quot;: &quot;failing&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;not_run&quot;,
-          &quot;description&quot;: &quot;The claim names a test a runner owns, and no run of it has ever been recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;,
-          &quot;const&quot;: &quot;unrunnable&quot;
-        },
-        {
-          &quot;const&quot;: &quot;no_test&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;
-        }
-      ]
-    },
     &quot;EvidenceExecution&quot;: {
       &quot;description&quot;: &quot;One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \&quot;0\&quot;.repeat(40),\n    working_tree: \&quot;clean\&quot;.into(),\n    digest: digest_of(b\&quot;fn main() {}\&quot;),\n    at: \&quot;2026-09-11T00:00:00Z\&quot;.into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&amp;serde_json::to_string(&amp;run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \&quot;crate:why\&quot;);\nassert_eq!(back.command, \&quot;cargo test --test why\&quot;);\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test&#39;s own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \&quot;suite:07_scope\&quot;.into(),\n    runner: Runner::Suite,\n    source: \&quot;test/cases/07_scope.sh\&quot;.into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \&quot;a04b65c9\&quot;.into(),\n    working_tree: \&quot;clean\&quot;.into(),\n    digest: \&quot;sha256:00\&quot;.into(),\n    at: \&quot;2026-09-11T00:00:00Z\&quot;.into(),\n    origin: Origin::Local,\n    command: \&quot;bash test/run.sh 07_scope\&quot;.into(),\n};\nassert!(e.outcome.proves());\n```&quot;,
       &quot;properties&quot;: {
-        &quot;working_tree&quot;: {
-          &quot;description&quot;: &quot;`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit.&quot;,
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When it was recorded, RFC 3339, UTC.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;command&quot;: {
+          &quot;description&quot;: &quot;The exact command that runs this one test again.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;commit&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The full commit id the run was made against.&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;The test&#39;s own source, repository-relative.&quot;,
+          &quot;description&quot;: &quot;The full commit id the run was made against.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;digest&quot;: {
           &quot;description&quot;: &quot;`sha256:&lt;hex&gt;` of the test&#39;s own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When it was recorded, RFC 3339, UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;origin&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceOrigin&quot;,
+          &quot;description&quot;: &quot;Where the run happened.&quot;
+        },
+        &quot;outcome&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceOutcome&quot;,
+          &quot;description&quot;: &quot;What it said.&quot;
         },
         &quot;runner&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/EvidenceRunner&quot;,
           &quot;description&quot;: &quot;Which runner produced it.&quot;
         },
-        &quot;origin&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EvidenceOrigin&quot;,
-          &quot;description&quot;: &quot;Where the run happened.&quot;
-        },
         &quot;seconds&quot;: {
+          &quot;description&quot;: &quot;How long it took, in whole seconds.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;How long it took, in whole seconds.&quot;
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;command&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The exact command that runs this one test again.&quot;
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;The test&#39;s own source, repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;test&quot;: {
           &quot;description&quot;: &quot;The test, in [`TestId::as_string`] form.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;outcome&quot;: {
-          &quot;description&quot;: &quot;What it said.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/EvidenceOutcome&quot;
+        &quot;working_tree&quot;: {
+          &quot;description&quot;: &quot;`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -697,23 +621,118 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;EvidenceFinding&quot;: {
+      &quot;description&quot;: &quot;A claim whose declared status the evidence does not support.\n\nOnly a `guaranteed` claim can produce one: the other statuses already say that a current\nproof is not what they are claiming. A finding says what was claimed, what the evidence\nsupports instead, and — where running something would settle it — what to run.\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\n\nlet finding = Finding {\n    claim: \&quot;scope-integrity\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    state: ProofState::NotRun,\n    reason: \&quot;the claim guarantees a behaviour and names a test, and no run of that \\\n             test has ever been recorded\&quot;\n        .into(),\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n};\n\n// the gap is the finding: what the matrix declares against what the ledger holds\nassert_ne!(finding.status, finding.state.label());\nassert!(finding.reproduce.unwrap().starts_with(\&quot;bash test/run.sh\&quot;));\n```\n# Example\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\nlet f = Finding {\n    claim: \&quot;some-claim\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    state: ProofState::NotRun,\n    reason: \&quot;the claim names a test nobody has run\&quot;.into(),\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n};\nassert_eq!(f.state, ProofState::NotRun);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;claim&quot;: {
+          &quot;description&quot;: &quot;The claim.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why this is a finding.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;What to run, when running something would settle it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;,
+          &quot;description&quot;: &quot;What the evidence supports.&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;What the claim says it is.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;claim&quot;,
+        &quot;status&quot;,
+        &quot;state&quot;,
+        &quot;reason&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EvidenceLedgerSummary&quot;: {
+      &quot;description&quot;: &quot;What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \&quot;a ledger holding nothing has recorded nothing\&quot;);\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \&quot;.ai/repo/evidence/ledger.json\&quot;.into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \&quot;a repository that recorded nothing says so\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;commits&quot;: {
+          &quot;description&quot;: &quot;The distinct commits its executions were recorded against. Always emitted, empty\nincluded, for the reason [`ClaimProof::changed`] is.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;executions&quot;: {
+          &quot;description&quot;: &quot;How many executions it holds.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;newest&quot;: {
+          &quot;description&quot;: &quot;The newest `at` in it, when it holds any.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Where it lives, repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;present&quot;: {
+          &quot;description&quot;: &quot;Whether the ledger holds at least one execution.\n\nNot whether the file exists. A ledger file holding nothing and no ledger file at\nall are the same answer to the only question a reader is asking — has anything\nbeen recorded — and both make every claim read `not_run`. [`Ledger::present`]\nanswers the filesystem question, and nothing derives a proof state from it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;present&quot;,
+        &quot;executions&quot;,
+        &quot;commits&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EvidenceOrigin&quot;: {
+      &quot;description&quot;: &quot;Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\&quot;CI\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;local\&quot;), Some(Origin::Local));\n// naming the provider is the adapter&#39;s business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\&quot;github-actions\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\&quot;ci\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;nowhere\&quot;), None);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;local&quot;,
+          &quot;description&quot;: &quot;Someone ran it on their own machine.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;A continuous-integration run.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;release&quot;,
+          &quot;description&quot;: &quot;A release run.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;EvidenceOutcome&quot;: {
       &quot;description&quot;: &quot;What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \&quot;this did not run\&quot; and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\&quot;ok\&quot;).proves());\nassert!(!Outcome::parse(\&quot;timeout\&quot;).proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \&quot;it declined\&quot; and \&quot;the harness broke\&quot; are different bugs\nassert_eq!(Outcome::parse(\&quot;skipped\&quot;), Outcome::Skip);\nassert_eq!(Outcome::parse(\&quot;nonsense\&quot;), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\&quot;ok\&quot;).proves());\nassert_eq!(Outcome::parse(\&quot;wat\&quot;), Outcome::Error);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;pass&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It passed.&quot;
+          &quot;description&quot;: &quot;It passed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;fail&quot;,
-          &quot;description&quot;: &quot;It failed.&quot;
+          &quot;description&quot;: &quot;It failed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;skip&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It declined to run and said so (an unmet precondition the case reports itself).&quot;
+          &quot;description&quot;: &quot;It declined to run and said so (an unmet precondition the case reports itself).&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;timeout&quot;,
@@ -727,54 +746,6 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
         }
       ]
     },
-    &quot;EvidenceSubject&quot;: {
-      &quot;required&quot;: [
-        &quot;examined&quot;,
-        &quot;complete&quot;,
-        &quot;excluded&quot;
-      ],
-      &quot;description&quot;: &quot;Whether the report could see its whole subject.\n\nA verdict over a matrix the index silently shrank is the failure this repository met\nfour times in one day: an object is excluded, every projection of the smaller index is a\nfaithful projection, and each check prints a true statement about the half it can see.\nA freshness check answers \&quot;was this generated from this tree\&quot; and cannot answer \&quot;did the\ngenerator see everything in it\&quot;, so the answer has to carry its own denominator.\n\n```\nuse majordomus_cli::evidence::Subject;\nlet whole = Subject { examined: 149, complete: true, excluded: vec![] };\nassert!(whole.complete);\n\nlet partial = Subject {\n    examined: 148,\n    complete: false,\n    excluded: vec![\&quot;docs/CLAIMS.yaml: unknown_key\&quot;.into()],\n};\nassert!(!partial.complete, \&quot;a shrunken index must not report a clean verdict\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;examined&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;How many claims the index held, and this report therefore examined.&quot;
-        },
-        &quot;excluded&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;The diagnostics that excluded something, when any did: `&lt;path&gt;: &lt;code&gt;`.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;complete&quot;: {
-          &quot;description&quot;: &quot;Whether the index that produced them carried no error diagnostic. When this is\nfalse, every count and every absence below is about a smaller world than the\nrepository, and no verdict over it means what it says.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EvidenceOrigin&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;local&quot;,
-          &quot;description&quot;: &quot;Someone ran it on their own machine.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A continuous-integration run.&quot;,
-          &quot;const&quot;: &quot;ci&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;release&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A release run.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\&quot;CI\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;local\&quot;), Some(Origin::Local));\n// naming the provider is the adapter&#39;s business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\&quot;github-actions\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\&quot;ci\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;nowhere\&quot;), None);\n```&quot;
-    },
     &quot;EvidenceRunner&quot;: {
       &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \&quot;suite\&quot;);\nassert_eq!(Runner::Crate.prefix(), \&quot;crate\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
@@ -784,73 +755,83 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;crate&quot;,
-          &quot;description&quot;: &quot;An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`.&quot;
+          &quot;description&quot;: &quot;An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
-    &quot;EvidenceLedgerSummary&quot;: {
+    &quot;EvidenceSubject&quot;: {
+      &quot;description&quot;: &quot;Whether the report could see its whole subject.\n\nA verdict over a matrix the index silently shrank is the failure this repository met\nfour times in one day: an object is excluded, every projection of the smaller index is a\nfaithful projection, and each check prints a true statement about the half it can see.\nA freshness check answers \&quot;was this generated from this tree\&quot; and cannot answer \&quot;did the\ngenerator see everything in it\&quot;, so the answer has to carry its own denominator.\n\n```\nuse majordomus_cli::evidence::Subject;\nlet whole = Subject { examined: 149, complete: true, excluded: vec![] };\nassert!(whole.complete);\n\nlet partial = Subject {\n    examined: 148,\n    complete: false,\n    excluded: vec![\&quot;docs/CLAIMS.yaml: unknown_key\&quot;.into()],\n};\nassert!(!partial.complete, \&quot;a shrunken index must not report a clean verdict\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;commits&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;The distinct commits its executions were recorded against. Always emitted, empty\nincluded, for the reason [`ClaimProof::changed`] is.&quot;
+        &quot;complete&quot;: {
+          &quot;description&quot;: &quot;Whether the index that produced them carried no error diagnostic. When this is\nfalse, every count and every absence below is about a smaller world than the\nrepository, and no verdict over it means what it says.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Where it lives, repository-relative.&quot;
-        },
-        &quot;newest&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The newest `at` in it, when it holds any.&quot;
-        },
-        &quot;executions&quot;: {
+        &quot;examined&quot;: {
+          &quot;description&quot;: &quot;How many claims the index held, and this report therefore examined.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many executions it holds.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;present&quot;: {
-          &quot;description&quot;: &quot;Whether the ledger holds at least one execution.\n\nNot whether the file exists. A ledger file holding nothing and no ledger file at\nall are the same answer to the only question a reader is asking — has anything\nbeen recorded — and both make every claim read `not_run`. [`Ledger::present`]\nanswers the filesystem question, and nothing derives a proof state from it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;excluded&quot;: {
+          &quot;description&quot;: &quot;The diagnostics that excluded something, when any did: `&lt;path&gt;: &lt;code&gt;`.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         }
       },
       &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;present&quot;,
-        &quot;executions&quot;,
-        &quot;commits&quot;
+        &quot;examined&quot;,
+        &quot;complete&quot;,
+        &quot;excluded&quot;
       ],
-      &quot;description&quot;: &quot;What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \&quot;a ledger holding nothing has recorded nothing\&quot;);\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \&quot;.ai/repo/evidence/ledger.json\&quot;.into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \&quot;a repository that recorded nothing says so\&quot;);\n```&quot;,
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ProofState&quot;: {
+      &quot;description&quot;: &quot;What the repository can say about one claim&#39;s proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven &lt; ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;proven&quot;,
+          &quot;description&quot;: &quot;A passing run, and nothing has changed since it — the diff against the execution&#39;s\nown commit is empty but for the ledger. Proof of the tree in front of you.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inputs_unchanged&quot;,
+          &quot;description&quot;: &quot;A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;A passing run, but something this claim names has changed since. The proof is older\nthan its subject.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failing&quot;,
+          &quot;description&quot;: &quot;The latest run of this claim&#39;s test did not pass.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_run&quot;,
+          &quot;description&quot;: &quot;The claim names a test a runner owns, and no run of it has ever been recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unrunnable&quot;,
+          &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;no_test&quot;,
+          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     }
   },
-  &quot;required&quot;: [
-    &quot;working_tree&quot;,
-    &quot;ledger&quot;,
-    &quot;subject&quot;,
-    &quot;claims&quot;,
-    &quot;totals&quot;,
-    &quot;findings&quot;
-  ],
+  &quot;description&quot;: &quot;The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \&quot;unknown\&quot;.into(),\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \&quot;nothing claimed, so nothing unsupported\&quot;);\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \&quot;an absent answer is not a clean one\&quot;);\n\nreport.findings.push(Finding {\n    claim: \&quot;scope-integrity\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    state: ProofState::Failing,\n    reason: \&quot;the claim guarantees a behaviour whose test most recently failed\&quot;.into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&amp;repo.index().unwrap(), &amp;ledger);\nassert!(r.satisfied(), \&quot;no claim, so no unsupported guarantee\&quot;);\n```&quot;,
   &quot;properties&quot;: {
-    &quot;findings&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/EvidenceFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Claims whose declared status the evidence does not support.&quot;
-    },
-    &quot;working_tree&quot;: {
-      &quot;description&quot;: &quot;`clean`, `dirty` or `unknown`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;claims&quot;: {
       &quot;description&quot;: &quot;Every claim, in the matrix&#39;s own order.&quot;,
       &quot;items&quot;: {
@@ -858,14 +839,12 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;totals&quot;: {
-      &quot;description&quot;: &quot;How many claims are in each state.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;type&quot;: &quot;integer&quot;,
-        &quot;minimum&quot;: 0
-      }
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;Claims whose declared status the evidence does not support.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EvidenceFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;head&quot;: {
       &quot;description&quot;: &quot;The commit the report was derived against.&quot;,
@@ -881,8 +860,29 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
     &quot;subject&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/EvidenceSubject&quot;,
       &quot;description&quot;: &quot;What the report could reach. Read this before reading the tallies: they are counts\nover the claims the index held, and an index that dropped a file holds fewer.&quot;
+    },
+    &quot;totals&quot;: {
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;
+      },
+      &quot;description&quot;: &quot;How many claims are in each state.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;working_tree&quot;: {
+      &quot;description&quot;: &quot;`clean`, `dirty` or `unknown`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;required&quot;: [
+    &quot;working_tree&quot;,
+    &quot;ledger&quot;,
+    &quot;subject&quot;,
+    &quot;claims&quot;,
+    &quot;totals&quot;,
+    &quot;findings&quot;
+  ],
   &quot;title&quot;: &quot;EvidenceReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -918,7 +918,7 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::evidence</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EvidenceReportInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EvidenceReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -943,7 +943,7 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -262,9 +262,9 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;description&quot;: &quot;No input.&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -273,20 +273,10 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">present</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the local half exists at all.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">balance</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The started/closed/open arithmetic.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">pointer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The pointer and its layout.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -299,6 +289,16 @@ case and means there is nothing to recover.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Temporary files left in the tracked sessions section.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">pointer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The pointer and its layout.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">present</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the local half exists at all.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">stranded</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -308,21 +308,157 @@ case and means there is nothing to recover.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;Recovery&quot;,
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;$defs&quot;: {
+    &quot;Balance&quot;: {
+      &quot;description&quot;: &quot;What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not.&quot;,
+      &quot;properties&quot;: {
+        &quot;agrees&quot;: {
+          &quot;description&quot;: &quot;Whether the three agree.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;closed&quot;: {
+          &quot;description&quot;: &quot;`session.closed` lines.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;note&quot;: {
+          &quot;description&quot;: &quot;What the numbers mean, in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;open&quot;: {
+          &quot;description&quot;: &quot;Open records in the store.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;started&quot;: {
+          &quot;description&quot;: &quot;`session.started` lines in the ledger.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;unaccounted&quot;: {
+          &quot;description&quot;: &quot;`started - closed - open`. Zero is the good case; negative means the ledger was\nrotated under the records, which is ordinary.&quot;,
+          &quot;format&quot;: &quot;int64&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;started&quot;,
+        &quot;closed&quot;,
+        &quot;open&quot;,
+        &quot;unaccounted&quot;,
+        &quot;agrees&quot;,
+        &quot;note&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Orphan&quot;: {
+      &quot;description&quot;: &quot;A temporary file left in a record directory by a close that did not finish.\n\nThe close path writes the durable record to `.tmp.XXXX` in the destination directory and\nrenames it, so that no reader ever sees half a record. A process killed between the two\nleaves the temporary file behind, where it is untracked, invisible to every reader of the\nsection, and — because the directory is tracked — offered to the next `git add .`.&quot;,
+      &quot;properties&quot;: {
+        &quot;bytes&quot;: {
+          &quot;description&quot;: &quot;Its size in bytes, which is how a reader tells an empty stub from a lost record.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;bytes&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Pointer&quot;: {
+      &quot;description&quot;: &quot;What the pointer is and whether it leads anywhere.&quot;,
+      &quot;properties&quot;: {
+        &quot;layout&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PointerLayout&quot;,
+          &quot;description&quot;: &quot;The layout.&quot;
+        },
+        &quot;note&quot;: {
+          &quot;description&quot;: &quot;What that means, in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;resolves&quot;: {
+          &quot;description&quot;: &quot;Whether reading through it yields an episode.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;session_id&quot;: {
+          &quot;description&quot;: &quot;The episode it resolves to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;target&quot;: {
+          &quot;description&quot;: &quot;What the symlink names, as written, when it is one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;layout&quot;,
+        &quot;resolves&quot;,
+        &quot;note&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;PointerLayout&quot;: {
+      &quot;description&quot;: &quot;The layout of the pointer, which is how far the per-provider migration has got here.\n\nBefore the episode was keyed by its provider session, `session-current.yaml` *was* the\nopen record: one regular file, one episode per checkout. Seven concurrent sessions on\n2026-09-09 produced one record between them under that layout. A regular file here today\nis a checkout that has not run the migration, and its episodes are being overwritten.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;pointer&quot;,
+          &quot;description&quot;: &quot;A symlink into `sessions-open/`: the per-provider layout.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inline&quot;,
+          &quot;description&quot;: &quot;A regular file: the pre-migration layout, one episode per checkout.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;Nothing is there. No episode is open here, which is not a fault.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Stranded&quot;: {
+      &quot;description&quot;: &quot;An open episode that cannot close itself, and what to do about it.\n\nThe remedy here is the mechanical one — remove the file — because it is correct in every\ncheckout and needs nothing that is not already installed. `lib/recover.sh` on\n`feature/session-store-recovery` is the same three degradations seen from the writing\nside: it classifies each candidate by reading it, prints the evidence before acting, and\ncloses a stranded episode into a real record rather than deleting it. When that lands,\nthe remedy a finding carries should become `majordomus recover episodes` and the two\ndetections should become one — a reader and a writer that each decide for themselves\nwhat \&quot;stranded\&quot; means are two definitions, and this repository has been bitten by that\nshape often enough to name it.&quot;,
+      &quot;properties&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The open record, repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it is stranded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;The command that clears it. A finding with no remedy is a complaint.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;session_id&quot;: {
+          &quot;description&quot;: &quot;The episode id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;session_id&quot;,
+        &quot;path&quot;,
+        &quot;reason&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
   &quot;description&quot;: &quot;What this checkout&#39;s session store needs somebody to do.&quot;,
   &quot;properties&quot;: {
-    &quot;present&quot;: {
-      &quot;description&quot;: &quot;Whether the local half exists at all.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
     &quot;balance&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/Balance&quot;,
       &quot;description&quot;: &quot;The started/closed/open arithmetic.&quot;
-    },
-    &quot;pointer&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Pointer&quot;,
-      &quot;description&quot;: &quot;The pointer and its layout.&quot;
     },
     &quot;findings&quot;: {
       &quot;description&quot;: &quot;Everything above, said once, for a reader that wants the summary. Empty is the good\ncase and means there is nothing to recover.&quot;,
@@ -332,18 +468,26 @@ case and means there is nothing to recover.</td>
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;orphans&quot;: {
+      &quot;description&quot;: &quot;Temporary files left in the tracked sessions section.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Orphan&quot;
       },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Temporary files left in the tracked sessions section.&quot;
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;pointer&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Pointer&quot;,
+      &quot;description&quot;: &quot;The pointer and its layout.&quot;
+    },
+    &quot;present&quot;: {
+      &quot;description&quot;: &quot;Whether the local half exists at all.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;stranded&quot;: {
+      &quot;description&quot;: &quot;Episodes that can no longer close themselves.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Stranded&quot;
       },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Episodes that can no longer close themselves.&quot;
+      &quot;type&quot;: &quot;array&quot;
     }
   },
   &quot;required&quot;: [
@@ -351,152 +495,8 @@ case and means there is nothing to recover.</td>
     &quot;pointer&quot;,
     &quot;balance&quot;
   ],
-  &quot;$defs&quot;: {
-    &quot;Pointer&quot;: {
-      &quot;required&quot;: [
-        &quot;layout&quot;,
-        &quot;resolves&quot;,
-        &quot;note&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;session_id&quot;: {
-          &quot;description&quot;: &quot;The episode it resolves to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;layout&quot;: {
-          &quot;description&quot;: &quot;The layout.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/PointerLayout&quot;
-        },
-        &quot;note&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What that means, in words.&quot;
-        },
-        &quot;target&quot;: {
-          &quot;description&quot;: &quot;What the symlink names, as written, when it is one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;resolves&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether reading through it yields an episode.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;What the pointer is and whether it leads anywhere.&quot;
-    },
-    &quot;PointerLayout&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;pointer&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A symlink into `sessions-open/`: the per-provider layout.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A regular file: the pre-migration layout, one episode per checkout.&quot;,
-          &quot;const&quot;: &quot;inline&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Nothing is there. No episode is open here, which is not a fault.&quot;,
-          &quot;const&quot;: &quot;absent&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The layout of the pointer, which is how far the per-provider migration has got here.\n\nBefore the episode was keyed by its provider session, `session-current.yaml` *was* the\nopen record: one regular file, one episode per checkout. Seven concurrent sessions on\n2026-09-09 produced one record between them under that layout. A regular file here today\nis a checkout that has not run the migration, and its episodes are being overwritten.&quot;
-    },
-    &quot;Balance&quot;: {
-      &quot;required&quot;: [
-        &quot;started&quot;,
-        &quot;closed&quot;,
-        &quot;open&quot;,
-        &quot;unaccounted&quot;,
-        &quot;agrees&quot;,
-        &quot;note&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not.&quot;,
-      &quot;properties&quot;: {
-        &quot;note&quot;: {
-          &quot;description&quot;: &quot;What the numbers mean, in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;closed&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;`session.closed` lines.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;open&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Open records in the store.&quot;
-        },
-        &quot;started&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;`session.started` lines in the ledger.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;unaccounted&quot;: {
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;description&quot;: &quot;`started - closed - open`. Zero is the good case; negative means the ledger was\nrotated under the records, which is ordinary.&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;agrees&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether the three agree.&quot;
-        }
-      }
-    },
-    &quot;Stranded&quot;: {
-      &quot;description&quot;: &quot;An open episode that cannot close itself, and what to do about it.\n\nThe remedy here is the mechanical one — remove the file — because it is correct in every\ncheckout and needs nothing that is not already installed. `lib/recover.sh` on\n`feature/session-store-recovery` is the same three degradations seen from the writing\nside: it classifies each candidate by reading it, prints the evidence before acting, and\ncloses a stranded episode into a real record rather than deleting it. When that lands,\nthe remedy a finding carries should become `majordomus recover episodes` and the two\ndetections should become one — a reader and a writer that each decide for themselves\nwhat \&quot;stranded\&quot; means are two definitions, and this repository has been bitten by that\nshape often enough to name it.&quot;,
-      &quot;required&quot;: [
-        &quot;session_id&quot;,
-        &quot;path&quot;,
-        &quot;reason&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;The command that clears it. A finding with no remedy is a complaint.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why it is stranded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The open record, repository-relative.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session_id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The episode id.&quot;
-        }
-      }
-    },
-    &quot;Orphan&quot;: {
-      &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;bytes&quot;: {
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;description&quot;: &quot;Its size in bytes, which is how a reader tells an empty stub from a lost record.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;bytes&quot;
-      ],
-      &quot;description&quot;: &quot;A temporary file left in a record directory by a close that did not finish.\n\nThe close path writes the durable record to `.tmp.XXXX` in the destination directory and\nrenames it, so that no reader ever sees half a record. A process killed between the two\nleaves the temporary file behind, where it is untracked, invisible to every reader of the\nsection, and — because the directory is tracked — offered to the next `git add .`.&quot;
-    }
-  }
+  &quot;title&quot;: &quot;Recovery&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -530,7 +530,7 @@ case and means there is nothing to recover.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::lifecycle</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Recovery</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -555,7 +555,7 @@ case and means there is nothing to recover.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

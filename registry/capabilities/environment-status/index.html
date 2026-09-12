@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -273,7 +273,6 @@ behalf of its caller, and the caller usually is that server. <span class="font-m
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;What to include in the snapshot.&quot;,
   &quot;properties&quot;: {
@@ -283,7 +282,8 @@ behalf of its caller, and the caller usually is that server. <span class="font-m
       &quot;type&quot;: &quot;boolean&quot;
     }
   },
-  &quot;title&quot;: &quot;EnvironmentInput&quot;
+  &quot;title&quot;: &quot;EnvironmentInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -298,6 +298,36 @@ so that two snapshots of the same repository serialise identically apart from
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Everything that went wrong or is worth knowing, in the order it was found.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">generated_at</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">When it was taken, RFC 3339 in UTC.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">layer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What the layer holds.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">project</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What the project is.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">provenance</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where every field came from.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">providers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The provider projections the policy declares, in the policy&#39;s order.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repository</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -307,16 +337,6 @@ so that two snapshots of the same repository serialise identically apart from
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How completely it was resolved.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">layer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the layer holds.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">provenance</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where every field came from.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -333,26 +353,6 @@ so that two snapshots of the same repository serialise identically apart from
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The toolchains the repository declares, sorted by id.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">generated_at</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">When it was taken, RFC 3339 in UTC.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Everything that went wrong or is worth knowing, in the order it was found.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">project</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the project is.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">providers</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The provider projections the policy declares, in the policy&#39;s order.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">vcs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -368,113 +368,13 @@ so that two snapshots of the same repository serialise identically apart from
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;ServiceState&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;path&quot;,
-        &quot;availability&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;A stable id, `[a-z][a-z0-9-]*`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The absolute path the router serves it under.&quot;
-        },
-        &quot;availability&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ServiceAvailability&quot;,
-          &quot;description&quot;: &quot;Whether anything answers there.&quot;
-        },
-        &quot;url&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The full URL, when a server is running and published its address.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The short name a person reads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;description&quot;: &quot;One local service of this repository: what it is, where it is, and whether anything\nanswers there. The path is the one the router serves; the URL exists only while a\nserver does.&quot;
-    },
-    &quot;ProjectionState&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;current&quot;,
-          &quot;description&quot;: &quot;The file matches the rendering byte for byte.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The file differs: it was hand-edited, or the policy moved under it.&quot;,
-          &quot;const&quot;: &quot;stale&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;absent&quot;,
-          &quot;description&quot;: &quot;The file is not there.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It could not be rendered, so nothing can be said.&quot;,
-          &quot;const&quot;: &quot;unknown&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where one provider projection stands against its policy.&quot;
-    },
-    &quot;Severity&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;const&quot;: &quot;error&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;
-    },
-    &quot;TierState&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;resolved&quot;,
-          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Taken from the cache written by an earlier full resolution.&quot;,
-          &quot;const&quot;: &quot;cached&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Neither available; the values are absent and the reason is a diagnostic.&quot;,
-          &quot;const&quot;: &quot;unavailable&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero.&quot;
-    },
     &quot;Confidence&quot;: {
       &quot;description&quot;: &quot;How far a resolved value can be trusted.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;exact&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;
+          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;cached&quot;,
@@ -482,25 +382,528 @@ so that two snapshots of the same repository serialise identically apart from
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;Not resolved.&quot;
+          &quot;description&quot;: &quot;Not resolved.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Diagnostic&quot;: {
+      &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;FieldSource&quot;: {
+      &quot;description&quot;: &quot;Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \&quot;why does it say that\&quot;\nis answered by the tool rather than by reading its source.&quot;,
+      &quot;properties&quot;: {
+        &quot;confidence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Confidence&quot;,
+          &quot;description&quot;: &quot;How certain the value is.&quot;
+        },
+        &quot;field&quot;: {
+          &quot;description&quot;: &quot;The field, in dotted form: `services.cockpit.url`, `vcs.branch`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;resolver&quot;: {
+          &quot;description&quot;: &quot;The part of this executable that read it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;What decided it: a file, a command, a compile-time constant, the cache.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;value&quot;: {
+          &quot;description&quot;: &quot;The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;field&quot;,
+        &quot;source&quot;,
+        &quot;resolver&quot;,
+        &quot;confidence&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GitWorkingTree&quot;: {
+      &quot;description&quot;: &quot;The state of one work tree, as porcelain v2 reports it.&quot;,
+      &quot;properties&quot;: {
+        &quot;ahead&quot;: {
+          &quot;description&quot;: &quot;Commits this branch has that its upstream does not; `None` without an upstream.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;behind&quot;: {
+          &quot;description&quot;: &quot;Commits the upstream has that this branch does not; `None` without an upstream.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch, or `None` when HEAD is detached or unborn.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;changed_paths&quot;: {
+          &quot;description&quot;: &quot;Every path that is not clean, repository-relative, in git&#39;s order. Used to decide\nwhether the cached tier is still valid, and shown to nobody.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;clean&quot;: {
+          &quot;description&quot;: &quot;Whether nothing at all is staged, modified, untracked or conflicted.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;conflicted&quot;: {
+          &quot;description&quot;: &quot;Files with an unresolved merge.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;detached&quot;: {
+          &quot;description&quot;: &quot;Whether HEAD names a commit directly rather than a branch.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit HEAD names, or `None` in a repository with no commits yet.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;modified&quot;: {
+          &quot;description&quot;: &quot;Tracked files changed in the work tree and not staged.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;staged&quot;: {
+          &quot;description&quot;: &quot;Tracked files with staged changes.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;untracked&quot;: {
+          &quot;description&quot;: &quot;Files git does not track and is not ignoring.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;upstream&quot;: {
+          &quot;description&quot;: &quot;The upstream the branch tracks, when it tracks one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;detached&quot;,
+        &quot;staged&quot;,
+        &quot;modified&quot;,
+        &quot;untracked&quot;,
+        &quot;conflicted&quot;,
+        &quot;clean&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;KindCount&quot;: {
+      &quot;description&quot;: &quot;How many valid objects of one kind the layer holds.&quot;,
+      &quot;properties&quot;: {
+        &quot;count&quot;: {
+          &quot;description&quot;: &quot;How many objects of it the index holds.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;The kind, as `share/kinds.yaml` declares it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;count&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;LayerSummary&quot;: {
+      &quot;description&quot;: &quot;What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on.&quot;,
+      &quot;properties&quot;: {
+        &quot;capabilities&quot;: {
+          &quot;description&quot;: &quot;How many capabilities the registry holds.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;degraded&quot;: {
+          &quot;description&quot;: &quot;Whether the layer read cleanly.&quot;,
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;invalid&quot;: {
+          &quot;description&quot;: &quot;How many files the layer declared that did not become objects.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;kinds&quot;: {
+          &quot;description&quot;: &quot;One entry per kind present, sorted by kind.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/KindCount&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;objects&quot;: {
+          &quot;description&quot;: &quot;How many objects the index holds.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TierState&quot;,
+          &quot;description&quot;: &quot;Where these numbers came from.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ProjectIdentity&quot;: {
+      &quot;description&quot;: &quot;What the project is, from the crate manifest and the prose written once in\n[`crate::about`]. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers.&quot;,
+      &quot;properties&quot;: {
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The commit it was built from, or `unknown` outside a work tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;license&quot;: {
+          &quot;description&quot;: &quot;The SPDX licence identifier.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The product name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;description&quot;: &quot;The cargo profile it was built with.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;repository&quot;: {
+          &quot;description&quot;: &quot;The source repository.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One sentence: what this is.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;target&quot;: {
+          &quot;description&quot;: &quot;The Rust target triple this executable was built for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The version of this executable, from the crate manifest.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;version&quot;,
+        &quot;summary&quot;,
+        &quot;license&quot;,
+        &quot;repository&quot;,
+        &quot;target&quot;,
+        &quot;profile&quot;,
+        &quot;commit&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ProjectionState&quot;: {
+      &quot;description&quot;: &quot;Where one provider projection stands against its policy.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;description&quot;: &quot;The file matches the rendering byte for byte.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;The file differs: it was hand-edited, or the policy moved under it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;The file is not there.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;It could not be rendered, so nothing can be said.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ProviderState&quot;: {
+      &quot;description&quot;: &quot;One provider projection the policy declares, and whether the file on disk still matches\nwhat the policy renders.&quot;,
+      &quot;properties&quot;: {
+        &quot;always_loaded&quot;: {
+          &quot;description&quot;: &quot;Whether the provider loads this file into every context.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The provider id, as the policy names it: `agents`, `claude-code`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ProjectionState&quot;,
+          &quot;description&quot;: &quot;Whether the file matches what the policy renders now.&quot;
+        },
+        &quot;target&quot;: {
+          &quot;description&quot;: &quot;The repository-relative file it renders to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;target&quot;,
+        &quot;state&quot;,
+        &quot;always_loaded&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RepositoryIdentity&quot;: {
+      &quot;description&quot;: &quot;The checkout this snapshot is of.&quot;,
+      &quot;properties&quot;: {
+        &quot;layer_schema&quot;: {
+          &quot;description&quot;: &quot;The manifest&#39;s `schema`, `ai-repository/v1`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;linked_worktree&quot;: {
+          &quot;description&quot;: &quot;Whether this checkout is a linked work tree rather than the main one.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;local_path&quot;: {
+          &quot;description&quot;: &quot;The checkout-local half of the layer, repository-relative. Never tracked, and\nwhere anything this checkout alone knows — the server&#39;s lease, this snapshot&#39;s\ncache — is kept.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The name a person calls it: the base name of the root directory.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;root&quot;: {
+          &quot;description&quot;: &quot;The root, absolute. The same value `repository.info` reports.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;sections&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Section name to repository-relative path, as the manifest declares them.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;root&quot;,
+        &quot;layer_schema&quot;,
+        &quot;sections&quot;,
+        &quot;local_path&quot;,
+        &quot;linked_worktree&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Resolution&quot;: {
+      &quot;description&quot;: &quot;How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \&quot;there is no server running\&quot; from \&quot;nobody looked\&quot;.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;fast&quot;,
+          &quot;description&quot;: &quot;Only what is cheap enough for a shell prompt; the rest from the cache.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;full&quot;,
+          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ServiceAvailability&quot;: {
+      &quot;description&quot;: &quot;Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;available&quot;,
+          &quot;description&quot;: &quot;The address accepted a connection.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_running&quot;,
+          &quot;description&quot;: &quot;No server holds the repository&#39;s lease, or the address refused the connection.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;The probe did not finish in its budget, or this resolution did not probe.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ServiceState&quot;: {
+      &quot;description&quot;: &quot;One local service of this repository: what it is, where it is, and whether anything\nanswers there. The path is the one the router serves; the URL exists only while a\nserver does.&quot;,
+      &quot;properties&quot;: {
+        &quot;availability&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ServiceAvailability&quot;,
+          &quot;description&quot;: &quot;Whether anything answers there.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;A stable id, `[a-z][a-z0-9-]*`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The absolute path the router serves it under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The short name a person reads.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;The full URL, when a server is running and published its address.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;path&quot;,
+        &quot;availability&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TierState&quot;: {
+      &quot;description&quot;: &quot;Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;resolved&quot;,
+          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cached&quot;,
+          &quot;description&quot;: &quot;Taken from the cache written by an earlier full resolution.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unavailable&quot;,
+          &quot;description&quot;: &quot;Neither available; the values are absent and the reason is a diagnostic.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ToolchainAvailability&quot;: {
+      &quot;description&quot;: &quot;Whether a declared toolchain is usable here.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;installed&quot;,
+          &quot;description&quot;: &quot;Installed, and its version answered.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;missing&quot;,
+          &quot;description&quot;: &quot;The executable is not on the path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Nobody asked: this resolution may not run a subprocess for it, and no cache held it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;ToolchainState&quot;: {
       &quot;description&quot;: &quot;A toolchain the repository declares, and what is installed for it. The three are kept\napart on purpose: a repository can declare a version nobody has, and a machine can have\na version no repository asked for, and reporting either as the other is how a version\nmismatch stays invisible for a week.&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;declared_by&quot;,
-        &quot;availability&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
         &quot;availability&quot;: {
-          &quot;description&quot;: &quot;Where the installed version stands.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ToolchainAvailability&quot;
+          &quot;$ref&quot;: &quot;#/$defs/ToolchainAvailability&quot;,
+          &quot;description&quot;: &quot;Where the installed version stands.&quot;
+        },
+        &quot;declared&quot;: {
+          &quot;description&quot;: &quot;The version the repository declares, when it declares one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;declared_by&quot;: {
           &quot;description&quot;: &quot;The repository-relative file that declares it.&quot;,
@@ -517,117 +920,110 @@ so that two snapshots of the same repository serialise identically apart from
             &quot;null&quot;
           ]
         },
-        &quot;declared&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The version the repository declares, when it declares one.&quot;
-        },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;The short name a person reads.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;declared_by&quot;,
+        &quot;availability&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;VcsState&quot;: {
+      &quot;description&quot;: &quot;What version control says about the checkout, or why it could not be asked.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/GitWorkingTree&quot;,
+          &quot;description&quot;: &quot;`git` answered.&quot;,
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;git&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;state&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;`git` could not be asked, or this is not a work tree.&quot;,
+          &quot;properties&quot;: {
+            &quot;reason&quot;: {
+              &quot;description&quot;: &quot;What went wrong.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;unavailable&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;reason&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        }
+      ]
     },
     &quot;WorkflowCatalogue&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The workflows a person can run here, as the workflow runner itself describes them.&quot;,
       &quot;properties&quot;: {
-        &quot;workflows&quot;: {
-          &quot;description&quot;: &quot;Every public workflow, sorted by name.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/WorkflowDescriptor&quot;
-          }
-        },
         &quot;entrypoints&quot;: {
+          &quot;description&quot;: &quot;The entry point of each group, in the order the groups are declared: what a person\nnew to the repository runs first. Derived, never listed anywhere.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/WorkflowEntrypoint&quot;
           },
-          &quot;description&quot;: &quot;The entry point of each group, in the order the groups are declared: what a person\nnew to the repository runs first. Derived, never listed anywhere.&quot;,
           &quot;type&quot;: &quot;array&quot;
         },
         &quot;source&quot;: {
+          &quot;description&quot;: &quot;The command that produced them, when one did.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The command that produced them, when one did.&quot;
+          ]
         },
         &quot;state&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/TierState&quot;,
           &quot;description&quot;: &quot;Where these came from.&quot;
+        },
+        &quot;workflows&quot;: {
+          &quot;description&quot;: &quot;Every public workflow, sorted by name.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/WorkflowDescriptor&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         }
       },
       &quot;required&quot;: [
         &quot;state&quot;
       ],
-      &quot;description&quot;: &quot;The workflows a person can run here, as the workflow runner itself describes them.&quot;
-    },
-    &quot;RepositoryIdentity&quot;: {
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;root&quot;,
-        &quot;layer_schema&quot;,
-        &quot;sections&quot;,
-        &quot;local_path&quot;,
-        &quot;linked_worktree&quot;
-      ],
-      &quot;description&quot;: &quot;The checkout this snapshot is of.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;local_path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The checkout-local half of the layer, repository-relative. Never tracked, and\nwhere anything this checkout alone knows — the server&#39;s lease, this snapshot&#39;s\ncache — is kept.&quot;
-        },
-        &quot;layer_schema&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The manifest&#39;s `schema`, `ai-repository/v1`.&quot;
-        },
-        &quot;root&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The root, absolute. The same value `repository.info` reports.&quot;
-        },
-        &quot;sections&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;Section name to repository-relative path, as the manifest declares them.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The name a person calls it: the base name of the root directory.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;linked_worktree&quot;: {
-          &quot;description&quot;: &quot;Whether this checkout is a linked work tree rather than the main one.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        }
-      }
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;WorkflowDescriptor&quot;: {
       &quot;description&quot;: &quot;One workflow: a recipe of the repository&#39;s `justfile`, as `just` describes it.&quot;,
       &quot;properties&quot;: {
+        &quot;confirm&quot;: {
+          &quot;description&quot;: &quot;Whether it asks before it runs (`[confirm]`).&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
         &quot;dependencies&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The recipes it runs first, in order.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;The recipes it runs first, in order.&quot;
-        },
-        &quot;parameters&quot;: {
-          &quot;description&quot;: &quot;Its parameters, in declaration order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/WorkflowParameter&quot;
           },
           &quot;type&quot;: &quot;array&quot;
         },
         &quot;description&quot;: {
+          &quot;description&quot;: &quot;The recipe&#39;s doc comment, when it has one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The recipe&#39;s doc comment, when it has one.&quot;
+          ]
         },
         &quot;group&quot;: {
           &quot;description&quot;: &quot;The `[group(...)]` it belongs to, when it declares one.&quot;,
@@ -640,16 +1036,19 @@ so that two snapshots of the same repository serialise identically apart from
           &quot;description&quot;: &quot;The name a person types after `just`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;confirm&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether it asks before it runs (`[confirm]`).&quot;
-        },
         &quot;namespace&quot;: {
           &quot;description&quot;: &quot;The module path, for a recipe in an imported module; empty at the root.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
+        },
+        &quot;parameters&quot;: {
+          &quot;description&quot;: &quot;Its parameters, in declaration order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/WorkflowParameter&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         }
       },
       &quot;required&quot;: [
@@ -657,180 +1056,6 @@ so that two snapshots of the same repository serialise identically apart from
         &quot;confirm&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ServiceAvailability&quot;: {
-      &quot;description&quot;: &quot;Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;available&quot;,
-          &quot;description&quot;: &quot;The address accepted a connection.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;No server holds the repository&#39;s lease, or the address refused the connection.&quot;,
-          &quot;const&quot;: &quot;not_running&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;The probe did not finish in its budget, or this resolution did not probe.&quot;
-        }
-      ]
-    },
-    &quot;LayerSummary&quot;: {
-      &quot;description&quot;: &quot;What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on.&quot;,
-      &quot;properties&quot;: {
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TierState&quot;,
-          &quot;description&quot;: &quot;Where these numbers came from.&quot;
-        },
-        &quot;kinds&quot;: {
-          &quot;description&quot;: &quot;One entry per kind present, sorted by kind.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/KindCount&quot;
-          }
-        },
-        &quot;objects&quot;: {
-          &quot;description&quot;: &quot;How many objects the index holds.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;capabilities&quot;: {
-          &quot;description&quot;: &quot;How many capabilities the registry holds.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;degraded&quot;: {
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Whether the layer read cleanly.&quot;
-        },
-        &quot;invalid&quot;: {
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many files the layer declared that did not become objects.&quot;,
-          &quot;minimum&quot;: 0
-        }
-      },
-      &quot;required&quot;: [
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;KindCount&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;How many valid objects of one kind the layer holds.&quot;,
-      &quot;properties&quot;: {
-        &quot;count&quot;: {
-          &quot;description&quot;: &quot;How many objects of it the index holds.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;The kind, as `share/kinds.yaml` declares it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;count&quot;
-      ]
-    },
-    &quot;ToolchainAvailability&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Installed, and its version answered.&quot;,
-          &quot;const&quot;: &quot;installed&quot;
-        },
-        {
-          &quot;const&quot;: &quot;missing&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The executable is not on the path.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Nobody asked: this resolution may not run a subprocess for it, and no cache held it.&quot;,
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Whether a declared toolchain is usable here.&quot;
-    },
-    &quot;VcsState&quot;: {
-      &quot;description&quot;: &quot;What version control says about the checkout, or why it could not be asked.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;`git` answered.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/GitWorkingTree&quot;,
-          &quot;required&quot;: [
-            &quot;state&quot;
-          ],
-          &quot;properties&quot;: {
-            &quot;state&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;git&quot;
-            }
-          }
-        },
-        {
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;properties&quot;: {
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;unavailable&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;reason&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;description&quot;: &quot;What went wrong.&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;,
-            &quot;reason&quot;
-          ],
-          &quot;description&quot;: &quot;`git` could not be asked, or this is not a work tree.&quot;
-        }
-      ]
-    },
-    &quot;WorkflowParameter&quot;: {
-      &quot;properties&quot;: {
-        &quot;required&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether it must be given.&quot;
-        },
-        &quot;variadic&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether it may be repeated (`*args`, `+args`).&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;variadic&quot;,
-        &quot;required&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One parameter of a workflow.&quot;
     },
     &quot;WorkflowEntrypoint&quot;: {
       &quot;description&quot;: &quot;The entry point of one group of workflows: what the group is, and the one workflow that\nstands for it.&quot;,
@@ -840,19 +1065,19 @@ so that two snapshots of the same repository serialise identically apart from
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;description&quot;: {
+          &quot;description&quot;: &quot;The workflow&#39;s description, when it has one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The workflow&#39;s description, when it has one.&quot;
+          ]
         },
         &quot;group&quot;: {
           &quot;description&quot;: &quot;The group, as the justfile declares it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;workflow&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The workflow that stands for the group.&quot;
+          &quot;description&quot;: &quot;The workflow that stands for the group.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -862,277 +1087,72 @@ so that two snapshots of the same repository serialise identically apart from
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;GitWorkingTree&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;detached&quot;,
-        &quot;staged&quot;,
-        &quot;modified&quot;,
-        &quot;untracked&quot;,
-        &quot;conflicted&quot;,
-        &quot;clean&quot;
-      ],
-      &quot;description&quot;: &quot;The state of one work tree, as porcelain v2 reports it.&quot;,
+    &quot;WorkflowParameter&quot;: {
+      &quot;description&quot;: &quot;One parameter of a workflow.&quot;,
       &quot;properties&quot;: {
-        &quot;changed_paths&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;Every path that is not clean, repository-relative, in git&#39;s order. Used to decide\nwhether the cached tier is still valid, and shown to nobody.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;ahead&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Commits this branch has that its upstream does not; `None` without an upstream.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch, or `None` when HEAD is detached or unborn.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;detached&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether HEAD names a commit directly rather than a branch.&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit HEAD names, or `None` in a repository with no commits yet.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;modified&quot;: {
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;description&quot;: &quot;Tracked files changed in the work tree and not staged.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;clean&quot;: {
-          &quot;description&quot;: &quot;Whether nothing at all is staged, modified, untracked or conflicted.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;staged&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;description&quot;: &quot;Tracked files with staged changes.&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;conflicted&quot;: {
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;description&quot;: &quot;Files with an unresolved merge.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;untracked&quot;: {
-          &quot;description&quot;: &quot;Files git does not track and is not ignoring.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;upstream&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The upstream the branch tracks, when it tracks one.&quot;
-        },
-        &quot;behind&quot;: {
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Commits the upstream has that this branch does not; `None` without an upstream.&quot;
-        }
-      }
-    },
-    &quot;ProviderState&quot;: {
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;target&quot;,
-        &quot;state&quot;,
-        &quot;always_loaded&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One provider projection the policy declares, and whether the file on disk still matches\nwhat the policy renders.&quot;,
-      &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The provider id, as the policy names it: `agents`, `claude-code`.&quot;,
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The name.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;target&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The repository-relative file it renders to.&quot;
-        },
-        &quot;always_loaded&quot;: {
-          &quot;description&quot;: &quot;Whether the provider loads this file into every context.&quot;,
+        &quot;required&quot;: {
+          &quot;description&quot;: &quot;Whether it must be given.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;Whether the file matches what the policy renders now.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ProjectionState&quot;
+        &quot;variadic&quot;: {
+          &quot;description&quot;: &quot;Whether it may be repeated (`*args`, `+args`).&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         }
-      }
-    },
-    &quot;ProjectIdentity&quot;: {
+      },
       &quot;required&quot;: [
         &quot;name&quot;,
-        &quot;version&quot;,
-        &quot;summary&quot;,
-        &quot;license&quot;,
-        &quot;repository&quot;,
-        &quot;target&quot;,
-        &quot;profile&quot;,
-        &quot;commit&quot;
+        &quot;variadic&quot;,
+        &quot;required&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;What the project is, from the crate manifest and the prose written once in\n[`crate::about`]. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers.&quot;,
-      &quot;properties&quot;: {
-        &quot;license&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The SPDX licence identifier.&quot;
-        },
-        &quot;repository&quot;: {
-          &quot;description&quot;: &quot;The source repository.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The commit it was built from, or `unknown` outside a work tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;name&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The product name.&quot;
-        },
-        &quot;target&quot;: {
-          &quot;description&quot;: &quot;The Rust target triple this executable was built for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;The version of this executable, from the crate manifest.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;profile&quot;: {
-          &quot;description&quot;: &quot;The cargo profile it was built with.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One sentence: what this is.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
-    },
-    &quot;Diagnostic&quot;: {
-      &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How bad.&quot;
-        },
-        &quot;path&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;
-        },
-        &quot;message&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;
-        },
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;message&quot;
-      ]
-    },
-    &quot;FieldSource&quot;: {
-      &quot;description&quot;: &quot;Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \&quot;why does it say that\&quot;\nis answered by the tool rather than by reading its source.&quot;,
-      &quot;properties&quot;: {
-        &quot;resolver&quot;: {
-          &quot;description&quot;: &quot;The part of this executable that read it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;value&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing.&quot;
-        },
-        &quot;source&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What decided it: a file, a command, a compile-time constant, the cache.&quot;
-        },
-        &quot;confidence&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Confidence&quot;,
-          &quot;description&quot;: &quot;How certain the value is.&quot;
-        },
-        &quot;field&quot;: {
-          &quot;description&quot;: &quot;The field, in dotted form: `services.cockpit.url`, `vcs.branch`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;field&quot;,
-        &quot;source&quot;,
-        &quot;resolver&quot;,
-        &quot;confidence&quot;
-      ]
-    },
-    &quot;Resolution&quot;: {
-      &quot;description&quot;: &quot;How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \&quot;there is no server running\&quot; from \&quot;nobody looked\&quot;.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Only what is cheap enough for a shell prompt; the rest from the cache.&quot;,
-          &quot;const&quot;: &quot;fast&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;full&quot;
-        }
-      ]
+      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;RepositoryEnvironment&quot;,
   &quot;description&quot;: &quot;The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n[`RepositoryEnvironment::generated_at`].&quot;,
   &quot;properties&quot;: {
+    &quot;diagnostics&quot;: {
+      &quot;description&quot;: &quot;Everything that went wrong or is worth knowing, in the order it was found.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;generated_at&quot;: {
+      &quot;description&quot;: &quot;When it was taken, RFC 3339 in UTC.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;layer&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/LayerSummary&quot;,
+      &quot;description&quot;: &quot;What the layer holds.&quot;
+    },
+    &quot;project&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ProjectIdentity&quot;,
+      &quot;description&quot;: &quot;What the project is.&quot;
+    },
+    &quot;provenance&quot;: {
+      &quot;description&quot;: &quot;Where every field came from.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/FieldSource&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;providers&quot;: {
+      &quot;description&quot;: &quot;The provider projections the policy declares, in the policy&#39;s order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ProviderState&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
     &quot;repository&quot;: {
-      &quot;description&quot;: &quot;What the checkout is.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/RepositoryIdentity&quot;
+      &quot;$ref&quot;: &quot;#/$defs/RepositoryIdentity&quot;,
+      &quot;description&quot;: &quot;What the checkout is.&quot;
     },
     &quot;resolution&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/Resolution&quot;,
       &quot;description&quot;: &quot;How completely it was resolved.&quot;
-    },
-    &quot;layer&quot;: {
-      &quot;description&quot;: &quot;What the layer holds.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/LayerSummary&quot;
-    },
-    &quot;provenance&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Where every field came from.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/FieldSource&quot;
-      }
     },
     &quot;schema&quot;: {
       &quot;description&quot;: &quot;The contract this document follows, `majordomus/repository-environment/v1`.&quot;,
@@ -1147,30 +1167,8 @@ so that two snapshots of the same repository serialise identically apart from
     },
     &quot;toolchains&quot;: {
       &quot;description&quot;: &quot;The toolchains the repository declares, sorted by id.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ToolchainState&quot;
-      }
-    },
-    &quot;generated_at&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;When it was taken, RFC 3339 in UTC.&quot;
-    },
-    &quot;diagnostics&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Everything that went wrong or is worth knowing, in the order it was found.&quot;
-    },
-    &quot;project&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ProjectIdentity&quot;,
-      &quot;description&quot;: &quot;What the project is.&quot;
-    },
-    &quot;providers&quot;: {
-      &quot;description&quot;: &quot;The provider projections the policy declares, in the policy&#39;s order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ProviderState&quot;
       },
       &quot;type&quot;: &quot;array&quot;
     },
@@ -1179,8 +1177,8 @@ so that two snapshots of the same repository serialise identically apart from
       &quot;description&quot;: &quot;What version control says.&quot;
     },
     &quot;workflows&quot;: {
-      &quot;description&quot;: &quot;The workflows a person can run.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/WorkflowCatalogue&quot;
+      &quot;$ref&quot;: &quot;#/$defs/WorkflowCatalogue&quot;,
+      &quot;description&quot;: &quot;The workflows a person can run.&quot;
     }
   },
   &quot;required&quot;: [
@@ -1197,7 +1195,9 @@ so that two snapshots of the same repository serialise identically apart from
     &quot;services&quot;,
     &quot;diagnostics&quot;,
     &quot;provenance&quot;
-  ]
+  ],
+  &quot;title&quot;: &quot;RepositoryEnvironment&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -1228,7 +1228,7 @@ so that two snapshots of the same repository serialise identically apart from
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::environment</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EnvironmentInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RepositoryEnvironment</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/environment.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/environment.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/environment.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/environment.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -1253,7 +1253,7 @@ so that two snapshots of the same repository serialise identically apart from
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

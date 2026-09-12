@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -281,12 +281,12 @@ the repository does not have is an invalid input, not an empty answer. <span cla
   &quot;description&quot;: &quot;Filters; both optional.&quot;,
   &quot;properties&quot;: {
     &quot;kind&quot;: {
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer.&quot;
+      ]
     },
     &quot;tag&quot;: {
       &quot;default&quot;: null,
@@ -307,15 +307,15 @@ the repository does not have is an invalid input, not an empty answer. <span cla
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">objects</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The objects, one summary each.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">count</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many objects matched.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">objects</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The objects, one summary each.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -323,15 +323,30 @@ the repository does not have is an invalid input, not an empty answer. <span cla
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;ObjectSummary&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One object, summarised for a listing.&quot;,
       &quot;properties&quot;: {
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;The one-line description, when the kind holds one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;identity&quot;: {
+          &quot;description&quot;: &quot;The identity within the kind.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;kind&quot;: {
           &quot;description&quot;: &quot;The kind the object was read as.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;identity&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The identity within the kind.&quot;
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative source path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;The title, when the kind&#39;s title rule found one.&quot;,
@@ -340,24 +355,9 @@ the repository does not have is an invalid input, not an empty answer. <span cla
             &quot;null&quot;
           ]
         },
-        &quot;description&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The one-line description, when the kind holds one.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Repository-relative source path.&quot;
-        },
         &quot;uri&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;
+          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -367,7 +367,23 @@ the repository does not have is an invalid input, not an empty answer. <span cla
         &quot;identity&quot;,
         &quot;path&quot;
       ],
-      &quot;description&quot;: &quot;One object, summarised for a listing.&quot;
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;The answer of `objects.list`: the matching objects, summarised, in URI order.&quot;,
+  &quot;properties&quot;: {
+    &quot;count&quot;: {
+      &quot;description&quot;: &quot;How many objects matched.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;objects&quot;: {
+      &quot;description&quot;: &quot;The objects, one summary each.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ObjectSummary&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     }
   },
   &quot;required&quot;: [
@@ -375,22 +391,6 @@ the repository does not have is an invalid input, not an empty answer. <span cla
     &quot;objects&quot;
   ],
   &quot;title&quot;: &quot;ObjectList&quot;,
-  &quot;properties&quot;: {
-    &quot;objects&quot;: {
-      &quot;description&quot;: &quot;The objects, one summary each.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ObjectSummary&quot;
-      }
-    },
-    &quot;count&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;How many objects matched.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `objects.list`: the matching objects, summarised, in URI order.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -425,7 +425,7 @@ the repository does not have is an invalid input, not an empty answer. <span cla
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::objects</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ListInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ObjectList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/objects.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/objects.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/72_rust_mcp.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/72_rust_mcp.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/objects.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/objects.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/72_rust_mcp.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/72_rust_mcp.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -493,7 +493,7 @@ the repository does not have is an invalid input, not an empty answer. <span cla
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

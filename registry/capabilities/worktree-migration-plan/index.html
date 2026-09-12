@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -261,10 +261,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -273,10 +273,20 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">steps</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">applied</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">One step per misplaced worktree with a branch, container occupants first.</td>
+        <td class="px-3 py-2 text-body">Whether anything was changed.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">blocked</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Steps that cannot.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">container</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The container everything moves into.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">exceptions</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -284,35 +294,20 @@
         <td class="px-3 py-2 text-body">Worktrees the migration cannot address by design: detached, missing, the primary
 checkout off the trunk. Each says what a person does about it.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">moved</td>
+        <td class="px-3 py-2 font-mono text-heading">failed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Steps carried out and verified.</td>
+        <td class="px-3 py-2 text-body">Steps attempted and not verified.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">movable</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Steps that can be carried out as things stand.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">blocked</td>
+        <td class="px-3 py-2 font-mono text-heading">moved</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Steps that cannot.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">failed</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Steps attempted and not verified.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">applied</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether anything was changed.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">container</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The container everything moves into.</td>
+        <td class="px-3 py-2 text-body">Steps carried out and verified.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">moved_current</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -323,324 +318,17 @@ checkout off the trunk. Each says what a person does about it.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">[`SCHEMA`].</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">steps</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">One step per misplaced worktree with a branch, container occupants first.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;A migration, planned or applied.&quot;,
   &quot;$defs&quot;: {
-    &quot;WorktreeFingerprint&quot;: {
-      &quot;required&quot;: [
-        &quot;index_digest&quot;,
-        &quot;staged_diff_digest&quot;,
-        &quot;unstaged_diff_digest&quot;,
-        &quot;untracked_manifest_digest&quot;,
-        &quot;untracked_files&quot;,
-        &quot;ignored_manifest_digest&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;untracked_manifest_digest&quot;: {
-          &quot;description&quot;: &quot;A digest of every untracked file: path, kind, size and content.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;tree_manifest_digest&quot;: {
-          &quot;description&quot;: &quot;A digest of every entry of the directory tree, ignored included: path, kind, size\nand link target. Taken only for a move made by copying, where the rename guarantee\ndoes not hold.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;index_digest&quot;: {
-          &quot;description&quot;: &quot;A digest of the index: every tracked path with its mode, blob and stage.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;staged_diff_digest&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A digest of the staged diff against HEAD.&quot;
-        },
-        &quot;ignored_manifest_digest&quot;: {
-          &quot;description&quot;: &quot;A digest of every ignored entry: path, kind and size, never content.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch, or none when detached.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;unstaged_diff_digest&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A digest of the unstaged diff against the index.&quot;
-        },
-        &quot;untracked_files&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;How many untracked files the manifest holds.&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;in_progress&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The operation in progress, if any.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;What a work tree held at one moment, reduced to digests.&quot;
-    },
-    &quot;DirtyState&quot;: {
-      &quot;properties&quot;: {
-        &quot;unstaged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;staged&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Entries with a change in the index.&quot;
-        },
-        &quot;untracked&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;conflicted&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;clean&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;
-        },
-        &quot;in_progress&quot;: {
-          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;staged&quot;,
-        &quot;unstaged&quot;,
-        &quot;untracked&quot;,
-        &quot;conflicted&quot;,
-        &quot;clean&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;
-    },
-    &quot;MigrationStep&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One worktree to bring home.&quot;,
-      &quot;required&quot;: [
-        &quot;branch&quot;,
-        &quot;from&quot;,
-        &quot;to&quot;,
-        &quot;action&quot;,
-        &quot;dirty&quot;,
-        &quot;blockers&quot;,
-        &quot;outcome&quot;,
-        &quot;differences&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;before&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/WorktreeFingerprint&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The fingerprint before the move.&quot;
-        },
-        &quot;differences&quot;: {
-          &quot;description&quot;: &quot;What differs between the two; empty when verified.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;action&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/MigrationAction&quot;,
-          &quot;description&quot;: &quot;How it moves.&quot;
-        },
-        &quot;after&quot;: {
-          &quot;description&quot;: &quot;The fingerprint after it.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/WorktreeFingerprint&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;dirty&quot;: {
-          &quot;description&quot;: &quot;Its uncommitted work, which moves with it.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;
-        },
-        &quot;head&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The commit checked out.&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What happened, in words, when it was not simply moved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;outcome&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StepOutcome&quot;,
-          &quot;description&quot;: &quot;What happened.&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The branch it holds.&quot;
-        },
-        &quot;from&quot;: {
-          &quot;description&quot;: &quot;Where it is.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;envrc&quot;: {
-          &quot;description&quot;: &quot;What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout&#39;s approval carried there, or why it was not. Only on a moved step.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/EnvrcApproval&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;to&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Where it belongs.&quot;
-        },
-        &quot;blockers&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;Why it cannot move, when it cannot.&quot;
-        }
-      }
-    },
-    &quot;MigrationAction&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;One `git worktree move`.&quot;,
-          &quot;const&quot;: &quot;move&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;move_via_staging&quot;,
-          &quot;description&quot;: &quot;The worktree is the container itself: out to a staging path, then into the container.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The move crossed devices: copy, `git worktree repair`, verify, remove the original.&quot;,
-          &quot;const&quot;: &quot;copy_and_repair&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;none&quot;,
-          &quot;description&quot;: &quot;Nothing: the step is blocked.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How a step moves its worktree.&quot;
-    },
-    &quot;Severity&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;
-    },
-    &quot;TopologyDiagnostic&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch involved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;expected&quot;: {
-          &quot;description&quot;: &quot;Where the work tree belongs.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remedy&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The command that addresses it.&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;description&quot;: &quot;How serious it is.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The work tree involved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;code&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DiagnosticCode&quot;,
-          &quot;description&quot;: &quot;The stable code.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;severity&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;description&quot;: &quot;One thing wrong with, or worth knowing about, the topology.&quot;
-    },
     &quot;DiagnosticCode&quot;: {
       &quot;description&quot;: &quot;The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state.&quot;,
       &quot;oneOf&quot;: [
@@ -655,14 +343,14 @@ checkout off the trunk. Each says what a person does about it.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;worktree.nested&quot;,
           &quot;description&quot;: &quot;A linked work tree sits inside the primary checkout or inside another work tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;worktree.nested&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;worktree.destination_conflict&quot;,
-          &quot;description&quot;: &quot;The canonical path of a branch is occupied by something that is not its work tree.&quot;
+          &quot;description&quot;: &quot;The canonical path of a branch is occupied by something that is not its work tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.missing&quot;,
@@ -676,48 +364,48 @@ checkout off the trunk. Each says what a person does about it.</td>
         },
         {
           &quot;const&quot;: &quot;worktree.branch_already_checked_out&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A branch is checked out somewhere other than its canonical path.&quot;
+          &quot;description&quot;: &quot;A branch is checked out somewhere other than its canonical path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.detached&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A linked work tree has no branch.&quot;
+          &quot;description&quot;: &quot;A linked work tree has no branch.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.ephemeral&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A linked work tree is a session&#39;s scratch checkout: under the temporary directory or\nunder the primary checkout&#39;s `.claude/worktrees/`.&quot;
+          &quot;description&quot;: &quot;A linked work tree is a session&#39;s scratch checkout: under the temporary directory or\nunder the primary checkout&#39;s `.claude/worktrees/`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.primary_on_non_trunk&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The primary checkout holds a branch that is not the trunk.&quot;
+          &quot;description&quot;: &quot;The primary checkout holds a branch that is not the trunk.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.trunk_in_linked_worktree&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The trunk is checked out in a linked work tree rather than the primary checkout.&quot;
+          &quot;description&quot;: &quot;The trunk is checked out in a linked work tree rather than the primary checkout.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;worktree.path_escape&quot;,
           &quot;description&quot;: &quot;A derived path would leave the container. Cannot happen for a valid branch name.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;worktree.path_escape&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.invalid_branch_name&quot;,
           &quot;description&quot;: &quot;A branch name git accepted that this executable cannot derive a path for.&quot;,
-          &quot;const&quot;: &quot;worktree.invalid_branch_name&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;A work tree is locked, so it cannot be moved until it is unlocked.&quot;,
           &quot;const&quot;: &quot;worktree.locked&quot;,
+          &quot;description&quot;: &quot;A work tree is locked, so it cannot be moved until it is unlocked.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.migration_verification_failed&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A move happened and the fingerprint after it differs from the one before.&quot;
+          &quot;description&quot;: &quot;A move happened and the fingerprint after it differs from the one before.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;worktree.trunk_unknown&quot;,
@@ -725,115 +413,134 @@ checkout off the trunk. Each says what a person does about it.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;worktree.case_collision&quot;,
-          &quot;description&quot;: &quot;Two branch names map to one directory on a case-insensitive filesystem.&quot;
+          &quot;description&quot;: &quot;Two branch names map to one directory on a case-insensitive filesystem.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;A move crossed devices and was made by copy, repair and verification.&quot;,
           &quot;const&quot;: &quot;worktree.cross_device&quot;,
+          &quot;description&quot;: &quot;A move crossed devices and was made by copy, repair and verification.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
-    &quot;StepOutcome&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;planned&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Planned and not applied.&quot;
+    &quot;DirtyState&quot;: {
+      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
+      &quot;properties&quot;: {
+        &quot;clean&quot;: {
+          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        {
-          &quot;description&quot;: &quot;Not carried out, with the blockers on the step.&quot;,
-          &quot;const&quot;: &quot;blocked&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;conflicted&quot;: {
+          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;moved&quot;,
-          &quot;description&quot;: &quot;Moved, and the fingerprint after equals the one before.&quot;
+        &quot;in_progress&quot;: {
+          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
-        {
-          &quot;description&quot;: &quot;Attempted and not completed, or completed and not verified; the message says which.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;failed&quot;
+        &quot;staged&quot;: {
+          &quot;description&quot;: &quot;Entries with a change in the index.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;unstaged&quot;: {
+          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;untracked&quot;: {
+          &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         }
+      },
+      &quot;required&quot;: [
+        &quot;staged&quot;,
+        &quot;unstaged&quot;,
+        &quot;untracked&quot;,
+        &quot;conflicted&quot;,
+        &quot;clean&quot;
       ],
-      &quot;description&quot;: &quot;What became of a step.&quot;
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;EnvrcApproval&quot;: {
       &quot;description&quot;: &quot;What became of the `.envrc` of a worktree that was just created, found, or moved.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;direnv accepted it: the next `cd` loads the environment.&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;approved&quot;
+              &quot;const&quot;: &quot;approved&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;description&quot;: &quot;direnv accepted it: the next `cd` loads the environment.&quot;,
-          &quot;required&quot;: [
-            &quot;outcome&quot;
-          ]
-        },
-        {
-          &quot;description&quot;: &quot;The worktree has no `.envrc`; there is nothing to approve and nothing is blocked.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;outcome&quot;
           ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The worktree has no `.envrc`; there is nothing to approve and nothing is blocked.&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
               &quot;const&quot;: &quot;no_envrc&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          }
-        },
-        {
+          },
           &quot;required&quot;: [
             &quot;outcome&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
           &quot;description&quot;: &quot;direnv is not on the PATH; nothing was done, and nothing is blocked either, because\nnothing would load the file.&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
               &quot;const&quot;: &quot;direnv_absent&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          }
-        },
-        {
-          &quot;properties&quot;: {
-            &quot;outcome&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;differs&quot;
-            }
           },
-          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;outcome&quot;
           ],
-          &quot;description&quot;: &quot;The worktree&#39;s `.envrc` is not the primary checkout&#39;s, so the approval given there\ndoes not carry. `direnv allow` in the worktree, after reading it, is the person&#39;s.&quot;
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The worktree&#39;s `.envrc` is not the primary checkout&#39;s, so the approval given there\ndoes not carry. `direnv allow` in the worktree, after reading it, is the person&#39;s.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;differs&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
           &quot;description&quot;: &quot;The primary checkout&#39;s `.envrc` is not approved, so there is no approval to carry.&quot;,
-          &quot;required&quot;: [
-            &quot;outcome&quot;
-          ],
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
               &quot;const&quot;: &quot;not_approved_in_primary&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
           },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
           &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;required&quot;: [
-            &quot;outcome&quot;,
-            &quot;message&quot;
-          ],
           &quot;description&quot;: &quot;direnv was asked and refused, or could not be run; the message is its own.&quot;,
           &quot;properties&quot;: {
             &quot;message&quot;: {
@@ -845,18 +552,318 @@ checkout off the trunk. Each says what a person does about it.</td>
               &quot;type&quot;: &quot;string&quot;
             }
           },
+          &quot;required&quot;: [
+            &quot;outcome&quot;,
+            &quot;message&quot;
+          ],
           &quot;type&quot;: &quot;object&quot;
         }
       ]
+    },
+    &quot;MigrationAction&quot;: {
+      &quot;description&quot;: &quot;How a step moves its worktree.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;move&quot;,
+          &quot;description&quot;: &quot;One `git worktree move`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;move_via_staging&quot;,
+          &quot;description&quot;: &quot;The worktree is the container itself: out to a staging path, then into the container.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;copy_and_repair&quot;,
+          &quot;description&quot;: &quot;The move crossed devices: copy, `git worktree repair`, verify, remove the original.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;Nothing: the step is blocked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MigrationStep&quot;: {
+      &quot;description&quot;: &quot;One worktree to bring home.&quot;,
+      &quot;properties&quot;: {
+        &quot;action&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MigrationAction&quot;,
+          &quot;description&quot;: &quot;How it moves.&quot;
+        },
+        &quot;after&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/WorktreeFingerprint&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The fingerprint after it.&quot;
+        },
+        &quot;before&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/WorktreeFingerprint&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The fingerprint before the move.&quot;
+        },
+        &quot;blockers&quot;: {
+          &quot;description&quot;: &quot;Why it cannot move, when it cannot.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it holds.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;differences&quot;: {
+          &quot;description&quot;: &quot;What differs between the two; empty when verified.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;dirty&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;,
+          &quot;description&quot;: &quot;Its uncommitted work, which moves with it.&quot;
+        },
+        &quot;envrc&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EnvrcApproval&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout&#39;s approval carried there, or why it was not. Only on a moved step.&quot;
+        },
+        &quot;from&quot;: {
+          &quot;description&quot;: &quot;Where it is.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit checked out.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What happened, in words, when it was not simply moved.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;outcome&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StepOutcome&quot;,
+          &quot;description&quot;: &quot;What happened.&quot;
+        },
+        &quot;to&quot;: {
+          &quot;description&quot;: &quot;Where it belongs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;branch&quot;,
+        &quot;from&quot;,
+        &quot;to&quot;,
+        &quot;action&quot;,
+        &quot;dirty&quot;,
+        &quot;blockers&quot;,
+        &quot;outcome&quot;,
+        &quot;differences&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;StepOutcome&quot;: {
+      &quot;description&quot;: &quot;What became of a step.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;planned&quot;,
+          &quot;description&quot;: &quot;Planned and not applied.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;blocked&quot;,
+          &quot;description&quot;: &quot;Not carried out, with the blockers on the step.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;moved&quot;,
+          &quot;description&quot;: &quot;Moved, and the fingerprint after equals the one before.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;Attempted and not completed, or completed and not verified; the message says which.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TopologyDiagnostic&quot;: {
+      &quot;description&quot;: &quot;One thing wrong with, or worth knowing about, the topology.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch involved.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;code&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DiagnosticCode&quot;,
+          &quot;description&quot;: &quot;The stable code.&quot;
+        },
+        &quot;expected&quot;: {
+          &quot;description&quot;: &quot;Where the work tree belongs.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The work tree involved.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;The command that addresses it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How serious it is.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;severity&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;WorktreeFingerprint&quot;: {
+      &quot;description&quot;: &quot;What a work tree held at one moment, reduced to digests.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch, or none when detached.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;ignored_manifest_digest&quot;: {
+          &quot;description&quot;: &quot;A digest of every ignored entry: path, kind and size, never content.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;in_progress&quot;: {
+          &quot;description&quot;: &quot;The operation in progress, if any.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;index_digest&quot;: {
+          &quot;description&quot;: &quot;A digest of the index: every tracked path with its mode, blob and stage.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;staged_diff_digest&quot;: {
+          &quot;description&quot;: &quot;A digest of the staged diff against HEAD.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;tree_manifest_digest&quot;: {
+          &quot;description&quot;: &quot;A digest of every entry of the directory tree, ignored included: path, kind, size\nand link target. Taken only for a move made by copying, where the rename guarantee\ndoes not hold.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;unstaged_diff_digest&quot;: {
+          &quot;description&quot;: &quot;A digest of the unstaged diff against the index.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;untracked_files&quot;: {
+          &quot;description&quot;: &quot;How many untracked files the manifest holds.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;untracked_manifest_digest&quot;: {
+          &quot;description&quot;: &quot;A digest of every untracked file: path, kind, size and content.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;index_digest&quot;,
+        &quot;staged_diff_digest&quot;,
+        &quot;unstaged_diff_digest&quot;,
+        &quot;untracked_manifest_digest&quot;,
+        &quot;untracked_files&quot;,
+        &quot;ignored_manifest_digest&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
+  &quot;description&quot;: &quot;A migration, planned or applied.&quot;,
   &quot;properties&quot;: {
-    &quot;steps&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/MigrationStep&quot;
-      },
-      &quot;description&quot;: &quot;One step per misplaced worktree with a branch, container occupants first.&quot;,
-      &quot;type&quot;: &quot;array&quot;
+    &quot;applied&quot;: {
+      &quot;description&quot;: &quot;Whether anything was changed.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;blocked&quot;: {
+      &quot;description&quot;: &quot;Steps that cannot.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;container&quot;: {
+      &quot;description&quot;: &quot;The container everything moves into.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;exceptions&quot;: {
       &quot;description&quot;: &quot;Worktrees the migration cannot address by design: detached, missing, the primary\ncheckout off the trunk. Each says what a person does about it.&quot;,
@@ -865,37 +872,23 @@ checkout off the trunk. Each says what a person does about it.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;moved&quot;: {
+    &quot;failed&quot;: {
+      &quot;description&quot;: &quot;Steps attempted and not verified.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;description&quot;: &quot;Steps carried out and verified.&quot;,
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
     &quot;movable&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;description&quot;: &quot;Steps that can be carried out as things stand.&quot;
-    },
-    &quot;blocked&quot;: {
+      &quot;description&quot;: &quot;Steps that can be carried out as things stand.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;Steps that cannot.&quot;
+      &quot;type&quot;: &quot;integer&quot;
     },
-    &quot;failed&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
+    &quot;moved&quot;: {
+      &quot;description&quot;: &quot;Steps carried out and verified.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
-      &quot;description&quot;: &quot;Steps attempted and not verified.&quot;,
-      &quot;format&quot;: &quot;uint&quot;
-    },
-    &quot;applied&quot;: {
-      &quot;description&quot;: &quot;Whether anything was changed.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;container&quot;: {
-      &quot;description&quot;: &quot;The container everything moves into.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;integer&quot;
     },
     &quot;moved_current&quot;: {
       &quot;description&quot;: &quot;The new path of the worktree the command was run from, when that one moved.&quot;,
@@ -907,9 +900,15 @@ checkout off the trunk. Each says what a person does about it.</td>
     &quot;schema&quot;: {
       &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;steps&quot;: {
+      &quot;description&quot;: &quot;One step per misplaced worktree with a branch, container occupants first.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/MigrationStep&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
   &quot;required&quot;: [
     &quot;schema&quot;,
     &quot;container&quot;,
@@ -921,7 +920,8 @@ checkout off the trunk. Each says what a person does about it.</td>
     &quot;failed&quot;,
     &quot;applied&quot;
   ],
-  &quot;title&quot;: &quot;MigrationPlan&quot;
+  &quot;title&quot;: &quot;MigrationPlan&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -952,7 +952,7 @@ checkout off the trunk. Each says what a person does about it.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::worktree</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">MigrationPlan</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -984,7 +984,7 @@ checkout off the trunk. Each says what a person does about it.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

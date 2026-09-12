@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -262,11 +262,6 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">limit</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">How many, oldest first; the default and the bound are both `500`.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">after</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -276,42 +271,47 @@
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The execution&#39;s id.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">limit</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">How many, oldest first; the default and the bound are both `500`.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;EventsInput&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `executions.events`.&quot;,
   &quot;properties&quot;: {
-    &quot;limit&quot;: {
-      &quot;description&quot;: &quot;How many, oldest first; the default and the bound are both `500`.&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ],
-      &quot;format&quot;: &quot;uint&quot;
-    },
     &quot;after&quot;: {
-      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;Only events after this sequence number: the cursor a reconnecting client holds.&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
       &quot;type&quot;: [
         &quot;integer&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;Only events after this sequence number: the cursor a reconnecting client holds.&quot;
+      ]
     },
     &quot;id&quot;: {
       &quot;description&quot;: &quot;The execution&#39;s id.&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;limit&quot;: {
+      &quot;description&quot;: &quot;How many, oldest first; the default and the bound are both `500`.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
     }
   },
   &quot;required&quot;: [
     &quot;id&quot;
   ],
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `executions.events`.&quot;
+  &quot;title&quot;: &quot;EventsInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -325,26 +325,26 @@
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The events, oldest first.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">execution_id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The execution the events belong to.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The sequence of the last event here: the cursor for the next page, and the one to
 open the live channel with.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">execution_id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">more</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The execution the events belong to.</td>
+        <td class="px-3 py-2 text-body">Whether more events follow this page right now.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">state</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Where the execution stands now, so a client needs one request rather than two.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">more</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether more events follow this page right now.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">truncated</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -355,153 +355,57 @@ open the live channel with.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;properties&quot;: {
-    &quot;events&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ExecutionEvent&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The events, oldest first.&quot;
-    },
-    &quot;last_sequence&quot;: {
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;The sequence of the last event here: the cursor for the next page, and the one to\nopen the live channel with.&quot;,
-      &quot;minimum&quot;: 0
-    },
-    &quot;execution_id&quot;: {
-      &quot;description&quot;: &quot;The execution the events belong to.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;state&quot;: {
-      &quot;description&quot;: &quot;Where the execution stands now, so a client needs one request rather than two.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;
-    },
-    &quot;more&quot;: {
-      &quot;description&quot;: &quot;Whether more events follow this page right now.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;truncated&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether events before this page had already been dropped by the store&#39;s bound.&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `executions.events`: one page of an execution&#39;s retained history.&quot;,
-  &quot;required&quot;: [
-    &quot;execution_id&quot;,
-    &quot;state&quot;,
-    &quot;events&quot;,
-    &quot;last_sequence&quot;,
-    &quot;more&quot;,
-    &quot;truncated&quot;
-  ],
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;EventHistory&quot;,
   &quot;$defs&quot;: {
-    &quot;Severity&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;
-    },
-    &quot;ExecutionId&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;
-    },
-    &quot;ExecutionState&quot;: {
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
-          &quot;const&quot;: &quot;queued&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The handler is running.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;running&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;cancelling&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The handler returned an output.&quot;,
-          &quot;const&quot;: &quot;succeeded&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
-          &quot;const&quot;: &quot;failed&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelled&quot;,
-          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;LogStream&quot;: {
-      &quot;description&quot;: &quot;Which stream a log line came from.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The standard output of a child process the handler ran.&quot;,
-          &quot;const&quot;: &quot;stdout&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stderr&quot;,
-          &quot;description&quot;: &quot;Its standard error.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;handler&quot;,
-          &quot;description&quot;: &quot;The handler itself, saying something it wants a reader to see.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;ExecutionDiagnostic&quot;: {
       &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;A stable machine-readable code.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;The rest, when there is more.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
+        },
+        &quot;suggestion&quot;: {
+          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line, for a person.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
       &quot;required&quot;: [
         &quot;severity&quot;,
         &quot;code&quot;,
         &quot;summary&quot;
       ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ExecutionError&quot;: {
+      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
       &quot;properties&quot;: {
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How bad.&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;One line, for a person.&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The rest, when there is more.&quot;
-        },
         &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable machine-readable code.&quot;,
+          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;correlation_id&quot;: {
+          &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What went wrong, for a person.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;suggestion&quot;: {
@@ -512,48 +416,18 @@ open the live channel with.</td>
           ]
         }
       },
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;message&quot;,
+        &quot;correlation_id&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ExecutionEvent&quot;: {
       &quot;description&quot;: &quot;One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world.&quot;,
-      &quot;required&quot;: [
-        &quot;schema_version&quot;,
-        &quot;event_id&quot;,
-        &quot;execution_id&quot;,
-        &quot;sequence&quot;,
-        &quot;timestamp&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;timestamp&quot;: {
-          &quot;description&quot;: &quot;When the event was produced, RFC 3339 in UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;execution_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
-          &quot;description&quot;: &quot;The execution it is about.&quot;
-        },
-        &quot;sequence&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Its position in that execution&#39;s stream, from 1, without gaps.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;schema_version&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The protocol version, [`PROTOCOL_VERSION`].&quot;
-        },
-        &quot;event_id&quot;: {
-          &quot;description&quot;: &quot;The identity of this event: the execution&#39;s id and the sequence, so a client that\ndeduplicates needs no composite key of its own.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;oneOf&quot;: [
         {
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
+          &quot;description&quot;: &quot;The execution was accepted and exists. Carries what it will run and with what,\nredacted, so a client that joins at the first event needs nothing else to render a\nheading.&quot;,
           &quot;properties&quot;: {
             &quot;data&quot;: {
               &quot;properties&quot;: {
@@ -565,8 +439,8 @@ open the live channel with.</td>
                   &quot;description&quot;: &quot;The input, with sensitive values already replaced.&quot;
                 },
                 &quot;title&quot;: {
-                  &quot;type&quot;: &quot;string&quot;,
-                  &quot;description&quot;: &quot;Its title.&quot;
+                  &quot;description&quot;: &quot;Its title.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
                 }
               },
               &quot;required&quot;: [
@@ -581,26 +455,16 @@ open the live channel with.</td>
               &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;description&quot;: &quot;The execution was accepted and exists. Carries what it will run and with what,\nredacted, so a client that joins at the first event needs nothing else to render a\nheading.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;type&quot;,
             &quot;data&quot;
           ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
           &quot;description&quot;: &quot;It is waiting for a worker.&quot;,
           &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;execution.queued&quot;
-            },
             &quot;data&quot;: {
-              &quot;required&quot;: [
-                &quot;ahead&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;,
               &quot;properties&quot;: {
                 &quot;ahead&quot;: {
                   &quot;description&quot;: &quot;How many executions are ahead of it.&quot;,
@@ -608,56 +472,65 @@ open the live channel with.</td>
                   &quot;minimum&quot;: 0,
                   &quot;type&quot;: &quot;integer&quot;
                 }
-              }
+              },
+              &quot;required&quot;: [
+                &quot;ahead&quot;
+              ],
+              &quot;type&quot;: &quot;object&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.queued&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
-          }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
+          &quot;description&quot;: &quot;A worker picked it up and is about to enter the handler.&quot;,
           &quot;properties&quot;: {
             &quot;type&quot;: {
               &quot;const&quot;: &quot;execution.started&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;description&quot;: &quot;A worker picked it up and is about to enter the handler.&quot;,
           &quot;required&quot;: [
             &quot;type&quot;
           ],
           &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;type&quot;: &quot;object&quot;,
           &quot;description&quot;: &quot;How far along it is.&quot;,
+          &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;$ref&quot;: &quot;#/$defs/ProgressView&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.progress&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
           &quot;required&quot;: [
             &quot;type&quot;,
             &quot;data&quot;
           ],
-          &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.progress&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;data&quot;: {
-              &quot;$ref&quot;: &quot;#/$defs/ProgressView&quot;
-            }
-          }
+          &quot;type&quot;: &quot;object&quot;
         },
         {
           &quot;description&quot;: &quot;A named phase was entered.&quot;,
           &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.step.started&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
             &quot;data&quot;: {
               &quot;properties&quot;: {
-                &quot;title&quot;: {
-                  &quot;type&quot;: &quot;string&quot;,
-                  &quot;description&quot;: &quot;One line for a reader.&quot;
-                },
                 &quot;name&quot;: {
-                  &quot;type&quot;: &quot;string&quot;,
-                  &quot;description&quot;: &quot;The step&#39;s stable name.&quot;
+                  &quot;description&quot;: &quot;The step&#39;s stable name.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
+                },
+                &quot;title&quot;: {
+                  &quot;description&quot;: &quot;One line for a reader.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
                 }
               },
               &quot;required&quot;: [
@@ -665,22 +538,22 @@ open the live channel with.</td>
                 &quot;title&quot;
               ],
               &quot;type&quot;: &quot;object&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.step.started&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;type&quot;,
             &quot;data&quot;
-          ]
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;A named phase finished.&quot;,
           &quot;properties&quot;: {
             &quot;data&quot;: {
-              &quot;required&quot;: [
-                &quot;name&quot;,
-                &quot;ok&quot;
-              ],
               &quot;properties&quot;: {
                 &quot;detail&quot;: {
                   &quot;description&quot;: &quot;What it said, when it said anything.&quot;,
@@ -689,15 +562,19 @@ open the live channel with.</td>
                     &quot;null&quot;
                   ]
                 },
-                &quot;ok&quot;: {
-                  &quot;type&quot;: &quot;boolean&quot;,
-                  &quot;description&quot;: &quot;Whether what it was asked to do happened.&quot;
-                },
                 &quot;name&quot;: {
-                  &quot;type&quot;: &quot;string&quot;,
-                  &quot;description&quot;: &quot;The step&#39;s stable name.&quot;
+                  &quot;description&quot;: &quot;The step&#39;s stable name.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
+                },
+                &quot;ok&quot;: {
+                  &quot;description&quot;: &quot;Whether what it was asked to do happened.&quot;,
+                  &quot;type&quot;: &quot;boolean&quot;
                 }
               },
+              &quot;required&quot;: [
+                &quot;name&quot;,
+                &quot;ok&quot;
+              ],
               &quot;type&quot;: &quot;object&quot;
             },
             &quot;type&quot;: {
@@ -709,180 +586,248 @@ open the live channel with.</td>
             &quot;type&quot;,
             &quot;data&quot;
           ],
-          &quot;description&quot;: &quot;A named phase finished.&quot;
+          &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
           &quot;description&quot;: &quot;A line of output.&quot;,
           &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.log&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
             &quot;data&quot;: {
-              &quot;required&quot;: [
-                &quot;stream&quot;,
-                &quot;message&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;,
               &quot;properties&quot;: {
                 &quot;message&quot;: {
                   &quot;description&quot;: &quot;The text, with control characters and terminal escapes already removed.&quot;,
                   &quot;type&quot;: &quot;string&quot;
                 },
                 &quot;stream&quot;: {
-                  &quot;description&quot;: &quot;Which stream it came from.&quot;,
-                  &quot;$ref&quot;: &quot;#/$defs/LogStream&quot;
+                  &quot;$ref&quot;: &quot;#/$defs/LogStream&quot;,
+                  &quot;description&quot;: &quot;Which stream it came from.&quot;
                 }
-              }
+              },
+              &quot;required&quot;: [
+                &quot;stream&quot;,
+                &quot;message&quot;
+              ],
+              &quot;type&quot;: &quot;object&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.log&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
           },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
           &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
+          &quot;description&quot;: &quot;A structured finding, distinct from the outcome.&quot;,
           &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
+            },
             &quot;type&quot;: {
               &quot;const&quot;: &quot;execution.diagnostic&quot;,
               &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;data&quot;: {
-              &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
             }
           },
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;description&quot;: &quot;A structured finding, distinct from the outcome.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;type&quot;,
             &quot;data&quot;
           ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
           &quot;description&quot;: &quot;Cancellation was asked for; the handler has not stopped yet.&quot;,
           &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;execution.cancelling&quot;
-            },
             &quot;data&quot;: {
               &quot;properties&quot;: {
                 &quot;by&quot;: {
-                  &quot;type&quot;: &quot;string&quot;,
-                  &quot;description&quot;: &quot;Who asked, in one word.&quot;
+                  &quot;description&quot;: &quot;Who asked, in one word.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
                 }
               },
-              &quot;type&quot;: &quot;object&quot;,
               &quot;required&quot;: [
                 &quot;by&quot;
-              ]
+              ],
+              &quot;type&quot;: &quot;object&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.cancelling&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
-          }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
           &quot;properties&quot;: {
             &quot;type&quot;: {
               &quot;const&quot;: &quot;execution.cancelled&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;type&quot;
-          ]
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
+          &quot;description&quot;: &quot;It finished, and the handler returned an output.\n\nThe output is on this event and not on one of its own, because a client must never\nbe able to read \&quot;succeeded\&quot; and find no result: the state and the value it produced\nare one fact and travel together.&quot;,
           &quot;properties&quot;: {
             &quot;data&quot;: {
-              &quot;required&quot;: [
-                &quot;output&quot;
-              ],
               &quot;properties&quot;: {
                 &quot;output&quot;: {
                   &quot;description&quot;: &quot;What the handler returned.&quot;
                 }
               },
+              &quot;required&quot;: [
+                &quot;output&quot;
+              ],
               &quot;type&quot;: &quot;object&quot;
             },
             &quot;type&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;execution.completed&quot;
+              &quot;const&quot;: &quot;execution.completed&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;description&quot;: &quot;It finished, and the handler returned an output.\n\nThe output is on this event and not on one of its own, because a client must never\nbe able to read \&quot;succeeded\&quot; and find no result: the state and the value it produced\nare one fact and travel together.&quot;,
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ]
-        },
-        {
           &quot;required&quot;: [
             &quot;type&quot;,
             &quot;data&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;It finished, and it did not.&quot;,
           &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;execution.failed&quot;
-            },
             &quot;data&quot;: {
+              &quot;properties&quot;: {
+                &quot;error&quot;: {
+                  &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;,
+                  &quot;description&quot;: &quot;Why.&quot;
+                }
+              },
               &quot;required&quot;: [
                 &quot;error&quot;
               ],
-              &quot;type&quot;: &quot;object&quot;,
-              &quot;properties&quot;: {
-                &quot;error&quot;: {
-                  &quot;description&quot;: &quot;Why.&quot;,
-                  &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;
-                }
-              }
+              &quot;type&quot;: &quot;object&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.failed&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;description&quot;: &quot;It finished, and it did not.&quot;
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        }
+      ],
+      &quot;properties&quot;: {
+        &quot;event_id&quot;: {
+          &quot;description&quot;: &quot;The identity of this event: the execution&#39;s id and the sequence, so a client that\ndeduplicates needs no composite key of its own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;execution_id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
+          &quot;description&quot;: &quot;The execution it is about.&quot;
+        },
+        &quot;schema_version&quot;: {
+          &quot;description&quot;: &quot;The protocol version, [`PROTOCOL_VERSION`].&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;sequence&quot;: {
+          &quot;description&quot;: &quot;Its position in that execution&#39;s stream, from 1, without gaps.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;timestamp&quot;: {
+          &quot;description&quot;: &quot;When the event was produced, RFC 3339 in UTC.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;schema_version&quot;,
+        &quot;event_id&quot;,
+        &quot;execution_id&quot;,
+        &quot;sequence&quot;,
+        &quot;timestamp&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ExecutionId&quot;: {
+      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;ExecutionState&quot;: {
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;queued&quot;,
+          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;description&quot;: &quot;The handler is running.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelling&quot;,
+          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;succeeded&quot;,
+          &quot;description&quot;: &quot;The handler returned an output.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
-    &quot;ExecutionError&quot;: {
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;message&quot;,
-        &quot;correlation_id&quot;
-      ],
-      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;correlation_id&quot;: {
-          &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;,
+    &quot;LogStream&quot;: {
+      &quot;description&quot;: &quot;Which stream a log line came from.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;stdout&quot;,
+          &quot;description&quot;: &quot;The standard output of a child process the handler ran.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;suggestion&quot;: {
-          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.&quot;,
+        {
+          &quot;const&quot;: &quot;stderr&quot;,
+          &quot;description&quot;: &quot;Its standard error.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What went wrong, for a person.&quot;,
+        {
+          &quot;const&quot;: &quot;handler&quot;,
+          &quot;description&quot;: &quot;The handler itself, saying something it wants a reader to see.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      }
+      ]
     },
     &quot;ProgressView&quot;: {
+      &quot;description&quot;: &quot;How far along an execution is.&quot;,
       &quot;properties&quot;: {
+        &quot;current&quot;: {
+          &quot;description&quot;: &quot;Units done.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
         &quot;message&quot;: {
           &quot;description&quot;: &quot;What is being done, for a reader.&quot;,
           &quot;type&quot;: [
@@ -892,27 +837,82 @@ open the live channel with.</td>
         },
         &quot;total&quot;: {
           &quot;description&quot;: &quot;Units in total, when the handler knows how many.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
           &quot;type&quot;: [
             &quot;integer&quot;,
             &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;current&quot;: {
-          &quot;description&quot;: &quot;Units done.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint64&quot;
+          ]
         }
       },
-      &quot;description&quot;: &quot;How far along an execution is.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;current&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
       ]
     }
-  }
+  },
+  &quot;description&quot;: &quot;The answer of `executions.events`: one page of an execution&#39;s retained history.&quot;,
+  &quot;properties&quot;: {
+    &quot;events&quot;: {
+      &quot;description&quot;: &quot;The events, oldest first.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ExecutionEvent&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;execution_id&quot;: {
+      &quot;description&quot;: &quot;The execution the events belong to.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;last_sequence&quot;: {
+      &quot;description&quot;: &quot;The sequence of the last event here: the cursor for the next page, and the one to\nopen the live channel with.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;more&quot;: {
+      &quot;description&quot;: &quot;Whether more events follow this page right now.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;state&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;,
+      &quot;description&quot;: &quot;Where the execution stands now, so a client needs one request rather than two.&quot;
+    },
+    &quot;truncated&quot;: {
+      &quot;description&quot;: &quot;Whether events before this page had already been dropped by the store&#39;s bound.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;execution_id&quot;,
+    &quot;state&quot;,
+    &quot;events&quot;,
+    &quot;last_sequence&quot;,
+    &quot;more&quot;,
+    &quot;truncated&quot;
+  ],
+  &quot;title&quot;: &quot;EventHistory&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -943,7 +943,7 @@ open the live channel with.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EventsInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EventHistory</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -968,7 +968,7 @@ open the live channel with.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -274,17 +274,17 @@ assert!(!i.findings_only);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">class</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Only rules of this class (`blocking`, `advisory`). Absent: every rule.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings_only</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Only the rules whose declared class the proof does not support, with the findings.
 The tallies still count the whole corpus, so a filtered answer never misreports how
 much of it was examined.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">class</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only rules of this class (`blocking`, `advisory`). Absent: every rule.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">namespace</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -312,14 +312,14 @@ the vendored package. Absent: both.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;advisory&quot;,
           &quot;description&quot;: &quot;Normative for whoever reads it; nothing refuses a violation.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;advisory&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;The front matter declared no class, or one this repository does not know.&quot;
+          &quot;description&quot;: &quot;The front matter declared no class, or one this repository does not know.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
@@ -332,18 +332,18 @@ the vendored package. Absent: both.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;inputs_unchanged&quot;,
-          &quot;description&quot;: &quot;Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree.&quot;
+          &quot;description&quot;: &quot;Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;stale&quot;,
           &quot;description&quot;: &quot;A passing run exists, but something it is about has changed since.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;stale&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here.&quot;,
           &quot;const&quot;: &quot;gated&quot;,
+          &quot;description&quot;: &quot;An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -352,14 +352,14 @@ the vendored package. Absent: both.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Every artifact is present, and no run of at least one named test was ever recorded.&quot;,
           &quot;const&quot;: &quot;not_run&quot;,
+          &quot;description&quot;: &quot;Every artifact is present, and no run of at least one named test was ever recorded.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;reviewed&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The rule declares, with a stated reason, that nothing executable can express it. An\nhonest exemption: counted apart from every proven rule, never counted as one.&quot;
+          &quot;description&quot;: &quot;The rule declares, with a stated reason, that nothing executable can express it. An\nhonest exemption: counted apart from every proven rule, never counted as one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;unrunnable&quot;,
@@ -372,20 +372,17 @@ the vendored package. Absent: both.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;unproven&quot;,
           &quot;description&quot;: &quot;The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;unproven&quot;
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
   },
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which part of the corpus to answer for.\n# Example\n\nEvery field narrows the answer; the tallies still count the whole corpus, so a filtered\nreport never misreports how much of it was examined.\n\n```\nuse majordomus_cli::capability::builtin::rules::RulesReportInput;\nuse majordomus_cli::rules::Class;\nlet i = RulesReportInput { class: Some(Class::Blocking), ..Default::default() };\nassert_eq!(i.class, Some(Class::Blocking));\nassert!(!i.findings_only);\n```&quot;,
   &quot;properties&quot;: {
-    &quot;findings_only&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Only the rules whose declared class the proof does not support, with the findings.\nThe tallies still count the whole corpus, so a filtered answer never misreports how\nmuch of it was examined.&quot;
-    },
     &quot;class&quot;: {
-      &quot;description&quot;: &quot;Only rules of this class (`blocking`, `advisory`). Absent: every rule.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;
@@ -393,7 +390,12 @@ the vendored package. Absent: both.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Only rules of this class (`blocking`, `advisory`). Absent: every rule.&quot;
+    },
+    &quot;findings_only&quot;: {
+      &quot;description&quot;: &quot;Only the rules whose declared class the proof does not support, with the findings.\nThe tallies still count the whole corpus, so a filtered answer never misreports how\nmuch of it was examined.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;namespace&quot;: {
       &quot;description&quot;: &quot;Only rules of this namespace — `project` for this repository&#39;s own, `majordomus` for\nthe vendored package. Absent: both.&quot;,
@@ -403,7 +405,6 @@ the vendored package. Absent: both.</td>
       ]
     },
     &quot;state&quot;: {
-      &quot;description&quot;: &quot;Only rules in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,\n`not_run`, `unrunnable`, `dangling`, `unproven`). Absent: every rule.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;
@@ -411,13 +412,12 @@ the vendored package. Absent: both.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Only rules in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,\n`not_run`, `unrunnable`, `dangling`, `unproven`). Absent: every rule.&quot;
     }
   },
-  &quot;description&quot;: &quot;Which part of the corpus to answer for.\n# Example\n\nEvery field narrows the answer; the tallies still count the whole corpus, so a filtered\nreport never misreports how much of it was examined.\n\n```\nuse majordomus_cli::capability::builtin::rules::RulesReportInput;\nuse majordomus_cli::rules::Class;\nlet i = RulesReportInput { class: Some(Class::Blocking), ..Default::default() };\nassert_eq!(i.class, Some(Class::Blocking));\nassert!(!i.findings_only);\n```&quot;,
   &quot;title&quot;: &quot;RulesReportInput&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -449,15 +449,20 @@ assert!(r.satisfied());
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The parts of a proof, counted.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">rules</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every rule, in canonical id order.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every rule whose declared class the proof does not support.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The commit the report was derived against, when git could say.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">rules</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every rule, in canonical id order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">satisfied</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -469,11 +474,6 @@ assert!(r.satisfied());
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many rules are in each state, by the state&#39;s printed word.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">head</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The commit the report was derived against, when git could say.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">working_tree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -483,80 +483,17 @@ assert!(r.satisfied());
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;RulesReport&quot;,
-  &quot;properties&quot;: {
-    &quot;coverage&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/RuleCoverage&quot;,
-      &quot;description&quot;: &quot;The parts of a proof, counted.&quot;
-    },
-    &quot;rules&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/RuleProof&quot;
-      },
-      &quot;description&quot;: &quot;Every rule, in canonical id order.&quot;,
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Every rule whose declared class the proof does not support.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/RuleFinding&quot;
-      }
-    },
-    &quot;satisfied&quot;: {
-      &quot;description&quot;: &quot;Whether there are no findings.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;states&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;additionalProperties&quot;: {
-        &quot;minimum&quot;: 0,
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;type&quot;: &quot;integer&quot;
-      },
-      &quot;description&quot;: &quot;How many rules are in each state, by the state&#39;s printed word.&quot;
-    },
-    &quot;head&quot;: {
-      &quot;description&quot;: &quot;The commit the report was derived against, when git could say.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;working_tree&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;`clean`, `dirty` or `unknown` at the time of derivation.&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The whole rule corpus, verified.\n# Example\n\nThe whole corpus joined to the tree and the ledger. `satisfied` is true when no rule\ndeclares a class its proof does not support.\n\n```\nuse majordomus_cli::rules::RulesReport;\nlet r = RulesReport {\n    head: None,\n    working_tree: \&quot;clean\&quot;.into(),\n    rules: vec![],\n    states: Default::default(),\n    coverage: Default::default(),\n    findings: vec![],\n    satisfied: true,\n};\nassert!(r.satisfied());\n```&quot;,
   &quot;$defs&quot;: {
     &quot;EvidenceExecution&quot;: {
+      &quot;description&quot;: &quot;One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \&quot;0\&quot;.repeat(40),\n    working_tree: \&quot;clean\&quot;.into(),\n    digest: digest_of(b\&quot;fn main() {}\&quot;),\n    at: \&quot;2026-09-11T00:00:00Z\&quot;.into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&amp;serde_json::to_string(&amp;run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \&quot;crate:why\&quot;);\nassert_eq!(back.command, \&quot;cargo test --test why\&quot;);\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test&#39;s own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \&quot;suite:07_scope\&quot;.into(),\n    runner: Runner::Suite,\n    source: \&quot;test/cases/07_scope.sh\&quot;.into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \&quot;a04b65c9\&quot;.into(),\n    working_tree: \&quot;clean\&quot;.into(),\n    digest: \&quot;sha256:00\&quot;.into(),\n    at: \&quot;2026-09-11T00:00:00Z\&quot;.into(),\n    origin: Origin::Local,\n    command: \&quot;bash test/run.sh 07_scope\&quot;.into(),\n};\nassert!(e.outcome.proves());\n```&quot;,
       &quot;properties&quot;: {
-        &quot;test&quot;: {
-          &quot;description&quot;: &quot;The test, in [`TestId::as_string`] form.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;at&quot;: {
           &quot;description&quot;: &quot;When it was recorded, RFC 3339, UTC.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;command&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The exact command that runs this one test again.&quot;
-        },
-        &quot;outcome&quot;: {
-          &quot;description&quot;: &quot;What it said.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/EvidenceOutcome&quot;
-        },
-        &quot;seconds&quot;: {
-          &quot;description&quot;: &quot;How long it took, in whole seconds.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint64&quot;
-        },
-        &quot;runner&quot;: {
-          &quot;description&quot;: &quot;Which runner produced it.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/EvidenceRunner&quot;
+          &quot;description&quot;: &quot;The exact command that runs this one test again.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;commit&quot;: {
           &quot;description&quot;: &quot;The full commit id the run was made against.&quot;,
@@ -566,20 +503,37 @@ assert!(r.satisfied());
           &quot;description&quot;: &quot;`sha256:&lt;hex&gt;` of the test&#39;s own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;working_tree&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit.&quot;
-        },
         &quot;origin&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/EvidenceOrigin&quot;,
           &quot;description&quot;: &quot;Where the run happened.&quot;
         },
+        &quot;outcome&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceOutcome&quot;,
+          &quot;description&quot;: &quot;What it said.&quot;
+        },
+        &quot;runner&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceRunner&quot;,
+          &quot;description&quot;: &quot;Which runner produced it.&quot;
+        },
+        &quot;seconds&quot;: {
+          &quot;description&quot;: &quot;How long it took, in whole seconds.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
         &quot;source&quot;: {
           &quot;description&quot;: &quot;The test&#39;s own source, repository-relative.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;test&quot;: {
+          &quot;description&quot;: &quot;The test, in [`TestId::as_string`] form.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;working_tree&quot;: {
+          &quot;description&quot;: &quot;`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;description&quot;: &quot;One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \&quot;0\&quot;.repeat(40),\n    working_tree: \&quot;clean\&quot;.into(),\n    digest: digest_of(b\&quot;fn main() {}\&quot;),\n    at: \&quot;2026-09-11T00:00:00Z\&quot;.into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&amp;serde_json::to_string(&amp;run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \&quot;crate:why\&quot;);\nassert_eq!(back.command, \&quot;cargo test --test why\&quot;);\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test&#39;s own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \&quot;suite:07_scope\&quot;.into(),\n    runner: Runner::Suite,\n    source: \&quot;test/cases/07_scope.sh\&quot;.into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \&quot;a04b65c9\&quot;.into(),\n    working_tree: \&quot;clean\&quot;.into(),\n    digest: \&quot;sha256:00\&quot;.into(),\n    at: \&quot;2026-09-11T00:00:00Z\&quot;.into(),\n    origin: Origin::Local,\n    command: \&quot;bash test/run.sh 07_scope\&quot;.into(),\n};\nassert!(e.outcome.proves());\n```&quot;,
       &quot;required&quot;: [
         &quot;test&quot;,
         &quot;runner&quot;,
@@ -595,94 +549,63 @@ assert!(r.satisfied());
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;RuleEnforcement&quot;: {
-      &quot;required&quot;: [
-        &quot;mode&quot;
-      ],
-      &quot;description&quot;: &quot;The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\&quot;test/cases/07_scope.sh\&quot;.into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;enforced_by&quot;: {
-          &quot;description&quot;: &quot;Which boundary enforces it: the word the rule&#39;s own block uses.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;category&quot;: {
-          &quot;description&quot;: &quot;The diagnostic category the validator reports under.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;tests&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;Every test the block names, in the order it names them.&quot;
-        },
-        &quot;validator&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The validator the dispatcher calls, when the mode is dispatched.&quot;
-        },
-        &quot;exit_code&quot;: {
-          &quot;description&quot;: &quot;The exit code the validator uses to refuse.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;mode&quot;: {
-          &quot;description&quot;: &quot;Which of the two canonical modes, or neither.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/RuleMode&quot;
-        },
-        &quot;reviewed_because&quot;: {
-          &quot;description&quot;: &quot;Why nothing executable can express this rule, when the mode is reviewed. Required\nthere: a declared exemption with no reason is the debt it exists to replace.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RuleMode&quot;: {
+    &quot;EvidenceOrigin&quot;: {
+      &quot;description&quot;: &quot;Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\&quot;CI\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;local\&quot;), Some(Origin::Local));\n// naming the provider is the adapter&#39;s business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\&quot;github-actions\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\&quot;ci\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;nowhere\&quot;), None);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;Names a validator the doctrine dispatcher calls at run time.&quot;,
-          &quot;const&quot;: &quot;dispatched&quot;,
+          &quot;const&quot;: &quot;local&quot;,
+          &quot;description&quot;: &quot;Someone ran it on their own machine.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;gated&quot;,
-          &quot;description&quot;: &quot;Names behavioural cases and no validator; a gate runs them.&quot;,
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;A continuous-integration run.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;reviewed&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Carries a reason why nothing executable can express it, and so declares that a\nreader enforces it. An honest declaration, not an absence: the reason *is* the\ndeclaration — there is no flag beside it, because a flag can be set and a reason\ncannot be set without writing one — it is counted apart from every executable mode,\nand it separates a rule nobody could automate from a rule nobody got round to.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Names neither. Correct for a rule nothing executable can express; a defect for a\nblocking one.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;declarative&quot;
+          &quot;const&quot;: &quot;release&quot;,
+          &quot;description&quot;: &quot;A release run.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;How a rule is enforced, as its own front matter declares it.\n# Example\n\n```\nuse majordomus_cli::rules::Mode;\nassert_eq!(Mode::Dispatched.label(), \&quot;dispatched\&quot;);\nassert_eq!(Mode::Declarative.label(), \&quot;declarative\&quot;);\n```&quot;
+      ]
+    },
+    &quot;EvidenceOutcome&quot;: {
+      &quot;description&quot;: &quot;What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \&quot;this did not run\&quot; and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\&quot;ok\&quot;).proves());\nassert!(!Outcome::parse(\&quot;timeout\&quot;).proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \&quot;it declined\&quot; and \&quot;the harness broke\&quot; are different bugs\nassert_eq!(Outcome::parse(\&quot;skipped\&quot;), Outcome::Skip);\nassert_eq!(Outcome::parse(\&quot;nonsense\&quot;), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\&quot;ok\&quot;).proves());\nassert_eq!(Outcome::parse(\&quot;wat\&quot;), Outcome::Error);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;pass&quot;,
+          &quot;description&quot;: &quot;It passed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;fail&quot;,
+          &quot;description&quot;: &quot;It failed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;skip&quot;,
+          &quot;description&quot;: &quot;It declined to run and said so (an unmet precondition the case reports itself).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;timeout&quot;,
+          &quot;description&quot;: &quot;The bound fired before it finished.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The harness could not run it at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     },
     &quot;EvidenceRunner&quot;: {
       &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \&quot;suite\&quot;);\nassert_eq!(Runner::Crate.prefix(), \&quot;crate\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;suite&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A behavioural case under `test/cases/`, run by `test/run.sh`.&quot;
+          &quot;description&quot;: &quot;A behavioural case under `test/cases/`, run by `test/run.sh`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;crate&quot;,
@@ -691,47 +614,28 @@ assert!(r.satisfied());
         }
       ]
     },
-    &quot;RuleClass&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;A gate refuses work that violates it.&quot;,
-          &quot;const&quot;: &quot;blocking&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;advisory&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Normative for whoever reads it; nothing refuses a violation.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The front matter declared no class, or one this repository does not know.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;unknown&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \&quot;blocking\&quot;);\nassert_eq!(Class::parse(\&quot;advisory\&quot;), Class::Advisory);\n```&quot;
-    },
     &quot;ProofState&quot;: {
+      &quot;description&quot;: &quot;What the repository can say about one claim&#39;s proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven &lt; ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;proven&quot;,
-          &quot;description&quot;: &quot;A passing run, and nothing has changed since it — the diff against the execution&#39;s\nown commit is empty but for the ledger. Proof of the tree in front of you.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it.&quot;,
-          &quot;const&quot;: &quot;inputs_unchanged&quot;,
+          &quot;description&quot;: &quot;A passing run, and nothing has changed since it — the diff against the execution&#39;s\nown commit is empty but for the ledger. Proof of the tree in front of you.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;inputs_unchanged&quot;,
+          &quot;description&quot;: &quot;A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
           &quot;description&quot;: &quot;A passing run, but something this claim names has changed since. The proof is older\nthan its subject.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;stale&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;failing&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The latest run of this claim&#39;s test did not pass.&quot;
+          &quot;description&quot;: &quot;The latest run of this claim&#39;s test did not pass.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;not_run&quot;,
@@ -739,53 +643,62 @@ assert!(r.satisfied());
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unrunnable&quot;,
           &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;,
-          &quot;const&quot;: &quot;unrunnable&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;no_test&quot;,
-          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;
+          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;What the repository can say about one claim&#39;s proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven &lt; ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```&quot;
+      ]
+    },
+    &quot;RuleArtifactKind&quot;: {
+      &quot;description&quot;: &quot;What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \&quot;case\&quot;);\nassert_eq!(ArtifactKind::Gate.label(), \&quot;gate\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;case&quot;,
+          &quot;description&quot;: &quot;A behavioural case a runner drives; executions of it are recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;gate&quot;,
+          &quot;description&quot;: &quot;An executable check a CI gate runs as its own command.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Neither. Nothing can run it, so nothing can ever record it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;RuleClass&quot;: {
+      &quot;description&quot;: &quot;What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \&quot;blocking\&quot;);\nassert_eq!(Class::parse(\&quot;advisory\&quot;), Class::Advisory);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;blocking&quot;,
+          &quot;description&quot;: &quot;A gate refuses work that violates it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;advisory&quot;,
+          &quot;description&quot;: &quot;Normative for whoever reads it; nothing refuses a violation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;The front matter declared no class, or one this repository does not know.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     },
     &quot;RuleCoverage&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;How much of the rule corpus carries each part of a proof.\n\nEvery number here is counted from the tree. Nothing in this struct may be written down\nanywhere else: a hardcoded rule count is the defect this repository keeps rediscovering.\n# Example\n\nEvery number is counted from the tree; an empty corpus counts zero rather than\nreading as complete, which is what `Coverage::default` is for.\n\n```\nuse majordomus_cli::rules::Coverage;\nlet c = Coverage::default();\nassert_eq!(c.rules, 0);\nassert_eq!(c.review_only, 0);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;recorded&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Rules every one of whose tests has a recorded run.&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;rules&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;Rules discovered.&quot;,
-          &quot;minimum&quot;: 0
-        },
         &quot;advisory&quot;: {
-          &quot;minimum&quot;: 0,
           &quot;description&quot;: &quot;Of those, advisory.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;mechanism_only&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Rules whose only executable proof is a gate: a mechanism that refuses violations,\nwith no recorded verdict behind it. Counted apart from `passing` so that the two\nare never read as one number.&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;runnable&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Rules at least one of whose tests a runner owns.&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;passing&quot;: {
-          &quot;description&quot;: &quot;Rules whose recorded runs all passed.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
@@ -793,38 +706,68 @@ assert!(r.satisfied());
         &quot;artifacts_present&quot;: {
           &quot;description&quot;: &quot;Rules every one of whose named paths is in the tree.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;blocking&quot;: {
+          &quot;description&quot;: &quot;Of those, blocking.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Of those, blocking.&quot;
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;gated&quot;: {
+          &quot;description&quot;: &quot;Rules some CI gate runs.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;mechanism_only&quot;: {
+          &quot;description&quot;: &quot;Rules whose only executable proof is a gate: a mechanism that refuses violations,\nwith no recorded verdict behind it. Counted apart from `passing` so that the two\nare never read as one number.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;named_proof&quot;: {
+          &quot;description&quot;: &quot;Rules naming a validator or at least one test.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;passing&quot;: {
+          &quot;description&quot;: &quot;Rules whose recorded runs all passed.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;recorded&quot;: {
+          &quot;description&quot;: &quot;Rules every one of whose tests has a recorded run.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;review_only&quot;: {
+          &quot;description&quot;: &quot;Rules that declare, with a reason, that a reader enforces them. Counted apart from\nevery executable mode: this number going up is governance getting weaker, and a\nsummary that folded it into a total would hide exactly that.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Rules that declare, with a reason, that a reader enforces them. Counted apart from\nevery executable mode: this number going up is governance getting weaker, and a\nsummary that folded it into a total would hide exactly that.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;rules&quot;: {
+          &quot;description&quot;: &quot;Rules discovered.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;runnable&quot;: {
+          &quot;description&quot;: &quot;Rules at least one of whose tests a runner owns.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;satisfied&quot;: {
           &quot;description&quot;: &quot;Rules whose state their class can live with.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;gated&quot;: {
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Rules some CI gate runs.&quot;,
           &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;named_proof&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Rules naming a validator or at least one test.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;
         }
       },
       &quot;required&quot;: [
@@ -841,42 +784,82 @@ assert!(r.satisfied());
         &quot;review_only&quot;,
         &quot;satisfied&quot;
       ],
-      &quot;description&quot;: &quot;How much of the rule corpus carries each part of a proof.\n\nEvery number here is counted from the tree. Nothing in this struct may be written down\nanywhere else: a hardcoded rule count is the defect this repository keeps rediscovering.\n# Example\n\nEvery number is counted from the tree; an empty corpus counts zero rather than\nreading as complete, which is what `Coverage::default` is for.\n\n```\nuse majordomus_cli::rules::Coverage;\nlet c = Coverage::default();\nassert_eq!(c.rules, 0);\nassert_eq!(c.review_only, 0);\n```&quot;
-    },
-    &quot;RuleFinding&quot;: {
-      &quot;required&quot;: [
-        &quot;rule&quot;,
-        &quot;class&quot;,
-        &quot;state&quot;,
-        &quot;reason&quot;,
-        &quot;reproduce&quot;
-      ],
-      &quot;description&quot;: &quot;One rule whose declared class the proof does not support.\n# Example\n\n```\nuse majordomus_cli::rules::{Class, Finding, RuleState};\nlet f = Finding {\n    rule: \&quot;project.x\&quot;.into(),\n    class: Class::Blocking,\n    state: RuleState::Dangling,\n    reason: \&quot;it names a path that is not in the tree\&quot;.into(),\n    reproduce: \&quot;scripts/ci/rule-proof-check\&quot;.into(),\n};\nassert_eq!(f.state, RuleState::Dangling);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The command that shows it again.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;class&quot;: {
-          &quot;description&quot;: &quot;The class it declares.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why that combination is a finding.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;rule&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The rule id.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;The state its proof is in.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;
-        }
-      },
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;RuleDefinition&quot;: {
+      &quot;description&quot;: &quot;One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \&quot;project.scope-is-declared\&quot;.into(),\n    identity: \&quot;project.scope-is-declared@1\&quot;.into(),\n    uri: \&quot;majordomus://rule/project.scope-is-declared@1\&quot;.into(),\n    version: 1,\n    title: \&quot;Scope is declared\&quot;.into(),\n    description: None,\n    statement: None,\n    status: \&quot;active\&quot;.into(),\n    class: Class::Blocking,\n    namespace: \&quot;project\&quot;.into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \&quot;.ai/repo/rules/project/scope-is-declared.v1.md\&quot;.into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;class&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;,
+          &quot;description&quot;: &quot;How strongly it binds.&quot;
+        },
+        &quot;depends_on&quot;: {
+          &quot;description&quot;: &quot;The rules it depends on, by id.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;The one-line description.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;enforcement&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleEnforcement&quot;,
+          &quot;description&quot;: &quot;How it is enforced, as declared.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The rule id, `&lt;namespace&gt;.&lt;stem&gt;`, without the version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;identity&quot;: {
+          &quot;description&quot;: &quot;The identity the index holds, with the version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;namespace&quot;: {
+          &quot;description&quot;: &quot;Whether it came with the vendored package or belongs to this project.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the rule object.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;statement&quot;: {
+          &quot;description&quot;: &quot;The normative sentence.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;`active`, or whatever else the front matter declares.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;tags&quot;: {
+          &quot;description&quot;: &quot;The declared tags.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;uri&quot;: {
+          &quot;description&quot;: &quot;`majordomus://rule/&lt;identity&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The declared version.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;identity&quot;,
@@ -889,297 +872,118 @@ assert!(r.satisfied());
         &quot;path&quot;,
         &quot;enforcement&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \&quot;project.scope-is-declared\&quot;.into(),\n    identity: \&quot;project.scope-is-declared@1\&quot;.into(),\n    uri: \&quot;majordomus://rule/project.scope-is-declared@1\&quot;.into(),\n    version: 1,\n    title: \&quot;Scope is declared\&quot;.into(),\n    description: None,\n    statement: None,\n    status: \&quot;active\&quot;.into(),\n    class: Class::Blocking,\n    namespace: \&quot;project\&quot;.into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \&quot;.ai/repo/rules/project/scope-is-declared.v1.md\&quot;.into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RuleEnforcement&quot;: {
+      &quot;description&quot;: &quot;The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\&quot;test/cases/07_scope.sh\&quot;.into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;enforcement&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleEnforcement&quot;,
-          &quot;description&quot;: &quot;How it is enforced, as declared.&quot;
-        },
-        &quot;class&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;,
-          &quot;description&quot;: &quot;How strongly it binds.&quot;
-        },
-        &quot;statement&quot;: {
+        &quot;category&quot;: {
+          &quot;description&quot;: &quot;The diagnostic category the validator reports under.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The normative sentence.&quot;
+          ]
         },
-        &quot;tags&quot;: {
-          &quot;description&quot;: &quot;The declared tags.&quot;,
+        &quot;enforced_by&quot;: {
+          &quot;description&quot;: &quot;Which boundary enforces it: the word the rule&#39;s own block uses.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;exit_code&quot;: {
+          &quot;description&quot;: &quot;The exit code the validator uses to refuse.&quot;,
+          &quot;format&quot;: &quot;int64&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleMode&quot;,
+          &quot;description&quot;: &quot;Which of the two canonical modes, or neither.&quot;
+        },
+        &quot;reviewed_because&quot;: {
+          &quot;description&quot;: &quot;Why nothing executable can express this rule, when the mode is reviewed. Required\nthere: a declared exemption with no reason is the debt it exists to replace.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;tests&quot;: {
+          &quot;description&quot;: &quot;Every test the block names, in the order it names them.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;uri&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`majordomus://rule/&lt;identity&gt;`.&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path of the rule object.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;version&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;The declared version.&quot;
-        },
-        &quot;depends_on&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The rules it depends on, by id.&quot;
-        },
-        &quot;identity&quot;: {
-          &quot;description&quot;: &quot;The identity the index holds, with the version.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;The one-line description.&quot;,
+        &quot;validator&quot;: {
+          &quot;description&quot;: &quot;The validator the dispatcher calls, when the mode is dispatched.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
-        },
-        &quot;namespace&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Whether it came with the vendored package or belongs to this project.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The title.&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`active`, or whatever else the front matter declares.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The rule id, `&lt;namespace&gt;.&lt;stem&gt;`, without the version.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
-    },
-    &quot;EvidenceOrigin&quot;: {
-      &quot;description&quot;: &quot;Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\&quot;CI\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;local\&quot;), Some(Origin::Local));\n// naming the provider is the adapter&#39;s business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\&quot;github-actions\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\&quot;ci\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;nowhere\&quot;), None);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;local&quot;,
-          &quot;description&quot;: &quot;Someone ran it on their own machine.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A continuous-integration run.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;ci&quot;
-        },
-        {
-          &quot;const&quot;: &quot;release&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A release run.&quot;
-        }
-      ]
-    },
-    &quot;RuleTestProof&quot;: {
-      &quot;properties&quot;: {
-        &quot;present&quot;: {
-          &quot;description&quot;: &quot;Whether that path is in the tree.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The command that runs this test again.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;meaning&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;That state, in one sentence, from the one place it is worded.&quot;
-        },
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The path the rule names.&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleArtifactKind&quot;,
-          &quot;description&quot;: &quot;What drives it: a runner, a CI gate, or nothing.&quot;
-        },
-        &quot;test&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The canonical test identity (`suite:&lt;case&gt;`, `crate:&lt;binary&gt;`), when a runner owns\nthe path. Absent means no runner drives it, so no run of it can ever be recorded.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;,
-          &quot;description&quot;: &quot;What the repository can say about this test&#39;s latest run.&quot;
-        },
-        &quot;gates&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;The CI gates that run this test, derived from the repository&#39;s own CI model.&quot;
-        },
-        &quot;execution&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/EvidenceExecution&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The execution behind the state, when there is one.&quot;
         }
       },
-      &quot;description&quot;: &quot;One test a rule names, joined to what was recorded against it.\n# Example\n\n```\nuse majordomus_cli::rules::{ArtifactKind, TestProof};\nuse majordomus_cli::evidence::ProofState;\nlet t = TestProof {\n    path: \&quot;test/cases/07_scope.sh\&quot;.into(),\n    kind: ArtifactKind::Case,\n    present: true,\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().into(),\n    execution: None,\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n    gates: vec![\&quot;shell-suite\&quot;.into()],\n};\nassert_eq!(t.kind, ArtifactKind::Case);\n```&quot;,
       &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;kind&quot;,
-        &quot;present&quot;,
-        &quot;state&quot;,
-        &quot;meaning&quot;
+        &quot;mode&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;RuleValidator&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;function&quot;,
-        &quot;present&quot;
-      ],
-      &quot;description&quot;: &quot;The validator a dispatched rule names, and whether anything defines it.\n\nA validator is **not a path**. `validator: adr` names the shell function\n`mj_validate_adr`, which the doctrine dispatcher calls; the tool finds it by scanning\n`lib/`, exactly as `majordomus doctor` does. Reading it as a path is a mistake worth\nrecording here, because it is the one this type was introduced to fix: it makes every\ndispatched rule in the vendored package report as naming something that is not in the\ntree, which is the opposite of true — those are the best-enforced rules there are.\n# Example\n\n```\nuse majordomus_cli::rules::ValidatorRef;\nlet v = ValidatorRef {\n    name: \&quot;adr\&quot;.into(),\n    function: \&quot;mj_validate_adr\&quot;.into(),\n    defined_in: Some(\&quot;lib/adr.sh\&quot;.into()),\n    present: true,\n};\nassert_eq!(v.function, \&quot;mj_validate_adr\&quot;);\n```&quot;,
+    &quot;RuleFinding&quot;: {
+      &quot;description&quot;: &quot;One rule whose declared class the proof does not support.\n# Example\n\n```\nuse majordomus_cli::rules::{Class, Finding, RuleState};\nlet f = Finding {\n    rule: \&quot;project.x\&quot;.into(),\n    class: Class::Blocking,\n    state: RuleState::Dangling,\n    reason: \&quot;it names a path that is not in the tree\&quot;.into(),\n    reproduce: \&quot;scripts/ci/rule-proof-check\&quot;.into(),\n};\nassert_eq!(f.state, RuleState::Dangling);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The name the rule declares, without the `mj_validate_` prefix.&quot;
+        &quot;class&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;,
+          &quot;description&quot;: &quot;The class it declares.&quot;
         },
-        &quot;defined_in&quot;: {
-          &quot;description&quot;: &quot;The file that defines it, when one does.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;present&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether anything in `lib/` defines it.&quot;
-        },
-        &quot;function&quot;: {
-          &quot;description&quot;: &quot;The function the dispatcher calls.&quot;,
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why that combination is a finding.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that shows it again.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;rule&quot;: {
+          &quot;description&quot;: &quot;The rule id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;,
+          &quot;description&quot;: &quot;The state its proof is in.&quot;
         }
-      }
+      },
+      &quot;required&quot;: [
+        &quot;rule&quot;,
+        &quot;class&quot;,
+        &quot;state&quot;,
+        &quot;reason&quot;,
+        &quot;reproduce&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
-    &quot;EvidenceOutcome&quot;: {
-      &quot;description&quot;: &quot;What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \&quot;this did not run\&quot; and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\&quot;ok\&quot;).proves());\nassert!(!Outcome::parse(\&quot;timeout\&quot;).proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \&quot;it declined\&quot; and \&quot;the harness broke\&quot; are different bugs\nassert_eq!(Outcome::parse(\&quot;skipped\&quot;), Outcome::Skip);\nassert_eq!(Outcome::parse(\&quot;nonsense\&quot;), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\&quot;ok\&quot;).proves());\nassert_eq!(Outcome::parse(\&quot;wat\&quot;), Outcome::Error);\n```&quot;,
+    &quot;RuleMode&quot;: {
+      &quot;description&quot;: &quot;How a rule is enforced, as its own front matter declares it.\n# Example\n\n```\nuse majordomus_cli::rules::Mode;\nassert_eq!(Mode::Dispatched.label(), \&quot;dispatched\&quot;);\nassert_eq!(Mode::Declarative.label(), \&quot;declarative\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;pass&quot;,
-          &quot;description&quot;: &quot;It passed.&quot;,
+          &quot;const&quot;: &quot;dispatched&quot;,
+          &quot;description&quot;: &quot;Names a validator the doctrine dispatcher calls at run time.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;fail&quot;,
-          &quot;description&quot;: &quot;It failed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It declined to run and said so (an unmet precondition the case reports itself).&quot;,
-          &quot;const&quot;: &quot;skip&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;timeout&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The bound fired before it finished.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The harness could not run it at all.&quot;
-        }
-      ]
-    },
-    &quot;RuleArtifactKind&quot;: {
-      &quot;description&quot;: &quot;What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \&quot;case\&quot;);\nassert_eq!(ArtifactKind::Gate.label(), \&quot;gate\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;A behavioural case a runner drives; executions of it are recorded.&quot;,
-          &quot;const&quot;: &quot;case&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;gate&quot;,
-          &quot;description&quot;: &quot;An executable check a CI gate runs as its own command.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Neither. Nothing can run it, so nothing can ever record it.&quot;
-        }
-      ]
-    },
-    &quot;RuleState&quot;: {
-      &quot;description&quot;: &quot;What the repository can say about one rule&#39;s proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule&#39;s state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven &lt; RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;proven&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;inputs_unchanged&quot;,
-          &quot;description&quot;: &quot;Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;A passing run exists, but something it is about has changed since.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here.&quot;,
           &quot;const&quot;: &quot;gated&quot;,
+          &quot;description&quot;: &quot;Names behavioural cases and no validator; a gate runs them.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failing&quot;,
-          &quot;description&quot;: &quot;The latest run of a test this rule names did not pass.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Every artifact is present, and no run of at least one named test was ever recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;not_run&quot;
         },
         {
           &quot;const&quot;: &quot;reviewed&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The rule declares, with a stated reason, that nothing executable can express it. An\nhonest exemption: counted apart from every proven rule, never counted as one.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unrunnable&quot;,
-          &quot;description&quot;: &quot;The rule names a path no runner in this repository drives.&quot;,
+          &quot;description&quot;: &quot;Carries a reason why nothing executable can express it, and so declares that a\nreader enforces it. An honest declaration, not an absence: the reason *is* the\ndeclaration — there is no flag beside it, because a flag can be set and a reason\ncannot be set without writing one — it is counted apart from every executable mode,\nand it separates a rule nobody could automate from a rule nobody got round to.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The rule names a path that is not in the tree. A proof that does not exist is worse\nthan no proof, because the rule reads as proven.&quot;,
-          &quot;const&quot;: &quot;dangling&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unproven&quot;,
-          &quot;description&quot;: &quot;The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one.&quot;,
+          &quot;const&quot;: &quot;declarative&quot;,
+          &quot;description&quot;: &quot;Names neither. Correct for a rule nothing executable can express; a defect for a\nblocking one.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
@@ -1187,14 +991,40 @@ assert!(r.satisfied());
     &quot;RuleProof&quot;: {
       &quot;description&quot;: &quot;One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&amp;repo.index().unwrap(), &amp;ledger);\nlet first: &amp;RuleProof = &amp;r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \&quot;an advisory rule owes no executable proof\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;rule&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleDefinition&quot;,
-          &quot;description&quot;: &quot;The canonical definition.&quot;
-        },
         &quot;gates&quot;: {
           &quot;description&quot;: &quot;Every CI gate that runs something this rule names, deduplicated.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;meaning&quot;: {
+          &quot;description&quot;: &quot;That state, in one sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;required_by&quot;: {
+          &quot;description&quot;: &quot;The rules that depend on this one, by id — the converse of `depends_on`, which no\nrule declares and which a reader always wants.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;rule&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleDefinition&quot;,
+          &quot;description&quot;: &quot;The canonical definition.&quot;
+        },
+        &quot;satisfied&quot;: {
+          &quot;description&quot;: &quot;Whether the state is one this rule&#39;s class can live with.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;,
+          &quot;description&quot;: &quot;What the repository can say, as a whole.&quot;
+        },
+        &quot;tests&quot;: {
+          &quot;description&quot;: &quot;Every test the rule names, joined to the ledger.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/RuleTestProof&quot;
           },
           &quot;type&quot;: &quot;array&quot;
         },
@@ -1208,44 +1038,212 @@ assert!(r.satisfied());
             }
           ],
           &quot;description&quot;: &quot;The validator, when the mode is dispatched.&quot;
-        },
-        &quot;satisfied&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether the state is one this rule&#39;s class can live with.&quot;
-        },
-        &quot;meaning&quot;: {
-          &quot;description&quot;: &quot;That state, in one sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;required_by&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The rules that depend on this one, by id — the converse of `depends_on`, which no\nrule declares and which a reader always wants.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;,
-          &quot;description&quot;: &quot;What the repository can say, as a whole.&quot;
-        },
-        &quot;tests&quot;: {
-          &quot;description&quot;: &quot;Every test the rule names, joined to the ledger.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/RuleTestProof&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
         }
       },
-      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;rule&quot;,
         &quot;state&quot;,
         &quot;meaning&quot;,
         &quot;satisfied&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RuleState&quot;: {
+      &quot;description&quot;: &quot;What the repository can say about one rule&#39;s proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule&#39;s state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven &lt; RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;proven&quot;,
+          &quot;description&quot;: &quot;Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inputs_unchanged&quot;,
+          &quot;description&quot;: &quot;Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;A passing run exists, but something it is about has changed since.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;gated&quot;,
+          &quot;description&quot;: &quot;An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failing&quot;,
+          &quot;description&quot;: &quot;The latest run of a test this rule names did not pass.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_run&quot;,
+          &quot;description&quot;: &quot;Every artifact is present, and no run of at least one named test was ever recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;reviewed&quot;,
+          &quot;description&quot;: &quot;The rule declares, with a stated reason, that nothing executable can express it. An\nhonest exemption: counted apart from every proven rule, never counted as one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unrunnable&quot;,
+          &quot;description&quot;: &quot;The rule names a path no runner in this repository drives.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;dangling&quot;,
+          &quot;description&quot;: &quot;The rule names a path that is not in the tree. A proof that does not exist is worse\nthan no proof, because the rule reads as proven.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unproven&quot;,
+          &quot;description&quot;: &quot;The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
       ]
+    },
+    &quot;RuleTestProof&quot;: {
+      &quot;description&quot;: &quot;One test a rule names, joined to what was recorded against it.\n# Example\n\n```\nuse majordomus_cli::rules::{ArtifactKind, TestProof};\nuse majordomus_cli::evidence::ProofState;\nlet t = TestProof {\n    path: \&quot;test/cases/07_scope.sh\&quot;.into(),\n    kind: ArtifactKind::Case,\n    present: true,\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().into(),\n    execution: None,\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n    gates: vec![\&quot;shell-suite\&quot;.into()],\n};\nassert_eq!(t.kind, ArtifactKind::Case);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;execution&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EvidenceExecution&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The execution behind the state, when there is one.&quot;
+        },
+        &quot;gates&quot;: {
+          &quot;description&quot;: &quot;The CI gates that run this test, derived from the repository&#39;s own CI model.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleArtifactKind&quot;,
+          &quot;description&quot;: &quot;What drives it: a runner, a CI gate, or nothing.&quot;
+        },
+        &quot;meaning&quot;: {
+          &quot;description&quot;: &quot;That state, in one sentence, from the one place it is worded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The path the rule names.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;present&quot;: {
+          &quot;description&quot;: &quot;Whether that path is in the tree.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that runs this test again.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;,
+          &quot;description&quot;: &quot;What the repository can say about this test&#39;s latest run.&quot;
+        },
+        &quot;test&quot;: {
+          &quot;description&quot;: &quot;The canonical test identity (`suite:&lt;case&gt;`, `crate:&lt;binary&gt;`), when a runner owns\nthe path. Absent means no runner drives it, so no run of it can ever be recorded.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;kind&quot;,
+        &quot;present&quot;,
+        &quot;state&quot;,
+        &quot;meaning&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RuleValidator&quot;: {
+      &quot;description&quot;: &quot;The validator a dispatched rule names, and whether anything defines it.\n\nA validator is **not a path**. `validator: adr` names the shell function\n`mj_validate_adr`, which the doctrine dispatcher calls; the tool finds it by scanning\n`lib/`, exactly as `majordomus doctor` does. Reading it as a path is a mistake worth\nrecording here, because it is the one this type was introduced to fix: it makes every\ndispatched rule in the vendored package report as naming something that is not in the\ntree, which is the opposite of true — those are the best-enforced rules there are.\n# Example\n\n```\nuse majordomus_cli::rules::ValidatorRef;\nlet v = ValidatorRef {\n    name: \&quot;adr\&quot;.into(),\n    function: \&quot;mj_validate_adr\&quot;.into(),\n    defined_in: Some(\&quot;lib/adr.sh\&quot;.into()),\n    present: true,\n};\nassert_eq!(v.function, \&quot;mj_validate_adr\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;defined_in&quot;: {
+          &quot;description&quot;: &quot;The file that defines it, when one does.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;function&quot;: {
+          &quot;description&quot;: &quot;The function the dispatcher calls.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The name the rule declares, without the `mj_validate_` prefix.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;present&quot;: {
+          &quot;description&quot;: &quot;Whether anything in `lib/` defines it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;function&quot;,
+        &quot;present&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The whole rule corpus, verified.\n# Example\n\nThe whole corpus joined to the tree and the ledger. `satisfied` is true when no rule\ndeclares a class its proof does not support.\n\n```\nuse majordomus_cli::rules::RulesReport;\nlet r = RulesReport {\n    head: None,\n    working_tree: \&quot;clean\&quot;.into(),\n    rules: vec![],\n    states: Default::default(),\n    coverage: Default::default(),\n    findings: vec![],\n    satisfied: true,\n};\nassert!(r.satisfied());\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;coverage&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/RuleCoverage&quot;,
+      &quot;description&quot;: &quot;The parts of a proof, counted.&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;Every rule whose declared class the proof does not support.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RuleFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;head&quot;: {
+      &quot;description&quot;: &quot;The commit the report was derived against, when git could say.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;rules&quot;: {
+      &quot;description&quot;: &quot;Every rule, in canonical id order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RuleProof&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;satisfied&quot;: {
+      &quot;description&quot;: &quot;Whether there are no findings.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;states&quot;: {
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;
+      },
+      &quot;description&quot;: &quot;How many rules are in each state, by the state&#39;s printed word.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;working_tree&quot;: {
+      &quot;description&quot;: &quot;`clean`, `dirty` or `unknown` at the time of derivation.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
   &quot;required&quot;: [
     &quot;working_tree&quot;,
     &quot;rules&quot;,
@@ -1253,7 +1251,9 @@ assert!(r.satisfied());
     &quot;coverage&quot;,
     &quot;findings&quot;,
     &quot;satisfied&quot;
-  ]
+  ],
+  &quot;title&quot;: &quot;RulesReport&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -1284,7 +1284,7 @@ assert!(r.satisfied());
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::rules</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">RulesReportInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RulesReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/rules.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/rules.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6315b14a25ea8b168222b2a6d5809316ba623c829f8b173eb92986b9d0fe1544</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/rules.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/rules.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fd7c142c686b08cb3041e2dbbf45a9c0888fdbee2fe8387685b373d0a970b705</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -1309,7 +1309,7 @@ assert!(r.satisfied());
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0aef4f1401b04440a71efaea9094b2e5f934546b" class="font-mono underline">0aef4f1</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
