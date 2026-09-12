@@ -172,14 +172,13 @@ graph no longer carries fails the build rather than pointing at nothing.
 
 There is one completion engine, and the shell adapters know nothing.
 
-```text
-   zsh / bash
-        │  words, cursor
-        ▼
-   generic adapter ──► majordomus completion query ──► CompletionEngine
-                                                            │
-                                              CommandGraph  +  value sources
-```
+<pre class="mermaid">
+flowchart LR
+  shell["zsh / bash"] --&gt;|"words, cursor"| adapter["generic adapter"]
+  adapter --&gt; query["majordomus completion query"] --&gt; engine["CompletionEngine"]
+  engine --- sources["CommandGraph  +  value sources"]
+</pre>
+
 
 An adapter reads the words being completed, finds the cursor, asks the executable and prints
 what comes back. It carries no command, no flag and no identifier — a test asserts exactly
@@ -372,14 +371,15 @@ Nothing time-dependent is in either, so two builds over one tree agree.
 
 A fresh clone has no bridge and no executable.
 
-```text
-clone
-  └─ direnv, or `just`
-       └─ the executable is absent: one line naming `just build`, exit 0
-            └─ just build
-                 └─ just bridge   (or the next `cd`)
-                      └─ every command of both programs, as a recipe
-```
+<pre class="mermaid">
+flowchart TD
+  clone["clone"] --&gt; entry["direnv, or just"]
+  entry --&gt; absent["the executable is absent:&lt;br&gt;one line naming just build, exit 0"]
+  absent --&gt; build["just build"]
+  build --&gt; bridge["just bridge&lt;br&gt;(or the next cd)"]
+  bridge --&gt; recipes["every command of both programs, as a recipe"]
+</pre>
+
 
 The root justfile imports the bridge optionally, so a clone without one still has a
 justfile: `just build` and `just bridge` are the two recipes the bridge cannot provide,

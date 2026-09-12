@@ -20,16 +20,27 @@ the rule that owns the invariant is `project.web-surface-declared-once`. Behavio
 implemented and tested; where this document and the executable disagree, the document is
 wrong and changes in the same commit.
 
-```text
-PRODUCERS                   capability! declarations · site/config.toml · target/web/<id>/surface.json
-        ↓
-ONE RESOLUTION              web::discover → Topology, validated, narrowed per process
-        ↓
-DERIVED PROJECTIONS         the HTTP router · the home page at / · /api/v1/web/surfaces
-                            · docs/generated/web.json → the website's route reference
-                            · majordomus web list / explain / validate / compose
-                            · the benchmark targets · the startup log
-```
+<pre class="mermaid">
+flowchart TD
+  subgraph producers["PRODUCERS"]
+    decl["capability! declarations"]
+    config["site/config.toml"]
+    surfacejson["target/web/&amp;lt;id&amp;gt;/surface.json"]
+  end
+  resolution["ONE RESOLUTION&lt;br&gt;web::discover → Topology,&lt;br&gt;validated, narrowed per process"]
+  subgraph projections["DERIVED PROJECTIONS"]
+    router["the HTTP router"]
+    home["the home page at /"]
+    api["/api/v1/web/surfaces"]
+    webjson["docs/generated/web.json →&lt;br&gt;the website's route reference"]
+    cli["majordomus web list / explain /&lt;br&gt;validate / compose"]
+    bench["the benchmark targets"]
+    log["the startup log"]
+  end
+  producers --&gt; resolution
+  resolution --&gt; projections
+</pre>
+
 
 ## The effective surface
 
@@ -148,10 +159,13 @@ it appears under `/api/v1/` because the `api` surface owns that prefix
 The documentation under `/docs/` is the **same Zola source** GitHub Pages renders. There is
 no second copy and no second generator; the two builds differ in one argument.
 
-```text
-site/  ──scripts/site-build───────────────────→ site/public/     base_url https://majordomus.dev
-   └───scripts/site-build --serve ───────────→ target/web/docs/  base_url /docs
-```
+<pre class="mermaid">
+flowchart LR
+  src["site/"]
+  src --&gt;|"scripts/site-build"| public["site/public/&lt;br&gt;base_url https://majordomus.dev"]
+  src --&gt;|"scripts/site-build --serve"| served["target/web/docs/&lt;br&gt;base_url /docs"]
+</pre>
+
 
 `zola build --base-url /docs` emits root-relative links (`/docs/commands/`), so the mount is
 correct behind any host, port or reverse-proxy prefix — no hostname is ever baked into the

@@ -61,22 +61,45 @@ are what every stylesheet carries as `--mj-design`.
 
 ## The pipeline
 
-```text
-share/design/tokens.yaml
-        │  majordomus generate design   (crate::design::render)
-        ▼
-share/design/theme.css       Tailwind @theme + Flowbite's names as var(--mj-*)   ┐
-share/design/surface.css     every role and status colour, light and dark        ├─► site/tailwind.css ──► site/static/app.css ──► GitHub Pages
-share/design/status.css      one selector group per state word                   ├─► share/cockpit/src/cockpit.css ──► share/cockpit/cockpit.css ──► Cockpit
-share/design/base.css        (hand-written) focus ring, reduced motion            │
-share/design/primitives.css  (hand-written) badge, table, card, code, form …      ┘
-apps/majordomus-cli/src/web/tokens.css          the same tokens, no Tailwind ──► reports, home page, Swagger shell
-apps/majordomus-cli/src/design/tokens.yaml      the declaration, compiled in ──► design.* capabilities, Cockpit shell and Design page
-apps/majordomus-cli/src/cockpit/logo-mark.svg   the mark, compiled in         ──► Cockpit top bar
-share/cockpit/favicon.svg, site/static/favicon.svg, site/static/images/*.svg    every copy of the brand
-site/data/registry/design.json                  vocabulary, theme contract, widths ──► templates, site-probe, ui audit
-docs/generated/design.{json,yaml,md}            the inventory
-```
+<pre class="mermaid">
+flowchart TD
+  yaml["share/design/tokens.yaml"]
+  subgraph sheets["share/design/"]
+    theme["theme.css&lt;br&gt;Tailwind @theme + Flowbite's names&lt;br&gt;as var(--mj-*)"]
+    surface["surface.css&lt;br&gt;every role and status colour,&lt;br&gt;light and dark"]
+    status["status.css&lt;br&gt;one selector group per state word"]
+    base["base.css&lt;br&gt;(hand-written) focus ring, reduced motion"]
+    primitives["primitives.css&lt;br&gt;(hand-written) badge, table, card,&lt;br&gt;code, form …"]
+  end
+  tailwind["site/tailwind.css"]
+  appcss["site/static/app.css"]
+  pages["GitHub Pages"]
+  cksrc["share/cockpit/src/cockpit.css"]
+  ckcss["share/cockpit/cockpit.css"]
+  cockpit["Cockpit"]
+  webtokens["apps/majordomus-cli/src/web/tokens.css&lt;br&gt;the same tokens, no Tailwind"]
+  webout["reports, home page, Swagger shell"]
+  decl["apps/majordomus-cli/src/design/tokens.yaml&lt;br&gt;the declaration, compiled in"]
+  declout["design.* capabilities,&lt;br&gt;Cockpit shell and Design page"]
+  logo["apps/majordomus-cli/src/cockpit/logo-mark.svg&lt;br&gt;the mark, compiled in"]
+  topbar["Cockpit top bar"]
+  brand["share/cockpit/favicon.svg, site/static/favicon.svg,&lt;br&gt;site/static/images/*.svg&lt;br&gt;every copy of the brand"]
+  registry["site/data/registry/design.json&lt;br&gt;vocabulary, theme contract, widths"]
+  registryout["templates, site-probe, ui audit"]
+  inventory["docs/generated/design.json, design.yaml, design.md&lt;br&gt;the inventory"]
+  yaml --&gt;|"majordomus generate design (crate::design::render)"| sheets
+  sheets --&gt; tailwind
+  tailwind --&gt; appcss
+  appcss --&gt; pages
+  sheets --&gt; cksrc
+  cksrc --&gt; ckcss
+  ckcss --&gt; cockpit
+  webtokens --&gt; webout
+  decl --&gt; declout
+  logo --&gt; topbar
+  registry --&gt; registryout
+</pre>
+
 
 Two hand-written files sit beside the generated ones and are imported by both Tailwind entry
 points: `base.css` (the accessible defaults) and `primitives.css` (the `.mj-*` components
@@ -182,7 +205,7 @@ always shows the word beside it.
 `explain` takes a role, a status, a state word, a type step, a palette entry, or the custom
 property any of them becomes:
 
-```text
+```console
 majordomus_design_explain {"token": "--mj-ok"}
 → kind: status, about: healthy, done, passing …,
   parts: fg --mj-ok emerald-900 / emerald-300, bg --mj-ok-bg …, line --mj-ok-line …,

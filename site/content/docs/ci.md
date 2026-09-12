@@ -19,19 +19,26 @@ every run writes its own summary.
 
 ## The shape
 
-```
-plan ──► structure (always) ──┐
-    ├──► suite                ├──► ci (the verdict; the one required status)
-    ├──► rust                 │
-    ├──► coverage             │
-    ├──► bench (macOS)        │
-    ├──► site                 │
-    └──► macos ───────────────┘
+<pre class="mermaid">
+flowchart LR
+  plan["plan"] --&gt; structure["structure&lt;br&gt;(always)"]
+  plan --&gt; suite["suite"]
+  plan --&gt; rust["rust"]
+  plan --&gt; coverage["coverage"]
+  plan --&gt; bench["bench (macOS)"]
+  plan --&gt; site["site"]
+  plan --&gt; macos["macos"]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+</pre>
+
 
 and beside it, on the same commit, never after it:
 
-pages.yml ──► one job: build ──► check ──► push gh-pages ──► measure publication
-```
+<pre class="mermaid">
+flowchart LR
+  pages["pages.yml"] --&gt; job["one job: build"] --&gt; check["check"] --&gt; push["push gh-pages"] --&gt; measure["measure publication"]
+</pre>
+
 
 `plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
 plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`) and the structural gates the

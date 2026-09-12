@@ -19,21 +19,20 @@ the rules it serves are `project.no-claim-without-test` and
 `project.never-reported-is-not-green` under
 [`.ai/repo/rules/project/`](../.ai/repo/rules/project/).
 
-```text
-docs/CLAIMS.yaml                    .ai/repo/evidence/ledger.json
-claim → source, implementation,     latest execution per test:
-        test (a path)                 outcome, seconds, commit, tree,
-        ↓                             digest, time, origin, command
-   TestId::of(path)                            ↓
-   suite:84_distribution_model  ─────────  ledger.latest(id)
-   crate:why                                   ↓
-                                        evidence::report()
-                                                ↓
-                       proven · inputs_unchanged · stale · failing
-                       not_run · unrunnable · no_test
-                                                ↓
-                    CLI · HTTP · MCP · scripts/evidence-check
-```
+<pre class="mermaid">
+flowchart TD
+  claims["docs/CLAIMS.yaml&lt;br&gt;claim → source, implementation,&lt;br&gt;test (a path)"]
+  testid["TestId::of(path)&lt;br&gt;suite:84_distribution_model&lt;br&gt;crate:why"]
+  ledger[".ai/repo/evidence/ledger.json&lt;br&gt;latest execution per test:&lt;br&gt;outcome, seconds, commit, tree,&lt;br&gt;digest, time, origin, command"]
+  latest["ledger.latest(id)"]
+  report["evidence::report()"]
+  states["proven · inputs_unchanged · stale · failing&lt;br&gt;not_run · unrunnable · no_test"]
+  out["CLI · HTTP · MCP · scripts/evidence-check"]
+  claims --&gt; testid --&gt; latest
+  ledger --&gt; latest
+  latest --&gt; report --&gt; states --&gt; out
+</pre>
+
 
 ## The problem
 

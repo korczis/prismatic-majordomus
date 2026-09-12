@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "073e0883be2d4fa8d66c686ccc378e4c1534a810603c28b769ea17827cf51702",
+    "fingerprint": "dd42fd819665502f1a26c73ad2b9d2b04ecb68778fec758fd3da47d583d0dd30",
     "summary": {
-      "total": 1428,
+      "total": 1432,
       "builtin": 112,
-      "declarative": 1316,
+      "declarative": 1320,
       "by_kind": {
         "command": 6,
         "query": 106,
-        "resource": 1316
+        "resource": 1320
       },
       "by_stability": {
         "behaviorally_verified": 99,
         "experimental": 7,
-        "implemented": 1322
+        "implemented": 1326
       },
       "mcp_tools": 109,
-      "mcp_resources": 1357,
+      "mcp_resources": 1361,
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
@@ -1728,11 +1728,19 @@
                   "type": "string"
                 },
                 "description": "Runnable commands of the command line that no capability claims, in command order."
+              },
+              "unclassified": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Of those, the ones [`crate::cli::local::LOCAL`] does not explain either: a command\nthat is neither the projection of a capability nor declared command-line-only with\na reason. Empty is the closure the rule asks for; anything here is an operation\nthat left the API by accident rather than by decision."
               }
             },
             "required": [
               "rows",
-              "unbacked"
+              "unbacked",
+              "unclassified"
             ],
             "description": "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\".",
             "title": "ClosureMatrix",
@@ -40416,7 +40424,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 131,
+        "capabilities": 133,
         "capability_ids": []
       },
       {
@@ -40495,7 +40503,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 193,
+        "capabilities": 195,
         "capability_ids": []
       },
       {
@@ -40575,7 +40583,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c7b6edeaa06b21216d356ba312a0116c95b54b5a67a7645ef2b0217c2ff9a830",
+    "fingerprint": "3df5466eb85f25dadca2db48d3a730baadc4c90259d4af9798a41560155d5ab8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40619,12 +40627,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 131,
+      "rule": 133,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 193,
+      "test": 195,
       "use-case": 46,
       "workspace": 1
     },
@@ -44342,7 +44350,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 43805
+        "bytes": 43944
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -44360,7 +44368,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 24551
+        "bytes": 24581
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -44378,7 +44386,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 35878
+        "bytes": 35974
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -44387,7 +44395,7 @@
         "title": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
         "path": "docs/COCKPIT_IDE_AUDIT.md",
         "source_class": "document",
-        "bytes": 50157
+        "bytes": 50134
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -44396,7 +44404,7 @@
         "title": "The command graph",
         "path": "docs/COMMANDS.md",
         "source_class": "document",
-        "bytes": 19547
+        "bytes": 19525
       },
       {
         "uri": "majordomus://document/docs/COMMIT.md",
@@ -44432,7 +44440,7 @@
         "title": "Continuity — how work survives the session that was doing it",
         "path": "docs/CONTINUITY.md",
         "source_class": "document",
-        "bytes": 32871
+        "bytes": 31556
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -44441,7 +44449,7 @@
         "title": "Prismatic Majordomus",
         "path": "docs/DESIGN.md",
         "source_class": "document",
-        "bytes": 36967
+        "bytes": 36709
       },
       {
         "uri": "majordomus://document/docs/DESIGN_SYSTEM.md",
@@ -44450,7 +44458,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 14471
+        "bytes": 14779
       },
       {
         "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
@@ -44459,7 +44467,7 @@
         "title": "The development runtime",
         "path": "docs/DEVELOPMENT_RUNTIME.md",
         "source_class": "document",
-        "bytes": 37136
+        "bytes": 37259
       },
       {
         "uri": "majordomus://document/docs/DISTRIBUTION.md",
@@ -44477,7 +44485,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 20637
+        "bytes": 21560
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -44522,7 +44530,7 @@
         "title": "Repository entry: what is automatic, what is decorative, and where it breaks",
         "path": "docs/ENTRY_AUDIT.md",
         "source_class": "document",
-        "bytes": 28333
+        "bytes": 28146
       },
       {
         "uri": "majordomus://document/docs/ENVIRONMENT.md",
@@ -44540,7 +44548,7 @@
         "title": "Evidence — what ran, against which commit, and whether it still proves anything",
         "path": "docs/EVIDENCE.md",
         "source_class": "document",
-        "bytes": 30212
+        "bytes": 30018
       },
       {
         "uri": "majordomus://document/docs/EXECUTIONS.md",
@@ -44549,7 +44557,7 @@
         "title": "Executions — watching a capability call happen",
         "path": "docs/EXECUTIONS.md",
         "source_class": "document",
-        "bytes": 18145
+        "bytes": 18039
       },
       {
         "uri": "majordomus://document/docs/EXTRACTION_REPORT.md",
@@ -44576,7 +44584,7 @@
         "title": "GitHub Pages performance",
         "path": "docs/GITHUB_PAGES_PERFORMANCE.md",
         "source_class": "document",
-        "bytes": 17235
+        "bytes": 24373
       },
       {
         "uri": "majordomus://document/docs/INSTALL.md",
@@ -44603,7 +44611,7 @@
         "title": "The mesh: discovery of running Majordomus instances",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 11584
+        "bytes": 11525
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -44621,7 +44629,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2876
+        "bytes": 2872
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -44639,7 +44647,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 15112
+        "bytes": 15177
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -44684,7 +44692,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 27358
+        "bytes": 27602
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -44765,7 +44773,7 @@
         "title": "The web surface — discovered from its producer, projected once",
         "path": "docs/WEB.md",
         "source_class": "document",
-        "bytes": 11661
+        "bytes": 11743
       },
       {
         "uri": "majordomus://document/docs/WHY.md",
@@ -44783,7 +44791,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 24314
+        "bytes": 24483
       },
       {
         "uri": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
@@ -45368,7 +45376,7 @@
         "title": "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing",
         "path": "docs/claims/github-projection-gated.md",
         "source_class": "claim_page",
-        "bytes": 3893
+        "bytes": 3918
       },
       {
         "uri": "majordomus://document/docs/claims/github-projection.md",
@@ -46858,7 +46866,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 69828
+        "bytes": 69827
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -46866,7 +46874,7 @@
         "identity": "lib/doctrine.sh",
         "path": "lib/doctrine.sh",
         "source_class": "library",
-        "bytes": 17046
+        "bytes": 17045
       },
       {
         "uri": "majordomus://implementation/lib/evidence.sh",
@@ -46890,7 +46898,7 @@
         "identity": "lib/gates.sh",
         "path": "lib/gates.sh",
         "source_class": "library",
-        "bytes": 13835
+        "bytes": 13929
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -51281,6 +51289,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "kind": "rule",
+        "identity": "project.a-diagram-is-drawn-not-typed@1",
+        "title": "An architectural relationship in a published document is drawn, never typed in box art",
+        "description": "A diagram made of box-drawing characters is a picture nothing can read — it cannot be rendered, linked, themed or checked against what it claims to describe, and on a phone it is the one element that cannot wrap. Every architectural relationship a published document states is a mermaid block; literal terminal output, file listings and quoted file content are not diagrams and are exempt by declaration.",
+        "path": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5441,
+        "tags": [
+          "documentation",
+          "diagrams",
+          "web",
+          "accessibility"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -51304,7 +51329,7 @@
         "path": ".ai/repo/rules/project/a-verdict-states-its-subject.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6121,
+        "bytes": 8066,
         "tags": [
           "evidence",
           "governance",
@@ -51430,7 +51455,7 @@
         "path": ".ai/repo/rules/project/commands-are-projections.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6819,
+        "bytes": 7395,
         "tags": [
           "commands",
           "projections",
@@ -51764,7 +51789,7 @@
         "path": ".ai/repo/rules/project/github-projection-gated.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3969,
+        "bytes": 3971,
         "tags": [
           "projection",
           "github",
@@ -51796,7 +51821,7 @@
         "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3861,
+        "bytes": 4494,
         "tags": [
           "architecture",
           "capabilities",
@@ -51851,6 +51876,23 @@
           "cli",
           "documentation",
           "projections"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.navigation-is-declared-once@1",
+        "kind": "rule",
+        "identity": "project.navigation-is-declared-once@1",
+        "title": "The site's navigation is declared once, and every projection derives from that declaration",
+        "description": "site/data/nav.toml is the one statement of what the site's navigation is — its groups, their items and the single call to action. Every surface that shows a route a visitor navigates to renders that file; no href is written twice in it, the primary navigation stays small enough to be a set of questions rather than a sitemap, and no template types a site route beside the declaration.",
+        "path": ".ai/repo/rules/project/navigation-is-declared-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6080,
+        "tags": [
+          "web",
+          "navigation",
+          "projections",
+          "documentation"
         ]
       },
       {
@@ -53002,7 +53044,7 @@
         "identity": "test/cases/101_command_graph.sh",
         "path": "test/cases/101_command_graph.sh",
         "source_class": "case",
-        "bytes": 11259
+        "bytes": 12197
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -53226,7 +53268,7 @@
         "identity": "test/cases/125_rule_proof.sh",
         "path": "test/cases/125_rule_proof.sh",
         "source_class": "case",
-        "bytes": 9698
+        "bytes": 10794
       },
       {
         "uri": "majordomus://test/test/cases/127_briefing_freshness.sh",
@@ -53346,7 +53388,7 @@
         "identity": "test/cases/132_health_sees_a_stopped_writer.sh",
         "path": "test/cases/132_health_sees_a_stopped_writer.sh",
         "source_class": "case",
-        "bytes": 5392
+        "bytes": 5413
       },
       {
         "uri": "majordomus://test/test/cases/133_plan_transition.sh",
@@ -53362,7 +53404,7 @@
         "identity": "test/cases/133_rule_graph.sh",
         "path": "test/cases/133_rule_graph.sh",
         "source_class": "case",
-        "bytes": 15852
+        "bytes": 15825
       },
       {
         "uri": "majordomus://test/test/cases/135_session_store_recovery.sh",
@@ -53610,7 +53652,7 @@
         "identity": "test/cases/230_verdict_states_its_subject.sh",
         "path": "test/cases/230_verdict_states_its_subject.sh",
         "source_class": "case",
-        "bytes": 8591
+        "bytes": 11556
       },
       {
         "uri": "majordomus://test/test/cases/23_context.sh",
@@ -53667,6 +53709,22 @@
         "path": "test/cases/271_adr_allocation.sh",
         "source_class": "case",
         "bytes": 8269
+      },
+      {
+        "uri": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
+        "kind": "test",
+        "identity": "test/cases/272_diagrams_are_drawn.sh",
+        "path": "test/cases/272_diagrams_are_drawn.sh",
+        "source_class": "case",
+        "bytes": 5154
+      },
+      {
+        "uri": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
+        "kind": "test",
+        "identity": "test/cases/273_navigation_is_declared_once.sh",
+        "path": "test/cases/273_navigation_is_declared_once.sh",
+        "source_class": "case",
+        "bytes": 8955
       },
       {
         "uri": "majordomus://test/test/cases/274_commit_policy.sh",
@@ -54362,7 +54420,7 @@
         "identity": "test/cases/97_pages_fast_path.sh",
         "path": "test/cases/97_pages_fast_path.sh",
         "source_class": "case",
-        "bytes": 12015
+        "bytes": 17139
       },
       {
         "uri": "majordomus://test/test/cases/97_product_features.sh",
@@ -55181,7 +55239,7 @@
         "id",
         "version"
       ],
-      "objects": 131
+      "objects": 133
     },
     {
       "name": "scope",
@@ -55236,7 +55294,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 193
+      "objects": 195
     },
     {
       "name": "use-case",
