@@ -24,6 +24,29 @@
 //! supports nothing it says so, which is the honest answer for a tree of unrelated edits
 //! that only a person can divide.
 
+//! ```
+//! use majordomus_cli::commit::{ChangeStage, PlanFingerprint, WorkingTreeState};
+//! use majordomus_cli::commit::plan::PathChange;
+//!
+//! let change = |path: &str, stage| PathChange {
+//!     path: path.into(), stage, status: "M.".into(), partial: false,
+//! };
+//! let tree = WorkingTreeState {
+//!     head: Some("a1b2c3d4e5f60718293a4b5c6d7e8f9012345678".into()),
+//!     changes: vec![change("src/a.rs", ChangeStage::Staged)],
+//!     ..WorkingTreeState::default()
+//! };
+//!
+//! // The same tree fingerprints the same way every time.
+//! let made = PlanFingerprint::of("/repo/.git", "/repo", &tree);
+//! assert!(made.differs_from(&PlanFingerprint::of("/repo/.git", "/repo", &tree)).is_none());
+//!
+//! // Another worktree of the same repository is a different subject, and is named as one.
+//! let elsewhere = PlanFingerprint::of("/repo/.git", "/repo-wt/feature/x", &tree);
+//! let why = made.differs_from(&elsewhere).expect("another worktree");
+//! assert!(why.contains("another worktree"), "{why}");
+//! ```
+
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::process::Command;
@@ -42,6 +65,12 @@ use crate::release::ChangeKind;
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+/// ```
+/// use majordomus_cli::commit::ChangeStage;
+/// // ordered so that what would be in the next commit sorts first
+/// assert!(ChangeStage::Staged < ChangeStage::Unstaged);
+/// assert!(ChangeStage::Unstaged < ChangeStage::Untracked);
+/// ```
 pub enum ChangeStage {
     /// Different in the index from HEAD: it would be in the next commit.
     Staged,
@@ -53,6 +82,15 @@ pub enum ChangeStage {
 
 /// One path, and where it stands.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::ChangeStage;
+/// use majordomus_cli::commit::plan::PathChange;
+/// // staged and modified again since: the commit would carry the staged half only
+/// let c = PathChange {
+///     path: "src/a.rs".into(), stage: ChangeStage::Staged, status: "MM".into(), partial: true,
+/// };
+/// assert!(c.partial);
+/// ```
 pub struct PathChange {
     /// Repository-relative, forward slashes.
     pub path: String,
@@ -69,6 +107,12 @@ pub struct PathChange {
 
 /// What git says about the working tree right now.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+/// ```
+/// use majordomus_cli::commit::WorkingTreeState;
+/// let clean = WorkingTreeState::default();
+/// assert!(clean.is_clean());
+/// assert!(clean.staged().is_empty());
+/// ```
 pub struct WorkingTreeState {
     /// The branch, or `None` when HEAD is detached.
     pub branch: Option<String>,
@@ -90,6 +134,17 @@ pub struct WorkingTreeState {
 
 impl WorkingTreeState {
     /// The paths that would be in a commit made right now.
+    /// ```
+    /// use majordomus_cli::commit::{ChangeStage, WorkingTreeState};
+    /// use majordomus_cli::commit::plan::PathChange;
+    /// let c = |p: &str, s| PathChange { path: p.into(), stage: s, status: "M.".into(), partial: false };
+    /// let tree = WorkingTreeState {
+    ///     changes: vec![c("a.rs", ChangeStage::Staged), c("b.rs", ChangeStage::Unstaged)],
+    ///     ..WorkingTreeState::default()
+    /// };
+    /// assert_eq!(tree.staged(), vec!["a.rs".to_string()]);
+    /// assert!(!tree.is_clean());
+    /// ```
     pub fn staged(&self) -> Vec<String> {
         self.changes
             .iter()
@@ -109,6 +164,11 @@ impl WorkingTreeState {
 /// Compared, never trusted: a plan whose fingerprint differs from the tree in front of it
 /// describes a tree that no longer exists.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::{PlanFingerprint, WorkingTreeState};
+/// let f = PlanFingerprint::of("/repo/.git", "/repo", &WorkingTreeState::default());
+/// assert_eq!(f.head, "unborn", "a repository with no commits says so");
+/// ```
 pub struct PlanFingerprint {
     /// The repository: git's common directory, which every worktree of one repository
     /// shares and no two repositories do.
@@ -125,6 +185,12 @@ pub struct PlanFingerprint {
 
 impl PlanFingerprint {
     /// The fingerprint of a tree as it stands.
+    /// ```
+    /// use majordomus_cli::commit::{PlanFingerprint, WorkingTreeState};
+    /// let a = PlanFingerprint::of("/r/.git", "/r", &WorkingTreeState::default());
+    /// let b = PlanFingerprint::of("/r/.git", "/r", &WorkingTreeState::default());
+    /// assert_eq!(a, b, "deterministic over one tree");
+    /// ```
     pub fn of(repository: &str, worktree: &str, tree: &WorkingTreeState) -> PlanFingerprint {
         let mut hasher = Sha256::new();
         for c in &tree.changes {
@@ -147,6 +213,18 @@ impl PlanFingerprint {
     ///
     /// A sentence rather than a boolean, because "the plan is stale" is not an answer
     /// anybody can act on and "HEAD moved from a1b2c3d to e4f5a6b" is.
+    /// ```
+    /// use majordomus_cli::commit::{PlanFingerprint, WorkingTreeState};
+    /// let mut then = WorkingTreeState::default();
+    /// then.head = Some("a1b2c3d4e5f6".into());
+    /// let mut now = then.clone();
+    /// now.head = Some("ffffffffffff".into());
+    /// let why = PlanFingerprint::of("/r/.git", "/r", &then)
+    ///     .differs_from(&PlanFingerprint::of("/r/.git", "/r", &now))
+    ///     .expect("HEAD moved");
+    /// // a sentence, because "the plan is stale" is not something anybody can act on
+    /// assert!(why.contains("HEAD moved"), "{why}");
+    /// ```
     pub fn differs_from(&self, now: &PlanFingerprint) -> Option<String> {
         if self.repository != now.repository {
             return Some(format!(
@@ -182,6 +260,19 @@ fn short(name: &str) -> &str {
 
 /// One commit a plan proposes.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// One commit a plan proposes: its message, its paths, and why those paths are one commit.
+///
+/// ```
+/// use majordomus_cli::commit::{plan::group, CommitGroup, ScopeVocabulary};
+/// let mut v = ScopeVocabulary::default();
+/// v.learn("commit", "src/commit", 40);
+/// let g: Vec<CommitGroup> = group(&["src/commit/a.rs".into()], &v, &[]);
+/// // the subject is empty on purpose: what a change did is the one thing no evidence in
+/// // the tree can state
+/// assert_eq!(g[0].message.header.subject, "");
+/// assert_eq!(g[0].message.header.scope.as_deref(), Some("commit"));
+/// assert!(g[0].rationale.contains("40 prior commit"), "{}", g[0].rationale);
+/// ```
 pub struct CommitGroup {
     /// The message as proposed. The summary is the one field a person is expected to
     /// replace: nothing here can know *why* a change was made, and a planner that wrote a
@@ -198,6 +289,16 @@ pub struct CommitGroup {
 
 /// A plan over a working tree.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::{CommitPlan, PlanFingerprint, WorkingTreeState};
+/// let plan = CommitPlan {
+///     fingerprint: PlanFingerprint::of("/r/.git", "/r", &WorkingTreeState::default()),
+///     tree: WorkingTreeState::default(),
+///     groups: Vec::new(),
+///     diagnostics: Vec::new(),
+/// };
+/// assert!(plan.groups.is_empty(), "a clean tree proposes nothing");
+/// ```
 pub struct CommitPlan {
     /// What the plan was derived from, and what makes it stale.
     pub fingerprint: PlanFingerprint,
@@ -216,6 +317,12 @@ pub struct CommitPlan {
 /// caller reports that, because "there is no working tree" is a different answer from "the
 /// working tree is clean" and a plan that confused the two would propose committing nothing
 /// in a directory that is not a repository.
+/// ```
+/// use majordomus_cli::commit::plan::working_tree;
+/// // "there is no working tree" and "the working tree is clean" are different answers
+/// let plain = tempfile::tempdir().expect("a temporary directory");
+/// assert!(working_tree(plain.path()).is_none());
+/// ```
 pub fn working_tree(root: &Path) -> Option<WorkingTreeState> {
     let out = Command::new("git")
         .arg("-C")
@@ -340,6 +447,13 @@ fn in_progress(root: &Path) -> Option<String> {
 /// difference between a feature, a fix and a refactor is in the diff's meaning and not in
 /// its file names, and a planner that guessed would be putting the wrong word in front of
 /// every commit in the history.
+/// ```
+/// use majordomus_cli::commit::plan::kind_of;
+/// use majordomus_cli::release::ChangeKind;
+/// assert_eq!(kind_of(&["docs/COMMIT.md".into()]), Some(ChangeKind::Docs));
+/// // a source change could be a feature, a fix or a refactor; the file names do not say
+/// assert_eq!(kind_of(&["src/a.rs".into()]), None);
+/// ```
 pub fn kind_of(paths: &[String]) -> Option<ChangeKind> {
     if paths.is_empty() {
         return None;
@@ -365,6 +479,12 @@ pub fn kind_of(paths: &[String]) -> Option<ChangeKind> {
 /// of defect this repository spends its time removing — and one that has already cost it
 /// once, when a hand-written glob claimed forty-five files of which the generator writes
 /// nine.
+/// ```
+/// use majordomus_cli::commit::plan::derived_among;
+/// let plain = tempfile::tempdir().expect("a temporary directory");
+/// // nothing to ask about is nothing derived, and git is never run
+/// assert!(derived_among(plain.path(), &[]).is_empty());
+/// ```
 pub fn derived_among(root: &Path, paths: &[String]) -> Vec<String> {
     if paths.is_empty() {
         return Vec::new();
@@ -403,6 +523,19 @@ pub fn derived_among(root: &Path, paths: &[String]) -> Vec<String> {
 /// `derived-current` hook then refuses, one commit at a time, after the split has already
 /// been made. The planner found this on its first run against its own change set, where it
 /// proposed putting twenty-three generated files in a commit of their own.
+/// ```
+/// use majordomus_cli::commit::{plan::group, ScopeVocabulary};
+/// let mut v = ScopeVocabulary::default();
+/// v.learn("alpha", "src/alpha", 40);
+/// v.learn("derive", "docs/generated", 180);
+/// let paths: Vec<String> = vec!["src/alpha/a.rs".into(), "docs/generated/x.json".into()];
+/// // without the derived-file rule the scopes alone would make two commits
+/// assert_eq!(group(&paths, &v, &[]).len(), 2);
+/// // with one of them generated, it is one, and the rationale names the rule that decided
+/// let one = group(&paths, &v, &["docs/generated/x.json".into()]);
+/// assert_eq!(one.len(), 1);
+/// assert!(one[0].rationale.contains("derived-files-regenerated"), "{}", one[0].rationale);
+/// ```
 pub fn group(
     paths: &[String],
     vocabulary: &ScopeVocabulary,
@@ -720,6 +853,12 @@ mod tests {
 /// The same separators the changelog reads the log with, for the same reason: a commit body
 /// may contain any arrangement of newlines, and a field separator git will not produce is
 /// the only way to tell where one ends.
+/// ```
+/// use majordomus_cli::commit::plan::messages_in;
+/// // a range git cannot resolve is None, not an empty history
+/// let plain = tempfile::tempdir().expect("a temporary directory");
+/// assert!(messages_in(plain.path(), "HEAD").is_none());
+/// ```
 pub fn messages_in(root: &Path, range: &str) -> Option<Vec<(String, String)>> {
     const FIELD: &str = "\u{1}";
     const RECORD: &str = "\u{2}";

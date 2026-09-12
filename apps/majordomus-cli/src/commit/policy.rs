@@ -28,6 +28,13 @@ use crate::model::Severity;
 /// apply to it has made a decision, and a decision is worth being able to read back.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "lowercase")]
+/// ```
+/// use majordomus_cli::commit::FindingLevel;
+/// // a repository that has turned a check off has made a decision, and it reads back
+/// let off: FindingLevel = serde_json::from_str("\"off\"").expect("a level");
+/// assert_eq!(off, FindingLevel::Off);
+/// assert_eq!(FindingLevel::default(), FindingLevel::Warning);
+/// ```
 pub enum FindingLevel {
     /// Never reported.
     Off,
@@ -42,6 +49,12 @@ pub enum FindingLevel {
 
 impl FindingLevel {
     /// The severity a finding at this level carries, or `None` when it is not reported.
+    /// ```
+    /// use majordomus_cli::commit::FindingLevel;
+    /// use majordomus_cli::Severity;
+    /// assert_eq!(FindingLevel::Off.severity(), None);
+    /// assert_eq!(FindingLevel::Error.severity(), Some(Severity::Error));
+    /// ```
     pub fn severity(self) -> Option<Severity> {
         match self {
             FindingLevel::Off => None,
@@ -52,8 +65,25 @@ impl FindingLevel {
     }
 }
 
-/// `commit:` in the repository policy.
+/// `commit:` in the repository policy: the subject width, and how loudly to report the four
+/// judgements a repository can reasonably decide differently about. The type vocabulary is
+/// deliberately absent — it is [`crate::release::ChangeKind`], which the changelog already
+/// renders from, and a second copy of those words here is the duplication this subsystem
+/// exists to remove.
+///
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::{CommitPolicy, FindingLevel};
+/// // a policy that says nothing is the default this repository's history already satisfies
+/// let quiet: CommitPolicy = serde_json::from_str("{}").expect("an empty block");
+/// assert_eq!(quiet, CommitPolicy::default());
+/// assert_eq!(quiet.subject_max_chars, 72);
+/// // and one that says something keeps the defaults it did not mention
+/// let narrow: CommitPolicy =
+///     serde_json::from_str(r#"{"subject_max_chars": 50}"#).expect("a block");
+/// assert_eq!(narrow.subject_max_chars, 50);
+/// assert_eq!(narrow.reference_unresolved, FindingLevel::Error);
+/// ```
 pub struct CommitPolicy {
     /// The widest a subject line may be. 72 is what a terminal and every git viewer show
     /// without wrapping, and what this repository's history already keeps to.

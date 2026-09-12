@@ -25,6 +25,14 @@ use super::CommitHeader;
 
 /// One `Key: value` line in the trailer block at the end of a commit message.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::CommitMessage;
+/// use majordomus_cli::commit::CommitTrailer;
+/// let m = CommitMessage::parse("fix(x): a thing\n\nWhy.\n\nRefs: I1305\n");
+/// let t: &CommitTrailer = &m.trailers[0];
+/// assert_eq!(t.key, "Refs");
+/// assert_eq!(t.value, "I1305");
+/// ```
 pub struct CommitTrailer {
     /// The key, as written: `Refs`, `Co-Authored-By`, `BREAKING CHANGE`.
     pub key: String,
@@ -34,6 +42,13 @@ pub struct CommitTrailer {
 
 /// A commit message taken apart: header, body, trailers.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::CommitMessage;
+/// let m = CommitMessage::parse("feat(a): a thing\n\nThe body.\n\nRefs: I1305\n");
+/// assert_eq!(m.header.subject, "a thing");
+/// assert_eq!(m.body, "The body.");
+/// assert_eq!(m.trailers.len(), 1);
+/// ```
 pub struct CommitMessage {
     /// The first line, parsed.
     pub header: CommitHeader,
@@ -79,6 +94,13 @@ fn trailer_of(line: &str) -> Option<CommitTrailer> {
 impl CommitMessage {
     /// Read a whole commit message. Total, like [`CommitHeader::parse`]: what cannot be read as a
     /// header or a trailer is body, and nothing is an error.
+    /// ```
+    /// use majordomus_cli::commit::CommitMessage;
+    /// // a last paragraph of prose is body, not trailers, even though git would disagree
+    /// let m = CommitMessage::parse("fix(x): a thing\n\nThe reason: it was wrong.");
+    /// assert!(m.trailers.is_empty());
+    /// assert_eq!(m.body, "The reason: it was wrong.");
+    /// ```
     pub fn parse(text: &str) -> CommitMessage {
         // A message given to `git commit` may carry comment lines; git strips them and so
         // does this, so that what is validated is what will be stored.
@@ -113,6 +135,12 @@ impl CommitMessage {
     }
 
     /// The value of the first trailer with this key, compared case-insensitively.
+    /// ```
+    /// use majordomus_cli::commit::CommitMessage;
+    /// let m = CommitMessage::parse("fix(x): a\n\nb\n\nCo-Authored-By: Someone <s@example.org>\n");
+    /// assert_eq!(m.trailer("co-authored-by"), Some("Someone <s@example.org>"));
+    /// assert_eq!(m.trailer("Refs"), None);
+    /// ```
     pub fn trailer(&self, key: &str) -> Option<&str> {
         self.trailers
             .iter()
@@ -135,6 +163,11 @@ impl CommitMessage {
 
     /// Render the message as git will store it: header, blank line, body, blank line,
     /// trailers, one final newline.
+    /// ```
+    /// use majordomus_cli::commit::CommitMessage;
+    /// let text = "feat(a)!: a thing\n\nWhy.\n\nRefs: I1305\n";
+    /// assert_eq!(CommitMessage::parse(text).render(), text);
+    /// ```
     pub fn render(&self) -> String {
         let mut out = self.header.render();
         if !self.body.is_empty() {

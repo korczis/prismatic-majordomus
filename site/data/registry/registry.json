@@ -6,7 +6,7 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "dd42fd819665502f1a26c73ad2b9d2b04ecb68778fec758fd3da47d583d0dd30",
+    "fingerprint": "3c9d19be27c5bdc598331a93f526c8564987854454cf753c3dcbe349095d622e",
     "summary": {
       "total": 1432,
       "builtin": 112,
@@ -3795,7 +3795,7 @@
                 "default": "HEAD"
               }
             },
-            "description": "Which range of history to judge.",
+            "description": "Which range of history to judge.\n```\nuse majordomus_cli::capability::builtin::commit::HistoryInput;\nlet h: HistoryInput = serde_json::from_str(\"{}\").expect(\"an empty input\");\nassert_eq!(h.range, \"HEAD\", \"the whole history reachable from here\");\n```",
             "title": "HistoryInput"
           }
         },
@@ -3841,7 +3841,7 @@
               "failing",
               "commits"
             ],
-            "description": "A range of history, judged.",
+            "description": "A range of history, judged.\nA range of history, judged in one pass.\n\n```\nuse majordomus_cli::commit::verdict::HistoryReport;\nlet r = HistoryReport {\n    range: \"HEAD\".into(),\n    total: 1755,\n    exempt: 561,\n    failing: 54,\n    commits: Vec::new(),\n};\n// a commit with nothing to say is counted and not listed: a report of a thousand\n// passing commits is a report nobody reads\nassert!(r.commits.is_empty());\nassert_eq!(r.total - r.exempt, 1194);\n```",
             "title": "HistoryReport",
             "$defs": {
               "JudgedCommit": {
@@ -3884,7 +3884,7 @@
                   "passed",
                   "findings"
                 ],
-                "description": "One commit of the history, judged."
+                "description": "One commit of the history, judged.\n```\nuse majordomus_cli::commit::verdict::JudgedCommit;\n// what a history report lists: only the commits that have something to say\nlet row = JudgedCommit {\n    commit: \"a1b2c3d4e\".into(),\n    subject: \"update stuff\".into(),\n    passed: false,\n    exempt: None,\n    findings: Vec::new(),\n};\nassert!(!row.passed);\n```"
               },
               "CommitExemption": {
                 "oneOf": [
@@ -3894,7 +3894,7 @@
                     "description": "git composed the subject: a merge, a revert, a fixup."
                   }
                 ],
-                "description": "Why a commit was not judged."
+                "description": "Why a commit was not judged.\n```\nuse majordomus_cli::commit::{judge, CommitExemption, CommitPolicy, CommitSubject};\nlet v = judge(&CommitSubject::of(\"Merge pull request #1 from a/b\"), &CommitPolicy::default());\nassert_eq!(v.exempt, Some(CommitExemption::GitAuthored));\n```"
               },
               "Diagnostic": {
                 "type": "object",
@@ -4038,7 +4038,7 @@
               "groups",
               "diagnostics"
             ],
-            "description": "A plan over a working tree.",
+            "description": "A plan over a working tree.\n```\nuse majordomus_cli::commit::{CommitPlan, PlanFingerprint, WorkingTreeState};\nlet plan = CommitPlan {\n    fingerprint: PlanFingerprint::of(\"/r/.git\", \"/r\", &WorkingTreeState::default()),\n    tree: WorkingTreeState::default(),\n    groups: Vec::new(),\n    diagnostics: Vec::new(),\n};\nassert!(plan.groups.is_empty(), \"a clean tree proposes nothing\");\n```",
             "title": "CommitPlan",
             "$defs": {
               "PlanFingerprint": {
@@ -4067,7 +4067,7 @@
                   "head",
                   "changes"
                 ],
-                "description": "What a plan was derived from.\n\nCompared, never trusted: a plan whose fingerprint differs from the tree in front of it\ndescribes a tree that no longer exists."
+                "description": "What a plan was derived from.\n\nCompared, never trusted: a plan whose fingerprint differs from the tree in front of it\ndescribes a tree that no longer exists.\n```\nuse majordomus_cli::commit::{PlanFingerprint, WorkingTreeState};\nlet f = PlanFingerprint::of(\"/repo/.git\", \"/repo\", &WorkingTreeState::default());\nassert_eq!(f.head, \"unborn\", \"a repository with no commits says so\");\n```"
               },
               "WorkingTreeState": {
                 "type": "object",
@@ -4125,7 +4125,7 @@
                   "behind",
                   "changes"
                 ],
-                "description": "What git says about the working tree right now."
+                "description": "What git says about the working tree right now.\n```\nuse majordomus_cli::commit::WorkingTreeState;\nlet clean = WorkingTreeState::default();\nassert!(clean.is_clean());\nassert!(clean.staged().is_empty());\n```"
               },
               "PathChange": {
                 "type": "object",
@@ -4152,7 +4152,7 @@
                   "stage",
                   "status"
                 ],
-                "description": "One path, and where it stands."
+                "description": "One path, and where it stands.\n```\nuse majordomus_cli::commit::ChangeStage;\nuse majordomus_cli::commit::plan::PathChange;\n// staged and modified again since: the commit would carry the staged half only\nlet c = PathChange {\n    path: \"src/a.rs\".into(), stage: ChangeStage::Staged, status: \"MM\".into(), partial: true,\n};\nassert!(c.partial);\n```"
               },
               "ChangeStage": {
                 "oneOf": [
@@ -4172,7 +4172,7 @@
                     "description": "Not tracked at all."
                   }
                 ],
-                "description": "Where one path stands between the index and the working tree."
+                "description": "Where one path stands between the index and the working tree.\n```\nuse majordomus_cli::commit::ChangeStage;\n// ordered so that what would be in the next commit sorts first\nassert!(ChangeStage::Staged < ChangeStage::Unstaged);\nassert!(ChangeStage::Unstaged < ChangeStage::Untracked);\n```"
               },
               "CommitGroup": {
                 "type": "object",
@@ -4209,7 +4209,7 @@
                   "paths",
                   "rationale"
                 ],
-                "description": "One commit a plan proposes."
+                "description": "One commit a plan proposes.\nOne commit a plan proposes: its message, its paths, and why those paths are one commit.\n\n```\nuse majordomus_cli::commit::{plan::group, CommitGroup, ScopeVocabulary};\nlet mut v = ScopeVocabulary::default();\nv.learn(\"commit\", \"src/commit\", 40);\nlet g: Vec<CommitGroup> = group(&[\"src/commit/a.rs\".into()], &v, &[]);\n// the subject is empty on purpose: what a change did is the one thing no evidence in\n// the tree can state\nassert_eq!(g[0].message.header.subject, \"\");\nassert_eq!(g[0].message.header.scope.as_deref(), Some(\"commit\"));\nassert!(g[0].rationale.contains(\"40 prior commit\"), \"{}\", g[0].rationale);\n```"
               },
               "CommitMessage": {
                 "type": "object",
@@ -4235,7 +4235,7 @@
                   "body",
                   "trailers"
                 ],
-                "description": "A commit message taken apart: header, body, trailers."
+                "description": "A commit message taken apart: header, body, trailers.\n```\nuse majordomus_cli::commit::CommitMessage;\nlet m = CommitMessage::parse(\"feat(a): a thing\\n\\nThe body.\\n\\nRefs: I1305\\n\");\nassert_eq!(m.header.subject, \"a thing\");\nassert_eq!(m.body, \"The body.\");\nassert_eq!(m.trailers.len(), 1);\n```"
               },
               "CommitHeader": {
                 "type": "object",
@@ -4270,7 +4270,7 @@
                   "breaking",
                   "subject"
                 ],
-                "description": "The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type."
+                "description": "The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type.\n```\nuse majordomus_cli::commit::CommitHeader;\nuse majordomus_cli::release::ChangeKind;\nlet h = CommitHeader::parse(\"fix(plan): the fingerprint names what moved\");\nassert_eq!(h.word, \"fix\");\nassert_eq!(h.kind, ChangeKind::Fix);\nassert_eq!(h.scope.as_deref(), Some(\"plan\"));\nassert!(!h.breaking);\nassert_eq!(h.subject, \"the fingerprint names what moved\");\n```"
               },
               "ReleaseChangeKind": {
                 "oneOf": [
@@ -4358,7 +4358,7 @@
                   "key",
                   "value"
                 ],
-                "description": "One `Key: value` line in the trailer block at the end of a commit message."
+                "description": "One `Key: value` line in the trailer block at the end of a commit message.\n```\nuse majordomus_cli::commit::CommitMessage;\nuse majordomus_cli::commit::CommitTrailer;\nlet m = CommitMessage::parse(\"fix(x): a thing\\n\\nWhy.\\n\\nRefs: I1305\\n\");\nlet t: &CommitTrailer = &m.trailers[0];\nassert_eq!(t.key, \"Refs\");\nassert_eq!(t.value, \"I1305\");\n```"
               },
               "ScopeSuggestion": {
                 "type": "object",
@@ -4388,7 +4388,7 @@
                   "directory",
                   "ambiguous"
                 ],
-                "description": "Which scope a set of paths belongs to, and the evidence for it."
+                "description": "Which scope a set of paths belongs to, and the evidence for it.\n```\nuse majordomus_cli::commit::{ScopeSuggestion, ScopeVocabulary};\nlet mut v = ScopeVocabulary::default();\n// two scopes with equal claim to one directory: reported, never broken silently\nv.learn(\"a\", \"src\", 7);\nv.learn(\"b\", \"src\", 7);\nlet s: ScopeSuggestion = v.suggest(&[\"src/x.rs\".into()]).expect(\"a tie\");\nassert!(s.ambiguous);\n```"
               },
               "Diagnostic": {
                 "type": "object",
@@ -4522,7 +4522,7 @@
               "vocabulary",
               "sample"
             ],
-            "description": "The vocabulary, with the policy that reads it.",
+            "description": "The vocabulary, with the policy that reads it.\n```\nuse majordomus_cli::capability::builtin::commit::ScopesReport;\nuse majordomus_cli::commit::ScopeVocabulary;\nlet r = ScopesReport { vocabulary: ScopeVocabulary::default(), sample: 1500 };\nassert_eq!(r.sample, majordomus_cli::commit::scopes::SAMPLE);\n```",
             "title": "ScopesReport",
             "$defs": {
               "ScopeVocabulary": {
@@ -4553,7 +4553,7 @@
                   "scopes",
                   "sampled"
                 ],
-                "description": "The vocabulary as observed, with what was observed."
+                "description": "The vocabulary as observed, with what was observed.\n```\nuse majordomus_cli::commit::ScopeVocabulary;\n// an empty vocabulary knows nothing and says so, rather than guessing\nlet v = ScopeVocabulary::default();\nassert!(!v.knows(\"anything\"));\nassert!(v.words().is_empty());\n```"
               },
               "ScopeUse": {
                 "type": "object",
@@ -4581,7 +4581,7 @@
                   "commits",
                   "directories"
                 ],
-                "description": "One scope the history uses, and how much."
+                "description": "One scope the history uses, and how much.\n```\nuse majordomus_cli::commit::scopes::ScopeUse;\nlet u = ScopeUse { scope: \"commit\".into(), commits: 40, directories: vec![\"src/commit\".into()] };\nassert_eq!(u.commits, 40);\n```"
               }
             }
           }
@@ -4661,7 +4661,7 @@
             "required": [
               "message"
             ],
-            "description": "A message to judge, and what is known about the commit it would make.",
+            "description": "A message to judge, and what is known about the commit it would make.\n```\nuse majordomus_cli::capability::builtin::commit::ValidateInput;\n// paths are optional: a caller that does not know them gets the judgements that need\n// none, rather than a guess\nlet v: ValidateInput = serde_json::from_str(r#\"{\"message\": \"feat(a): a thing\"}\"#).unwrap();\nassert!(v.paths.is_none());\n```",
             "title": "ValidateInput"
           }
         },
@@ -4702,7 +4702,7 @@
               "passed",
               "findings"
             ],
-            "description": "What the judge concluded.",
+            "description": "What the judge concluded: the message as it was parsed, whether anything of error\nseverity was found, the exemption when git composed the subject rather than a person, and\nevery finding in [`CommitRule::ALL`] order — which is the order the evidence for them\nappears in the message, so a person reads them in the order they would fix them.\n\n```\nuse majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};\nlet v: CommitVerdict = judge(&CommitSubject::of(\"update stuff\"), &CommitPolicy::default());\nassert!(!v.passed);\nassert_eq!(v.findings[0].code, \"commit.not_conventional\");\nassert_eq!(v.message.header.subject, \"update stuff\", \"what was judged, not what was typed\");\n```",
             "title": "CommitVerdict",
             "$defs": {
               "CommitMessage": {
@@ -4729,7 +4729,7 @@
                   "body",
                   "trailers"
                 ],
-                "description": "A commit message taken apart: header, body, trailers."
+                "description": "A commit message taken apart: header, body, trailers.\n```\nuse majordomus_cli::commit::CommitMessage;\nlet m = CommitMessage::parse(\"feat(a): a thing\\n\\nThe body.\\n\\nRefs: I1305\\n\");\nassert_eq!(m.header.subject, \"a thing\");\nassert_eq!(m.body, \"The body.\");\nassert_eq!(m.trailers.len(), 1);\n```"
               },
               "CommitHeader": {
                 "type": "object",
@@ -4764,7 +4764,7 @@
                   "breaking",
                   "subject"
                 ],
-                "description": "The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type."
+                "description": "The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type.\n```\nuse majordomus_cli::commit::CommitHeader;\nuse majordomus_cli::release::ChangeKind;\nlet h = CommitHeader::parse(\"fix(plan): the fingerprint names what moved\");\nassert_eq!(h.word, \"fix\");\nassert_eq!(h.kind, ChangeKind::Fix);\nassert_eq!(h.scope.as_deref(), Some(\"plan\"));\nassert!(!h.breaking);\nassert_eq!(h.subject, \"the fingerprint names what moved\");\n```"
               },
               "ReleaseChangeKind": {
                 "oneOf": [
@@ -4852,7 +4852,7 @@
                   "key",
                   "value"
                 ],
-                "description": "One `Key: value` line in the trailer block at the end of a commit message."
+                "description": "One `Key: value` line in the trailer block at the end of a commit message.\n```\nuse majordomus_cli::commit::CommitMessage;\nuse majordomus_cli::commit::CommitTrailer;\nlet m = CommitMessage::parse(\"fix(x): a thing\\n\\nWhy.\\n\\nRefs: I1305\\n\");\nlet t: &CommitTrailer = &m.trailers[0];\nassert_eq!(t.key, \"Refs\");\nassert_eq!(t.value, \"I1305\");\n```"
               },
               "CommitExemption": {
                 "oneOf": [
@@ -4862,7 +4862,7 @@
                     "description": "git composed the subject: a merge, a revert, a fixup."
                   }
                 ],
-                "description": "Why a commit was not judged."
+                "description": "Why a commit was not judged.\n```\nuse majordomus_cli::commit::{judge, CommitExemption, CommitPolicy, CommitSubject};\nlet v = judge(&CommitSubject::of(\"Merge pull request #1 from a/b\"), &CommitPolicy::default());\nassert_eq!(v.exempt, Some(CommitExemption::GitAuthored));\n```"
               },
               "Diagnostic": {
                 "type": "object",
@@ -40583,7 +40583,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3df5466eb85f25dadca2db48d3a730baadc4c90259d4af9798a41560155d5ab8",
+    "fingerprint": "60b0460fac462092783c55eef28a557a07ea24f170bd8b5390205901a3c6824a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

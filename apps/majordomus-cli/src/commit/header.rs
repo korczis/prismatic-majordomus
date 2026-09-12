@@ -50,6 +50,16 @@ use crate::release::ChangeKind;
 /// keeping both is what lets a reader see `wip(site): halfway through` as its author typed
 /// it while a judge still reports that `wip` is not a type.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::CommitHeader;
+/// use majordomus_cli::release::ChangeKind;
+/// let h = CommitHeader::parse("fix(plan): the fingerprint names what moved");
+/// assert_eq!(h.word, "fix");
+/// assert_eq!(h.kind, ChangeKind::Fix);
+/// assert_eq!(h.scope.as_deref(), Some("plan"));
+/// assert!(!h.breaking);
+/// assert_eq!(h.subject, "the fingerprint names what moved");
+/// ```
 pub struct CommitHeader {
     /// The type as written: `feat`, `fix`, `wip`, or the empty string when the subject
     /// carries no `type: ` head at all.
@@ -70,6 +80,15 @@ pub struct CommitHeader {
 
 impl CommitHeader {
     /// Read one subject line. Never fails; see the module documentation for why.
+    /// ```
+    /// use majordomus_cli::commit::CommitHeader;
+    /// // a conventional subject comes apart
+    /// assert_eq!(CommitHeader::parse("docs: one line").subject, "one line");
+    /// // and one that is not is carried whole rather than split at a colon in the sentence
+    /// let m = CommitHeader::parse("Merge branch 'x' of host: into y");
+    /// assert_eq!(m.word, "");
+    /// assert_eq!(m.subject, "Merge branch 'x' of host: into y");
+    /// ```
     pub fn parse(subject: &str) -> CommitHeader {
         let line = subject.trim_end_matches(['\r', '\n']);
         let Some((head, rest)) = line.split_once(": ") else {

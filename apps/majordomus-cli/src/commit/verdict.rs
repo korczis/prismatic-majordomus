@@ -49,6 +49,13 @@ use crate::release::ChangeKind;
 /// name and a test can assert on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+/// ```
+/// use majordomus_cli::commit::CommitRule;
+/// // every rule has a stable code, and the order is the order a person would fix them in
+/// assert_eq!(CommitRule::NotConventional.code(), "commit.not_conventional");
+/// assert_eq!(CommitRule::ALL.first(), Some(&CommitRule::NotConventional));
+/// assert!(CommitRule::ALL.iter().all(|r| r.code().starts_with("commit.")));
+/// ```
 pub enum CommitRule {
     /// The header is not `type(scope): subject`.
     NotConventional,
@@ -106,6 +113,11 @@ impl CommitRule {
 /// Why a commit was not judged.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+/// ```
+/// use majordomus_cli::commit::{judge, CommitExemption, CommitPolicy, CommitSubject};
+/// let v = judge(&CommitSubject::of("Merge pull request #1 from a/b"), &CommitPolicy::default());
+/// assert_eq!(v.exempt, Some(CommitExemption::GitAuthored));
+/// ```
 pub enum CommitExemption {
     /// git composed the subject: a merge, a revert, a fixup.
     GitAuthored,
@@ -118,6 +130,19 @@ pub enum CommitExemption {
 /// files, a gate reading history does not, and a judge that demanded both would have to be
 /// two judges.
 #[derive(Debug, Clone, Default)]
+/// ```
+/// use majordomus_cli::commit::{judge, CommitPolicy, CommitSubject};
+/// // the two optional halves are the two a caller may not have: a hook knows the staged
+/// // files, a gate reading history does not
+/// let hook = CommitSubject {
+///     text: "fix(a): a thing".into(),
+///     paths: Some(vec!["src/a.rs".into()]),
+///     ..CommitSubject::default()
+/// };
+/// assert_eq!(judge(&hook, &CommitPolicy::default()).findings.len(), 1);
+/// let gate = CommitSubject::of("fix(a): a thing");
+/// assert!(judge(&gate, &CommitPolicy::default()).findings.is_empty());
+/// ```
 pub struct CommitSubject {
     /// The message as it will be stored.
     pub text: String,
@@ -131,6 +156,12 @@ pub struct CommitSubject {
 
 impl CommitSubject {
     /// A subject that is only a message: the judgements that need no other evidence.
+    /// ```
+    /// use majordomus_cli::commit::CommitSubject;
+    /// let s = CommitSubject::of("feat(a): a thing");
+    /// assert!(s.paths.is_none(), "a judgement needing paths is not made rather than guessed");
+    /// assert!(s.scopes.is_none());
+    /// ```
     pub fn of(text: &str) -> CommitSubject {
         CommitSubject {
             text: text.to_string(),
@@ -139,8 +170,19 @@ impl CommitSubject {
     }
 }
 
-/// What the judge concluded.
+/// What the judge concluded: the message as it was parsed, whether anything of error
+/// severity was found, the exemption when git composed the subject rather than a person, and
+/// every finding in [`CommitRule::ALL`] order — which is the order the evidence for them
+/// appears in the message, so a person reads them in the order they would fix them.
+///
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};
+/// let v: CommitVerdict = judge(&CommitSubject::of("update stuff"), &CommitPolicy::default());
+/// assert!(!v.passed);
+/// assert_eq!(v.findings[0].code, "commit.not_conventional");
+/// assert_eq!(v.message.header.subject, "update stuff", "what was judged, not what was typed");
+/// ```
 pub struct CommitVerdict {
     /// The message as parsed; what was judged, not what was typed.
     pub message: CommitMessage,
@@ -169,6 +211,17 @@ fn is_test_path(path: &str) -> bool {
 }
 
 /// Judge one commit.
+/// Judge one commit against `policy`.
+///
+/// ```
+/// use majordomus_cli::commit::{judge, CommitPolicy, CommitSubject};
+/// let p = CommitPolicy::default();
+/// // a well-formed subject has nothing said about it
+/// assert!(judge(&CommitSubject::of("feat(commit): a subject"), &p).findings.is_empty());
+/// // an id the layer does not hold is an error, because nothing may be invented
+/// let invented = CommitSubject { text: "fix(a): under I9999".into(), ..CommitSubject::default() };
+/// assert!(!judge(&invented, &p).passed);
+/// ```
 pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
     let message = CommitMessage::parse(&subject.text);
     let head = &message.header;
@@ -529,6 +582,18 @@ mod tests {
 
 /// One commit of the history, judged.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::verdict::JudgedCommit;
+/// // what a history report lists: only the commits that have something to say
+/// let row = JudgedCommit {
+///     commit: "a1b2c3d4e".into(),
+///     subject: "update stuff".into(),
+///     passed: false,
+///     exempt: None,
+///     findings: Vec::new(),
+/// };
+/// assert!(!row.passed);
+/// ```
 pub struct JudgedCommit {
     /// The commit name, as git gave it.
     pub commit: String,
@@ -545,6 +610,22 @@ pub struct JudgedCommit {
 
 /// A range of history, judged.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// A range of history, judged in one pass.
+///
+/// ```
+/// use majordomus_cli::commit::verdict::HistoryReport;
+/// let r = HistoryReport {
+///     range: "HEAD".into(),
+///     total: 1755,
+///     exempt: 561,
+///     failing: 54,
+///     commits: Vec::new(),
+/// };
+/// // a commit with nothing to say is counted and not listed: a report of a thousand
+/// // passing commits is a report nobody reads
+/// assert!(r.commits.is_empty());
+/// assert_eq!(r.total - r.exempt, 1194);
+/// ```
 pub struct HistoryReport {
     /// The range as asked for.
     pub range: String,

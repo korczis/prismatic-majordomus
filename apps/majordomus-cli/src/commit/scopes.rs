@@ -27,6 +27,24 @@
 //! It is read when a commit is being planned or judged, which is a moment that already
 //! involves a person waiting for git.
 
+//! ```
+//! use majordomus_cli::commit::ScopeVocabulary;
+//!
+//! // A vocabulary is normally learned with `derive`; stated directly it reads the same.
+//! let mut v = ScopeVocabulary::default();
+//! v.learn("commit", "apps/majordomus-cli/src/commit", 40);
+//! v.learn("site", "site/content", 90);
+//!
+//! let s = v.suggest(&["apps/majordomus-cli/src/commit/plan.rs".into()]).expect("an association");
+//! assert_eq!(s.scope, "commit");
+//! assert_eq!(s.commits, 40, "the association, not the vote weight");
+//! assert!(!s.ambiguous);
+//!
+//! // and a path nothing in the history scopes is answered with nothing, never with the
+//! // repository's most popular scope
+//! assert!(v.suggest(&["brand/new/thing.rs".into()]).is_none());
+//! ```
+
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::process::Command;
@@ -54,6 +72,11 @@ const PREFIX_DEPTH: usize = 4;
 
 /// One scope the history uses, and how much.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::scopes::ScopeUse;
+/// let u = ScopeUse { scope: "commit".into(), commits: 40, directories: vec!["src/commit".into()] };
+/// assert_eq!(u.commits, 40);
+/// ```
 pub struct ScopeUse {
     /// The scope word, as commits spell it.
     pub scope: String,
@@ -65,6 +88,13 @@ pub struct ScopeUse {
 
 /// The vocabulary as observed, with what was observed.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+/// ```
+/// use majordomus_cli::commit::ScopeVocabulary;
+/// // an empty vocabulary knows nothing and says so, rather than guessing
+/// let v = ScopeVocabulary::default();
+/// assert!(!v.knows("anything"));
+/// assert!(v.words().is_empty());
+/// ```
 pub struct ScopeVocabulary {
     /// Every scope, by how often it is used, then by name. The order is the answer to
     /// "which scopes does this repository use", so it is the order a person reads.
@@ -82,6 +112,15 @@ pub struct ScopeVocabulary {
 
 /// Which scope a set of paths belongs to, and the evidence for it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::commit::{ScopeSuggestion, ScopeVocabulary};
+/// let mut v = ScopeVocabulary::default();
+/// // two scopes with equal claim to one directory: reported, never broken silently
+/// v.learn("a", "src", 7);
+/// v.learn("b", "src", 7);
+/// let s: ScopeSuggestion = v.suggest(&["src/x.rs".into()]).expect("a tie");
+/// assert!(s.ambiguous);
+/// ```
 pub struct ScopeSuggestion {
     /// The scope.
     pub scope: String,
@@ -111,6 +150,15 @@ fn prefixes(path: &str) -> Vec<String> {
 ///
 /// Never fails: a directory that is not a work tree, a repository with no commits and a
 /// missing `git` all yield an empty vocabulary that says why.
+/// ```
+/// use majordomus_cli::commit::scopes::derive;
+/// // a directory that is not a work tree yields an empty vocabulary that says why,
+/// // never an empty one that looks like a repository with no conventions
+/// let plain = tempfile::tempdir().expect("a temporary directory");
+/// let v = derive(plain.path());
+/// assert!(v.scopes.is_empty());
+/// assert!(v.unavailable.is_some());
+/// ```
 pub fn derive(root: &Path) -> ScopeVocabulary {
     // One `git log`, formatted so that a subject and the names it touched arrive together.
     // `%x00` separates the two, and a record separator git will not produce delimits the
@@ -210,6 +258,13 @@ impl ScopeVocabulary {
     /// [`derive`] is how a vocabulary is normally built, from the history. This is the same
     /// association stated directly, for a caller that has the evidence by another route —
     /// and for tests, which must be able to state a history rather than construct one.
+    /// ```
+    /// use majordomus_cli::commit::ScopeVocabulary;
+    /// let mut v = ScopeVocabulary::default();
+    /// v.learn("commit", "src/commit", 12);
+    /// v.learn("commit", "src/commit", 5);
+    /// assert_eq!(v.suggest(&["src/commit/a.rs".into()]).expect("known").commits, 17);
+    /// ```
     pub fn learn(&mut self, scope: &str, prefix: &str, commits: usize) {
         *self
             .association
@@ -218,11 +273,24 @@ impl ScopeVocabulary {
     }
 
     /// Whether the history has used this scope.
+    /// ```
+    /// use majordomus_cli::commit::{scopes::ScopeUse, ScopeVocabulary};
+    /// let mut v = ScopeVocabulary::default();
+    /// v.scopes.push(ScopeUse { scope: "commit".into(), commits: 1, directories: vec![] });
+    /// assert!(v.knows("commit"));
+    /// assert!(!v.knows("nonesuch"));
+    /// ```
     pub fn knows(&self, scope: &str) -> bool {
         self.scopes.iter().any(|s| s.scope == scope)
     }
 
     /// The scope words alone, in vocabulary order.
+    /// ```
+    /// use majordomus_cli::commit::{scopes::ScopeUse, ScopeVocabulary};
+    /// let mut v = ScopeVocabulary::default();
+    /// v.scopes.push(ScopeUse { scope: "site".into(), commits: 9, directories: vec![] });
+    /// assert_eq!(v.words(), vec!["site".to_string()]);
+    /// ```
     pub fn words(&self) -> Vec<String> {
         self.scopes.iter().map(|s| s.scope.clone()).collect()
     }
@@ -234,6 +302,15 @@ impl ScopeVocabulary {
     /// which is the honest answer for the first commit of a new subsystem, and is better
     /// than the most popular scope in the repository, which is what a tie-break to
     /// frequency would produce.
+    /// ```
+    /// use majordomus_cli::commit::ScopeVocabulary;
+    /// let mut v = ScopeVocabulary::default();
+    /// // the deepest association wins over the busiest directory two levels up
+    /// v.learn("commit", "apps/cli/src/commit", 12);
+    /// v.learn("everything", "apps", 900);
+    /// let s = v.suggest(&["apps/cli/src/commit/a.rs".into()]).expect("an association");
+    /// assert_eq!(s.scope, "commit");
+    /// ```
     pub fn suggest(&self, paths: &[String]) -> Option<ScopeSuggestion> {
         // Each path votes once, at the deepest prefix that anything is associated with, so
         // that a change inside one subsystem is not outvoted by the repository's busiest

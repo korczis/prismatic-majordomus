@@ -56,3 +56,68 @@ pub use plan::{ChangeStage, CommitGroup, CommitPlan, PlanFingerprint, WorkingTre
 pub use policy::{CommitPolicy, FindingLevel};
 pub use scopes::{ScopeSuggestion, ScopeVocabulary};
 pub use verdict::{judge, CommitExemption, CommitRule, CommitSubject, CommitVerdict};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The four parts compose into one answer, which is the only thing this module is
+    /// responsible for: everything else is asserted beside the code that does it.
+    ///
+    /// The property under test is that a message *authored* as a value, rendered, parsed
+    /// back and judged is the same commit throughout — because that is what lets the planner
+    /// propose a message, the hook judge the rendered text, and the changelog read it back
+    /// months later without any of the three holding its own idea of what a commit is.
+    #[test]
+    fn a_message_authored_as_a_value_survives_being_rendered_parsed_and_judged() {
+        let authored = CommitMessage {
+            header: CommitHeader {
+                word: "feat".into(),
+                kind: crate::release::ChangeKind::Feat,
+                scope: Some("commit".into()),
+                breaking: false,
+                subject: "the value is the same at every step".into(),
+            },
+            body: "Why it was written this way.".into(),
+            trailers: vec![CommitTrailer {
+                key: "Co-Authored-By".into(),
+                value: "Someone <s@example.org>".into(),
+            }],
+        };
+
+        let rendered = authored.render();
+        let parsed = CommitMessage::parse(&rendered);
+        assert_eq!(parsed, authored, "the round trip is exact");
+
+        let verdict = judge(&CommitSubject::of(&rendered), &CommitPolicy::default());
+        assert!(verdict.passed, "{:?}", verdict.findings);
+        assert_eq!(
+            verdict.message.header.subject, authored.header.subject,
+            "the judge read the same commit the author wrote"
+        );
+
+        // and the changelog's reader, which is a different caller of the same grammar,
+        // agrees about every field it carries
+        let change = crate::release::commits::parse("abc123456", &authored.header.render(), "");
+        assert_eq!(change.kind, authored.header.kind);
+        assert_eq!(change.scope, authored.header.scope);
+        assert_eq!(change.subject, authored.header.subject);
+        assert_eq!(change.breaking, authored.header.breaking);
+    }
+
+    /// A subject nobody spelled conventionally reaches both readers, and they disagree only
+    /// about what to do with it. That disagreement is the design; a test that did not state
+    /// it would leave the next person free to "fix" one of the two.
+    #[test]
+    fn the_changelog_carries_what_the_judge_refuses() {
+        let subject = "update stuff";
+        let change = crate::release::commits::parse("abc123456", subject, "");
+        assert_eq!(
+            change.subject, subject,
+            "the changelog keeps it whole: dropping it would lie about what the release holds"
+        );
+        let verdict = judge(&CommitSubject::of(subject), &CommitPolicy::default());
+        assert!(!verdict.passed, "the judge reports it");
+        assert_eq!(verdict.findings.len(), 1, "and reports it once");
+    }
+}

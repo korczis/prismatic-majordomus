@@ -14,6 +14,18 @@
 //! this repository chose, and the commit subsystem is shaped to it — which is why the
 //! planner and the judge are pure functions of a tree and a message.
 
+//! ```
+//! use majordomus_cli::capability::builtin::commit::module;
+//!
+//! // The declaration is the only place these names exist; every surface derives from it.
+//! let m = module();
+//! assert_eq!(m.id.as_str(), "commit");
+//! let plan = m.capabilities.iter().find(|e| e.capability.id.as_str() == "commit.plan").unwrap();
+//! let exposure = &plan.capability.exposure;
+//! assert_eq!(exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()), Some("majordomus_commit_plan"));
+//! assert_eq!(exposure.http.as_ref().map(|h| h.path.as_str()), Some("/api/v1/commit/plan"));
+//! ```
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -63,6 +75,12 @@ fn records(ctx: &Context) -> Vec<String> {
 
 /// The vocabulary, with the policy that reads it.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// ```
+/// use majordomus_cli::capability::builtin::commit::ScopesReport;
+/// use majordomus_cli::commit::ScopeVocabulary;
+/// let r = ScopesReport { vocabulary: ScopeVocabulary::default(), sample: 1500 };
+/// assert_eq!(r.sample, majordomus_cli::commit::scopes::SAMPLE);
+/// ```
 pub struct ScopesReport {
     /// Every scope the history uses, most used first, with the directories it is used about.
     pub vocabulary: ScopeVocabulary,
@@ -142,6 +160,13 @@ pub(super) fn plan(ctx: &Context, _: Empty) -> Result<CommitPlan, CapabilityErro
 /// A message to judge, and what is known about the commit it would make.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+/// ```
+/// use majordomus_cli::capability::builtin::commit::ValidateInput;
+/// // paths are optional: a caller that does not know them gets the judgements that need
+/// // none, rather than a guess
+/// let v: ValidateInput = serde_json::from_str(r#"{"message": "feat(a): a thing"}"#).unwrap();
+/// assert!(v.paths.is_none());
+/// ```
 pub struct ValidateInput {
     /// The commit message, as it would be stored. Comment lines are ignored, as git ignores
     /// them, so what is judged is what would be committed.
@@ -204,6 +229,11 @@ pub(super) fn validate(
 /// Which range of history to judge.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+/// ```
+/// use majordomus_cli::capability::builtin::commit::HistoryInput;
+/// let h: HistoryInput = serde_json::from_str("{}").expect("an empty input");
+/// assert_eq!(h.range, "HEAD", "the whole history reachable from here");
+/// ```
 pub struct HistoryInput {
     /// Anything `git log` accepts: `origin/master..HEAD`, `v0.6.0..`, a bare `HEAD`.
     /// Default `HEAD`, which is the whole history reachable from here.
@@ -283,6 +313,14 @@ pub(super) fn history(
 }
 
 /// The module.
+/// The module: three read-only capabilities over the commit domain, plus the range judge.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::commit::module;
+/// use majordomus_cli::capability::Effect;
+/// // nothing here writes the repository; making a commit stays with the person
+/// assert!(module().capabilities.iter().all(|e| e.capability.execution.effect == Effect::Read));
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "commit",
