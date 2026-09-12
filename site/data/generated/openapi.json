@@ -11773,6 +11773,13 @@
           "type": "boolean"
         },
         {
+          "description": "True when the gate measures the deployment rather than the tree, so no change to\nany file can select it and the path classes can never reach it. `finish` asks it\ninstead: the question \"is what the public is being served still a projection of\nthe trunk\" has no answer a commit can give, and its moment is when a session\nclaims to be done.",
+          "name": "at-finish",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
           "description": "Gates that are selected whenever this one is.",
           "name": "implies",
           "refs": [],

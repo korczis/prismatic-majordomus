@@ -113,8 +113,8 @@ benchmark:
     p95: 0.5
     p99: 0.6
   budget:                # doctor and watch report their own wall time against these (WARN, never the exit code)
-    doctor_ms: 3000
-    watch_ms: 3000
+    doctor_ms: 20000     # the skeleton's values, measured on a freshly adopted repository
+    watch_ms: 20000      # re-derive with `majordomus bench` once your catalogue has grown
 
 enforcement:                             # what doctor reconciles; each must be wired
   - name: doctor-on-commit

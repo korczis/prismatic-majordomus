@@ -1214,11 +1214,35 @@
         "majordomus.obligation-closure@1"
       ],
       "source": "share/standard/majordomus/rules/completion-gates.v1.md"
+    },
+    {
+      "id": "majordomus.publication-currency",
+      "slug": "publication-currency",
+      "title": "A session does not finish behind its own published site",
+      "class": "blocking",
+      "principle": "",
+      "statement": "A gate the CI model marks at-finish measures the deployment rather than the tree, so no path class can select it; finish runs it live and refuses the outcome completed while it reports the publication is not a projection of the trunk. It is measured, never recorded: evidence about a live site expires with the site and not with a file hash.",
+      "summary": "A repository that publishes has a second tree — the one the public is being served — and no commit-level gate can measure it, because no change to any file can make it right or wrong. A session that lands work and leaves the publication owed has finished nothing the public can see, and every check stays green while that is true. The gates that measure a deployment are declared as such in the CI model, and finish asks them.",
+      "validator": "publication_currency",
+      "validator_function": "mj_validate_publication_currency",
+      "defined_in": "lib/gates.sh",
+      "category": "gate",
+      "enforced_by": [
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "publication_current",
+      "claims": [],
+      "test": "test/cases/275_publication_is_current.sh",
+      "depends_on": [
+        "majordomus.completion-gates@1"
+      ],
+      "source": "share/standard/majordomus/rules/publication-currency.v1.md"
     }
   ],
   "counts": {
-    "declared": 44,
-    "blocking": 39,
+    "declared": 45,
+    "blocking": 40,
     "advisory": 5
   },
   "index": {
@@ -1265,6 +1289,7 @@
     "majordomus.use-case-coverage": 40,
     "majordomus.verification-integrity": 41,
     "majordomus.obligation-closure": 42,
-    "majordomus.completion-gates": 43
+    "majordomus.completion-gates": 43,
+    "majordomus.publication-currency": 44
   }
 }
