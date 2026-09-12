@@ -154,7 +154,7 @@ gates:
   - id: rule-proof
     job: structure
     runs: scripts/ci/rule-proof-check
-    summary: every rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, and a named case that was renamed or deleted fails outright
+    summary: every blocking rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, a named case that was renamed or deleted fails outright, and the verdict names the population it is not about (claims are the claim-proof gate)
 
   # A grep over the tree, so it costs nothing and runs in every plan: a second parser of
   # the lease can be introduced from a shell script, a recipe, a hook or the crate, and no
@@ -165,16 +165,18 @@ gates:
     runs: scripts/ci/lease-reader-check
     summary: the shared server's lease is parsed by the one typed reader the executable owns; a second parser anywhere but documentation and the tests is refused
 
-  # A promise names a proof a machine can follow: a rule declared blocking with a validator
-  # or a Verification path that runs, a guaranteed claim whose test names the claim back.
-  # File reads only — the rule front matter and docs/CLAIMS.yaml — so it belongs beside the
-  # other structure checks and needs no build. The debt is ratcheted in
-  # .ai/repo/enforcement-baseline.txt; the gate fails on a new promise, not on the known ones.
-  - id: enforcement
+  # A claim marked guaranteed names a test, and the test names the claim back. The other end
+  # of the promise — a rule declared blocking that names no proof — is the `rule-proof` gate
+  # above and is not measured here; this gate carried a weaker duplicate of it until the two
+  # verdicts were read as contradicting each other. File reads only (docs/CLAIMS.yaml and the
+  # tests it names), so it belongs beside the other structure checks and needs no build. The
+  # debt is ratcheted in .ai/repo/claim-proof-baseline.txt; the gate fails on a new claim, not
+  # on the known ones.
+  - id: claim-proof
     job: structure
     always: true
-    runs: scripts/ci/enforcement-check
-    summary: a rule declared blocking and a claim marked guaranteed each name something that runs; both halves state their denominator, and neither set may grow
+    runs: scripts/ci/claim-proof-check
+    summary: a claim marked guaranteed names a test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and the set may not grow
 
   - id: rust-quality
     job: structure
@@ -427,8 +429,8 @@ classes:
   # class, so both apply, and the vendored package under share/ is selected here too —
   # `share` does not name it and a doctrine's proof can go stale exactly like a rule's.
   - id: governance
-    paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, apps/majordomus-cli/src/rules/**]
-    gates: [rule-proof, english-only, finding-reproduce, shell-suite, rust-integration]
+    paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/claim-proof-check, .ai/repo/claim-proof-baseline.txt, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, test/cases/230_verdict_states_its_subject.sh, apps/majordomus-cli/src/rules/**]
+    gates: [rule-proof, claim-proof, english-only, finding-reproduce, shell-suite, rust-integration]
 
   # the evidence fabric: the ledger of recorded executions, the join that reads it and the
   # gate that ratchets it. A claim's proof is derived from the matrix and the ledger
