@@ -462,7 +462,7 @@ commands:
 
   - id: adr
     title: adr
-    summary: "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set."
+    summary: "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref."
     category: memory
     stage: conclude
     visibility: public
@@ -471,12 +471,12 @@ commands:
     requires_installed: true
     requires_task: none
     json: true
-    syntax: majordomus adr <list|show <id>|propose "<title>"|check> [--json]
+    syntax: majordomus adr <list|show <id>|next|propose "<title>"|check|affected> [--json]
     reads: [.ai/repo/adrs/, .ai/repo/knowledge/sources.yaml, share/allow/adr.txt]
     writes: [.ai/repo/adrs/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: adr-propose
-    note: "propose writes status 'proposed' and refuses --status: accepting a decision is a person editing the field. The identity is allocated under a lock over the section directory, so two worktrees proposing at once get two identities; check refuses duplicate identities, a superseded record with no replacement, and one-sided supersession."
+    note: "propose writes status 'proposed' and refuses --status: accepting a decision is a person editing the field. An identity is allocated above the high-water mark of four sources — this working tree, every sibling worktree as it stands on disk, every ref, and the peer board — and never into a hole, because a hole is an identity taken and withdrawn or taken and not yet written; next asks that survey without writing anything and says what each source claimed. check refuses duplicate identities, a superseded record with no replacement, one-sided supersession, and an identity this tree adds that another ref carries a different decision at."
 
   - id: usecase
     title: usecase

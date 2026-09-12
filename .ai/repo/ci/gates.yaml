@@ -88,6 +88,20 @@ gates:
     runs: scripts/site-basepath-check
     summary: the documentation source states no origin-absolute link, so one build serves both the published site and the executable's /docs mount
 
+  # Two branches claiming one decision identity is a defect of the *pair of trees*, so no
+  # check that reads one tree can see it: `generate --strict` meets it at the merge, excludes
+  # every claimant and names the identity rather than the two sessions. `adr check` asks it
+  # of the other refs instead — for every identity this branch adds relative to the base, does
+  # another ref already carry a different decision there — and `doctor` runs the same
+  # examination in the pre-commit hook, where the answer is still cheap to act on. Git
+  # plumbing and file reads only, no build, so it belongs with the structure checks; the job
+  # checks out at fetch-depth 0, and the check says out loud when it cannot see the other
+  # refs rather than exiting clean.
+  - id: adr-collision
+    job: structure
+    runs: bin/majordomus adr check
+    summary: every decision valid and its references resolving, and no identity this branch adds is already carried by a different decision on another ref
+
   - id: shell-suite
     job: suite
     runs: MJ_TEST_JOBS=4 bash test/run.sh
@@ -439,6 +453,14 @@ classes:
   - id: layer
     paths: [.ai/**]
     gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection, entry-converges]
+
+  # the decisions and the allocator that hands out their identities. `layer` already selects
+  # the suite for anything under .ai/; this class is narrower and adds the one gate that reads
+  # the decisions as a set spread across refs rather than as files of this tree. The planner
+  # takes the union of every matching class, so both apply.
+  - id: decisions
+    paths: [.ai/repo/adrs/**, lib/adr.sh, test/cases/271_adr_allocation.sh, test/cases/99_adr.sh]
+    gates: [adr-collision, core-check, shell-suite]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs

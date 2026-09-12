@@ -60,6 +60,16 @@
       "external": false
     },
     {
+      "id": "lib/context.sh",
+      "kind": "module",
+      "label": "context",
+      "command": "context",
+      "summary": "what the next worker needs to know now, within budget",
+      "read_only": true,
+      "route": "/commands/context/",
+      "external": false
+    },
+    {
       "id": ".ai/repo/adrs/.id.lock",
       "kind": "artifact",
       "label": "repo/adrs/.id.lock",
@@ -387,16 +397,6 @@
       "summary": null,
       "read_only": null,
       "route": null,
-      "external": false
-    },
-    {
-      "id": "lib/context.sh",
-      "kind": "module",
-      "label": "context",
-      "command": "context",
-      "summary": "what the next worker needs to know now, within budget",
-      "read_only": true,
-      "route": "/commands/context/",
       "external": false
     },
     {
@@ -1179,6 +1179,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/watch.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/adr.sh",
+      "target": "lib/context.sh",
       "kind": "sources"
     },
     {

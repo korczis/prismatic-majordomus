@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "0f48700b14aa91acedf3eb9b29842c9138b6d3522c6abb0eb973a4c2c9fb378d",
+    "fingerprint": "f7ac9cb50259313e892fc2cc6a308348fddf0831b422be8875018e0e6831b612",
     "summary": {
-      "total": 1411,
+      "total": 1413,
       "builtin": 108,
-      "declarative": 1303,
+      "declarative": 1305,
       "by_kind": {
         "command": 6,
         "query": 102,
-        "resource": 1303
+        "resource": 1305
       },
       "by_stability": {
         "behaviorally_verified": 95,
         "experimental": 7,
-        "implemented": 1309
+        "implemented": 1311
       },
       "mcp_tools": 105,
-      "mcp_resources": 1342,
+      "mcp_resources": 1344,
       "http_routes": 107,
       "cli_commands": 48,
       "modules": 64,
@@ -38647,7 +38647,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 48,
+        "capabilities": 49,
         "capability_ids": []
       },
       {
@@ -39290,7 +39290,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 191,
+        "capabilities": 192,
         "capability_ids": []
       },
       {
@@ -39370,7 +39370,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5da66a61efd0180442336ce416599c1b4c6f8431e8a81f48e1a1859589435231",
+    "fingerprint": "c0964e6ed31e88b8add505bcf39c0cbba893ee5317b000501e4584f56a41e3a9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -39393,7 +39393,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 48,
+      "adr": 49,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -39419,13 +39419,11 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 191,
+      "test": 192,
       "use-case": 45,
       "workspace": 1
     },
-    "diagnostics": {
-      "warning": 1
-    },
+    "diagnostics": {},
     "objects": [
       {
         "uri": "majordomus://adr/adr-0001",
@@ -40208,6 +40206,21 @@
           "continuity",
           "governance",
           "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0053",
+        "kind": "adr",
+        "identity": "adr-0053",
+        "title": "An identity is allocated above the high-water mark, and a collision is refused on the branch",
+        "description": "An identity is allocated above the high-water mark, and a collision is refused on the branch",
+        "path": ".ai/repo/adrs/0053-an-identity-is-allocated-above-the-high-water-mark-and-a-collision-is-refused-on-the-branch.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7885,
+        "tags": [
+          "coordination",
+          "governance"
         ]
       },
       {
@@ -42214,10 +42227,10 @@
         "kind": "command",
         "identity": "adr",
         "title": "adr",
-        "description": "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.",
+        "description": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/archive",
@@ -42227,7 +42240,7 @@
         "description": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/bench",
@@ -42237,7 +42250,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/capture",
@@ -42247,7 +42260,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/check",
@@ -42257,7 +42270,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -42267,7 +42280,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/context",
@@ -42277,7 +42290,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/decision",
@@ -42287,7 +42300,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/doctor",
@@ -42297,7 +42310,7 @@
         "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -42307,7 +42320,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/evidence",
@@ -42317,7 +42330,7 @@
         "description": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/finish",
@@ -42327,7 +42340,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/handover",
@@ -42337,7 +42350,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/help",
@@ -42347,7 +42360,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/history",
@@ -42357,7 +42370,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/init",
@@ -42367,7 +42380,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -42377,7 +42390,7 @@
         "description": "The compiled index over what this repository states.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/migrate",
@@ -42387,7 +42400,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/plan",
@@ -42397,7 +42410,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/prompt",
@@ -42407,7 +42420,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/question",
@@ -42417,7 +42430,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/recover",
@@ -42427,7 +42440,7 @@
         "description": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/rules",
@@ -42437,7 +42450,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/search",
@@ -42447,7 +42460,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/session",
@@ -42457,7 +42470,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/skills",
@@ -42467,7 +42480,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/start",
@@ -42477,7 +42490,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/update",
@@ -42487,7 +42500,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/usecase",
@@ -42497,7 +42510,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/version",
@@ -42507,7 +42520,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://command/watch",
@@ -42517,7 +42530,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 29763
+        "bytes": 30156
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -43102,7 +43115,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 115511
+        "bytes": 118051
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -45427,7 +45440,7 @@
         "identity": "lib/adr.sh",
         "path": "lib/adr.sh",
         "source_class": "library",
-        "bytes": 33845
+        "bytes": 51590
       },
       {
         "uri": "majordomus://implementation/lib/archive.sh",
@@ -45499,7 +45512,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 41859
+        "bytes": 42631
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -51143,7 +51156,7 @@
         "path": ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3739,
+        "bytes": 5809,
         "tags": [
           "coordination",
           "process"
@@ -51649,7 +51662,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 3827
+        "bytes": 4182
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -52338,6 +52351,14 @@
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
         "bytes": 17281
+      },
+      {
+        "uri": "majordomus://test/test/cases/271_adr_allocation.sh",
+        "kind": "test",
+        "identity": "test/cases/271_adr_allocation.sh",
+        "path": "test/cases/271_adr_allocation.sh",
+        "source_class": "case",
+        "bytes": 8269
       },
       {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -53623,7 +53644,7 @@
       "identity": [
         "id"
       ],
-      "objects": 48
+      "objects": 49
     },
     {
       "name": "application",
@@ -53888,7 +53909,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 191
+      "objects": 192
     },
     {
       "name": "use-case",
