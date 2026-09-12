@@ -34,27 +34,47 @@ prompt is unversioned, unenforceable, untestable, and true for exactly one tool.
 
 ## What there is now
 
-```text
-                     apps/majordomus-cli/src/commit/
-                     ┌──────────────────────────────┐
-   .ai/repo/         │ header   the grammar         │
-   policy.yaml ─────▶│ message  header, body,       │
-   commit:           │          trailers            │
-                     │ policy   what it is held to  │
-   git log ─────────▶│ scopes   the vocabulary,     │
-   (the history)     │          learned             │
-                     │ plan     the working tree,   │
-   git status ──────▶│          grouped,            │
-   (this tree)       │          fingerprinted       │
-                     │ verdict  the judge           │
-                     └───────────────┬──────────────┘
-                                     │
-        ┌────────────┬───────────────┼───────────────┬─────────────┐
-        ▼            ▼               ▼               ▼             ▼
-   commit-msg    scripts/ci/     majordomus      MCP tools     /api/v1/
-   hook          commit-policy   commit …        + resources   commit/…
-   (one message) (the history)   (a person)      (an agent)    (a program)
-```
+<pre class="mermaid">
+flowchart TD
+    policy["&lt;b&gt;.ai/repo/policy.yaml&lt;/b&gt;&lt;br/&gt;&lt;code&gt;commit:&lt;/code&gt;&lt;br/&gt;the width, three levels"]
+    log["&lt;b&gt;git log&lt;/b&gt;&lt;br/&gt;at most 1500 commits"]
+    status["&lt;b&gt;git status&lt;/b&gt;&lt;br/&gt;this working tree"]
+
+    subgraph domain["apps/majordomus-cli/src/commit/"]
+        direction TB
+        header["&lt;b&gt;header&lt;/b&gt; · the one grammar&lt;br/&gt;&lt;b&gt;message&lt;/b&gt; · header, body, trailers"]
+        pol["&lt;b&gt;policy&lt;/b&gt; · what a commit is held to"]
+        scopes["&lt;b&gt;scopes&lt;/b&gt; · the vocabulary, learned"]
+        plan["&lt;b&gt;plan&lt;/b&gt; · the tree, grouped, fingerprinted"]
+        verdict["&lt;b&gt;verdict&lt;/b&gt; · the judge"]
+    end
+
+    policy --&gt; pol
+    log --&gt; scopes
+    status --&gt; plan
+    header --&gt; verdict
+    pol --&gt; verdict
+    scopes --&gt; verdict
+    plan --&gt; verdict
+
+    hook["&lt;b&gt;commit-msg hook&lt;/b&gt;&lt;br/&gt;one message, with its paths"]
+    gate["&lt;b&gt;scripts/ci/commit-policy&lt;/b&gt;&lt;br/&gt;the history, ratcheted"]
+    cli["&lt;b&gt;majordomus commit&lt;/b&gt;&lt;br/&gt;a person"]
+    mcp["&lt;b&gt;MCP tools + resources&lt;/b&gt;&lt;br/&gt;an agent"]
+    api["&lt;b&gt;GET /api/v1/commit/…&lt;/b&gt;&lt;br/&gt;a program"]
+
+    verdict --&gt; hook
+    verdict --&gt; gate
+    domain --&gt; cli
+    domain --&gt; mcp
+    domain --&gt; api
+
+    classDef source fill:#eef2ff,stroke:#4f46e5,color:#1e1b4b
+    classDef surface fill:#ecfdf5,stroke:#059669,color:#064e3b
+    class policy,log,status source
+    class hook,gate,cli,mcp,api surface
+</pre>
+
 
 Four capabilities, declared once in
 `apps/majordomus-cli/src/capability/builtin/commit.rs`, each projected onto every surface

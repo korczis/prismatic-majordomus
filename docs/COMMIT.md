@@ -26,26 +26,45 @@ prompt is unversioned, unenforceable, untestable, and true for exactly one tool.
 
 ## What there is now
 
-```text
-                     apps/majordomus-cli/src/commit/
-                     ┌──────────────────────────────┐
-   .ai/repo/         │ header   the grammar         │
-   policy.yaml ─────▶│ message  header, body,       │
-   commit:           │          trailers            │
-                     │ policy   what it is held to  │
-   git log ─────────▶│ scopes   the vocabulary,     │
-   (the history)     │          learned             │
-                     │ plan     the working tree,   │
-   git status ──────▶│          grouped,            │
-   (this tree)       │          fingerprinted       │
-                     │ verdict  the judge           │
-                     └───────────────┬──────────────┘
-                                     │
-        ┌────────────┬───────────────┼───────────────┬─────────────┐
-        ▼            ▼               ▼               ▼             ▼
-   commit-msg    scripts/ci/     majordomus      MCP tools     /api/v1/
-   hook          commit-policy   commit …        + resources   commit/…
-   (one message) (the history)   (a person)      (an agent)    (a program)
+```mermaid
+flowchart TD
+    policy["<b>.ai/repo/policy.yaml</b><br/><code>commit:</code><br/>the width, three levels"]
+    log["<b>git log</b><br/>at most 1500 commits"]
+    status["<b>git status</b><br/>this working tree"]
+
+    subgraph domain["apps/majordomus-cli/src/commit/"]
+        direction TB
+        header["<b>header</b> · the one grammar<br/><b>message</b> · header, body, trailers"]
+        pol["<b>policy</b> · what a commit is held to"]
+        scopes["<b>scopes</b> · the vocabulary, learned"]
+        plan["<b>plan</b> · the tree, grouped, fingerprinted"]
+        verdict["<b>verdict</b> · the judge"]
+    end
+
+    policy --> pol
+    log --> scopes
+    status --> plan
+    header --> verdict
+    pol --> verdict
+    scopes --> verdict
+    plan --> verdict
+
+    hook["<b>commit-msg hook</b><br/>one message, with its paths"]
+    gate["<b>scripts/ci/commit-policy</b><br/>the history, ratcheted"]
+    cli["<b>majordomus commit</b><br/>a person"]
+    mcp["<b>MCP tools + resources</b><br/>an agent"]
+    api["<b>GET /api/v1/commit/…</b><br/>a program"]
+
+    verdict --> hook
+    verdict --> gate
+    domain --> cli
+    domain --> mcp
+    domain --> api
+
+    classDef source fill:#eef2ff,stroke:#4f46e5,color:#1e1b4b
+    classDef surface fill:#ecfdf5,stroke:#059669,color:#064e3b
+    class policy,log,status source
+    class hook,gate,cli,mcp,api surface
 ```
 
 Four capabilities, declared once in
