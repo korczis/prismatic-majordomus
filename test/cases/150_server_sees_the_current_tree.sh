@@ -46,15 +46,15 @@ url="$(jq -r '.url' "$T/ensure.json")"
 [ -n "$url" ] && [ "$url" != null ] || { echo "    no address"; cat "$T/ensure.json"; exit 1; }
 pid="$(jq -r '.pid // empty' "$lease")"
 
-head_over_http() { curl -fsS "$url/api/v1/repository" | jq -r '.repository.git.head'; }
-objects_over_http() { curl -fsS "$url/api/v1/repository" | jq -r '.objects'; }
+head_over_http() { curl -fsS --max-time 30 "$url/api/v1/repository" | jq -r '.repository.git.head'; }
+objects_over_http() { curl -fsS --max-time 30 "$url/api/v1/repository" | jq -r '.objects'; }
 
 # ---------------------------------------------------------------- an MCP session, opened now
 # It is opened before the commit on purpose: a session that outlives a commit is exactly the
 # client the frozen picture lied to, and one opened afterwards would prove nothing.
 mcp() {   # mcp ID METHOD PARAMS [SESSION-HEADER-ARGS...]
   local id="$1" method="$2" params="$3"; shift 3
-  curl -fsS -X POST "$url/mcp" \
+  curl -fsS --max-time 30 -X POST "$url/mcp" \
     -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
     "$@" -d "{\"jsonrpc\":\"2.0\",\"id\":$id,\"method\":\"$method\",\"params\":$params}"
 }
