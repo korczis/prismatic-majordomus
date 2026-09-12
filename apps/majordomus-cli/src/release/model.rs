@@ -104,6 +104,26 @@ impl ChangeKind {
 
     /// The word this kind is written as, or `None` for [`ChangeKind::Other`], which is not
     /// a type anybody writes.
+    ///
+    /// The inverse of [`ChangeKind::parse`] over the one table, so the two cannot disagree
+    /// about which words exist:
+    ///
+    /// ```
+    /// use majordomus_cli::release::model::ChangeKind;
+    ///
+    /// assert_eq!(ChangeKind::parse("feat").word(), Some("feat"));
+    /// assert_eq!(ChangeKind::Perf.word(), Some("perf"));
+    ///
+    /// // `Other` is what an unknown word parses to, and it is not itself a word: a
+    /// // validator quoting the vocabulary back must not offer it as something to type.
+    /// assert_eq!(ChangeKind::parse("nonsense"), ChangeKind::Other);
+    /// assert_eq!(ChangeKind::Other.word(), None);
+    ///
+    /// // every word the vocabulary advertises round-trips through both directions
+    /// for word in ChangeKind::WORDS {
+    ///     assert_eq!(ChangeKind::parse(word).word(), Some(*word), "{word} round-trips");
+    /// }
+    /// ```
     pub fn word(self) -> Option<&'static str> {
         ChangeKind::TABLE
             .iter()

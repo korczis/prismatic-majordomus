@@ -3364,6 +3364,31 @@ pub const EXAMPLES: &[CommandExamples] = &[
 /// history uses, and whether one message passes. Making the commit is `git commit`, which
 /// the `commit-msg` hook puts the third of these in front of — the executable proposes and
 /// judges, and a person commits.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, CommitArgs, CommitCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "commit", "history", "origin/master..HEAD", "--format", "json",
+/// ])
+/// .unwrap();
+/// let args: CommitArgs = match cli.command {
+///     Command::Commit(args) => args,
+///     other => panic!("expected `commit`, parsed {other:?}"),
+/// };
+/// // `--format` is global, so it parses after the subcommand, where a person writes it
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(
+///     args.command,
+///     Some(CommitCommand::History { range: Some(ref r) }) if r == "origin/master..HEAD"
+/// ));
+///
+/// // unlike the other groups this one does answer bare, because planning is what somebody
+/// // asking about committing wants; `None` is `plan` rather than a usage error
+/// let bare = Cli::try_parse_from(["majordomus", "commit"]).unwrap();
+/// assert!(matches!(bare.command, Command::Commit(CommitArgs { command: None, .. })));
+/// ```
 pub struct CommitArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
@@ -3379,7 +3404,37 @@ pub struct CommitArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The subcommands of `majordomus commit`.
+/// The subcommands of `majordomus commit`: `plan`, `scopes`, `history` and `validate`.
+///
+/// All four are read-only. `validate` is the one the `commit-msg` hook runs, and its shape
+/// is the hook's: the file git will take the message from, and the paths that are staged,
+/// so that a `fix` carrying no test among its files is judged rather than guessed at.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, CommitCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "commit", "validate", ".git/COMMIT_EDITMSG",
+///     "--paths", "apps/majordomus-cli/src/commit/mod.rs,test/cases/274_commit_policy.sh",
+/// ])
+/// .unwrap();
+/// let args = match cli.command {
+///     Command::Commit(args) => args,
+///     other => panic!("expected `commit`, parsed {other:?}"),
+/// };
+/// // `--paths` is comma-delimited, so the hook can hand over one `git diff --cached` line
+/// assert!(matches!(
+///     args.command,
+///     Some(CommitCommand::Validate { file: Some(ref f), ref paths, rev: None })
+///         if f == ".git/COMMIT_EDITMSG" && paths.len() == 2
+/// ));
+///
+/// // a revision instead of a file judges a commit already made, and the two are exclusive
+/// assert!(Cli::try_parse_from(["majordomus", "commit", "validate", "--rev", "HEAD"]).is_ok());
+/// assert!(Cli::try_parse_from(["majordomus", "commit", "validate", "m.txt", "--rev", "HEAD"])
+///     .is_err());
+/// ```
 pub enum CommitCommand {
     /// What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves
     Plan,
