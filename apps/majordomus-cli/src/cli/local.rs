@@ -422,6 +422,11 @@ pub const LOCAL: &[LocalCommand] = &[
         reason: LocalReason::SessionLocal,
         note: "prints the environment variables for the shell to evaluate, which is the shell's own state and nobody else's.",
     },
+    LocalCommand {
+        command: "env enter",
+        reason: LocalReason::SessionLocal,
+        note: "is the whole of entering this repository as one call (ADR 0043) — the assignments, the banner, the bridge refreshed and the runtime ensured — and every part of it is about the shell that just arrived, which no caller over a socket shares.",
+    },
     // ---------------------------------------------------------------- executions
     LocalCommand {
         command: "executions",

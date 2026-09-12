@@ -6,7 +6,7 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "28b20898c7a91cef85dc1d62e3f3cdac8ecbe80ff404d57890d4d32b5c022eec",
+    "fingerprint": "416886faf76a6c6243e6835affaf670ae8e0c269dd2c7dcd979d1bdffd6f1d56",
     "summary": {
       "total": 1413,
       "builtin": 108,
@@ -1728,11 +1728,19 @@
                   "type": "string"
                 },
                 "description": "Runnable commands of the command line that no capability claims, in command order."
+              },
+              "unclassified": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Of those, the ones [`crate::cli::local::LOCAL`] does not explain either: a command\nthat is neither the projection of a capability nor declared command-line-only with\na reason. Empty is the closure the rule asks for; anything here is an operation\nthat left the API by accident rather than by decision."
               }
             },
             "required": [
               "rows",
-              "unbacked"
+              "unbacked",
+              "unclassified"
             ],
             "description": "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\".",
             "title": "ClosureMatrix",
@@ -39370,7 +39378,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ed2421d539a87d27b0c53401cdbd2b4947ccadc70a5c12dfc23b54dc10e6533e",
+    "fingerprint": "84d9f37ca19c06b59cf21f775de6bb0ad35231ab33fee4f4d662ebc52692eb79",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -43090,7 +43098,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 43805
+        "bytes": 44003
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -44080,7 +44088,7 @@
         "title": "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing",
         "path": "docs/claims/github-projection-gated.md",
         "source_class": "claim_page",
-        "bytes": 3893
+        "bytes": 3918
       },
       {
         "uri": "majordomus://document/docs/claims/github-projection.md",
@@ -50126,7 +50134,7 @@
         "path": ".ai/repo/rules/project/commands-are-projections.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6819,
+        "bytes": 7395,
         "tags": [
           "commands",
           "projections",
@@ -50458,7 +50466,7 @@
         "path": ".ai/repo/rules/project/github-projection-gated.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3969,
+        "bytes": 3971,
         "tags": [
           "projection",
           "github",
@@ -50490,7 +50498,7 @@
         "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3861,
+        "bytes": 4494,
         "tags": [
           "architecture",
           "capabilities",
@@ -51696,7 +51704,7 @@
         "identity": "test/cases/101_command_graph.sh",
         "path": "test/cases/101_command_graph.sh",
         "source_class": "case",
-        "bytes": 11259
+        "bytes": 12197
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
