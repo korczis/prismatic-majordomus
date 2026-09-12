@@ -6,7 +6,7 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "5057ca7d140484bd1943a40f6e4ccfa1a567ef8565a8a4b860d4729135895620",
+    "fingerprint": "b8ce7fa9a098822bf80d0f6940e7ce2fb3d0794eda4b898c9f3242e31842f05f",
     "summary": {
       "total": 1417,
       "builtin": 108,
@@ -1728,11 +1728,19 @@
                   "type": "string"
                 },
                 "description": "Runnable commands of the command line that no capability claims, in command order."
+              },
+              "unclassified": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Of those, the ones [`crate::cli::local::LOCAL`] does not explain either: a command\nthat is neither the projection of a capability nor declared command-line-only with\na reason. Empty is the closure the rule asks for; anything here is an operation\nthat left the API by accident rather than by decision."
               }
             },
             "required": [
               "rows",
-              "unbacked"
+              "unbacked",
+              "unclassified"
             ],
             "description": "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\".",
             "title": "ClosureMatrix",
@@ -39370,7 +39378,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e48c2637549723d4b64ebb600b7cff8acc6fd71fe5639e103b62324820c98a77",
+    "fingerprint": "216cd36ee5f0e733f3a5ada6748484187879e9c99efeacdc1efe2933ca46b8de",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -43090,7 +43098,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 43746
+        "bytes": 43944
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -43216,7 +43224,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 20637
+        "bytes": 21560
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -44080,7 +44088,7 @@
         "title": "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing",
         "path": "docs/claims/github-projection-gated.md",
         "source_class": "claim_page",
-        "bytes": 3893
+        "bytes": 3918
       },
       {
         "uri": "majordomus://document/docs/claims/github-projection.md",
@@ -45554,7 +45562,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 69828
+        "bytes": 69827
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -45562,7 +45570,7 @@
         "identity": "lib/doctrine.sh",
         "path": "lib/doctrine.sh",
         "source_class": "library",
-        "bytes": 17046
+        "bytes": 17045
       },
       {
         "uri": "majordomus://implementation/lib/evidence.sh",
@@ -50017,7 +50025,7 @@
         "path": ".ai/repo/rules/project/a-verdict-states-its-subject.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6121,
+        "bytes": 8066,
         "tags": [
           "evidence",
           "governance",
@@ -50143,7 +50151,7 @@
         "path": ".ai/repo/rules/project/commands-are-projections.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6819,
+        "bytes": 7395,
         "tags": [
           "commands",
           "projections",
@@ -50475,7 +50483,7 @@
         "path": ".ai/repo/rules/project/github-projection-gated.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3969,
+        "bytes": 3971,
         "tags": [
           "projection",
           "github",
@@ -50507,7 +50515,7 @@
         "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3861,
+        "bytes": 4494,
         "tags": [
           "architecture",
           "capabilities",
@@ -51730,7 +51738,7 @@
         "identity": "test/cases/101_command_graph.sh",
         "path": "test/cases/101_command_graph.sh",
         "source_class": "case",
-        "bytes": 11259
+        "bytes": 12197
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -51954,7 +51962,7 @@
         "identity": "test/cases/125_rule_proof.sh",
         "path": "test/cases/125_rule_proof.sh",
         "source_class": "case",
-        "bytes": 9698
+        "bytes": 10794
       },
       {
         "uri": "majordomus://test/test/cases/127_briefing_freshness.sh",
@@ -52338,7 +52346,7 @@
         "identity": "test/cases/230_verdict_states_its_subject.sh",
         "path": "test/cases/230_verdict_states_its_subject.sh",
         "source_class": "case",
-        "bytes": 8591
+        "bytes": 11556
       },
       {
         "uri": "majordomus://test/test/cases/23_context.sh",
