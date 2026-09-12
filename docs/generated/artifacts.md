@@ -128,10 +128,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
-| `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `4e585ed3999f874f` |
+| `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `29a9fa48293644d9` |
 | `.dockerignore` | `deployment` | text | 573 | `b5411ad35adb24ea` |
-| `AGENTS.md` | `providers/agents` | markdown | 6099 | `92eb16b7c68fc445` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 5388 | `a789d4a117933289` |
+| `AGENTS.md` | `providers/agents` | markdown | 6099 | `c1b4a1faaaa8c4b7` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 5388 | `72d2378db61b5918` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 903 | `4323c8bced7faeb1` |
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 16876 | `768c6ee182759052` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 5692 | `ec62af8b774afa1c` |
@@ -252,7 +252,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `5f49e416917c9296` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 68040 | `fbf6685f6107043e` |
 | `site/data/registry/product.json` | `site-product` | json | 332468 | `396bd403de0f188b` |
-| `site/data/registry/registry.json` | `site-registry` | json | 3298486 | `f49d6333d94caf3e` |
+| `site/data/registry/registry.json` | `site-registry` | json | 3298487 | `364404e55c2a04ae` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `88dd29c9033dccf0` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `78d9ee8a5847a269` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `4323c8bced7faeb1` |

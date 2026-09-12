@@ -97,8 +97,60 @@ benchmark:
     p95: 0.5
     p99: 0.6
   budget:
-    doctor_ms: 3000
-    watch_ms: 3000
+    # doctor and watch report their own wall time against these, INFO under and WARN over,
+    # never as the exit code. They are two numbers because they are two different bills:
+    # watch dispatches the same doctrine registry in a different mode. They carried the
+    # same value until 2026-09-12 only because neither had ever been measured.
+    #
+    # These judge THIS repository. The same two keys in share/skeleton/policy.yaml judge a
+    # repository on the day it adopts Majordomus, whose catalogue is the vendored baseline
+    # and nothing else; that is a different corpus and it is measured separately, there.
+    #
+    # THE MEASUREMENT (2026-09-12, at 3407ca2d4). Twenty runs of each command in a linked
+    # worktree, Apple silicon, `env -u MAJORDOMUS_SHARE MJ_TIMING=1 bin/majordomus <cmd>`,
+    # 160+ GiB free throughout. Every run's exit status was asserted before its duration was
+    # kept — doctor 0 or 10, watch 0 or 11 — because a command that exits on a usage error
+    # returns in milliseconds and is otherwise recorded as a very fast run. Ten of the twenty
+    # ran with this machine's 1-minute load average between 4.4 and 10.2 and ten between 13.7
+    # and 34.7, which is what a working day here actually looks like: many sessions at once.
+    #
+    #   command   n    min  median    p90    max  spread   budget  headroom over p90
+    #   doctor   20  24952   38354  64252  96413   3.86x   100000              1.56x
+    #   watch    20  18019   28418  40236  49737   2.76x    60000              1.49x
+    #
+    # One rule, applied to both: the p90 of that sample times 1.5, to the nearest 10 s, and
+    # checked to sit above the slowest run recorded. Recompute it from the table.
+    #
+    # WHY THE HEADROOM IS THAT LARGE, AND WHAT THESE NUMBERS CANNOT DO. Ten consecutive
+    # doctor runs ranged from 34505 ms to 96413 ms — 2.8x, at a fixed corpus, on one
+    # afternoon. Wall time here is mostly the host's concurrency and it does not even track
+    # the load average closely (run 5 cost 34505 ms at a load of 25.5; run 4 cost 96413 ms at
+    # 25.4). A budget tight enough to catch a 50% regression would therefore fire on most
+    # busy afternoons, and a WARN that is usually noise is a WARN nobody reads — which is
+    # exactly what the previous pair had become. So these refuse a gross structural change
+    # (an index build on doctor's path, a validator that walks the whole tree several times
+    # over) and nothing subtler. The instrument for anything subtler is `majordomus bench`,
+    # which takes a distribution rather than one sample and compares it against a baseline
+    # under the `regression` fractions above.
+    #
+    # The two are set independently but they agree: measured as alternating pairs, so that
+    # both see the same host in the same minute, watch cost a median 0.57 of doctor, and
+    # these two budgets stand in a ratio of 0.60.
+    #
+    # WHY 3000 WAS WRONG RATHER THAN SOMETHING HAVING REGRESSED. It was written on
+    # 2026-09-05 by 0334deff1, the commit that introduced the mechanism; that message
+    # describes the mechanism and cites no run, and no bench baseline for these two targets
+    # has ever existed under .ai/repo/benchmarks/. It was never derived from a measurement.
+    # It is also decidable as wrong from this file alone, with no machine at all:
+    # `MJ_TIMING=1 majordomus doctor` names 40 phases which account for most of the command,
+    # and over the quieter ten of the runs above their median sum is 22733 ms — an aggregate
+    # an order of magnitude below the sum of its own parts. The four dearest over that same
+    # ten (validate:adr 4799, validate:catalogue 3561, validate:schema_integrity 2456,
+    # validate:skills 1902) alone cost 12718 ms. The shape is linear in the corpus with a
+    # process spawned per document — one run's own counters are 365 yaml_flatten and 166
+    # git — which is this tool's shape, not a regression in it.
+    doctor_ms: 100000
+    watch_ms: 60000
     # Entering the repository (ADR 0043). `enter_ms` is a `cd` into a checkout whose runtime
     # is already up, which is every entry but one; `enter_cold_ms` is the entry that finds
     # nothing serving, starts a server and returns without waiting for it.
