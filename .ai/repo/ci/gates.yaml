@@ -188,6 +188,19 @@ gates:
     runs: scripts/ci/claim-proof-check
     summary: a claim marked guaranteed names a test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and the set may not grow
 
+  # The third population. A public command must have an executable use case and doctor fails
+  # without one; a guaranteed claim is held by claim-proof above. The ~109 tools the registry
+  # projects over MCP were held by nothing: `use_cases.coverage.mcp_tools` is advisory, and
+  # for that class `covered` means NAMED, because no use-case scenario can reach an MCP tool.
+  # Greps over the generated registry and the files that send a tools/call, so it costs
+  # nothing and needs no build. The debt is ratcheted in .ai/repo/mcp-tool-run-baseline.txt;
+  # the gate fails on a tool that arrives unexercised, not on the known ones.
+  - id: mcp-tool-run
+    job: structure
+    always: true
+    runs: scripts/ci/mcp-tool-run-check
+    summary: every MCP tool the registry projects is sent a tools/call by a case or an integration test of this repository; the verdict states its denominator and the populations it is not about, and the uninvoked set may not grow
+
   - id: rust-quality
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
@@ -457,6 +470,14 @@ classes:
   - id: governance
     paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/claim-proof-check, .ai/repo/claim-proof-baseline.txt, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, test/cases/230_verdict_states_its_subject.sh, apps/majordomus-cli/src/rules/**]
     gates: [rule-proof, claim-proof, english-only, finding-reproduce, shell-suite, rust-integration]
+
+  # the MCP surface as a population: the ratchet that holds every projected tool to being
+  # invoked by something, its baseline, and the case that both invokes a sample and proves
+  # the ratchet by mutation. The denominator is the generated registry, which `rust-generated`
+  # already selects; this class is what selects the gate itself when its own files move.
+  - id: mcp-surface
+    paths: [scripts/ci/mcp-tool-run-check, .ai/repo/mcp-tool-run-baseline.txt, test/cases/299_mcp_tools_are_invoked_and_answer.sh]
+    gates: [mcp-tool-run, shell-suite]
 
   # the commit policy: the subsystem that judges a message, the gate that reads the history
   # through it, the hook that refuses with it, and the baseline of the commits that predate

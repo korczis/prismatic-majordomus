@@ -1,0 +1,85 @@
+# MCP tools the registry projects that nothing in this repository invokes.
+#
+# A tool is invoked when its name occurs on a live line of a file that sends a
+# JSON-RPC tools/call: a case under test/cases or an integration test under
+# apps/majordomus-cli/tests. apps/majordomus-cli/tests/properties.rs sends a frame
+# for every capability, but asserts only that MCP, HTTP and direct agree over a
+# synthetic repository — an equivalence, not an answer — so it proves no tool here.
+#
+# Written by scripts/ci/mcp-tool-run-check --write-baseline; never by hand. The list
+# may only shrink, and it shrinks by invoking the tool from a case and asserting what
+# it answers — never by removing the tool from the registry, which would move the
+# surface instead of proving it.
+majordomus_artifact
+majordomus_build
+majordomus_changelog
+majordomus_command
+majordomus_command_graph
+majordomus_commands
+majordomus_commit_history
+majordomus_commit_plan
+majordomus_commit_scopes
+majordomus_commit_validate
+majordomus_completion
+majordomus_continuity
+majordomus_demonstrate_execution
+majordomus_deploy_check
+majordomus_deployments
+majordomus_design_tokens
+majordomus_devcontext_explain
+majordomus_devtask
+majordomus_devtask_milestone
+majordomus_directories
+majordomus_distribution
+majordomus_environment
+majordomus_environment_explain
+majordomus_evidence
+majordomus_evidence_claim
+majordomus_evidence_test
+majordomus_execution
+majordomus_execution_events
+majordomus_execution_protocol
+majordomus_execution_start
+majordomus_executions
+majordomus_feature
+majordomus_features
+majordomus_gates
+majordomus_graph
+majordomus_graphs
+majordomus_health
+majordomus_lifecycle_closed
+majordomus_lifecycle_episodes
+majordomus_lifecycle_providers
+majordomus_lifecycle_recovery
+majordomus_lifecycle_runtime
+majordomus_mesh
+majordomus_mesh_doctor
+majordomus_mesh_nodes
+majordomus_mesh_register
+majordomus_models
+majordomus_models_route
+majordomus_obligation_closure
+majordomus_obligations
+majordomus_product_matrix
+majordomus_projections
+majordomus_providers
+majordomus_quality
+majordomus_release_version
+majordomus_releases
+majordomus_rule
+majordomus_rule_proves
+majordomus_scope
+majordomus_server
+majordomus_session_identity
+majordomus_session_machine
+majordomus_verify_objects
+majordomus_why
+majordomus_why_areas
+majordomus_why_audiences
+majordomus_why_diagnose
+majordomus_why_moment
+majordomus_why_validate
+majordomus_worktree_inspect
+majordomus_worktree_migration_plan
+majordomus_worktree_status
+majordomus_worktrees

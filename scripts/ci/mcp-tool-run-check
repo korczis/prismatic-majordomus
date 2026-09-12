@@ -1,0 +1,194 @@
+#!/usr/bin/env bash
+# mcp-tool-run-check — every MCP tool the registry projects is invoked, as a client
+# invokes it, by something this repository runs.
+#
+# THE SUBJECT IS MCP TOOLS. Public commands are not measured here: `use_cases.coverage`
+# makes an executable use case *required* for every public command and `majordomus doctor`
+# fails on a gap, so that population is already held. Guaranteed claims are not measured
+# here either: scripts/ci/claim-proof-check owns them. This gate exists because the third
+# population — the ~109 tools the capability registry projects over MCP — was held by
+# nothing at all. `use_cases.coverage.mcp_tools` is `advisory`, so a tool no use case names
+# is reported by doctor as one line of INFO and never fails anything.
+#
+# Worse than advisory: for an MCP tool, `covered` means NAMED. lib/usecase.sh counts the
+# executable column as the named column for this class (mj_uc_coverage_rows), and a use
+# case's scenario runs `bin/majordomus <argv>` — the shell tool — so no scenario can reach
+# an MCP tool at all. A use case that lists five tools in its front matter and runs `init`
+# and `doctor` marks all five covered. That is the shape this repository has been bitten by
+# twice: a surface marked proven by a run that does not touch it.
+#
+# WHAT IS ALREADY TRUE, so that this verdict is not read as saying more than it does.
+# apps/majordomus-cli/tests/properties.rs::direct_http_and_mcp_answer_the_same_data_or_fail_the_same_way
+# iterates every executable capability and, for each one carrying an MCP tool, does send a
+# real tools/call frame. So it is not true that nothing ever executes these tools. What that
+# property asserts is an EQUIVALENCE — the MCP answer equals the direct answer equals the
+# HTTP answer — over a SyntheticRepository of twelve rules and four documents. Three
+# surfaces agreeing on an empty answer is three surfaces agreeing. Nothing there says any
+# tool answers correctly about a real repository, and that is the relation this gate holds.
+#
+# A tool is INVOKED when its name occurs on a live (non-comment) line of a file that speaks
+# JSON-RPC `tools/call`: a behavioural case under test/cases or an integration test under
+# apps/majordomus-cli/tests. The name, not a pattern: the cases invoke tools through their
+# own helpers (`call majordomus_trace_issue '{...}'`, `plan_tool "$repo" majordomus_plan_issues
+# '{}'`), so a detector looking for `"name":"<tool>"` would report a tool that is invoked
+# nine times as a gap. Comment lines are excluded for the converse reason — a tool named in
+# prose is discussed, not run — and test/cases/95_executable_reference.sh names one in a
+# comment for exactly that reason.
+#
+# One finding, ratcheted:
+#
+#   uninvoked  the registry projects the tool and nothing in this repository sends it a
+#              tools/call. Recorded in the baseline, so today's debt blocks nobody and a
+#              tool added tomorrow cannot arrive unexercised.
+#
+# The denominator is read from docs/generated/registry.json, so a tool added tomorrow is
+# measured tomorrow and this script carries no list of what exists.
+#
+#   scripts/ci/mcp-tool-run-check                    report, and fail on new debt
+#   MJ_ROOT=<dir> scripts/ci/mcp-tool-run-check      measure another tree (the case does)
+#   scripts/ci/mcp-tool-run-check --write-baseline   record today's debt (a deliberate act)
+#   scripts/ci/mcp-tool-run-check --strict           fail on any finding, baseline ignored
+#
+# Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
+set -eu
+# pipefail, so a pipeline reports the failure of any stage rather than the success of its
+# last. Every counting pipeline below therefore ends in `|| true` or `|| echo 0`, because
+# grep exits 1 on no match and "no findings" is the healthy case, not an error.
+set -o pipefail
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+REGISTRY="docs/generated/registry.json"
+BASELINE=".ai/repo/mcp-tool-run-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "mcp-tool-run-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+# The registry is generated, and a tree without it cannot be measured. That is an unusable
+# run, not a clean one: reporting "no new debt" over a denominator that failed to load is
+# how a gate comes to pass by measuring nothing.
+[ -f "$REGISTRY" ] || {
+  echo "mcp-tool-run-check: $REGISTRY is not in the tree; run \`majordomus generate\` — nothing could be measured" >&2
+  exit 12
+}
+
+# Every tool the registry projects. The member is `"tool": "<name>"` under exposure.mcp and
+# nothing else in the document spells it, which is the same reader lib/usecase.sh uses.
+tools="$(grep -o '"tool": *"[a-z_]*"' "$REGISTRY" | sed 's/.*"\([a-z_]*\)"$/\1/' | LC_ALL=C sort -u || true)"
+
+# Zero is a failure unless zero is declared expected. A registry that exists and projects no
+# MCP tool is a population that vanished, not one that came back clean (project.empty-is-not-failure).
+n_tools="$(printf '%s\n' "$tools" | grep -c '[^[:space:]]' || true)"
+if [ "$n_tools" = 0 ]; then
+  echo "mcp-tool-run-check: $REGISTRY projects no MCP tool — nothing was measured, which is not the same as nothing being wrong" >&2
+  exit 12
+fi
+
+# The clients: every file that speaks JSON-RPC tools/call. A file that does not is not an
+# MCP client and a tool name in it is prose.
+clients=""
+for f in test/cases/*.sh apps/majordomus-cli/tests/*.rs; do
+  [ -f "$f" ] || continue
+  grep -q 'tools/call' "$f" || continue
+  clients="$clients $f"
+done
+n_clients="$(printf '%s\n' $clients | grep -c '[^[:space:]]' || true)"
+if [ "$n_clients" = 0 ]; then
+  echo "mcp-tool-run-check: no file under test/cases or apps/majordomus-cli/tests sends a tools/call — the reader is broken, or every MCP client of the suite is gone" >&2
+  exit 12
+fi
+
+# Every tool name that occurs on a live line of a client, with the files it occurs in.
+# The comment strip is per language: `#` for the shell cases, `//` for the Rust tests.
+# shellcheck disable=SC2086  # $clients is a deliberately split list of paths
+invocations="$(awk '
+  { line = $0; sub(/^[ \t]+/, "", line) }
+  FILENAME ~ /\.sh$/ && line ~ /^#/ { next }
+  FILENAME ~ /\.rs$/ && line ~ /^\/\// { next }
+  {
+    s = $0
+    while (match(s, /majordomus_[a-z_]+/)) {
+      printf "%s\t%s\n", substr(s, RSTART, RLENGTH), FILENAME
+      s = substr(s, RSTART + RLENGTH)
+    }
+  }
+' $clients | LC_ALL=C sort -u || true)"
+
+invoked="$(printf '%s\n' "$invocations" | awk -F'\t' '{ print $1 }' | LC_ALL=C sort -u || true)"
+# Narrowed to the population: `majordomus_cli` is the crate's own name and occurs in every
+# Rust test; only a name the registry projects is a tool.
+invoked="$(LC_ALL=C comm -12 <(printf '%s\n' "$tools" | grep -v '^$' | LC_ALL=C sort -u) \
+                             <(printf '%s\n' "$invoked" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+uninvoked="$(LC_ALL=C comm -23 <(printf '%s\n' "$tools" | grep -v '^$' | LC_ALL=C sort -u) \
+                               <(printf '%s\n' "$invoked" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+
+nlines() { printf '%s\n' "$1" | grep -c '[^[:space:]]' || true; }
+
+if [ "$MODE" = write ]; then
+  { echo "# MCP tools the registry projects that nothing in this repository invokes."
+    echo "#"
+    echo "# A tool is invoked when its name occurs on a live line of a file that sends a"
+    echo "# JSON-RPC tools/call: a case under test/cases or an integration test under"
+    echo "# apps/majordomus-cli/tests. apps/majordomus-cli/tests/properties.rs sends a frame"
+    echo "# for every capability, but asserts only that MCP, HTTP and direct agree over a"
+    echo "# synthetic repository — an equivalence, not an answer — so it proves no tool here."
+    echo "#"
+    echo "# Written by scripts/ci/mcp-tool-run-check --write-baseline; never by hand. The list"
+    echo "# may only shrink, and it shrinks by invoking the tool from a case and asserting what"
+    echo "# it answers — never by removing the tool from the registry, which would move the"
+    echo "# surface instead of proving it."
+    printf '%s\n' "$uninvoked" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "mcp-tool-run-check: baseline written with $(nlines "$uninvoked") tool(s)"
+  exit 0
+fi
+
+# The denominator, and the populations this gate is not about, before any finding: a reader
+# who meets a list of names must not have to guess what they are names of.
+printf 'MCP tools:           %s projected by %s; %s invoked by %s client file(s) of this repository\n' \
+  "$n_tools" "$REGISTRY" "$(nlines "$invoked")" "$n_clients"
+printf 'public commands:     not measured here — use_cases.coverage requires an executable use case for each, and doctor fails on a gap\n'
+printf 'guaranteed claims:   not measured here — scripts/ci/claim-proof-check is the one reader of that population\n'
+printf 'cross-surface parity: apps/majordomus-cli/tests/properties.rs sends every tool a frame and asserts MCP equals HTTP equals direct over a synthetic repository; that is agreement, not an answer, and is not counted here\n'
+
+known=""
+[ -f "$BASELINE" ] && known="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" || true)"
+
+# A finding the baseline already excused is not a failure of this run, and printing it as
+# one is how a green gate comes to read as red. FAIL is what fails; KNOWN is the debt this
+# gate is holding flat. Under --strict nothing is excused.
+label() { # name -> FAIL or KNOWN
+  [ "$MODE" = strict ] && { printf 'FAIL'; return; }
+  case "
+$known
+" in *"
+$1
+"*) printf 'KNOWN' ;; *) printf 'FAIL' ;; esac
+}
+[ -n "$uninvoked" ] && printf '%s\n' "$uninvoked" | grep -v '^$' | while IFS= read -r t; do
+  printf '%s mcp-tool-run uninvoked %-40s nothing sends it a tools/call  [reproduce: scripts/ci/mcp-tool-run-check]\n' "$(label "$t")" "$t"
+done
+
+if [ "$MODE" = strict ]; then
+  [ -z "$uninvoked" ] && { echo "mcp-tool-run-check: every one of $n_tools MCP tool(s) is invoked by something this repository runs"; exit 0; }
+  echo "mcp-tool-run-check: $(nlines "$uninvoked") MCP tool(s) are invoked by nothing (--strict)" >&2
+  exit 10
+fi
+
+new="$(LC_ALL=C comm -23 <(printf '%s\n' "$uninvoked" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+gone="$(LC_ALL=C comm -13 <(printf '%s\n' "$uninvoked" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+
+[ -n "$gone" ] && { echo; echo "mcp-tool-run-check: debt cleared, run --write-baseline to record it:"; printf '  %s\n' $gone; }
+
+if [ -n "$new" ]; then
+  echo >&2
+  echo "mcp-tool-run-check: new debt, not in $BASELINE:" >&2
+  printf '  %s\n' $new >&2
+  echo "  A tool the registry projects and nothing invokes is indistinguishable from one that" >&2
+  echo "  does not work. Send it a tools/call from a case and assert what it answers — see" >&2
+  echo "  test/cases/299_mcp_tools_are_invoked_and_answer.sh for the idiom." >&2
+  exit 10
+fi
+echo "mcp-tool-run-check: no new debt ($(nlines "$known") tool(s) known, $(nlines "$invoked") of $n_tools invoked)"
