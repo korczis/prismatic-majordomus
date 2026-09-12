@@ -1756,6 +1756,33 @@ pub enum CompletionShell {
 #[derive(Debug, Args)]
 /// `majordomus devcontext`. Every subcommand is the projection of one `devcontext.*`
 /// capability; the request flags are declared once and shared by `compile` and `explain`.
+///
+/// `--format` is `global`, so it parses where a person writes it rather than only before
+/// the subcommand, and the group itself runs nothing: every runnable path here is a
+/// capability's.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DevcontextArgs, DevcontextCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "devcontext", "compile", "--intent", "explain the budget",
+///     "--budget-tokens", "4000", "--format", "json",
+/// ])
+/// .unwrap();
+/// let args: DevcontextArgs = match cli.command {
+///     Command::Devcontext(args) => args,
+///     other => panic!("expected `devcontext`, parsed {other:?}"),
+/// };
+/// // written after the subcommand and picked up all the same
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// let DevcontextCommand::Compile(request) = args.command else { panic!("compile") };
+/// assert_eq!(request.intent.as_deref(), Some("explain the budget"));
+/// assert_eq!(request.budget_tokens, Some(4000));
+///
+/// // the group has no behaviour of its own, so it refuses to be run bare
+/// assert!(Cli::try_parse_from(["majordomus", "devcontext"]).is_err());
+/// ```
 pub struct DevcontextArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
@@ -1771,7 +1798,43 @@ pub struct DevcontextArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// What to ask of the context compiler.
+/// What to ask of the context compiler: compile an answer, ask why one identifier is or is
+/// not in it, or read the rules the compiler decides by.
+///
+/// `Explain` takes the identifier positionally and then the same request flags as
+/// `Compile`, because the question it answers is *about* a compiled answer — "why is this
+/// not in it" is only meaningful against the request that left it out. `Policy` takes
+/// nothing: it is the compiler's own table, not a question about a repository.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DevcontextCommand};
+///
+/// let parse = |argv: &[&str]| {
+///     let cli = Cli::try_parse_from(argv).unwrap();
+///     let Command::Devcontext(args) = cli.command else { panic!("devcontext") };
+///     args.command
+/// };
+///
+/// // the identifier is positional and the request flags follow it, so the budget the
+/// // judgement is made under is part of the question
+/// let explain = parse(&[
+///     "majordomus", "devcontext", "explain", "majordomus://rule/x@1", "--max-depth", "1",
+/// ]);
+/// let DevcontextCommand::Explain { uri, request } = explain else { panic!("explain") };
+/// assert_eq!(uri, "majordomus://rule/x@1");
+/// assert_eq!(request.max_depth, Some(1));
+///
+/// // `policy` is about the compiler and not about a request, so it accepts no request flag
+/// assert!(matches!(
+///     parse(&["majordomus", "devcontext", "policy"]),
+///     DevcontextCommand::Policy
+/// ));
+/// assert!(
+///     Cli::try_parse_from(["majordomus", "devcontext", "policy", "--intent", "x"]).is_err(),
+///     "the rules do not depend on what is being asked about"
+/// );
+/// ```
 pub enum DevcontextCommand {
     /// Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget
     Compile(DevcontextRequest),
@@ -1788,7 +1851,56 @@ pub enum DevcontextCommand {
 }
 
 #[derive(Debug, Clone, Args)]
-/// What to compile a context about; every flag is optional.
+/// What to compile a context about; every flag is optional, and naming nothing is a
+/// legitimate request.
+///
+/// This is the command-line half of
+/// [`CompileInput`](crate::devcontext::CompileInput), field for field, which is why the
+/// repeated flags are `--path` and `--uri` singular while the fields behind them are
+/// plural: a person adds one path at a time, and the request holds the set. A request that
+/// names nothing still compiles — to the governance the layer applies to everything, plus
+/// what the last session left.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DevcontextCommand, DevcontextRequest};
+///
+/// // one type behind both subcommands, which is why `explain` can judge an identifier
+/// // under exactly the request `compile` would have used
+/// let request_of = |argv: &[&str]| -> DevcontextRequest {
+///     let cli = Cli::try_parse_from(argv).unwrap();
+///     let Command::Devcontext(args) = cli.command else { panic!("devcontext") };
+///     match args.command {
+///         DevcontextCommand::Compile(request) => request,
+///         DevcontextCommand::Explain { request, .. } => request,
+///         DevcontextCommand::Policy => panic!("`policy` takes no request"),
+///     }
+/// };
+///
+/// let compiling = request_of(&[
+///     "majordomus", "devcontext", "compile",
+///     "--path", "apps/majordomus-cli/src", "--path", "lib",
+///     "--uri", "majordomus://adr/0052",
+///     "--floor", "0.4", "--all-blocking-rules",
+/// ]);
+///
+/// // repeated singular flags accumulate into the set the compiler seeds from
+/// assert_eq!(compiling.paths, ["apps/majordomus-cli/src", "lib"]);
+/// assert_eq!(compiling.uris, ["majordomus://adr/0052"]);
+/// assert_eq!(compiling.floor, Some(0.4));
+/// assert!(compiling.all_blocking_rules);
+///
+/// // the same flags reach `explain`, after its positional identifier
+/// let explaining = request_of(&[
+///     "majordomus", "devcontext", "explain", "majordomus://adr/0052", "--max-depth", "1",
+/// ]);
+/// assert_eq!(explaining.max_depth, Some(1));
+///
+/// // and nothing is required: the smallest true context there is
+/// let silent = request_of(&["majordomus", "devcontext", "compile"]);
+/// assert!(silent.issue.is_none() && silent.paths.is_empty());
+/// assert!(!silent.all_blocking_rules && silent.floor.is_none());
+/// ```
 pub struct DevcontextRequest {
     /// An issue id (`I0301`) or its canonical identifier
     #[arg(long)]
