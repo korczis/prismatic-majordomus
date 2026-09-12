@@ -240,8 +240,41 @@ ok mermaid "every page with <pre class=\"mermaid\"> loads the runtime"
 while IFS= read -r m; do bad mobile "$m"; done < "$PAGEROWS.11"; rm -f "$PAGEROWS.11"
 ok mobile "no unwrapped <pre>, no unprefixed grid-cols-3+, no fixed width over 360px"
 # 12. secrets and private paths in output
-grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
-grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
+# Every reader here has three answers, not two: output that could not be read in full is a
+# failure naming what was not examined, never a pass. `grep -r … | head -1 | grep -q .` was
+# the idiom this replaced, and it printed "no local paths" under grep's own complaint that it
+# could not open a page — a pipeline's verdict is its last command's, and the last command
+# only ever saw an empty stream.
+#
+# A home directory is one property with one pattern: scripts/ci/no-machine-paths holds it and
+# reads the tracked tree for core-check; here it reads what the build wrote, which nothing
+# tracks. The two used to carry two copies of an expression that missed `Bob` and `first.last`.
+rc=0; nmp="$("$ROOT/scripts/ci/no-machine-paths" --dir "$PUB" 2>&1)" || rc=$?
+nmp="${nmp//"$ROOT/"/}"
+case "$rc" in
+  0) ok private "$(printf '%s\n' "$nmp" | sed -n 's/^no-machine-paths: OK — //p')" ;;
+  1) bad private "a home directory in output: $(printf '%s\n' "$nmp" | grep -m1 '^site/public/' || true)" ;;
+  *) bad private "home directories not examined, so not clean (exit $rc): $(printf '%s\n' "$nmp" | head -n 1)" ;;
+esac
+# pubscan <ERE>: every match under site/public, one per line. Fails, leaving what grep said in
+# $PAGEROWS.scan, when grep could not read all of it.
+pubscan() {
+  local rc=0 said
+  grep -rhoaE -e "$1" "$PUB" 2>"$PAGEROWS.scan" || rc=$?
+  [ "$rc" -le 1 ] && return 0
+  said="$(head -n 1 "$PAGEROWS.scan")"; printf 'grep exit %s: %s' "$rc" "$said" > "$PAGEROWS.scan"
+  return 1
+}
+if hosts="$(pubscan '\.internal\b|\.corp\b')"; then
+  if [ -z "$hosts" ]; then ok private "no internal host name under site/public"
+  else bad private "internal host name in output: $(printf '%s\n' "$hosts" | head -n 1)"; fi
+else bad private "internal host names not examined, so not clean: $(cat "$PAGEROWS.scan")"; fi
+# the match is never printed: a credential written into a CI log is a second leak
+if cred="$(pubscan '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}')"; then
+  if printf '%s\n' "$cred" | grep -viE 'id-token|GITHUB_TOKEN' | grep -q .; then bad secrets "credential pattern in output"
+  else ok secrets "no credential pattern under site/public"; fi
+else bad secrets "credentials not examined, so not clean: $(cat "$PAGEROWS.scan")"; fi
+rm -f "$PAGEROWS.scan"
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
 for d in $(jq -r '.docs[] | select(.route) | .path' "$SITE/data/generated/docs.json"); do
   r="$(jq -r --arg p "$d" '.docs[] | select(.path==$p) | .route' "$SITE/data/generated/docs.json")"

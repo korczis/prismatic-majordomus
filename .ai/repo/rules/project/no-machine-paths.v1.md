@@ -62,21 +62,36 @@ edited.
   second copy is a second fallback, and the second fallback is what leaked after the first
   was fixed.
 
-Two exceptions, both narrow and both necessary. The fixtures under `test/` name such a path
-deliberately, because a gate that cannot be shown to fail is decoration. And the gate
-scripts themselves write the pattern down, because something has to.
+- A home directory is any `/Users/<name>` or `/home/<name>`, where the name is drawn from the
+  POSIX portable filename set — either case, digits, dot, underscore, hyphen. A placeholder
+  in an example or a doc comment is spelled as a path no account owns (`/srv/repo`): no
+  reader can tell a placeholder shaped like a home directory from a real one, so it is
+  reworded where it is declared rather than exempted where it is read.
+- A reader of this property that could not examine the whole of its subject says what it
+  did not examine and fails. "Found nothing" and "could not look" are different answers,
+  and only one of them is a pass (`project.a-verdict-states-its-subject`).
+
+One exception, narrow and necessary. The fixtures under `test/` name such a path
+deliberately, because a gate that cannot be shown to fail is decoration. The gate scripts
+are not exempt: the pattern is written so that it cannot match its own spelling, and the
+prose that explains it — `/Users/<name>/`, a bracket expression, `$HOME` — puts no account
+character straight after the slash.
 
 # Failure behaviour
 
-`scripts/ci/no-machine-paths` exits 1 and prints every match as `file:line:text`, under a
+`scripts/ci/no-machine-paths` exits 1 and prints every match as `file:line:match`, under a
 message that names both faults and their different fixes: an authored document is a wording
 problem, a generated artifact is a generator problem, and the second is never fixed by
-editing the file. `scripts/ci/core-check` runs it as a blocking step, so it fails a commit,
-a push and CI alike.
+editing the file. It exits 12 when it could not examine its whole subject — no repository,
+no directory, nothing in it, or a read that failed — naming what it did not examine; and on
+a pass it says how many files it examined. `scripts/ci/core-check` runs it over the tracked
+tree as a blocking step, so it fails a commit, a push and CI alike.
 
-`scripts/site-check` keeps its own `private` check over the built site. That one stays: it
-is the last line, it catches whatever reaches publication by a route nobody anticipated,
-and it costs one grep.
+`scripts/site-check` runs the same script with `--dir` over the built site for its `private`
+check. That check stays: it is the last line, it catches whatever reaches publication by a
+route nobody anticipated, and nothing else reads the build output. It carries no pattern of
+its own, and a result of 12 there is a failure saying the output was not examined — never
+`OK`.
 
 # Verification
 
@@ -84,8 +99,12 @@ and it costs one grep.
 re-implementing its grep, and proves each half over a fixture repository: an authored
 document carrying a home directory fails and its reworded form passes; a generated banner
 naming its schema by an absolute path fails and its repository-relative form passes; and a
-file under `site/content/` fails, which is the case the two pathspec allowlists missed. It
-also asserts the gate is wired into `scripts/ci/core-check`.
+file under `site/content/` fails, which is the case the two pathspec allowlists missed. One
+table of account names that must be caught and of prose that must not is driven through
+both the tracked tree and `--dir`. The refusals are each shown: an absent directory, an
+empty one, a directory `find` cannot walk, a file `grep` cannot open, a path that is no
+repository and a repository that tracks nothing all exit 12. It also asserts the gate is
+wired into `scripts/ci/core-check` and that `scripts/site-check` reads through it.
 
 `apps/majordomus-cli/src/generate.rs` holds the single helper and its two unit tests: one
 resolves a share inside the repository reached by a differently-spelled root, and fails on

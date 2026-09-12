@@ -2821,7 +2821,7 @@ mod tests {
                 format!("\"source\": \"{}someone/dev/x\"", "/Users/"),
                 "/Users/",
             ),
-            ("\"source\": \"/home/someone/x\"".to_string(), "/home/"),
+            (format!("\"source\": \"{}someone/x\"", "/home/"), "/home/"),
             ("-----BEGIN PRIVATE KEY-----".to_string(), "-----BEGIN "),
             ("Authorization: Bearer abc".to_string(), "Authorization:"),
             ("AKIAIOSFODNN7EXAMPLE".to_string(), "AKIA"),
