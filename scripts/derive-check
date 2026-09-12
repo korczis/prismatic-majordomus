@@ -12,6 +12,8 @@
 #   scripts/generate-site-data --check site/data/generated/**, docs/SITE_CLAIMS.md,
 #                                      docs/PLAN_STATUS.md (by input hash, which covers
 #                                      docs/generated/registry.json and openapi.json)
+#   scripts/gitattributes --check      .gitattributes: the merge policy is a projection of
+#                                      what the two generators above actually write
 #
 # Together they prove the chain: a capability edited in Rust makes registry.json stale (the
 # first check), and a registry.json regenerated without the site makes the site's input hash
@@ -56,6 +58,13 @@ fi
 if [ "$grc" != 0 ]; then rc=10; fi
 printf '==> derive-check: scripts/generate-site-data --check\n'
 "$ROOT/scripts/generate-site-data" --check || rc=10
+# The merge policy is a projection of the two generators above, so it is checked after them
+# and for the same reason: a `merge=derived` line for a file nobody generates discards one
+# whole side of a merge without a conflict marker, and a generated file with no line conflicts
+# on every integration over a fingerprint neither branch decides. It was a hand list until
+# 2026-09-12 and was wrong in both directions at once.
+printf '==> derive-check: scripts/gitattributes --check\n'
+"$ROOT/scripts/gitattributes" --check || rc=10
 if [ "$rc" = 0 ]; then printf '==> derive-check: every derived artifact is current\n'
 else printf '==> derive-check: stale derived artifact(s); run scripts/derive (just derive) and commit the result\n' >&2; fi
 exit "$rc"

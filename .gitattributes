@@ -20,30 +20,18 @@
 # text merge and you get the conflicts you get today: this file makes merging better where it
 # is wired and never worse where it is not.
 
-docs/PLAN_STATUS.md                 merge=derived
-docs/PAGES_STATUS.md                merge=derived
-docs/SITE_CLAIMS.md                 merge=derived
-docs/generated/**                   merge=derived
-site/data/generated/**              merge=derived
-site/data/registry/**               merge=derived
 # The public release metadata: rendered from the record under .ai/repo/releases/ by
 # `majordomus generate`, one file per release plus the stable pointer. They arrived with the
 # first real release and had no rule until then, so every merge touching a release conflicted
 # on them — and the pointer changes on every release, which is exactly when several branches
 # are in flight. test/cases/57_derived_merge_driver.sh is what noticed.
-site/static/releases/**             merge=derived
 # Every page under site/content/docs/ is written by scripts/generate-site-data out of the
 # CLI tree, the capability registry and the documents: the front matter carries a `weight`
 # derived from presentation order, so any branch that adds a command renumbers pages it
 # never touched. Merging two renumberings is never the answer; deriving is.
-site/content/docs/**                merge=derived
-site/content/docs/pages-status.md   merge=derived
-site/content/docs/plan-status.md    merge=derived
-site/content/docs/site-claims.md    merge=derived
 
 # The site's registry projection: one page per capability and per module, all of them
 # rewritten whenever the registry moves.
-site/content/registry/**            merge=derived
 
 # The whole documentation tree the site serves: `scripts/generate-site-data` deletes and
 # rewrites site/content/docs on every run — the long-form pages are the canonical Markdown
@@ -51,7 +39,6 @@ site/content/registry/**            merge=derived
 # whose `weight` is a function of where that command sits in the whole list. Adding a
 # command anywhere renumbers every page after it, so two branches that each add one
 # conflict on every page between them, over a number neither of them decides.
-site/content/docs/**                merge=derived
 
 # The schema, allow-list and section projections: `majordomus generate` writes all three out
 # of the kind and capability declarations, and they conflict for the same reason the rest of
@@ -66,41 +53,21 @@ site/content/docs/**                merge=derived
 # The authority is docs/generated/artifacts.json. When generate gains or loses a schema this
 # list must follow it:
 #   grep -o '"share/schemas/[^"]*schema.json"' docs/generated/artifacts.json | tr -d '"' | sort -u
-share/schemas/majordomus/adr/adr.v1.schema.json      merge=derived
-share/schemas/majordomus/application/application.v1.schema.json      merge=derived
-share/schemas/majordomus/capture/capture.v1.schema.json      merge=derived
-share/schemas/majordomus/context/context.v1.schema.json      merge=derived
-share/schemas/majordomus/knowledge/knowledge.v1.schema.json      merge=derived
-share/schemas/majordomus/prompt/prompt.v1.schema.json      merge=derived
-share/schemas/majordomus/rule/rule.v1.schema.json      merge=derived
-share/schemas/majordomus/skill/skill.v1.schema.json      merge=derived
-share/schemas/majordomus/use-case/use-case.v1.schema.json      merge=derived
-share/allow/**                      merge=derived
-share/sections/**                   merge=derived
 
 # The provider projections. They carry a stamp over the policy hash and their own content,
 # so a merge of two branches leaves a stamp that describes neither.
-AGENTS.md                           merge=derived
-CLAUDE.md                           merge=derived
-.bb/AGENTS.md                       merge=derived
 
 # The installer and the document that describes it: both are written out of the release and
 # platform declarations, and both carry a fingerprint of the tree they were generated from.
-docs/INSTALL.md                     merge=derived
-site/static/install.sh              merge=derived
 
 # The release metadata the site publishes: `majordomus generate distribution` writes one
 # file per release plus latest.json out of the release declarations, so two branches that
 # cut or record a release conflict here on content neither of them decides.
-site/static/releases/**             merge=derived
 
 # The deployment artifacts: `majordomus generate` writes fly.toml, deploy/Dockerfile and
 # .dockerignore out of .ai/repo/deployments/majordomus.yaml. They landed with the deployment
 # module and had no rule, so a merge of two branches that each moved the deployment model
 # conflicted on three files whose content neither side decides.
-fly.toml                            merge=derived
-deploy/Dockerfile                   merge=derived
-.dockerignore                       merge=derived
 
 # Every section under site/content that scripts/generate-site-data deletes and rewrites on
 # each run (its `rm -rf "$CONTENT_ROOT/..."` lines are the authoritative list). Thirteen of
@@ -108,19 +75,6 @@ deploy/Dockerfile                   merge=derived
 # branch owns and that the generator replaces wholesale — the single largest mechanical
 # cause of the pull-request backlog measured on 2026-09-11 (docs/BACKLOG.md).
 # scripts/ci/backlog-check derives the list from the generator and refuses a new omission.
-site/content/applications/**        merge=derived
-site/content/commands/**            merge=derived
-site/content/context/**             merge=derived
-site/content/doctrines/**           merge=derived
-site/content/features/**            merge=derived
-site/content/guarantees/**          merge=derived
-site/content/plan/**                merge=derived
-site/content/profiles/**            merge=derived
-site/content/sessions/**            merge=derived
-site/content/skills/**              merge=derived
-site/content/supervises/**          merge=derived
-site/content/use-cases/**           merge=derived
-site/content/why/**                 merge=derived
 
 # The design system's projections. Every one of these is generated from a canonical source
 # that is deliberately NOT listed here — share/design/tokens.yaml and share/design/brand/*
@@ -128,13 +82,166 @@ site/content/why/**                 merge=derived
 # writes into the crate, the shared assets and the site, and docs/generated/artifacts.json
 # names each with its source. test/cases/57_derived_merge_driver.sh has been failing on
 # master over exactly these ten paths.
-apps/majordomus-cli/src/cockpit/logo-mark.svg   merge=derived
-apps/majordomus-cli/src/design/tokens.yaml      merge=derived
-apps/majordomus-cli/src/web/tokens.css          merge=derived
-share/cockpit/favicon.svg                       merge=derived
-share/design/status.css                         merge=derived
-share/design/surface.css                        merge=derived
-share/design/theme.css                          merge=derived
-site/static/favicon.svg                         merge=derived
-site/static/images/logo-mark.svg                merge=derived
-site/static/images/logo.svg                     merge=derived
+
+
+# >>> generated by scripts/gitattributes — do not edit between the markers >>>
+# 134 path(s) from docs/generated/artifacts.json, plus the sections and documents scripts/generate-site-data publishes.
+# Regenerate with scripts/gitattributes; scripts/derive does it, --check proves it,
+# and test/cases/241_merge_policy_claims_only_generated.sh proves the converse.
+.bb/AGENTS.md                                                    merge=derived
+.dockerignore                                                    merge=derived
+.gitattributes                                                   merge=derived
+AGENTS.md                                                        merge=derived
+CLAUDE.md                                                        merge=derived
+apps/majordomus-cli/src/cockpit/logo-mark.svg                    merge=derived
+apps/majordomus-cli/src/design/tokens.yaml                       merge=derived
+apps/majordomus-cli/src/web/tokens.css                           merge=derived
+deploy/Dockerfile                                                merge=derived
+docs/INSTALL.md                                                  merge=derived
+docs/PAGES_STATUS.md                                             merge=derived
+docs/PLAN_STATUS.md                                              merge=derived
+docs/SITE_CLAIMS.md                                              merge=derived
+docs/generated/artifacts.json                                    merge=derived
+docs/generated/artifacts.md                                      merge=derived
+docs/generated/artifacts.yaml                                    merge=derived
+docs/generated/benchmarks.json                                   merge=derived
+docs/generated/benchmarks.md                                     merge=derived
+docs/generated/benchmarks.yaml                                   merge=derived
+docs/generated/capabilities.md                                   merge=derived
+docs/generated/changelog.json                                    merge=derived
+docs/generated/changelog.md                                      merge=derived
+docs/generated/changelog.yaml                                    merge=derived
+docs/generated/cli.json                                          merge=derived
+docs/generated/cli.md                                            merge=derived
+docs/generated/cli.yaml                                          merge=derived
+docs/generated/design.json                                       merge=derived
+docs/generated/design.md                                         merge=derived
+docs/generated/design.yaml                                       merge=derived
+docs/generated/distribution-matrix.json                          merge=derived
+docs/generated/graph.json                                        merge=derived
+docs/generated/graph.schema.json                                 merge=derived
+docs/generated/modules/artifacts.md                              merge=derived
+docs/generated/modules/capabilities.md                           merge=derived
+docs/generated/modules/commands.md                               merge=derived
+docs/generated/modules/continuity.md                             merge=derived
+docs/generated/modules/deploy.md                                 merge=derived
+docs/generated/modules/design.md                                 merge=derived
+docs/generated/modules/devcontext.md                             merge=derived
+docs/generated/modules/devtask.md                                merge=derived
+docs/generated/modules/directories.md                            merge=derived
+docs/generated/modules/distribution.md                           merge=derived
+docs/generated/modules/environment.md                            merge=derived
+docs/generated/modules/evidence.md                               merge=derived
+docs/generated/modules/executions.md                             merge=derived
+docs/generated/modules/gates.md                                  merge=derived
+docs/generated/modules/graph.md                                  merge=derived
+docs/generated/modules/health.md                                 merge=derived
+docs/generated/modules/lifecycle.md                              merge=derived
+docs/generated/modules/mesh.md                                   merge=derived
+docs/generated/modules/models.md                                 merge=derived
+docs/generated/modules/objects.md                                merge=derived
+docs/generated/modules/obligations.md                            merge=derived
+docs/generated/modules/peers.md                                  merge=derived
+docs/generated/modules/perf.md                                   merge=derived
+docs/generated/modules/plan.md                                   merge=derived
+docs/generated/modules/product.md                                merge=derived
+docs/generated/modules/quality.md                                merge=derived
+docs/generated/modules/release.md                                merge=derived
+docs/generated/modules/repository.md                             merge=derived
+docs/generated/modules/rules.md                                  merge=derived
+docs/generated/modules/server.md                                 merge=derived
+docs/generated/modules/session_domain.md                         merge=derived
+docs/generated/modules/trace.md                                  merge=derived
+docs/generated/modules/web.md                                    merge=derived
+docs/generated/modules/why.md                                    merge=derived
+docs/generated/modules/worktree.md                               merge=derived
+docs/generated/openapi.json                                      merge=derived
+docs/generated/openapi.yaml                                      merge=derived
+docs/generated/providers.json                                    merge=derived
+docs/generated/providers.md                                      merge=derived
+docs/generated/providers.yaml                                    merge=derived
+docs/generated/registry.json                                     merge=derived
+docs/generated/registry.yaml                                     merge=derived
+docs/generated/web.json                                          merge=derived
+docs/generated/web.yaml                                          merge=derived
+fly.toml                                                         merge=derived
+share/allow/adr.txt                                              merge=derived
+share/allow/application.txt                                      merge=derived
+share/allow/context.txt                                          merge=derived
+share/allow/current.txt                                          merge=derived
+share/allow/deployment.txt                                       merge=derived
+share/allow/distribution.txt                                     merge=derived
+share/allow/document.txt                                         merge=derived
+share/allow/issue.txt                                            merge=derived
+share/allow/knowledge.txt                                        merge=derived
+share/allow/manifest.txt                                         merge=derived
+share/allow/mesh-declaration.txt                                 merge=derived
+share/allow/milestone.txt                                        merge=derived
+share/allow/policy.txt                                           merge=derived
+share/allow/profile.txt                                          merge=derived
+share/allow/project.txt                                          merge=derived
+share/allow/prompt.txt                                           merge=derived
+share/allow/release.txt                                          merge=derived
+share/allow/rule.txt                                             merge=derived
+share/allow/scope.txt                                            merge=derived
+share/allow/session-context.txt                                  merge=derived
+share/allow/session-record.txt                                   merge=derived
+share/allow/session.txt                                          merge=derived
+share/allow/skill.txt                                            merge=derived
+share/allow/taxonomy.txt                                         merge=derived
+share/allow/use-case.txt                                         merge=derived
+share/allow/workspace.txt                                        merge=derived
+share/cockpit/favicon.svg                                        merge=derived
+share/design/status.css                                          merge=derived
+share/design/surface.css                                         merge=derived
+share/design/theme.css                                           merge=derived
+share/schemas/majordomus/adr/adr.v1.schema.json                  merge=derived
+share/schemas/majordomus/application/application.v1.schema.json  merge=derived
+share/schemas/majordomus/capture/capture.v1.schema.json          merge=derived
+share/schemas/majordomus/context/context.v1.schema.json          merge=derived
+share/schemas/majordomus/knowledge/knowledge.v1.schema.json      merge=derived
+share/schemas/majordomus/prompt/prompt.v1.schema.json            merge=derived
+share/schemas/majordomus/rule/rule.v1.schema.json                merge=derived
+share/schemas/majordomus/skill/skill.v1.schema.json              merge=derived
+share/schemas/majordomus/use-case/use-case.v1.schema.json        merge=derived
+share/sections/adr.txt                                           merge=derived
+share/sections/application.txt                                   merge=derived
+share/sections/context.txt                                       merge=derived
+share/sections/knowledge.txt                                     merge=derived
+share/sections/prompt.txt                                        merge=derived
+share/sections/rule.txt                                          merge=derived
+share/sections/skill.txt                                         merge=derived
+share/sections/use-case.txt                                      merge=derived
+site/content/*.md                                                merge=derived
+site/content/applications/**                                     merge=derived
+site/content/commands/**                                         merge=derived
+site/content/context/**                                          merge=derived
+site/content/docs/**                                             merge=derived
+site/content/doctrines/**                                        merge=derived
+site/content/features/**                                         merge=derived
+site/content/guarantees/**                                       merge=derived
+site/content/method/**                                           merge=derived
+site/content/plan/**                                             merge=derived
+site/content/profiles/**                                         merge=derived
+site/content/registry/**                                         merge=derived
+site/content/sessions/**                                         merge=derived
+site/content/skills/**                                           merge=derived
+site/content/supervises/**                                       merge=derived
+site/content/use-cases/**                                        merge=derived
+site/content/why/**                                              merge=derived
+site/data/generated/**                                           merge=derived
+site/data/registry/design.json                                   merge=derived
+site/data/registry/distribution.json                             merge=derived
+site/data/registry/product-graph.json                            merge=derived
+site/data/registry/product.json                                  merge=derived
+site/data/registry/registry.json                                 merge=derived
+site/data/registry/why-graph.json                                merge=derived
+site/data/registry/why.json                                      merge=derived
+site/static/favicon.svg                                          merge=derived
+site/static/images/logo-mark.svg                                 merge=derived
+site/static/images/logo.svg                                      merge=derived
+site/static/install.sh                                           merge=derived
+site/static/releases/latest.json                                 merge=derived
+site/static/releases/v0.3.1.json                                 merge=derived
+site/static/releases/v0.5.0.json                                 merge=derived
+# <<< generated by scripts/gitattributes <<<
