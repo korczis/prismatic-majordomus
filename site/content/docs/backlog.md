@@ -8,17 +8,18 @@ source = "docs/BACKLOG.md"
 
 {% raw %}
 
-The four quantities in this repository that grow on their own, the commands that measure
+The five quantities in this repository that grow on their own, the commands that measure
 them, and the commands that reduce them. Behaviour as implemented and tested; where this
 document and the scripts disagree, the document is wrong and changes in the same commit.
 The rule is `project.accumulation-is-measured`; the gate is `scripts/ci/backlog-check`; the
-behavioural case is `test/cases/131_backlog_hygiene.sh`.
+behavioural cases are `test/cases/131_backlog_hygiene.sh` and
+`test/cases/276_disk_is_bounded.sh`.
 
 ## The finding this exists because of
 
 On 2026-09-11 the operator reported one symptom — *worktrees, processes and branches keep
 piling up and nothing is being deployed* — and measurement found four separate quantities
-at once:
+at once (the fifth, disk, filled the volume the next day and has its own section below):
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -78,6 +79,7 @@ expensive way this measurement can be wrong. `scripts/land` uses the exit code.
 | pull requests | `scripts/land` | `scripts/land --run` |
 | worktrees, branches | `majordomus worktree` | `majordomus worktree` cleanup, by hand for dirty ones |
 | abandoned servers | `scripts/reap-orphans` | `scripts/reap-orphans --kill` |
+| build output on disk | `scripts/reap-orphans --targets` | `scripts/reap-orphans --reclaim` |
 | the whole gate | `scripts/ci/backlog-check` | `scripts/ci/backlog-check --remote` |
 
 </div>
@@ -116,6 +118,43 @@ process is reaped only when all four hold, each re-checked immediately before th
 
 Dry-run by default; `--kill` acts. A server that acquires a client between the scan and the
 signal is skipped.
+
+### Build output, and the floor under a build
+
+On 2026-09-12 this machine reached **zero bytes free** on a 926GiB volume. Every session on
+it died in the same minute — not gracefully, but with the harness unable to write its own
+task files, which reads to each session like broken tooling rather than like a full disk,
+and `df` could not be run either. `~/dev/prismatic-majordomus-wt` held 180GB, of which
+~145GB was `apps/majordomus-cli/target` in worktrees **whose branches were already merged**.
+One had landed hours before and still held 32GiB. Nothing in finishing a piece of work
+removes the build directory it produced, so nothing ever would have.
+
+The same reaper answers it, with a second subject and a second consent (`--reclaim`, never
+`--kill`). **It removes `target/` and never a worktree**: a false positive costs somebody a
+rebuild and cannot cost a byte of source. A build directory is reclaimed only when all four
+hold — merged into `origin/master`, nobody working in that worktree, `git status` empty, and
+the directory provably cargo's own and inside that worktree. The primary checkout is
+excluded by name rather than by predicate, because every other checkout borrows its
+executable.
+
+Liveness is read from the machine (`ps`, and every process's working directory) and never
+from the peer board: an announcement belongs to a *connection*, and a worker that reconnects
+keeps its work while losing its place on the board — exactly the window a reaper runs in.
+Merged-ness alone would have been a disaster, and the instance was on the machine that
+morning: a worktree holding 11.8GB with a live peer in it read as fully merged, because the
+session working in it had not committed yet and its tip was still where the merge left it.
+An mtime is never a predicate here (it is the one whose missing input becomes an extreme
+value, and it cleaned three *active* worktrees once), and the reaper refuses as a whole —
+reclaiming nothing, not everything — when liveness or `origin/master` cannot be read.
+
+The other half is a bound rather than a warning. A `df` in `doctor` helps the next person
+and cannot help the person already stuck. `mj_rust_space_check` in `lib/rust_bin.sh` refuses
+to *start* a build below **5120MB** free, and the three paths that start one — the launcher,
+`scripts/derive`, `just build` — all ask it. The floor is measured: a full `cargo build
+--locked` of the crate into an empty `target/` wrote 2.45GiB, and the floor is two of those.
+`MAJORDOMUS_MIN_FREE_MB=0` lifts it. A bound whose own input cannot be measured says so and
+lets the build run — the deliberate opposite of the sweep, because refusing every build on a
+machine whose `df` is unreadable stops all work to prevent a hypothetical.
 
 ### The derived trees that were never declared
 

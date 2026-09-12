@@ -59,6 +59,7 @@ if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
   printf '==> derive: MAJORDOMUS_BIN=%s (not building; it must be of this tree'"'"'s generation)\n' "$RB" >&2
 else
   # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
+  mj_rust_space_check "$ROOT" "the build this derivation needs" || exit 12
   step "building the Rust executable ($PROFILE)"
   release=(); [ "$PROFILE" = release ] && release=(--release)
   RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}"
