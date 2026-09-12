@@ -1,7 +1,7 @@
 +++
 title = "What the product does is a catalogue object, and every public surface of it is derived"
 description = "What the product does is a catalogue object, and every public surface of it is derived"
-weight = 107
+weight = 108
 [extra]
 kind = "rule"
 slug = "project-product-surface-derived-1"

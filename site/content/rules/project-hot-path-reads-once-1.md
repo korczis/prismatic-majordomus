@@ -1,7 +1,7 @@
 +++
 title = "A command reads each canonical file at most once"
 description = "A command reads each canonical file at most once"
-weight = 89
+weight = 90
 [extra]
 kind = "rule"
 slug = "project-hot-path-reads-once-1"

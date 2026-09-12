@@ -1,7 +1,7 @@
 +++
 title = "Derived files are regenerated, never edited"
 description = "Derived files are regenerated, never edited"
-weight = 70
+weight = 71
 [extra]
 kind = "rule"
 slug = "project-derived-files-regenerated-1"

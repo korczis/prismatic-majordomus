@@ -1,7 +1,7 @@
 +++
 title = "Conventional commits, committed and pushed incrementally"
 description = "Conventional commits, committed and pushed incrementally"
-weight = 69
+weight = 70
 [extra]
 kind = "rule"
 slug = "project-conventional-commits-1"

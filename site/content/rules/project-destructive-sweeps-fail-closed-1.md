@@ -1,7 +1,7 @@
 +++
 title = "A sweep that deletes fails closed on what it could not read"
 description = "A sweep that deletes fails closed on what it could not read"
-weight = 73
+weight = 74
 [extra]
 kind = "rule"
 slug = "project-destructive-sweeps-fail-closed-1"
