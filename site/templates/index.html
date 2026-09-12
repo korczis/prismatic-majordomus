@@ -351,7 +351,7 @@
             <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">version declared</dt>
             {%- if prov.version %}
             <dd class="mt-1 font-mono text-2xl font-bold text-fg-brand-strong">{{ prov.version.declared_version }}</dd>
-            <dd class="mt-1 text-sm text-body">the public surface requires <span class="font-mono text-heading">{{ prov.version.required_version }}</span></dd>
+            <dd class="mt-1 text-sm text-body">measured against <span class="font-mono text-heading">{{ prov.version.baseline_reference | default(value=prov.version.baseline_version) }}</span> by <span class="font-mono text-heading">{{ prov.version.measured_by }}</span></dd>
             {%- else %}
             <dd class="mt-1 text-sm text-body">not derived here</dd>
             {%- endif %}
@@ -367,7 +367,7 @@
           </div>
           <div class="rounded-base border border-default bg-neutral-primary p-4 sm:col-span-2">
             <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">inferred impact</dt>
-            {%- if prov.version %}
+            {%- if prov.version and prov.version.measured %}
             <dd class="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span class="font-mono text-2xl font-bold text-heading">{{ prov.version.implied }}</span>
               <span class="mj-badge mj-badge--{{ prov.version.status }}">{{ prov.version.status }}</span>

@@ -109,12 +109,17 @@
       <span class="mb-3 block font-mono text-xs uppercase tracking-wide text-body-subtle">the version this tree declares</span>
       <p class="font-mono text-3xl font-bold text-fg-brand-strong">{{ v.declared_version }}</p>
       <dl class="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+        {%- if v.measured %}
         <dt class="text-body-subtle">the surface implies</dt><dd class="min-w-0 font-mono text-heading">{{ v.implied }}</dd>
         <dt class="text-body-subtle">the policy requires</dt><dd class="min-w-0 font-mono text-heading">{{ v.required }} &rarr; {{ v.required_version }}</dd>
         <dt class="text-body-subtle">the tree declares</dt><dd class="min-w-0 font-mono text-heading">{{ v.declared }}</dd>
         <dt class="text-body-subtle">agreement</dt><dd class="min-w-0"><span class="mj-badge mj-badge--{{ v.status }}">{{ v.status }}</span></dd>
         <dt class="text-body-subtle">breaking</dt><dd class="min-w-0 font-mono text-heading">{% if v.breaking %}yes{% else %}no{% endif %}</dd>
         <dt class="text-body-subtle">contract changes</dt><dd class="min-w-0 font-mono text-heading">{{ v.changes }}</dd>
+        {%- else %}
+        <dt class="text-body-subtle">measured by</dt><dd class="min-w-0 font-mono text-heading">{{ v.measured_by }}</dd>
+        <dt class="text-body-subtle">in this projection</dt><dd class="min-w-0 text-body">not measured: the analysis needs the executable and the history of the last release, which a committed page may not depend on</dd>
+        {%- endif %}
         {%- if v.policy_mode %}<dt class="text-body-subtle">policy</dt><dd class="min-w-0 font-mono text-heading">{{ v.policy_mode }}</dd>{% endif %}
       </dl>
     </div>

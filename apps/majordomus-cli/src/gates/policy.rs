@@ -304,7 +304,7 @@ impl CompletionPolicy {
         let mut out = self.structural_problems();
         for q in &self.questions {
             if let QuestionSource::Obligation(token) = q.kind() {
-                if !obligations.iter().any(|o| *o == token) {
+                if !obligations.contains(&token) {
                     out.push(format!(
                         "question '{}' is answered by obligation '{token}', which \
                          share/obligations.yaml does not declare",
