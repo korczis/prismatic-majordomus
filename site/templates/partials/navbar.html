@@ -1,5 +1,11 @@
-{#- Flowbite v4 navbar (components/navbar) with dropdown groups (components/dropdowns). Five top-level intents; on mobile every
-    group is a labelled flat list inside the collapsed menu, so nothing depends on hover. -#}
+{#- Flowbite v4 navbar (components/navbar) with dropdown groups (components/dropdowns). Five
+    top-level intents and one call to action; on mobile every group is a labelled flat list
+    inside the collapsed menu, so nothing depends on hover.
+
+    `Get started` is rendered as a button beside GitHub rather than as a sixth group, because
+    it is an action and not a question a visitor arrives with. It sits outside the collapsing
+    menu on desktop so a decided reader never has to open anything, and inside it at the end
+    on mobile, where the bar has no room for a second button. -#}
 {% set nav = load_data(path="data/nav.toml") %}
 {% set cp = current_path or "" %}
 <nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
@@ -12,6 +18,9 @@
     <div class="flex items-center gap-2 md:order-2">
       {% include "partials/theme-toggle.html" %}
       <a href="{{ project.repository_url }}" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      {%- if nav.cta %}
+      <a href="{{ get_url(path=nav.cta.href, trailing_slash=true) }}" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex"{% if cp == nav.cta.href %} aria-current="page"{% endif %}>{{ nav.cta.label }}</a>
+      {%- endif %}
       <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
         <span class="sr-only">Open main menu</span>
         <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
@@ -45,6 +54,9 @@
         </li>
         {% endif %}
         {% endfor %}
+        {%- if nav.cta %}
+        <li class="mt-3 md:hidden"><a href="{{ get_url(path=nav.cta.href, trailing_slash=true) }}" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong"{% if cp == nav.cta.href %} aria-current="page"{% endif %}>{{ nav.cta.label }}</a></li>
+        {%- endif %}
       </ul>
     </div>
   </div>

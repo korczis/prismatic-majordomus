@@ -131,11 +131,18 @@ network call, and `test/cases/08_no_forbidden_constructs.sh` proves it:
 | branches and commits | `git for-each-ref`, `git log` | the `trace` capability module of the Rust executable |
 | pull requests | the GitHub API, through `gh` | `scripts/traceability` |
 
-```text
-issue ──names──▶ branch ──contains──▶ commit          derived from git
-  ▲                 ▲
-  │                 └── head branch of ─── pull request   derived from GitHub
-  └── milestone, the one edge git does not hold: the canonical issue record declares it
+```mermaid
+flowchart LR
+  issue["issue"]
+  subgraph git["derived from git"]
+    branch["branch"] -->|contains| commit["commit"]
+  end
+  subgraph github["derived from GitHub"]
+    pr["pull request"]
+  end
+  issue -->|names| branch
+  pr -->|"head branch of"| branch
+  milestone["milestone"] -->|"the one edge git does not hold:<br>the canonical issue record declares it"| issue
 ```
 
 A branch's commits are the commits it holds that the trunk did not: measured against the

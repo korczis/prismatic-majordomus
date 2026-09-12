@@ -32,19 +32,22 @@ those words rather than reporting one number that hides which half moved.
 
 ## The shape
 
-```text
-push to master (on paths that can change the site)
-        │
-        ├─── validate.yml ── plan ─┬─ structure ─┬─ ci  (the status a branch rule requires)
-        │                          ├─ suite      │
-        │                          ├─ rust       │      decides whether a change may merge
-        │                          ├─ coverage   │
-        │                          ├─ bench      │
-        │                          ├─ site       │      (build, check, browser probe)
-        │                          └─ macos ─────┘
-        │
-        └─── pages.yml ──── one job ───────────────────  decides what the public site shows
-                 checkout → setup → build → check → push gh-pages → measure publication
+```mermaid
+flowchart LR
+  push["push to master<br>(on paths that can<br>change the site)"]
+  push --> validate["validate.yml<br>decides whether a<br>change may merge"]
+  validate --> plan["plan"]
+  plan --> structure["structure"]
+  plan --> suite["suite"]
+  plan --> rust["rust"]
+  plan --> coverage["coverage"]
+  plan --> bench["bench"]
+  plan --> site["site<br>(build, check,<br>browser probe)"]
+  plan --> macos["macos"]
+  structure & suite & rust & coverage & bench & site & macos --> ci["ci<br>the status a branch<br>rule requires"]
+  push --> pages["pages.yml<br>decides what the<br>public site shows"]
+  pages --> job["one job"]
+  job --> checkout["checkout"] --> setup["setup"] --> build["build"] --> check["check"] --> ghpages["push gh-pages"] --> measure["measure publication"]
 ```
 
 The two run beside each other on the same commit. Publication used to be a job *inside*

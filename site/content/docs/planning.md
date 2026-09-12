@@ -154,12 +154,20 @@ network call, and `test/cases/08_no_forbidden_constructs.sh` proves it:
 </div>
 
 
-```text
-issue ──names──▶ branch ──contains──▶ commit          derived from git
-  ▲                 ▲
-  │                 └── head branch of ─── pull request   derived from GitHub
-  └── milestone, the one edge git does not hold: the canonical issue record declares it
-```
+<pre class="mermaid">
+flowchart LR
+  issue["issue"]
+  subgraph git["derived from git"]
+    branch["branch"] --&gt;|contains| commit["commit"]
+  end
+  subgraph github["derived from GitHub"]
+    pr["pull request"]
+  end
+  issue --&gt;|names| branch
+  pr --&gt;|"head branch of"| branch
+  milestone["milestone"] --&gt;|"the one edge git does not hold:&lt;br&gt;the canonical issue record declares it"| issue
+</pre>
+
 
 A branch's commits are the commits it holds that the trunk did not: measured against the
 trunk while the branch is open, and against the first parent of the merge commit that brought

@@ -40,20 +40,24 @@ those words rather than reporting one number that hides which half moved.
 
 ## The shape
 
-```text
-push to master (on paths that can change the site)
-        │
-        ├─── validate.yml ── plan ─┬─ structure ─┬─ ci  (the status a branch rule requires)
-        │                          ├─ suite      │
-        │                          ├─ rust       │      decides whether a change may merge
-        │                          ├─ coverage   │
-        │                          ├─ bench      │
-        │                          ├─ site       │      (build, check, browser probe)
-        │                          └─ macos ─────┘
-        │
-        └─── pages.yml ──── one job ───────────────────  decides what the public site shows
-                 checkout → setup → build → check → push gh-pages → measure publication
-```
+<pre class="mermaid">
+flowchart LR
+  push["push to master&lt;br&gt;(on paths that can&lt;br&gt;change the site)"]
+  push --&gt; validate["validate.yml&lt;br&gt;decides whether a&lt;br&gt;change may merge"]
+  validate --&gt; plan["plan"]
+  plan --&gt; structure["structure"]
+  plan --&gt; suite["suite"]
+  plan --&gt; rust["rust"]
+  plan --&gt; coverage["coverage"]
+  plan --&gt; bench["bench"]
+  plan --&gt; site["site&lt;br&gt;(build, check,&lt;br&gt;browser probe)"]
+  plan --&gt; macos["macos"]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; macos --&gt; ci["ci&lt;br&gt;the status a branch&lt;br&gt;rule requires"]
+  push --&gt; pages["pages.yml&lt;br&gt;decides what the&lt;br&gt;public site shows"]
+  pages --&gt; job["one job"]
+  job --&gt; checkout["checkout"] --&gt; setup["setup"] --&gt; build["build"] --&gt; check["check"] --&gt; ghpages["push gh-pages"] --&gt; measure["measure publication"]
+</pre>
+
 
 The two run beside each other on the same commit. Publication used to be a job *inside*
 `validate.yml` that needed `plan`, `structure`, `suite`, `rust` and `site` — the set that
