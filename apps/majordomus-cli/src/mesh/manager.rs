@@ -161,7 +161,18 @@ impl MeshRuntime {
     }
 
     /// Whether a shared server activated or declined this runtime. `false` in every
-    /// process that is not a server: there, `status()` reports an absence, not a decision.
+    /// process that is not a server: there, `status()` reports an absence, not a
+    /// decision, and the doctor's `runtime` check says so instead of judging it.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::MeshRuntime;
+    ///
+    /// let runtime = MeshRuntime::new();
+    /// assert!(!runtime.decided(), "nothing has decided anything yet");
+    /// runtime.decline("the mesh declaration is disabled");
+    /// assert!(runtime.decided());
+    /// assert!(!runtime.status().active);
+    /// ```
     pub fn decided(&self) -> bool {
         self.decided.load(Ordering::SeqCst)
     }
