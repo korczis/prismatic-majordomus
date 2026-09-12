@@ -1,208 +1,56 @@
 #!/usr/bin/env bash
-# version-matches-surface — the version is measured against the public surface, not claimed.
+# version-matches-surface — the version is measured against the public contract, not claimed.
 #
-# `project.land-and-publish` already says that a merge which changes the public contract
-# carries its version, and the published site naming a version three releases behind the
-# code is why it says so. What it could not say was *which* version, because the bump was
-# decided by the words in the commit messages: `feat:` meant minor, `fix:` meant patch, and
-# a capability deleted under a `refactor:` heading meant nothing at all. A number a person
-# chooses is a claim, and a claim about compatibility is exactly the kind nobody can check
-# by reading.
+# This script holds no domain semantics and must not acquire any. It is an adapter: it runs
+# the one canonical analyser and maps its exit code to the gate's. Everything it used to
+# decide for itself — which atoms make up the public surface, what a removal costs, what the
+# `0.x` floor is, which release is the baseline — now lives in the typed engine, where it is
+# one implementation with one set of tests instead of a shell copy nothing could exercise:
 #
-# So it is measured. The capability registry is the public surface — one declaration, of
-# which MCP, HTTP, OpenAPI and the command line are projections (ADR 0002, ADR 0027) — and
-# `docs/generated/registry.json` is committed at every commit, which means the surface of
-# any two refs can be compared without building either of them. What the comparison finds
-# decides the smallest honest bump:
+#   apps/majordomus-cli/src/release/surface.rs   what the public contract is
+#   apps/majordomus-cli/src/release/compat.rs    what a movement of it costs, and the policy
 #
-#   an atom of the surface is GONE      major   somebody depended on it and now cannot
-#   an atom of the surface is NEW       minor   nothing broke, something arrived
-#   the surface is unchanged            patch   the change was behind the boundary
-#
-# An atom is one thing a caller can hold: a capability's identity, its kind, its
-# visibility, the MCP tool or resource it answers to, the HTTP method and path it is bound
-# to, the command-line path that dispatches it. Losing any of them is a major change even
-# when the capability survives, because a caller holding the old one is broken either way.
-#
-# This is Elm's rule for its package manager, and it is here for Elm's reason: a version is
-# worth something only when it cannot be smaller than the truth.
+# The same value answers `majordomus release analyze`, `GET /api/v1/release/analysis`, the
+# `majordomus_release_analysis` MCP tool, the Cockpit panel and `release bump`. That is the
+# point: a gate that re-derived the verdict would be a fifth authority, and the reason this
+# subsystem was rebuilt is that there were two.
 #
 #   scripts/ci/version-matches-surface              the tree against the last release
 #   scripts/ci/version-matches-surface --since REF  against that ref instead
-#   scripts/ci/version-matches-surface --explain    every atom that arrived or left
-#   scripts/ci/version-matches-surface --implied    print the implied bump and exit 0
+#   scripts/ci/version-matches-surface --explain    every movement, and why each counts
+#   scripts/ci/version-matches-surface --json       the canonical VersionPlan
 #   MJ_ROOT=DIR ...                                 examine that repository instead of this one
 #
-# Exit 0 the declared version is at least what the surface implies · 10 it is smaller, and
-# the refusal names what moved · 12 something needed is absent (no release to compare with,
-# no committed registry at that ref) · 2 usage.
-set -eu
-set -o pipefail
+# Exit 0 the declared version covers what the contract did · 10 it does not, and the refusal
+# names what moved · 12 the analysis could not be made (no release to compare with, a
+# baseline that carries no committed registry, a shallow clone) · 2 usage.
+set -euo pipefail
 
-ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
-cd "$ROOT"
+# Two roots, and they are not the same one. HERE is the checkout this script belongs to,
+# which is where the launcher that builds the executable lives; ROOT is the repository being
+# examined, which MJ_ROOT may point elsewhere (the behavioural case does exactly that). The
+# old gate conflated them by `cd`-ing into ROOT and running a relative path, which worked
+# only while the two were the same directory.
+HERE="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="${MJ_ROOT:-$HERE}"
 
-REGISTRY="docs/generated/registry.json"
-SINCE=""; EXPLAIN=0; IMPLIED_ONLY=0
+ARGS=()
+FORMAT=text
 while [ $# -gt 0 ]; do
   case "$1" in
-    --since) [ $# -ge 2 ] || { echo "version-matches-surface: --since needs a ref" >&2; exit 2; }; SINCE="$2"; shift 2 ;;
-    --explain) EXPLAIN=1; shift ;;
-    --implied) IMPLIED_ONLY=1; shift ;;
-    -h|--help) sed -n '2,34p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --since) [ $# -ge 2 ] || { echo "version-matches-surface: --since needs a ref" >&2; exit 2; }
+             ARGS+=(--since "$2"); shift 2 ;;
+    --explain) ARGS+=(--explain); shift ;;
+    --json) FORMAT=json; shift ;;
+    -h|--help) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "version-matches-surface: unknown option $1" >&2; exit 2 ;;
   esac
 done
 
-command -v jq >/dev/null 2>&1 || { echo "version-matches-surface: jq is not installed" >&2; exit 12; }
-
-# The release to measure against: the newest version tag, unless one was named. Tags are
-# read from git rather than from a list here, so a release nobody told this script about is
-# still the one it compares with.
-if [ -z "$SINCE" ]; then
-  SINCE="$(git tag --list 'v[0-9]*' | LC_ALL=C sort -V | tail -n 1)"
-  [ -n "$SINCE" ] || { echo "version-matches-surface: this repository has no version tag to compare with" >&2; exit 12; }
-fi
-git rev-parse --verify --quiet "$SINCE^{commit}" >/dev/null || {
-  echo "version-matches-surface: $SINCE is not a commit in this repository" >&2; exit 12; }
-
-# One atom per line: everything a caller can hold on to. Sorted, so the comparison is a
-# set difference and not a diff of two orderings.
-atoms_of() {  # atoms_of <ref|-> ; "-" is the working tree
-  local ref="$1" json
-  if [ "$ref" = "-" ]; then
-    [ -f "$REGISTRY" ] || { echo "version-matches-surface: $REGISTRY is not in this tree" >&2; exit 12; }
-    json="$(cat "$REGISTRY")"
-  else
-    json="$(git show "$ref:$REGISTRY" 2>/dev/null)" || {
-      echo "version-matches-surface: $ref carries no $REGISTRY, so its surface cannot be read" >&2; exit 12; }
-  fi
-  printf '%s' "$json" | jq -r '
-    .capabilities[]
-    | select((.visibility // "public") == "public")
-    | . as $c
-    | [ "capability \($c.id)",
-        "kind       \($c.id) is \($c.kind)",
-        ( $c.exposure.mcp.tool // empty          | "mcp tool  \(.)" ),
-        ( $c.exposure.mcp.resource.uri // empty  | "resource  \(.)" ),
-        ( $c.exposure.http // empty              | "route     \(.method) \(.path)" ),
-        ( $c.exposure.cli // empty               | "command   \(.path | join(" "))" )
-      ] | .[]' | LC_ALL=C sort -u
-}
-
-BASE="$(atoms_of "$SINCE")"
-NOW="$(atoms_of -)"
-
-GONE="$(LC_ALL=C comm -23 <(printf '%s\n' "$BASE") <(printf '%s\n' "$NOW") | sed '/^$/d')"
-NEW="$(LC_ALL=C comm -13 <(printf '%s\n' "$BASE") <(printf '%s\n' "$NOW") | sed '/^$/d')"
-
-if [ -n "$GONE" ]; then IMPLIED="major"
-elif [ -n "$NEW" ]; then IMPLIED="minor"
-else IMPLIED="patch"
-fi
-
-if [ "$IMPLIED_ONLY" = 1 ]; then printf '%s\n' "$IMPLIED"; exit 0; fi
-
-# What the two writers of the version say now, and what the release said. `release version`
-# owns the reading; this script never parses a manifest of its own.
-version_now() {
-  local v
-  v="$(sed -n 's/^MJ_VERSION="\(.*\)"$/\1/p' bin/majordomus | head -n 1)"
-  [ -n "$v" ] || return 1
-  printf '%s' "$v"
-}
-version_at() {  # the version the compared release declared
-  local v
-  v="$(git show "$1:bin/majordomus" 2>/dev/null | sed -n 's/^MJ_VERSION="\(.*\)"$/\1/p' | head -n 1)" || return 1
-  [ -n "$v" ] || return 1
-  printf '%s' "$v"
-}
-
-NOW_V="$(version_now)" || { echo "version-matches-surface: this tree declares no version" >&2; exit 12; }
-BASE_V="$(version_at "$SINCE")" || { echo "version-matches-surface: $SINCE declares no version" >&2; exit 12; }
-
-# The bump the declared version represents, from the two numbers alone.
-declared_bump() {  # declared_bump <from> <to>
-  local a="$1" b="$2" a1 a2 a3 b1 b2 b3
-  IFS=. read -r a1 a2 a3 <<EOF
-${a%%-*}
-EOF
-  IFS=. read -r b1 b2 b3 <<EOF
-${b%%-*}
-EOF
-  a3="${a3:-0}"; b3="${b3:-0}"
-  if [ "$b1" -gt "$a1" ]; then printf 'major'
-  elif [ "$b1" -lt "$a1" ]; then printf 'lower'
-  elif [ "$b2" -gt "$a2" ]; then printf 'minor'
-  elif [ "$b2" -lt "$a2" ]; then printf 'lower'
-  elif [ "$b3" -gt "$a3" ]; then printf 'patch'
-  elif [ "$b3" -lt "$a3" ]; then printf 'lower'
-  else printf 'none'; fi
-}
-DECLARED="$(declared_bump "$BASE_V" "$NOW_V")"
-
-rank() { case "$1" in lower|none) echo 0 ;; patch) echo 1 ;; minor) echo 2 ;; major) echo 3 ;; *) echo 0 ;; esac; }
-
-# What the surface change *requires*, which below 1.0.0 is not what it implies.
+# `bin/majordomus-cli` builds the executable when it must and runs it; every other gate that
+# needs the crate reaches it the same way, so the bootstrap is stated once.
 #
-# Semantic versioning hands 0.y.z a blanket exemption — "anything MAY change at any time" —
-# and Elm refuses that exemption by starting every package at 1.0.0, because a rule with an
-# escape hatch is a rule about when to use the hatch. This repository is 0.x and has not
-# earned 1.0.0 yet, so neither answer is available: demanding `major` would demand 1.0.0 for
-# a single removal, and granting the exemption would let a breaking change ship as a patch.
-#
-# So below 1.0.0 the floor is a minor: any change to the surface, gone or new, is at least a
-# minor release, and only an unchanged surface is a patch. That is the strongest signal 0.x
-# has. When the major reaches 1 the shift ends and the implied bump is the required one —
-# the first line of the function is the whole of that transition.
-# An unchanged surface owes nothing. This runs over every tree, not only over a release, and
-# most commits are behind the boundary: demanding a bump for each of them would make the
-# gate a thing to be worked around within a day.
-required_of() {  # required_of <implied> <base version>
-  local implied="$1" major="${2%%.*}"
-  [ "$implied" = patch ] && { printf 'none'; return; }
-  if [ "${major:-0}" != 0 ]; then printf '%s' "$implied"; return; fi
-  printf 'minor'
-}
-REQUIRED="$(required_of "$IMPLIED" "$BASE_V")"
-
-report_atoms() {
-  [ "$EXPLAIN" = 1 ] || return 0
-  if [ -n "$GONE" ]; then printf '\ngone from the surface since %s:\n' "$SINCE"; printf '%s\n' "$GONE" | sed 's/^/  - /'; fi
-  if [ -n "$NEW" ]; then printf '\nnew on the surface since %s:\n' "$SINCE"; printf '%s\n' "$NEW" | sed 's/^/  + /'; fi
-  [ -n "$GONE$NEW" ] || printf '\nthe surface is unchanged since %s\n' "$SINCE"
-}
-
-printf 'surface   %s -> this tree: %s implied, %s required (%s gone, %s new)\n' \
-  "$SINCE" "$IMPLIED" "$REQUIRED" \
-  "$(printf '%s' "$GONE" | grep -c . || true)" "$(printf '%s' "$NEW" | grep -c . || true)"
-printf 'version   %s -> %s: %s declared\n' "$BASE_V" "$NOW_V" "$DECLARED"
-
-# A removal is named whatever the verdict is. Below 1.0.0 it does not refuse the release,
-# and it is still the one thing a reader must be told: a caller who held what is gone finds
-# out by breaking, or by reading this line.
-if [ -n "$GONE" ]; then
-  printf '\nBREAKING %s atom(s) a caller could hold are gone since %s:\n' \
-    "$(printf '%s' "$GONE" | grep -c . || true)" "$SINCE"
-  printf '%s\n' "$GONE" | sed 's/^/  - /'
-  printf '         Each belongs in the release record and in the changelog as a breaking change.\n'
-fi
-
-if [ "$(rank "$DECLARED")" -lt "$(rank "$REQUIRED")" ]; then
-  report_atoms
-  printf '\nREFUSE the surface requires a %s release and the version declares %s.\n' "$REQUIRED" "$DECLARED"
-  case "$IMPLIED" in
-    major) printf '       Something a caller could hold is gone; a caller pinned to %s breaks on %s.\n' "$BASE_V" "$NOW_V" ;;
-    minor) printf '       The surface gained something, and a caller can only ask for it by version.\n' ;;
-  esac
-  printf '       Run: majordomus release bump --level %s   (or --exact, deliberately)\n' "$REQUIRED"
-  printf '       See: scripts/ci/version-matches-surface --explain\n'
-  exit 10
-fi
-
-report_atoms
-if [ "$REQUIRED" = none ]; then
-  printf 'ok        the surface is unchanged since %s; no bump is owed\n' "$SINCE"
-else
-  printf 'ok        %s declared covers the %s the surface requires\n' "$DECLARED" "$REQUIRED"
-fi
+# `${ARGS[@]+...}`, not a bare `"${ARGS[@]}"`: under `set -u` bash 3.2 — which is what macOS
+# ships and what `project.portable-shell` requires this to run under — an empty array is an
+# unbound variable, so the common case, no arguments at all, is the one that would fail.
+exec "$HERE/bin/majordomus-cli" release analyze --repo "$ROOT" --format "$FORMAT" ${ARGS[@]+"${ARGS[@]}"}

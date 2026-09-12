@@ -260,10 +260,21 @@ gates:
   # time it ran. A publication owed for longer than the deploy window is a refusal now, and
   # GitHub's own build of gh-pages — the half of publishing this repository does not own, and
   # which errored at 17:35 that day with nothing red anywhere — is read rather than inferred.
+  # The compatibility gate. `scripts/ci/version-matches-surface` is an adapter over
+  # `majordomus release analyze` — the one typed engine that also answers the HTTP route, the
+  # MCP tool, the Cockpit panel and `release bump` — so it needs the executable and belongs in
+  # the rust job rather than in structure, which has no toolchain. The rust job already checks
+  # out the full history, which this needs for the same reason `generate --check` does: the
+  # baseline's surface is read out of the registry committed at its tag.
+  #
+  # It was in no class until now, which meant it ran only on a full plan: a pull request that
+  # added a capability and left the version alone was never asked the question. The `rust`
+  # class selects it now, and `apps/majordomus-cli/**` is the whole of what can move the
+  # public surface — every capability in the committed registry is builtin and lives there.
   - id: version-surface
-    job: structure
+    job: rust
     runs: scripts/ci/version-matches-surface
-    summary: the declared version is at least the bump the public surface has changed by since the last release, and a removal is named
+    summary: the declared version is at least what the public contract requires since the last release — capabilities, routes, MCP tools, commands and both schemas of each, compared as contracts rather than as text — and every breaking movement is named
 
   - id: pages-live
     job: pages
@@ -317,13 +328,13 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, version-surface, release-check]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
   - id: rust-generated
     paths: [docs/generated/**, site/data/registry/**, share/allow/**, AGENTS.md, CLAUDE.md]
-    gates: [rust-integration, shell-suite, site-build, site-probe, providers-data]
+    gates: [rust-integration, shell-suite, site-build, site-probe, providers-data, version-surface]
 
   # governance: the rule objects themselves, the gate that holds their proof, and the
   # baseline of the rules nothing executable proves yet. `layer` already selects the suite
@@ -390,8 +401,8 @@ classes:
   # and they ask the executable for every name they use, so the crate's registry checks and
   # the behavioural cases are what decide whether they still work
   - id: distribution
-    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture]
-    gates: [shell-suite, rust-integration, macos]
+    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture, .ai/repo/releases/**]
+    gates: [shell-suite, rust-integration, macos, release-check, version-surface]
 
   # the gesture that takes a branch out of the state GitHub puts it in: it merges the trunk
   # in where the derived merge driver exists, derives, and pushes. It reads .gitattributes

@@ -26,22 +26,41 @@ command line and every gate stayed green, because no gate was looking at the sur
 The surface is the capability registry — one declaration of which MCP, HTTP, OpenAPI and
 the command line are projections — and `docs/generated/registry.json` is committed at every
 commit and every tag, so two releases can be compared without building either. What a
-caller can hold is an *atom*: a public capability's identity, its kind, the MCP tool and
-resource it answers to, the HTTP method and path it is bound to, the command-line path that
-dispatches it.
+caller can hold is a public capability's identity, its kind, the MCP tool and resource it
+answers to, the HTTP method and path it is bound to, the command-line path that dispatches
+it, **and both of its schemas**.
 
 ```text
-an atom is gone      major implied   a caller who held it is broken
-an atom is new       minor implied   nothing broke, something arrived
-the surface is equal patch implied   nothing is owed; most commits are here
+something a caller held is gone    major implied   a caller who held it is broken
+a contract narrowed under a caller major implied   a required field, a removed value, a type
+something arrived                  minor implied   nothing broke, something is new
+a contract widened                 minor implied   every existing caller still works
+the surface is equal               nothing owed    most commits are here
 ```
 
+Schemas are compared **as contracts, in both directions**, which is the comparison a textual
+diff of two schemas gets wrong. An input is what a caller sends, so accepting more is
+compatible and demanding more is breaking; an output is what a caller receives, so promising
+more is compatible and promising less is breaking. The same edit — `x` becoming required —
+is a minor in an output and a major in an input. Descriptions, titles and examples are
+normalised away before anything is compared, so rewording a doc comment is not a release; a
+constraint the comparator has no rule for, changed, is counted **breaking** rather than
+guessed at, because a false major is an argument someone can win and a false patch is a
+caller who finds out by breaking.
+
 ```bash
-scripts/ci/version-matches-surface             # the tree against the newest version tag
-scripts/ci/version-matches-surface --explain   # every atom that arrived or left
-scripts/ci/version-matches-surface --implied   # just the level
-majordomus release bump --level minor          # raise both writers at once
+majordomus release analyze                     # the tree against the last release
+majordomus release analyze --explain           # every movement, and why each counts
+majordomus release analyze --format json       # the canonical VersionPlan every surface renders
+scripts/ci/version-matches-surface             # the gate: the same thing, mapping exit codes
+majordomus release bump                        # raise both writers to the measured minimum
 ```
+
+There is **one** engine and it lives in `apps/majordomus-cli/src/release/compat.rs`, reading
+`release/surface.rs`. The gate is an adapter over it; so is the Cockpit panel, the HTTP
+route, the MCP tool and the writer. Until [ADR 0051](../.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md)
+there were two answers — a shell comparison in CI and a commit-subject inference inside
+`release bump` — and the inference won, because the writer runs before the gate does.
 
 **Below 1.0.0 the floor is a minor release** for any surface change, gone or new. Semantic
 versioning grants `0.y.z` a blanket exemption — anything may change — and Elm refuses that
@@ -51,7 +70,9 @@ the major reaches 1 the shift ends and the implied bump is the required one.
 
 **A removal is named whatever the verdict is.** Below 1.0.0 it does not refuse the release,
 and it is still stated as a breaking change: a caller who held what is gone otherwise finds
-out by breaking. The rule is `project.the-version-is-measured`; the gate is `version-surface`.
+out by breaking. The rule is `project.the-version-is-measured@2`; the gate is `version-surface`,
+selected by the `rust`, `rust-generated` and `distribution` path classes so that it runs
+before a change lands rather than only on a full plan.
 
 ### Where a removal is written down
 
@@ -287,24 +308,31 @@ compiled before the shell tool exists, so neither program can read the other's c
 time. [`DISTRIBUTION.md`](DISTRIBUTION.md#the-two-versions-and-why-there-are-two) is where
 that is argued. What was missing was not a single source — it was a single writer.
 
-`majordomus release version` answers what both files state, whether they agree, what the
-commits since the last release imply, and the commits themselves as the evidence for that
-implication. It exits 10 when the two disagree, which is the same verdict and the same exit
-code `scripts/release-version --check` gives, so a person and a pipeline get one answer.
+`majordomus release version` answers what both files state and whether they agree. It exits
+10 when they do not, which is the same verdict and the same exit code
+`scripts/release-version --check` gives, so a person and a pipeline get one answer.
 
-`majordomus release bump` is the writer. The bump defaults to what the commits imply:
+`majordomus release bump` is the writer, and it **computes nothing**. It reads the same
+`VersionPlan` that `release analyze`, the HTTP route, the MCP tool and the gate read, and
+applies it:
 
 ```text
-  any commit marked breaking   →  major
-  any feat                     →  minor
-  anything else                →  patch
-  no commits at all            →  none
+  plan  →  validate  →  apply(plan)
 ```
 
-It is a total function of the changes, which is what makes the answer arguable from the
-evidence rather than a judgement a reader has to trust. `--level major|minor|patch|none`
-overrides it and `--exact 1.2.3` bypasses it, for the cases where a maintainer means
-something the commits do not say. `--dry-run` prints what would change and writes nothing.
+With no argument the version becomes the measured minimum: the baseline raised by what the
+contract requires. `--level major|minor|patch` and `--exact 1.2.3` name a **higher** version
+than that, for the cases where a maintainer means more than the contract did — reported with
+its provenance rather than silently. Neither may name a lower one:
+
+```text
+  required minor, --level patch    REFUSED, nothing written
+  required minor, --exact 0.4.0    REFUSED, a version does not go down
+  required minor, --level major    allowed; "required 0.6.0, selected 1.0.0, explicit override"
+```
+
+An override that could undershoot would not be an override — it would be the hole that makes
+the measurement decorative. `--dry-run` prints what would change and writes nothing.
 
 Two properties of the write matter:
 
@@ -315,10 +343,11 @@ Two properties of the write matter:
   disagreement with exit 10 — so a bump that half-applied is caught by the thing built to
   catch it rather than by the release three commits later.
 
-Zero-major is not special-cased: a project at `0.x` that declares a breaking change gets
-`1.0.0`. Some projects hold the convention that it should not, and others do not; applying
-it silently would make the derived answer unarguable, so a maintainer who means otherwise
-names the bump.
+Zero-major is not special-cased in the *arithmetic* — `Version::raised` is arithmetic and
+nothing else. Whether a breaking change below 1.0 costs a major or a minor is a policy
+question, and this repository answers it in exactly one place: `compat::Policy`, carrying the
+schema id `majordomus/version-policy/v1` and a mode decided by the baseline version alone. A
+second answer in the arithmetic is the shape this subsystem was built to remove.
 
 The version the crate declares is also the `current` field of the changelog, so a bump that
 was made and a changelog that was not regenerated disagree, and `generate --check` says so.
@@ -329,6 +358,7 @@ was made and a changelog that was not regenerated disagree, and `generate --chec
 |---|---|---|---|---|
 | the changelog | `majordomus release [changelog [VERSION]]` | `docs/generated/changelog.{json,yaml,md}` | `GET /api/v1/changelog` · `majordomus_changelog` · `majordomus://changelog` | through the registry |
 | the version report | `majordomus release version` | — | `GET /api/v1/release/version` · `majordomus_release_version` | through the registry |
+| the compatibility analysis | `majordomus release analyze` | — | `GET /api/v1/release/analysis` · `majordomus_release_analysis` | through the registry |
 | raising the version | `majordomus release bump` | — | withheld | withheld |
 
 Nothing configures that last row. `release bump` writes tracked files, which

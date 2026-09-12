@@ -3,30 +3,30 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "9cfefe94535d81b3bc2856bb4a623b7dedd43d77c61226473c984f0302dbd52b",
+    "fingerprint": "e97ab2fb6487a93f8980346b17a20467b46a91f02a97e05bb1e6df86d9471946",
     "summary": {
-      "total": 1304,
-      "builtin": 89,
-      "declarative": 1215,
+      "total": 1339,
+      "builtin": 90,
+      "declarative": 1249,
       "by_kind": {
         "command": 4,
-        "query": 85,
-        "resource": 1215
+        "query": 86,
+        "resource": 1249
       },
       "by_stability": {
         "behaviorally_verified": 84,
-        "implemented": 1220
+        "implemented": 1255
       },
-      "mcp_tools": 86,
-      "mcp_resources": 1246,
-      "http_routes": 88,
+      "mcp_tools": 87,
+      "mcp_resources": 1280,
+      "http_routes": 89,
       "cli_commands": 38,
       "modules": 57,
       "benchmark_required": 85,
-      "benchmark_waived": 4,
+      "benchmark_waived": 5,
       "cached": 29
     },
     "builtin": [
@@ -877,6 +877,11 @@
                     "type": "string",
                     "const": "transient_state",
                     "description": "The capability starts, or answers about, work that exists only while it is running.\nA benchmark host cannot stage an execution to read, and running the operation in a\nloop would measure the work rather than the operation."
+                  },
+                  {
+                    "type": "string",
+                    "const": "published_history",
+                    "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from [`WaiverReason::ExternalDependency`]: nothing outside this process is\nconsulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,\nit simply does not exist yet where the benchmark runs."
                   }
                 ],
                 "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
@@ -1576,6 +1581,11 @@
                     "type": "string",
                     "const": "transient_state",
                     "description": "The capability starts, or answers about, work that exists only while it is running.\nA benchmark host cannot stage an execution to read, and running the operation in a\nloop would measure the work rather than the operation."
+                  },
+                  {
+                    "type": "string",
+                    "const": "published_history",
+                    "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from [`WaiverReason::ExternalDependency`]: nothing outside this process is\nconsulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,\nit simply does not exist yet where the benchmark runs."
                   }
                 ],
                 "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
@@ -23694,6 +23704,452 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
       },
       {
+        "id": "release.analysis",
+        "module": "release",
+        "kind": "query",
+        "title": "What the public contract did, and the smallest version it allows",
+        "description": "The public capability surface of this tree against the one the last release published, every movement of it named with the reason it counts for what it does, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command, or a required field of either schema that a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. What the commits said about themselves is carried beside the verdict as evidence, and the answer says when the two disagree.",
+        "input": {
+          "name": "ReleaseAnalysisInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "since": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A ref to compare with instead of the last release: `v0.4.0`, or any commit that\ncarries a committed registry."
+              }
+            },
+            "description": "Which release to measure this tree against.\n\n```\nuse majordomus_cli::capability::builtin::release::AnalysisInput;\n// Absent means the last release the layer records, which is the canonical baseline.\nlet input = AnalysisInput::default();\nassert!(input.since.is_none());\nlet explicit = AnalysisInput { since: Some(\"v0.4.0\".into()) };\nassert_eq!(explicit.since.as_deref(), Some(\"v0.4.0\"));\n```",
+            "title": "ReleaseAnalysisInput"
+          }
+        },
+        "output": {
+          "name": "ReleaseVersionPlan",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "policy": {
+                "$ref": "#/$defs/ReleasePolicy",
+                "description": "The policy the verdict was reached under."
+              },
+              "baseline": {
+                "$ref": "#/$defs/ReleaseBaseline",
+                "description": "The release this was measured against."
+              },
+              "declared_version": {
+                "type": "string",
+                "description": "The version the crate manifest declares."
+              },
+              "tool_version": {
+                "type": "string",
+                "description": "The version `bin/majordomus` prints, and whether the two agree."
+              },
+              "writers_agree": {
+                "type": "boolean",
+                "description": "Whether the two writers of the version state one value."
+              },
+              "atoms": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many public atoms this tree carries."
+              },
+              "fingerprint": {
+                "type": "string",
+                "description": "The fingerprint of this tree's surface."
+              },
+              "implied": {
+                "$ref": "#/$defs/ReleaseImpact",
+                "description": "What the surface movement amounts to on its own."
+              },
+              "required": {
+                "$ref": "#/$defs/ReleaseImpact",
+                "description": "What the policy requires of it."
+              },
+              "declared": {
+                "$ref": "#/$defs/ReleaseImpact",
+                "description": "What the two version numbers already represent."
+              },
+              "required_version": {
+                "type": "string",
+                "description": "The smallest version this tree may declare."
+              },
+              "status": {
+                "$ref": "#/$defs/ReleaseStatus",
+                "description": "Whether it does."
+              },
+              "breaking": {
+                "type": "boolean",
+                "description": "Whether anything a caller could hold is gone."
+              },
+              "changes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReleaseSurfaceChange"
+                },
+                "description": "Every movement of the contract, worst first."
+              },
+              "commits": {
+                "$ref": "#/$defs/ReleaseCommitEvidence",
+                "description": "What the commits said about themselves."
+              },
+              "understated": {
+                "type": "boolean",
+                "description": "Whether the commit subjects understate what the contract actually did."
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReleaseDiagnostic"
+                },
+                "description": "Anything incoherent about the release state, whatever the verdict."
+              }
+            },
+            "required": [
+              "policy",
+              "baseline",
+              "declared_version",
+              "tool_version",
+              "writers_agree",
+              "atoms",
+              "fingerprint",
+              "implied",
+              "required",
+              "declared",
+              "required_version",
+              "status",
+              "breaking",
+              "changes",
+              "commits",
+              "understated"
+            ],
+            "description": "The whole answer: what moved, what that requires, and what the tree declares.\n\nOne value, and every surface renders it — the command line, `/api/v1/release/analysis`,\nthe MCP tool, the Cockpit panel, the generated document and the CI gate. There is no\nsecond computation anywhere, which is the property that makes the number mean something.\n\n```\nuse majordomus_cli::release::compat::{Status, VersionPlan};\n# use majordomus_cli::release::compat::{Baseline, CommitEvidence, Impact, Policy};\n# use majordomus_cli::release::version::Version;\nlet plan = VersionPlan {\n    policy: Policy::for_version(Version::parse(\"0.5.0\").unwrap()),\n    baseline: Baseline {\n        version: \"0.5.0\".into(), reference: \"v0.5.0\".into(), commit: \"3a032c1e\".into(),\n        recorded: true, atoms: 300, fingerprint: \"sha256:a\".into(),\n    },\n    declared_version: \"0.5.0\".into(),\n    tool_version: \"0.5.0\".into(),\n    writers_agree: true,\n    atoms: 333,\n    fingerprint: \"sha256:b\".into(),\n    implied: Impact::Minor,\n    required: Impact::Minor,\n    declared: Impact::None,\n    required_version: \"0.6.0\".into(),\n    status: Status::Blocked,\n    breaking: false,\n    changes: Vec::new(),\n    commits: CommitEvidence { commits: 24, implied: Impact::Patch, breaking: Vec::new() },\n    understated: true,\n    diagnostics: Vec::new(),\n};\n// The contract requires a minor and the version declares none: this tree may not land.\nassert_eq!(plan.status, Status::Blocked);\nassert!(plan.declared < plan.required);\nassert!(plan.understated, \"the commit subjects claim less than the contract did\");\n```",
+            "title": "ReleaseVersionPlan",
+            "$defs": {
+              "ReleasePolicy": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "string",
+                    "description": "`majordomus/version-policy/v1`."
+                  },
+                  "mode": {
+                    "$ref": "#/$defs/ReleasePolicyMode",
+                    "description": "Which rule is in force, decided by the baseline version alone."
+                  }
+                },
+                "required": [
+                  "schema",
+                  "mode"
+                ],
+                "description": "The compatibility policy, named and versioned.\n\n```\nuse majordomus_cli::release::compat::{Impact, Policy, POLICY_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet policy = Policy::for_version(Version::parse(\"0.5.0\").unwrap());\nassert_eq!(policy.schema, POLICY_SCHEMA, \"a verdict carries the rules it was reached under\");\nassert_eq!(policy.required_of(Impact::Major), Impact::Minor);\n```"
+              },
+              "ReleasePolicyMode": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "pre1-0-strict",
+                    "description": "Below `1.0.0`: breaking changes are allowed, and cost a minor rather than nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "semver",
+                    "description": "At or above `1.0.0`: the impact is the requirement."
+                  }
+                ],
+                "description": "How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \"anything MAY change at any\ntime\" — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: [`Mode::Semver`] is the ordinary rule, and the transition is\none line of [`Policy::required_of`].\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\"0.9.0\").unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\"1.0.0\").unwrap()).mode, Mode::Semver);\n```"
+              },
+              "ReleaseBaseline": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "description": "`0.5.0`."
+                  },
+                  "reference": {
+                    "type": "string",
+                    "description": "`v0.5.0`: the ref whose registry was read."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit that ref resolved to."
+                  },
+                  "recorded": {
+                    "type": "boolean",
+                    "description": "Whether the layer holds a release record for it, which is what makes it canonical\nrather than the newest thing that looked like a tag."
+                  },
+                  "atoms": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many public atoms it published."
+                  },
+                  "fingerprint": {
+                    "type": "string",
+                    "description": "The fingerprint of the surface it published."
+                  }
+                },
+                "required": [
+                  "version",
+                  "reference",
+                  "commit",
+                  "recorded",
+                  "atoms",
+                  "fingerprint"
+                ],
+                "description": "The release this tree is measured against, and how it was found.\n\n```\nuse majordomus_cli::release::compat::Baseline;\nlet baseline = Baseline {\n    version: \"0.5.0\".into(),\n    reference: \"v0.5.0\".into(),\n    commit: \"3a032c1e033b\".into(),\n    recorded: true,\n    atoms: 300,\n    fingerprint: \"sha256:…\".into(),\n};\n// `recorded` is the half that matters: a baseline taken from a tag alone is reported.\nassert!(baseline.recorded);\nassert_eq!(baseline.reference, \"v0.5.0\");\n```"
+              },
+              "ReleaseImpact": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "none",
+                    "description": "The contract did not move."
+                  },
+                  {
+                    "type": "string",
+                    "const": "patch",
+                    "description": "It moved behind the boundary: a caller cannot tell."
+                  },
+                  {
+                    "type": "string",
+                    "const": "minor",
+                    "description": "Something arrived; every existing caller still works."
+                  },
+                  {
+                    "type": "string",
+                    "const": "major",
+                    "description": "Something a caller could hold is gone or changed under it."
+                  }
+                ],
+                "description": "How much a change moves the contract.\n\nOrdered, so that \"the declared bump covers what is required\" is a comparison rather than\na table:\n\n```\nuse majordomus_cli::release::compat::Impact;\nassert!(Impact::Major > Impact::Minor);\nassert!(Impact::Minor > Impact::Patch);\nassert!(Impact::Patch > Impact::None);\n```"
+              },
+              "ReleaseStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ok",
+                    "description": "The declared version covers what the contract did."
+                  },
+                  {
+                    "type": "string",
+                    "const": "blocked",
+                    "description": "It does not, and the plan says by how much."
+                  }
+                ],
+                "description": "Whether the tree may land or ship as it stands.\n\n```\nuse majordomus_cli::release::compat::Status;\nassert_ne!(Status::Ok, Status::Blocked);\n```"
+              },
+              "ReleaseSurfaceChange": {
+                "type": "object",
+                "properties": {
+                  "impact": {
+                    "$ref": "#/$defs/ReleaseImpact",
+                    "description": "How much it moves the contract on its own."
+                  },
+                  "direction": {
+                    "$ref": "#/$defs/ReleaseChangeDirection",
+                    "description": "Added, removed, or altered."
+                  },
+                  "surface": {
+                    "$ref": "#/$defs/ReleaseSurfaceKind",
+                    "description": "Which promise it is."
+                  },
+                  "capability": {
+                    "type": "string",
+                    "description": "The capability it belongs to."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "The thing itself: `GET /api/v1/foo`, `majordomus_release_analysis`, `release.analysis`."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "Why this impact and not a smaller one, in one clause."
+                  }
+                },
+                "required": [
+                  "impact",
+                  "direction",
+                  "surface",
+                  "capability",
+                  "id",
+                  "detail"
+                ],
+                "description": "One movement of the public contract, with the reason it counts for what it does.\n\n```\nuse majordomus_cli::release::compat::{Direction, Impact, SurfaceChange, SurfaceKind};\nlet change = SurfaceChange {\n    impact: Impact::Major,\n    direction: Direction::Removed,\n    surface: SurfaceKind::Http,\n    capability: \"alpha.list\".into(),\n    id: \"GET /api/v1/alpha\".into(),\n    detail: \"the capability survives; this way of reaching it does not\".into(),\n};\nassert_eq!(change.to_string(), \"- route GET /api/v1/alpha\");\n```"
+              },
+              "ReleaseChangeDirection": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "added",
+                    "description": "It was not there before."
+                  },
+                  {
+                    "type": "string",
+                    "const": "removed",
+                    "description": "It was there before and is not now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "changed",
+                    "description": "It is there in both, and differs."
+                  }
+                ],
+                "description": "Whether a change added, removed or altered part of the contract.\n\n```\nuse majordomus_cli::release::compat::Direction;\nassert_eq!(Direction::Removed.sign(), '-');\n```"
+              },
+              "ReleaseSurfaceKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "capability",
+                    "description": "The capability itself."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kind",
+                    "description": "Whether calling it changes anything."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mcp_tool",
+                    "description": "An MCP tool name."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mcp_resource",
+                    "description": "An MCP resource URI."
+                  },
+                  {
+                    "type": "string",
+                    "const": "http",
+                    "description": "An HTTP method and path."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cli",
+                    "description": "A command-line path."
+                  },
+                  {
+                    "type": "string",
+                    "const": "input",
+                    "description": "What a caller may send."
+                  },
+                  {
+                    "type": "string",
+                    "const": "output",
+                    "description": "What a caller is promised back."
+                  }
+                ],
+                "description": "Which projection of the contract a change is in.\n\nNot where it was *found* — everything here is found in the registry — but which promise\nit is, so that a reader sees \"a route is gone\" rather than a JSON pointer.\n\n```\nuse majordomus_cli::release::compat::SurfaceKind;\nassert_eq!(SurfaceKind::Http.as_str(), \"route\");\n```"
+              },
+              "ReleaseCommitEvidence": {
+                "type": "object",
+                "properties": {
+                  "commits": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many commits since the baseline."
+                  },
+                  "implied": {
+                    "$ref": "#/$defs/ReleaseImpact",
+                    "description": "What their conventional-commit types alone would have implied."
+                  },
+                  "breaking": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The subjects of the ones that claimed to be breaking."
+                  }
+                },
+                "required": [
+                  "commits",
+                  "implied"
+                ],
+                "description": "What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that [`VersionPlan::understated`] can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied < Impact::Minor);\n```"
+              },
+              "ReleaseDiagnostic": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "`tag-without-record`, `record-without-tag`, `tag-commit-mismatch`."
+                  },
+                  "severity": {
+                    "$ref": "#/$defs/ReleaseSeverity",
+                    "description": "Whether it stops a release or only warns."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one sentence."
+                  }
+                },
+                "required": [
+                  "id",
+                  "severity",
+                  "message"
+                ],
+                "description": "Something about the release state that a person should be told, whatever the verdict.\n\n```\nuse majordomus_cli::release::compat::{Diagnostic, Severity};\nlet d = Diagnostic {\n    id: \"tag-without-record\".into(),\n    severity: Severity::Warning,\n    message: \"v0.1.0 is tagged and the layer holds no release record for it\".into(),\n};\nassert_eq!(d.severity, Severity::Warning, \"a warning states the plan still stands\");\n```"
+              },
+              "ReleaseSeverity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The plan cannot be trusted; the verdict is blocked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "The plan stands, and something is still wrong."
+                  }
+                ],
+                "description": "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_release_analysis"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/release/analysis"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "implemented",
+        "tags": [
+          "release",
+          "version",
+          "compatibility"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "published_history"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
+      },
+      {
         "id": "release.changelog",
         "module": "release",
         "kind": "query",
@@ -31551,7 +32007,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 41,
+        "capabilities": 44,
         "capability_ids": []
       },
       {
@@ -31745,7 +32201,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 226,
+        "capabilities": 227,
         "capability_ids": []
       },
       {
@@ -31842,7 +32298,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 203,
+        "capabilities": 215,
         "capability_ids": []
       },
       {
@@ -31874,7 +32330,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 18,
+        "capabilities": 19,
         "capability_ids": []
       },
       {
@@ -32015,8 +32471,9 @@
         "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become.",
         "stability": "implemented",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
+          "release.analysis",
           "release.changelog",
           "release.version"
         ],
@@ -32049,7 +32506,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 125,
+        "capabilities": 128,
         "capability_ids": []
       },
       {
@@ -32101,7 +32558,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 165,
+        "capabilities": 179,
         "capability_ids": []
       },
       {
@@ -32181,7 +32638,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f7ecbf5f5c09873d1f0726479ce9ac84ed8b8dff27d8e7f5646add7eed90405d",
+    "fingerprint": "54b00fe63438f0b338d77b0989a3675e34b2e3d605e05c5833814d0524fe8c92",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -32204,7 +32661,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 41,
+      "adr": 44,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -32213,23 +32670,23 @@
       "context": 28,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 226,
+      "document": 227,
       "feature": 21,
       "implementation": 46,
-      "issue": 203,
+      "issue": 215,
       "knowledge": 1,
-      "milestone": 18,
+      "milestone": 19,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 125,
+      "rule": 128,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 165,
+      "test": 179,
       "use-case": 44,
       "workspace": 1
     },
@@ -32692,7 +33149,7 @@
         "path": ".ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 9983,
+        "bytes": 10811,
         "tags": [
           "release",
           "changelog",
@@ -32884,6 +33341,23 @@
         ]
       },
       {
+        "uri": "majordomus://adr/adr-0043",
+        "kind": "adr",
+        "identity": "adr-0043",
+        "title": "Entering the repository brings its runtime up, through one bootstrap command the entry file calls",
+        "description": "Entering the repository brings its runtime up, through one bootstrap command the entry file calls",
+        "path": ".ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 10485,
+        "tags": [
+          "entry",
+          "mcp",
+          "environment",
+          "doctrine"
+        ]
+      },
+      {
         "uri": "majordomus://adr/adr-0044",
         "kind": "adr",
         "identity": "adr-0044",
@@ -32898,6 +33372,41 @@
           "architecture",
           "coordination",
           "worktrees"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0047",
+        "kind": "adr",
+        "identity": "adr-0047",
+        "title": "The session domain is typed, its identities are not interchangeable, and closing is exactly once",
+        "description": "The session domain is typed, its identities are not interchangeable, and closing is exactly once",
+        "path": ".ai/repo/adrs/0047-the-session-domain-is-typed-and-its-identities-are-not-interchangeable.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 14850,
+        "tags": [
+          "sessions",
+          "continuity",
+          "architecture",
+          "identity",
+          "rust"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0051",
+        "kind": "adr",
+        "identity": "adr-0051",
+        "title": "The minimum release version is measured from the public contract, and conventional commits are demoted to evidence",
+        "description": "The minimum release version is measured from the public contract, and conventional commits are demoted to evidence",
+        "path": ".ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 12816,
+        "tags": [
+          "release",
+          "versioning",
+          "compatibility",
+          "projections"
         ]
       },
       {
@@ -35610,6 +36119,15 @@
         "bytes": 7285
       },
       {
+        "uri": "majordomus://document/docs/BACKLOG.md",
+        "kind": "document",
+        "identity": "docs/BACKLOG.md",
+        "title": "Backlog",
+        "path": "docs/BACKLOG.md",
+        "source_class": "document",
+        "bytes": 8697
+      },
+      {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "document",
         "identity": "docs/CAPABILITIES.md",
@@ -35931,7 +36449,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 24721
+        "bytes": 27084
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -40373,6 +40891,138 @@
         "bytes": 5194
       },
       {
+        "uri": "majordomus://issue/I1501",
+        "kind": "issue",
+        "identity": "I1501",
+        "title": "An execution a person starts is an execution the server can see",
+        "description": "Make `majordomus-cli run` reach the server that serves this repository, so that the execution plane a surface shows and the execution plane a person uses are the same plane — or record the decision that they are not, and stop every surface from implying otherwise.",
+        "path": ".ai/repo/project/issues/I1501.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3386
+      },
+      {
+        "uri": "majordomus://issue/I1502",
+        "kind": "issue",
+        "identity": "I1502",
+        "title": "A server serving code that no longer exists stops calling itself ready",
+        "description": "Make a running server's own root and health documents carry the identity of the code it is serving, so that a stale server is detectable by the client reading it rather than only by an outside reader holding a newer executable.",
+        "path": ".ai/repo/project/issues/I1502.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3017
+      },
+      {
+        "uri": "majordomus://issue/I1503",
+        "kind": "issue",
+        "identity": "I1503",
+        "title": "A closed session is not closed a second time under the same identity",
+        "description": "Stop the session closer from writing a second record for a session that already has one, so that a session identity names one record and the index does not exclude every claimant of it.",
+        "path": ".ai/repo/project/issues/I1503.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2802
+      },
+      {
+        "uri": "majordomus://issue/I1504",
+        "kind": "issue",
+        "identity": "I1504",
+        "title": "One development transition is a capability, end to end",
+        "description": "Declare one development transition — the plan's `done` — as a single `capability!` of kind command in the plan module, with a typed input schema, benchmark cases and a registered ledger event, and point lib/plan.sh at it instead of letting it write the YAML itself.",
+        "path": ".ai/repo/project/issues/I1504.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3627
+      },
+      {
+        "uri": "majordomus://issue/I1505",
+        "kind": "issue",
+        "identity": "I1505",
+        "title": "A mutating capability leaves a durable event, and the ledger can be read back",
+        "description": "Give a capability of kind command one way to record what it did: append a ledger event whose name share/events.yaml declares, publish the same change to the execution stream, and add a read capability for the ledger so a surface can show history at all.",
+        "path": ".ai/repo/project/issues/I1505.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2550
+      },
+      {
+        "uri": "majordomus://issue/I1506",
+        "kind": "issue",
+        "identity": "I1506",
+        "title": "The lifecycle commands become non-interactive capabilities",
+        "description": "Move task start, checkpoint and finish, session open and close, handover and evidence into the pattern Phase A establishes, each one non-interactive, so that the exposure policy stops withholding them from every machine surface.",
+        "path": ".ai/repo/project/issues/I1506.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2696
+      },
+      {
+        "uri": "majordomus://issue/I1507",
+        "kind": "issue",
+        "identity": "I1507",
+        "title": "Issues, milestones, sessions and peers reach the Cockpit as projections",
+        "description": "Give the Cockpit the development areas it has none of — issues, milestones, sessions, peers and the current task — each one rendering what a capability answered and computing nothing of its own.",
+        "path": ".ai/repo/project/issues/I1507.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2712
+      },
+      {
+        "uri": "majordomus://issue/I1508",
+        "kind": "issue",
+        "identity": "I1508",
+        "title": "The navigation is derived from the dispatcher, not kept beside it",
+        "description": "Reconcile the Cockpit's area list against the routes the dispatcher actually answers, and derive or check the route table in docs/COCKPIT.md, so that a routed page cannot be invisible.",
+        "path": ".ai/repo/project/issues/I1508.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2704
+      },
+      {
+        "uri": "majordomus://issue/I1509",
+        "kind": "issue",
+        "identity": "I1509",
+        "title": "A detail page that pages nothing has outgrown the reason it pages nothing",
+        "description": "Reconcile the two things the Cockpit's largest page is trying to be — complete before any JavaScript loads, and usable by a person — without giving up the first, and bring the page under the test sweep that covers every other one.",
+        "path": ".ai/repo/project/issues/I1509.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3414
+      },
+      {
+        "uri": "majordomus://issue/I1510",
+        "kind": "issue",
+        "identity": "I1510",
+        "title": "A gap the audit calls planned names a plan object that exists",
+        "description": "Check docs/COCKPIT_IDE_AUDIT.md's gap matrix against the plan, so that a row whose status is `planned` must name an issue that exists, and a row cannot quietly claim to be scheduled when nothing schedules it.",
+        "path": ".ai/repo/project/issues/I1510.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2916
+      },
+      {
+        "uri": "majordomus://issue/I1511",
+        "kind": "issue",
+        "identity": "I1511",
+        "title": "The documentation surface answers in a checkout that has not built the site",
+        "description": "Make /docs/ say what it needs rather than fail, so that a developer entering a fresh worktree does not meet a broken documentation surface as their first impression of the runtime.",
+        "path": ".ai/repo/project/issues/I1511.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1896
+      },
+      {
+        "uri": "majordomus://issue/I1512",
+        "kind": "issue",
+        "identity": "I1512",
+        "title": "Gate state is something the runtime can answer",
+        "description": "Give the runtime a capability that answers what the repository's gates are and how the last run of each one went, so that CI status stops being the one observability subject with no reader on any surface.",
+        "path": ".ai/repo/project/issues/I1512.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2602
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -40474,6 +41124,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4742
+      },
+      {
+        "uri": "majordomus://milestone/development-runtime",
+        "kind": "milestone",
+        "identity": "development-runtime",
+        "title": "The runtime has a development surface",
+        "description": "A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable.",
+        "path": ".ai/repo/project/milestones/development-runtime.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5428
       },
       {
         "uri": "majordomus://milestone/execution-telemetry",
@@ -42150,6 +42811,26 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.accumulation-is-measured@1",
+        "kind": "rule",
+        "identity": "project.accumulation-is-measured@1",
+        "title": "Everything that accumulates is measured, bounded and reaped by a committed command",
+        "description": "Open pull requests, linked worktrees, local branches and running servers all grow on their own and none of them shrinks on its own; each is measured by one committed command, carries a threshold that makes growth loud, and is reduced by a command that is safe to run unattended — never by a name match against a process list and never by deleting a worktree whose work is not published.",
+        "path": ".ai/repo/rules/project/accumulation-is-measured.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5404,
+        "tags": [
+          "operations",
+          "git",
+          "worktree",
+          "safety",
+          "agents",
+          "coordination",
+          "ci"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.benchmarkable-commands@1",
         "kind": "rule",
         "identity": "project.benchmarkable-commands@1",
@@ -42445,6 +43126,24 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.entry-converges@2",
+        "kind": "rule",
+        "identity": "project.entry-converges@2",
+        "title": "Entering the repository converges on a server, by either door, without anything to remember",
+        "description": "An agent entering the repository is owed a ready shared server before its first attach and gets one through the provider's start event; a shell entering the repository is owed the same and gets it through one bootstrap command of the executable, which the entry file calls and nothing else; neither entry path builds the executable, ensures from a stale one, waits for readiness or fails; what a worker is told on entry is derived from the same typed reading every other surface uses; entry has a declared time budget; and a server no client owns ends by itself.",
+        "path": ".ai/repo/rules/project/entry-converges.v2.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 17464,
+        "tags": [
+          "entry",
+          "mcp",
+          "environment",
+          "enforcement",
+          "performance"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.envrc-is-an-adapter@1",
         "kind": "rule",
         "identity": "project.envrc-is-an-adapter@1",
@@ -42454,6 +43153,22 @@
         "section": "rules",
         "source_class": "rule",
         "bytes": 5031,
+        "tags": [
+          "environment",
+          "shell",
+          "performance"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.envrc-is-an-adapter@2",
+        "kind": "rule",
+        "identity": "project.envrc-is-an-adapter@2",
+        "title": "The shell entry point is an adapter, and it makes one call",
+        "description": "A file a shell evaluates on entering the repository resolves the tool and makes exactly one call to it — the bootstrap command — evaluating what that call exports; it reads nothing about the repository itself, builds nothing, and reaches no network of its own, so that entering a directory cannot be slow, cannot fail, and cannot become a second implementation of what the executable already knows.",
+        "path": ".ai/repo/rules/project/envrc-is-an-adapter.v2.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 7462,
         "tags": [
           "environment",
           "shell",
@@ -42911,7 +43626,7 @@
         "path": ".ai/repo/rules/project/release-is-a-projection.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 7393,
+        "bytes": 8135,
         "tags": [
           "release",
           "changelog",
@@ -43127,15 +43842,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.the-version-is-measured@1",
+        "uri": "majordomus://rule/project.the-version-is-measured@2",
         "kind": "rule",
-        "identity": "project.the-version-is-measured@1",
+        "identity": "project.the-version-is-measured@2",
         "title": "The version is measured against the public surface, not claimed",
-        "description": "What a release's version number says about compatibility is decided by comparing the capability registry of the last release with this tree — an atom of the surface that is gone is a breaking change, one that is new is an addition — and a version smaller than what moved is refused. Below 1.0.0 the floor is a minor release and a removal is named rather than refused; at 1.0.0 the shift ends.",
-        "path": ".ai/repo/rules/project/the-version-is-measured.v1.md",
+        "description": "What a release's version number says about compatibility is decided by one typed engine comparing the capability registry of the last release with this tree — identities, bindings and both schemas of each capability — and a version smaller than what moved is refused, by the writer as well as by the gate. Commit subjects are evidence beside that verdict and never the authority for it. Below 1.0.0 the floor is a minor release and a removal is named rather than refused; at 1.0.0 the shift ends.",
+        "path": ".ai/repo/rules/project/the-version-is-measured.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6575,
+        "bytes": 11931,
         "tags": [
           "release",
           "versioning",
@@ -43409,10 +44124,10 @@
         "identity": "s-20260909152316-024f",
         "title": "Session s-20260909152316-024f on master",
         "description": "Session s-20260909152316-024f on master",
-        "path": ".ai/repo/sessions/20260909T214136Z--s-20260909152316-024f--master--06b3c3c--8573c6044ea5126f.md",
+        "path": ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
         "section": "sessions",
         "source_class": "session",
-        "bytes": 2139
+        "bytes": 10673
       },
       {
         "uri": "majordomus://session/s-20260910205542-e2a6",
@@ -43914,7 +44629,7 @@
         "identity": "test/cases/112_version_matches_surface.sh",
         "path": "test/cases/112_version_matches_surface.sh",
         "source_class": "case",
-        "bytes": 5245
+        "bytes": 16373
       },
       {
         "uri": "majordomus://test/test/cases/113_clean_owns_its_target.sh",
@@ -44069,6 +44784,22 @@
         "bytes": 7081
       },
       {
+        "uri": "majordomus://test/test/cases/130_context_compiler.sh",
+        "kind": "test",
+        "identity": "test/cases/130_context_compiler.sh",
+        "path": "test/cases/130_context_compiler.sh",
+        "source_class": "case",
+        "bytes": 19935
+      },
+      {
+        "uri": "majordomus://test/test/cases/131_backlog_hygiene.sh",
+        "kind": "test",
+        "identity": "test/cases/131_backlog_hygiene.sh",
+        "path": "test/cases/131_backlog_hygiene.sh",
+        "source_class": "case",
+        "bytes": 5157
+      },
+      {
         "uri": "majordomus://test/test/cases/139_release_record_schema.sh",
         "kind": "test",
         "identity": "test/cases/139_release_record_schema.sh",
@@ -44149,6 +44880,30 @@
         "bytes": 4272
       },
       {
+        "uri": "majordomus://test/test/cases/180_publication_is_observed.sh",
+        "kind": "test",
+        "identity": "test/cases/180_publication_is_observed.sh",
+        "path": "test/cases/180_publication_is_observed.sh",
+        "source_class": "case",
+        "bytes": 12535
+      },
+      {
+        "uri": "majordomus://test/test/cases/181_local_is_never_published.sh",
+        "kind": "test",
+        "identity": "test/cases/181_local_is_never_published.sh",
+        "path": "test/cases/181_local_is_never_published.sh",
+        "source_class": "case",
+        "bytes": 9965
+      },
+      {
+        "uri": "majordomus://test/test/cases/182_sessions_published_are_the_records.sh",
+        "kind": "test",
+        "identity": "test/cases/182_sessions_published_are_the_records.sh",
+        "path": "test/cases/182_sessions_published_are_the_records.sh",
+        "source_class": "case",
+        "bytes": 5024
+      },
+      {
         "uri": "majordomus://test/test/cases/18_doctrine_wiring.sh",
         "kind": "test",
         "identity": "test/cases/18_doctrine_wiring.sh",
@@ -44157,12 +44912,36 @@
         "bytes": 6259
       },
       {
+        "uri": "majordomus://test/test/cases/190_entry_is_automatic.sh",
+        "kind": "test",
+        "identity": "test/cases/190_entry_is_automatic.sh",
+        "path": "test/cases/190_entry_is_automatic.sh",
+        "source_class": "case",
+        "bytes": 15453
+      },
+      {
         "uri": "majordomus://test/test/cases/190_graph_drawing.sh",
         "kind": "test",
         "identity": "test/cases/190_graph_drawing.sh",
         "path": "test/cases/190_graph_drawing.sh",
         "source_class": "case",
         "bytes": 9963
+      },
+      {
+        "uri": "majordomus://test/test/cases/191_entry_races.sh",
+        "kind": "test",
+        "identity": "test/cases/191_entry_races.sh",
+        "path": "test/cases/191_entry_races.sh",
+        "source_class": "case",
+        "bytes": 14379
+      },
+      {
+        "uri": "majordomus://test/test/cases/192_entry_across_checkouts_and_clients.sh",
+        "kind": "test",
+        "identity": "test/cases/192_entry_across_checkouts_and_clients.sh",
+        "path": "test/cases/192_entry_across_checkouts_and_clients.sh",
+        "source_class": "case",
+        "bytes": 8927
       },
       {
         "uri": "majordomus://test/test/cases/19_end_to_end.sh",
@@ -44189,6 +44968,46 @@
         "bytes": 6010
       },
       {
+        "uri": "majordomus://test/test/cases/220_exactly_once_close.sh",
+        "kind": "test",
+        "identity": "test/cases/220_exactly_once_close.sh",
+        "path": "test/cases/220_exactly_once_close.sh",
+        "source_class": "case",
+        "bytes": 10628
+      },
+      {
+        "uri": "majordomus://test/test/cases/221_the_lifecycle_under_concurrency.sh",
+        "kind": "test",
+        "identity": "test/cases/221_the_lifecycle_under_concurrency.sh",
+        "path": "test/cases/221_the_lifecycle_under_concurrency.sh",
+        "source_class": "case",
+        "bytes": 9937
+      },
+      {
+        "uri": "majordomus://test/test/cases/222_an_episode_nobody_ended.sh",
+        "kind": "test",
+        "identity": "test/cases/222_an_episode_nobody_ended.sh",
+        "path": "test/cases/222_an_episode_nobody_ended.sh",
+        "source_class": "case",
+        "bytes": 9431
+      },
+      {
+        "uri": "majordomus://test/test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "kind": "test",
+        "identity": "test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "path": "test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "source_class": "case",
+        "bytes": 9125
+      },
+      {
+        "uri": "majordomus://test/test/cases/224_continuity_crosses_machines.sh",
+        "kind": "test",
+        "identity": "test/cases/224_continuity_crosses_machines.sh",
+        "path": "test/cases/224_continuity_crosses_machines.sh",
+        "source_class": "case",
+        "bytes": 8455
+      },
+      {
         "uri": "majordomus://test/test/cases/22_history.sh",
         "kind": "test",
         "identity": "test/cases/22_history.sh",
@@ -44203,6 +45022,14 @@
         "path": "test/cases/23_context.sh",
         "source_class": "case",
         "bytes": 8350
+      },
+      {
+        "uri": "majordomus://test/test/cases/240_the_session_domain_is_typed.sh",
+        "kind": "test",
+        "identity": "test/cases/240_the_session_domain_is_typed.sh",
+        "path": "test/cases/240_the_session_domain_is_typed.sh",
+        "source_class": "case",
+        "bytes": 12373
       },
       {
         "uri": "majordomus://test/test/cases/24_prompt_search.sh",
@@ -45509,7 +46336,7 @@
       "identity": [
         "id"
       ],
-      "objects": 41
+      "objects": 44
     },
     {
       "name": "application",
@@ -45595,7 +46422,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 226
+      "objects": 227
     },
     {
       "name": "feature",
@@ -45622,7 +46449,7 @@
       "identity": [
         "id"
       ],
-      "objects": 203
+      "objects": 215
     },
     {
       "name": "knowledge",
@@ -45642,7 +46469,7 @@
       "identity": [
         "id"
       ],
-      "objects": 18
+      "objects": 19
     },
     {
       "name": "moment",
@@ -45709,7 +46536,7 @@
         "id",
         "version"
       ],
-      "objects": 125
+      "objects": 128
     },
     {
       "name": "scope",
@@ -45764,7 +46591,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 165
+      "objects": 179
     },
     {
       "name": "use-case",
@@ -58766,7 +59593,7 @@
               {
                 "id": "release-version",
                 "title": "The version, and the one the commits imply",
-                "description": "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state, whether they agree, and what the conventional commits since the last release imply the next one should be.",
+                "description": "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.",
                 "argv": [
                   "release",
                   "version",
@@ -58784,18 +59611,158 @@
             "path": [
               "majordomus",
               "release",
+              "analyze"
+            ],
+            "route": "/docs/cli/release/analyze/",
+            "executable": true,
+            "usage": "majordomus release analyze [OPTIONS]",
+            "about": "What the public contract did since the last release, and the smallest version this tree may therefore declare",
+            "args": [
+              {
+                "name": "since",
+                "long": "since",
+                "positional": false,
+                "help": "Measure against this ref instead of the last release",
+                "value_name": "REF",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "explain",
+                "long": "explain",
+                "positional": false,
+                "help": "Name every movement of the contract and the reason it counts for what it does",
+                "value_name": "EXPLAIN",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "How to render the answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "release-analyze",
+                "title": "What the contract did, and the smallest version it allows",
+                "description": "The public capability surface of this tree against the one the last release published, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command or required field a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. The same value answers `GET /api/v1/release/analysis`, the `majordomus_release_analysis` MCP tool, the Cockpit's Release page and the `version-surface` gate. A repository that has published nothing has no baseline to measure against, and says so with exit 12 rather than reporting an empty diff — which would read as \"nothing changed\".",
+                "argv": [
+                  "release",
+                  "analyze",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus release analyze --format json",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "release",
               "bump"
             ],
             "route": "/docs/cli/release/bump/",
             "executable": true,
             "usage": "majordomus release bump [OPTIONS]",
-            "about": "Raise the version in both places at once, to the bump the commits imply or to one you name",
+            "about": "Raise the version in both places at once, to at least what the public contract requires",
             "args": [
               {
                 "name": "level",
                 "long": "level",
                 "positional": false,
-                "help": "Raise by this much instead of by what the commits imply",
+                "help": "Raise by this much instead of by the measured minimum; never below it",
                 "value_name": "LEVEL",
                 "takes_value": true,
                 "required": false,
@@ -58807,7 +59774,7 @@
                 "name": "exact",
                 "long": "exact",
                 "positional": false,
-                "help": "Set exactly this version, instead of raising the current one",
+                "help": "Set exactly this version; refused when it is below the measured minimum",
                 "value_name": "VERSION",
                 "takes_value": true,
                 "required": false,
@@ -58918,7 +59885,7 @@
               {
                 "id": "release-bump-dry-run",
                 "title": "Raising it, in both places, once",
-                "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. A repository that declares no version — the example runs in one with no crate — cannot be raised, and says so with exit 12 rather than inventing a number to raise from.",
+                "description": "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
                 "argv": [
                   "release",
                   "bump",
@@ -61389,6 +62356,16 @@
         "output": "QualityAnswer"
       },
       {
+        "name": "majordomus_release_analysis",
+        "id": "release.analysis",
+        "title": "What the public contract did, and the smallest version it allows",
+        "description": "The public capability surface of this tree against the one the last release published, every movement of it named with the reason it counts for what it does, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command, or a required field of either schema that a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. What the commits said about themselves is carried beside the verdict as evidence, and the answer says when the two disagree.",
+        "kind": "query",
+        "read_only": true,
+        "input": "ReleaseAnalysisInput",
+        "output": "ReleaseVersionPlan"
+      },
+      {
         "name": "majordomus_changelog",
         "id": "release.changelog",
         "title": "The changelog",
@@ -62218,6 +63195,12 @@
         "method": "GET",
         "path": "/api/v1/quality",
         "id": "quality.report",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/release/analysis",
+        "id": "release.analysis",
         "kind": "query"
       },
       {
@@ -67550,6 +68533,30 @@
           "cases": 1
         },
         {
+          "subject": "release.analysis",
+          "module": "release",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
+          "subject": "release.analysis",
+          "module": "release",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
+          "subject": "release.analysis",
+          "module": "release",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
           "subject": "release.changelog",
           "module": "release",
           "transport": "direct",
@@ -68063,22 +69070,22 @@
       ],
       "tallies": {
         "direct": {
+          "required": 90,
+          "covered": 85,
+          "missing": 0,
+          "waived": 5
+        },
+        "http": {
           "required": 89,
           "covered": 85,
           "missing": 0,
           "waived": 4
         },
-        "http": {
-          "required": 88,
-          "covered": 85,
-          "missing": 0,
-          "waived": 3
-        },
         "mcp": {
-          "required": 86,
+          "required": 87,
           "covered": 83,
           "missing": 0,
-          "waived": 3
+          "waived": 4
         },
         "system": {
           "required": 13,
@@ -68087,10 +69094,10 @@
           "waived": 0
         },
         "total": {
-          "required": 276,
+          "required": 279,
           "covered": 266,
           "missing": 0,
-          "waived": 10
+          "waived": 13
         }
       }
     },

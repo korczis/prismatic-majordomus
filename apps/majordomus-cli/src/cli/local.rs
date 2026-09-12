@@ -441,6 +441,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the declared and the tool's version and whether they agree.",
     },
     LocalCommand {
+        command: "release analyze",
+        reason: LocalReason::RendersCapability("release.analysis"),
+        note: "prints what the public contract did since the last release and the smallest version it allows.",
+    },
+    LocalCommand {
         command: "release bump",
         reason: LocalReason::WritesRepository,
         note: "raises the version in both places it is written; the one writer, and a deliberate act.",

@@ -62,17 +62,24 @@ states, and it reads them and nothing else:
   written form is a generated artifact under `docs/generated/`, and a page that renders that
   document is a projection of it rather than a second copy.
 
-**The version is stated exactly twice, and written by one command.**
+**The version is declared exactly twice, recorded once more, and written by one command.**
 
 - `apps/majordomus-cli/Cargo.toml` — the crate's version, the authority;
-- `bin/majordomus` — `MJ_VERSION`, which the shell tool prints.
+- `bin/majordomus` — `MJ_VERSION`, which the shell tool prints;
+- `apps/majordomus-cli/Cargo.lock` — not a declaration, since cargo derives it and nobody
+  chooses the value, but a tracked *site*: the build runs `--locked`, so a bump that leaves
+  it behind fails the next build with `cannot update the lock file`, which reads as a
+  toolchain fault rather than as a half-applied bump. The one writer owns it too.
 
 Both sites are named in the module that writes them
 (`apps/majordomus-cli/src/release/version.rs`) and again in `scripts/release-version`, which
 reads them from a tree that may have no toolchain. That second naming is the only duplication
 this rule permits, and it is gated rather than trusted. `majordomus release bump` is the one
-writer: it rewrites the one line each file owns and nothing else, it is idempotent, and it
-declines to invent a version it was not given or cannot derive.
+writer: it rewrites the one line each file owns and nothing else, it is idempotent, it reads
+all three sites back after writing and refuses when they disagree, and it declines to invent
+a version it was not given or cannot derive. What version it writes is not its own judgement:
+`project.the-version-is-measured` decides that from the public contract, and this rule is
+about where the number is written rather than which number it is.
 
 **Raising the version is a repository mutation.** It writes tracked files, so no capability
 answers it and the exposure policy withholds it from every machine surface; the read half —
@@ -88,6 +95,7 @@ The gate `release-check` (`scripts/ci/release-check`) fails, exit 10, when:
   the drift that would have one program raising files the other never looks at;
 - the two sites do not state one version, which until now was only asked at the moment of
   publication;
+- the lock file records a different version for this crate than the manifest declares;
 - a changelog is authored at the repository root or under `docs/` outside `docs/generated/`;
 - the version the tree declares is behind the newest release the layer records, which means
   the bump that shipped it was never made.

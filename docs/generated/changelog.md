@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.5.0 -->
+     Generator: majordomus-cli 0.6.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.5.0**
+Current version: **0.6.0**
 
 ## v0.5.0 — 2026-09-11
 
@@ -19,7 +19,7 @@ Current version: **0.5.0**
 - **ADR-0035** A checkout's server is one of the repository's, and its state is served like every other fact _(proposed)_
 - **ADR-0031** The design is one declaration and every surface is a projection of it _(accepted)_
 - **ADR-0030** A task owes obligations, and the evidence that discharges them goes stale _(proposed)_
-- **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(proposed)_
+- **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(accepted)_
 - **ADR-0026** A capability module's area is derived from the features that name it, not declared beside it _(accepted)_
 - **ADR-0025** Presentation order is one total order owned by the crate, not a decision each surface makes _(accepted)_
 - **ADR-0024** An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts _(accepted)_

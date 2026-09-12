@@ -34,9 +34,13 @@
 
 pub mod changelog;
 pub mod commits;
+pub mod compat;
 pub mod model;
+pub mod surface;
 pub mod version;
 
 pub use changelog::{compose, compose_published};
+pub use compat::{analyze, Impact, VersionPlan};
 pub use model::{Change, ChangeKind, Changelog, ReleaseSection, VersionReport};
+pub use surface::Surface;
 pub use version::{bump_of, Bump};

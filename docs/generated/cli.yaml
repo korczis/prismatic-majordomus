@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.5.0
+# Generator: majordomus-cli 0.6.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.5.0
-version: "0.5.0"
+generator: majordomus-cli 0.6.0
+version: "0.6.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -9634,7 +9634,7 @@ cli:
           examples:
             - id: release-version
               title: "The version, and the one the commits imply"
-              description: "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state, whether they agree, and what the conventional commits since the last release imply the next one should be."
+              description: "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`."
               argv:
                 - release
                 - version
@@ -9647,16 +9647,120 @@ cli:
         - path:
             - majordomus
             - release
+            - analyze
+          route: /docs/cli/release/analyze/
+          executable: true
+          usage: "majordomus release analyze [OPTIONS]"
+          about: "What the public contract did since the last release, and the smallest version this tree may therefore declare"
+          args:
+            - name: since
+              long: since
+              positional: false
+              help: Measure against this ref instead of the last release
+              value_name: REF
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: explain
+              long: explain
+              positional: false
+              help: Name every movement of the contract and the reason it counts for what it does
+              value_name: EXPLAIN
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: How to render the answer
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-analyze
+              title: "What the contract did, and the smallest version it allows"
+              description: "The public capability surface of this tree against the one the last release published, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command or required field a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. The same value answers `GET /api/v1/release/analysis`, the `majordomus_release_analysis` MCP tool, the Cockpit's Release page and the `version-surface` gate. A repository that has published nothing has no baseline to measure against, and says so with exit 12 rather than reporting an empty diff — which would read as \"nothing changed\"."
+              argv:
+                - release
+                - analyze
+                - "--format"
+                - json
+              command: majordomus release analyze --format json
+              setup: []
+              expectation: exits 12
+          subcommands: []
+        - path:
+            - majordomus
+            - release
             - bump
           route: /docs/cli/release/bump/
           executable: true
           usage: "majordomus release bump [OPTIONS]"
-          about: "Raise the version in both places at once, to the bump the commits imply or to one you name"
+          about: "Raise the version in both places at once, to at least what the public contract requires"
           args:
             - name: level
               long: level
               positional: false
-              help: Raise by this much instead of by what the commits imply
+              help: Raise by this much instead of by the measured minimum; never below it
               value_name: LEVEL
               takes_value: true
               required: false
@@ -9666,7 +9770,7 @@ cli:
             - name: exact
               long: exact
               positional: false
-              help: "Set exactly this version, instead of raising the current one"
+              help: Set exactly this version; refused when it is below the measured minimum
               value_name: VERSION
               takes_value: true
               required: false
@@ -9748,7 +9852,7 @@ cli:
           examples:
             - id: release-bump-dry-run
               title: "Raising it, in both places, once"
-              description: "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. A repository that declares no version — the example runs in one with no crate — cannot be raised, and says so with exit 12 rather than inventing a number to raise from."
+              description: "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number."
               argv:
                 - release
                 - bump

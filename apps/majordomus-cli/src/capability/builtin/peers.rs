@@ -224,7 +224,10 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
                 // Starting is the genuinely unknown one: a server is binding right now and
                 // may hold peers a second from now. Brief, and reported rather than guessed.
                 _ => Err(reason.unwrap_or_else(|| {
-                    format!("its server is {} and has no board to read yet", standing.as_str())
+                    format!(
+                        "its server is {} and has no board to read yet",
+                        standing.as_str()
+                    )
                 })),
             };
             (standing, url, found)

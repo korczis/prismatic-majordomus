@@ -212,12 +212,21 @@ pub enum ReleaseCommand {
     },
     /// The version the two writers state, whether they agree, and the bump the commits since the last release imply
     Version,
-    /// Raise the version in both places at once, to the bump the commits imply or to one you name
+    /// What the public contract did since the last release, and the smallest version this tree may therefore declare
+    Analyze {
+        /// Measure against this ref instead of the last release
+        #[arg(long, value_name = "REF")]
+        since: Option<String>,
+        /// Name every movement of the contract and the reason it counts for what it does
+        #[arg(long)]
+        explain: bool,
+    },
+    /// Raise the version in both places at once, to at least what the public contract requires
     Bump {
-        /// Raise by this much instead of by what the commits imply
+        /// Raise by this much instead of by the measured minimum; never below it
         #[arg(long, value_name = "LEVEL")]
         level: Option<String>,
-        /// Set exactly this version, instead of raising the current one
+        /// Set exactly this version; refused when it is below the measured minimum
         #[arg(long, value_name = "VERSION", conflicts_with = "level")]
         exact: Option<String>,
         /// Say what would change and write nothing
@@ -1686,10 +1695,21 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "release-version",
             title: "The version, and the one the commits imply",
-            description: "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state, whether they agree, and what the conventional commits since the last release imply the next one should be.",
+            description: "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.",
             argv: &["release", "version", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/declared", "/agree", "/bump"]),
+        }],
+    },
+    CommandExamples {
+        command: "release analyze",
+        examples: &[ExampleDoc {
+            id: "release-analyze",
+            title: "What the contract did, and the smallest version it allows",
+            description: "The public capability surface of this tree against the one the last release published, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command or required field a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. The same value answers `GET /api/v1/release/analysis`, the `majordomus_release_analysis` MCP tool, the Cockpit's Release page and the `version-surface` gate. A repository that has published nothing has no baseline to measure against, and says so with exit 12 rather than reporting an empty diff — which would read as \"nothing changed\".",
+            argv: &["release", "analyze", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {
@@ -1697,7 +1717,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "release-bump-dry-run",
             title: "Raising it, in both places, once",
-            description: "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. A repository that declares no version — the example runs in one with no crate — cannot be raised, and says so with exit 12 rather than inventing a number to raise from.",
+            description: "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
             argv: &["release", "bump", "--dry-run"],
             setup: &[],
             expect: Expect::ExitCode(12),

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.5.0 -->
+     Generator: majordomus-cli 0.6.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 89 | 85 | 0 | 4 |
-| http | 88 | 85 | 0 | 3 |
-| mcp | 86 | 83 | 0 | 3 |
+| direct | 90 | 85 | 0 | 5 |
+| http | 89 | 85 | 0 | 4 |
+| mcp | 87 | 83 | 0 | 4 |
 | system | 13 | 13 | 0 | 0 |
-| total | 276 | 266 | 0 | 10 |
+| total | 279 | 266 | 0 | 13 |
 
 ## Capabilities
 
@@ -88,6 +88,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
+| `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
 | `release.version` | release | query | — | covered | covered | covered | `default` |
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |

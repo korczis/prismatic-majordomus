@@ -712,7 +712,10 @@ fn recovery(ctx: &Context, _: Empty) -> Result<Recovery, CapabilityError> {
     let (records, mut findings) = open_records(&store);
     let ledger = ledger_lines(&dir.join(LEDGER));
 
-    let started = ledger.iter().filter(|l| l.event == "session.started").count();
+    let started = ledger
+        .iter()
+        .filter(|l| l.event == "session.started")
+        .count();
     let closed_events: Vec<&str> = ledger
         .iter()
         .filter(|l| l.event == "session.closed")
@@ -776,7 +779,11 @@ fn recovery(ctx: &Context, _: Empty) -> Result<Recovery, CapabilityError> {
                 })
                 .collect();
             found.sort();
-            orphans.extend(found.into_iter().map(|(path, bytes)| Orphan { path, bytes }));
+            orphans.extend(
+                found
+                    .into_iter()
+                    .map(|(path, bytes)| Orphan { path, bytes }),
+            );
         }
     }
 
@@ -1142,7 +1149,11 @@ mod tests {
         }
         let episodes = &m.capabilities[0].capability;
         assert_eq!(
-            episodes.exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+            episodes
+                .exposure
+                .mcp
+                .as_ref()
+                .and_then(|m| m.tool.as_deref()),
             Some("majordomus_lifecycle_episodes")
         );
         assert_eq!(

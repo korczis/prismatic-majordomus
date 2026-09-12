@@ -21,6 +21,7 @@ use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
+use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,
@@ -1684,7 +1685,6 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
     )
 }
 
-
 /// Every open episode of this checkout's store, and not only the one the pointer follows.
 ///
 /// The card above this one is `continuity.state`'s: the episode `session-current.yaml`
@@ -1720,20 +1720,17 @@ fn episodes_card(e: &Episodes) -> El {
             row(vec![
                 cell(mono(x.session_id.clone())),
                 cell(badge(level, x.standing.as_str())),
-                cell(
-                    el("span").text(if x.provider.is_empty() {
-                        "(opened by hand)"
-                    } else {
-                        &x.provider
-                    }),
-                ),
+                cell(el("span").text(if x.provider.is_empty() {
+                    "(opened by hand)"
+                } else {
+                    &x.provider
+                })),
                 cell(mono(x.branch.clone())),
                 text_cell(x.started_at.clone()),
                 cell(if x.last_activity.is_empty() {
                     el("span").text("(has written nothing)")
                 } else {
-                    el("span")
-                        .text(format!("{} · {}", x.last_activity, x.last_event))
+                    el("span").text(format!("{} · {}", x.last_activity, x.last_event))
                 }),
                 cell(if x.tasks.is_empty() {
                     el("span").text("—")
@@ -1787,13 +1784,25 @@ fn runtime_card(r: &RuntimeView) -> El {
     let short = |h: &str| h[..7.min(h.len())].to_string();
     card_with(
         "This process against the repository",
-        badge(if r.agree { "ok" } else { "fail" }, if r.agree { "current" } else { "behind" }),
+        badge(
+            if r.agree { "ok" } else { "fail" },
+            if r.agree { "current" } else { "behind" },
+        ),
         el("div")
             .child(facts(vec![
                 ("Serving", Node::Element(mono(short(&r.served_head)))),
-                ("Repository is on", Node::Element(mono(short(&r.repository_head)))),
-                ("Branch served", Node::Element(mono(r.served_branch.clone()))),
-                ("Branch now", Node::Element(mono(r.repository_branch.clone()))),
+                (
+                    "Repository is on",
+                    Node::Element(mono(short(&r.repository_head))),
+                ),
+                (
+                    "Branch served",
+                    Node::Element(mono(r.served_branch.clone())),
+                ),
+                (
+                    "Branch now",
+                    Node::Element(mono(r.repository_branch.clone())),
+                ),
                 (
                     "Working tree now",
                     Node::Element(el("span").text(&r.repository_working_tree)),
@@ -1823,9 +1832,12 @@ fn providers_card(p: &ProviderLifecycles) -> El {
                 cell(if x.lifecycle.is_empty() {
                     el("span").text("(no lifecycle adapter)")
                 } else {
-                    el("div")
-                        .class("mj-marks")
-                        .children(x.lifecycle.iter().map(|e| tag(e.clone())).collect::<Vec<_>>())
+                    el("div").class("mj-marks").children(
+                        x.lifecycle
+                            .iter()
+                            .map(|e| tag(e.clone()))
+                            .collect::<Vec<_>>(),
+                    )
                 }),
                 cell(badge(
                     if x.prompt_capture { "ok" } else { "info" },
@@ -1875,7 +1887,9 @@ fn providers_card(p: &ProviderLifecycles) -> El {
 /// Every row carries the command that clears it. A finding with no remedy is a complaint,
 /// and a page full of complaints teaches a reader to stop reading it.
 fn recovery_card(r: &Recovery) -> El {
-    let clean = r.stranded.is_empty() && r.orphans.is_empty() && r.balance.agrees
+    let clean = r.stranded.is_empty()
+        && r.orphans.is_empty()
+        && r.balance.agrees
         && r.pointer.layout != PointerLayout::Inline;
     let body = el("div")
         .child(facts(vec![
@@ -1983,17 +1997,15 @@ fn closed_card(c: &ClosedSessions) -> El {
         "Closed episodes",
         badge("info", format!("{} tracked", c.total)),
         el("div")
-            .child(
-                el("div").class("mj-stats").children(vec![
-                    statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
-                    statistic(
-                        c.on_this_branch.to_string(),
-                        "on this branch",
-                        ".ai/repo/sessions",
-                    ),
-                    statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
-                ]),
-            )
+            .child(el("div").class("mj-stats").children(vec![
+                statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
+                statistic(
+                    c.on_this_branch.to_string(),
+                    "on this branch",
+                    ".ai/repo/sessions",
+                ),
+                statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
+            ]))
             .child(table(
                 &["Episode", "Closed", "Branch", "Outcome", "Title"],
                 rows,
@@ -2466,6 +2478,189 @@ pub fn health(ctx: &Context) -> Page {
     )
     .subtitle("The same verdicts `capabilities validate`, `bench coverage --check` and `generate --check` reach, read through one capability.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Health", None)])
+}
+
+// --------------------------------------------------------------------- release
+
+/// What the public contract did since the last release, and the smallest version it allows.
+///
+/// Every number here is read from `release.analysis` — the one engine the command line, the
+/// HTTP route, the MCP tool, the CI gate and `release bump` all read. The Cockpit computes
+/// no compatibility of its own and increments no version: the page shows the verdict and the
+/// exact command that acts on it, because raising the version writes tracked files and the
+/// exposure policy keeps repository mutations off every machine surface (ADR 0027).
+pub fn release(ctx: &Context) -> Page {
+    let plan: VersionPlan = match ask(ctx, "release.analysis", json!({})) {
+        Ok(p) => p,
+        // A repository that has published nothing cannot be measured, and says so. An empty
+        // diff here would read as "nothing changed", which is the one wrong answer.
+        Err(e) => return failed(Area::Release, "Release", e),
+    };
+    let (added, changed, removed) = plan.counts();
+    let blocked = plan.status == ReleaseStatus::Blocked;
+
+    let verdict = card_with(
+        if blocked {
+            format!("{} → {} required", plan.declared_version, plan.required_version)
+        } else {
+            format!("{} — aligned", plan.declared_version)
+        },
+        badge(
+            if blocked { "fail" } else { "ok" },
+            if blocked { "blocked" } else { "aligned" },
+        ),
+        el("div")
+            .child(facts(vec![
+                ("Last release", Node::Element(mono(&plan.baseline.reference))),
+                ("Required bump", Node::Element(badge(
+                    if plan.required == Impact::Major { "fail" } else if plan.required == Impact::Minor { "warn" } else { "ok" },
+                    plan.required.as_str(),
+                ))),
+                ("Declared bump", Node::Element(mono(plan.declared.as_str()))),
+                ("Next minimum", Node::Element(mono(&plan.required_version))),
+                ("Surface", Node::Element(mono(format!(
+                    "{} public atoms, was {}",
+                    plan.atoms, plan.baseline.atoms
+                )))),
+            ]))
+            .child(
+                el("div").class("mj-marks").children(vec![
+                    badge("ok", format!("{added} added")),
+                    badge("info", format!("{changed} changed")),
+                    badge(if removed > 0 { "fail" } else { "ok" }, format!("{removed} removed")),
+                ]),
+            )
+            .child(el("p").class("mj-note").text(plan.policy.statement()))
+            .when(blocked, |d| {
+                d.child(el("p").class("mj-prose").text(
+                    "The public contract moved by more than the version says. Raise it with the one writer:",
+                ))
+                .child(mono("majordomus release bump"))
+            }),
+    );
+
+    // Why — every movement, with the reason it counts for what it does. The list is the
+    // evidence for the badge above, so a surprising verdict can be checked rather than
+    // believed.
+    let why = card(
+        "Why",
+        el("div")
+            .when(plan.changes.is_empty(), |d| {
+                d.child(el("p").class("mj-prose").text(format!(
+                    "Nothing a caller can hold has moved since {}. No bump is owed.",
+                    plan.baseline.reference
+                )))
+            })
+            .when(!plan.changes.is_empty(), |d| {
+                d.child(
+                    el("ul").class("mj-list").children(
+                        plan.changes
+                            .iter()
+                            .map(|c| {
+                                el("li")
+                                    .child(badge(
+                                        match c.impact {
+                                            Impact::Major => "fail",
+                                            Impact::Minor => "warn",
+                                            _ => "ok",
+                                        },
+                                        c.impact.as_str(),
+                                    ))
+                                    .child(mono(c.to_string()))
+                                    .child(el("span").class("mj-note").text(&c.detail))
+                            })
+                            .collect::<Vec<_>>(),
+                    ),
+                )
+            }),
+    );
+
+    let mut cards = vec![verdict, why];
+
+    // The line this subsystem exists for: the human account and the measured one, side by
+    // side, when they disagree.
+    if plan.understated {
+        cards.push(card_with(
+            "The commits understate the change".to_string(),
+            badge("warn", "evidence"),
+            el("div")
+                .child(facts(vec![
+                    ("Commits say", Node::Element(mono(plan.commits.implied.as_str()))),
+                    ("The contract moved by", Node::Element(mono(plan.implied.as_str()))),
+                    ("Commits since", Node::Element(mono(plan.commits.commits.to_string()))),
+                ]))
+                .child(el("p").class("mj-note").text(
+                    "Conventional commits are how a change explains itself; the contract is what decides the version. The measurement wins.",
+                )),
+        ));
+    }
+
+    if !plan.diagnostics.is_empty() {
+        cards.push(card(
+            "The release state",
+            el("ul").class("mj-list").children(
+                plan.diagnostics
+                    .iter()
+                    .map(|d| {
+                        el("li")
+                            .child(badge(
+                                if d.severity == Severity::Error {
+                                    "fail"
+                                } else {
+                                    "warn"
+                                },
+                                if d.severity == Severity::Error {
+                                    "error"
+                                } else {
+                                    "warning"
+                                },
+                            ))
+                            .child(el("span").text(&d.message))
+                    })
+                    .collect::<Vec<_>>(),
+            ),
+        ));
+    }
+
+    cards.push(card(
+        "Provenance",
+        facts(vec![
+            ("Policy", Node::Element(mono(&plan.policy.schema))),
+            (
+                "Baseline commit",
+                Node::Element(mono(
+                    plan.baseline.commit.chars().take(12).collect::<String>(),
+                )),
+            ),
+            (
+                "Baseline recorded",
+                Node::Element(badge(
+                    if plan.baseline.recorded { "ok" } else { "warn" },
+                    if plan.baseline.recorded {
+                        "yes"
+                    } else {
+                        "from a tag alone"
+                    },
+                )),
+            ),
+            (
+                "Baseline surface",
+                Node::Element(mono(&plan.baseline.fingerprint)),
+            ),
+            ("This surface", Node::Element(mono(&plan.fingerprint))),
+            (
+                "Version writers agree",
+                Node::Element(badge(
+                    if plan.writers_agree { "ok" } else { "fail" },
+                    if plan.writers_agree { "yes" } else { "no" },
+                )),
+            ),
+        ]),
+    ));
+
+    Page::new(Area::Release, "Release", el("div").class("mj-grid").children(cards))
+        .subtitle("The smallest version this tree may declare, measured from the public capability surface against the last release — the same verdict `majordomus release analyze` and the `version-surface` gate reach.")
+        .trail(vec![("Cockpit", Some("/cockpit")), ("Release", None)])
 }
 
 // --------------------------------------------------------------------- artifacts
