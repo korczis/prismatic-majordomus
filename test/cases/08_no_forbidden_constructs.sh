@@ -25,7 +25,11 @@ while IFS= read -r line; do
 done <<EOF
 $net
 EOF
-grep -qE 'curl -fsS --max-time [0-9]+ "[$]url/api/v1/peers".*\|\| return 0' "$ROOT/lib/context.sh" \
+# `return 0` or `return 1`: what is guarded is that the request is bounded and that its
+# failure escapes as a status and never as output. `mj_peer_board` returns 1 so that a caller
+# can tell "there is no board" from "the board is empty" — the distinction
+# project.empty-is-not-failure exists for — and its callers turn that status into silence.
+grep -qE 'curl -fsS --max-time [0-9]+ "[$]url/api/v1/peers".*\|\| return [01]' "$ROOT/lib/context.sh" \
   || { printf '    the declared peer-board exception is not one bounded request whose failure is silence\n'; bad=1; }
 grep -qF 'http://127.0.0.1:*|http://localhost:*' "$ROOT/lib/context.sh" \
   || { printf '    the declared exception does not refuse a lease outside loopback\n'; bad=1; }

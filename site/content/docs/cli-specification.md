@@ -1746,6 +1746,7 @@ declaration the Rust executable indexes. See [`SCHEMAS.md`](@/docs/schemas.md) f
 ```
 majordomus adr list [--status <status>] [--json]      every decision: id, status, date, title
 majordomus adr show <id> [--json]                     the path, then the file as written
+majordomus adr next [--json]                          the next free identity, and every source surveyed
 majordomus adr propose "<title>" [--from <ref>]...    write a new decision, status proposed
                        [--tag <tag>]... [--supersedes <id>]
 majordomus adr check [--json]                         validate every decision and every reference
@@ -1756,6 +1757,22 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   filters to one of `proposed`, `accepted`, `superseded`, `rejected`.
 - `show` prints the repository-relative path on the first line and the file below it. An
   id that is not a decision exits `12` and names `adr list`.
+- `next` answers what the next free identity is, and says what it looked at to decide. Four
+  sources, each reporting how many identities it claimed: this working tree, every sibling
+  worktree as it stands on disk (authored and not yet committed is a real claim), every ref —
+  branches, tags, remote-tracking refs and every linked worktree's `HEAD`, in one
+  `git log --all --no-renames --diff-filter=A` — and the peer board of the shared server,
+  which is the only source that knows about an identity a session has decided to take and has
+  not written anywhere. A source that could not be reached is reported as unreachable and
+  never dropped silently from the denominator.
+  Allocation is **monotonic**: one above the highest identity anything has ever claimed,
+  never into a hole. A hole means an identity was taken and withdrawn, or taken and not yet
+  written, and nothing can tell either from a number nobody ever used — `0034` of this
+  repository is on no branch, in no tag and in no working tree, and `ADR 0035` cites it. Holes
+  are therefore listed as spent, with whatever cites them named as evidence for the reader.
+  The shell tool has no peer identity of its own, so a session that announced an allocation
+  and then asks is stepped over its own claim; the output says when the high-water mark came
+  from a board claim. `propose` allocates through the same survey.
 - `propose` writes `status: proposed` and nothing else. **There is no way to write
   `accepted`**: `--status` exits `15` naming the reason, because a tool that can write
   `accepted` turns its own inference into repository truth and a later reader cannot tell
@@ -1778,6 +1795,18 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   file-name prefix, the required body sections; and across the set: duplicate identities,
   a `superseded` record with no `superseded_by`, one-sided supersession, and a reference
   that resolves to nothing. It exits `10` on any failure.
+- `check` also asks the question no single tree can answer about itself: for every identity
+  this tree **adds** relative to the base (`origin/master`, `origin/main`, `master`, `main`,
+  in that order; `MJ_ADR_BASE` overrides and is then the only candidate), does another ref
+  carry a *different* document at that identity? A different file name is a competing claim
+  and is refused, naming both documents, the refs that carry the other one, and
+  `majordomus adr next`; the same file name on two refs is an edit and is resolved by
+  merging. The verdict always states its subject — how many identities were added and what
+  they were measured against — and when the base does not resolve it says the other refs were
+  **not** surveyed rather than exiting clean with nothing said. `doctor` runs the same
+  examination, and `doctor` is the pre-commit hook, so a collision is refused on the branch
+  rather than at the merge where `generate --strict` would exclude every claimant and name
+  only the identity. `ADR 0053` is the reasoning.
 
 - `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
   for the index, `--base <ref>` for `<ref>..HEAD` plus the working tree — and names every

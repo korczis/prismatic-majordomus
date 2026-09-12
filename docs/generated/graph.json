@@ -3759,6 +3759,29 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0053",
+        "kind": "adr",
+        "label": "adr-0053",
+        "summary": "An identity is allocated above the high-water mark, and a collision is refused on the branch",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0053",
+        "source": ".ai/repo/adrs/0053-an-identity-is-allocated-above-the-high-water-mark-and-a-collision-is-refused-on-the-branch.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "related": [
+            "rule:project.work-is-claimed-before-it-is-built",
+            "rule:project.blocking-checks-cheap",
+            "rule:project.empty-is-not-failure",
+            "rule:project.no-network-no-eval",
+            "test:test/cases/271_adr_allocation.sh"
+          ],
+          "tags": [
+            "coordination",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -7063,8 +7086,8 @@
           "requires_repository": true,
           "requires_task": "none",
           "stage": "conclude",
-          "summary": "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.",
-          "syntax": "majordomus adr <list|show <id>|propose \"<title>\"|check> [--json]",
+          "summary": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
+          "syntax": "majordomus adr <list|show <id>|next|propose \"<title>\"|check|affected> [--json]",
           "visibility": "public",
           "writes": [
             ".ai/repo/adrs/",
@@ -31788,6 +31811,13 @@
         "source": "test/cases/26_ci_wiring.sh"
       },
       {
+        "id": "majordomus://test/test/cases/271_adr_allocation.sh",
+        "kind": "test",
+        "label": "test/cases/271_adr_allocation.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F271_adr_allocation.sh",
+        "source": "test/cases/271_adr_allocation.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/27_foreign_task.sh",
         "kind": "test",
         "label": "test/cases/27_foreign_task.sh",
@@ -37914,6 +37944,36 @@
       {
         "source": "majordomus://adr/adr-0052",
         "target": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0053",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0053",
+        "target": "majordomus://rule/project.blocking-checks-cheap@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0053",
+        "target": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0053",
+        "target": "majordomus://rule/project.no-network-no-eval@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0053",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0053",
+        "target": "majordomus://test/test/cases/271_adr_allocation.sh",
         "kind": "put_in_force"
       },
       {
@@ -49532,6 +49592,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/271_adr_allocation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/27_foreign_task.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -53188,8 +53253,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1660,
-      "edges": 3721,
+      "nodes": 1662,
+      "edges": 3728,
       "acyclic": true,
       "truncated": false
     }
