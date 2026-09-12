@@ -1,7 +1,7 @@
 +++
 title = "The development runtime"
 description = "the development runtime: which program owns the semantics of the plan, tasks, sessions, context, executions, peers, evidence and completion, the measured inventory of every one of them, the storage each is decided to keep, the two event tiers, the derivation chain anything exposed must follow, what each surface may and may not decide, and the ranked gaps between that boundary and the code"
-weight = 35
+weight = 36
 [extra]
 source = "docs/DEVELOPMENT_RUNTIME.md"
 +++
@@ -182,7 +182,7 @@ No new datastore. Every decision below is the storage the repository already has
 | Development session, closed | `.ai/repo/sessions/*.md`, kind `session` | tracked | a closed episode is a durable shared record of what happened |
 | Development session, open | `.ai/local/state/session-current.yaml` (+ `sessions-open/`) | local | an open episode belongs to the process holding it |
 | Compiled context provenance | `.ai/local/session-contexts/<episode>` | local | it names this machine and freezes a projection at one moment; `.ai/README.md` forbids publishing it |
-| Durable events | `.ai/local/state/ledger.jsonl`, vocabulary `share/events.yaml` (20 names) | local, append-only | already the canonical record; ledger *order* is load-bearing for `mj_record_rank` |
+| Durable events | `.ai/local/state/ledger.jsonl`, vocabulary `share/events.yaml` (every name it registers) | local, append-only | already the canonical record; ledger *order* is load-bearing for `mj_record_rank` |
 | Live execution events | the in-process store, streamed over `/events` (15 typed messages) | neither | bounded by design; a second durable log would reproduce the defect `share/events.yaml` was introduced to fix |
 | Actor / peer state | the in-memory board (`src/peers.rs`) | neither | a peer *is* a connection; its durable trace is the ledger envelope's `by` and the session record's `worker` |
 | Completion evidence | `evidence[]` inside the issue or milestone it discharges | tracked | evidence that lives away from the obligation it discharges is evidence nobody joins |
@@ -331,6 +331,7 @@ ADR 0040, not an architecture.
 | milestone | as issue | `.ai/repo/project/milestones/*.yaml` | `majordomus.milestone/v1` | class `milestone` | `plan.model`, `plan.roadmap`, one resource each | `lib/plan.sh` | as issue | as issue | [`ROADMAP.md`](@/docs/roadmap.md) | as issue |
 | task (active) | `lib/start.sh`, `check.sh`, `finish.sh` | `.ai/local/state/current.yaml` | `majordomus.current/v1` | not indexed (local) | `continuity.state`, `obligations.closure`, `scope` | `lib/` only | `task.started`, `task.checkpoint`, `task.evidence`, `task.finished` | `test/cases/32_refusal_lifecycle.sh` | [`CONTINUITY.md`](@/docs/continuity.md) | no capability; a refused `finish` writes no event at all |
 | session (closed) | `lib/session.sh` | `.ai/repo/sessions/*.md` | `session/v1` | class `session` | 12 resources, `objects.*`, site | `lib/session.sh` | `session.closed` | `test/cases/*` | [`CONTINUITY.md`](@/docs/continuity.md) | no Rust module; write unreachable |
+| knowledge (candidate) | `lib/knowledge.sh` | `.ai/repo/knowledge/candidates/*.md` | `knowledge/v1` | `sources.yaml` class `candidates` | `knowledge_base.candidates`, `knowledge_base.record`, `knowledge_base.status`, one resource per record, the briefing | `lib/knowledge.sh` only, at the episode boundary and by `knowledge derive|promote|reject` | `knowledge.derived`, `knowledge.promoted`, `knowledge.rejected` | `test/cases/*` | [`KNOWLEDGE.md`](@/docs/knowledge.md) | write unreachable from every machine surface, by decision: promotion is a person's act |
 | session (open) | `lib/session.sh` | `.ai/local/state/session-current.yaml`, `sessions-open/` | `majordomus.session-record/v1` | not indexed | `continuity.state` | `lib/session.sh` | `session.started` | ” | ” | ” |
 | session context | **`lib/session_context.sh` only** | `.ai/local/session-contexts/` | `majordomus.session-context/v1` | not indexed | the briefing, a person | `lib/` only | — | ” | `.ai/README.md` | **no Rust owner and no capability at all** |
 | checkpoint | `lib/checkpoint.sh` | `.ai/local/state/checkpoints/` | — | not indexed | `continuity.state`, `context` | `lib/` only | `task.checkpoint` | ” | [`CONTINUITY.md`](@/docs/continuity.md) | no capability |

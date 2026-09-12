@@ -302,6 +302,10 @@ mj_report_overlap_from_current() {
 . "$MJ_LIB_DIR/usecase.sh"
 # shellcheck source=evidence.sh
 . "$MJ_LIB_DIR/evidence.sh"
+# the knowledge-integrity doctrine is enforced by check as well as doctor; the validator
+# lives beside the writer it judges (ADR 0058)
+# shellcheck source=knowledge.sh
+. "$MJ_LIB_DIR/knowledge.sh"
 # the completion-gate doctrine: which validation gates the change selects, what each said,
 # and whether that verdict still describes this tree
 # shellcheck source=gates.sh

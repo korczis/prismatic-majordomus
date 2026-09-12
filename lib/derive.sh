@@ -31,6 +31,9 @@
 . "$MJ_LIB_DIR/decision.sh"
 # shellcheck source=question.sh
 . "$MJ_LIB_DIR/question.sh"
+# the candidates awaiting review, which the briefing names (ADR 0058)
+# shellcheck source=knowledge.sh
+. "$MJ_LIB_DIR/knowledge.sh"
 
 # How many items any derived list prints before it says how many it left out. The cap is
 # the policy's, not a constant here: a derived body is read into the next worker's context
@@ -395,6 +398,12 @@ mj_derive_briefing_body() {
   else
     printf 'No relevant handover for this worktree and branch. That is an answer, not a gap: a record from another branch is never offered, because a briefing that is quietly about somebody else is worse than none.\n'
   fi
+
+  # --- the knowledge awaiting review: what earlier episodes on this branch learned and
+  # nobody has yet judged (ADR 0058). Bounded the way the questions are, and the same text
+  # `majordomus context` carries as its KNOWLEDGE section: one definition, in knowledge.sh.
+  printf '\n'
+  mj_knowledge_briefing_section "$(mj_git_branch)"
 
   printf '\nRun `majordomus context` for the full briefing, `majordomus check` before claiming anything is done.\n'
   return 0

@@ -512,6 +512,26 @@ mj_session_close() {
   # would serialise two closes that are no longer racing for the same thing.
   mj_lock_release
 
+  # What the episode learned, derived on the single path every close takes (ADR 0058):
+  # after its record, so that the episode's own record exists before anything names it,
+  # and before session.closed, so that the knowledge.derived line of an episode precedes
+  # its close in ledger order and the stopped-writer check compares episode ids rather
+  # than clocks. Best effort, on purpose: a derivation that fails is said on stderr and
+  # reported by the adapter as the typed event, and the episode still closes.
+  [ -n "${MJ_POL_FLAT:-}" ] || mj_load_policy 2>/dev/null || true
+  if [ "$(mj_pol session.knowledge_on_end)" != false ]; then
+    # shellcheck source=knowledge.sh
+    . "$MJ_LIB_DIR/knowledge.sh"
+    local kout
+    if kout="$( (mj_cmd_knowledge derive --episode "$sid") 2>&1 )"; then
+      mj_err "session close: knowledge derived: $(printf '%s\n' "$kout" | tail -n 1)"
+    else
+      mj_err "session close: the knowledge was not derived: $(printf '%s\n' "$kout" | tail -n 1)"
+    fi
+  else
+    mj_err "session close: session.knowledge_on_end is false, so no knowledge is derived"
+  fi
+
   # Appended before the open record is removed, so the closing event carries this
   # session's stamp like every other event of the episode.
   mj_ledger_append session.closed \

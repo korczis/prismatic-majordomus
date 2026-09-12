@@ -823,6 +823,87 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/#op-knowledge_base-candidates",
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "cli": "majordomus knowledge candidates",
+      "id": "knowledge_base.candidates",
+      "kind": "query",
+      "module": "knowledge_base",
+      "module_route": "/registry/modules/knowledge-base/",
+      "resource": "majordomus://knowledge-candidates",
+      "route": "/registry/capabilities/knowledge-base-candidates/",
+      "slug": "knowledge-base-candidates",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "tests": [
+        "apps/majordomus-cli/tests/knowledge_base.rs"
+      ],
+      "title": "Candidates awaiting review",
+      "tool": "majordomus_knowledge_candidates"
+    },
+    {
+      "api_anchor": "/docs/api/#op-knowledge_base-record",
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "cli": "majordomus knowledge record",
+      "id": "knowledge_base.record",
+      "kind": "query",
+      "module": "knowledge_base",
+      "module_route": "/registry/modules/knowledge-base/",
+      "resource": null,
+      "route": "/registry/capabilities/knowledge-base-record/",
+      "slug": "knowledge-base-record",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "tests": [
+        "apps/majordomus-cli/tests/knowledge_base.rs"
+      ],
+      "title": "One knowledge record",
+      "tool": "majordomus_knowledge_record"
+    },
+    {
+      "api_anchor": "/docs/api/#op-knowledge_base-status",
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "cli": "majordomus knowledge status",
+      "id": "knowledge_base.status",
+      "kind": "query",
+      "module": "knowledge_base",
+      "module_route": "/registry/modules/knowledge-base/",
+      "resource": "majordomus://knowledge-status",
+      "route": "/registry/capabilities/knowledge-base-status/",
+      "slug": "knowledge-base-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "tests": [
+        "apps/majordomus-cli/tests/knowledge_base.rs"
+      ],
+      "title": "Whether the deriver is still writing",
+      "tool": "majordomus_knowledge_status"
+    },
+    {
       "api_anchor": "/docs/api/#op-lifecycle-closed",
       "claims": [
         {
@@ -2295,9 +2376,9 @@
     ]
   },
   "counts": {
-    "capabilities": 108,
-    "claims": 48,
-    "modules": 35
+    "capabilities": 111,
+    "claims": 49,
+    "modules": 36
   },
   "generator": "majordomus-cli 0.6.0",
   "modules": [
@@ -2714,6 +2795,40 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
       "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "knowledge_base.candidates",
+          "route": "/registry/capabilities/knowledge-base-candidates/",
+          "slug": "knowledge-base-candidates"
+        },
+        {
+          "id": "knowledge_base.record",
+          "route": "/registry/capabilities/knowledge-base-record/",
+          "slug": "knowledge-base-record"
+        },
+        {
+          "id": "knowledge_base.status",
+          "route": "/registry/capabilities/knowledge-base-status/",
+          "slug": "knowledge-base-status"
+        }
+      ],
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "id": "knowledge_base",
+      "route": "/registry/modules/knowledge-base/",
+      "slug": "knowledge-base",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "title": "Knowledge base"
     },
     {
       "capabilities": [

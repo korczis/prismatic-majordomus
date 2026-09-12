@@ -219,3 +219,27 @@ events:
     requires: [records, pruned, bytes_left]
     public: true
     note: A record is never deleted. What this event counts is bodies taken, and the record left behind still says when the prompt happened, in which episode, and the digest and length of what was removed.
+
+  - id: knowledge.derived
+    title: Knowledge derived from an episode
+    summary: The deriver ran over one episode's evidence and wrote, kept or skipped the candidate records it yields; which episode, how many of each, and the paths written.
+    emitted_by: knowledge
+    requires: [episode, written, unchanged, skipped, paths]
+    public: true
+    note: "Written at every episode close and every compaction, and by `majordomus knowledge derive`, even when nothing was written: derived-and-nothing-new and never-derived are different facts, and the stopped-writer check tells them apart by this line (ADR 0058). `episode` is explicit because the envelope's session stamp is present only while the episode is open, and a derivation run after the close carries none. `paths` is the space-joined list of the repository-relative files written, empty when none; `skipped` counts the records refused because they were promoted, superseded or opened like a conversation."
+
+  - id: knowledge.promoted
+    title: Knowledge candidate promoted
+    summary: A person promoted a candidate record to verified with evidence; the record moved to the curated section.
+    emitted_by: knowledge
+    requires: [id, path]
+    public: true
+    note: "`verified` is written by this act and by a person editing the file, never by the deriver. `path` is the curated record's repository-relative path."
+
+  - id: knowledge.rejected
+    title: Knowledge candidate rejected
+    summary: A person rejected a candidate record; it was superseded in place and the reason recorded.
+    emitted_by: knowledge
+    requires: [id, reason]
+    public: true
+    note: Carries `by` when the rejection named the record that replaces it. A superseded candidate stays where it was, so the deriver never writes it again and the reason stays readable beside it.

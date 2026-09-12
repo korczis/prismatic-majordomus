@@ -1,7 +1,7 @@
 +++
 title = "Performance truth"
 description = "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, and how to work on performance"
-weight = 18
+weight = 19
 [extra]
 source = "docs/PERFORMANCE.md"
 +++

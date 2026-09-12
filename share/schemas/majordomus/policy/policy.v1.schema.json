@@ -121,6 +121,14 @@
           "type": "boolean",
           "description": "Write a derived continuation record when an episode ends. Until ADR 0052 this happened only while a task was still active, so a repository whose last task had been handed over stopped writing the one record a future worker resumes from."
         },
+        "knowledge_on_end": {
+          "type": "boolean",
+          "description": "Derive the knowledge an episode produced into candidate records under the tracked knowledge section as the episode closes, on every close path: the ledger lines it stamped are the evidence, and they are about to stop being reachable. Deterministic and without a model; a second run over the same evidence writes nothing (ADR 0058). Absent means on."
+        },
+        "knowledge_on_compact": {
+          "type": "boolean",
+          "description": "Derive the same records when the provider announces a compaction, which discards the conversation while the work continues, so the record exists whether or not the episode ever closes cleanly. Independent of checkpoint_on_compact: the two record different things. Absent means on."
+        },
         "stranded_after": {
           "type": "string",
           "pattern": "^[0-9]+[smh]$",
@@ -177,6 +185,23 @@
           "description": "The total size of the prompt bodies the archive keeps; the oldest are pruned first past it.",
           "type": "integer",
           "minimum": 1
+        }
+      }
+    },
+    "knowledge": {
+      "type": "object",
+      "description": "Bounds on the review queue of derived knowledge records under the tracked knowledge section. A candidate is a record the deriver wrote and nobody has judged; the queue is measured, never emptied by a machine, and both numbers are declared once here and read by the shell validator and the Rust reader alike (ADR 0058).",
+      "additionalProperties": false,
+      "properties": {
+        "candidates_max_files": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "More records with status candidate than this awaiting review is an advisory doctor finding that names them: a review queue that grows without bound is a queue nobody reviews."
+        },
+        "candidate_max_age_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A candidate waiting longer than this since it entered the queue is an advisory doctor finding: it was not reviewed, it was ignored. The age is measured from the derivation that wrote the file, else the commit that added it, else the record's own date."
         }
       }
     },

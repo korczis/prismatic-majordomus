@@ -682,13 +682,13 @@ fn blockers(path: &Path) -> Vec<String> {
 /// The freshness thresholds this repository declares, read from the policy the manifest
 /// names.
 ///
-/// Read here rather than carried on the [`Context`] because nothing else in this process
-/// needs them, and read from the policy rather than written down because a constant in this
+/// Read here rather than carried on the [`Context`] because only this module and
+/// [`super::knowledge_base`] need them, and read from the policy rather than written down because a constant in this
 /// file would be the second copy of a number the policy owns — the drift `session.freshness`
 /// exists in one place to prevent. A repository whose policy predates the key, or whose
 /// policy cannot be read at all, yields no thresholds; every record is then reported as
 /// `unknown` naming the missing key, which is the honest answer and not a default.
-fn thresholds_of(ctx: &Context) -> Thresholds {
+pub(crate) fn thresholds_of(ctx: &Context) -> Thresholds {
     let root = PathBuf::from(&ctx.index.repository.root);
     let Ok(repo) = crate::repository::Repository::open(&root) else {
         return Thresholds::default();

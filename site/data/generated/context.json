@@ -257,6 +257,8 @@
       "supersedes": [],
       "tracks": [
         "lib/knowledge.sh",
+        "lib/capture.sh",
+        "lib/session.sh",
         "share/knowledge-sources.yaml"
       ]
     },
@@ -609,6 +611,28 @@
         "apps/majordomus-cli/src/bench",
         "scripts/rust-check"
       ]
+    },
+    {
+      "id": "ai.repo.knowledge.candidates",
+      "path": ".ai/repo/knowledge/candidates/README.md",
+      "dir": ".ai/repo/knowledge/candidates",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Candidate records",
+      "description": "What the tool derived from the ledger and git at an episode boundary and nobody has reviewed yet, discovered as a knowledge source class.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
     },
     {
       "id": "ai.repo.knowledge.curated",
@@ -1115,10 +1139,45 @@
         "supersedes": [],
         "tracks": [
           "lib/knowledge.sh",
+          "lib/capture.sh",
+          "lib/session.sh",
           "share/knowledge-sources.yaml"
         ],
         "paths": [],
-        "sha256": "940b66ef23466289a0fcf7eca36a47b89d3ccc973dee3ec99cda70951e243862"
+        "sha256": "08fd514e11443d6355b911b819602e888f09b68bee80acd73b2b394507087655"
+      }
+    },
+    {
+      "dir": ".ai/repo/knowledge/candidates",
+      "document": "ai.repo.knowledge.candidates",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "candidates",
+      "contract": {
+        "index": 26,
+        "id": "ai.repo.knowledge.candidates",
+        "path": ".ai/repo/knowledge/candidates/README.md",
+        "dir": ".ai/repo/knowledge/candidates",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Candidate records",
+        "description": "What the tool derived from the ledger and git at an episode boundary and nobody has reviewed yet, discovered as a knowledge source class.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "932391638f4f18ae79df00206d886d475fe57c46ff87452f920dbfb17d5bda3e"
       }
     },
     {
@@ -1129,7 +1188,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 26,
+        "index": 27,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -1272,7 +1331,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 27,
+        "index": 28,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1307,7 +1366,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 28,
+        "index": 29,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1485,7 +1544,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 29,
+        "index": 30,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -1797,8 +1856,8 @@
     }
   ],
   "counts": {
-    "directories": 37,
-    "documented": 29,
+    "directories": 38,
+    "documented": 30,
     "exempt": 8
   }
 }

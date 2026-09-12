@@ -63,6 +63,26 @@
         ]
       },
       "explain": "Usage errors exit 2 and name the help text; nothing is guessed from a near miss."
+    },
+    {
+      "id": "derive-dry-run",
+      "title": "What an episode would yield, without writing it",
+      "given": {
+        "session open": true
+      },
+      "setup": "session-open",
+      "run": [
+        "knowledge",
+        "derive",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^knowledge derive:"
+        ]
+      },
+      "explain": "The deriver reads the open episode's ledger lines and says what it would write; with --dry-run no record and no ledger line is written, so it can be run anywhere."
     }
   ]
 }

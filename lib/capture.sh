@@ -1511,6 +1511,8 @@ mj_capture_session_compact() {
   local provider="$1" psession="$2" out
   # shellcheck source=checkpoint.sh
   . "$MJ_LIB_DIR/checkpoint.sh"
+  # shellcheck source=knowledge.sh
+  . "$MJ_LIB_DIR/knowledge.sh"
   # A policy that does not parse is a failure of the repository, and `doctor` says so. It is
   # not a reason to fail here: this runs in a provider hook, where the cost of dying is the
   # episode nobody can reopen. Nothing is recorded and the reason is logged beside the
@@ -1519,18 +1521,30 @@ mj_capture_session_compact() {
     mj_capture_session_failed "$provider" compact "the policy does not parse; nothing recorded"
     return 0; }
   if [ "$(mj_pol session.checkpoint_on_compact)" = false ]; then
-    mj_err "capture session: compaction ahead; session.checkpoint_on_compact is false, so nothing is recorded"
-    return 0
-  fi
+    mj_err "capture session: compaction ahead; session.checkpoint_on_compact is false, so no checkpoint is recorded"
   # No task guard. A compaction discards the conversation whether or not anybody declared a
   # task, and what is about to stop being reachable is worth the same either way. This
   # asked for an `active` task until ADR 0052, which meant that finishing a task turned
   # compaction checkpoints off for every episode after it — silently, for six days.
-  out="$( (mj_cmd_checkpoint --derive) 2>&1 )" || {
+  elif out="$( (mj_cmd_checkpoint --derive) 2>&1 )"; then
+    mj_err "capture session: compaction ahead${psession:+ (provider session $psession)}; checkpointed into $(printf '%s' "$out" | tail -n 1)"
+  else
     mj_capture_session_failed "$provider" compact "the checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the checkpoint was not written; see the log beside the working contexts"
-    return 0; }
-  mj_err "capture session: compaction ahead${psession:+ (provider session $psession)}; checkpointed into $(printf '%s' "$out" | tail -n 1)"
+  fi
+  # The knowledge the episode has produced so far, derived now for the checkpoint's reason:
+  # the ledger lines it stamped are about to outlive the conversation that produced them,
+  # and the record exists whether or not the episode ever closes cleanly (ADR 0058). Its
+  # own switch, independent of the checkpoint's: the two record different things, and the
+  # checkpoint's `return 0` used to sit above this line, which would have made one switch
+  # silently govern the other.
+  if [ "$(mj_pol session.knowledge_on_compact)" != false ]; then
+    out="$( (mj_cmd_knowledge derive) 2>&1 )" \
+      && mj_err "capture session: knowledge derived: $(printf '%s' "$out" | tail -n 1)" \
+      || mj_capture_session_failed "$provider" compact "the knowledge was not derived: $(printf '%s' "$out" | tail -n 1)"
+  else
+    mj_err "capture session: session.knowledge_on_compact is false, so no knowledge is derived"
+  fi
   return 0
 }
 
@@ -1593,7 +1607,18 @@ mj_capture_session_end() {
     mj_capture_session_failed "$provider" end "the episode did not close: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the episode did not close; see the log beside the working contexts"
     return 0; }
-  if [ -n "$out" ]; then mj_err "capture session: episode closed ($outcome${reason:+, reason $reason}) into $out"
+  # The close derives the episode's knowledge on its way out (ADR 0058) and says on its
+  # own stderr what became of that; the record path is its last line. Everything above the
+  # path is passed on as it was said, and a derivation that failed inside the close is
+  # reported here as the typed event, because the close itself must not fail for it: an
+  # episode left open for ever is the worse of the two failures.
+  if [ -n "$out" ]; then
+    printf '%s\n' "$out" | sed '$d' >&2
+    case "$out" in *"the knowledge was not derived"*)
+      mj_capture_session_failed "$provider" end \
+        "$(printf '%s\n' "$out" | grep -F 'the knowledge was not derived' | head -n 1 | sed 's/^majordomus: session close: //')" ;;
+    esac
+    mj_err "capture session: episode closed ($outcome${reason:+, reason $reason}) into $(printf '%s\n' "$out" | tail -n 1)"
   else mj_err "capture session: no open episode here${psession:+ for provider session $psession}; nothing to close"; fi
   return 0
 }

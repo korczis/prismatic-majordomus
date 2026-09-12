@@ -479,6 +479,33 @@
         "status": "query"
       },
       {
+        "id": "capability:knowledge_base.candidates",
+        "kind": "capability",
+        "label": "knowledge_base.candidates",
+        "summary": "Candidates awaiting review",
+        "route": "/cockpit/capabilities/knowledge_base.candidates",
+        "source": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:knowledge_base.record",
+        "kind": "capability",
+        "label": "knowledge_base.record",
+        "summary": "One knowledge record",
+        "route": "/cockpit/capabilities/knowledge_base.record",
+        "source": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:knowledge_base.status",
+        "kind": "capability",
+        "label": "knowledge_base.status",
+        "summary": "Whether the deriver is still writing",
+        "route": "/cockpit/capabilities/knowledge_base.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:lifecycle.closed",
         "kind": "capability",
         "label": "lifecycle.closed",
@@ -1271,6 +1298,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/knowledge/sources.yaml",
+        "kind": "file",
+        "label": "sources.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/knowledge/sources.yaml",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/order-baseline.txt",
         "kind": "file",
         "label": "order-baseline.txt",
@@ -1364,6 +1399,14 @@
         "label": "health.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+        "kind": "file",
+        "label": "knowledge_base.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
         "external": true
       },
       {
@@ -1895,6 +1938,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/tests/knowledge_base.rs",
+        "kind": "file",
+        "label": "knowledge_base.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/knowledge_base.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/tests/lease_lost.rs",
         "kind": "file",
         "label": "lease_lost.rs",
@@ -2311,6 +2362,14 @@
         "external": true
       },
       {
+        "id": "file:share/schemas/majordomus/knowledge/knowledge.v1.proto",
+        "kind": "file",
+        "label": "knowledge.v1.proto",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/knowledge/knowledge.v1.proto",
+        "external": true
+      },
+      {
         "id": "file:share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
         "kind": "file",
         "label": "mesh-declaration.v1.schema.json",
@@ -2340,6 +2399,14 @@
         "label": "workspace.v1.schema.json",
         "summary": "named by the layer; not an object of this index",
         "source": "share/schemas/majordomus/workspace/workspace.v1.schema.json",
+        "external": true
+      },
+      {
+        "id": "file:share/skeleton/ai/repo/knowledge/candidates/README.md",
+        "kind": "file",
+        "label": "README.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/skeleton/ai/repo/knowledge/candidates/README.md",
         "external": true
       },
       {
@@ -2388,6 +2455,30 @@
         "label": "majordomus",
         "summary": "named by the layer; not an object of this index",
         "source": "share/standard/majordomus",
+        "external": true
+      },
+      {
+        "id": "file:share/standard/majordomus/rules/candidates-reviewed.v1.md",
+        "kind": "file",
+        "label": "candidates-reviewed.v1.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/standard/majordomus/rules/candidates-reviewed.v1.md",
+        "external": true
+      },
+      {
+        "id": "file:share/standard/majordomus/rules/knowledge-integrity.v1.md",
+        "kind": "file",
+        "label": "knowledge-integrity.v1.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/standard/majordomus/rules/knowledge-integrity.v1.md",
+        "external": true
+      },
+      {
+        "id": "file:share/standard/majordomus/rules/knowledge-observed.v1.md",
+        "kind": "file",
+        "label": "knowledge-observed.v1.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/standard/majordomus/rules/knowledge-observed.v1.md",
         "external": true
       },
       {
@@ -3809,6 +3900,68 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0058",
+        "kind": "adr",
+        "label": "adr-0058",
+        "summary": "Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0058",
+        "source": ".ai/repo/adrs/0058-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "related": [
+            "rule:majordomus.knowledge-observed",
+            "rule:majordomus.knowledge-integrity",
+            "rule:majordomus.candidates-reviewed",
+            "rule:majordomus.lifecycle-observed",
+            "rule:project.never-store-transcripts",
+            "rule:project.no-new-nouns",
+            "rule:project.no-network-no-eval",
+            "rule:project.derived-files-regenerated",
+            "rule:project.accumulation-is-measured",
+            "claim:knowledge-derived-at-the-boundary",
+            "claim:knowledge-derivation-is-idempotent",
+            "claim:knowledge-failure-is-recorded",
+            "claim:knowledge-integrity",
+            "claim:knowledge-writer-observed",
+            "claim:knowledge-promotion-is-an-act",
+            "claim:briefing-names-candidates",
+            "claim:candidates-reviewed-not-accumulated",
+            "claim:knowledge-served-on-every-surface",
+            "file:share/standard/majordomus/rules/knowledge-observed.v1.md",
+            "file:share/standard/majordomus/rules/knowledge-integrity.v1.md",
+            "file:share/standard/majordomus/rules/candidates-reviewed.v1.md",
+            "file:share/events.yaml",
+            "file:.ai/repo/policy.yaml",
+            "file:.ai/repo/knowledge/sources.yaml",
+            "file:.ai/repo/knowledge/candidates/README.md",
+            "file:share/skeleton/ai/repo/knowledge/candidates/README.md",
+            "file:share/schemas/majordomus/knowledge/knowledge.v1.proto",
+            "file:lib/knowledge.sh",
+            "file:lib/capture.sh",
+            "file:lib/session.sh",
+            "file:lib/init.sh",
+            "file:apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "file:docs/KNOWLEDGE.md",
+            "test:test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+            "test:test/cases/279_knowledge_derivation_is_idempotent.sh",
+            "test:test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+            "test:test/cases/281_knowledge_check_refuses_malformed_records.sh",
+            "test:test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
+            "test:test/cases/283_knowledge_promotion_is_an_act.sh",
+            "test:test/cases/284_briefing_names_the_candidates.sh",
+            "test:test/cases/285_candidates_are_reviewed_not_accumulated.sh",
+            "test:apps/majordomus-cli/tests/knowledge_base.rs"
+          ],
+          "tags": [
+            "knowledge",
+            "sessions",
+            "continuity",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -3994,7 +4147,8 @@
             "trust-the-policy-before-reading-it",
             "follow-a-skill-the-repository-defines",
             "see-what-the-repository-holds-without-reading-it",
-            "say-what-the-tool-is-for"
+            "say-what-the-tool-is-for",
+            "keep-what-an-episode-learned"
           ],
           "weight": 1
         }
@@ -4557,6 +4711,38 @@
           "responsibility": "projection",
           "source": "docs/DESIGN.md",
           "test": "test/cases/03_update.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/briefing-names-candidates",
+        "kind": "claim",
+        "label": "briefing-names-candidates",
+        "summary": "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fbriefing-names-candidates",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it",
+          "implementation": "lib/derive.sh",
+          "responsibility": "handover",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/284_briefing_names_the_candidates.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/candidates-reviewed-not-accumulated",
+        "kind": "claim",
+        "label": "candidates-reviewed-not-accumulated",
+        "summary": "More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fcandidates-reviewed-not-accumulated",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy",
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "doctor",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/285_candidates_are_reviewed_not_accumulated.sh"
         }
       },
       {
@@ -5498,6 +5684,112 @@
           "responsibility": "none",
           "source": "docs/CAPABILITIES.md",
           "test": "test/cases/76_capabilities_projections.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/knowledge-derivation-is-idempotent",
+        "kind": "claim",
+        "label": "knowledge-derivation-is-idempotent",
+        "summary": "A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fknowledge-derivation-is-idempotent",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "layer",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/279_knowledge_derivation_is_idempotent.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/knowledge-derived-at-the-boundary",
+        "kind": "claim",
+        "label": "knowledge-derived-at-the-boundary",
+        "summary": "A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fknowledge-derived-at-the-boundary",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "doctor",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/278_knowledge_is_derived_at_the_boundary.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/knowledge-failure-is-recorded",
+        "kind": "claim",
+        "label": "knowledge-failure-is-recorded",
+        "summary": "A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fknowledge-failure-is-recorded",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0",
+          "implementation": "lib/capture.sh",
+          "responsibility": "doctor",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/280_knowledge_switch_and_failure_leave_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/knowledge-integrity",
+        "kind": "claim",
+        "label": "knowledge-integrity",
+        "summary": "Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fknowledge-integrity",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "doctor",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/281_knowledge_check_refuses_malformed_records.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/knowledge-promotion-is-an-act",
+        "kind": "claim",
+        "label": "knowledge-promotion-is-an-act",
+        "summary": "verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fknowledge-promotion-is-an-act",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "layer",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/283_knowledge_promotion_is_an_act.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/knowledge-served-on-every-surface",
+        "kind": "claim",
+        "label": "knowledge-served-on-every-surface",
+        "summary": "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fknowledge-served-on-every-surface",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "responsibility": "none",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/knowledge-writer-observed",
+        "kind": "claim",
+        "label": "knowledge-writer-observed",
+        "summary": "A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fknowledge-writer-observed",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "doctor",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/282_health_sees_a_stopped_knowledge_writer.sh"
         }
       },
       {
@@ -7680,28 +7972,37 @@
         "source": "share/commands.yaml",
         "facts": {
           "category": "memory",
-          "class": "read-only",
+          "class": "state-mutating",
           "demo": "knowledge-index",
           "exit_codes": [
             "0",
             "2",
             "10",
+            "12",
             "13"
           ],
           "json": true,
           "reads": [
             ".ai/repo/knowledge/sources.yaml",
             "share/knowledge-sources.yaml",
-            ".ai/local/state/"
+            ".ai/local/state/",
+            ".ai/repo/knowledge/candidates/",
+            ".ai/repo/knowledge/curated/",
+            ".ai/local/state/ledger.jsonl",
+            ".ai/repo/policy.yaml",
+            "share/allow/knowledge.txt"
           ],
           "requires_installed": true,
           "requires_repository": true,
           "requires_task": "none",
           "stage": "inspect",
-          "summary": "The compiled index over what this repository states.",
-          "syntax": "majordomus knowledge <sources|nodes|edges> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--json]",
+          "summary": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
           "visibility": "public",
-          "writes": []
+          "writes": [
+            ".ai/repo/knowledge/candidates/",
+            ".ai/repo/knowledge/curated/",
+            ".ai/local/state/ledger.jsonl"
+          ]
         }
       },
       {
@@ -8491,8 +8792,31 @@
           "scope": "subtree",
           "tracks": [
             "lib/knowledge.sh",
+            "lib/capture.sh",
+            "lib/session.sh",
             "share/knowledge-sources.yaml"
           ]
+        }
+      },
+      {
+        "id": "majordomus://context/ai.repo.knowledge.candidates",
+        "kind": "context",
+        "label": "ai.repo.knowledge.candidates",
+        "summary": "Candidate records",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcontext%2Fai.repo.knowledge.candidates",
+        "source": ".ai/repo/knowledge/candidates/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree"
         }
       },
       {
@@ -9328,6 +9652,14 @@
         "source": "docs/INSTALL.md"
       },
       {
+        "id": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "document",
+        "label": "docs/KNOWLEDGE.md",
+        "summary": "Knowledge — what an episode learned, derived at its boundary and promoted by a person",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FKNOWLEDGE.md",
+        "source": "docs/KNOWLEDGE.md"
+      },
+      {
         "id": "majordomus://document/docs/MCP.md",
         "kind": "document",
         "label": "docs/MCP.md",
@@ -9598,6 +9930,22 @@
         "summary": "Provider instruction files are thin bootstraps that point at the AI layer and carry no rule of their own",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fbootstrap-chain.md",
         "source": "docs/claims/bootstrap-chain.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/briefing-names-candidates.md",
+        "kind": "document",
+        "label": "docs/claims/briefing-names-candidates.md",
+        "summary": "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fbriefing-names-candidates.md",
+        "source": "docs/claims/briefing-names-candidates.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/candidates-reviewed-not-accumulated.md",
+        "kind": "document",
+        "label": "docs/claims/candidates-reviewed-not-accumulated.md",
+        "summary": "More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fcandidates-reviewed-not-accumulated.md",
+        "source": "docs/claims/candidates-reviewed-not-accumulated.md"
       },
       {
         "id": "majordomus://document/docs/claims/capability-class.md",
@@ -10062,6 +10410,62 @@
         "summary": "MCP, HTTP, OpenAPI, Swagger UI, the capabilities commands and the generated reference are derived from the registry, and a change to one definition reaches every one of them",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Finterfaces-are-projections.md",
         "source": "docs/claims/interfaces-are-projections.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/knowledge-derivation-is-idempotent.md",
+        "kind": "document",
+        "label": "docs/claims/knowledge-derivation-is-idempotent.md",
+        "summary": "A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fknowledge-derivation-is-idempotent.md",
+        "source": "docs/claims/knowledge-derivation-is-idempotent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/knowledge-derived-at-the-boundary.md",
+        "kind": "document",
+        "label": "docs/claims/knowledge-derived-at-the-boundary.md",
+        "summary": "A provider's end event and its compaction event derive the knowledge the episode produced into candidate records, from the ledger and git and never from a conversation",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fknowledge-derived-at-the-boundary.md",
+        "source": "docs/claims/knowledge-derived-at-the-boundary.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/knowledge-failure-is-recorded.md",
+        "kind": "document",
+        "label": "docs/claims/knowledge-failure-is-recorded.md",
+        "summary": "A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as a failed event and the hook still exits 0",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fknowledge-failure-is-recorded.md",
+        "source": "docs/claims/knowledge-failure-is-recorded.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/knowledge-integrity.md",
+        "kind": "document",
+        "label": "docs/claims/knowledge-integrity.md",
+        "summary": "Every knowledge record is schema-valid, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fknowledge-integrity.md",
+        "source": "docs/claims/knowledge-integrity.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/knowledge-promotion-is-an-act.md",
+        "kind": "document",
+        "label": "docs/claims/knowledge-promotion-is-an-act.md",
+        "summary": "verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fknowledge-promotion-is-an-act.md",
+        "source": "docs/claims/knowledge-promotion-is-an-act.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/knowledge-served-on-every-surface.md",
+        "kind": "document",
+        "label": "docs/claims/knowledge-served-on-every-surface.md",
+        "summary": "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout answer with the same content over the command line, HTTP and MCP",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fknowledge-served-on-every-surface.md",
+        "source": "docs/claims/knowledge-served-on-every-surface.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/knowledge-writer-observed.md",
+        "kind": "document",
+        "label": "docs/claims/knowledge-writer-observed.md",
+        "summary": "A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fknowledge-writer-observed.md",
+        "source": "docs/claims/knowledge-writer-observed.md"
       },
       {
         "id": "majordomus://document/docs/claims/landing-page-is-a-projection.md",
@@ -11705,7 +12109,8 @@
         "facts": {
           "adrs": [
             "adr-0010",
-            "adr-0020"
+            "adr-0020",
+            "adr-0058"
           ],
           "areas": [
             "decisions",
@@ -11719,7 +12124,8 @@
             "adr-propose",
             "record-search",
             "semantic-retrieval",
-            "history-ledger-read"
+            "history-ledger-read",
+            "knowledge-served-on-every-surface"
           ],
           "cockpit": [
             "graphs",
@@ -11745,7 +12151,8 @@
             "document"
           ],
           "modules": [
-            "graph"
+            "graph",
+            "knowledge_base"
           ],
           "related": [
             "continuity",
@@ -26538,6 +26945,26 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.candidates-reviewed@1",
+        "kind": "rule",
+        "label": "majordomus.candidates-reviewed@1",
+        "summary": "Candidates are reviewed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.candidates-reviewed%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/candidates-reviewed.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.knowledge-integrity@1"
+          ],
+          "tags": [
+            "knowledge",
+            "health",
+            "accumulation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.catalogue-integrity@1",
         "kind": "rule",
         "label": "majordomus.catalogue-integrity@1",
@@ -26917,6 +27344,44 @@
           "statement": "Run at the profile's capability class and effort, and when you raise either, record that you did and why.",
           "tags": [
             "principle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/majordomus.knowledge-integrity@1",
+        "kind": "rule",
+        "label": "majordomus.knowledge-integrity@1",
+        "summary": "Knowledge integrity",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.knowledge-integrity%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/knowledge-integrity.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "knowledge",
+            "integrity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/majordomus.knowledge-observed@1",
+        "kind": "rule",
+        "label": "majordomus.knowledge-observed@1",
+        "summary": "Knowledge observation",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.knowledge-observed%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/knowledge-observed.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.lifecycle-observed@1"
+          ],
+          "tags": [
+            "knowledge",
+            "sessions",
+            "continuity",
+            "health"
           ]
         }
       },
@@ -31942,11 +32407,67 @@
         "source": "test/cases/276_disk_is_bounded.sh"
       },
       {
+        "id": "majordomus://test/test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+        "kind": "test",
+        "label": "test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F278_knowledge_is_derived_at_the_boundary.sh",
+        "source": "test/cases/278_knowledge_is_derived_at_the_boundary.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/279_knowledge_derivation_is_idempotent.sh",
+        "kind": "test",
+        "label": "test/cases/279_knowledge_derivation_is_idempotent.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F279_knowledge_derivation_is_idempotent.sh",
+        "source": "test/cases/279_knowledge_derivation_is_idempotent.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/27_foreign_task.sh",
         "kind": "test",
         "label": "test/cases/27_foreign_task.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F27_foreign_task.sh",
         "source": "test/cases/27_foreign_task.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F280_knowledge_switch_and_failure_leave_evidence.sh",
+        "source": "test/cases/280_knowledge_switch_and_failure_leave_evidence.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/281_knowledge_check_refuses_malformed_records.sh",
+        "kind": "test",
+        "label": "test/cases/281_knowledge_check_refuses_malformed_records.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F281_knowledge_check_refuses_malformed_records.sh",
+        "source": "test/cases/281_knowledge_check_refuses_malformed_records.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
+        "kind": "test",
+        "label": "test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F282_health_sees_a_stopped_knowledge_writer.sh",
+        "source": "test/cases/282_health_sees_a_stopped_knowledge_writer.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/283_knowledge_promotion_is_an_act.sh",
+        "kind": "test",
+        "label": "test/cases/283_knowledge_promotion_is_an_act.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F283_knowledge_promotion_is_an_act.sh",
+        "source": "test/cases/283_knowledge_promotion_is_an_act.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/284_briefing_names_the_candidates.sh",
+        "kind": "test",
+        "label": "test/cases/284_briefing_names_the_candidates.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F284_briefing_names_the_candidates.sh",
+        "source": "test/cases/284_briefing_names_the_candidates.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/285_candidates_are_reviewed_not_accumulated.sh",
+        "kind": "test",
+        "label": "test/cases/285_candidates_are_reviewed_not_accumulated.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F285_candidates_are_reviewed_not_accumulated.sh",
+        "source": "test/cases/285_candidates_are_reviewed_not_accumulated.sh"
       },
       {
         "id": "majordomus://test/test/cases/28_catalogue.sh",
@@ -33516,6 +34037,45 @@
         }
       },
       {
+        "id": "majordomus://use-case/keep-what-an-episode-learned",
+        "kind": "use-case",
+        "label": "keep-what-an-episode-learned",
+        "summary": "Keep what an episode learned, without a model and without a conversation",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Fkeep-what-an-episode-learned",
+        "source": ".ai/repo/use-cases/keep-what-an-episode-learned.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "maintainer",
+            "agent"
+          ],
+          "applications": [
+            "repository-with-authored-governance"
+          ],
+          "category": "knowledge",
+          "claims": [
+            "knowledge-derived-at-the-boundary",
+            "knowledge-derivation-is-idempotent"
+          ],
+          "commands": [
+            "start",
+            "decision",
+            "knowledge",
+            "history"
+          ],
+          "difficulty": "basic",
+          "doctrines": [
+            "majordomus.knowledge-observed",
+            "majordomus.knowledge-integrity"
+          ],
+          "responsibilities": [
+            "layer"
+          ],
+          "summary": "Record a decision inside an episode, derive it into a candidate knowledge record from the ledger, read the evidence that the derivation ran, and watch a second derivation change nothing.",
+          "target": "guaranteed"
+        }
+      },
+      {
         "id": "majordomus://use-case/know-whether-this-work-is-finished",
         "kind": "use-case",
         "label": "know-whether-this-work-is-finished",
@@ -34607,6 +35167,11 @@
         "label": "health"
       },
       {
+        "id": "module:knowledge_base",
+        "kind": "module",
+        "label": "knowledge_base"
+      },
+      {
         "id": "module:lifecycle",
         "kind": "module",
         "label": "lifecycle"
@@ -34731,6 +35296,14 @@
         "label": "cockpit.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/cockpit.rs",
+        "external": true
+      },
+      {
+        "id": "test:apps/majordomus-cli/tests/knowledge_base.rs",
+        "kind": "test",
+        "label": "knowledge_base.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/knowledge_base.rs",
         "external": true
       }
     ],
@@ -35517,6 +36090,66 @@
       },
       {
         "source": "capability:health.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.candidates",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.candidates",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.candidates",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.candidates",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.record",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.record",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.record",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.record",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.status",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -38141,6 +38774,221 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0058",
+        "target": "file:.ai/repo/knowledge/sources.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "file:share/events.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "file:share/schemas/majordomus/knowledge/knowledge.v1.proto",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "file:share/skeleton/ai/repo/knowledge/candidates/README.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "file:share/standard/majordomus/rules/candidates-reviewed.v1.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "file:share/standard/majordomus/rules/knowledge-integrity.v1.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "file:share/standard/majordomus/rules/knowledge-observed.v1.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/briefing-names-candidates",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/candidates-reviewed-not-accumulated",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/knowledge-derivation-is-idempotent",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/knowledge-derived-at-the-boundary",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/knowledge-failure-is-recorded",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/knowledge-integrity",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/knowledge-promotion-is-an-act",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/knowledge-served-on-every-surface",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://claim/knowledge-writer-observed",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://context/ai.repo.knowledge.candidates",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://implementation/lib/init.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://implementation/lib/session.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://policy/.ai/repo/policy.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/majordomus.candidates-reviewed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/majordomus.knowledge-integrity@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/majordomus.knowledge-observed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/project.derived-files-regenerated@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/project.never-store-transcripts@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/project.no-network-no-eval@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://test/test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://test/test/cases/279_knowledge_derivation_is_idempotent.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://test/test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://test/test/cases/281_knowledge_check_refuses_malformed_records.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://test/test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://test/test/cases/283_knowledge_promotion_is_an_act.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://test/test/cases/284_briefing_names_the_candidates.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "majordomus://test/test/cases/285_candidates_are_reviewed_not_accumulated.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0058",
+        "target": "test:apps/majordomus-cli/tests/knowledge_base.rs",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -38563,6 +39411,46 @@
       {
         "source": "majordomus://claim/bootstrap-chain",
         "target": "majordomus://test/test/cases/03_update.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/briefing-names-candidates",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/briefing-names-candidates",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/briefing-names-candidates",
+        "target": "majordomus://implementation/lib/derive.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/briefing-names-candidates",
+        "target": "majordomus://test/test/cases/284_briefing_names_the_candidates.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/candidates-reviewed-not-accumulated",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/candidates-reviewed-not-accumulated",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/candidates-reviewed-not-accumulated",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/candidates-reviewed-not-accumulated",
+        "target": "majordomus://test/test/cases/285_candidates_are_reviewed_not_accumulated.sh",
         "kind": "tested_by"
       },
       {
@@ -39703,6 +40591,146 @@
       {
         "source": "majordomus://claim/interfaces-are-projections",
         "target": "majordomus://test/test/cases/76_capabilities_projections.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-derivation-is-idempotent",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/knowledge-derivation-is-idempotent",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/knowledge-derivation-is-idempotent",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-derivation-is-idempotent",
+        "target": "majordomus://test/test/cases/279_knowledge_derivation_is_idempotent.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-derived-at-the-boundary",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/knowledge-derived-at-the-boundary",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/knowledge-derived-at-the-boundary",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-derived-at-the-boundary",
+        "target": "majordomus://test/test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-failure-is-recorded",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/knowledge-failure-is-recorded",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/knowledge-failure-is-recorded",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-failure-is-recorded",
+        "target": "majordomus://test/test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-integrity",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/knowledge-integrity",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/knowledge-integrity",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-integrity",
+        "target": "majordomus://test/test/cases/281_knowledge_check_refuses_malformed_records.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-promotion-is-an-act",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/knowledge-promotion-is-an-act",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/knowledge-promotion-is-an-act",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-promotion-is-an-act",
+        "target": "majordomus://test/test/cases/283_knowledge_promotion_is_an_act.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-served-on-every-surface",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-served-on-every-surface",
+        "target": "file:apps/majordomus-cli/tests/knowledge_base.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-served-on-every-surface",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/knowledge-served-on-every-surface",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/knowledge-writer-observed",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/knowledge-writer-observed",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/knowledge-writer-observed",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/knowledge-writer-observed",
+        "target": "majordomus://test/test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
         "kind": "tested_by"
       },
       {
@@ -41902,8 +42930,23 @@
       },
       {
         "source": "majordomus://context/ai.repo.knowledge",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.knowledge",
         "target": "majordomus://implementation/lib/knowledge.sh",
         "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.knowledge",
+        "target": "majordomus://implementation/lib/session.sh",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.knowledge.candidates",
+        "target": "kind:context",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://context/ai.repo.knowledge.curated",
@@ -42396,6 +43439,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/KNOWLEDGE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/MCP.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -42562,6 +43610,16 @@
       },
       {
         "source": "majordomus://document/docs/claims/bootstrap-chain.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/briefing-names-candidates.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/candidates-reviewed-not-accumulated.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -42852,6 +43910,41 @@
       },
       {
         "source": "majordomus://document/docs/claims/interfaces-are-projections.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/knowledge-derivation-is-idempotent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/knowledge-derived-at-the-boundary.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/knowledge-failure-is-recorded.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/knowledge-integrity.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/knowledge-promotion-is-an-act.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/knowledge-served-on-every-surface.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/knowledge-writer-observed.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -47711,6 +48804,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.candidates-reviewed@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.candidates-reviewed@1",
+        "target": "majordomus://rule/majordomus.knowledge-integrity@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.catalogue-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -47899,6 +49002,21 @@
         "source": "majordomus://rule/majordomus.justified-escalation@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.knowledge-integrity@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.knowledge-observed@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.knowledge-observed@1",
+        "target": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/majordomus.layout-integrity@1",
@@ -49836,7 +50954,47 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/279_knowledge_derivation_is_idempotent.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/27_foreign_task.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/281_knowledge_check_refuses_malformed_records.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/283_knowledge_promotion_is_an_act.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/284_briefing_names_the_candidates.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/285_candidates_are_reviewed_not_accumulated.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -51601,6 +52759,56 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "command:decision",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "command:history",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "command:knowledge",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "command:start",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "majordomus://application/repository-with-authored-governance",
+        "kind": "serves"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "majordomus://claim/knowledge-derivation-is-idempotent",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "majordomus://claim/knowledge-derived-at-the-boundary",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "majordomus://rule/majordomus.knowledge-integrity@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/keep-what-an-episode-learned",
+        "target": "majordomus://rule/majordomus.knowledge-observed@1",
+        "kind": "exercises"
+      },
+      {
         "source": "majordomus://use-case/know-whether-this-work-is-finished",
         "target": "command:check",
         "kind": "runs"
@@ -53181,6 +54389,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:knowledge_base",
+        "target": "capability:knowledge_base.candidates",
+        "kind": "composes"
+      },
+      {
+        "source": "module:knowledge_base",
+        "target": "capability:knowledge_base.record",
+        "kind": "composes"
+      },
+      {
+        "source": "module:knowledge_base",
+        "target": "capability:knowledge_base.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:lifecycle",
         "target": "capability:lifecycle.closed",
         "kind": "composes"
@@ -53492,8 +54715,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1670,
-      "edges": 3751,
+      "nodes": 1716,
+      "edges": 3881,
       "acyclic": true,
       "truncated": false
     }

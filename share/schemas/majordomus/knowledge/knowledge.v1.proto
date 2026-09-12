@@ -49,7 +49,11 @@ message Header {
 
   Epistemics epistemics = 8 [(majordomus.required) = true];
 
-  // The day the record reached its current status, YYYY-MM-DD.
+  // The day the record reached its current status, YYYY-MM-DD. For a derived candidate it
+  // is the day of the evidence line the record came from, never the day the deriver ran,
+  // so that the same evidence yields the same bytes; how long a candidate has waited for
+  // review is measured from the derivation that wrote it (the ledger), then the commit
+  // that added it, and only then from this field.
   string date = 9 [(majordomus.required) = true, (majordomus.pattern) = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"];
 
   repeated string tags = 10 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
@@ -103,13 +107,18 @@ message Provenance {
   Origin origin = 1 [(majordomus.required) = true];
 
   // Typed references to the evidence: `decision:<task-id>`, `session:<id>`,
-  // `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`,
-  // `test:<repository-relative path>`. A file or test reference must resolve.
-  repeated string derived_from = 2 [(majordomus.pattern) = "^(decision|session|commit|issue|file|test):.+$"];
+  // `task:<task-id>`, `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`,
+  // `test:<repository-relative path>`. A file or test reference must resolve in the tree; a
+  // decision, session, task or commit reference resolves against the ledger, the session
+  // records and git, which `majordomus knowledge check` and `knowledge_base.record` do. A
+  // decision and a question carry no identity of their own in the ledger, so the task they
+  // were recorded under is the reference; `none` is not a task.
+  repeated string derived_from = 2 [(majordomus.pattern) = "^(decision|session|commit|issue|task|file|test):.+$"];
 }
 
-// authored: a person wrote it. extracted: `majordomus knowledge propose` derived it from a
-// local record, which derived_from names.
+// authored: a person wrote it. extracted: `majordomus knowledge derive` derived it from the
+// ledger and git at an episode boundary, without a model and without a conversation, and
+// derived_from names the evidence (ADR 0058).
 enum Origin {
   ORIGIN_UNSPECIFIED = 0;
   ORIGIN_AUTHORED = 1 [(majordomus.value) = "authored"];

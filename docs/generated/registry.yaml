@@ -101,6 +101,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
+  - id: knowledge_base
+    title: Knowledge base
+    description: "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: lifecycle
     title: Session lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
@@ -13264,6 +13270,530 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/health.rs
+  - id: knowledge_base.candidates
+    module: knowledge_base
+    kind: query
+    title: Candidates awaiting review
+    description: "Every knowledge record with status candidate under the candidates source class: its class, its assertion, the episode it came from and that episode's branch, and how long it has waited — measured from the derivation that wrote it, then the commit that added it, then its own date — judged against session.freshness; against the policy's cap. A candidate whose episode this checkout does not know is reported with no branch rather than hidden. Ordered by id."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: KnowledgeCandidates
+      schema:
+        type: object
+        properties:
+          total:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many records carry `status: candidate` under the candidates class."
+          on_this_branch:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many of them came from an episode on this checkout's branch."
+          unattributed:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many name an episode this checkout knows nothing about.
+          branch:
+            type: string
+            description: "The branch this answer is about, or `DETACHED`."
+          candidates:
+            type: array
+            items:
+              "$ref": "#/$defs/KnowledgeCandidate"
+            description: "Every candidate, in canonical order of id."
+          cap:
+            type:
+              - integer
+              - "null"
+            format: uint
+            minimum: 0
+            description: "`knowledge.candidates_max_files`, when the policy declares it."
+          over_cap:
+            type: boolean
+            description: "True when `total` exceeds `cap`. False when no cap is declared: nobody wrote one down."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know before trusting the above: a malformed record that was\nskipped, a cap that was exceeded, a policy that declares none. Empty is the good case."
+        required:
+          - total
+          - on_this_branch
+          - unattributed
+          - branch
+          - over_cap
+        description: "The candidates awaiting review, against the policy's cap.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidates;\nlet empty: KnowledgeCandidates = serde_json::from_str(\n    r#\"{\"total\":0,\"on_this_branch\":0,\"unattributed\":0,\"branch\":\"master\",\"candidates\":[],\"over_cap\":false}\"#,\n).unwrap();\nassert_eq!(empty.total, 0, \"an empty queue is an answer\");\nassert_eq!(empty.cap, None, \"and a policy without the key declares no cap\");\n```"
+        title: KnowledgeCandidates
+        "$defs":
+          KnowledgeCandidate:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The record id, which is also its file name."
+              uri:
+                type: string
+                description: "`majordomus://knowledge/<id>`."
+              path:
+                type: string
+                description: Repository-relative path.
+              class:
+                type: string
+                description: "`fact`, `convention`, `constraint`, `memory` or `lesson`."
+              status:
+                type: string
+                description: "Always `candidate` here; carried so that a reader sees the same record shape as `record`."
+              epistemics:
+                type: string
+                description: "`observed`, `inferred` or `decided`."
+              title:
+                type: string
+                description: "The assertion, in one line."
+              date:
+                type: string
+                description: "The day of the evidence, `YYYY-MM-DD`."
+              derived_from:
+                type: array
+                items:
+                  type: string
+                description: "The typed references the record names as its evidence, as declared."
+              episode:
+                type: string
+                description: "The episode the record came from: the `session:` reference, or empty when it names none."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch that episode ran on, joined to the tracked session record or, while that\nis not yet written, to the ledger's `session.started` line. `None` when this checkout\nknows nothing about the episode — named rather than hidden, so that a reader can tell\n\"not this branch\" from \"not known here\". Serialised as `null` in that case, never\nomitted."
+                default: null
+              freshness:
+                "$ref": "#/$defs/Freshness"
+                description: "How long it has waited, judged against `session.freshness`."
+              age_minutes:
+                type:
+                  - integer
+                  - "null"
+                format: int64
+                description: "The wait in whole minutes, when it could be measured."
+              freshness_reason:
+                type: string
+                description: "Why it was judged that way, in one phrase. Never empty."
+              age_source:
+                "$ref": "#/$defs/AgeSource"
+                description: Where the wait was read from.
+            required:
+              - id
+              - uri
+              - path
+              - class
+              - status
+              - epistemics
+              - title
+              - date
+              - freshness
+              - freshness_reason
+              - age_source
+            description: "One candidate record awaiting review: what a reader needs to decide whether to open it.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidate;\nlet c: KnowledgeCandidate = serde_json::from_str(r#\"{\n  \"id\": \"e1-0123456789ab\", \"uri\": \"majordomus://knowledge/e1-0123456789ab\",\n  \"path\": \".ai/repo/knowledge/candidates/e1-0123456789ab.md\", \"class\": \"convention\",\n  \"status\": \"candidate\", \"epistemics\": \"decided\", \"title\": \"Tests run in disposable repositories\",\n  \"date\": \"2026-09-12\", \"derived_from\": [\"session:e1\"], \"episode\": \"e1\",\n  \"freshness\": \"unknown\", \"freshness_reason\": \"no timestamp\", \"age_source\": \"date\"\n}\"#).unwrap();\nassert_eq!(c.episode, \"e1\");\nassert_eq!(c.branch, None, \"an episode this checkout never saw has no branch, and says so\");\n```"
+          Freshness:
+            oneOf:
+              - type: string
+                const: fresh
+                description: "Inside `session.freshness.fresh_minutes`. Current; act on it."
+              - type: string
+                const: aging
+                description: "Between the two thresholds. Still current, but its age is worth stating."
+              - type: string
+                const: stale
+                description: "At or beyond `session.freshness.stale_minutes`. History, never current."
+              - type: string
+                const: unknown
+                description: "Nothing to judge it by: no timestamp, or no thresholds declared."
+              - type: string
+                const: invalid
+                description: "A timestamp that does not parse, or one in the future."
+            description: "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared."
+          AgeSource:
+            oneOf:
+              - type: string
+                const: derivation
+                description: "The oldest `knowledge.derived` line in this checkout's ledger whose paths name it."
+              - type: string
+                const: commit
+                description: The commit that added the file to this history.
+              - type: string
+                const: date
+                description: "The record's own `date`, at midnight UTC: the evidence day, not the queue day."
+            description: "Where the age of a candidate in the review queue was read from. A candidate's `date` is\nthe day of the evidence it came from, deliberately, so that the same evidence yields the\nsame bytes; the day it entered the queue is a different fact and is read from the ledger\nfirst, then from git, and only then from the record.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::AgeSource;\nlet from_ledger: AgeSource = serde_json::from_str(r#\"\"derivation\"\"#).unwrap();\nassert_eq!(from_ledger, AgeSource::Derivation);\nassert!(AgeSource::Derivation < AgeSource::Date, \"the ledger is asked before the record\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::knowledge_base
+    exposure:
+      mcp:
+        tool: majordomus_knowledge_candidates
+        resource:
+          uri: majordomus://knowledge-candidates
+          name: knowledge-candidates
+      http:
+        method: GET
+        path: /api/v1/knowledge/candidates
+      cli:
+        path:
+          - knowledge
+          - candidates
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - knowledge
+      - continuity
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - id: knowledge_base.record
+    module: knowledge_base
+    kind: query
+    title: One knowledge record
+    description: "One knowledge record by id — candidate or curated — with every reference it names resolved: a session against the tracked session records and the ledger, a task or decision against the ledger and the task store, a commit against git, a file or test against the index and the tree, a rule, an ADR, an issue or another record against the index. Which references dangle is the question a reviewer asks before promoting, and the one the integrity validator asks of every record. A `task:none` or `decision:none` reference is refused by name."
+    input:
+      name: KnowledgeRecordInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: "The record id, as the file name and `majordomus://knowledge/<id>` carry it."
+        required:
+          - id
+        description: "Which knowledge record: the input of `knowledge_base.record`. The id is the file name\nand the identity the index keys the record by, so one string names it on every surface.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecordInput;\nlet input: KnowledgeRecordInput = serde_json::from_str(r#\"{\"id\":\"e1-0123456789ab\"}\"#).unwrap();\nassert_eq!(input.id, \"e1-0123456789ab\");\n// a key the input does not declare is refused, never ignored\nassert!(serde_json::from_str::<KnowledgeRecordInput>(r#\"{\"id\":\"x\",\"uri\":\"y\"}\"#).is_err());\n```"
+        title: KnowledgeRecordInput
+    output:
+      name: KnowledgeRecord
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            description: The record id.
+          uri:
+            type: string
+            description: "`majordomus://knowledge/<id>`."
+          path:
+            type: string
+            description: Repository-relative path.
+          source_class:
+            type: string
+            description: "The source class that discovered it: `candidates` or `curated`."
+          class:
+            type: string
+            description: "`fact`, `convention`, `constraint`, `memory` or `lesson`."
+          status:
+            type: string
+            description: "`candidate`, `verified` or `superseded`."
+          epistemics:
+            type: string
+            description: "`observed`, `inferred` or `decided`."
+          origin:
+            type: string
+            description: "`authored` or `extracted`; empty when the record carries no provenance."
+          date:
+            type: string
+            description: The day the record reached its status.
+          title:
+            type: string
+            description: The assertion.
+          derived_from:
+            type: array
+            items:
+              "$ref": "#/$defs/ResolvedReference"
+            description: "Every `provenance.derived_from` reference, resolved, in the record's order."
+          relations:
+            type: array
+            items:
+              "$ref": "#/$defs/ResolvedRelation"
+            description: "Every `relations` entry, resolved, in the record's order."
+          superseded_by:
+            type:
+              - string
+              - "null"
+            description: "The record that replaced this one, when the status is `superseded`."
+          resolved:
+            type: boolean
+            description: True when every reference above resolved. The one bit a reviewer reads first.
+            default: false
+          content:
+            type: string
+            description: "The whole file, front matter and body."
+        required:
+          - id
+          - uri
+          - path
+          - source_class
+          - class
+          - status
+          - epistemics
+          - date
+          - title
+          - content
+        description: "One knowledge record, with every reference it names resolved.\n\n`objects.get` already serves the same file as metadata and content. What this adds is\nthe resolution: which of the record's references answer, through which reader, and which\ndangle — the question a reviewer asks before promoting a candidate, and the question the\nintegrity validator asks of every record.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecord;\nlet r: KnowledgeRecord = serde_json::from_str(r#\"{\n  \"id\": \"e1-0123456789ab\", \"uri\": \"majordomus://knowledge/e1-0123456789ab\",\n  \"path\": \".ai/repo/knowledge/candidates/e1-0123456789ab.md\", \"source_class\": \"candidates\",\n  \"class\": \"convention\", \"status\": \"candidate\", \"epistemics\": \"decided\", \"origin\": \"extracted\",\n  \"date\": \"2026-09-12\", \"title\": \"An assertion\", \"resolved\": true, \"content\": \"---\\n---\\n\"\n}\"#).unwrap();\nassert!(r.derived_from.is_empty(), \"a record that names nothing has nothing to resolve\");\nassert_eq!(r.superseded_by, None, \"and is not superseded\");\n```"
+        title: KnowledgeRecord
+        "$defs":
+          ResolvedReference:
+            type: object
+            properties:
+              reference:
+                type: string
+                description: "The reference as written: `<prefix>:<value>`."
+              resolution:
+                "$ref": "#/$defs/ReferenceResolution"
+                description: How it resolved.
+              target:
+                type:
+                  - string
+                  - "null"
+                description: "What it resolved to: a URI for an object, a path for a file, the reader that vouched\nfor an external reference. Absent when nothing did."
+              reason:
+                type: string
+                description: "Why it did not resolve, when it did not."
+            required:
+              - reference
+              - resolution
+            description: "One `derived_from` reference of a record, with how it resolved and against what.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::{ReferenceResolution, ResolvedReference};\nlet r: ResolvedReference = serde_json::from_str(\n    r#\"{\"reference\":\"task:none\",\"resolution\":\"missing\",\"reason\":\"`none` is not a task\"}\"#,\n).unwrap();\nassert_eq!(r.resolution, ReferenceResolution::Missing);\nassert_eq!(r.target, None);\n```"
+          ReferenceResolution:
+            oneOf:
+              - type: string
+                const: object
+                description: "An object of the index: the `target` is its URI, or its path for a file."
+              - type: string
+                const: external
+                description: "Vouched for by the ledger, the task store or git: a session, a task, a decision, a commit."
+              - type: string
+                const: missing
+                description: "Nothing answers to it. A dangling reference is the integrity validator's finding."
+            description: "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+          ResolvedRelation:
+            type: object
+            properties:
+              relation_type:
+                type: string
+                description: "`relates_to`, `depends_on`, `documents`, `supports`, `contradicts`, `supersedes` or `derived_from`."
+              reference:
+                type: string
+                description: The target as written.
+              resolution:
+                "$ref": "#/$defs/ReferenceResolution"
+                description: How it resolved.
+              target:
+                type:
+                  - string
+                  - "null"
+                description: "What it resolved to, when something did."
+              reason:
+                type: string
+                description: "Why it did not resolve, when it did not."
+            required:
+              - relation_type
+              - reference
+              - resolution
+            description: "One `relations` entry, resolved the same way.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::{ReferenceResolution, ResolvedRelation};\nlet r: ResolvedRelation = serde_json::from_str(\n    r#\"{\"relation_type\":\"relates_to\",\"reference\":\"file:docs/CLI.md\",\"resolution\":\"object\",\"target\":\"docs/CLI.md\"}\"#,\n).unwrap();\nassert_eq!(r.relation_type, \"relates_to\");\nassert!(r.resolution.resolves());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::knowledge_base
+    exposure:
+      mcp:
+        tool: majordomus_knowledge_record
+      http:
+        method: GET
+        path: /api/v1/knowledge/record
+      cli:
+        path:
+          - knowledge
+          - record
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - knowledge
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - id: knowledge_base.status
+    module: knowledge_base
+    kind: query
+    title: Whether the deriver is still writing
+    description: "The freshness half of the stopped-writer judgement (ADR 0052, applied to the knowledge deriver by ADR 0058): the newest knowledge.derived line, the newest session.closed line, how many closed episodes no derivation names, the candidate counts, and — once a derivation has run in this checkout and the switch is on — whether the newest closed episode went underived past session.freshness.stale_minutes. Episode ids are compared, never line order. Whether the close path still calls the deriver is read from the source by the shell validator, not here."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: KnowledgeStatus
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: "Whether anything is here to judge: a ledger line or a candidate. False in a fresh clone."
+          branch:
+            type: string
+            description: "The branch this checkout is on, or `DETACHED`."
+          last_derived:
+            anyOf:
+              - "$ref": "#/$defs/LedgerMark"
+              - type: "null"
+            description: "The newest `knowledge.derived` line, or `None` when the deriver has never run here."
+          last_closed:
+            anyOf:
+              - "$ref": "#/$defs/LedgerMark"
+              - type: "null"
+            description: "The newest `session.closed` line, or `None` when no episode has closed here."
+          closed_without_derivation:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many closed episodes in this ledger no `knowledge.derived` line names."
+          candidates:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many records carry `status: candidate` under the candidates class."
+          on_this_branch:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of those came from an episode on this branch.
+          freshness:
+            "$ref": "#/$defs/Freshness"
+            description: "How old the newest closed episode is, judged against `session.freshness`."
+          age_minutes:
+            type:
+              - integer
+              - "null"
+            format: int64
+            description: "That age in whole minutes, when it could be measured."
+          freshness_reason:
+            type: string
+            description: Why it was judged that way. Never empty.
+          judged:
+            type: boolean
+            description: "Whether the stopped-writer judgement was made at all. False, with the reason among\n`findings`, while no episode has closed here, while the switch is off, or while no\nderivation has yet run in this checkout."
+          stopped_writer:
+            type: boolean
+            description: "The finding: episodes close here and no derivation followed the newest one within\nthe stale threshold. True only when `judged`."
+          knowledge_on_end:
+            type: boolean
+            description: "`session.knowledge_on_end`, as the policy declares it; absent means on."
+          knowledge_on_compact:
+            type: boolean
+            description: "`session.knowledge_on_compact`, likewise."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know: why the judgement was withheld, or what it found."
+        required:
+          - present
+          - branch
+          - closed_without_derivation
+          - candidates
+          - on_this_branch
+          - freshness
+          - freshness_reason
+          - judged
+          - stopped_writer
+          - knowledge_on_end
+          - knowledge_on_compact
+        description: "Whether the deriver is still writing, and what it last wrote.\n\nThe judgement is ADR 0052's, applied to this writer: while episodes keep closing, a\nderivation follows every close. It compares episode ids, never line order or timestamps\nbetween the two events, because the close derives before it appends `session.closed`.\nIt is the freshness half of the judgement only; whether the close path and the\ncompaction adapter still call the deriver is read from the source by the shell\nvalidator, which is where the source is.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeStatus;\nlet fresh: KnowledgeStatus = serde_json::from_str(r#\"{\n  \"present\": false, \"branch\": \"master\", \"closed_without_derivation\": 0, \"candidates\": 0,\n  \"on_this_branch\": 0, \"freshness\": \"unknown\", \"freshness_reason\": \"no episode has closed here\",\n  \"judged\": false, \"stopped_writer\": false, \"knowledge_on_end\": true, \"knowledge_on_compact\": true\n}\"#).unwrap();\nassert!(!fresh.present, \"a fresh clone has no ledger, and that is not a fault\");\nassert!(!fresh.stopped_writer);\n```"
+        title: KnowledgeStatus
+        "$defs":
+          LedgerMark:
+            type: object
+            properties:
+              ts:
+                type: string
+                description: "The line's timestamp, RFC 3339 in UTC."
+              episode:
+                type: string
+                description: The episode the line is about; empty when the line names none.
+            required:
+              - ts
+            description: "One ledger line that matters to the judgement: when, and which episode.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::LedgerMark;\nlet m: LedgerMark = serde_json::from_str(r#\"{\"ts\":\"2026-09-12T10:00:00Z\",\"episode\":\"e1\"}\"#).unwrap();\nassert_eq!(m.episode, \"e1\");\n```"
+          Freshness:
+            oneOf:
+              - type: string
+                const: fresh
+                description: "Inside `session.freshness.fresh_minutes`. Current; act on it."
+              - type: string
+                const: aging
+                description: "Between the two thresholds. Still current, but its age is worth stating."
+              - type: string
+                const: stale
+                description: "At or beyond `session.freshness.stale_minutes`. History, never current."
+              - type: string
+                const: unknown
+                description: "Nothing to judge it by: no timestamp, or no thresholds declared."
+              - type: string
+                const: invalid
+                description: "A timestamp that does not parse, or one in the future."
+            description: "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::knowledge_base
+    exposure:
+      mcp:
+        tool: majordomus_knowledge_status
+        resource:
+          uri: majordomus://knowledge-status
+          name: knowledge-status
+      http:
+        method: GET
+        path: /api/v1/knowledge/status
+      cli:
+        path:
+          - knowledge
+          - status
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - knowledge
+      - continuity
+      - session
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
   - id: lifecycle.closed
     module: lifecycle
     kind: query

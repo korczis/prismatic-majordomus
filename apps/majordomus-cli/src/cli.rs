@@ -84,6 +84,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
+    Knowledge(KnowledgeArgs),
 }
 
 #[derive(Debug, Args)]
@@ -702,6 +704,61 @@ pub enum RulesCommand {
         /// `suite:<case>`, `crate:<binary>`, or the path a rule names it with
         id: String,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus knowledge`. What the knowledge deriver left for review and whether it is
+/// still writing. The deriver itself is the shell tool's (`lib/knowledge.sh`); this reads
+/// what it wrote — the candidate records under the tracked knowledge section, one record by
+/// id with its references resolved, and the derivation status of this checkout — through the
+/// `knowledge_base` capabilities, so the command line answers what HTTP and MCP answer.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, KnowledgeArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "knowledge", "status", "--format", "json"]).unwrap();
+/// let Command::Knowledge(args) = cli.command else { panic!("not the knowledge command") };
+/// let _: KnowledgeArgs = args;
+/// ```
+pub struct KnowledgeArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `candidates`, `record` or `status`. Required: the group runs nothing of its own, so
+    /// that every runnable path here is one a capability declares rather than one
+    /// classified command-line-only in `cli::local`.
+    pub command: KnowledgeCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus knowledge`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, KnowledgeCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "knowledge", "record", "e1-0123456789ab"]).unwrap();
+/// let Command::Knowledge(args) = cli.command else { panic!("not the knowledge command") };
+/// assert!(matches!(args.command, KnowledgeCommand::Record { id } if id == "e1-0123456789ab"));
+/// assert!(Cli::try_parse_from(["majordomus", "knowledge"]).is_err(), "a subcommand is required");
+/// ```
+pub enum KnowledgeCommand {
+    /// The candidate records awaiting review, with the branch of the episode each came from and how long each has waited
+    Candidates,
+    /// One knowledge record by id: its front matter, and every reference it names resolved against the index, the ledger and git
+    Record {
+        /// The record id, which is also its file name
+        id: String,
+    },
+    /// Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness
+    Status,
 }
 
 #[derive(Debug, Args)]
@@ -2165,6 +2222,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "proves", "test/cases/125_rule_proof.sh", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/proves", "/sole_proof_of", "/path"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge candidates",
+        examples: &[ExampleDoc {
+            id: "knowledge-candidates-json",
+            title: "The review queue, as one document",
+            description: "The same answer `GET /api/v1/knowledge/candidates`, the MCP tool `majordomus_knowledge_candidates` and the resource `majordomus://knowledge-candidates` serve: every record with status candidate under the candidates class, the branch of the episode each came from, how long each has waited, and the policy's cap beside the count. A repository whose deriver has not run yet answers with an empty queue, which is an answer and not an error.",
+            argv: &["knowledge", "candidates", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/total", "/on_this_branch", "/branch", "/over_cap"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge record",
+        examples: &[ExampleDoc {
+            id: "knowledge-record-absent",
+            title: "A record the repository does not hold",
+            description: "An id nothing carries is a not-found rather than an empty answer, with the exit code that says which: a typo that read as `this record names no evidence` would be indistinguishable from the dangling reference the integrity validator exists to report.",
+            argv: &["knowledge", "record", "no-such-record"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge status",
+        examples: &[ExampleDoc {
+            id: "knowledge-status-json",
+            title: "Whether the deriver is still writing",
+            description: "The freshness half of the stopped-writer judgement: the newest derivation, the newest closed episode, how many closed episodes no derivation names, and — once a derivation has run in this checkout — whether the newest close went underived past the stale threshold. A fresh repository, in which no episode has closed, reports that it was not judged and why, and never a stopped writer.",
+            argv: &["knowledge", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/present", "/judged", "/stopped_writer", "/freshness"]),
         }],
     },
     CommandExamples {

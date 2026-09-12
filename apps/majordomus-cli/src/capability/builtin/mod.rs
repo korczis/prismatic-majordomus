@@ -46,6 +46,7 @@ pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
 pub mod health;
+pub mod knowledge_base;
 pub mod lifecycle;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -104,6 +105,11 @@ pub use executions::{
 pub use gates::{CompletionInput, GateModelEntry, GateModelReport, COMPLETION_URI, GATES_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
+pub use knowledge_base::{
+    AgeSource, KnowledgeCandidate, KnowledgeCandidates, KnowledgeRecord, KnowledgeRecordInput,
+    KnowledgeStatus, LedgerMark, ReferenceResolution, ResolvedReference, ResolvedRelation,
+    KNOWLEDGE_CANDIDATES_URI, KNOWLEDGE_STATUS_URI,
+};
 pub use lifecycle::{
     Balance, ClosedSession, ClosedSessions, Episode, EpisodeStanding, Episodes, Orphan, Pointer,
     PointerLayout, ProviderLifecycle, ProviderLifecycles, Recovery, RuntimeView, Stranded,
@@ -152,6 +158,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         graph,
         health,
         continuity,
+        knowledge_base,
         lifecycle,
         obligations,
         gates,

@@ -194,6 +194,11 @@
     },
     {
       "kind": "depends_on",
+      "source": "rule:majordomus.candidates-reviewed",
+      "target": "rule:majordomus.knowledge-integrity"
+    },
+    {
+      "kind": "depends_on",
       "source": "rule:majordomus.context-integrity",
       "target": "rule:majordomus.ai-layout-integrity"
     },
@@ -201,6 +206,11 @@
       "kind": "depends_on",
       "source": "rule:majordomus.lifecycle-observed",
       "target": "rule:majordomus.handover-integrity"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.knowledge-observed",
+      "target": "rule:majordomus.lifecycle-observed"
     },
     {
       "kind": "depends_on",
@@ -256,6 +266,16 @@
       "kind": "depends_on",
       "source": "rule:majordomus.publication-currency",
       "target": "rule:majordomus.completion-gates"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.knowledge-integrity",
+      "target": "validator:knowledge_integrity"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.candidates-reviewed",
+      "target": "validator:knowledge_accumulation"
     },
     {
       "kind": "decided_by",
@@ -351,6 +371,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.lifecycle-observed",
       "target": "validator:lifecycle"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.knowledge-observed",
+      "target": "validator:knowledge_lifecycle"
     },
     {
       "kind": "decided_by",
@@ -639,6 +664,31 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:knowledge_accumulation",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:knowledge_integrity",
+      "target": "command:check"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:knowledge_integrity",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:knowledge_lifecycle",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:knowledge_lifecycle",
+      "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:layout",
       "target": "command:doctor"
     },
@@ -914,6 +964,16 @@
     },
     {
       "kind": "proved_by",
+      "source": "rule:majordomus.knowledge-integrity",
+      "target": "test:test/cases/281_knowledge_check_refuses_malformed_records.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.candidates-reviewed",
+      "target": "test:test/cases/285_candidates_are_reviewed_not_accumulated.sh"
+    },
+    {
+      "kind": "proved_by",
       "source": "rule:majordomus.ai-layout-integrity",
       "target": "test:test/cases/01_init.sh"
     },
@@ -1006,6 +1066,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.lifecycle-observed",
       "target": "test:test/cases/130_lifecycle_survives_a_stale_task.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.knowledge-observed",
+      "target": "test:test/cases/278_knowledge_is_derived_at_the_boundary.sh"
     },
     {
       "kind": "proved_by",
@@ -1203,6 +1268,28 @@
       "label": "Verify outcomes, not activity",
       "role": "accent",
       "summary": "An invariant of the standard package. It is not checked; the rules under it are."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.knowledge-integrity",
+      "kind": "rule",
+      "label": "knowledge-integrity",
+      "note": "exit 10 · knowledge",
+      "role": "text",
+      "route": "/doctrines/knowledge-integrity/",
+      "status": "blocking",
+      "summary": "Every knowledge record is one evidenced, well-formed assertion. It is valid against its schema with no unknown key, its identity is unique and equals its file name, a verified record carries provenance, every reference it names resolves, a superseded record says what replaced it or why it was rejected, a candidate never claims to be verified, and no record carries a conversation."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.candidates-reviewed",
+      "kind": "rule",
+      "label": "candidates-reviewed",
+      "note": "exit 0 · knowledge",
+      "role": "warn",
+      "route": "/doctrines/candidates-reviewed/",
+      "status": "advisory",
+      "summary": "A review queue that grows without bound is not reviewed. More candidates than the policy cap, a candidate that has waited longer than the policy age, or a candidate the tree does not track, is reported, not stopped; both numbers are declared once in the policy."
     },
     {
       "external": false,
@@ -1412,6 +1499,17 @@
       "route": "/doctrines/lifecycle-observed/",
       "status": "blocking",
       "summary": "A store that can be read is not a store that is being written. While episodes go on opening, the records a future worker resumes from must go on advancing, every lifecycle event received must leave evidence it arrived, and an episode that outlives the staleness threshold must be named rather than left open."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.knowledge-observed",
+      "kind": "rule",
+      "label": "knowledge-observed",
+      "note": "exit 10 · knowledge",
+      "role": "text",
+      "route": "/doctrines/knowledge-observed/",
+      "status": "blocking",
+      "summary": "While episodes keep closing, the knowledge they produced must keep being derived. A closed episode no derivation followed, once it is older than the freshness threshold, is a stopped writer; a lifecycle whose close path never calls the deriver while the policy switch is on is a writer that was never started."
     },
     {
       "external": false,
@@ -1826,6 +1924,30 @@
       "label": "mj_validate_doctrine_wiring",
       "role": "muted",
       "summary": "Decides the rule. Declared in lib/doctor.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:knowledge_accumulation",
+      "kind": "validator",
+      "label": "mj_validate_knowledge_accumulation",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/knowledge.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:knowledge_integrity",
+      "kind": "validator",
+      "label": "mj_validate_knowledge_integrity",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/knowledge.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:knowledge_lifecycle",
+      "kind": "validator",
+      "label": "mj_validate_knowledge_lifecycle",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/knowledge.sh."
     },
     {
       "external": false,
@@ -2256,6 +2378,30 @@
       "id": "test:test/cases/275_publication_is_current.sh",
       "kind": "test",
       "label": "test/cases/275_publication_is_current.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+      "kind": "test",
+      "label": "test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/281_knowledge_check_refuses_malformed_records.sh",
+      "kind": "test",
+      "label": "test/cases/281_knowledge_check_refuses_malformed_records.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/285_candidates_are_reviewed_not_accumulated.sh",
+      "kind": "test",
+      "label": "test/cases/285_candidates_are_reviewed_not_accumulated.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

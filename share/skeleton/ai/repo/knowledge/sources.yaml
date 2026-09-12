@@ -94,6 +94,15 @@ sources:
     pathspec: ':(glob).ai/repo/knowledge/curated/*.md'
     required: false
 
+  # What the tool derived at an episode boundary and nobody has reviewed yet: the same kind
+  # as curated/, one status apart, tracked so that every checkout can review it. Promotion
+  # moves a record across; the deriver never writes into curated/.
+  - id: candidates
+    kind: knowledge
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/candidates/*.md'
+    required: false
+
   - id: use_case
     kind: use-case
     discovery: vcs

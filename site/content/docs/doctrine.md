@@ -365,6 +365,14 @@ live, at the moment of the claim, and refuses `completed` while one of them says
 publication is owed. It is run and never recorded: evidence whose subject can change while
 the tree stands still has no hash to expire against.
 
+The knowledge doctrines span both programs. `majordomus.knowledge-observed` and
+`majordomus.knowledge-integrity` are decided by validators in `lib/knowledge.sh`, beside the
+shell writer that derives the records, and the Rust reader's `knowledge_base.status` makes the
+freshness half of the same stopped-writer judgement from the same ledger and the same policy
+numbers; the wiring half — that the lifecycle source calls the deriver — is the shell
+validator's alone, because only the shell tool can read its own source. `KNOWLEDGE.md` has
+the three rules and what each one finds.
+
 ## Reading it from the command line
 
 ```bash

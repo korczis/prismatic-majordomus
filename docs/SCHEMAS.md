@@ -1093,11 +1093,11 @@ provenance:
     - decision:t-2026-09-05-a
     - file:docs/CAPABILITIES.md
 ---
-# Context
+## Context
 ...
-# Decision
+## Decision
 ...
-# Consequences
+## Consequences
 ...
 ```
 
@@ -1116,8 +1116,8 @@ provenance:
 | `provenance.origin` | no | `authored` (a person wrote it) or `extracted` (`adr propose` derived it) |
 | `provenance.derived_from` | no | typed references: `decision:`, `session:`, `commit:`, `issue:`, `file:`, `test:` |
 
-Unknown keys are errors. The body carries non-empty level-one sections `# Context`,
-`# Decision` and `# Consequences`; `# Alternatives rejected` is optional.
+Unknown keys are errors. The body carries non-empty level-two sections `## Context`,
+`## Decision` and `## Consequences`; `## Alternatives rejected` is optional.
 
 **`propose` never writes `accepted`.** It writes `status: proposed` and has no flag that
 says otherwise, because acceptance is the person's act: a tool that can write `accepted`
@@ -1314,6 +1314,91 @@ separator and no two classes claim one file. Read back with `majordomus knowledg
 
 ---
 
+## `.ai/repo/knowledge/candidates/<id>.md` — a candidate knowledge record
+
+What the tool derived about the repository at an episode boundary and nobody has reviewed
+yet. Written by `majordomus knowledge derive` — from the close of every episode, from the
+compaction event, or by hand — through a temporary file in the same directory renamed over
+the id-named file, never staged. Validated against
+`share/schemas/majordomus/knowledge/knowledge.v1.schema.json` (the allow-list
+`share/allow/knowledge.txt` is generated from it), the same schema a curated note under
+`curated/` is validated against: a candidate and a verified record are one kind, one status
+apart. Discovery is the source class `candidates` in `.ai/repo/knowledge/sources.yaml`. The
+identity is `id`, which equals the file name and is derived from the evidence: the episode
+id followed by a digest of the canonical evidence string, so the same fact always lands in
+the same file and two worktrees never write one name for different content.
+
+```markdown
+---
+schema: knowledge/v1
+id: s-20260912101500-7f1a-3b9c2e4d1a05
+kind: knowledge
+class: convention
+title: "Tabs are refused in the parser"
+description: "Recorded as a decision under task t-20260912101512-b7c2 in episode s-20260912101500-7f1a."
+status: candidate
+epistemics: decided
+date: 2026-09-12
+tags:
+  - derived
+  - decision
+provenance:
+  origin: extracted
+  derived_from:
+    - session:s-20260912101500-7f1a
+    - decision:t-20260912101512-b7c2
+    - commit:3f2a9c1e4b7d8a05c1119f2b6e0d7a3c8e5f1b42
+relations:
+  - type: relates_to
+    target: file:.ai/repo/rules/project/yaml-has-one-encoding.md
+---
+
+# Tabs are refused in the parser
+
+Recorded as a decision under task t-20260912101512-b7c2 in episode s-20260912101500-7f1a.
+```
+
+| Key | Required | Meaning |
+|---|---|---|
+| `schema` | yes | `knowledge/v1` |
+| `id` | yes | `^[a-z][a-z0-9-]*$`; equals the file name; for a derived record, `<episode-id>-<digest>` |
+| `kind` | yes | `knowledge` |
+| `class` | yes | `fact`, `convention`, `constraint`, `memory` or `lesson`; the deriver writes `convention` for a decision, `fact` for a resolved question or a verified completion, `lesson` for a blocked, failed or unmatched task; promotion is where a person changes it |
+| `title` | yes | the assertion, one line, double-quoted with `\` and `"` escaped |
+| `description` | yes | one line saying where the evidence came from |
+| `status` | yes | `candidate` under `candidates/`; `verified` only under `curated/`; `superseded` when a person rejected it |
+| `epistemics` | yes | `decided` for a decision, `observed` for a resolved question or a passed verification, `inferred` for a task outcome |
+| `date` | yes | `YYYY-MM-DD`, the day of the evidence line — deterministic, never the clock; the review age is measured from the ledger and git instead |
+| `tags` | no | `derived` and the evidence kind: `decision`, `question` or `task` |
+| `provenance.origin` | yes for `extracted` | `extracted` for a derived record; `authored` for a curated note a person wrote |
+| `provenance.derived_from` | yes for `extracted` | typed references: `session:<episode>`, then `decision:<task-id>` or `task:<task-id>`, then `commit:<sha>` for each commit of the episode that touched a rule or a decision record; a decision recorded outside a task names the session alone |
+| `relations` | no | `relates_to file:<path>` for each rule or decision record those commits touched; present only when non-empty |
+| `superseded_by` | when `superseded` | the record that replaces it, when `reject --by` named one; otherwise the body carries `# Rejected` and the reason |
+
+Unknown keys are errors. The body is the title as a level-one heading and the description; a
+promoted record gains `# Evidence` with what the person supplied, a rejected one `# Rejected`
+with the reason.
+
+**The deriver never writes `verified`.** It writes `status: candidate` and nothing else;
+`majordomus knowledge promote` with evidence on standard input moves the record to `curated/`
+and sets `verified`, and a person editing the file is the other act. A record under
+`candidates/` claiming `verified` is refused by `check`, `doctor` and `majordomus knowledge
+check`.
+
+**A body is an assertion, never a transcript.** The title, the description and the body are
+subject to the check that keeps `project.never-store-transcripts`; a line naming a message
+list, a completion or a model's reply is a blocking failure, and the deriver refuses to write
+a record whose evidence carries one rather than write it for the check to refuse.
+
+**Every reference resolves.** A session in the sessions store or the ledger, a task or
+decision in the ledger or the state directory, a commit in git, a file or test in the tree,
+an issue in the project section, a knowledge record in either directory, a rule or a
+decision record in the layer. `decision:none` and `task:none` are refused. The graph compiler
+treats ledger and git targets as external and never reports them as dangling; the integrity
+validator is what resolves them.
+
+---
+
 ## `.ai/local/state/ledger.jsonl`
 
 Append-only. Written only by Majordomus. One JSON object per line. Retention-capped;
@@ -1360,6 +1445,9 @@ Events and their extra fields:
 | `session.recovered` | `session_id` (the episode recovered, which is never the one the envelope's own `session` stamp names), `reason` (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), `session_path` |
 | `provider.event.received` | `provider`, `event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
 | `provider.event.failed` | `provider`, `event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
+| `knowledge.derived` | `episode`, `written`, `unchanged`, `paths`; `skipped` when a line was refused. Written by every non-dry-run derivation that resolved an episode, even when it wrote nothing; `episode` is explicit because the envelope's `session` stamp is present only while the episode is open |
+| `knowledge.promoted` | `id`, `path` (the curated record's repository-relative path). A person promoted a candidate to verified with evidence |
+| `knowledge.rejected` | `id`, `reason`; `by` when `--by` named the record that replaces it. A person rejected a candidate; it is superseded in place |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 | `use_cases.ran` | `ran`, `failed` (counts; the evidence under `.ai/local/evidence/use-cases/` carries the steps) |
@@ -1371,8 +1459,8 @@ Events and their extra fields:
 | `rules.vendored` | `package` (the revision of the package now vendored) |
 | `adr.proposed` | `adr` (the identity written), `title`; never written for an acceptance, which is a person's edit to the file |
 
-`doctor`, `check` (without `--checkpoint`), `watch`, `context`, `history`, `search`, and
-`prompt` write nothing, the ledger included.
+`doctor`, `check` (without `--checkpoint`), `watch`, `context`, `history`, `search`,
+`prompt`, `knowledge check` and `knowledge candidates` write nothing, the ledger included.
 
 Every line must be a JSON object carrying `ts` and `event`. A line that is not is a
 **failure** in `history --validate`, `check`, `doctor` and `watch`: a ledger the tool

@@ -1536,6 +1536,87 @@
       "note": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential."
     },
     {
+      "id": "claim:knowledge-derived-at-the-boundary",
+      "kind": "claim",
+      "label": "A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-derived-at-the-boundary/",
+      "external": false,
+      "note": "The close path in lib/session.sh runs the deriver after the session record is published and before session.closed is appended, so every close is followed by its knowledge.derived line; the compaction adapter calls it directly, independent of the checkpoint switch. A decision becomes a convention, a resolved question a fact, a blocked task a lesson, a verified completion a fact; a handover's Next Action is continuation state and is never derived from. Nothing reads a conversation, a prompt or a model."
+    },
+    {
+      "id": "claim:knowledge-derivation-is-idempotent",
+      "kind": "claim",
+      "label": "A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-derivation-is-idempotent/",
+      "external": false,
+      "note": "The record is composed into a temporary file in the same directory and compared byte for byte with the file the id names; identical is reported unchanged and the temporary file removed, different is renamed over it. The date is the evidence line's day, never the clock, and no random value enters the bytes, so the same ledger and the same git yield the same file on every machine."
+    },
+    {
+      "id": "claim:knowledge-failure-is-recorded",
+      "kind": "claim",
+      "label": "A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-failure-is-recorded/",
+      "external": false,
+      "note": "session.knowledge_on_end and session.knowledge_on_compact are the two switches, read from the policy and independent of checkpoint_on_compact. A hook must return success to its provider and returning success is not the same as claiming the work happened, so the adapter reports the failure through mj_capture_session_failed with the deriver's last line as the reason and closes the episode regardless."
+    },
+    {
+      "id": "claim:knowledge-integrity",
+      "kind": "claim",
+      "label": "Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-integrity/",
+      "external": false,
+      "note": "mj_validate_knowledge_integrity reads candidates/ and curated/ once, refuses a candidate that claims verified, a dangling derived_from or relations target, a duplicate id across both directories, a key the generated allow-list does not carry, a superseded record with neither superseded_by nor a rejection, and a title, description or body line matching the transcript check that never-store-transcripts is kept by. References to the ledger and git (session, task, decision, commit) are resolved here, in one pass, and are external to the graph compiler, which never reports them as dangling."
+    },
+    {
+      "id": "claim:knowledge-writer-observed",
+      "kind": "claim",
+      "label": "A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-writer-observed/",
+      "external": false,
+      "note": "mj_validate_knowledge_lifecycle compares two facts the way ADR 0052's validator does, episodes closing and derivations following, judged against session.freshness.stale_minutes; it also reads the lifecycle source for the call to the deriver while session.knowledge_on_end is on. A checkout whose ledger holds no knowledge.derived line is skipped rather than failed, so the day the deriver arrives no checkout turns red; the first derivation ends the skip. The Rust reader's knowledge_base.status makes the freshness half of the same judgement from the same numbers."
+    },
+    {
+      "id": "claim:knowledge-promotion-is-an-act",
+      "kind": "claim",
+      "label": "verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-promotion-is-an-act/",
+      "external": false,
+      "note": "An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary."
+    },
+    {
+      "id": "claim:briefing-names-candidates",
+      "kind": "claim",
+      "label": "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it",
+      "status": "guaranteed",
+      "route": "/guarantees/briefing-names-candidates/",
+      "external": false,
+      "note": "The section sits after the open questions and before the handover in the derived briefing, bounded the way the open-questions block is. A candidate's branch is the branch of the episode its derived_from names, read from the tracked session record or, while that record is not yet written, from the ledger; a candidate whose episode this checkout cannot resolve is named on its own line as unattributed rather than hidden."
+    },
+    {
+      "id": "claim:candidates-reviewed-not-accumulated",
+      "kind": "claim",
+      "label": "More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy",
+      "status": "guaranteed",
+      "route": "/guarantees/candidates-reviewed-not-accumulated/",
+      "external": false,
+      "note": "knowledge.candidates_max_files and knowledge.candidate_max_age_minutes are read with mj_pol_req and a missing key is reported at the rule's class. Review age is the age of the queue entry — the oldest knowledge.derived line naming the file, then the commit that added it, then the record's date — never the evidence day alone. A candidate version control does not track is named too, with the git add remedy after fix:, because a record git does not hold is discovered by nothing. The rule is dispatched from doctor only, so a full review queue never turns watch red."
+    },
+    {
+      "id": "claim:knowledge-served-on-every-surface",
+      "kind": "claim",
+      "label": "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-served-on-every-surface/",
+      "external": false,
+      "note": "knowledge_base.candidates, knowledge_base.record and knowledge_base.status are capability! blocks in one module; majordomus generate projects them to the HTTP routes, the OpenAPI document, the MCP tools and resources, the executable's knowledge subcommands, the cockpit's module catalogue and the benchmark inventory. The reader takes candidates from the index, the ledger from the session module and the thresholds from the continuity module's reading of the policy; it writes nothing and reports absence as absence."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -1560,6 +1641,13 @@
       "id": "impl:apps/majordomus-cli/src/capability/builtin/evidence.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
       "route": null,
       "external": false
     },
@@ -1858,6 +1946,13 @@
       "external": false
     },
     {
+      "id": "impl:lib/derive.sh",
+      "kind": "implementation",
+      "label": "lib/derive.sh",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:lib/doctor.sh",
       "kind": "implementation",
       "label": "lib/doctor.sh",
@@ -1903,6 +1998,13 @@
       "id": "impl:lib/init.sh",
       "kind": "implementation",
       "label": "lib/init.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/knowledge.sh",
+      "kind": "implementation",
+      "label": "lib/knowledge.sh",
       "route": null,
       "external": false
     },
@@ -2313,6 +2415,13 @@
       "external": false
     },
     {
+      "id": "source:docs/KNOWLEDGE.md",
+      "kind": "source",
+      "label": "docs/KNOWLEDGE.md",
+      "route": "/docs/knowledge/",
+      "external": false
+    },
+    {
       "id": "source:docs/MCP.md",
       "kind": "source",
       "label": "docs/MCP.md",
@@ -2437,6 +2546,13 @@
       "label": "apps/majordomus-cli/tests/cli_docs.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cli_docs.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/knowledge_base.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/knowledge_base.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/knowledge_base.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/lease_lost.rs",
@@ -2691,11 +2807,67 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh"
     },
     {
+      "id": "test:test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+      "kind": "test",
+      "label": "test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/278_knowledge_is_derived_at_the_boundary.sh"
+    },
+    {
+      "id": "test:test/cases/279_knowledge_derivation_is_idempotent.sh",
+      "kind": "test",
+      "label": "test/cases/279_knowledge_derivation_is_idempotent.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/279_knowledge_derivation_is_idempotent.sh"
+    },
+    {
       "id": "test:test/cases/27_foreign_task.sh",
       "kind": "test",
       "label": "test/cases/27_foreign_task.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/27_foreign_task.sh"
+    },
+    {
+      "id": "test:test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/280_knowledge_switch_and_failure_leave_evidence.sh"
+    },
+    {
+      "id": "test:test/cases/281_knowledge_check_refuses_malformed_records.sh",
+      "kind": "test",
+      "label": "test/cases/281_knowledge_check_refuses_malformed_records.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/281_knowledge_check_refuses_malformed_records.sh"
+    },
+    {
+      "id": "test:test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
+      "kind": "test",
+      "label": "test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/282_health_sees_a_stopped_knowledge_writer.sh"
+    },
+    {
+      "id": "test:test/cases/283_knowledge_promotion_is_an_act.sh",
+      "kind": "test",
+      "label": "test/cases/283_knowledge_promotion_is_an_act.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/283_knowledge_promotion_is_an_act.sh"
+    },
+    {
+      "id": "test:test/cases/284_briefing_names_the_candidates.sh",
+      "kind": "test",
+      "label": "test/cases/284_briefing_names_the_candidates.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/284_briefing_names_the_candidates.sh"
+    },
+    {
+      "id": "test:test/cases/285_candidates_are_reviewed_not_accumulated.sh",
+      "kind": "test",
+      "label": "test/cases/285_candidates_are_reviewed_not_accumulated.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/285_candidates_are_reviewed_not_accumulated.sh"
     },
     {
       "id": "test:test/cases/28_catalogue.sh",
@@ -3874,6 +4046,51 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:knowledge-derived-at-the-boundary",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-derivation-is-idempotent",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-failure-is-recorded",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-integrity",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-writer-observed",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-promotion-is-an-act",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:briefing-names-candidates",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:candidates-reviewed-not-accumulated",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-served-on-every-surface",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -4674,6 +4891,51 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:knowledge-derived-at-the-boundary",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-derivation-is-idempotent",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-failure-is-recorded",
+      "target": "impl:lib/capture.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-integrity",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-writer-observed",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-promotion-is-an-act",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:briefing-names-candidates",
+      "target": "impl:lib/derive.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:candidates-reviewed-not-accumulated",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-served-on-every-surface",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -5471,6 +5733,51 @@
     {
       "source": "claim:models-no-secret-fields",
       "target": "test:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-derived-at-the-boundary",
+      "target": "test:test/cases/278_knowledge_is_derived_at_the_boundary.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-derivation-is-idempotent",
+      "target": "test:test/cases/279_knowledge_derivation_is_idempotent.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-failure-is-recorded",
+      "target": "test:test/cases/280_knowledge_switch_and_failure_leave_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-integrity",
+      "target": "test:test/cases/281_knowledge_check_refuses_malformed_records.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-writer-observed",
+      "target": "test:test/cases/282_health_sees_a_stopped_knowledge_writer.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-promotion-is-an-act",
+      "target": "test:test/cases/283_knowledge_promotion_is_an_act.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:briefing-names-candidates",
+      "target": "test:test/cases/284_briefing_names_the_candidates.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:candidates-reviewed-not-accumulated",
+      "target": "test:test/cases/285_candidates_are_reviewed_not_accumulated.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-served-on-every-surface",
+      "target": "test:apps/majordomus-cli/tests/knowledge_base.rs",
       "kind": "proved_by"
     }
   ]

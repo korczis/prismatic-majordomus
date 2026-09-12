@@ -1530,3 +1530,84 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential.
+
+  - id: knowledge-derived-at-the-boundary
+    claim: A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/278_knowledge_is_derived_at_the_boundary.sh
+    status: guaranteed
+    responsibility: doctor
+    note: The close path in lib/session.sh runs the deriver after the session record is published and before session.closed is appended, so every close is followed by its knowledge.derived line; the compaction adapter calls it directly, independent of the checkpoint switch. A decision becomes a convention, a resolved question a fact, a blocked task a lesson, a verified completion a fact; a handover's Next Action is continuation state and is never derived from. Nothing reads a conversation, a prompt or a model.
+
+  - id: knowledge-derivation-is-idempotent
+    claim: A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/279_knowledge_derivation_is_idempotent.sh
+    status: guaranteed
+    responsibility: layer
+    note: The record is composed into a temporary file in the same directory and compared byte for byte with the file the id names; identical is reported unchanged and the temporary file removed, different is renamed over it. The date is the evidence line's day, never the clock, and no random value enters the bytes, so the same ledger and the same git yield the same file on every machine.
+
+  - id: knowledge-failure-is-recorded
+    claim: A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0
+    source: docs/KNOWLEDGE.md
+    implementation: lib/capture.sh
+    test: test/cases/280_knowledge_switch_and_failure_leave_evidence.sh
+    status: guaranteed
+    responsibility: doctor
+    note: session.knowledge_on_end and session.knowledge_on_compact are the two switches, read from the policy and independent of checkpoint_on_compact. A hook must return success to its provider and returning success is not the same as claiming the work happened, so the adapter reports the failure through mj_capture_session_failed with the deriver's last line as the reason and closes the episode regardless.
+
+  - id: knowledge-integrity
+    claim: Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/281_knowledge_check_refuses_malformed_records.sh
+    status: guaranteed
+    responsibility: doctor
+    note: mj_validate_knowledge_integrity reads candidates/ and curated/ once, refuses a candidate that claims verified, a dangling derived_from or relations target, a duplicate id across both directories, a key the generated allow-list does not carry, a superseded record with neither superseded_by nor a rejection, and a title, description or body line matching the transcript check that never-store-transcripts is kept by. References to the ledger and git (session, task, decision, commit) are resolved here, in one pass, and are external to the graph compiler, which never reports them as dangling.
+
+  - id: knowledge-writer-observed
+    claim: A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/282_health_sees_a_stopped_knowledge_writer.sh
+    status: guaranteed
+    responsibility: doctor
+    note: mj_validate_knowledge_lifecycle compares two facts the way ADR 0052's validator does, episodes closing and derivations following, judged against session.freshness.stale_minutes; it also reads the lifecycle source for the call to the deriver while session.knowledge_on_end is on. A checkout whose ledger holds no knowledge.derived line is skipped rather than failed, so the day the deriver arrives no checkout turns red; the first derivation ends the skip. The Rust reader's knowledge_base.status makes the freshness half of the same judgement from the same numbers.
+
+  - id: knowledge-promotion-is-an-act
+    claim: verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/283_knowledge_promotion_is_an_act.sh
+    status: guaranteed
+    responsibility: layer
+    note: An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary.
+
+  - id: briefing-names-candidates
+    claim: The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it
+    source: docs/KNOWLEDGE.md
+    implementation: lib/derive.sh
+    test: test/cases/284_briefing_names_the_candidates.sh
+    status: guaranteed
+    responsibility: handover
+    note: The section sits after the open questions and before the handover in the derived briefing, bounded the way the open-questions block is. A candidate's branch is the branch of the episode its derived_from names, read from the tracked session record or, while that record is not yet written, from the ledger; a candidate whose episode this checkout cannot resolve is named on its own line as unattributed rather than hidden.
+
+  - id: candidates-reviewed-not-accumulated
+    claim: More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/285_candidates_are_reviewed_not_accumulated.sh
+    status: guaranteed
+    responsibility: doctor
+    note: knowledge.candidates_max_files and knowledge.candidate_max_age_minutes are read with mj_pol_req and a missing key is reported at the rule's class. Review age is the age of the queue entry — the oldest knowledge.derived line naming the file, then the commit that added it, then the record's date — never the evidence day alone. A candidate version control does not track is named too, with the git add remedy after fix:, because a record git does not hold is discovered by nothing. The rule is dispatched from doctor only, so a full review queue never turns watch red.
+
+  - id: knowledge-served-on-every-surface
+    claim: The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP
+    source: docs/KNOWLEDGE.md
+    implementation: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+    test: apps/majordomus-cli/tests/knowledge_base.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: knowledge_base.candidates, knowledge_base.record and knowledge_base.status are capability! blocks in one module; majordomus generate projects them to the HTTP routes, the OpenAPI document, the MCP tools and resources, the executable's knowledge subcommands, the cockpit's module catalogue and the benchmark inventory. The reader takes candidates from the index, the ledger from the session module and the thresholds from the continuity module's reading of the policy; it writes nothing and reports absence as absence.

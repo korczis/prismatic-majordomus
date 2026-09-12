@@ -470,6 +470,7 @@ weakest evidence about the present.
 | `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
 | `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
 | `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
+| knowledge candidates | `.ai/repo/knowledge/candidates/` | in the derived briefing, after the open questions and before the handover: the candidates awaiting review whose episode was on this branch, count and ids, bounded; unattributed ones on their own line; absence printed rather than omitted |
 | `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |
 | `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |
 | `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |
@@ -1306,6 +1307,17 @@ as `closed`, and anything else — a crash, a name the table has not seen — cl
 `interrupted`, because calling a cut-short episode complete is the worse of the two
 mistakes.
 
+**The close derives what the episode learned, between the checkpoint and the handover.**
+`session close` runs `majordomus knowledge derive` after the session record is published and
+before `session.closed` is appended, whenever `session.knowledge_on_end` is not `false`, so
+every close — the adapter's, a person's, any future caller's — is followed by its
+`knowledge.derived` line; the compaction adapter calls the deriver itself under
+`session.knowledge_on_compact`, independently of `checkpoint_on_compact`. Neither asks whether
+a task is active. A derivation that fails is reported as `provider.event.failed` with the
+deriver's last line as the reason, the episode is closed regardless, and the hook exits 0; a
+switch that is off is said on stderr and derives nothing. [`KNOWLEDGE.md`](@/docs/knowledge.md) has
+what is derived from what.
+
 **Neither hook writes to standard output.** Claude Code adds a `SessionStart` hook's output
 to the model's context, and nothing under the local half of the layer may be loaded into a
 context implicitly. Diagnostics go to stderr, and `capture session` never exits 2, for the
@@ -1367,8 +1379,9 @@ search: 2 match(es)
 
 ## `majordomus knowledge`
 
-A compiler over what this repository already states. Read-only in every subcommand
-documented here.
+A compiler over what this repository already states, and the writer of what an episode
+learned. `sources`, `nodes`, `edges`, `candidates` and `check` are read-only; `derive`,
+`promote` and `reject` write knowledge records and ledger lines, and nothing else.
 
 It is not a wiki, not a database, not a memory service, and not a second place to write
 things down. Every source it reads is a file somebody already maintains, everything it
@@ -1390,6 +1403,62 @@ changes the other.
   claim one identity.
 - `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file
   and the field or line it was observed in.
+- `derive [--episode <id>] [--dry-run] [--json]` derives the knowledge the episode produced
+  into candidate records under `.ai/repo/knowledge/candidates/`, from the ledger and git and
+  never from a conversation: a recorded decision becomes a `convention`, a resolved question a
+  `fact`, a blocked or failed task a `lesson`, a completion with a verification command a
+  `fact`. The open episode, or the one named. Deterministic: same ledger, same git, same
+  bytes, and a second run reports every record `unchanged`. `--dry-run` says what it would
+  write and touches neither the tree nor the ledger.
+- `candidates [--json]` lists every record awaiting review — id, class, date, the branch of
+  the episode it came from, title — reading the directory rather than the index, so a
+  candidate the hook just wrote and nobody has added is listed.
+- `promote <id> [--class <c>] < evidence.md` moves a candidate to `curated/` as `verified`,
+  with the evidence on standard input appended under `# Evidence` and the class the person
+  chose. The deriver never writes `verified`; this is the act that does.
+- `reject <id> --reason "<why>" [--by <id>]` marks a candidate `superseded` in place with the
+  reason under `# Rejected`, naming the record that replaces it when `--by` gives one.
+- `check [--json]` validates every record under `candidates/` and `curated/`: the schema, no
+  unknown key, unique ids equal to the file name, provenance beside `verified`, every
+  reference resolving, a reason beside `superseded`, no candidate claiming `verified`, no
+  conversation. The same check `check` and `doctor` dispatch.
+
+The read side of the same store is served by the executable — `bin/majordomus-cli knowledge
+candidates`, `knowledge record <id>` and `knowledge status`, each a capability declared once
+and answering identically over HTTP, MCP and the command line (`CAPABILITIES.md`); `status`
+reports the last derivation, the newest close and whether the writer has stopped.
+[`KNOWLEDGE.md`](@/docs/knowledge.md) has the derivation table, the two moments and the rules.
+
+**Writes:** `derive` writes `.ai/repo/knowledge/candidates/<id>.md`, one per record, through a
+temporary file in the same directory renamed over the id-named file, never staged, and prints
+`written`, `unchanged` or `skipped` per record with the summary last; it appends
+`knowledge.derived` to the ledger — episode, counts, paths — even when it wrote nothing.
+`promote` writes `.ai/repo/knowledge/curated/<id>.md` the same way, removes the candidate,
+appends `knowledge.promoted` and prints the curated path last. `reject` rewrites the
+candidate in place and appends `knowledge.rejected`. The record id is the episode id and a
+digest of the evidence, so the same fact always lands in the same file.
+
+**Never** stages, commits, or modifies any other file. Never reads a conversation, a prompt or
+a handover; never calls a model or a network. Never writes `verified`.
+
+**Refuses** (`10`) `promote` with empty stdin, with stdin carrying a transcript marker, on a
+record whose status is not `candidate`, or with a class outside the enumeration; `reject` on a
+record whose status is not `candidate`, or when `--by` names no record; `derive` when the
+policy does not parse; `check` on any failing record. (`12`) `promote` or `reject` when no
+candidate carries the id. (`2`) `reject` without a non-empty `--reason`. (`13`) a write that
+did not complete. `derive` with no episode to derive from says so and exits `0`.
+
+```
+$ majordomus decision add "Tabs are refused in the parser" --why "two encodings of one thing"
+$ majordomus knowledge derive
+written .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md
+knowledge derive: 1 written, 0 unchanged, 0 skipped for episode s-20260912101500-7f1a
+$ majordomus knowledge derive
+unchanged .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md
+knowledge derive: 0 written, 1 unchanged, 0 skipped for episode s-20260912101500-7f1a
+$ printf 'Verified by reading lib/yaml.sh.\n' | majordomus knowledge promote s-20260912101500-7f1a-3b9c2e4d1a05 --class constraint
+.ai/repo/knowledge/curated/s-20260912101500-7f1a-3b9c2e4d1a05.md
+```
 
 **No edge without provenance.** Every edge names where the relationship was stated, and an
 edge missing any of from, to, type or provenance is refused rather than emitted with a

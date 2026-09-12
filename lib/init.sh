@@ -66,8 +66,11 @@ H
     MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$MJ_RULES_DIR")/vendor/$MJ_RULES_VENDOR_NS/"
   fi
   mj_init_tree "$skel/ai/repo/knowledge" "$MJ_KNOWLEDGE_DIR" '*'
-  mkdir -p "$MJ_KNOWLEDGE_DIR/curated"
+  mkdir -p "$MJ_KNOWLEDGE_DIR/curated" "$MJ_KNOWLEDGE_DIR/candidates"
   mj_init_file "$skel/ai/repo/knowledge/curated/README.md" "$MJ_KNOWLEDGE_DIR/curated/README.md"
+  # the review queue the deriver writes into (ADR 0058), with its contract from the start:
+  # the first episode boundary adds a record, never a directory the layer has to explain
+  mj_init_file "$skel/ai/repo/knowledge/candidates/README.md" "$MJ_KNOWLEDGE_DIR/candidates/README.md"
   mj_init_tree "$skel/ai/repo/workflows" "$MJ_WORKFLOWS_DIR" '*.md'
   mj_init_tree "$skel/ai/repo/skills" "$MJ_SKILLS_DIR" '*.md'
   mj_init_tree "$skel/ai/repo/adrs" "$MJ_ADRS_DIR" '*.md'

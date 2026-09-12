@@ -444,21 +444,21 @@ commands:
 
   - id: knowledge
     title: knowledge
-    summary: The compiled index over what this repository states.
+    summary: The compiled index over what this repository states, and the candidate records it derives from what an episode did.
     category: memory
     stage: inspect
     visibility: public
-    class: read-only
+    class: state-mutating
     requires_repository: true
     requires_installed: true
     requires_task: none
     json: true
-    syntax: majordomus knowledge <sources|nodes|edges> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--json]
-    reads: [.ai/repo/knowledge/sources.yaml, share/knowledge-sources.yaml, .ai/local/state/]
-    writes: []
-    exit_codes: [0, 2, 10, 13]
+    syntax: majordomus knowledge <sources|nodes|edges|derive|candidates|promote|reject|check> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--json]
+    reads: [.ai/repo/knowledge/sources.yaml, share/knowledge-sources.yaml, .ai/local/state/, .ai/repo/knowledge/candidates/, .ai/repo/knowledge/curated/, .ai/local/state/ledger.jsonl, .ai/repo/policy.yaml, share/allow/knowledge.txt]
+    writes: [.ai/repo/knowledge/candidates/, .ai/repo/knowledge/curated/, .ai/local/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 13]
     demo: knowledge-index
-    note: Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it.
+    note: "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0058)."
 
   - id: adr
     title: adr

@@ -10,13 +10,13 @@ status: stable
 weight: 60
 featured: true
 areas: [decisions, context]
-modules: [graph]
+modules: [graph, knowledge_base]
 commands: [decision, adr, knowledge, search, history, question]
 kinds: [adr, knowledge, document]
 rules: [majordomus.adr-integrity, majordomus.decision-records, majordomus.decision-threshold, majordomus.externalise-decisions]
 docs: [docs/CONTINUITY.md, docs/CONCEPTS.md]
-adrs: [adr-0010, adr-0020]
-claims: [decision-record, decision-attribution, adr-catalogue, adr-traceability, adr-propose, record-search, semantic-retrieval, history-ledger-read]
+adrs: [adr-0010, adr-0020, adr-0058]
+claims: [decision-record, decision-attribution, adr-catalogue, adr-traceability, adr-propose, record-search, semantic-retrieval, history-ledger-read, knowledge-served-on-every-surface]
 use_cases: [record-a-decision-before-it-is-forgotten, keep-decisions-out-of-the-transcript, read-back-what-happened, find-an-object-without-reading-everything]
 cockpit: [graphs, objects]
 related: [continuity, doctrine]

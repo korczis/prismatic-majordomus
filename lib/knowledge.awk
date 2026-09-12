@@ -49,8 +49,17 @@ BEGIN {
     # The edge types are a closed set. An undeclared type is a defect rather than a new
     # vocabulary word, because a reader who cannot enumerate the relations cannot tell a
     # missing one from one that was never modelled.
-    edge_types = " part_of depends_on specified_by implemented_by tested_by declares supports references "
+    edge_types = " part_of depends_on specified_by implemented_by tested_by declares supports references derived_from relates_to documents contradicts supersedes "
+    # A knowledge record's provenance may name an object that lives in the ledger or in
+    # git rather than in the tree: a task, a decision recorded under one, a commit, an
+    # issue, and an episode whose record is not tracked yet (a candidate derived at a
+    # compaction names an episode that has not closed). The edge is emitted, because it
+    # was stated; whether it resolves is answered by the integrity validator against the
+    # ledger and git, and never reported here as dangling — the compiler cannot see those.
+    ledger_refs = " decision task commit issue session "
 }
+
+function is_ledger_ref(to,   t) { t = to; sub(/:.*$/, "", t); return index(ledger_refs, " " t " ") > 0 }
 
 # A finding the reader produced before awk saw the file passes straight through, so
 # there is one findings stream rather than two that a caller has to merge.
@@ -105,8 +114,41 @@ END {
         else if (k == "doctrine") edges_doctrines(i)
         else if (k == "document") edges_links(i)
         else if (k == "adr")      edges_adr(i)
+        else if (k == "knowledge") edges_knowledge(i)
     }
     report_edges()
+}
+
+# A knowledge record -> the evidence it came from and the objects it relates to. Both are
+# stated in its front matter as typed references, and the reference type chooses the
+# target: an episode, a rule, a decision record or another knowledge record is a node of
+# its kind; a file or a test is a path; a ledger or git object is external (see
+# ledger_refs) and is emitted as stated. An unknown kind is emitted as stated too, and it
+# dangles, which is the report.
+function edges_knowledge(si,   p, id, from, n, v, t, tgt) {
+    p = spath[si]
+    id = f(p, "id"); if (id == "") return
+    from = node_id("knowledge", id)
+    for (n = 0; ; n++) {
+        v = f(p, "provenance.derived_from." n)
+        if (v == "") break
+        knowledge_edge(from, v, "derived_from", p ":provenance.derived_from." n)
+    }
+    for (n = 0; ; n++) {
+        v = f(p, "relations." n ".target"); t = f(p, "relations." n ".type")
+        if (v == "" && t == "") break
+        if (v == "" || t == "") continue
+        knowledge_edge(from, v, t, p ":relations." n ".target")
+    }
+}
+
+function knowledge_edge(from, ref, type, prov,   t, tgt) {
+    t = ref; sub(/:.*$/, "", t); tgt = ref; sub(/^[^:]*:/, "", tgt)
+    if (t == "file" || t == "test") { path_edge(from, tgt, type, prov); return }
+    external_next = is_ledger_ref(ref)
+    if (t == "knowledge" || t == "rule" || t == "adr" || t == "session") add_edge(from, node_id(t, tgt), type, prov)
+    else add_edge(from, ref, type, prov)
+    external_next = 0
 }
 
 # ---------------------------------------------------------------- one node per file
@@ -119,18 +161,21 @@ function extract_one(i, k,   p, id, title) {
     id = ""
     if      (k == "milestone" || k == "issue" || k == "rule") id = f(p, "id")
     else if (k == "adr" || k == "skill" || k == "use-case" || k == "application") id = f(p, "id")
+    # a knowledge record declares its identity: the id its file is named after, which is
+    # what a promotion keeps and what every reference to it names (ADR 0058)
+    else if (k == "knowledge")                 id = f(p, "id")
     else if (k == "session")                   id = f(p, "session_id")
     else if (k == "profile" || k == "prompt")  id = f(p, "name")
-    else if (k == "session")                   id = f(p, "session_id")
     else if (k == "handover" || k == "checkpoint") id = basename_noext(p)
 
     title = ""
     if      (k == "milestone" || k == "issue" || k == "rule") title = f(p, "title")
     else if (k == "adr" || k == "skill" || k == "use-case" || k == "application" || k == "session") title = f(p, "title")
+    else if (k == "knowledge")                 title = f(p, "title")
     else if (k == "profile" || k == "prompt")  title = f(p, "description")
-    # a curated note and a taxonomy carry no identity of their own: the file is the object,
+    # a document and a taxonomy carry no identity of their own: the file is the object,
     # and its first heading, or the comment the file opens with, is what a reader sees
-    else if (k == "document" || k == "knowledge") title = h1[p]
+    else if (k == "document") title = h1[p]
 
     if (id == "") id = p
     emit(node_id(k, id), k, sscope[i], p, shash[i], title)
@@ -320,6 +365,11 @@ function add_edge(from, to, type, prov) {
     # the extracted set is ordinary — gating on it would make a permanently red report, which
     # is a report people stop reading.
     e_owned[ne] = (type == "references") ? 0 : 1
+    # A knowledge record's reference to a ledger or git object is outside this graph (see
+    # ledger_refs); knowledge_edge raises the flag for exactly that edge, and the validator
+    # that reads the ledger judges it rather than this report. Every other edge — an issue
+    # depending on an issue, say — names a node this compiler models, and dangles as before.
+    e_external[ne] = external_next ? 1 : 0
 }
 
 # Every ancestor of a tracked file is a tracked directory. Nothing lists directories — the
@@ -357,6 +407,7 @@ function report_edges(   i) {
     for (i = 1; i <= ne; i++) {
         print "E", e_from[i], e_to[i], e_type[i], e_prov[i]
         if (!(e_to[i] in seen)) {
+            if (e_external[i]) continue
             if (e_owned[i])
                 finding("FAIL", "dangling_edge", e_from[i] " -> " e_to[i],
                         "declared " e_type[i] " in " e_prov[i] " and no such node exists")

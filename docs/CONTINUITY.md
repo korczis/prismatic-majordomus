@@ -41,7 +41,7 @@ decisions against a repository that no longer exists.
 So Majordomus stores none of it. What it stores is small, typed, and each piece has one
 home.
 
-## Six kinds of durable record, and a seventh that is not task-shaped
+## The durable records, and the ones that are not task-shaped
 
 | Record | Answers | Mutability | Where |
 |---|---|---|---|
@@ -55,14 +55,14 @@ home.
 Prompt assets in `.ai/repo/prompts/` are a seventh thing, but they are not records of
 work — they are reusable framings, versioned with the repository.
 
-## The seventh kind: the session
+## The kinds that are not task-shaped: the session, and what it learned
 
-The six above are all task-shaped. Each one hangs off the work, which is right, and it
+The records above are all task-shaped. Each one hangs off the work, which is right, and it
 leaves one question with nowhere to live: *what did one worker do between sitting down and
 stopping?*
 
-That question is not the same as any of the six. A task can outlive a worker; a worker can
-touch three tasks in an afternoon. Nothing in the six records that two decisions an hour
+That question is not the same as any of those. A task can outlive a worker; a worker can
+touch three tasks in an afternoon. Nothing in those records that two decisions an hour
 apart, filed under different tasks, were made by the same person in the same sitting — and
 that is exactly the causal thread a later reader is trying to pick up.
 
@@ -70,6 +70,7 @@ that is exactly the causal thread a later reader is trying to pick up.
 |---|---|---|---|
 | **session** | what one execution episode did, between which commits, producing which records | one open per provider session, then immutable | `local/state/sessions-open/<provider session>.yaml`, pointed at by `local/state/session-current.yaml`, then the layer’s `repo/sessions/` |
 | **working context** | what the worker was told when the episode opened, and what it noted while working | appended to, never rewritten | `local/session-contexts/<stamp>--<session-id>.md` |
+| **knowledge record** | what the repository now knows because of the episode: each decision recorded, question resolved and task finished, as one assertion with provenance | a candidate is rewritten by the deriver until a person promotes or rejects it; verified is then immutable except by supersession | `repo/knowledge/candidates/<id>.md`, then `repo/knowledge/curated/<id>.md` |
 
 The two are not the same record and answer opposite questions. The closed session says what
 the episode produced, derived from git and the ledger, and it is shared. The working context
@@ -174,6 +175,17 @@ guards each asked, correctly against their own contract, whether a task was `act
 A checkpoint that grows into a report is refused rather than truncated, with the
 suggestion to write a handover instead. The cap is the mechanism that keeps the two
 objects distinct.
+
+A **knowledge record** is neither. A checkpoint says what the work looked like and a
+handover says what to do next; a knowledge record says what is now true about the
+repository because of the episode — the decision it recorded, the question it resolved, the
+reason a task was blocked — as one assertion with a class, a status and provenance that
+resolves. It is derived at the same moments the checkpoint is, from the ledger and git and
+never from the conversation or from either of the other two records, and it lands in the
+tracked tree as a candidate that a person promotes or rejects. It is the one record of an
+episode that survives a clone before anybody has written a word by hand, and it is the one
+that is never authored by the deriver: `verified` is a person's act. [`KNOWLEDGE.md`](KNOWLEDGE.md)
+has the derivation and the commands.
 
 ## Identity comes from reality
 
@@ -310,6 +322,8 @@ flowchart TD
   cp1["a derived checkpoint, because the conversation<br>is about to stop holding it"]
   se["provider fires SessionEnd"]
   cp2["a derived checkpoint, for the same reason: the close<br>is the other moment at which what the episode knows<br>stops being reachable"]
+  kn1["derived knowledge candidates, from the ledger and git:<br>what the episode decided, resolved and finished"]
+  kn2["derived knowledge candidates, on the close path,<br>before the envelope is sealed"]
   ho["a derived handover"]
   env["the episode closes into its envelope of references"]
 
@@ -319,8 +333,10 @@ flowchart TD
   ss --> work
   work --> pc
   pc --> cp1
+  pc --> kn1
   pc --> se
   se --> cp2
+  se --> kn2
   se --> ho
   se --> env
 ```
@@ -363,8 +379,9 @@ the already-open episode whatever the event said: seven concurrent sessions here
 2026-09-09 produced one record between them, stamped with whichever id happened to be first,
 and closed by whichever window was shut first.
 
-The briefing is bounded by `session.briefing_budget_lines` and carries references, labels
-and one section — never a conversation. Each of the three behaviours is a switch in the
+The briefing is bounded by `session.briefing_budget_lines` and carries references, labels,
+one section and the ids of the knowledge candidates awaiting review on the branch — never a
+conversation. Each of the three behaviours is a switch in the
 policy, and `session.briefing_on_start: false` restores the older silence.
 
 This is the one route by which anything under `local/` reaches a model's context without
@@ -446,18 +463,21 @@ flowchart TD
   context["CONTEXT PROJECTED<br>the briefing, within session.briefing_budget_lines, frozen<br>into local/session-contexts/ as the working context —<br>what this episode was told, never rewritten"]
   events["WORK AND EVENTS<br>every command appends one ledger line, stamped with the<br>episode that wrote it. A line with no episode belongs to<br>none: work outside a session is attributed to nobody<br>rather than to whoever was open nearby."]
   checkpoints["CHECKPOINTS<br>written by hand, and derived on PreCompact — the moment<br>the conversation stops being a place anything is kept.<br>An artefact of the episode: no task required."]
+  knowledge["KNOWLEDGE DERIVED<br>on PreCompact and on the close path: the episode's decisions,<br>resolved questions and finished tasks become candidate<br>records from the ledger and git, never from the conversation.<br>Idempotent; the ledger says it ran. [ADR 0058]"]
   closing["CLOSE AND HANDOVER<br>SessionEnd closes the episode and, when work is still open,<br>writes the continuation record. The envelope's reference<br>lists are computed from the ledger at close, never<br>accumulated during the episode."]
-  record[".ai/repo/sessions/&lt;stamp&gt;--&lt;episode&gt;--&lt;branch&gt;--&lt;head&gt;--&lt;digest&gt;.md<br>TRACKED. The only half of this that survives a clone:<br>everything under .ai/local/ names this machine and<br>travels nowhere."]
+  record[".ai/repo/sessions/&lt;stamp&gt;--&lt;episode&gt;--&lt;branch&gt;--&lt;head&gt;--&lt;digest&gt;.md<br>and .ai/repo/knowledge/candidates/&lt;episode&gt;-&lt;digest&gt;.md<br>TRACKED. What survives a clone: everything under .ai/local/<br>names this machine and travels nowhere."]
   resume["A FUTURE RESUME<br>locally, the next episode's briefing resolves the records of<br>this worktree and branch; elsewhere, a clone receives the<br>closed records and reads them as history, because a record<br>is evidence and never authority."]
   watching["and, beside the path, watching it:<br>lifecycle.episodes · lifecycle.recovery · lifecycle.runtime<br>lifecycle.providers · lifecycle.closed · continuity.state<br>projected together on the Cockpit's /cockpit/continuity"]
 
   cmd & conv --> entry
   entry --> runtime --> client --> episode --> fresh --> context
-  context --> events --> checkpoints --> closing --> record --> resume
+  context --> events --> checkpoints --> knowledge --> closing --> record --> resume
 ```
 
-One box in that path is marked, because it is the newest and the one this repository most
-recently did without: **freshness validated** is a step, not a property of the record.
+Two boxes in that path are marked. **Knowledge derived** is the newest: until ADR 0058 an
+episode's decisions, resolved questions and finished tasks were evidence on one machine, under
+a retention cap, and nothing wrote them where a clone could read them. **Freshness validated**
+is the one this repository most recently did without: it is a step, not a property of the record.
 Without it a handover that was `advanced` — a true statement about git topology, and
 identically true on the day it was written and a month later — was quoted into every new
 episode for six days after the work it described was finished. The decision, the thresholds
@@ -481,6 +501,8 @@ flowchart TD
   nxt["the next session runs context"]
   fin["majordomus finish --outcome &lt;...&gt; --verify-command #quot;&lt;cmd&gt;#quot;"]
   hist["majordomus history<br>the lifecycle, reconstructable"]
+  kd["majordomus knowledge derive<br>at the close and on compaction, or by hand:<br>the decisions, answers and outcomes as candidate records"]
+  kp["majordomus knowledge promote &lt;id&gt; &lt; evidence<br>a person makes a candidate verified"]
 
   st --> ctx --> work
   work --> cp
@@ -489,6 +511,9 @@ flowchart TD
   work --> ck
   ck -->|"not finished"| ho --> nxt
   ck --> fin --> hist
+  dec --> kd
+  fin --> kd
+  kd --> kp
 ```
 
 ## What this does not do
@@ -519,5 +544,6 @@ It does not resolve across worktrees or branches, and it never will silently.
 ## Related
 
 [`CONCEPTS.md`](CONCEPTS.md) for the vocabulary · [`CLI.md`](CLI.md) for every command ·
-[`SCHEMAS.md`](SCHEMAS.md) for the file formats · [`DESIGN.md`](DESIGN.md) for why the
-models are shaped this way.
+[`SCHEMAS.md`](SCHEMAS.md) for the file formats · [`KNOWLEDGE.md`](KNOWLEDGE.md) for what an
+episode learned and how it is derived · [`DESIGN.md`](DESIGN.md) for why the models are
+shaped this way.

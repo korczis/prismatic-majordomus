@@ -82,6 +82,33 @@ pub struct FreshnessPolicy {
     pub stale_minutes: Option<i64>,
 }
 
+/// `knowledge:` of the policy: the bounds on the review queue of derived knowledge records.
+///
+/// A candidate is a record the deriver wrote at an episode boundary and nobody has judged
+/// (ADR 0058). The queue is measured, never emptied by a machine, and both numbers are
+/// declared once in the policy and read from it by the shell validator and by
+/// `knowledge_base.candidates` alike. Absence is carried as absence: a repository whose
+/// policy predates the keys is reported as declaring no cap, never judged against one
+/// nobody wrote down.
+///
+/// ```
+/// use majordomus_cli::policy::KnowledgePolicy;
+/// let declared: KnowledgePolicy =
+///     serde_json::from_str(r#"{"candidates_max_files": 40}"#).expect("a knowledge block");
+/// assert_eq!(declared.candidates_max_files, Some(40));
+/// assert_eq!(declared.candidate_max_age_minutes, None, "absent is absent, not a default");
+/// assert_eq!(KnowledgePolicy::default().candidates_max_files, None);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
+pub struct KnowledgePolicy {
+    /// More records with status `candidate` than this awaiting review is a finding.
+    #[serde(default)]
+    pub candidates_max_files: Option<usize>,
+    /// A candidate waiting longer than this since it entered the queue is a finding.
+    #[serde(default)]
+    pub candidate_max_age_minutes: Option<i64>,
+}
+
 /// The policy, typed to what the projections consume. Every other key is carried through
 /// unread: the policy schema under `share/schemas/majordomus/policy/policy.v1.schema.json` owns the full shape.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
@@ -98,6 +125,9 @@ pub struct Policy {
     /// `session:`.
     #[serde(default)]
     pub session: SessionPolicy,
+    /// `knowledge:`.
+    #[serde(default)]
+    pub knowledge: KnowledgePolicy,
     /// `projections:`.
     #[serde(default)]
     pub projections: Vec<Projection>,
@@ -114,10 +144,15 @@ pub struct Policy {
 /// // repository's policy and the skeleton a new one is written from both declare, and a
 /// // policy that could not be read must not silently change behaviour.
 /// assert!(SessionPolicy::default().ensure_server_on_start);
-/// // and a repository that has turned it off is read as having turned it off
+/// assert!(SessionPolicy::default().knowledge_on_end);
+/// assert!(SessionPolicy::default().knowledge_on_compact);
+/// // and a repository that has turned one off is read as having turned it off
 /// let off: SessionPolicy =
-///     serde_json::from_str(r#"{"ensure_server_on_start": false}"#).expect("a session block");
+///     serde_json::from_str(r#"{"ensure_server_on_start": false, "knowledge_on_end": false}"#)
+///         .expect("a session block");
 /// assert!(!off.ensure_server_on_start);
+/// assert!(!off.knowledge_on_end);
+/// assert!(off.knowledge_on_compact, "the two switches are independent");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SessionPolicy {
@@ -135,6 +170,17 @@ pub struct SessionPolicy {
     /// an unreadable policy is `doctor`'s finding, not a reason to stop converging.
     #[serde(default = "yes")]
     pub ensure_server_on_start: bool,
+    /// Whether closing an episode derives the knowledge it produced into candidate records
+    /// under the tracked knowledge section (ADR 0058). Read here so that
+    /// `knowledge_base.status` judges a silent writer only where the writer is switched on,
+    /// and defaults to `true` for the reason `ensure_server_on_start` does: the policy and
+    /// the skeleton both declare it, and an unreadable policy must not change behaviour.
+    #[serde(default = "yes")]
+    pub knowledge_on_end: bool,
+    /// Whether a provider's compaction event derives the same records. Independent of
+    /// `checkpoint_on_compact`: the two record different things.
+    #[serde(default = "yes")]
+    pub knowledge_on_compact: bool,
 }
 
 impl Default for SessionPolicy {
@@ -142,6 +188,8 @@ impl Default for SessionPolicy {
         SessionPolicy {
             freshness: FreshnessPolicy::default(),
             ensure_server_on_start: true,
+            knowledge_on_end: true,
+            knowledge_on_compact: true,
         }
     }
 }
