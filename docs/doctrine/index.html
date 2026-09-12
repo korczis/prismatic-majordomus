@@ -263,11 +263,23 @@ the numbers must be read carefully: most of those rules <em>are</em> enforced, b
 the doctrine registry cannot see is not the same as what nothing enforces, and a surface
 that reports one while the reader hears the other is the defect
 <code>project.a-verdict-states-its-subject</code> exists to stop.</p>
-<p><code>scripts/ci/enforcement-check</code> is what decides the difference: a blocking rule must carry
-either an <code>x-majordomus</code> block or a <code># Verification</code> path that exists and runs, and the
-handful that carry neither are ratcheted in <code>.ai/repo/enforcement-baseline.txt</code> so the set
-can shrink and cannot grow. It is answered by wiring the enforcement, never by changing the
-rule's class — moving a promise is not keeping it.</p>
+<p><code>scripts/ci/rule-proof-check</code> is what decides the difference, and it is the only reader of
+that population: a blocking rule must name, in its <code>x-majordomus</code> block, a validator the
+dispatcher calls, a test that proves it, or a <code>reviewed_because:</code> saying why nothing
+executable can express it. The rules that name none are ratcheted in
+<code>.ai/repo/rule-proof-baseline.txt</code> so the set can shrink and cannot grow. It is answered by
+wiring the enforcement, never by changing the rule's class — moving a promise is not keeping
+it.</p>
+<p>The other end of the same idea is a claim, not a rule, and it has its own gate:
+<code>scripts/ci/claim-proof-check</code> refuses a claim marked <code>status: guaranteed</code> in
+<code>docs/CLAIMS.yaml</code> whose named test does not contain the claim's id, so the link reads from
+both ends rather than only from the claim's. The two gates are separate readers of separate
+populations and each says so on every run. They were one script, and the rule half of it
+accepted any <code>x-majordomus</code> block as proof — including a <code>reviewed_because:</code>, which declares
+that a <em>person</em> enforces the rule. It announced those exemptions as promises that had gained
+a proof. A second inventory of a property another gate owns does not stay a harmless
+duplicate; it drifts, and then the two verdicts disagree about the thing this repository
+exists to assert.</p>
 <h3 id="resolution"><a class="zola-anchor" href="#resolution" aria-label="Anchor link for: resolution">Resolution</a></h3>
 <p><code>majordomus rules list</code> resolves the effective set as a dependency graph, deterministically:
 the vendored package in its manifest order, then project rules in file-name order, ordered
@@ -565,7 +577,7 @@ a check. <code>doctor</code> traces the invocation instead.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/710fd79382a4f60b917de72fda03140e04641093" class="font-mono underline">710fd79</a> · inputs <span class="font-mono">66d26df4436c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b8d3eb59b643366d6b0d22003aae2fd7b84736ad" class="font-mono underline">b8d3eb5</a> · inputs <span class="font-mono">73576914c2c3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

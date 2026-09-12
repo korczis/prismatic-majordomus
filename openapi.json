@@ -12963,11 +12963,19 @@
               "type": "string"
             },
             "description": "Runnable commands of the command line that no capability claims, in command order."
+          },
+          "unclassified": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Of those, the ones [`crate::cli::local::LOCAL`] does not explain either: a command\nthat is neither the projection of a capability nor declared command-line-only with\na reason. Empty is the closure the rule asks for; anything here is an operation\nthat left the API by accident rather than by decision."
           }
         },
         "required": [
           "rows",
-          "unbacked"
+          "unbacked",
+          "unclassified"
         ],
         "description": "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\"."
       },
