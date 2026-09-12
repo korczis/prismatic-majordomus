@@ -199,7 +199,7 @@ pub fn issue_ids(primary: &Path) -> Vec<String> {
         })
         .filter(|id| !id.eq_ignore_ascii_case("readme"))
         .collect();
-    ids.sort();
+    crate::order::canonical(&mut ids);
     ids
 }
 

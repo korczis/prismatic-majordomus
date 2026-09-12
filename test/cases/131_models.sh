@@ -22,6 +22,8 @@ git -C "$R" commit -qm fixture >/dev/null
 mj() { local cwd="$1"; shift; ( cd "$cwd" && MAJORDOMUS_SHARE="$R/share" "$RB" "$@" ); }
 
 # ---------------------------------------------------------------- 1. the catalogue is one declaration
+# Proves `models-one-declaration`: the vendors and models rendered here are the ones
+# share/models.yaml declares, and the command contributes no model name of its own.
 cat > "$R/share/models.yaml" <<'YAML'
 version: 1
 vendors:
@@ -54,6 +56,8 @@ if printf '%s' "$LAST_OUT" | grep -q "a-secret-value"; then
 fi
 
 # ---------------------------------------------------------------- 2. routing explains itself
+# Proves `models-routing-explains-itself`: the selected model carries why it was
+# selected and every excluded model carries the first check it failed.
 expect_exit 0 mj "$R" models route --require vision
 expect_grep "selected   acme-large"
 expect_grep "excluded   acme-mini"

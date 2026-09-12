@@ -190,7 +190,7 @@ impl Served {
                 format!("{} {base}{path}", s.id)
             })
             .collect();
-        parts.sort();
+        crate::order::canonical(&mut parts);
         format!(
             "{} surface(s): {}",
             self.topology.surfaces.len(),
