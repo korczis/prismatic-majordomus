@@ -64,6 +64,111 @@ out="$( cd "$F" && ./scripts/liveness-check 2>&1 )" || {
   echo "    the gate reported prose as a blocking call:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1
 }
 
+# ------------------------------------------------- the supervision window counts shell code
+# `$!` is captured a few lines after the spawn, so the window is six lines -- but six lines
+# of shell code. A heredoc body and the body of a multi-line single-quoted string are text
+# handed to another interpreter: `python3 - <<PY` and `node -e '...'` can carry twenty lines
+# of payload between a spawn and the `pid=$!` that reaps it. Counting that payload against
+# the budget reported supervised spawns as unsupervised, which is how this gate came to
+# accuse `test/lib.sh` of debt it did not have.
+cat > "$F/scripts/window-heredoc" <<'INNER'
+#!/usr/bin/env bash
+python3 - "$1" <<'PY' &
+import sys
+a = 1
+b = 2
+c = 3
+d = 4
+e = 5
+f = 6
+g = 7
+PY
+worker=$!
+wait "$worker"
+INNER
+cat > "$F/scripts/window-quoted" <<'INNER'
+#!/usr/bin/env bash
+case "$1" in
+  a) sleep 9 &
+    ;;
+  b) node -e '
+      var a = 1;
+      var b = 2;
+      var c = 3;
+      var d = 4;
+      var e = 5;
+      var f = 6;
+    ' >/dev/null 2>&1 &
+    ;;
+esac
+pid=$!
+wait "$pid"
+INNER
+chmod +x "$F/scripts/window-heredoc" "$F/scripts/window-quoted"
+( cd "$F" && git add -A && git commit -qm window ) || { echo "    could not commit the window fixture"; exit 1; }
+out="$( cd "$F" && ./scripts/liveness-check 2>&1 )" || {
+  echo "    a spawn reaped across an interpreter payload was reported as unsupervised:"
+  printf '%s\n' "$out" | sed 's/^/      /'; exit 1
+}
+
+# ------------------------------------------------- and the window still refuses a real one
+# The control for the section above. Skipping a payload must cost the gate nothing: a spawn
+# that nothing reaps is still a finding when the payload is there, and a literal quote in
+# double quotes -- `tr -d "'"` -- must not desynchronise the scanner's idea of what is code.
+# Without this, "skip the payload" could degrade into "skip everything" and stay green.
+cat > "$F/scripts/window-control" <<'INNER'
+#!/usr/bin/env bash
+python3 - "$1" <<'PY' &
+import sys
+a = 1
+b = 2
+c = 3
+d = 4
+PY
+echo "nothing reaps the process above"
+INNER
+cat > "$F/scripts/quote-control" <<'INNER'
+#!/usr/bin/env bash
+value="$(printf 'a\n' | tr -d "'")"
+sleep 9 &
+echo "$value"
+echo one
+echo two
+echo three
+echo four
+echo five
+INNER
+# and the window is still six lines wide. Measuring it in shell code rather than physical
+# lines widens what it reaches; it must not remove the bound. A `$!` eight code lines from
+# the spawn is outside the window and stays a finding -- without this, "count code lines"
+# could quietly become "scan to end of file" and every fixture above would still pass.
+cat > "$F/scripts/window-distance" <<'INNER'
+#!/usr/bin/env bash
+sleep 9 &
+echo one
+echo two
+echo three
+echo four
+echo five
+echo six
+echo seven
+pid=$!
+wait "$pid"
+INNER
+chmod +x "$F/scripts/window-control" "$F/scripts/quote-control" "$F/scripts/window-distance"
+( cd "$F" && git add -A && git commit -qm control ) || { echo "    could not commit the control fixture"; exit 1; }
+out="$( cd "$F" && ./scripts/liveness-check 2>&1 )" && {
+  echo "    an unreaped spawn behind a payload was accepted"; exit 1
+}
+for want in scripts/window-control scripts/quote-control scripts/window-distance; do
+  printf '%s\n' "$out" | grep -q "$want" \
+    || { echo "    the gate lost the unsupervised spawn in $want:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1; }
+done
+
+rm -f "$F/scripts/window-heredoc" "$F/scripts/window-quoted" \
+      "$F/scripts/window-control" "$F/scripts/quote-control" "$F/scripts/window-distance"
+( cd "$F" && git add -A && git commit -qm "drop window fixtures" ) >/dev/null 2>&1
+
 # ---------------------------------------------------------------- the ratchet cannot rot
 # A baseline entry that matches nothing is reported, so the list shrinks as files are fixed
 # instead of quietly outliving them.

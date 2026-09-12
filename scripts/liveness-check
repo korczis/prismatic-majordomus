@@ -95,26 +95,69 @@ scan() {
   # must reap it — and reading that fixture as this file's own debt reported the gate's
   # subject as its violation. Where the written text is itself run, the debt is real and
   # belongs to whatever runs it; it is not this file's to carry.
+  #
+  # The window is six lines of SHELL CODE, not six physical lines. A heredoc body and the
+  # body of a multi-line single-quoted string -- `python3 - <<PY`, `node -e '...'` -- are
+  # text handed to another interpreter. Counting them against the budget let a ten-line
+  # payload push the `pid=$!` that reaps the spawn out of a window it sits next to in every
+  # sense that matters, and the gate then reported a supervised spawn as unsupervised. Both
+  # the report and the window read `iscode`, so a line that is not shell code can neither be
+  # a finding nor spend the budget for one.
   awk -v f="$f" -v W=6 '
+    # the shell quoting state at the end of a line, given the state it began in. Counting
+    # quote characters instead of reading them is not good enough: `tr -d "'"'"'"` is a
+    # literal quote inside double quotes, and a parity counter that flips on it inverts
+    # for the rest of the file -- silently marking real code as string body, which loses
+    # findings rather than reporting them.
+    # `$(...)` restarts quoting: the inner `"` of `x="$(tr -d "'"'"'")"` opens a string, it does
+    # not close the outer one, and a scanner that misreads it ends the line believing it is
+    # inside a quote that was never opened -- after which every real spawn looks like payload
+    # and is silently dropped. The nesting is tracked with a stack for that reason.
+    function qscan(str, s,   i, c, d, n, st) {
+      n = length(str); d = 0
+      for (i = 1; i <= n; i++) {
+        c = substr(str, i, 1)
+        if (s == "sq") { if (c == "'"'"'") s = ""; continue }
+        if (c == "\\") { i++; continue }
+        if (c == "$" && substr(str, i + 1, 1) == "(") { d++; st[d] = s; s = ""; i++; continue }
+        if (s == "dq") { if (c == "\"") s = ""; continue }
+        if (c == ")" && d > 0) { s = st[d]; d-- }
+        else if (c == "'"'"'") s = "sq"
+        else if (c == "\"") s = "dq"
+        else if (c == "#" && d == 0 && (i == 1 || substr(str, i - 1, 1) ~ /[[:space:]]/)) return s
+      }
+      return s
+    }
     {
       line[NR] = $0
       inheredoc[NR] = here
+      hd = (here != "")
       if (here != "") { if ($0 == here || $0 == "\t" here) here = "" }
       else if (match($0, /<<-?[[:space:]]*"?'"'"'?[A-Za-z_][A-Za-z_0-9]*"?'"'"'?/)) {
         tag = substr($0, RSTART, RLENGTH)
         gsub(/^<<-?[[:space:]]*|["'"'"']/, "", tag)
         here = tag
       }
+      was = q
+      if (!hd) q = qscan(line[NR], q)
+      # the line that opens the string and the line that closes it are both shell code;
+      # only a body line -- inside at both ends -- is text for another interpreter.
+      iscode[NR] = (hd || (was == "sq" && q == "sq")) ? 0 : 1
     }
     END {
+      m = 0
+      for (i = 1; i <= NR; i++) if (iscode[i]) { m++; cn[m] = i; ci[i] = m }
       for (i = 1; i <= NR; i++) {
         L = line[i]
         if (inheredoc[i] != "") continue
+        if (!iscode[i]) continue
         if (L ~ /^[[:space:]]*#/) continue
         if (L !~ /[^&|>][[:space:]]*&[[:space:]]*$/) continue
         supervised = 0
-        for (j = i; j <= i + W && j <= NR; j++)
+        for (k = ci[i]; k <= ci[i] + W && k <= m; k++) {
+          j = cn[k]
           if (line[j] ~ /\$!/ || line[j] ~ /(^|[;&|() ])wait([ ;)]|$)/) { supervised = 1; break }
+        }
         if (supervised) continue
         t = L; sub(/^[[:space:]]+/, "", t)
         printf "%s:%d:unsupervised-spawn:%s\n", f, i, substr(t, 1, 100)
