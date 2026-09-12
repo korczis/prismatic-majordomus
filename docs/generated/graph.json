@@ -27499,6 +27499,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "kind": "rule",
+        "label": "project.a-diagram-is-drawn-not-typed@1",
+        "summary": "An architectural relationship in a published document is drawn, never typed in box art",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-diagram-is-drawn-not-typed%401",
+        "source": ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-once@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "documentation",
+            "diagrams",
+            "web",
+            "accessibility"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -28235,6 +28257,28 @@
             "cli",
             "documentation",
             "projections"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.navigation-is-declared-once@1",
+        "kind": "rule",
+        "label": "project.navigation-is-declared-once@1",
+        "summary": "The site's navigation is declared once, and every projection derives from that declaration",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.navigation-is-declared-once%401",
+        "source": ".ai/repo/rules/project/navigation-is-declared-once.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-once@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "web",
+            "navigation",
+            "projections",
+            "documentation"
           ]
         }
       },
@@ -31816,6 +31860,20 @@
         "label": "test/cases/271_adr_allocation.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F271_adr_allocation.sh",
         "source": "test/cases/271_adr_allocation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
+        "kind": "test",
+        "label": "test/cases/272_diagrams_are_drawn.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F272_diagrams_are_drawn.sh",
+        "source": "test/cases/272_diagrams_are_drawn.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
+        "kind": "test",
+        "label": "test/cases/273_navigation_is_declared_once.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F273_navigation_is_declared_once.sh",
+        "source": "test/cases/273_navigation_is_declared_once.sh"
       },
       {
         "id": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -48042,6 +48100,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -48489,6 +48562,21 @@
       {
         "source": "majordomus://rule/project.native-cli-documented@1",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-is-declared-once@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-is-declared-once@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-is-declared-once@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
       {
@@ -49593,6 +49681,16 @@
       },
       {
         "source": "majordomus://test/test/cases/271_adr_allocation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -53253,8 +53351,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1662,
-      "edges": 3728,
+      "nodes": 1666,
+      "edges": 3736,
       "acyclic": true,
       "truncated": false
     }

@@ -181,8 +181,11 @@ from `sources.yaml`, typed by `kinds.yaml`, validated against the kind's schema 
 derivation over it (`plan.rs`, `graph.rs`, `product.rs`, `why.rs`, `obligations.rs`). No
 surface reads a file.
 
-```text
-.ai/** ──discovery──▶ index ──derivation──▶ capability ──projection──▶ surface
+```mermaid
+flowchart LR
+  layer[".ai/**"] -->|discovery| index["index"]
+  index -->|derivation| capability["capability"]
+  capability -->|projection| surface["surface"]
 ```
 
 **Mutate.** *Target flow.* A surface posts a typed input to a capability of kind `command`.
@@ -190,8 +193,12 @@ The capability validates against its input schema, applies the transition to the
 its canonical storage, appends a registered ledger event, and returns the new state. The
 same call over MCP, HTTP, the CLI and the Cockpit is one code path.
 
-```text
-surface ──typed input──▶ capability ──▶ object in .ai/**  ──▶ ledger event ──▶ /events
+```mermaid
+flowchart LR
+  surface["surface"] -->|typed input| capability["capability"]
+  capability --> object["object in .ai/**"]
+  object --> ledger["ledger event"]
+  ledger --> events["/events"]
 ```
 
 *Actual flow today.* For the lifecycle's mutating commands, the surface is a terminal
@@ -228,20 +235,17 @@ the execution stream, or the reverse.
 
 ## The derivation chain every exposed object follows
 
-```text
-canonical declaration            capability!  under src/capability/builtin/<module>.rs
-        │                        (or, for a layer object, its kind in share/kinds.yaml)
-        ▼
-serialization schema             CanonicalSchema from the typed input/output
-        │                        (or share/schemas/majordomus/<kind>/<kind>.v1.schema.json)
-        ▼
-HTTP route + OpenAPI             src/http/router.rs, docs/generated/openapi.{json,yaml}
-        │
-        ▼
-MCP tool or resource             majordomus://<kind>/<identity>, or a tool by capability id
-        │
-        ▼
-Cockpit contract                 the page that renders that capability's JSON
+```mermaid
+flowchart TD
+  decl["canonical declaration<br>capability! under src/capability/builtin/&lt;module&gt;.rs<br>(or, for a layer object, its kind in share/kinds.yaml)"]
+  schema["serialization schema<br>CanonicalSchema from the typed input/output<br>(or share/schemas/majordomus/&lt;kind&gt;/&lt;kind&gt;.v1.schema.json)"]
+  http["HTTP route + OpenAPI<br>src/http/router.rs<br>docs/generated/openapi.json, openapi.yaml"]
+  mcp["MCP tool or resource<br>majordomus://&lt;kind&gt;/&lt;identity&gt;,<br>or a tool by capability id"]
+  cockpit["Cockpit contract<br>the page that renders that capability's JSON"]
+  decl --> schema
+  schema --> http
+  http --> mcp
+  mcp --> cockpit
 ```
 
 Every link is generated. Nothing on the chain is written by hand, and a hand-written entry

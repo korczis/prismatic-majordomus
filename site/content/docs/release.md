@@ -150,12 +150,15 @@ writer.
 One section per release record, newest first by the date the record carries, with the
 unreleased work leading:
 
-```text
-   release record  ──►  version, tag, date, commit, artifacts
-   adr objects     ──►  the decisions dated inside this release's window
-   git log A..B    ──►  the changes, as conventional commits
-   issue·milestone ──►  the records those commits name, resolved against the layer
-```
+<pre class="mermaid">
+flowchart LR
+  record["release record"] --&gt; meta["version, tag, date,&lt;br&gt;commit, artifacts"]
+  adr["adr objects"] --&gt; decisions["the decisions dated inside&lt;br&gt;this release's window"]
+  log["git log A..B"] --&gt; changes["the changes, as&lt;br&gt;conventional commits"]
+  refs["issue · milestone"] --&gt; resolved["the records those commits name,&lt;br&gt;resolved against the layer"]
+  meta &amp; decisions &amp; changes &amp; resolved --&gt; section["one changelog section"]
+</pre>
+
 
 The window of a release is the same interval said in the two vocabularies its two sources
 have. An ADR carries a date and no commit; a commit carries no date the layer indexes. So
@@ -223,10 +226,12 @@ any change at all, each with its `kind`, the `heading` it is shown under, the `r
 by, and its own `changes` — and the groups are already in rank order when the document is
 composed:
 
-```text
-  section.groups[]  →  { kind: "feat", heading: "Added",   rank: 0, changes: [...] }
-                       { kind: "fix",  heading: "Fixed",   rank: 1, changes: [...] }
-                       { kind: "docs", heading: "Documentation", rank: 4, changes: [...] }
+```json
+{ "groups": [
+  { "kind": "feat", "heading": "Added",         "rank": 0, "changes": ["…"] },
+  { "kind": "fix",  "heading": "Fixed",         "rank": 1, "changes": ["…"] },
+  { "kind": "docs", "heading": "Documentation", "rank": 4, "changes": ["…"] }
+] }
 ```
 
 That order used to exist in exactly one place a projection could not reach: `ChangeKind::rank()`,
@@ -248,13 +253,15 @@ own `repository`, which the compiler passes in as `CARGO_PKG_REPOSITORY`. None o
 literal, so a fork or a move carries every link with it and nothing has to be told where the
 project now lives:
 
-```text
-  section  ──►  notes_url    the published release, from the record's own notes_url
-                compare_url  the range against the previous tag
-                tree_url     the tree at that tag
-  change   ──►  url          the commit
-  decision ──►  url          the ADR file that states the decision
-```
+<pre class="mermaid">
+flowchart LR
+  section["section"] --&gt; notes["notes_url&lt;br&gt;the published release, from&lt;br&gt;the record's own notes_url"]
+  section --&gt; compare["compare_url&lt;br&gt;the range against&lt;br&gt;the previous tag"]
+  section --&gt; tree["tree_url&lt;br&gt;the tree at that tag"]
+  change["change"] --&gt; curl["url&lt;br&gt;the commit"]
+  decision["decision"] --&gt; durl["url&lt;br&gt;the ADR file that&lt;br&gt;states the decision"]
+</pre>
+
 
 `forge()` in `changelog.rs` recognises one shape — `https://github.com/<owner>/<repo>` — and
 returns nothing for anything else. When it returns nothing, **no links are produced at all**
@@ -324,9 +331,11 @@ that is argued. What was missing was not a single source — it was a single wri
 `VersionPlan` that `release analyze`, the HTTP route, the MCP tool and the gate read, and
 applies it:
 
-```text
-  plan  →  validate  →  apply(plan)
-```
+<pre class="mermaid">
+flowchart LR
+  plan["plan"] --&gt; validate["validate"] --&gt; apply["apply(plan)"]
+</pre>
+
 
 With no argument the version becomes the measured minimum: the baseline raised by what the
 contract requires. `--level major|minor|patch` and `--exact 1.2.3` name a **higher** version

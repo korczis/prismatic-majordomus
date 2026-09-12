@@ -19,34 +19,29 @@ The one sentence that governs everything here:
 
 ## The shape
 
-```
-mesh declaration (.ai/repo/mesh/<id>.yaml, kind mesh, schema mesh/v1)
-        │  read once at shared-server startup; absent or disabled ⇒ nothing opens
-        ▼
-MeshRuntime (on the capability Context of the process)
-        │
-        ├─ NodeIdentity      ~/.local/state/majordomus/node.json — an Ed25519 keypair,
-        │                    created once per user and machine; node id = digest(key)
-        ├─ Beacon            this node's signed advertisement, one rising sequence
-        │
-        ├─ providers         each an implementation of mesh::provider::MeshProvider:
-        │     udp_multicast  the preferred LAN mechanism (group, port, TTL declared)
-        │     udp_broadcast  a declared fallback: disabled | auto | explicit networks
-        │     rendezvous     registers with declared endpoints over plain HTTP
-        │                    — providers hear bytes and hand them up; nothing more
-        ▼
-manager (one thread)         the single verification path, in order:
-        │                    size → shape → version → bounds → staleness → signature
-        │                    → own-datagram skip → trust policy → registry
-        ▼
-MeshRegistry                 the one store: deduplicated by node id, replay-protected
-        │                    per instance, presence decays (60 s), records expire
-        │                    (15 min), bounded (256; trusted never evicted for space)
-        ▼
-projections                  mesh.status · mesh.nodes · mesh.identity · mesh.doctor ·
-                             mesh.register — one declaration each, so the CLI, HTTP,
-                             OpenAPI, MCP and the Cockpit cannot disagree
-```
+<pre class="mermaid">
+flowchart TD
+  decl["mesh declaration&lt;br&gt;.ai/repo/mesh/&amp;lt;id&amp;gt;.yaml&lt;br&gt;kind mesh, schema mesh/v1"]
+  runtime["MeshRuntime&lt;br&gt;(on the capability Context of the process)"]
+  identity["NodeIdentity&lt;br&gt;~/.local/state/majordomus/node.json — an&lt;br&gt;Ed25519 keypair, created once per user and&lt;br&gt;machine; node id = digest(key)"]
+  beacon["Beacon&lt;br&gt;this node's signed advertisement,&lt;br&gt;one rising sequence"]
+  subgraph providers["providers — each an implementation of mesh::provider::MeshProvider&lt;br&gt;providers hear bytes and hand them up; nothing more"]
+    multicast["udp_multicast&lt;br&gt;the preferred LAN mechanism&lt;br&gt;(group, port, TTL declared)"]
+    broadcast["udp_broadcast&lt;br&gt;a declared fallback:&lt;br&gt;disabled | auto | explicit networks"]
+    rendezvous["rendezvous&lt;br&gt;registers with declared&lt;br&gt;endpoints over plain HTTP"]
+  end
+  manager["manager (one thread)&lt;br&gt;the single verification path, in order:&lt;br&gt;size → shape → version → bounds → staleness →&lt;br&gt;signature → own-datagram skip → trust policy → registry"]
+  registry["MeshRegistry&lt;br&gt;the one store: deduplicated by node id, replay-protected&lt;br&gt;per instance, presence decays (60 s), records expire&lt;br&gt;(15 min), bounded (256; trusted never evicted for space)"]
+  projections["projections&lt;br&gt;mesh.status · mesh.nodes · mesh.identity · mesh.doctor ·&lt;br&gt;mesh.register — one declaration each, so the CLI, HTTP,&lt;br&gt;OpenAPI, MCP and the Cockpit cannot disagree"]
+  decl --&gt;|"read once at shared-server startup;&lt;br&gt;absent or disabled ⇒ nothing opens"| runtime
+  runtime --&gt; identity
+  runtime --&gt; beacon
+  runtime --&gt; providers
+  runtime --&gt; manager
+  manager --&gt; registry
+  registry --&gt; projections
+</pre>
+
 
 ## Identity
 

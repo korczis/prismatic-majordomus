@@ -209,18 +209,27 @@ from `sources.yaml`, typed by `kinds.yaml`, validated against the kind's schema 
 derivation over it (`plan.rs`, `graph.rs`, `product.rs`, `why.rs`, `obligations.rs`). No
 surface reads a file.
 
-```text
-.ai/** ──discovery──▶ index ──derivation──▶ capability ──projection──▶ surface
-```
+<pre class="mermaid">
+flowchart LR
+  layer[".ai/**"] --&gt;|discovery| index["index"]
+  index --&gt;|derivation| capability["capability"]
+  capability --&gt;|projection| surface["surface"]
+</pre>
+
 
 **Mutate.** *Target flow.* A surface posts a typed input to a capability of kind `command`.
 The capability validates against its input schema, applies the transition to the object in
 its canonical storage, appends a registered ledger event, and returns the new state. The
 same call over MCP, HTTP, the CLI and the Cockpit is one code path.
 
-```text
-surface ──typed input──▶ capability ──▶ object in .ai/**  ──▶ ledger event ──▶ /events
-```
+<pre class="mermaid">
+flowchart LR
+  surface["surface"] --&gt;|typed input| capability["capability"]
+  capability --&gt; object["object in .ai/**"]
+  object --&gt; ledger["ledger event"]
+  ledger --&gt; events["/events"]
+</pre>
+
 
 *Actual flow today.* For the lifecycle's mutating commands, the surface is a terminal
 and the capability does not exist: `bin/majordomus` dispatches into `lib/<name>.sh`, which
@@ -261,21 +270,19 @@ the execution stream, or the reverse.
 
 ## The derivation chain every exposed object follows
 
-```text
-canonical declaration            capability!  under src/capability/builtin/<module>.rs
-        │                        (or, for a layer object, its kind in share/kinds.yaml)
-        ▼
-serialization schema             CanonicalSchema from the typed input/output
-        │                        (or share/schemas/majordomus/<kind>/<kind>.v1.schema.json)
-        ▼
-HTTP route + OpenAPI             src/http/router.rs, docs/generated/openapi.{json,yaml}
-        │
-        ▼
-MCP tool or resource             majordomus://<kind>/<identity>, or a tool by capability id
-        │
-        ▼
-Cockpit contract                 the page that renders that capability's JSON
-```
+<pre class="mermaid">
+flowchart TD
+  decl["canonical declaration&lt;br&gt;capability! under src/capability/builtin/&amp;lt;module&amp;gt;.rs&lt;br&gt;(or, for a layer object, its kind in share/kinds.yaml)"]
+  schema["serialization schema&lt;br&gt;CanonicalSchema from the typed input/output&lt;br&gt;(or share/schemas/majordomus/&amp;lt;kind&amp;gt;/&amp;lt;kind&amp;gt;.v1.schema.json)"]
+  http["HTTP route + OpenAPI&lt;br&gt;src/http/router.rs&lt;br&gt;docs/generated/openapi.json, openapi.yaml"]
+  mcp["MCP tool or resource&lt;br&gt;majordomus://&amp;lt;kind&amp;gt;/&amp;lt;identity&amp;gt;,&lt;br&gt;or a tool by capability id"]
+  cockpit["Cockpit contract&lt;br&gt;the page that renders that capability's JSON"]
+  decl --&gt; schema
+  schema --&gt; http
+  http --&gt; mcp
+  mcp --&gt; cockpit
+</pre>
+
 
 Every link is generated. Nothing on the chain is written by hand, and a hand-written entry
 anywhere on it is a violation of `project.rust-canonical-declaration@1` (ADR 0004) as much

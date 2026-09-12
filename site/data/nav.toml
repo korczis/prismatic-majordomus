@@ -1,20 +1,38 @@
-# Site navigation: a handful of intents, small on purpose. Rendered by templates/partials/navbar.html
-# as Flowbite dropdowns on desktop and as labelled flat lists inside the collapsed mobile menu,
-# and by templates/partials/footer.html as the footer's columns. A group with no items is a
-# plain link. Every href must resolve; scripts/site-check verifies it. Nothing here enumerates
-# a feature, a module, a capability or a command: those routes are the generator's.
+# Site navigation: five top-level user intents and one call to action. Rendered by
+# templates/partials/navbar.html as Flowbite dropdowns on desktop and as labelled flat lists
+# inside the collapsed mobile menu, and by templates/partials/footer.html as the footer's
+# columns. A group with no items is a plain link. Every href must resolve; scripts/site-check
+# verifies it, and scripts/ci/nav-check verifies that no href is written twice and that every
+# projection of this file derives from it.
+#
+# Nothing here enumerates a feature, a module, a capability or a command: those routes are
+# the generator's, and site-check refuses a feature route named by hand in this file.
+#
+# # Why five
+#
+# A navbar is not a sitemap. It carries the top-level questions a visitor arrives with, and
+# this file used to carry nine categories that answered a different question each: `Method`
+# and `Concepts` were both "how does it work", `Executable` and `Reference` both listed the
+# CLI reference and the HTTP API — the *same two hrefs*, under two labels — and `Trust` held
+# a roadmap while `Plan` sat beside it holding milestones. A visitor had to know this
+# repository's internal ontology before they could find anything, which is the reader doing
+# the information architecture's job.
+#
+#   Why            does this problem exist                     evaluate.problem
+#   Product        what it does and what I get                 evaluate.capabilities
+#   How it works   how the system actually behaves             understand.system
+#   Docs           how I use it, and what everything is        use.system
+#   Evidence       why I should believe any of it              verify.system
+#   [Get started]  an action, not a category                   adopt.start
+#
+# Two pages left the navbar rather than moving: /docs/extraction-report/ records how
+# DESIGN.md was derived in the v0.1 design phase, and /docs/economics/ opens with "short,
+# because v0.1 measures nothing and says so". Both are reachable from /docs/ and neither is
+# a question a visitor arrives with. Not every page deserves a place in the navbar.
 
 [[groups]]
 label = "Why"
 href = "/why/"
-
-[[groups]]
-label = "Method"
-href = "/method/"
-items = [
-  { label = "Doctrine, policy, rule, enforcement", href = "/method/" },
-  { label = "Four axes", href = "/method/axes/" },
-]
 
 [[groups]]
 label = "Product"
@@ -25,82 +43,64 @@ items = [
   { label = "Use cases", href = "/use-cases/" },
   { label = "Applications", href = "/applications/" },
   { label = "Skills", href = "/skills/" },
-]
-
-[[groups]]
-label = "Get started"
-href = "/getting-started/"
-items = [
-  { label = "Quick start", href = "/getting-started/" },
-  { label = "Install", href = "/docs/install/" },
-  { label = "Commands", href = "/commands/" },
-  { label = "Shell CLI specification", href = "/docs/cli-specification/" },
-  { label = "Execution profiles", href = "/profiles/" },
-]
-
-[[groups]]
-label = "Concepts"
-href = "/docs/concepts/"
-items = [
-  { label = "Vocabulary", href = "/docs/concepts/" },
   { label = "What it supervises", href = "/supervises/" },
+]
+
+[[groups]]
+label = "How it works"
+href = "/method/"
+items = [
+  { label = "Doctrine, policy, rule, enforcement", href = "/method/" },
+  { label = "Four axes", href = "/method/axes/" },
+  { label = "Vocabulary", href = "/docs/concepts/" },
   { label = "Canonical policy", href = "/policy/" },
   { label = "Directory contracts", href = "/context/" },
   { label = "Sessions", href = "/sessions/" },
-  { label = "Design", href = "/docs/design/" },
-]
-
-[[groups]]
-label = "Plan"
-href = "/plan/"
-items = [
-  { label = "Milestones and issues", href = "/plan/" },
-  { label = "Dependency graph", href = "/plan/dag/" },
   { label = "How planning works", href = "/docs/planning/" },
-  { label = "Dogfooding", href = "/docs/dogfooding/" },
+  { label = "Design", href = "/docs/design/" },
+  { label = "How this site is built", href = "/architecture/" },
+  { label = "How the product page is derived", href = "/docs/product/" },
 ]
 
 [[groups]]
-label = "Trust"
-href = "/guarantees/"
-items = [
-  { label = "Guarantees", href = "/guarantees/" },
-  { label = "Doctrine", href = "/doctrines/" },
-  { label = "Changelog", href = "/changelog/" },
-  { label = "The finish contract", href = "/contract/" },
-  { label = "Evidence graph", href = "/evidence/" },
-  { label = "Limitations", href = "/limitations/" },
-  { label = "Roadmap", href = "/roadmap/" },
-  { label = "Extraction report", href = "/docs/extraction-report/" },
-  { label = "Economics", href = "/docs/economics/" },
-]
-
-[[groups]]
-label = "Executable"
-href = "/registry/"
-items = [
-  { label = "The Rust executable", href = "/registry/executable/" },
-  { label = "Registry", href = "/registry/" },
-  { label = "Capabilities", href = "/registry/capabilities/" },
-  { label = "Command line", href = "/registry/cli/" },
-  { label = "Command reference", href = "/docs/cli/" },
-  { label = "MCP surface", href = "/registry/mcp/" },
-  { label = "HTTP API", href = "/docs/api/" },
-  { label = "Benchmarks", href = "/registry/benchmarks/" },
-]
-
-[[groups]]
-label = "Reference"
+label = "Docs"
 href = "/docs/"
 items = [
   { label = "All documents", href = "/docs/" },
-  { label = "How the product page is derived", href = "/docs/product/" },
-  { label = "Rust CLI reference", href = "/docs/cli/" },
+  { label = "Install", href = "/docs/install/" },
+  { label = "Commands", href = "/commands/" },
+  { label = "Execution profiles", href = "/profiles/" },
+  { label = "Command reference", href = "/docs/cli/" },
   { label = "HTTP API", href = "/docs/api/" },
+  { label = "MCP surface", href = "/registry/mcp/" },
   { label = "File schemas", href = "/docs/schemas/" },
+  { label = "Registry", href = "/registry/" },
   { label = "Program map", href = "/map/" },
-  { label = "How this site is built", href = "/architecture/" },
 ]
+
+[[groups]]
+label = "Evidence"
+href = "/guarantees/"
+items = [
+  { label = "Guarantees", href = "/guarantees/" },
+  { label = "Evidence graph", href = "/evidence/" },
+  { label = "The finish contract", href = "/contract/" },
+  { label = "Doctrine", href = "/doctrines/" },
+  { label = "Benchmarks", href = "/registry/benchmarks/" },
+  { label = "Limitations", href = "/limitations/" },
+  { label = "Roadmap", href = "/roadmap/" },
+  { label = "Milestones and issues", href = "/plan/" },
+  { label = "Dependency graph", href = "/plan/dag/" },
+  { label = "Changelog", href = "/changelog/" },
+  { label = "Dogfooding", href = "/docs/dogfooding/" },
+]
+
+# The one action on the bar. Not a sixth category: a visitor who has decided does not want a
+# dropdown, and /getting-started/ is the canonical start — it exists, it has its own
+# template, and its steps are the ones the tool's own tests exercise.
+[cta]
+label = "Get started"
+href = "/getting-started/"
 
 # Routes that moved. The generator turns each into a Zola alias on the page it points at,
 # so the old address answers with a redirect; scripts/site-check proves every one resolves.
