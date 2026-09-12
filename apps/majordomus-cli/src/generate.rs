@@ -765,6 +765,11 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             // derived, the matrix, the providers. Index-independent like the catalogue,
             // so both `generate` passes of the derivation graph agree byte for byte.
             out.extend(crate::site::product_artifacts(&app.context)?);
+            // The diagrams the site publishes, as the model rather than as Mermaid source
+            // (see [`crate::diagrams`]). They belong here because the site generator has no
+            // Rust toolchain and no renderer of its own: it reads this file the way it
+            // reads every other committed projection of the executable.
+            out.extend(crate::diagrams::artifacts(app, &policy)?);
         }
     }
     if targets.contains(&Target::Distribution) {

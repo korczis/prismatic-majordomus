@@ -673,7 +673,7 @@ mod tests {
                     validator: None,
                     category: None,
                     exit_code: None,
-                    enforced_by: None,
+                    enforced_by: Vec::new(),
                     tests: vec!["test/cases/07_scope.sh".into()],
                     reviewed_because: None,
                 },

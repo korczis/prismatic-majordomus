@@ -204,7 +204,7 @@ impl Mode {
 ///     validator: None,
 ///     category: None,
 ///     exit_code: None,
-///     enforced_by: None,
+///     enforced_by: vec!["commit".into()],
 ///     tests: vec!["test/cases/07_scope.sh".into()],
 ///     reviewed_because: None,
 /// };
@@ -222,9 +222,14 @@ pub struct Enforcement {
     /// The exit code the validator uses to refuse.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exit_code: Option<i64>,
-    /// Which boundary enforces it: the word the rule's own block uses.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub enforced_by: Option<String>,
+    /// Which boundaries enforce it: the words the rule's own block uses, in its order.
+    ///
+    /// A list, because the blocks write one. Read as a scalar it came back empty for every
+    /// rule that declares `enforced_by: [doctor, watch]` — which is most of them — and the
+    /// field looked like something the rules do not carry rather than something this
+    /// reader could not see.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub enforced_by: Vec<String>,
     /// Every test the block names, in the order it names them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tests: Vec<String>,
@@ -260,7 +265,7 @@ pub struct Enforcement {
 ///     path: ".ai/repo/rules/project/scope-is-declared.v1.md".into(),
 ///     enforcement: Enforcement {
 ///         mode: Mode::Declarative, validator: None, category: None, exit_code: None,
-///         enforced_by: None, tests: vec![], reviewed_because: None,
+///         enforced_by: vec![], tests: vec![], reviewed_because: None,
 ///     },
 /// };
 /// assert_eq!(d.class, Class::Blocking);
@@ -788,14 +793,14 @@ fn enforcement_of(meta: &Value) -> Enforcement {
             validator: None,
             category: None,
             exit_code: None,
-            enforced_by: None,
+            enforced_by: Vec::new(),
             tests: Vec::new(),
             reviewed_because: None,
         };
     };
     let validator = field(block, "validator");
     let tests = list(block, "tests");
-    let enforced_by = field(block, "enforced_by");
+    let enforced_by = list(block, "enforced_by");
     let reviewed_because = field(block, "reviewed_because");
     // The order matters. An executable proof wins over a declaration of review, so a rule
     // that acquires a case stops being review-enforced without anyone remembering to

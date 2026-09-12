@@ -866,7 +866,14 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
     ])
 }
 
-fn render_json(v: &serde_json::Value) -> String {
+/// A site dataset as the repository commits it: pretty-printed JSON with one trailing
+/// newline, which is what every writer of `site/data/registry/` produces.
+///
+/// ```
+/// use majordomus_cli::site::render_json;
+/// assert_eq!(render_json(&serde_json::json!({"a": 1})), "{\n  \"a\": 1\n}\n");
+/// ```
+pub fn render_json(v: &serde_json::Value) -> String {
     let mut s = serde_json::to_string_pretty(v).unwrap_or_default();
     s.push('\n');
     s

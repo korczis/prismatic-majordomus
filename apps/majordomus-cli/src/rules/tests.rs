@@ -23,7 +23,7 @@ fn the_mode_is_what_the_block_names() {
     assert_eq!(dispatched.mode, Mode::Dispatched);
     assert_eq!(dispatched.validator.as_deref(), Some("lib/checks/scope.sh"));
     assert_eq!(dispatched.exit_code, Some(12));
-    assert_eq!(dispatched.enforced_by.as_deref(), Some("commit"));
+    assert_eq!(dispatched.enforced_by, vec!["commit".to_string()]);
     assert_eq!(dispatched.tests, ["test/cases/07_scope.sh"]);
 
     let gated = enforcement_of(&json!({"x-majordomus": {"tests": ["test/cases/07_scope.sh"]}}));

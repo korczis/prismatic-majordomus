@@ -1,0 +1,35 @@
+{
+  "diagrams": {
+    "axes": {
+      "mermaid": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>108 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>48 of 108</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>107 of 108</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>105 of 108</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+      "source": "profiles, workflows and the capability registry",
+      "title": "Four axes, deliberately not one"
+    },
+    "governance": {
+      "mermaid": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>44 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>44 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2",
+      "source": "the standard rule package and its wiring",
+      "title": "One invariant, all the way down"
+    },
+    "lifecycle": {
+      "mermaid": "stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n    active --> completed: finish --outcome completed\n    completed --> [*]\n    active --> partial: finish --outcome partial\n    partial --> [*]\n    active --> blocked: finish --outcome blocked\n    blocked --> [*]\n    active --> no_match: finish --outcome no_match\n    no_match --> [*]\n    active --> failed: finish --outcome failed\n    failed --> [*]",
+      "source": "lib/finish.sh outcome vocabulary",
+      "title": "Task lifecycle"
+    },
+    "pipeline": {
+      "mermaid": "flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P",
+      "source": "generate-site-data inputs",
+      "title": "How this site is derived"
+    },
+    "projection": {
+      "mermaid": "flowchart TD\n    P[.ai/repo/policy.yaml]\n    U[majordomus update]\n    P --> U\n    U --> T0[\"AGENTS.md<br/><small>agents</small>\"]\n    U --> T1[\"CLAUDE.md<br/><small>claude-code</small>\"]\n    U --> T2[\"GEMINI.md<br/><small>gemini</small>\"]\n    T0 -.->|stamp| D[majordomus doctor]",
+      "source": "share/skeleton/policy.yaml projections",
+      "title": "Policy to instruction files"
+    },
+    "supervision": {
+      "mermaid": "flowchart TD\n    H[Human / Organisation]\n    M[Majordomus<br/><small>policy · state · verification</small>]\n    W1[Claude Code]\n    W2[Codex]\n    W3[Gemini · Cursor · local]\n    V[Verified, accepted outcomes]\n    H --> M\n    M --> W1\n    M --> W2\n    M --> W3\n    W1 --> V\n    W2 --> V\n    W3 --> V",
+      "source": "README.md mental model",
+      "title": "The core model"
+    }
+  },
+  "note": "Frozen: what site/data/generated/diagrams.json carried at 98a1f0800, before this module produced it. Evidence, not input: nothing regenerates this file."
+}

@@ -190,6 +190,16 @@ pub struct Node {
     pub id: String,
     /// The short text drawn inside the node.
     pub label: String,
+    /// The qualifier under the label: a count, a lifetime, a provider — the fact that
+    /// makes the node this node rather than the category it belongs to.
+    ///
+    /// Separate from `label` because it is a second value and not a second sentence, and
+    /// because how a qualifier is *shown* is the renderer's business: Mermaid writes it
+    /// smaller on a second line, another renderer may put it in a tooltip or drop it. A
+    /// derivation that concatenates the two itself has decided that for every renderer
+    /// there will ever be, and has put markup in the data to do it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
     /// What it is drawn as.
     #[serde(default)]
     pub shape: Shape,
@@ -208,8 +218,23 @@ impl Node {
         Node {
             id: id.into(),
             label: label.into(),
+            detail: None,
             shape: Shape::default(),
         }
+    }
+
+    /// The same node with the qualifier a derivation read beside its name.
+    ///
+    /// ```
+    /// use majordomus_cli::diagram::{Diagram, Kind, Node, Provenance};
+    /// let node = Node::new("rule", "Rule").detailed("44 rules · months");
+    /// assert_eq!(node.detail.as_deref(), Some("44 rules · months"));
+    /// let drawn = Diagram::new("x", "X", Kind::Flow, Provenance::new("a", "b")).with_node(node);
+    /// assert!(drawn.to_mermaid().contains(r#"rule["Rule<br/><small>44 rules · months</small>"]"#));
+    /// ```
+    pub fn detailed(mut self, detail: impl Into<String>) -> Node {
+        self.detail = Some(detail.into());
+        self
     }
 
     /// The same node with a different [`Shape`] — which is a statement about the thing and
@@ -542,6 +567,12 @@ impl Diagram {
             if seen.contains(&node.id.as_str()) {
                 found.push(format!("node id {:?} is declared twice", node.id));
             }
+            if node.detail.is_some() && self.kind == Kind::State {
+                found.push(format!(
+                    "node {:?} carries a detail, which a state diagram cannot draw",
+                    node.id
+                ));
+            }
             seen.push(&node.id);
         }
         for edge in &self.edges {
@@ -739,7 +770,13 @@ fn inline(label: &str) -> String {
 
 /// One node's declaration in a flowchart, in the brackets its shape asks for.
 fn flow_node(node: &Node) -> String {
-    let label = quoted(&node.label);
+    // the qualifier is Mermaid's to place: a line break below the name, drawn smaller.
+    // `quoted` turns the newline into the break Mermaid reads, so this function never
+    // writes `<br/>` itself and a label holding a newline is escaped the one way.
+    let label = match &node.detail {
+        Some(detail) => quoted(&format!("{}\n<small>{detail}</small>", node.label)),
+        None => quoted(&node.label),
+    };
     match node.shape {
         Shape::Box => format!("{}[{label}]", node.id),
         Shape::Rounded => format!("{}({label})", node.id),
