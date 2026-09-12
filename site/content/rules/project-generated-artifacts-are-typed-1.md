@@ -1,7 +1,7 @@
 +++
 title = "A generated artifact declares its document, its encoding, its contract and its source"
 description = "A generated artifact declares its document, its encoding, its contract and its source"
-weight = 87
+weight = 88
 [extra]
 kind = "rule"
 slug = "project-generated-artifacts-are-typed-1"

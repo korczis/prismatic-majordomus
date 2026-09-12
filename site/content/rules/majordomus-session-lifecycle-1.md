@@ -1,7 +1,7 @@
 +++
 title = "The episode boundary is drawn below the model, and its working context is local"
 description = "The episode boundary is drawn below the model, and its working context is local"
-weight = 47
+weight = 48
 [extra]
 kind = "rule"
 slug = "majordomus-session-lifecycle-1"

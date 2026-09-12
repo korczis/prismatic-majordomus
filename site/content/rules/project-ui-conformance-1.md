@@ -1,7 +1,7 @@
 +++
 title = "Every page of every web surface is audited, and the audit names no page"
 description = "Every page of every web surface is audited, and the audit names no page"
-weight = 127
+weight = 129
 [extra]
 kind = "rule"
 slug = "project-ui-conformance-1"

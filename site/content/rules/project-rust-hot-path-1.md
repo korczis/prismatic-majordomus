@@ -1,7 +1,7 @@
 +++
 title = "A request never rebuilds canonical state, and a cache is never trusted without an equivalence test"
 description = "A request never rebuilds canonical state, and a cache is never trusted without an equivalence test"
-weight = 118
+weight = 120
 [extra]
 kind = "rule"
 slug = "project-rust-hot-path-1"

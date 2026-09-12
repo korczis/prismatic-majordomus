@@ -1,7 +1,7 @@
 +++
 title = "An architectural relationship in a published document is drawn, never typed in box art"
 description = "An architectural relationship in a published document is drawn, never typed in box art"
-weight = 56
+weight = 57
 [extra]
 kind = "rule"
 slug = "project-a-diagram-is-drawn-not-typed-1"
@@ -40,9 +40,25 @@ the target is mermaid and not an image — an SVG would render and still be unre
 
 ## Required behaviour
 
-**An architectural relationship in a document under `docs/` is a ```mermaid block.** That is
-lifecycles, state machines, pipelines, dependency and governance graphs, projections from a
-declaration to its surfaces, and anything else whose content is *what connects to what*.
+**An architectural relationship in anything this repository publishes is a ```mermaid
+block.** That is lifecycles, state machines, pipelines, dependency and governance graphs,
+projections from a declaration to its surfaces, and anything else whose content is *what
+connects to what*.
+
+**Published means every form a reader meets it in**, not only the Markdown: `docs/**`, the
+pages written straight into `site/content-src/**`, and the templates those pages are rendered
+through, `site/templates/**`. Those are the canonical trees. `site/content/**` is a
+projection of the first two and the generator overwrites it, so a finding reported there
+would name a file its author cannot fix. And in each of them, both forms a block is written
+in — a ```fenced block and an HTML `<pre>`/`<code>` block. The second is not a technicality: the
+most-published document in this repository is a template, and for the rule's first weeks a
+hand-drawn control loop sat in one, in HTML, where a gate reading fences only could not see
+it at any scope.
+
+**An HTML block declares its language the way HTML does**, in `class` or `data-lang`:
+`class="console"` is exactly as exempt as a ```console fence, `language-bash` and
+`data-lang="mermaid"` are read the same way, and a `<pre>` wearing only layout classes
+declares nothing and is judged on its contents.
 
 **Three things made of the same characters are not diagrams, and are exempt by declaration:**
 
@@ -65,8 +81,8 @@ next to it for the terminal.
 ## Failure behaviour
 
 `scripts/ci/diagram-check`, registered as the `diagram-check` gate, fails when the number of
-hand-drawn diagrams under `docs/` rises above `.ai/repo/diagram-baseline.txt`, listing each
-one with its file, line and first line of content. It also fails when the count falls *below*
+hand-drawn diagrams in the published tree rises above `.ai/repo/diagram-baseline.txt`,
+listing each with its file, line and first line of content. It also fails when it falls *below*
 the baseline without the baseline being lowered — a ratchet above the truth is a gate that
 has stopped looking, and the only way to go down is to record that you did.
 
@@ -85,4 +101,8 @@ bash test/run.sh 272_diagrams_are_drawn
 fixture of its own — a box-art architecture, a mermaid block, a `console` transcript, a file
 tree, a tree whose annotation contains an arrow, and a block quoting an HTML comment — so the
 gate is measured by what it decides rather than by what this repository happens to contain.
+Each of those is asked again of the HTML form: a template's `<pre><code>` box art and
+entity-encoded arrows must be caught, and a `<pre class="console">` holding real terminal
+output, a `<pre>` holding a file tree, a `<pre class="mermaid">`, `class="language-bash"`, an
+inline `<code>` in a sentence and a ```html fence quoting the markup of a drawing must not.
 {% endraw %}

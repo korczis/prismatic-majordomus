@@ -1,7 +1,7 @@
 +++
 title = "What the tool knows about a provider is declared once and projected everywhere"
 description = "What the tool knows about a provider is declared once and projected everywhere"
-weight = 109
+weight = 111
 [extra]
 kind = "rule"
 slug = "project-providers-are-data-1"

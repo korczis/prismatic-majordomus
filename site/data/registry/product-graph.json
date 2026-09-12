@@ -323,6 +323,15 @@
       "status": "featured"
     },
     {
+      "id": "feature:coverage",
+      "kind": "feature",
+      "label": "Coverage",
+      "summary": "scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, the session/continuity domain held to 100%, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.",
+      "route": "/features/coverage/",
+      "source": ".ai/repo/features/coverage.md",
+      "status": "stable"
+    },
+    {
       "id": "feature:declare-once",
       "kind": "feature",
       "label": "Declare once",
@@ -470,7 +479,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "50 object(s) of the layer",
+      "summary": "51 object(s) of the layer",
       "route": "/registry/modules/adr/",
       "source": "share/kinds.yaml"
     },
@@ -502,7 +511,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "169 object(s) of the layer",
+      "summary": "170 object(s) of the layer",
       "route": "/registry/modules/claim/",
       "source": "share/kinds.yaml"
     },
@@ -534,7 +543,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "241 object(s) of the layer",
+      "summary": "243 object(s) of the layer",
       "route": "/registry/modules/document/",
       "source": "share/kinds.yaml"
     },
@@ -542,7 +551,7 @@
       "id": "kind:feature",
       "kind": "kind",
       "label": "feature",
-      "summary": "23 object(s) of the layer",
+      "summary": "24 object(s) of the layer",
       "route": "/registry/modules/feature/",
       "source": "share/kinds.yaml"
     },
@@ -606,7 +615,7 @@
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "134 object(s) of the layer",
+      "summary": "136 object(s) of the layer",
       "route": "/registry/modules/rule/",
       "source": "share/kinds.yaml"
     },
@@ -1228,6 +1237,21 @@
     },
     {
       "source": "feature:coordination",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "feature:coverage",
+      "target": "feature:ci",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:coverage",
+      "target": "feature:doctrine",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:coverage",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -2398,8 +2422,8 @@
     }
   ],
   "metadata": {
-    "nodes": 99,
-    "edges": 305,
+    "nodes": 100,
+    "edges": 308,
     "acyclic": false,
     "truncated": false
   },

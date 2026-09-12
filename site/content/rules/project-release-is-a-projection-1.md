@@ -1,7 +1,7 @@
 +++
 title = "The changelog is composed and the version has one writer"
 description = "The changelog is composed and the version has one writer"
-weight = 112
+weight = 114
 [extra]
 kind = "rule"
 slug = "project-release-is-a-projection-1"

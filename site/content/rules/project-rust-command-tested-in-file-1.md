@@ -1,7 +1,7 @@
 +++
 title = "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered"
 description = "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered"
-weight = 117
+weight = 119
 [extra]
 kind = "rule"
 slug = "project-rust-command-tested-in-file-1"

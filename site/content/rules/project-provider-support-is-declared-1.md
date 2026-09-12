@@ -1,7 +1,7 @@
 +++
 title = "What a provider's adapter can do is declared, never observed from the filesystem"
 description = "What a provider's adapter can do is declared, never observed from the filesystem"
-weight = 108
+weight = 110
 [extra]
 kind = "rule"
 slug = "project-provider-support-is-declared-1"

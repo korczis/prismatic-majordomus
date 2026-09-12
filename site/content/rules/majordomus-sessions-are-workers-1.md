@@ -1,7 +1,7 @@
 +++
 title = "Sessions are workers, not memory"
 description = "Sessions are workers, not memory"
-weight = 49
+weight = 50
 [extra]
 kind = "rule"
 slug = "majordomus-sessions-are-workers-1"

@@ -3800,6 +3800,33 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0055",
+        "kind": "adr",
+        "label": "adr-0055",
+        "summary": "Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts",
+        "route": "/cockpit/objects/adr/adr-0055",
+        "source": ".ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "related": [
+            "rule:project.accumulation-is-measured",
+            "rule:project.destructive-sweeps-fail-closed",
+            "rule:project.reclaim-only-what-you-own",
+            "rule:project.every-wait-is-bounded",
+            "rule:project.worktree-topology",
+            "test:test/cases/276_disk_is_bounded.sh",
+            "test:test/cases/131_backlog_hygiene.sh"
+          ],
+          "tags": [
+            "operations",
+            "safety",
+            "worktrees",
+            "ci"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0056",
         "kind": "adr",
         "label": "adr-0056",
@@ -5823,6 +5850,21 @@
           "responsibility": "none",
           "source": "docs/MODELS.md",
           "test": "test/cases/131_models.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/new-code-is-covered",
+        "kind": "claim",
+        "label": "new-code-is-covered",
+        "summary": "Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone",
+        "route": "/cockpit/objects/claim/new-code-is-covered",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "scripts/rust-coverage",
+          "responsibility": "none",
+          "source": "docs/COVERAGE.md",
+          "test": "test/cases/132_coverage_differential.sh"
         }
       },
       {
@@ -9200,6 +9242,14 @@
         "source": "docs/CONTINUITY.md"
       },
       {
+        "id": "majordomus://document/docs/COVERAGE.md",
+        "kind": "document",
+        "label": "docs/COVERAGE.md",
+        "summary": "Coverage: one measurement, two questions",
+        "route": "/cockpit/objects/document/docs-coverage-md",
+        "source": "docs/COVERAGE.md"
+      },
+      {
         "id": "majordomus://document/docs/DESIGN.md",
         "kind": "document",
         "label": "docs/DESIGN.md",
@@ -10232,6 +10282,14 @@
         "source": "docs/claims/models-routing-explains-itself.md"
       },
       {
+        "id": "majordomus://document/docs/claims/new-code-is-covered.md",
+        "kind": "document",
+        "label": "docs/claims/new-code-is-covered.md",
+        "summary": "Every executable line, function and region a change adds or touches in the Rust crate is covered by a test; new debt is refused and untouched legacy debt is left alone",
+        "route": "/cockpit/objects/document/docs-claims-new-code-is-covered-md",
+        "source": "docs/claims/new-code-is-covered.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/no-counts-in-context.md",
         "kind": "document",
         "label": "docs/claims/no-counts-in-context.md",
@@ -11259,6 +11317,45 @@
             "mcp"
           ],
           "weight": 30
+        }
+      },
+      {
+        "id": "majordomus://feature/coverage",
+        "kind": "feature",
+        "label": "coverage",
+        "summary": "New code is covered, measured once and asked two questions",
+        "route": "/cockpit/objects/feature/coverage",
+        "source": ".ai/repo/features/coverage.md",
+        "status": "stable",
+        "facts": {
+          "areas": [
+            "verification"
+          ],
+          "claims": [
+            "new-code-is-covered"
+          ],
+          "cockpit": [],
+          "commands": [],
+          "docs": [
+            "docs/COVERAGE.md"
+          ],
+          "featured": false,
+          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a full-coverage domain, and — the invariant of",
+          "modules": [],
+          "related": [
+            "doctrine",
+            "ci"
+          ],
+          "rules": [
+            "project.new-code-is-covered"
+          ],
+          "short_title": "Coverage",
+          "tags": [
+            "coverage",
+            "testing"
+          ],
+          "use_cases": [],
+          "weight": 72
         }
       },
       {
@@ -27219,6 +27316,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.publication-currency@1",
+        "kind": "rule",
+        "label": "majordomus.publication-currency@1",
+        "summary": "A session does not finish behind its own published site",
+        "route": "/cockpit/objects/rule/majordomus-publication-currency-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.completion-gates@1"
+          ],
+          "tags": [
+            "tasks",
+            "completion",
+            "deployment",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.questions-store-integrity@1",
         "kind": "rule",
         "label": "majordomus.questions-store-integrity@1",
@@ -27619,18 +27737,21 @@
         }
       },
       {
-        "id": "majordomus://rule/project.accumulation-is-measured@1",
+        "id": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "rule",
-        "label": "project.accumulation-is-measured@1",
+        "label": "project.accumulation-is-measured@2",
         "summary": "Everything that accumulates is measured, bounded and reaped by a committed command",
-        "route": "/cockpit/objects/rule/project-accumulation-is-measured-1",
-        "source": ".ai/repo/rules/project/accumulation-is-measured.v1.md",
+        "route": "/cockpit/objects/rule/project-accumulation-is-measured-2",
+        "source": ".ai/repo/rules/project/accumulation-is-measured.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [
             "project.worktree-topology@1",
-            "project.work-is-claimed-before-it-is-built@1"
+            "project.work-is-claimed-before-it-is-built@1",
+            "project.destructive-sweeps-fail-closed@1",
+            "project.reclaim-only-what-you-own@1",
+            "project.every-wait-is-bounded@1"
           ],
           "tags": [
             "operations",
@@ -27639,7 +27760,8 @@
             "safety",
             "agents",
             "coordination",
-            "ci"
+            "ci",
+            "disk"
           ]
         }
       },
@@ -28393,6 +28515,24 @@
           "tags": [
             "records",
             "continuity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.new-code-is-covered@1",
+        "kind": "rule",
+        "label": "project.new-code-is-covered@1",
+        "summary": "New and changed executable code is covered by a test; legacy debt may only shrink",
+        "route": "/cockpit/objects/rule/project-new-code-is-covered-1",
+        "source": ".ai/repo/rules/project/new-code-is-covered.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "coverage",
+            "testing",
+            "doctrine"
           ]
         }
       },
@@ -31632,6 +31772,13 @@
         "source": "test/cases/131_models.sh"
       },
       {
+        "id": "majordomus://test/test/cases/132_coverage_differential.sh",
+        "kind": "test",
+        "label": "test/cases/132_coverage_differential.sh",
+        "route": "/cockpit/objects/test/test-cases-132-coverage-differential-sh",
+        "source": "test/cases/132_coverage_differential.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "kind": "test",
         "label": "test/cases/132_health_sees_a_stopped_writer.sh",
@@ -31933,6 +32080,20 @@
         "source": "test/cases/273_navigation_is_declared_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/275_publication_is_current.sh",
+        "kind": "test",
+        "label": "test/cases/275_publication_is_current.sh",
+        "route": "/cockpit/objects/test/test-cases-275-publication-is-current-sh",
+        "source": "test/cases/275_publication_is_current.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "test",
+        "label": "test/cases/276_disk_is_bounded.sh",
+        "route": "/cockpit/objects/test/test-cases-276-disk-is-bounded-sh",
+        "source": "test/cases/276_disk_is_bounded.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/277_entities_are_routable.sh",
         "kind": "test",
         "label": "test/cases/277_entities_are_routable.sh",
@@ -31940,11 +32101,53 @@
         "source": "test/cases/277_entities_are_routable.sh"
       },
       {
+        "id": "majordomus://test/test/cases/278_the_gate_runner_clears_the_share.sh",
+        "kind": "test",
+        "label": "test/cases/278_the_gate_runner_clears_the_share.sh",
+        "route": "/cockpit/objects/test/test-cases-278-the-gate-runner-clears-the-share-sh",
+        "source": "test/cases/278_the_gate_runner_clears_the_share.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/279_the_publication_age_is_the_oldest_debt.sh",
+        "kind": "test",
+        "label": "test/cases/279_the_publication_age_is_the_oldest_debt.sh",
+        "route": "/cockpit/objects/test/test-cases-279-the-publication-age-is-the-oldest-debt-sh",
+        "source": "test/cases/279_the_publication_age_is_the_oldest_debt.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/27_foreign_task.sh",
         "kind": "test",
         "label": "test/cases/27_foreign_task.sh",
         "route": "/cockpit/objects/test/test-cases-27-foreign-task-sh",
         "source": "test/cases/27_foreign_task.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/280_capture_status_states_its_denominator.sh",
+        "kind": "test",
+        "label": "test/cases/280_capture_status_states_its_denominator.sh",
+        "route": "/cockpit/objects/test/test-cases-280-capture-status-states-its-denominator-sh",
+        "source": "test/cases/280_capture_status_states_its_denominator.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/281_published_order_is_tracked.sh",
+        "kind": "test",
+        "label": "test/cases/281_published_order_is_tracked.sh",
+        "route": "/cockpit/objects/test/test-cases-281-published-order-is-tracked-sh",
+        "source": "test/cases/281_published_order_is_tracked.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/282_the_ledger_envelope_is_reserved.sh",
+        "kind": "test",
+        "label": "test/cases/282_the_ledger_envelope_is_reserved.sh",
+        "route": "/cockpit/objects/test/test-cases-282-the-ledger-envelope-is-reserved-sh",
+        "source": "test/cases/282_the_ledger_envelope_is_reserved.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/284_a_record_reads_the_whole_declaration.sh",
+        "kind": "test",
+        "label": "test/cases/284_a_record_reads_the_whole_declaration.sh",
+        "route": "/cockpit/objects/test/test-cases-284-a-record-reads-the-whole-declaration-sh",
+        "source": "test/cases/284_a_record_reads_the_whole_declaration.sh"
       },
       {
         "id": "majordomus://test/test/cases/28_catalogue.sh",
@@ -32519,6 +32722,13 @@
         "label": "test/cases/96_worktree_topology.sh",
         "route": "/cockpit/objects/test/test-cases-96-worktree-topology-sh",
         "source": "test/cases/96_worktree_topology.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/97_development_semantics_gate.sh",
+        "kind": "test",
+        "label": "test/cases/97_development_semantics_gate.sh",
+        "route": "/cockpit/objects/test/test-cases-97-development-semantics-gate-sh",
+        "source": "test/cases/97_development_semantics_gate.sh"
       },
       {
         "id": "majordomus://test/test/cases/97_github_gate.sh",
@@ -38144,6 +38354,46 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0055",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://test/test/cases/131_backlog_hygiene.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0056",
         "target": "kind:adr",
         "kind": "is_a"
@@ -40111,6 +40361,26 @@
       {
         "source": "majordomus://claim/models-routing-explains-itself",
         "target": "majordomus://test/test/cases/131_models.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "file:scripts/rust-coverage",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "majordomus://document/docs/COVERAGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "majordomus://test/test/cases/132_coverage_differential.sh",
         "kind": "tested_by"
       },
       {
@@ -42319,6 +42589,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/COVERAGE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/DESIGN.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -42964,6 +43239,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/new-code-is-covered.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/no-counts-in-context.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -43385,6 +43665,11 @@
       },
       {
         "source": "majordomus://feature/coordination",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/coverage",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -48049,6 +48334,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.publication-currency@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.publication-currency@1",
+        "target": "majordomus://rule/majordomus.completion-gates@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.questions-store-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -48269,17 +48564,32 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "depends_on"
       },
@@ -48725,6 +49035,11 @@
       },
       {
         "source": "majordomus://rule/project.never-store-transcripts@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.new-code-is-covered@1",
         "target": "kind:rule",
         "kind": "is_a"
       },
@@ -49609,6 +49924,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/132_coverage_differential.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -49824,12 +50144,52 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/275_publication_is_current.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/277_entities_are_routable.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/278_the_gate_runner_clears_the_share.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/279_the_publication_age_is_the_oldest_debt.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/27_foreign_task.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/280_capture_status_states_its_denominator.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/281_published_order_is_tracked.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/282_the_ledger_envelope_is_reserved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/284_a_record_reads_the_whole_declaration.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -50240,6 +50600,11 @@
       },
       {
         "source": "majordomus://test/test/cases/96_worktree_topology.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/97_development_semantics_gate.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -53495,8 +53860,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1672,
-      "edges": 3751,
+      "nodes": 1689,
+      "edges": 3782,
       "acyclic": true,
       "truncated": false
     }

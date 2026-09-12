@@ -1,7 +1,7 @@
 +++
 title = "A cache never changes what a command observes"
 description = "A cache never changes what a command observes"
-weight = 63
+weight = 64
 [extra]
 kind = "rule"
 slug = "project-cache-is-invisible-1"

@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 50,
+      "count": 51,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 134,
+      "count": 136,
       "dir": "rules",
       "statuses": [
         "active"
@@ -2848,6 +2848,74 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0055",
+      "identity": "adr-0055",
+      "slug": "adr-0055",
+      "cockpit": "/cockpit/objects/adr/adr-0055",
+      "title": "Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts",
+      "status": "proposed",
+      "tags": [
+        "operations",
+        "safety",
+        "worktrees",
+        "ci"
+      ],
+      "source": ".ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.destructive-sweeps-fail-closed@1",
+          "kind": "rule",
+          "route": "/rules/project-destructive-sweeps-fail-closed-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.every-wait-is-bounded@1",
+          "kind": "rule",
+          "route": "/rules/project-every-wait-is-bounded-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.reclaim-only-what-you-own@1",
+          "kind": "rule",
+          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.worktree-topology@1",
+          "kind": "rule",
+          "route": "/rules/project-worktree-topology-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/131_backlog_hygiene.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/276_disk_is_bounded.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0056",
       "identity": "adr-0056",
       "slug": "adr-0056",
@@ -3275,7 +3343,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.publication-currency@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-publication-currency-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -4668,6 +4744,32 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/majordomus.publication-currency@1",
+      "identity": "majordomus.publication-currency@1",
+      "slug": "majordomus-publication-currency-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-publication-currency-1",
+      "title": "A session does not finish behind its own published site",
+      "status": "active",
+      "tags": [
+        "tasks",
+        "completion",
+        "deployment",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.completion-gates@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-completion-gates-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/majordomus.questions-store-integrity@1",
       "identity": "majordomus.questions-store-integrity@1",
       "slug": "majordomus-questions-store-integrity-1",
@@ -5564,10 +5666,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.accumulation-is-measured@1",
-      "identity": "project.accumulation-is-measured@1",
-      "slug": "project-accumulation-is-measured-1",
-      "cockpit": "/cockpit/objects/rule/project-accumulation-is-measured-1",
+      "id": "majordomus://rule/project.accumulation-is-measured@2",
+      "identity": "project.accumulation-is-measured@2",
+      "slug": "project-accumulation-is-measured-2",
+      "cockpit": "/cockpit/objects/rule/project-accumulation-is-measured-2",
       "title": "Everything that accumulates is measured, bounded and reaped by a committed command",
       "status": "active",
       "tags": [
@@ -5577,10 +5679,32 @@
         "safety",
         "agents",
         "coordination",
-        "ci"
+        "ci",
+        "disk"
       ],
-      "source": ".ai/repo/rules/project/accumulation-is-measured.v1.md",
+      "source": ".ai/repo/rules/project/accumulation-is-measured.v2.md",
       "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.destructive-sweeps-fail-closed@1",
+          "kind": "rule",
+          "route": "/rules/project-destructive-sweeps-fail-closed-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.every-wait-is-bounded@1",
+          "kind": "rule",
+          "route": "/rules/project-every-wait-is-bounded-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.reclaim-only-what-you-own@1",
+          "kind": "rule",
+          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "project.work-is-claimed-before-it-is-built@1",
@@ -5596,7 +5720,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -6163,6 +6295,20 @@
       "references": [],
       "referenced_by": [
         {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.recovery-is-idempotent@1",
           "kind": "rule",
@@ -6523,6 +6669,20 @@
           "label": "adr-0039",
           "kind": "adr",
           "route": "/adrs/adr-0039/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
           "external": false
         },
         {
@@ -7394,6 +7554,23 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.new-code-is-covered@1",
+      "identity": "project.new-code-is-covered@1",
+      "slug": "project-new-code-is-covered-1",
+      "cockpit": "/cockpit/objects/rule/project-new-code-is-covered-1",
+      "title": "New and changed executable code is covered by a test; legacy debt may only shrink",
+      "status": "active",
+      "tags": [
+        "coverage",
+        "testing",
+        "doctrine"
+      ],
+      "source": ".ai/repo/rules/project/new-code-is-covered.v1.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.no-claim-without-test@1",
       "identity": "project.no-claim-without-test@1",
       "slug": "project-no-claim-without-test-1",
@@ -7981,7 +8158,22 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -8867,9 +9059,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.accumulation-is-measured@1",
+          "label": "project.accumulation-is-measured@2",
           "kind": "rule",
-          "route": "/rules/project-accumulation-is-measured-1/",
+          "route": "/rules/project-accumulation-is-measured-2/",
           "external": false
         }
       ]
@@ -8923,10 +9115,17 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
-          "label": "project.accumulation-is-measured@1",
+          "label": "project.accumulation-is-measured@2",
           "kind": "rule",
-          "route": "/rules/project-accumulation-is-measured-1/",
+          "route": "/rules/project-accumulation-is-measured-2/",
           "external": false
         },
         {

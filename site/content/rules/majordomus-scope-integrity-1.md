@@ -1,7 +1,7 @@
 +++
 title = "Scope integrity"
 description = "Scope integrity"
-weight = 46
+weight = 47
 [extra]
 kind = "rule"
 slug = "majordomus-scope-integrity-1"

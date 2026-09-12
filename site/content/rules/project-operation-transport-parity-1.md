@@ -1,7 +1,7 @@
 +++
 title = "A command is the projection of a capability, or it says why it is not, and the reason is checked"
 description = "A command is the projection of a capability, or it says why it is not, and the reason is checked"
-weight = 103
+weight = 105
 [extra]
 kind = "rule"
 slug = "project-operation-transport-parity-1"

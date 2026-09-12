@@ -1,7 +1,7 @@
 +++
 title = "The site's navigation is declared once, and every projection derives from that declaration"
 description = "The site's navigation is declared once, and every projection derives from that declaration"
-weight = 94
+weight = 95
 [extra]
 kind = "rule"
 slug = "project-navigation-is-declared-once-1"
