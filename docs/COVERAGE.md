@@ -32,13 +32,13 @@ floor cannot forbid *new* debt: a change can add uncovered code while the aggreg
 moves. The differential gate draws the line where it can be held without rewriting history
 — at the code a change touches:
 
-```
-new file                     → every executable line/function/region covered
-new function                 → covered
-changed executable line      → covered
-changed branch/region        → covered
-untouched legacy code        → not this gate's business
-```
+| what a change introduces | what the gate requires |
+|---|---|
+| a new file | every executable line, function and region covered |
+| a new function | covered |
+| a changed executable line | covered |
+| a changed branch or region | covered |
+| untouched legacy code | not this gate's business |
 
 The invariant is `new_debt == 0` and `legacy_debt_after <= legacy_debt_before`. The gate
 never looks at a line the change did not touch, so it cannot demand that old debt be paid;
