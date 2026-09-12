@@ -70,13 +70,26 @@ it must:
   `GET /api/v1/commit/history`): every commit in a range judged in one pass, exit 10 when any
   carries an error. `HEAD~5..HEAD` here answers
   `HEAD~5..HEAD range      11 commit(s): 6 exempt, 0 failing` and exits 0; the whole history
-  answers `HEAD range      1755 commit(s): 561 exempt, 54 failing` and exits 10. This is what
+  answers `HEAD range      <n> commit(s): <e> exempt, 54 failing` and exits 10. The three
+counts move with the history; the one that does not is the 54, which is the recorded
+baseline. This is what
   `scripts/ci/commit-policy` asks, which is why the gate can say
   `commit-policy: history 54 failing, baseline 54` — the debt is recorded in
   `.ai/repo/commit-policy-baseline.txt`, the gate fails when it rises and reports when it falls,
   and commits a branch *adds* are held to the policy outright with no baseline at all.
 
-Two commands of the shell tool carry the enforcement half, and they are what the scenario runs:
+One command of the shell tool carries the half a live scenario can reach, and it is what the
+scenario runs. `doctor` would have been the obvious second — it reconciles
+`commit-policy-on-message` against what `.githooks/commit-msg` actually invokes, and prints
+`OK   wiring      commit-policy-on-message — wired via .githooks/commit-msg` — but it is
+deliberately not here. A `doctor` step asserts that the *whole repository* is healthy, which
+is far more than this use case is about: a finding anywhere else in the layer would fail a
+scenario about commit messages, and the reader would learn nothing about commit messages
+from it. It also costs 30–58 seconds, against a scenario runner that executes on every site
+build. The wiring is proved by `majordomus doctor` where that belongs, and by
+`test/cases/274_commit_policy.sh`, which drives the real hook.
+
+The command the scenario does run:
 
 - `doctor`: the `commit-msg` hook is declared under `enforcement:` in `.ai/repo/policy.yaml` as
   `commit-policy-on-message`, so the wiring is reconciled rather than assumed — the path must
@@ -91,12 +104,6 @@ mode: live
 given:
   - 'the layer installed and the hooks wired; the executable built, because the hook and the gate both call it'
 steps:
-  - id: the-judge-is-wired
-    run: ['doctor']
-    note: 'the hook that refuses a message is declared in the policy and reconciled against what .githooks/commit-msg actually invokes; a declared enforcement nothing calls is a failure, not a passing line'
-    expect:
-      exit: 0
-      stdout_contains: ['^OK   wiring      commit-policy-on-message — wired via .githooks/commit-msg', '^doctor: 0 failure']
   - id: no-shell-validator-decides-it
     run: ['doctrine', 'list']
     note: 'the doctrine registry is what a lib/ validator decides; project.conventional-commits is absent from it because the judge is the executable, asked by a hook and by a CI gate'
@@ -108,7 +115,7 @@ then:
   - 'a rule of this project is enforced by a gate and a hook that call the executable, never by a validator added to the shell tool'
   - 'the grammar is one parser: the changelog and the judge read the same CommitHeader::parse and disagree only about what to do with a header nobody spelled conventionally'
   - 'the three levels in the policy - off, warning, error - are decisions a repository can read back; off is a value, not an absence'
-  - 'test/cases/274_commit_policy.sh drives the four commands over real repositories, real worktrees and the real hook; scripts/ci/commit-policy reads 1755 commits against the baseline'
+  - 'test/cases/274_commit_policy.sh drives the four commands over real repositories, real worktrees and the real hook; scripts/ci/commit-policy reads the whole history against the baseline, and a branch of its own commits outright'
 ```
 
 ## Outcome
