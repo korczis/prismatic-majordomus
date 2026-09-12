@@ -774,6 +774,69 @@ pub fn rfc3339(t: SystemTime) -> String {
     format!("{y:04}-{mth:02}-{d:02}T{h:02}:{m:02}:{s:02}Z")
 }
 
+/// The inverse of [`rfc3339`]: `2026-08-29T10:40:00Z` back to Unix seconds.
+///
+/// It lives beside the formatter because the two are one thing, and a repository that had
+/// the one without the other grew a second parser every time somebody needed to compare two
+/// recorded instants. Strict about the shape it accepts — exactly `YYYY-MM-DDTHH:MM:SSZ`,
+/// which is the only shape this tool writes — because a lenient parser that guessed at a
+/// half-recognised string would answer `None` for a *malformed* timestamp and a plausible
+/// number for a *different* one, and only the first of those is safe.
+///
+/// `None` is the honest answer for anything else, and the caller's job is to report it as
+/// unjudgeable rather than as fresh: an episode whose evidence cannot be read as a time is
+/// one a recovery sweep must skip and count, never one it may sweep.
+///
+/// ```
+/// use majordomus_cli::peers::{epoch_seconds, rfc3339};
+/// use std::time::{Duration, UNIX_EPOCH};
+///
+/// assert_eq!(epoch_seconds("1970-01-01T00:00:00Z"), Some(0));
+/// assert_eq!(epoch_seconds("2026-08-29T10:40:00Z"), Some(1_788_000_000));
+/// assert_eq!(epoch_seconds("not a timestamp"), None);
+/// assert_eq!(epoch_seconds("2026-08-29 10:40:00Z"), None, "the T is not optional");
+/// assert_eq!(epoch_seconds("2026-08-29T10:40:00+02:00"), None, "UTC or nothing");
+///
+/// // and it round-trips with the formatter it is the inverse of
+/// for secs in [0u64, 1, 1_788_000_000, 2_000_000_000] {
+///     let text = rfc3339(UNIX_EPOCH + Duration::from_secs(secs));
+///     assert_eq!(epoch_seconds(&text), Some(secs as i64), "{text}");
+/// }
+/// ```
+pub fn epoch_seconds(ts: &str) -> Option<i64> {
+    let b = ts.as_bytes();
+    if b.len() != 20
+        || b[4] != b'-'
+        || b[7] != b'-'
+        || b[10] != b'T'
+        || b[13] != b':'
+        || b[16] != b':'
+        || b[19] != b'Z'
+    {
+        return None;
+    }
+    let n = |from: usize, to: usize| -> Option<i64> {
+        let part = ts.get(from..to)?;
+        part.bytes().all(|c| c.is_ascii_digit()).then_some(())?;
+        part.parse::<i64>().ok()
+    };
+    let (y, m, d) = (n(0, 4)?, n(5, 7)?, n(8, 10)?);
+    let (hh, mm, ss) = (n(11, 13)?, n(14, 16)?, n(17, 19)?);
+    if !(1..=12).contains(&m) || !(1..=31).contains(&d) || hh > 23 || mm > 59 || ss > 60 {
+        return None;
+    }
+    // days-from-civil, Howard Hinnant's algorithm — the inverse of the civil-from-days
+    // above, so the two agree by construction rather than by two tables being kept level.
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let mp = if m > 2 { m - 3 } else { m + 9 };
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    Some(days * 86_400 + hh * 3600 + mm * 60 + ss)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

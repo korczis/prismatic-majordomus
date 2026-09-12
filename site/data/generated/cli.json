@@ -6,13 +6,13 @@
       "args": [],
       "children": [
         {
-          "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
+          "about": "Serve the repository's AI layer to an MCP client over stdio",
           "command": "majordomus mcp",
           "name": "mcp",
           "route": "/docs/cli/mcp/"
         },
         {
-          "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
+          "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/",
           "command": "majordomus serve",
           "name": "serve",
           "route": "/docs/cli/serve/"
@@ -120,17 +120,41 @@
           "route": "/docs/cli/executions/"
         },
         {
+          "about": "The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget",
+          "command": "majordomus devcontext",
+          "name": "devcontext",
+          "route": "/docs/cli/devcontext/"
+        },
+        {
+          "about": "The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone",
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "about": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
+          "command": "majordomus models",
+          "name": "models",
+          "route": "/docs/cli/models/"
+        },
+        {
           "about": "What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened",
           "command": "majordomus evidence",
           "name": "evidence",
           "route": "/docs/cli/evidence/"
+        },
+        {
+          "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
+          "command": "majordomus rules",
+          "name": "rules",
+          "route": "/docs/cli/rules/"
         }
       ],
       "command": "majordomus",
       "depth": 0,
       "examples": [],
       "executable": false,
-      "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nThe task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.",
+      "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.\n\nMost of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.",
       "name": "majordomus",
       "parent_route": null,
       "path": [
@@ -140,7 +164,7 @@
       "usage": "majordomus <COMMAND>"
     },
     {
-      "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
+      "about": "Serve the repository's AI layer to an MCP client over stdio",
       "ancestors": [
         {
           "command": "majordomus",
@@ -364,7 +388,7 @@
       "usage": "majordomus mcp [OPTIONS]"
     },
     {
-      "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
+      "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/",
       "ancestors": [
         {
           "command": "majordomus",
@@ -8496,6 +8520,12 @@
           "route": "/docs/cli/env/export/"
         },
         {
+          "about": "Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer",
+          "command": "majordomus env enter",
+          "name": "enter",
+          "route": "/docs/cli/env/enter/"
+        },
+        {
           "about": "Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted",
           "command": "majordomus env explain",
           "name": "explain",
@@ -9000,6 +9030,222 @@
       ],
       "route": "/docs/cli/env/export/",
       "usage": "majordomus env export [OPTIONS]"
+    },
+    {
+      "about": "Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus env",
+          "name": "env",
+          "route": "/docs/cli/env/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "direnv"
+          ],
+          "global": false,
+          "help": "The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`",
+          "long": "shell",
+          "name": "shell",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SHELL"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "How much banner to draw; MAJORDOMUS_BANNER decides without it",
+          "long": "mode",
+          "name": "mode",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MODE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Do not draw the banner",
+          "long": "no-banner",
+          "name": "no_banner",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_BANNER"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Do not refresh the workflow bridge",
+          "long": "no-bridge",
+          "name": "no_bridge",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_BRIDGE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Do not ensure the runtime: export, draw and refresh only. What MAJORDOMUS_RUNTIME=off says, as an argument",
+          "long": "no-runtime",
+          "name": "no_runtime",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_RUNTIME"
+        },
+        {
+          "defaults": [
+            "0"
+          ],
+          "global": false,
+          "help": "Wait this many seconds for a server this call started to answer. Zero — the default, and what a shell prompt asks for — returns as soon as one has been started, and the entry file's watch over the lease brings the address in when it is published",
+          "long": "wait",
+          "name": "wait",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus env enter",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "env",
+            "enter",
+            "--shell",
+            "direnv",
+            "--no-banner",
+            "--no-bridge",
+            "--no-runtime"
+          ],
+          "command": "majordomus env enter --shell direnv --no-banner --no-bridge --no-runtime",
+          "description": "What the file a shell evaluates on entry runs, and the only call it makes (ADR 0043): the assignments on standard output for `eval`, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the repository's shared server ensured when nothing is serving this checkout. It never builds, never ensures from an executable older than its sources, never waits for a server it started to answer, and never exits non-zero — a non-zero exit here would make direnv report that the whole environment failed. `--no-runtime` is what this example passes, because an example is not the place to start a server.",
+          "expectation": "exits 0; prints export MAJORDOMUS_ROOT=",
+          "id": "env-enter",
+          "setup": [],
+          "title": "Everything entering this repository is, as one call"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "enter",
+      "parent_route": "/docs/cli/env/",
+      "path": [
+        "majordomus",
+        "env",
+        "enter"
+      ],
+      "route": "/docs/cli/env/enter/",
+      "usage": "majordomus env enter [OPTIONS]"
     },
     {
       "about": "Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted",
@@ -14679,7 +14925,13 @@
           "route": "/docs/cli/release/version/"
         },
         {
-          "about": "Raise the version in both places at once, to the bump the commits imply or to one you name",
+          "about": "What the public contract did since the last release, and the smallest version this tree may therefore declare",
+          "command": "majordomus release analyze",
+          "name": "analyze",
+          "route": "/docs/cli/release/analyze/"
+        },
+        {
+          "about": "Raise the version in both places at once, to at least what the public contract requires",
           "command": "majordomus release bump",
           "name": "bump",
           "route": "/docs/cli/release/bump/"
@@ -14954,7 +15206,7 @@
             "json"
           ],
           "command": "majordomus release version --format json",
-          "description": "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state, whether they agree, and what the conventional commits since the last release imply the next one should be.",
+          "description": "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.",
           "expectation": "exits 0; prints one JSON document carrying /declared, /agree, /bump",
           "id": "release-version",
           "setup": [],
@@ -14974,7 +15226,7 @@
       "usage": "majordomus release version [OPTIONS]"
     },
     {
-      "about": "Raise the version in both places at once, to the bump the commits imply or to one you name",
+      "about": "What the public contract did since the last release, and the smallest version this tree may therefore declare",
       "ancestors": [
         {
           "command": "majordomus",
@@ -14991,7 +15243,164 @@
         {
           "defaults": [],
           "global": false,
-          "help": "Raise by this much instead of by what the commits imply",
+          "help": "Measure against this ref instead of the last release",
+          "long": "since",
+          "name": "since",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Name every movement of the contract and the reason it counts for what it does",
+          "long": "explain",
+          "name": "explain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "EXPLAIN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release analyze",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "analyze",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus release analyze --format json",
+          "description": "The public capability surface of this tree against the one the last release published, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command or required field a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. The same value answers `GET /api/v1/release/analysis`, the `majordomus_release_analysis` MCP tool, the Cockpit's Release page and the `version-surface` gate. A repository that has published nothing has no baseline to measure against, and says so with exit 12 rather than reporting an empty diff — which would read as \"nothing changed\".",
+          "expectation": "exits 12",
+          "id": "release-analyze",
+          "setup": [],
+          "title": "What the contract did, and the smallest version it allows"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "analyze",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "analyze"
+      ],
+      "route": "/docs/cli/release/analyze/",
+      "usage": "majordomus release analyze [OPTIONS]"
+    },
+    {
+      "about": "Raise the version in both places at once, to at least what the public contract requires",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Raise by this much instead of by the measured minimum; never below it",
           "long": "level",
           "name": "level",
           "positional": false,
@@ -15003,7 +15412,7 @@
         {
           "defaults": [],
           "global": false,
-          "help": "Set exactly this version, instead of raising the current one",
+          "help": "Set exactly this version; refused when it is below the measured minimum",
           "long": "exact",
           "name": "exact",
           "positional": false,
@@ -15122,7 +15531,7 @@
             "--dry-run"
           ],
           "command": "majordomus release bump --dry-run",
-          "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. A repository that declares no version — the example runs in one with no crate — cannot be raised, and says so with exit 12 rather than inventing a number to raise from.",
+          "description": "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
           "expectation": "exits 12",
           "id": "release-bump-dry-run",
           "setup": [],
@@ -16438,6 +16847,1736 @@
       "usage": "majordomus executions protocol [OPTIONS]"
     },
     {
+      "about": "The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget",
+          "command": "majordomus devcontext compile",
+          "name": "compile",
+          "route": "/docs/cli/devcontext/compile/"
+        },
+        {
+          "about": "Why one canonical identifier is or is not in the context a request compiles to",
+          "command": "majordomus devcontext explain",
+          "name": "explain",
+          "route": "/docs/cli/devcontext/explain/"
+        },
+        {
+          "about": "The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults",
+          "command": "majordomus devcontext policy",
+          "name": "policy",
+          "route": "/docs/cli/devcontext/policy/"
+        }
+      ],
+      "command": "majordomus devcontext",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "devcontext",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "devcontext"
+      ],
+      "route": "/docs/cli/devcontext/",
+      "usage": "majordomus devcontext [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus devcontext",
+          "name": "devcontext",
+          "route": "/docs/cli/devcontext/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "An issue id (`I0301`) or its canonical identifier",
+          "long": "issue",
+          "name": "issue",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ISSUE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A milestone id or slug, or its canonical identifier",
+          "long": "milestone",
+          "name": "milestone",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MILESTONE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What the session is trying to do, in words; the only input the compiler infers from",
+          "long": "intent",
+          "name": "intent",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "INTENT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A repository-relative path the work touches; repeat for each",
+          "long": "path",
+          "name": "paths",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATHS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A canonical identifier to seed with directly; repeat for each",
+          "long": "uri",
+          "name": "uris",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "URIS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The ceiling in estimated tokens",
+          "long": "budget-tokens",
+          "name": "budget_tokens",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BUDGET_TOKENS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "How far from a seed the walk goes",
+          "long": "max-depth",
+          "name": "max_depth",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MAX_DEPTH"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Relevance below which an entry is reported rather than given, between 0 and 1",
+          "long": "floor",
+          "name": "floor",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FLOOR"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every blocking rule of the layer, not only the ones the work reaches",
+          "long": "all-blocking-rules",
+          "name": "all_blocking_rules",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL_BLOCKING_RULES"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus devcontext compile",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "devcontext",
+            "compile",
+            "--issue",
+            "I0001"
+          ],
+          "command": "majordomus devcontext compile --issue I0001",
+          "description": "The issue is the seed. Its milestone follows along the `belongs_to` edge of the composed graph, the code and the cases under the scope it declares follow from the paths, and the policy and the scope are governance every session is held to. Every selected line names the selector that reached it and why; everything left out is listed with the reason.",
+          "expectation": "exits 0; prints SELECTED, majordomus://issue/I0001, EXCLUDED",
+          "id": "devcontext-compile-issue",
+          "setup": [],
+          "title": "The context a session working on one issue should be given"
+        },
+        {
+          "argv": [
+            "devcontext",
+            "compile",
+            "--issue",
+            "I0001",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus devcontext compile --issue I0001 --format json",
+          "description": "The canonical form: `GET /api/v1/devcontext` and the `majordomus_devcontext` tool return this document. Entries keep their canonical identifier, the index's provenance, every discovery path with its confidence, and the cost in estimated tokens; nothing is flattened to prose.",
+          "expectation": "exits 0; prints one JSON document carrying /selected/0/uri, /selected/0/discovered_by/0/reason, /budget/limit_tokens, /fingerprint",
+          "id": "devcontext-compile-json",
+          "setup": [],
+          "title": "The same, as the structure every other surface answers with"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "compile",
+      "parent_route": "/docs/cli/devcontext/",
+      "path": [
+        "majordomus",
+        "devcontext",
+        "compile"
+      ],
+      "route": "/docs/cli/devcontext/compile/",
+      "usage": "majordomus devcontext compile [OPTIONS]"
+    },
+    {
+      "about": "Why one canonical identifier is or is not in the context a request compiles to",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus devcontext",
+          "name": "devcontext",
+          "route": "/docs/cli/devcontext/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The canonical identifier, `majordomus://<kind>/<identity>`",
+          "name": "uri",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "URI"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "An issue id (`I0301`) or its canonical identifier",
+          "long": "issue",
+          "name": "issue",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ISSUE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A milestone id or slug, or its canonical identifier",
+          "long": "milestone",
+          "name": "milestone",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MILESTONE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What the session is trying to do, in words; the only input the compiler infers from",
+          "long": "intent",
+          "name": "intent",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "INTENT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A repository-relative path the work touches; repeat for each",
+          "long": "path",
+          "name": "paths",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATHS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A canonical identifier to seed with directly; repeat for each",
+          "long": "uri",
+          "name": "uris",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "URIS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The ceiling in estimated tokens",
+          "long": "budget-tokens",
+          "name": "budget_tokens",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BUDGET_TOKENS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "How far from a seed the walk goes",
+          "long": "max-depth",
+          "name": "max_depth",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MAX_DEPTH"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Relevance below which an entry is reported rather than given, between 0 and 1",
+          "long": "floor",
+          "name": "floor",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FLOOR"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every blocking rule of the layer, not only the ones the work reaches",
+          "long": "all-blocking-rules",
+          "name": "all_blocking_rules",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL_BLOCKING_RULES"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus devcontext explain",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "devcontext",
+            "explain",
+            "majordomus://issue/I0001",
+            "--issue",
+            "I0001"
+          ],
+          "command": "majordomus devcontext explain majordomus://issue/I0001 --issue I0001",
+          "description": "The identifier is judged under the same request `compile` takes: selected, excluded with the reason, folded into another identifier, held by the index and never reached, or unknown.",
+          "expectation": "exits 0; prints selected, majordomus://issue/I0001",
+          "id": "devcontext-explain-seed",
+          "setup": [],
+          "title": "Why one thing is in the context"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "explain",
+      "parent_route": "/docs/cli/devcontext/",
+      "path": [
+        "majordomus",
+        "devcontext",
+        "explain"
+      ],
+      "route": "/docs/cli/devcontext/explain/",
+      "usage": "majordomus devcontext explain [OPTIONS] <URI>"
+    },
+    {
+      "about": "The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus devcontext",
+          "name": "devcontext",
+          "route": "/docs/cli/devcontext/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus devcontext policy",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "devcontext",
+            "policy"
+          ],
+          "command": "majordomus devcontext policy",
+          "description": "The tiers in the order the budget spends in, every edge kind the composed graph declares with the weight it is followed by or the reason it is refused, and which selectors infer rather than read.",
+          "expectation": "exits 0; prints TIER, is_a, REFUSED",
+          "id": "devcontext-policy",
+          "setup": [],
+          "title": "The compiler's own rules"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "policy",
+      "parent_route": "/docs/cli/devcontext/",
+      "path": [
+        "majordomus",
+        "devcontext",
+        "policy"
+      ],
+      "route": "/docs/cli/devcontext/policy/",
+      "usage": "majordomus devcontext policy [OPTIONS]"
+    },
+    {
+      "about": "The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies",
+          "command": "majordomus mesh status",
+          "name": "status",
+          "route": "/docs/cli/mesh/status/"
+        },
+        {
+          "about": "Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance",
+          "command": "majordomus mesh nodes",
+          "name": "nodes",
+          "route": "/docs/cli/mesh/nodes/"
+        },
+        {
+          "about": "This machine's node identity, public half only; absent is an answer, not an error",
+          "command": "majordomus mesh identity",
+          "name": "identity",
+          "route": "/docs/cli/mesh/identity/"
+        },
+        {
+          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+          "command": "majordomus mesh doctor",
+          "name": "doctor",
+          "route": "/docs/cli/mesh/doctor/"
+        }
+      ],
+      "command": "majordomus mesh",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "mesh",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "mesh"
+      ],
+      "route": "/docs/cli/mesh/",
+      "usage": "majordomus mesh <COMMAND>"
+    },
+    {
+      "about": "Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh status",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "status"
+          ],
+          "command": "majordomus mesh status",
+          "description": "The mesh lives inside the shared server, so the command asks the running server for `mesh.status` and renders it. No server, or no mesh declaration, is an answer with its reason — never an error: the default posture is that nothing leaves the machine until a declaration says otherwise.",
+          "expectation": "exits 0; prints mesh",
+          "id": "mesh-status",
+          "setup": [],
+          "title": "Whether this checkout's server runs a mesh"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "status"
+      ],
+      "route": "/docs/cli/mesh/status/",
+      "usage": "majordomus mesh status [OPTIONS]"
+    },
+    {
+      "about": "Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh nodes",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "nodes"
+          ],
+          "command": "majordomus mesh nodes",
+          "description": "One row per node, deduplicated by node identity across every discovery source, in node-id order: trust, presence, endpoints and where each observation came from. The registry lives in the server's memory; without a running server there are no nodes to list, and the command says so.",
+          "expectation": "exits 0; prints mesh",
+          "id": "mesh-nodes",
+          "setup": [],
+          "title": "The nodes the running server has observed"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "nodes",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "nodes"
+      ],
+      "route": "/docs/cli/mesh/nodes/",
+      "usage": "majordomus mesh nodes [OPTIONS]"
+    },
+    {
+      "about": "This machine's node identity, public half only; absent is an answer, not an error",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh identity",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "identity"
+          ],
+          "command": "majordomus mesh identity",
+          "description": "The node id is a digest of the machine's Ed25519 public key, kept under the user's state directory — never inside a repository, and the signing key appears in no output. Absent is an answer: the identity is created when a mesh first activates.",
+          "expectation": "exits 0; prints present",
+          "id": "mesh-identity",
+          "setup": [],
+          "title": "This machine's node identity, public half only"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "identity",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "identity"
+      ],
+      "route": "/docs/cli/mesh/identity/",
+      "usage": "majordomus mesh identity [OPTIONS]"
+    },
+    {
+      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh doctor",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "doctor"
+          ],
+          "command": "majordomus mesh doctor",
+          "description": "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.",
+          "expectation": "exits 0; prints protocol",
+          "id": "mesh-doctor",
+          "setup": [],
+          "title": "Every mesh prerequisite, proved on this machine alone"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "doctor",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "doctor"
+      ],
+      "route": "/docs/cli/mesh/doctor/",
+      "usage": "majordomus mesh doctor [OPTIONS]"
+    },
+    {
+      "about": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order",
+          "command": "majordomus models list",
+          "name": "list",
+          "route": "/docs/cli/models/list/"
+        },
+        {
+          "about": "Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out",
+          "command": "majordomus models route",
+          "name": "route",
+          "route": "/docs/cli/models/route/"
+        }
+      ],
+      "command": "majordomus models",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "models",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "models"
+      ],
+      "route": "/docs/cli/models/",
+      "usage": "majordomus models <COMMAND>"
+    },
+    {
+      "about": "Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus models",
+          "name": "models",
+          "route": "/docs/cli/models/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this vendor",
+          "long": "vendor",
+          "name": "vendor",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "VENDOR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only models declaring this capability word",
+          "long": "capability",
+          "name": "capability",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITY"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "One model, by canonical id or alias",
+          "long": "id",
+          "name": "id",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus models list",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "models",
+            "list"
+          ],
+          "command": "majordomus models list",
+          "description": "Every vendor and model share/models.yaml declares, in declaration order — which is also routing's preference order. Vendors show whether their named credential variable is set: presence only, never a value. An empty catalogue is an answer, not an error.",
+          "expectation": "exits 0; prints model(s)",
+          "id": "models-list",
+          "setup": [],
+          "title": "The declared model catalogue"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "list",
+      "parent_route": "/docs/cli/models/",
+      "path": [
+        "majordomus",
+        "models",
+        "list"
+      ],
+      "route": "/docs/cli/models/list/",
+      "usage": "majordomus models list [OPTIONS]"
+    },
+    {
+      "about": "Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus models",
+          "name": "models",
+          "route": "/docs/cli/models/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Capability words the model must declare, comma-separated: `vision,tools`",
+          "long": "require",
+          "name": "require",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REQUIRE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The least context window, tokens",
+          "long": "min-context",
+          "name": "min_context",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MIN_CONTEXT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this vendor",
+          "long": "vendor",
+          "name": "vendor",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "VENDOR"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only local inference",
+          "long": "local-only",
+          "name": "local_only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LOCAL_ONLY"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A model named outright, by canonical id or alias; still checked against the other requirements",
+          "long": "model",
+          "name": "model",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MODEL"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus models route",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "models",
+            "route",
+            "--require",
+            "text"
+          ],
+          "command": "majordomus models route --require text",
+          "description": "The first declared model satisfying every requirement wins; the qualifying rest are the fallback chain, and every excluded model carries the first check it failed. Pure over the declared data — the same question always gets the same answer, and the reasons are in it.",
+          "expectation": "exits 0; prints selected",
+          "id": "models-route",
+          "setup": [],
+          "title": "Which model a need selects, and why"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "route",
+      "parent_route": "/docs/cli/models/",
+      "path": [
+        "majordomus",
+        "models",
+        "route"
+      ],
+      "route": "/docs/cli/models/route/",
+      "usage": "majordomus models route [OPTIONS]"
+    },
+    {
       "about": "What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened",
       "ancestors": [
         {
@@ -17203,16 +19342,624 @@
       ],
       "route": "/docs/cli/evidence/record/",
       "usage": "majordomus evidence record [OPTIONS]"
+    },
+    {
+      "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every rule against the proof there is for it",
+          "command": "majordomus rules report",
+          "name": "report",
+          "route": "/docs/cli/rules/report/"
+        },
+        {
+          "about": "One rule: what proves it, what it depends on, and what is missing",
+          "command": "majordomus rules show",
+          "name": "show",
+          "route": "/docs/cli/rules/show/"
+        },
+        {
+          "about": "One test: every rule it proves, and the rules that would be left with none",
+          "command": "majordomus rules proves",
+          "name": "proves",
+          "route": "/docs/cli/rules/proves/"
+        }
+      ],
+      "command": "majordomus rules",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "rules",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "rules"
+      ],
+      "route": "/docs/cli/rules/",
+      "usage": "majordomus rules [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Every rule against the proof there is for it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus rules",
+          "name": "rules",
+          "route": "/docs/cli/rules/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only rules in this proof state (proven, inputs_unchanged, stale, gated, failing, not_run, reviewed, unrunnable, dangling, unproven)",
+          "long": "state",
+          "name": "state",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "STATE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only rules of this class (blocking, advisory)",
+          "long": "class",
+          "name": "class",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CLASS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only rules of this namespace (project, majordomus)",
+          "long": "namespace",
+          "name": "namespace",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMESPACE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only the rules whose declared class the proof does not support",
+          "long": "findings",
+          "name": "findings",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FINDINGS"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Exit 10 when a rule declares a class the proof does not support",
+          "long": "check",
+          "name": "check",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "CHECK"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus rules report",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "rules",
+            "report",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus rules report --format json",
+          "description": "The same answer `GET /api/v1/rules` and the MCP tool `majordomus_rules` return: per rule, its class, the mode it declares, the validator and the cases it names, whether each is in the tree, the execution behind each, the gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the rules are filtered, and `review_only` is counted apart from `passing` so that a rule a person enforces is never added to a total that reads as proof.",
+          "expectation": "exits 0; prints one JSON document carrying /rules, /states, /coverage/rules, /findings",
+          "id": "rules-report-json",
+          "setup": [],
+          "title": "Every rule against the proof there is for it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "report",
+      "parent_route": "/docs/cli/rules/",
+      "path": [
+        "majordomus",
+        "rules",
+        "report"
+      ],
+      "route": "/docs/cli/rules/report/",
+      "usage": "majordomus rules report [OPTIONS]"
+    },
+    {
+      "about": "One rule: what proves it, what it depends on, and what is missing",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus rules",
+          "name": "rules",
+          "route": "/docs/cli/rules/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The rule id, with or without its version",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus rules show",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "rules",
+            "show",
+            "project.no-such-rule"
+          ],
+          "command": "majordomus rules show project.no-such-rule",
+          "description": "A rule id nothing declares is a not-found rather than an empty answer. A typo that read as `this rule has no proof` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.",
+          "expectation": "exits 12",
+          "id": "rules-show-absent",
+          "setup": [],
+          "title": "A rule the repository does not declare"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "show",
+      "parent_route": "/docs/cli/rules/",
+      "path": [
+        "majordomus",
+        "rules",
+        "show"
+      ],
+      "route": "/docs/cli/rules/show/",
+      "usage": "majordomus rules show [OPTIONS] <ID>"
+    },
+    {
+      "about": "One test: every rule it proves, and the rules that would be left with none",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus rules",
+          "name": "rules",
+          "route": "/docs/cli/rules/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "`suite:<case>`, `crate:<binary>`, or the path a rule names it with",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus rules proves",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "rules",
+            "proves",
+            "test/cases/125_rule_proof.sh",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus rules proves test/cases/125_rule_proof.sh --format json",
+          "description": "The reverse of `rules show`, reading the same derivation so the two directions cannot disagree. It names every rule that names this test and, separately, the rules that would be left with no proof at all if it were deleted — the question to ask before renaming a case, and the one that could not be asked while the relation ran one way only.",
+          "expectation": "exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path",
+          "id": "rules-proves-case",
+          "setup": [],
+          "title": "What a case proves, and what would lose its only proof"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "proves",
+      "parent_route": "/docs/cli/rules/",
+      "path": [
+        "majordomus",
+        "rules",
+        "proves"
+      ],
+      "route": "/docs/cli/rules/proves/",
+      "usage": "majordomus rules proves [OPTIONS] <ID>"
     }
   ],
   "counts": {
-    "arguments": 755,
-    "commands": 104,
-    "examples": 113,
-    "runnable": 97
+    "arguments": 877,
+    "commands": 122,
+    "examples": 128,
+    "runnable": 111
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

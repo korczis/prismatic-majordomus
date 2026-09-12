@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 90 | 85 | 0 | 5 |
-| http | 89 | 85 | 0 | 4 |
-| mcp | 87 | 83 | 0 | 4 |
+| direct | 106 | 101 | 0 | 5 |
+| http | 105 | 101 | 0 | 4 |
+| mcp | 103 | 99 | 0 | 4 |
 | system | 13 | 13 | 0 | 0 |
-| total | 279 | 266 | 0 | 13 |
+| total | 327 | 314 | 0 | 13 |
 
 ## Capabilities
 
@@ -34,6 +34,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
 | `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
+| `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent` |
+| `devcontext.explain` | devcontext | query | process, 8 entries | covered | covered | covered | `policy`, `absent` |
+| `devcontext.policy` | devcontext | query | — | covered | covered | covered | `default` |
 | `devtask.issue` | devtask | query | — | covered | covered | covered | `records-only`, `with-git` |
 | `devtask.milestone` | devtask | query | — | covered | covered | covered | `first-milestone` |
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
@@ -65,6 +68,13 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.identity` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.nodes` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.register` | mesh | command | — | covered | covered | covered | `refused` |
+| `mesh.status` | mesh | query | — | covered | covered | covered | `default` |
+| `models.list` | models | query | process, 4 entries, 5s | covered | covered | covered | `default`, `narrowed` |
+| `models.route` | models | query | — | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
@@ -80,6 +90,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
 | `plan.roadmap` | plan | query | — | covered | covered | covered | `default` |
 | `plan.status` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
@@ -94,7 +105,12 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `rules.proves` | rules | query | — | covered | covered | covered | `suite` |
+| `rules.report` | rules | query | — | covered | covered | covered | `all`, `findings`, `blocking` |
+| `rules.show` | rules | query | — | covered | covered | covered | `first` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
+| `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |
 | `trace.commit` | trace | query | — | covered | covered | covered | `head` |
 | `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
 | `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |

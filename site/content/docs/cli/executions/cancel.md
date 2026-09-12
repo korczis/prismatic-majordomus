@@ -1,7 +1,7 @@
 +++
 title = "majordomus executions cancel"
 description = "Ask an execution to stop"
-weight = 98
+weight = 100
 [extra]
 route = "/docs/cli/executions/cancel/"
 command = "majordomus executions cancel"

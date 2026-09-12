@@ -1,7 +1,7 @@
 +++
 title = "Public API quality"
 description = "what the Rust crate's exported surface is held to: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry — the codes, the ratchet, and the golden path for adding a command"
-weight = 50
+weight = 53
 [extra]
 source = "docs/QUALITY.md"
 +++

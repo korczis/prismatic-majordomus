@@ -36,6 +36,7 @@ pub mod commands;
 pub mod continuity;
 pub(crate) mod deploy;
 pub(crate) mod design;
+pub(crate) mod devcontext;
 pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
@@ -45,6 +46,8 @@ pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
 pub mod lifecycle;
+pub(crate) mod mesh;
+pub(crate) mod models;
 pub mod objects;
 pub mod obligations;
 pub(crate) mod peers;
@@ -54,8 +57,10 @@ pub(crate) mod product;
 pub mod quality;
 pub mod release;
 pub mod repository;
+pub mod rules;
 mod scope;
 pub mod server;
+pub mod session_domain;
 pub mod trace;
 mod views;
 pub mod web;
@@ -76,6 +81,7 @@ pub use deploy::{
 // the Cockpit's Design page renders these two; everything else the module declares is
 // read as JSON through the executor, like every other capability's output
 pub(crate) use design::{DesignReport, TokenList};
+pub use devcontext::DEVCONTEXT_POLICY_URI;
 pub use devtask::{DevMilestoneInput, DevTaskInput};
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
@@ -101,6 +107,8 @@ pub use lifecycle::{
     PointerLayout, ProviderLifecycle, ProviderLifecycles, Recovery, RuntimeView, Stranded,
     EPISODES_URI, RECOVERY_URI,
 };
+pub use mesh::{MeshIdentityReport, NodeList, RegisterInput, MESH_URI};
+pub use models::{ModelsFilter, ModelsReport, RouteInput, VendorView, MODELS_URI};
 pub use objects::{
     resolve, AnswerView, Comparison, DriftedObject, GetInput, ListInput, ObjectList,
     ObjectStanding, Resolved, ResourceView, SearchHit, SearchInput, SearchResult, VerifyInput,
@@ -119,6 +127,7 @@ pub use server::{
     Checkouts, Desired, LeaseView, ServerStanding, ServerStatus, ServerStatusInput, ServerView,
     SERVER_URI,
 };
+pub use session_domain::{IdentityReport, MachineReport, IDENTITY_URI, MACHINE_URI};
 pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};
 pub(crate) mod why;
 
@@ -145,12 +154,17 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         obligations,
         deploy,
         evidence,
+        rules,
         executions,
+        mesh,
+        models,
         peers,
         server,
+        session_domain,
         perf,
         plan,
         directories,
+        devcontext,
         artifacts,
         environment,
         quality,
@@ -188,4 +202,67 @@ pub(crate) fn post(path: &str) -> Option<HttpExposure> {
         method: HttpMethod::Post,
         path: path.into(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::capability::{CapabilityKind, Effect};
+
+    /// Only a command may claim to write the repository, and one that does must be a POST.
+    ///
+    /// Two facts about the whole builtin registry rather than about one module, because the
+    /// harm of getting either wrong is not local: the exposure ceiling of every surface is
+    /// derived from the effect, and a capability whose effect is understated is projected
+    /// onto surfaces whose ceiling exists to exclude it. A query that claimed the effect
+    /// would be worse still — bound to GET, announced to MCP as read-only, and followed by
+    /// every crawler and prefetcher that ever met the Cockpit.
+    ///
+    /// The registry refuses both at construction; this states them where a reader looking
+    /// for the invariant will find it, and fails on a declaration that slipped past.
+    #[test]
+    fn only_a_command_writes_the_repository_and_only_by_post() {
+        for e in all() {
+            let c = &e.capability;
+            if c.execution.effect != Effect::RepositoryMutation {
+                continue;
+            }
+            assert_eq!(
+                c.kind,
+                CapabilityKind::Command,
+                "{} claims to write the repository and is not a command",
+                c.id
+            );
+            if let Some(http) = &c.exposure.http {
+                assert_eq!(
+                    http.method.as_str(),
+                    "POST",
+                    "{} writes the repository and is reachable by {}",
+                    c.id,
+                    http.method.as_str()
+                );
+            }
+        }
+    }
+
+    /// Every capability that writes the repository, named.
+    ///
+    /// A list rather than a count, and it is meant to be edited: adding one is a deliberate
+    /// widening of what this executable may do to a tracked file, and it should be visible
+    /// in a diff rather than absorbed silently. The entries converge as ADR 0040 is worked
+    /// through, so this grows — one line per lifecycle command that stops being the shell
+    /// tool's alone.
+    #[test]
+    fn the_capabilities_that_write_the_repository_are_these() {
+        // A BTreeSet rather than a Vec and a sort: the set is ordered by construction, and
+        // `order-check` counts every sort site in the crate against a baseline it may not
+        // exceed. A test that reached for one would spend that budget on itself.
+        let executables = all();
+        let writers: std::collections::BTreeSet<&str> = executables
+            .iter()
+            .filter(|e| e.capability.execution.effect == Effect::RepositoryMutation)
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        assert_eq!(writers.into_iter().collect::<Vec<_>>(), ["plan.transition"]);
+    }
 }

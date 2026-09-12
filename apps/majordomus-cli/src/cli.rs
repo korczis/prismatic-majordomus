@@ -17,9 +17,13 @@ pub const EXIT_USAGE: u8 = 2;
     version,
     about = "Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer",
     long_about = "The Rust executable of Majordomus. It reads the repository's provider-neutral \
-AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\n\
-The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus \
-in the same repository; this executable does not implement those commands."
+AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a \
+query; the few that change anything declare themselves as commands and are listed by \
+`capabilities list --kind command`.\n\n\
+Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool \
+bin/majordomus in the same repository. Development semantics are converging onto capabilities \
+of this registry one at a time (ADR 0040); until one has, this executable does not implement \
+that command."
 )]
 /// The command line: one of the commands below.
 pub struct Cli {
@@ -31,9 +35,9 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 /// The commands. A command listed here is implemented; nothing is advertised ahead of its behaviour.
 pub enum Command {
-    /// Serve the repository's AI layer to an MCP client over stdio (read-only)
+    /// Serve the repository's AI layer to an MCP client over stdio
     Mcp(McpArgs),
-    /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
+    /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
     Serve(ServeArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),
@@ -70,8 +74,122 @@ pub enum Command {
     Run(RunArgs),
     /// The executions of the server serving this repository: what has run, what is running, and what each one said
     Executions(ExecutionsArgs),
+    /// The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
+    Devcontext(DevcontextArgs),
+    /// The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
+    Mesh(MeshArgs),
+    /// The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
+    Models(ModelsArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
+    /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
+    Rules(RulesArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models`.
+pub struct ModelsArgs {
+    #[command(subcommand)]
+    /// `list`, `route`.
+    pub command: ModelsCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `models` subcommands.
+pub enum ModelsCommand {
+    /// Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order
+    List(ModelsListArgs),
+    /// Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out
+    Route(ModelsRouteArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models list`.
+pub struct ModelsListArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Only this vendor.
+    pub vendor: Option<String>,
+
+    #[arg(long)]
+    /// Only models declaring this capability word.
+    pub capability: Option<String>,
+
+    #[arg(long)]
+    /// One model, by canonical id or alias.
+    pub id: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models route`.
+pub struct ModelsRouteArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Capability words the model must declare, comma-separated: `vision,tools`.
+    pub require: Option<String>,
+
+    #[arg(long)]
+    /// The least context window, tokens.
+    pub min_context: Option<u64>,
+
+    #[arg(long)]
+    /// Only this vendor.
+    pub vendor: Option<String>,
+
+    #[arg(long)]
+    /// Only local inference.
+    pub local_only: bool,
+
+    #[arg(long)]
+    /// A model named outright, by canonical id or alias; still checked against the other requirements.
+    pub model: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus mesh`.
+pub struct MeshArgs {
+    #[command(subcommand)]
+    /// `status`, `nodes`, `identity`, `doctor`.
+    pub command: MeshCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh` subcommands.
+pub enum MeshCommand {
+    /// Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies
+    Status(MeshQueryArgs),
+    /// Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance
+    Nodes(MeshQueryArgs),
+    /// This machine's node identity, public half only; absent is an answer, not an error
+    Identity(MeshQueryArgs),
+    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
+    Doctor(MeshQueryArgs),
+}
+
+#[derive(Debug, Args)]
+/// One read-only `mesh` question.
+pub struct MeshQueryArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -175,6 +293,27 @@ pub enum EnvCommand {
         /// Also refresh the workflow bridge under .ai/local/cache/ when a declaration behind it has changed. A few `stat` calls when nothing has; never a build, never a network call
         #[arg(long)]
         bridge: bool,
+    },
+    /// Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer
+    Enter {
+        /// The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`
+        #[arg(long = "shell", value_name = "SHELL", default_value = "direnv")]
+        shell: String,
+        /// How much banner to draw; MAJORDOMUS_BANNER decides without it
+        #[arg(long, value_name = "MODE", conflicts_with = "no_banner")]
+        mode: Option<String>,
+        /// Do not draw the banner
+        #[arg(long = "no-banner")]
+        no_banner: bool,
+        /// Do not refresh the workflow bridge
+        #[arg(long = "no-bridge")]
+        no_bridge: bool,
+        /// Do not ensure the runtime: export, draw and refresh only. What MAJORDOMUS_RUNTIME=off says, as an argument
+        #[arg(long = "no-runtime")]
+        no_runtime: bool,
+        /// Wait this many seconds for a server this call started to answer. Zero — the default, and what a shell prompt asks for — returns as soon as one has been started, and the entry file's watch over the lease brings the address in when it is published
+        #[arg(long, value_name = "SECONDS", default_value_t = 0)]
+        wait: u64,
     },
     /// Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted
     Explain {
@@ -488,6 +627,80 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus rules`. The rule corpus against the proof there is for it: what each rule
+/// names, whether it is in the tree, whether a runner drives it, whether anything ran, and
+/// whether what ran is older than what it is about.
+///
+/// Distinct from `majordomus doctrine`, which asks whether the repository satisfies a rule
+/// right now. That is a question about the tree; this is a question about the rule.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, RulesArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "rules", "report", "--findings"]).unwrap();
+/// let Command::Rules(args) = cli.command else { panic!("not the rules command") };
+/// let _: RulesArgs = args;
+/// ```
+pub struct RulesArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `report`, `show` or `proves`. Required: the group runs nothing of its own, so that
+    /// every runnable path here is one a capability declares
+    /// (`.ai/repo/projection-baseline.txt` may only shrink).
+    pub command: RulesCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus rules`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, RulesCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "rules", "show", "project.x"]).unwrap();
+/// let Command::Rules(args) = cli.command else { panic!("not the rules command") };
+/// assert!(matches!(args.command, RulesCommand::Show { .. }));
+/// ```
+pub enum RulesCommand {
+    /// Every rule against the proof there is for it
+    Report {
+        /// Only rules in this proof state (proven, inputs_unchanged, stale, gated, failing, not_run, reviewed, unrunnable, dangling, unproven)
+        #[arg(long)]
+        state: Option<String>,
+        /// Only rules of this class (blocking, advisory)
+        #[arg(long)]
+        class: Option<String>,
+        /// Only rules of this namespace (project, majordomus)
+        #[arg(long)]
+        namespace: Option<String>,
+        /// Only the rules whose declared class the proof does not support
+        #[arg(long)]
+        findings: bool,
+        /// Exit 10 when a rule declares a class the proof does not support
+        #[arg(long)]
+        check: bool,
+    },
+    /// One rule: what proves it, what it depends on, and what is missing
+    Show {
+        /// The rule id, with or without its version
+        id: String,
+    },
+    /// One test: every rule it proves, and the rules that would be left with none
+    Proves {
+        /// `suite:<case>`, `crate:<binary>`, or the path a rule names it with
+        id: String,
     },
 }
 
@@ -1487,6 +1700,72 @@ pub enum CompletionShell {
     Fish,
 }
 
+#[derive(Debug, Args)]
+/// `majordomus devcontext`. Every subcommand is the projection of one `devcontext.*`
+/// capability; the request flags are declared once and shared by `compile` and `explain`.
+pub struct DevcontextArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `compile`, `explain` or `policy`.
+    pub command: DevcontextCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// What to ask of the context compiler.
+pub enum DevcontextCommand {
+    /// Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget
+    Compile(DevcontextRequest),
+    /// Why one canonical identifier is or is not in the context a request compiles to
+    Explain {
+        /// The canonical identifier, `majordomus://<kind>/<identity>`
+        uri: String,
+        #[command(flatten)]
+        /// The request to judge it under.
+        request: DevcontextRequest,
+    },
+    /// The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults
+    Policy,
+}
+
+#[derive(Debug, Clone, Args)]
+/// What to compile a context about; every flag is optional.
+pub struct DevcontextRequest {
+    /// An issue id (`I0301`) or its canonical identifier
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// A milestone id or slug, or its canonical identifier
+    #[arg(long)]
+    pub milestone: Option<String>,
+    /// What the session is trying to do, in words; the only input the compiler infers from
+    #[arg(long)]
+    pub intent: Option<String>,
+    /// A repository-relative path the work touches; repeat for each
+    #[arg(long = "path")]
+    pub paths: Vec<String>,
+    /// A canonical identifier to seed with directly; repeat for each
+    #[arg(long = "uri")]
+    pub uris: Vec<String>,
+    /// The ceiling in estimated tokens
+    #[arg(long)]
+    pub budget_tokens: Option<u64>,
+    /// How far from a seed the walk goes
+    #[arg(long)]
+    pub max_depth: Option<usize>,
+    /// Relevance below which an entry is reported rather than given, between 0 and 1
+    #[arg(long)]
+    pub floor: Option<f64>,
+    /// Every blocking rule of the layer, not only the ones the work reaches
+    #[arg(long)]
+    pub all_blocking_rules: bool,
+}
+
 // ------------------------------------------------------------------ the command line as data
 //
 // clap is the one declaration of the command line: every command, argument, default and
@@ -1779,6 +2058,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "env enter",
+        examples: &[ExampleDoc {
+            id: "env-enter",
+            title: "Everything entering this repository is, as one call",
+            description: "What the file a shell evaluates on entry runs, and the only call it makes (ADR 0043): the assignments on standard output for `eval`, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the repository's shared server ensured when nothing is serving this checkout. It never builds, never ensures from an executable older than its sources, never waits for a server it started to answer, and never exits non-zero — a non-zero exit here would make direnv report that the whole environment failed. `--no-runtime` is what this example passes, because an example is not the place to start a server.",
+            argv: &["env", "enter", "--shell", "direnv", "--no-banner", "--no-bridge", "--no-runtime"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["export MAJORDOMUS_ROOT="]),
+        }],
+    },
+    CommandExamples {
         command: "env explain",
         examples: &[ExampleDoc {
             id: "env-explain-field",
@@ -1842,6 +2132,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "proves", "not-a-test"],
             setup: &[],
             expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "rules report",
+        examples: &[ExampleDoc {
+            id: "rules-report-json",
+            title: "Every rule against the proof there is for it",
+            description: "The same answer `GET /api/v1/rules` and the MCP tool `majordomus_rules` return: per rule, its class, the mode it declares, the validator and the cases it names, whether each is in the tree, the execution behind each, the gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the rules are filtered, and `review_only` is counted apart from `passing` so that a rule a person enforces is never added to a total that reads as proof.",
+            argv: &["rules", "report", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/rules", "/states", "/coverage/rules", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "rules show",
+        examples: &[ExampleDoc {
+            id: "rules-show-absent",
+            title: "A rule the repository does not declare",
+            description: "A rule id nothing declares is a not-found rather than an empty answer. A typo that read as `this rule has no proof` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.",
+            argv: &["rules", "show", "project.no-such-rule"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "rules proves",
+        examples: &[ExampleDoc {
+            id: "rules-proves-case",
+            title: "What a case proves, and what would lose its only proof",
+            description: "The reverse of `rules show`, reading the same derivation so the two directions cannot disagree. It names every rule that names this test and, separately, the rules that would be left with no proof at all if it were deleted — the question to ask before renaming a case, and the one that could not be asked while the relation ran one way only.",
+            argv: &["rules", "proves", "test/cases/125_rule_proof.sh", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/proves", "/sole_proof_of", "/path"]),
         }],
     },
     CommandExamples {
@@ -2855,5 +3178,114 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::Json(&["/measured", "/passes", "/report/schema"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "devcontext compile",
+        examples: &[
+            ExampleDoc {
+                id: "devcontext-compile-issue",
+                title: "The context a session working on one issue should be given",
+                description: "The issue is the seed. Its milestone follows along the `belongs_to` edge of the composed graph, the code and the cases under the scope it declares follow from the paths, and the policy and the scope are governance every session is held to. Every selected line names the selector that reached it and why; everything left out is listed with the reason.",
+                argv: &["devcontext", "compile", "--issue", "I0001"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SELECTED", "majordomus://issue/I0001", "EXCLUDED"]),
+            },
+            ExampleDoc {
+                id: "devcontext-compile-json",
+                title: "The same, as the structure every other surface answers with",
+                description: "The canonical form: `GET /api/v1/devcontext` and the `majordomus_devcontext` tool return this document. Entries keep their canonical identifier, the index's provenance, every discovery path with its confidence, and the cost in estimated tokens; nothing is flattened to prose.",
+                argv: &["devcontext", "compile", "--issue", "I0001", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/selected/0/uri", "/selected/0/discovered_by/0/reason", "/budget/limit_tokens", "/fingerprint"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "devcontext explain",
+        examples: &[ExampleDoc {
+            id: "devcontext-explain-seed",
+            title: "Why one thing is in the context",
+            description: "The identifier is judged under the same request `compile` takes: selected, excluded with the reason, folded into another identifier, held by the index and never reached, or unknown.",
+            argv: &["devcontext", "explain", "majordomus://issue/I0001", "--issue", "I0001"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["selected", "majordomus://issue/I0001"]),
+        }],
+    },
+    CommandExamples {
+        command: "devcontext policy",
+        examples: &[ExampleDoc {
+            id: "devcontext-policy",
+            title: "The compiler's own rules",
+            description: "The tiers in the order the budget spends in, every edge kind the composed graph declares with the weight it is followed by or the reason it is refused, and which selectors infer rather than read.",
+            argv: &["devcontext", "policy"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["TIER", "is_a", "REFUSED"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh status",
+        examples: &[ExampleDoc {
+            id: "mesh-status",
+            title: "Whether this checkout's server runs a mesh",
+            description: "The mesh lives inside the shared server, so the command asks the running server for `mesh.status` and renders it. No server, or no mesh declaration, is an answer with its reason — never an error: the default posture is that nothing leaves the machine until a declaration says otherwise.",
+            argv: &["mesh", "status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh nodes",
+        examples: &[ExampleDoc {
+            id: "mesh-nodes",
+            title: "The nodes the running server has observed",
+            description: "One row per node, deduplicated by node identity across every discovery source, in node-id order: trust, presence, endpoints and where each observation came from. The registry lives in the server's memory; without a running server there are no nodes to list, and the command says so.",
+            argv: &["mesh", "nodes"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh identity",
+        examples: &[ExampleDoc {
+            id: "mesh-identity",
+            title: "This machine's node identity, public half only",
+            description: "The node id is a digest of the machine's Ed25519 public key, kept under the user's state directory — never inside a repository, and the signing key appears in no output. Absent is an answer: the identity is created when a mesh first activates.",
+            argv: &["mesh", "identity"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["present"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh doctor",
+        examples: &[ExampleDoc {
+            id: "mesh-doctor",
+            title: "Every mesh prerequisite, proved on this machine alone",
+            description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.",
+            argv: &["mesh", "doctor"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["protocol"]),
+        }],
+    },
+    CommandExamples {
+        command: "models list",
+        examples: &[ExampleDoc {
+            id: "models-list",
+            title: "The declared model catalogue",
+            description: "Every vendor and model share/models.yaml declares, in declaration order — which is also routing's preference order. Vendors show whether their named credential variable is set: presence only, never a value. An empty catalogue is an answer, not an error.",
+            argv: &["models", "list"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["model(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "models route",
+        examples: &[ExampleDoc {
+            id: "models-route",
+            title: "Which model a need selects, and why",
+            description: "The first declared model satisfying every requirement wins; the qualifying rest are the fallback chain, and every excluded model carries the first check it failed. Pure over the declared data — the same question always gets the same answer, and the reasons are in it.",
+            argv: &["models", "route", "--require", "text"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["selected"]),
+        }],
     },
 ];

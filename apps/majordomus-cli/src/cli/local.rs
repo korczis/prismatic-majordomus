@@ -256,6 +256,16 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the canonical input or output schema that capabilities.describe already carries on the descriptor it returns.",
     },
     LocalCommand {
+        command: "mesh status",
+        reason: LocalReason::RendersCapability("mesh.status"),
+        note: "asks this checkout's running server for mesh.status and renders it: the mesh lives in the server's memory, so an in-process answer would truthfully say only that this process runs no mesh.",
+    },
+    LocalCommand {
+        command: "mesh nodes",
+        reason: LocalReason::RendersCapability("mesh.nodes"),
+        note: "asks this checkout's running server for mesh.nodes and renders it, for the same reason as mesh status: the registry is the server's, not this process's.",
+    },
+    LocalCommand {
         command: "capabilities validate",
         reason: LocalReason::RendersCapability("repository.info"),
         note: "reports the registry's own validation, which repository.info answers as the diagnostics of the process that built it.",

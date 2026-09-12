@@ -461,12 +461,22 @@ impl Builder {
             // crate with a policy of its own would be a claim a projection then reads as a
             // fact
             let policy = ExecutionPolicy::classify(c.kind);
-            if c.execution != policy && c.execution != policy.stoppable() {
+            // The documented additions, and their combination: cancellation, which any kind
+            // may declare because any handler may look at its flag, and writing the
+            // repository, which only a command may — a query that wrote tracked files would
+            // be a query in name only, bound to GET and announced to MCP as read-only.
+            // Everything else about the policy still follows the kind.
+            let mut permitted = vec![policy, policy.stoppable()];
+            if c.kind == CapabilityKind::Command {
+                permitted.push(policy.writes_repository());
+                permitted.push(policy.stoppable().writes_repository());
+            }
+            if !permitted.contains(&c.execution) {
                 errors.push(RegistryError::Shape {
                     id: id.clone(),
                     provenance: prov.clone(),
                     reason: format!(
-                        "declares the execution policy {:?}; its kind makes it {policy:?}, and the only thing a declaration may add is cancellation (`.cancellable()`). The effect and the concurrency follow the kind",
+                        "declares the execution policy {:?}; its kind makes it {policy:?}. A declaration may add cancellation (`.cancellable()`), and a command may add writing the repository (`.writes_repository()`); the effect of a query and the concurrency of anything follow the kind",
                         c.execution
                     ),
                 });

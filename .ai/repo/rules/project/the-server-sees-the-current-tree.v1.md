@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.rust-hot-path@1]
 tags: [rust, mcp, server, freshness]
+
+x-majordomus:
+  tests: [test/cases/150_server_sees_the_current_tree.sh]
 ---
 
 # Rationale

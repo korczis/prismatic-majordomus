@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 90,
-      "covered": 85,
+      "required": 106,
+      "covered": 101,
       "missing": 0,
       "waived": 5
     },
     {
       "scope": "http",
-      "required": 89,
-      "covered": 85,
+      "required": 105,
+      "covered": 101,
       "missing": 0,
       "waived": 4
     },
     {
       "scope": "mcp",
-      "required": 87,
-      "covered": 83,
+      "required": 103,
+      "covered": 99,
       "missing": 0,
       "waived": 4
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 279,
-      "covered": 266,
+      "required": 327,
+      "covered": 314,
       "missing": 0,
       "waived": 13
     }
@@ -225,6 +225,46 @@
       "cases": [
         "all",
         "roles"
+      ]
+    },
+    {
+      "id": "devcontext.compile",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "process, 16 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "no-seed",
+        "issue",
+        "milestone",
+        "intent"
+      ]
+    },
+    {
+      "id": "devcontext.explain",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "process, 8 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "policy",
+        "absent"
+      ]
+    },
+    {
+      "id": "devcontext.policy",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
       ]
     },
     {
@@ -605,6 +645,91 @@
       ]
     },
     {
+      "id": "mesh.doctor",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.identity",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.nodes",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.register",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "refused"
+      ]
+    },
+    {
+      "id": "mesh.status",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "models.list",
+      "module": "models",
+      "kind": "query",
+      "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "narrowed"
+      ]
+    },
+    {
+      "id": "models.route",
+      "module": "models",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "objects.get",
       "module": "objects",
       "kind": "query",
@@ -793,6 +918,18 @@
       ]
     },
     {
+      "id": "plan.transition",
+      "module": "plan",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "refused-by-status"
+      ]
+    },
+    {
       "id": "plan.validate",
       "module": "plan",
       "kind": "query",
@@ -967,6 +1104,44 @@
       ]
     },
     {
+      "id": "rules.proves",
+      "module": "rules",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "suite"
+      ]
+    },
+    {
+      "id": "rules.report",
+      "module": "rules",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "findings",
+        "blocking"
+      ]
+    },
+    {
+      "id": "rules.show",
+      "module": "rules",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first"
+      ]
+    },
+    {
       "id": "server.status",
       "module": "server",
       "kind": "query",
@@ -977,6 +1152,30 @@
       "cases": [
         "repository",
         "this-checkout"
+      ]
+    },
+    {
+      "id": "session_domain.identity",
+      "module": "session_domain",
+      "kind": "query",
+      "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "session_domain.machine",
+      "module": "session_domain",
+      "kind": "query",
+      "cache": "process, 1 entries, 600s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
       ]
     },
     {

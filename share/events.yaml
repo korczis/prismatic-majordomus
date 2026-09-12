@@ -133,6 +133,14 @@ events:
     requires: [outcome, session_path]
     public: true
 
+  - id: session.recovered
+    title: Session recovered
+    summary: An episode nobody closed was closed by recovery, or its records were repaired.
+    emitted_by: recover
+    requires: [session_id, reason, session_path]
+    public: true
+    note: The envelope's own `session` stamp names the episode doing the recovering, which is never the one recovered; the recovered episode is named in session_id. The reason carries the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate.
+
   - id: layout.migrated
     title: Layout migrated
     summary: Project data moved from the pre-.ai layout into the portable AI layer.

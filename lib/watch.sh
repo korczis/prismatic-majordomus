@@ -26,7 +26,9 @@ mj_cmd_watch() {
     mj_info state "$(mj_cur id)" "task belongs to $(mj_cur worktree), not this checkout" "cat $(mj_rel "$MJ_STATE_DIR")/current.yaml"
   elif mj_load_current; then
     have_task=1
-    mj_load_profile "$(mj_cur profile)" 2>/dev/null || mj_drift state "$(mj_cur id)" "profile '$(mj_cur profile)' has no file"
+    mj_load_profile "$(mj_cur profile)" 2>/dev/null \
+      || mj_drift state "$(mj_cur id)" "profile '$(mj_cur profile)' has no file" \
+                  "ls $(mj_rel "$MJ_PROFILES_DIR")"
   fi
 
   mj_doctrine_dispatch watch

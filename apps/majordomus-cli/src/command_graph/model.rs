@@ -23,7 +23,7 @@ use std::fmt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::capability::{CapabilityId, CapabilityKind};
+use crate::capability::CapabilityId;
 
 /// The schema every serialisation of the graph carries.
 pub const SCHEMA: &str = "majordomus/command-graph/v1";
@@ -151,14 +151,19 @@ pub enum Effect {
 }
 
 impl Effect {
-    /// The effect of a capability, from the kind the registry already classified.
+    /// The effect of a capability, from the execution policy the registry classified.
     ///
-    /// The Rust executable writes nothing to the repository from a capability handler, so
-    /// the strongest a capability reaches is this process's own memory.
-    pub fn of_capability(kind: CapabilityKind) -> Self {
-        match kind {
-            CapabilityKind::Query | CapabilityKind::Resource => Effect::ReadOnly,
-            CapabilityKind::Command => Effect::LocalMutation,
+    /// Read from the policy rather than from the kind alone, because the kind cannot tell
+    /// the two commands apart: announcing a peer changes this process's memory, and moving
+    /// an issue writes a tracked file a commit will carry. This function is what the
+    /// exposure policy consults — a surface carries every node at or below the strongest
+    /// effect it declares — so a capability whose effect was understated here would be
+    /// projected onto a surface whose ceiling exists to exclude it.
+    pub fn of_capability(policy: crate::capability::ExecutionPolicy) -> Self {
+        match policy.effect {
+            crate::capability::Effect::Read => Effect::ReadOnly,
+            crate::capability::Effect::ProcessState => Effect::LocalMutation,
+            crate::capability::Effect::RepositoryMutation => Effect::RepositoryMutation,
         }
     }
 
@@ -658,8 +663,21 @@ mod tests {
         assert!(Effect::ReadOnly < Effect::LocalMutation);
         assert!(Effect::RepositoryMutation < Effect::NetworkMutation);
         assert!(Effect::NetworkMutation < Effect::Destructive);
-        assert!(Effect::of_capability(CapabilityKind::Query).is_read_only());
-        assert!(!Effect::of_capability(CapabilityKind::Command).is_read_only());
+        use crate::capability::{CapabilityKind, ExecutionPolicy};
+        let policy = ExecutionPolicy::classify;
+        assert!(Effect::of_capability(policy(CapabilityKind::Query)).is_read_only());
+        assert!(!Effect::of_capability(policy(CapabilityKind::Command)).is_read_only());
+        // The distinction the kind cannot make, and the reason this reads the policy: a
+        // command that writes a tracked record is a stronger effect than one that does not,
+        // and the exposure ceiling is derived from exactly this value.
+        assert_eq!(
+            Effect::of_capability(policy(CapabilityKind::Command)),
+            Effect::LocalMutation
+        );
+        assert_eq!(
+            Effect::of_capability(policy(CapabilityKind::Command).writes_repository()),
+            Effect::RepositoryMutation
+        );
     }
 
     #[test]

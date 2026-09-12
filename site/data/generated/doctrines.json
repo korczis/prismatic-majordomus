@@ -945,6 +945,31 @@
       "source": "share/standard/majordomus/rules/session-records.v1.md"
     },
     {
+      "id": "majordomus.record-changed-files",
+      "slug": "record-changed-files",
+      "title": "A record's changed_files names the work, not the tool's exhaust",
+      "class": "advisory",
+      "principle": "",
+      "statement": "A record's changed_files is the working tree classified against the declarations that say what is derived — the scope file's generated and never-read sets, the policy's projection targets, the merge driver's derived trees, and the record stores themselves — never git status verbatim.",
+      "summary": "The changed_files block of a checkpoint, a handover or a closed session names what the episode produced. Paths a declaration already calls generated, projected or local are classified out, and the classification reads those declarations rather than a list of its own.",
+      "validator": "record_changed_files",
+      "validator_function": "mj_validate_record_changed_files",
+      "defined_in": "lib/changed.sh",
+      "category": "records",
+      "enforced_by": [
+        "doctor"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [],
+      "test": "test/cases/136_changed_files_classifier.sh",
+      "depends_on": [
+        "majordomus.session-records@1",
+        "majordomus.handover-integrity@1"
+      ],
+      "source": "share/standard/majordomus/rules/record-changed-files.v1.md"
+    },
+    {
       "id": "majordomus.session-lifecycle",
       "slug": "session-lifecycle",
       "title": "The episode boundary is drawn below the model, and its working context is local",
@@ -1140,9 +1165,9 @@
     }
   ],
   "counts": {
-    "declared": 41,
+    "declared": 42,
     "blocking": 37,
-    "advisory": 4
+    "advisory": 5
   },
   "index": {
     "majordomus.ai-layout-integrity": 0,
@@ -1179,12 +1204,13 @@
     "majordomus.schema-integrity": 31,
     "majordomus.scope-integrity": 32,
     "majordomus.session-records": 33,
-    "majordomus.session-lifecycle": 34,
-    "majordomus.skill-integrity": 35,
-    "majordomus.state-consistency": 36,
-    "majordomus.task-continuity": 37,
-    "majordomus.use-case-coverage": 38,
-    "majordomus.verification-integrity": 39,
-    "majordomus.obligation-closure": 40
+    "majordomus.record-changed-files": 34,
+    "majordomus.session-lifecycle": 35,
+    "majordomus.skill-integrity": 36,
+    "majordomus.state-consistency": 37,
+    "majordomus.task-continuity": 38,
+    "majordomus.use-case-coverage": 39,
+    "majordomus.verification-integrity": 40,
+    "majordomus.obligation-closure": 41
   }
 }
