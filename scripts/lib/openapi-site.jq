@@ -7,6 +7,14 @@
 def refname: if type == "object" and has("$ref") then .["$ref"] | split("/") | last else null end;
 
 # A one-line name of a schema, for a table cell. Follows $ref by name, never by content.
+# A description is data rendered inside a page that already has its own <h1>. Rust doc
+# comments carry `# Example` sections, schemars puts them in the schema verbatim, and the
+# page then renders twenty-four competing <h1>s — site-check refuses the build for it, and a
+# screen reader is told the page has twenty-five titles. Headings in a description are
+# demoted three levels here, in the projection, rather than in the document: the OpenAPI
+# document says what the API is, and how deep a heading sits is a fact about this page.
+def demoted: if type == "string" then gsub("(?m)^(?<h>#{1,3}) "; "###\(.h) ") else . end;
+
 def typename:
   if type != "object" then "any"
   elif has("$ref") then (refname)
@@ -28,11 +36,11 @@ def properties:
   (.required // []) as $req
   | [ (.properties // {}) | to_entries[] | .key as $k
       | { name: $k, type: (.value | typename), required: (($req | index($k)) != null),
-          description: (.value.description // ""), refs: (.value | refs) } ];
+          description: ((.value.description // "") | demoted), refs: (.value | refs) } ];
 
 # The alternatives of a oneOf schema, each with its own properties (an enum of tagged objects).
 def variants:
-  [ (.oneOf // [])[] | { type: typename, description: (.description // ""), properties: properties } ];
+  [ (.oneOf // [])[] | { type: typename, description: ((.description // "") | demoted), properties: properties } ];
 
 def is_enum: has("oneOf") and all(.oneOf[]; has("const"));
 
@@ -48,7 +56,7 @@ def url_encode: @uri;
     openapi: $doc.openapi,
     dialect: $doc.jsonSchemaDialect,
     info: { title: $info.title, version: $info.version, summary: ($info.summary // ""),
-            description_md: ($info.description // ""),
+            description_md: (($info.description // "") | demoted),
             license: ($info.license.name // ""), contact_url: ($info.contact.url // ""), contact_name: ($info.contact.name // "") },
     external_docs: ($doc.externalDocs // {}),
     servers: ($doc.servers // []),
@@ -62,7 +70,7 @@ def url_encode: @uri;
     infrastructure: [ ($x.infrastructure // [])[]
       | { id: .id, path: .path, what: .what, availability: .availability } ],
     tags: [ ($doc.tags // [])[] | . as $t
-      | { name: $t.name, description: ($t.description // ""),
+      | { name: $t.name, description: (($t.description // "") | demoted),
           operations: [ $doc.paths | to_entries[] | .key as $path | .value | to_entries[]
             | .key as $method | .value as $op
             | select(($op.tags // []) | index($t.name) != null)
@@ -70,7 +78,7 @@ def url_encode: @uri;
             | ($op.requestBody.content["application/json"] // {}) as $body
             | {
                 id: $op.operationId, method: ($method | ascii_upcase), path: $path,
-                summary: ($op.summary // ""), description: ($op.description // ""),
+                summary: ($op.summary // ""), description: (($op.description // "") | demoted),
                 kind: ($op["x-majordomus-kind"] // ""), stability: ($op["x-majordomus-stability"] // ""),
                 benchmark: ($op["x-majordomus-benchmark"].policy // ""),
                 benchmark_reason: ($op["x-majordomus-benchmark"].reason // ""),
@@ -80,11 +88,11 @@ def url_encode: @uri;
                 mcp_tool: ($op["x-majordomus-mcp"].tool // ""), mcp_resource: ($op["x-majordomus-mcp"].resource // ""),
                 cli: ($op["x-majordomus-cli"] // ""),
                 parameters: [ $params[] | { name, required: (.required // false), type: (.schema | typename),
-                                            description: (.description // ""),
+                                            description: ((.description // "") | demoted),
                                             examples: [ (.examples // {}) | to_entries[] | { case: .key, value: (.value.value | tojson) } ] } ],
                 body_schema: ($body.schema | refname // ""),
                 body_examples: [ ($body.examples // {}) | to_entries[] | { case: .key, json: (.value.value | tojson) } ],
-                responses: [ $op.responses | to_entries[] | { status: .key, description: (.value.description // ""),
+                responses: [ $op.responses | to_entries[] | { status: .key, description: ((.value.description // "") | demoted),
                                                              schema: (.value.content["application/json"].schema | refname // "") } ],
                 result_schema: ($op.responses["200"].content["application/json"].schema | refname // ""),
                 curl: (
@@ -99,9 +107,9 @@ def url_encode: @uri;
                   end)
               } ] } ],
     schemas: [ $doc.components.schemas | to_entries[] | .key as $name | .value as $s
-      | { name: $name, description: ($s.description // ""), type: ($s | typename),
+      | { name: $name, description: (($s.description // "") | demoted), type: ($s | typename),
           is_enum: ($s | is_enum),
-          values: (if ($s | is_enum) then [ $s.oneOf[] | { value: (.const | tostring), description: (.description // "") } ] else [] end),
+          values: (if ($s | is_enum) then [ $s.oneOf[] | { value: (.const | tostring), description: ((.description // "") | demoted) } ] else [] end),
           properties: ($s | properties),
           variants: (if ($s | has("oneOf")) and (($s | is_enum) | not) then ($s | variants) else [] end),
           used_by: [ $doc.paths | to_entries[] | .value | to_entries[] | .value | select(([.. | objects | select(has("$ref")) | refname] | index($name)) != null) | .operationId ],
