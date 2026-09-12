@@ -52,7 +52,7 @@ pub mod verdict;
 
 pub use header::CommitHeader;
 pub use message::{CommitMessage, CommitTrailer};
-pub use plan::{PlanFingerprint, CommitGroup, CommitPlan, ChangeStage, WorkingTreeState};
+pub use plan::{ChangeStage, CommitGroup, CommitPlan, PlanFingerprint, WorkingTreeState};
 pub use policy::{CommitPolicy, FindingLevel};
 pub use scopes::{ScopeSuggestion, ScopeVocabulary};
 pub use verdict::{judge, CommitExemption, CommitRule, CommitSubject, CommitVerdict};

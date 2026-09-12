@@ -246,7 +246,9 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
             );
         }
     }
-    if message.breaking() && message.body.trim().is_empty() && message.trailer("BREAKING CHANGE").is_none()
+    if message.breaking()
+        && message.body.trim().is_empty()
+        && message.trailer("BREAKING CHANGE").is_none()
     {
         add(
             CommitRule::BreakingUnexplained,
@@ -255,11 +257,13 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
         );
     }
     for candidate in record_candidates(&subject.text) {
-        if !subject.records.iter().any(|r| *r == candidate) {
+        if !subject.records.contains(&candidate) {
             add(
                 CommitRule::UnresolvedReference,
                 policy.reference_unresolved,
-                format!("the message names {candidate}, which this repository's layer does not hold"),
+                format!(
+                    "the message names {candidate}, which this repository's layer does not hold"
+                ),
             );
         }
     }
@@ -348,7 +352,10 @@ mod tests {
     #[test]
     fn a_wide_subject_is_measured_whole_and_not_only_after_the_colon() {
         let long = "x".repeat(80);
-        let v = judge(&CommitSubject::of(&format!("feat(a): {long}")), &CommitPolicy::default());
+        let v = judge(
+            &CommitSubject::of(&format!("feat(a): {long}")),
+            &CommitPolicy::default(),
+        );
         assert_eq!(codes(&v), vec!["commit.subject_too_long"]);
         assert!(!v.passed);
         // the width reported is the whole line, which is what a viewer wraps
@@ -376,7 +383,9 @@ mod tests {
             scopes: Some(vec!["commit".into()]),
             ..CommitSubject::default()
         };
-        assert!(judge(&subject, &CommitPolicy::default()).findings.is_empty());
+        assert!(judge(&subject, &CommitPolicy::default())
+            .findings
+            .is_empty());
     }
 
     #[test]
@@ -402,10 +411,15 @@ mod tests {
     fn a_fix_is_asked_for_a_test_only_when_its_files_are_known() {
         let with_test = CommitSubject {
             text: "fix(commit): a thing".into(),
-            paths: Some(vec!["src/commit/verdict.rs".into(), "test/cases/1.sh".into()]),
+            paths: Some(vec![
+                "src/commit/verdict.rs".into(),
+                "test/cases/1.sh".into(),
+            ]),
             ..CommitSubject::default()
         };
-        assert!(judge(&with_test, &CommitPolicy::default()).findings.is_empty());
+        assert!(judge(&with_test, &CommitPolicy::default())
+            .findings
+            .is_empty());
 
         let without = CommitSubject {
             text: "fix(commit): a thing".into(),
@@ -414,11 +428,16 @@ mod tests {
         };
         let v = judge(&without, &CommitPolicy::default());
         assert_eq!(codes(&v), vec!["commit.fix_without_test"]);
-        assert!(v.passed, "a warning by default, so that a gate over history does not rewrite it");
+        assert!(
+            v.passed,
+            "a warning by default, so that a gate over history does not rewrite it"
+        );
 
         // a gate reading history knows no paths, and must not invent the finding
         let unknown = CommitSubject::of("fix(commit): a thing");
-        assert!(judge(&unknown, &CommitPolicy::default()).findings.is_empty());
+        assert!(judge(&unknown, &CommitPolicy::default())
+            .findings
+            .is_empty());
     }
 
     #[test]
@@ -428,12 +447,17 @@ mod tests {
             paths: Some(vec!["apps/majordomus-cli/src/commit/tests.rs".into()]),
             ..CommitSubject::default()
         };
-        assert!(judge(&only_tests, &CommitPolicy::default()).findings.is_empty());
+        assert!(judge(&only_tests, &CommitPolicy::default())
+            .findings
+            .is_empty());
     }
 
     #[test]
     fn a_breaking_change_must_say_why() {
-        let bare = judge(&CommitSubject::of("feat(api)!: the route moved"), &CommitPolicy::default());
+        let bare = judge(
+            &CommitSubject::of("feat(api)!: the route moved"),
+            &CommitPolicy::default(),
+        );
         assert_eq!(codes(&bare), vec!["commit.breaking_unexplained"]);
         assert!(!bare.passed);
 
@@ -444,7 +468,9 @@ mod tests {
         assert!(explained.findings.is_empty());
 
         let trailer = judge(
-            &CommitSubject::of("feat(api): the route moved\n\nBREAKING CHANGE: it is under /api/v2"),
+            &CommitSubject::of(
+                "feat(api): the route moved\n\nBREAKING CHANGE: it is under /api/v2",
+            ),
             &CommitPolicy::default(),
         );
         assert!(trailer.findings.is_empty());

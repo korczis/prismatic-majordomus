@@ -141,13 +141,13 @@ fn render_plan(out: &mut impl Write, v: &Value, format: OutputFormat) -> Result<
     writeln!(
         out,
         "fingerprint  {} @ {}",
-        &v["fingerprint"]["changes"]
+        v["fingerprint"]["changes"]
             .as_str()
             .unwrap_or("")
             .chars()
             .take(12)
             .collect::<String>(),
-        &v["fingerprint"]["head"]
+        v["fingerprint"]["head"]
             .as_str()
             .unwrap_or("?")
             .chars()
@@ -175,8 +175,12 @@ fn render_plan(out: &mut impl Write, v: &Value, format: OutputFormat) -> Result<
             )
         };
         writeln!(out, "\ncommit {}    {head}", i + 1).map_err(Error::Transport)?;
-        writeln!(out, "  why        {}", g["rationale"].as_str().unwrap_or(""))
-            .map_err(Error::Transport)?;
+        writeln!(
+            out,
+            "  why        {}",
+            g["rationale"].as_str().unwrap_or("")
+        )
+        .map_err(Error::Transport)?;
         for p in g["paths"].as_array().into_iter().flatten() {
             writeln!(out, "  {}", p.as_str().unwrap_or("")).map_err(Error::Transport)?;
         }
@@ -280,8 +284,11 @@ fn render_verdict(out: &mut impl Write, v: &Value, format: OutputFormat) -> Resu
     )
     .map_err(Error::Transport)?;
     if let Some(exempt) = v["exempt"].as_str() {
-        return writeln!(out, "exempt   {exempt}: git composed this subject, not a person")
-            .map_err(Error::Transport);
+        return writeln!(
+            out,
+            "exempt   {exempt}: git composed this subject, not a person"
+        )
+        .map_err(Error::Transport);
     }
     for d in v["findings"].as_array().into_iter().flatten() {
         writeln!(
@@ -293,8 +300,7 @@ fn render_verdict(out: &mut impl Write, v: &Value, format: OutputFormat) -> Resu
         )
         .map_err(Error::Transport)?;
     }
-    if v["passed"].as_bool() == Some(true)
-        && v["findings"].as_array().is_none_or(|f| f.is_empty())
+    if v["passed"].as_bool() == Some(true) && v["findings"].as_array().is_none_or(|f| f.is_empty())
     {
         writeln!(out, "ok       nothing to report").map_err(Error::Transport)?;
     }

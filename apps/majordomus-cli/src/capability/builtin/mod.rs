@@ -32,8 +32,8 @@
 
 pub mod artifacts;
 pub(crate) mod capabilities;
-pub mod commit;
 pub mod commands;
+pub mod commit;
 pub mod continuity;
 pub(crate) mod deploy;
 pub(crate) mod design;

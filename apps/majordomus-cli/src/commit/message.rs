@@ -195,7 +195,8 @@ mod tests {
     fn comment_lines_are_not_part_of_the_message() {
         // What is judged must be what git will store, or the hook passes a message that
         // the repository then rejects — or worse, the other way around.
-        let m = CommitMessage::parse("fix(x): a thing\n# Please enter the commit message\n\nBody.\n");
+        let m =
+            CommitMessage::parse("fix(x): a thing\n# Please enter the commit message\n\nBody.\n");
         assert_eq!(m.header.subject, "a thing");
         assert_eq!(m.body, "Body.");
     }

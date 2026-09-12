@@ -148,7 +148,9 @@ pub fn derive(root: &Path) -> ScopeVocabulary {
     let mut sampled = 0usize;
     for record in text.split('\u{2}') {
         let mut lines = record.lines();
-        let Some(subject) = lines.next() else { continue };
+        let Some(subject) = lines.next() else {
+            continue;
+        };
         if subject.trim().is_empty() {
             continue;
         }
@@ -189,7 +191,11 @@ pub fn derive(root: &Path) -> ScopeVocabulary {
             }
         })
         .collect();
-    scopes.sort_by(|a, b| b.commits.cmp(&a.commits).then_with(|| a.scope.cmp(&b.scope)));
+    scopes.sort_by(|a, b| {
+        b.commits
+            .cmp(&a.commits)
+            .then_with(|| a.scope.cmp(&b.scope))
+    });
     ScopeVocabulary {
         scopes,
         sampled,
@@ -245,19 +251,15 @@ impl ScopeVocabulary {
                     continue;
                 }
                 for (scope, n) in here {
-                    let entry = votes
-                        .entry(scope.clone())
-                        .or_insert((0, prefix.clone()));
+                    let entry = votes.entry(scope.clone()).or_insert((0, prefix.clone()));
                     entry.0 += n;
                     entry.1 = prefix.clone();
                 }
                 break;
             }
         }
-        let mut ranked: Vec<(String, usize, String)> = votes
-            .into_iter()
-            .map(|(s, (n, d))| (s, n, d))
-            .collect();
+        let mut ranked: Vec<(String, usize, String)> =
+            votes.into_iter().map(|(s, (n, d))| (s, n, d)).collect();
         ranked.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         let (scope, weight, directory) = ranked.first()?.clone();
         let ambiguous = ranked.get(1).is_some_and(|(_, n, _)| *n == weight);
@@ -366,7 +368,10 @@ mod tests {
         let plain = tempfile::tempdir().expect("a temporary directory");
         let v = derive(plain.path());
         assert!(v.scopes.is_empty());
-        assert!(v.unavailable.is_some(), "it says why rather than pretending");
+        assert!(
+            v.unavailable.is_some(),
+            "it says why rather than pretending"
+        );
         assert!(!v.knows("anything"));
     }
 }

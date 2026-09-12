@@ -38,7 +38,9 @@ use crate::model::Diagnostic;
 use crate::release::ChangeKind;
 
 /// Where one path stands between the index and the working tree.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum ChangeStage {
     /// Different in the index from HEAD: it would be in the next commit.
@@ -281,7 +283,11 @@ pub fn working_tree(root: &Path) -> Option<WorkingTreeState> {
                 }
                 tree.changes.push(PathChange {
                     path,
-                    stage: if staged { ChangeStage::Staged } else { ChangeStage::Unstaged },
+                    stage: if staged {
+                        ChangeStage::Staged
+                    } else {
+                        ChangeStage::Unstaged
+                    },
                     status: xy.to_string(),
                     partial: staged && worktree != '.',
                 });
@@ -291,7 +297,8 @@ pub fn working_tree(root: &Path) -> Option<WorkingTreeState> {
     }
     tree.in_progress = in_progress(root);
     tree.changes.sort();
-    tree.changes.dedup_by(|a, b| a.path == b.path && a.stage == b.stage);
+    tree.changes
+        .dedup_by(|a, b| a.path == b.path && a.stage == b.stage);
     Some(tree)
 }
 
@@ -341,9 +348,7 @@ pub fn kind_of(paths: &[String]) -> Option<ChangeKind> {
     if all(|p| p.starts_with("docs/") || p.ends_with(".md")) {
         return Some(ChangeKind::Docs);
     }
-    if all(|p| {
-        p.starts_with("test/") || p.starts_with("tests/") || p.contains("/tests/")
-    }) {
+    if all(|p| p.starts_with("test/") || p.starts_with("tests/") || p.contains("/tests/")) {
         return Some(ChangeKind::Test);
     }
     if all(|p| p.starts_with(".github/") || p.starts_with("scripts/ci/")) {
@@ -473,7 +478,11 @@ fn group_by_scope(paths: &[String], vocabulary: &ScopeVocabulary) -> Vec<CommitG
     let order = vocabulary.words();
     let mut keys: Vec<Option<String>> = by_scope.keys().cloned().collect();
     keys.sort_by_key(|k| match k {
-        Some(s) => (0, order.iter().position(|w| w == s).unwrap_or(usize::MAX), s.clone()),
+        Some(s) => (
+            0,
+            order.iter().position(|w| w == s).unwrap_or(usize::MAX),
+            s.clone(),
+        ),
         None => (1, 0, String::new()),
     });
     keys.into_iter()
@@ -551,8 +560,14 @@ mod tests {
     fn a_fingerprint_is_stable_for_one_tree_and_moves_with_it() {
         let a = tree(&[("src/a.rs", ChangeStage::Staged, "M.")]);
         let f = PlanFingerprint::of("/repo/.git", "/wt", &a);
-        assert_eq!(f, PlanFingerprint::of("/repo/.git", "/wt", &a), "deterministic");
-        assert!(f.differs_from(&PlanFingerprint::of("/repo/.git", "/wt", &a)).is_none());
+        assert_eq!(
+            f,
+            PlanFingerprint::of("/repo/.git", "/wt", &a),
+            "deterministic"
+        );
+        assert!(f
+            .differs_from(&PlanFingerprint::of("/repo/.git", "/wt", &a))
+            .is_none());
     }
 
     #[test]
@@ -629,7 +644,11 @@ mod tests {
         assert_eq!(groups[0].paths.len(), 2);
         assert_eq!(groups[1].message.header.scope.as_deref(), Some("site"));
         // and the reason is evidence a reader can check, not an assertion
-        assert!(groups[0].rationale.contains("40 prior commit"), "{}", groups[0].rationale);
+        assert!(
+            groups[0].rationale.contains("40 prior commit"),
+            "{}",
+            groups[0].rationale
+        );
     }
 
     #[test]
@@ -639,7 +658,11 @@ mod tests {
         assert_eq!(groups.len(), 1);
         assert_eq!(groups[0].paths.len(), 2);
         assert!(groups[0].message.header.scope.is_none());
-        assert!(groups[0].rationale.contains("never scoped"), "{}", groups[0].rationale);
+        assert!(
+            groups[0].rationale.contains("never scoped"),
+            "{}",
+            groups[0].rationale
+        );
     }
 
     #[test]
@@ -653,7 +676,10 @@ mod tests {
     fn a_kind_is_taken_from_the_paths_only_when_the_paths_decide_it() {
         assert_eq!(kind_of(&["docs/COMMIT.md".into()]), Some(ChangeKind::Docs));
         assert_eq!(kind_of(&["test/cases/1.sh".into()]), Some(ChangeKind::Test));
-        assert_eq!(kind_of(&[".github/workflows/ci.yml".into()]), Some(ChangeKind::Ci));
+        assert_eq!(
+            kind_of(&[".github/workflows/ci.yml".into()]),
+            Some(ChangeKind::Ci)
+        );
         // a source change could be a feature, a fix or a refactor; the file names do not say
         assert_eq!(kind_of(&["src/a.rs".into()]), None);
         // and a mixed set decides nothing
@@ -700,11 +726,7 @@ pub fn messages_in(root: &Path, range: &str) -> Option<Vec<(String, String)>> {
     let out = Command::new("git")
         .arg("-C")
         .arg(root)
-        .args([
-            "log",
-            &format!("--format=%H{FIELD}%B{RECORD}"),
-            range,
-        ])
+        .args(["log", &format!("--format=%H{FIELD}%B{RECORD}"), range])
         .output()
         .ok()?;
     if !out.status.success() {
@@ -719,7 +741,10 @@ pub fn messages_in(root: &Path, range: &str) -> Option<Vec<(String, String)>> {
                 if commit.is_empty() {
                     return None;
                 }
-                Some((commit.to_string(), parts.next().unwrap_or_default().trim_end().to_string()))
+                Some((
+                    commit.to_string(),
+                    parts.next().unwrap_or_default().trim_end().to_string(),
+                ))
             })
             .collect(),
     )
@@ -751,7 +776,10 @@ mod derived_tests {
     /// a time, after the split.
     #[test]
     fn a_change_set_carrying_generated_files_is_one_commit_and_says_why() {
-        let v = vocabulary(&[("alpha", "apps/cli/src", 40), ("derive", "docs/generated", 180)]);
+        let v = vocabulary(&[
+            ("alpha", "apps/cli/src", 40),
+            ("derive", "docs/generated", 180),
+        ]);
         let paths: Vec<String> = vec![
             "apps/cli/src/alpha/a.rs".into(),
             "docs/generated/registry.json".into(),
@@ -764,9 +792,17 @@ mod derived_tests {
         // Without the rule the scopes alone would make two commits.
         assert_eq!(group_by_scope(&paths, &v).len(), 2);
         let groups = group(&paths, &v, &derived);
-        assert_eq!(groups.len(), 1, "generated files may not be split from their source");
+        assert_eq!(
+            groups.len(),
+            1,
+            "generated files may not be split from their source"
+        );
         assert_eq!(groups[0].paths.len(), 3);
-        assert!(groups[0].rationale.contains("one commit, not 2"), "{}", groups[0].rationale);
+        assert!(
+            groups[0].rationale.contains("one commit, not 2"),
+            "{}",
+            groups[0].rationale
+        );
         assert!(
             groups[0].rationale.contains("derived-files-regenerated"),
             "the rationale names the rule that decided: {}",
@@ -779,7 +815,10 @@ mod derived_tests {
     #[test]
     fn a_change_set_that_would_be_one_commit_anyway_is_not_relabelled() {
         let v = vocabulary(&[("alpha", "apps/cli/src", 40)]);
-        let paths: Vec<String> = vec!["apps/cli/src/alpha/a.rs".into(), "apps/cli/src/alpha/b.rs".into()];
+        let paths: Vec<String> = vec![
+            "apps/cli/src/alpha/a.rs".into(),
+            "apps/cli/src/alpha/b.rs".into(),
+        ];
         let groups = group(&paths, &v, &["apps/cli/src/alpha/b.rs".into()]);
         assert_eq!(groups.len(), 1);
         assert!(

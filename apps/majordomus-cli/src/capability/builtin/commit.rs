@@ -22,7 +22,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CliExposure, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::commit::verdict::{HistoryReport, JudgedCommit};
-use crate::commit::{self, CommitPolicy, CommitPlan, CommitVerdict, ScopeVocabulary};
+use crate::commit::{self, CommitPlan, CommitPolicy, CommitVerdict, ScopeVocabulary};
 use crate::{capability, module};
 
 use super::{get, mcp, Empty};
@@ -180,7 +180,10 @@ impl BenchmarkCases for ValidateInput {
     }
 }
 
-pub(super) fn validate(ctx: &Context, input: ValidateInput) -> Result<CommitVerdict, CapabilityError> {
+pub(super) fn validate(
+    ctx: &Context,
+    input: ValidateInput,
+) -> Result<CommitVerdict, CapabilityError> {
     if input.message.trim().is_empty() {
         return Err(CapabilityError::InvalidInput(
             "the message is empty; there is nothing to judge".into(),
@@ -227,13 +230,13 @@ impl BenchmarkCases for HistoryInput {
     }
 }
 
-pub(super) fn history(ctx: &Context, input: HistoryInput) -> Result<HistoryReport, CapabilityError> {
+pub(super) fn history(
+    ctx: &Context,
+    input: HistoryInput,
+) -> Result<HistoryReport, CapabilityError> {
     let root = root(ctx);
     let messages = commit::plan::messages_in(&root, &input.range).ok_or_else(|| {
-        CapabilityError::InvalidInput(format!(
-            "git does not know the range '{}'",
-            input.range
-        ))
+        CapabilityError::InvalidInput(format!("git does not know the range '{}'", input.range))
     })?;
     let vocabulary = commit::scopes::derive(&root);
     let words = (!vocabulary.scopes.is_empty()).then(|| vocabulary.words());
@@ -374,7 +377,11 @@ mod tests {
                 "majordomus_commit_scopes",
                 "/api/v1/commit/scopes",
             ),
-            ("commit.plan", "majordomus_commit_plan", "/api/v1/commit/plan"),
+            (
+                "commit.plan",
+                "majordomus_commit_plan",
+                "/api/v1/commit/plan",
+            ),
             (
                 "commit.validate",
                 "majordomus_commit_validate",

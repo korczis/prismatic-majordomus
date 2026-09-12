@@ -211,7 +211,10 @@ mod tests {
         let h = CommitHeader::parse("Merge branch 'master' of gitlab.com: into feature/x");
         assert_eq!(h.word, "");
         assert_eq!(h.scope, None);
-        assert_eq!(h.subject, "Merge branch 'master' of gitlab.com: into feature/x");
+        assert_eq!(
+            h.subject,
+            "Merge branch 'master' of gitlab.com: into feature/x"
+        );
     }
 
     #[test]
