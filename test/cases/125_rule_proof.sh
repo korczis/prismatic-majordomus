@@ -183,6 +183,23 @@ expect_no_grep 'project\.fixture-advisory'
 # repository leaning harder on review shows that number rather than absorbing it in a total.
 clean
 expect_exit 0 "$CHECK"
-expect_grep 'no new debt \([0-9]+ rule\(s\) known, [0-9]+ declared review-enforced, [0-9]+ rule\(s\) measured\)$'
+expect_grep 'no new debt \([0-9]+ rule\(s\) known, [0-9]+ declared review-enforced, [0-9]+ blocking of [0-9]+ rule\(s\) measured\)$'
 expect_exit 0 "$CHECK" --write-baseline
 expect_exit 0 "$MJ" rules list
+
+# ---------------------------------------------------------------- the subject, stated
+# docs/CLAIMS.yaml marks `rule-proof-is-named-and-resolves` and
+# `rule-exemption-carries-its-reason` as guaranteed and names this case as the test that
+# proves them. The two ids are written here so the link reads from both ends:
+# scripts/ci/claim-proof-check is what refuses a guaranteed claim whose test never names it,
+# and a claim whose pointer is only written at the claim's end goes stale in silence.
+#
+# The verdict states both denominators and names the population it is NOT about. This gate
+# and scripts/ci/claim-proof-check each printed a bare list of ids, of different populations,
+# under headers that read as verdicts on the same thing; a list of unproven *claims* was
+# taken for a list of unproven *rules*. Naming the population on every run is what makes
+# that reading impossible.
+expect_exit 0 "$CHECK"
+expect_grep '^blocking rules: +[0-9]+ of [0-9]+ rule\(s\) in '
+expect_grep '^guaranteed claims: +not measured here'
+expect_no_grep '^guaranteed claims: +[0-9]+ of'
