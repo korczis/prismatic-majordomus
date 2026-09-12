@@ -46,6 +46,55 @@
 //! repository is milliseconds; building the index is seconds, and it is built once per
 //! process. The answer carries the index fingerprint, so an answer is valid exactly as long
 //! as the index it was computed from, and a caller can tell two trees apart without asking.
+//!
+//! # A call, end to end
+//!
+//! The whole module is three functions over one input type. [`compile`] answers *what
+//! should this session be given*, [`explain`] answers *why is this one thing in or out of
+//! that*, and [`policy`] answers *by what rules* — the last needing no request at all,
+//! because the rules do not depend on what is being asked about.
+//!
+//! The request below names nothing, which is the smallest legitimate one: the governance
+//! applies to every session whether or not anybody asked for it, so the answer is not empty.
+//!
+//! ```
+//! use majordomus_cli::devcontext::{compile, explain, policy, CompileInput, ExplainInput};
+//! use majordomus_cli::devcontext::{Standing, Tier};
+//! use majordomus_cli::synthetic::SyntheticRepository;
+//!
+//! let repo = SyntheticRepository::small().unwrap();
+//! let ctx = repo.context().unwrap();
+//!
+//! // what should a session here be given, with nothing asked for?
+//! let compiled = compile(&ctx, CompileInput::default()).unwrap();
+//! assert!(
+//!     compiled.selected.iter().any(|e| e.kind == "policy"),
+//!     "the governance applies without being asked for",
+//! );
+//! assert_eq!(compiled.budget.tiers.len(), Tier::ORDER.len());
+//!
+//! // and why is that entry in it? — judged under the same request, so "excluded for
+//! // budget" is a statement about a budget the caller can see
+//! let first = compiled.selected[0].uri.clone();
+//! let why = explain(&ctx, ExplainInput { uri: first.clone(), request: CompileInput::default() })
+//!     .unwrap();
+//! assert_eq!(why.standing, Standing::Selected);
+//! assert_eq!(why.uri, first);
+//! assert!(why.entry.is_some() && !why.detail.is_empty());
+//!
+//! // something the index does not hold is `unknown`, not an error
+//! let absent = explain(
+//!     &ctx,
+//!     ExplainInput { uri: "majordomus://rule/nothing-like-this@1".into(), ..Default::default() },
+//! )
+//! .unwrap();
+//! assert_eq!(absent.standing, Standing::Unknown);
+//!
+//! // by what rules? — readable without a request, because they do not depend on one
+//! let rules = policy(&ctx).unwrap();
+//! assert_eq!(rules.tiers.len(), Tier::ORDER.len());
+//! assert!(rules.edges.iter().any(|e| e.refused), "and it says what it will not follow");
+//! ```
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -75,6 +124,40 @@ pub const DEFAULT_FLOOR: f64 = 0.25;
 /// Every field is optional. A request that names nothing still gets an answer: the
 /// governance the layer applies to everything, and what the last session left — which is
 /// the smallest true context there is.
+///
+/// The seeds are additive, not alternative: `issue`, `milestone`, `uris`, `paths` and
+/// `intent` all contribute, and naming several is the normal case rather than a conflict.
+/// `intent` is the only one the compiler infers from, which is why every entry it produces
+/// carries [`Selector::IntentMatch`] and a confidence below one.
+///
+/// `deny_unknown_fields` is deliberate. This is the input of a served capability, so a
+/// misspelled field is a request that does not mean what its author thought; refusing it is
+/// the difference between a typo and a silently smaller answer.
+///
+/// ```
+/// use majordomus_cli::devcontext::CompileInput;
+/// use serde_json::json;
+///
+/// // the smallest legitimate request, which is not the same as no request
+/// let nothing: CompileInput = serde_json::from_value(json!({})).unwrap();
+/// assert_eq!(nothing, CompileInput::default());
+/// assert!(nothing.issue.is_none() && nothing.paths.is_empty());
+///
+/// // the seeds combine rather than compete
+/// let both: CompileInput = serde_json::from_value(json!({
+///     "issue": "I0301",
+///     "paths": ["apps/majordomus-cli/src"],
+///     "intent": "explain the budget",
+///     "budget_tokens": 4_000,
+/// })).unwrap();
+/// assert_eq!(both.issue.as_deref(), Some("I0301"));
+/// assert_eq!(both.paths, ["apps/majordomus-cli/src"]);
+/// assert_eq!(both.budget_tokens, Some(4_000));
+///
+/// // and a misspelled field is refused rather than quietly ignored
+/// let typo = serde_json::from_value::<CompileInput>(json!({"max_dept": 2}));
+/// assert!(typo.is_err(), "a typo must not become a smaller answer");
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CompileInput {
@@ -157,6 +240,38 @@ impl BenchmarkCases for CompileInput {
 }
 
 /// What one identifier's standing in a compiled context is.
+/// Where one identifier stands with respect to a compiled context.
+///
+/// The pair to be careful about is `NotReached` and `Unknown`, because they look alike in a
+/// rendering and mean opposite things. `NotReached` says the index holds the object and this
+/// request did not reach it — the request is what to change, and raising the depth or the
+/// budget may well bring it in. `Unknown` says the index holds nothing under that
+/// identifier: the request is fine and the identifier is wrong, or the object is not in
+/// this repository. Collapsing the two would send a reader to tune a request that was never
+/// the problem.
+///
+/// `Deduplicated` is the third one worth naming: the thing is *in* the answer, under another
+/// identifier, which is neither in nor out.
+///
+/// ```
+/// use majordomus_cli::devcontext::Standing;
+///
+/// // in the answer, one way or another
+/// let present = [Standing::Selected, Standing::Deduplicated];
+/// // reached and not given, so the request is what to change
+/// let request_bound = [Standing::Excluded, Standing::NotReached];
+/// for s in present {
+///     assert!(!request_bound.contains(&s));
+/// }
+///
+/// // the two that must not be confused: one is the request's fault, one is not
+/// assert_eq!(Standing::NotReached.as_str(), "not_reached");
+/// assert_ne!(Standing::NotReached, Standing::Unknown);
+/// assert_eq!(
+///     serde_json::to_value(Standing::NotReached).unwrap(),
+///     serde_json::json!(Standing::NotReached.as_str()),
+/// );
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // `worktree` already answers with a `Standing` about a branch, and the OpenAPI document has
@@ -194,6 +309,33 @@ impl Standing {
 }
 
 /// The input of `devcontext.explain`: one identifier, and the request to judge it under.
+///
+/// The request is not optional context for the question — it is half of the question.
+/// "Why is this ADR not in my context" has no answer in the abstract: it is in or out of a
+/// *particular* compiled answer, and "excluded for budget" is only actionable when the
+/// budget it did not fit in is known. So the same fields `compile` takes are `flatten`ed in
+/// here, which also means the wire form is one flat object rather than a nested `request`,
+/// and the command line can share its flags.
+///
+/// ```
+/// use majordomus_cli::devcontext::ExplainInput;
+/// use serde_json::json;
+///
+/// // flattened: the request's fields sit beside `uri`, not under it
+/// let input: ExplainInput = serde_json::from_value(json!({
+///     "uri": "majordomus://adr/0052",
+///     "budget_tokens": 2_000,
+///     "max_depth": 1,
+/// })).unwrap();
+/// assert_eq!(input.uri, "majordomus://adr/0052");
+/// assert_eq!(input.request.budget_tokens, Some(2_000));
+/// assert_eq!(input.request.max_depth, Some(1));
+///
+/// // and the identifier alone is a complete question, judged under the default request
+/// let bare: ExplainInput = serde_json::from_value(json!({"uri": "majordomus://adr/0052"}))
+///     .unwrap();
+/// assert_eq!(bare.request, Default::default());
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ExplainInput {
@@ -234,6 +376,46 @@ impl BenchmarkCases for ExplainInput {
 }
 
 /// Why one identifier is, or is not, in a compiled context.
+///
+/// `standing` says which of the five cases this is, and the three optional fields are the
+/// evidence for it: at most one of `entry`, `excluded` and `deduplicated` is populated, and
+/// which one is determined by the standing rather than independent of it. `detail` is the
+/// same answer in words, so the value is legible without a reader matching them up.
+///
+/// `budget` is always present, including when the answer is `unknown`, and that is the
+/// point of carrying it: the commonest reason to ask this question is an entry that did not
+/// fit, and an explanation that said "excluded for budget" without the budget would need a
+/// second call to act on.
+///
+/// ```
+/// use majordomus_cli::devcontext::{compile, explain, CompileInput, ExplainInput};
+/// use majordomus_cli::devcontext::{Explanation, Standing};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let compiled = compile(&ctx, CompileInput::default()).unwrap();
+/// let selected = compiled.selected[0].uri.clone();
+///
+/// // something in the answer: the entry is the evidence, and the other two are empty
+/// let e: Explanation =
+///     explain(&ctx, ExplainInput { uri: selected.clone(), ..Default::default() }).unwrap();
+/// assert_eq!(e.standing, Standing::Selected);
+/// assert_eq!(e.entry.as_ref().unwrap().uri, selected);
+/// assert!(e.excluded.is_none() && e.deduplicated.is_none());
+/// assert!(!e.detail.is_empty(), "the standing always reads as a sentence too");
+///
+/// // something this repository does not hold: an answer, not an error — and the budget
+/// // the judgement was made under is carried even here
+/// let absent: Explanation = explain(
+///     &ctx,
+///     ExplainInput { uri: "majordomus://adr/9999".into(), ..Default::default() },
+/// )
+/// .unwrap();
+/// assert_eq!(absent.standing, Standing::Unknown);
+/// assert!(absent.entry.is_none());
+/// assert_eq!(absent.budget.limit_tokens, compiled.budget.limit_tokens);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Explanation {
     /// What was asked about.
@@ -256,7 +438,49 @@ pub struct Explanation {
     pub budget: Budget,
 }
 
-/// One tier, as the policy reports it.
+/// One tier, as the policy reports it: its place in the spend order, what it is for, and
+/// which kinds of object land in it.
+///
+/// `position` is 1-based and exists because the wire form has no inherent order a consumer
+/// can rely on — the [`Tier`] enum's `Ord` is a Rust fact, not a JSON one — so the rank is
+/// made explicit for the readers that are not this crate. `kinds` is the inverse of
+/// [`tier_for_kind`], published so that a caller can see where a kind will land without
+/// compiling an answer and looking.
+///
+/// ```
+/// use majordomus_cli::devcontext::{policy, tier_for_kind, Tier, TierRule};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let rules = policy(&ctx).unwrap();
+///
+/// // the first tier spent is the one that is never dropped, at position 1
+/// let first: &TierRule = &rules.tiers[0];
+/// assert_eq!(first.tier, Tier::Task);
+/// assert_eq!(first.position, 1, "1-based, so the order survives serialisation");
+///
+/// // every tier is reported, in the order the budget spends in, and explains itself
+/// assert_eq!(rules.tiers.len(), Tier::ORDER.len());
+/// for (i, r) in rules.tiers.iter().enumerate() {
+///     assert_eq!(r.position, i + 1);
+///     assert_eq!(r.meaning, r.tier.meaning());
+/// }
+///
+/// // and every kind is listed under the tier the classifier puts it in, exactly once —
+/// // so the published table and the function behind it cannot disagree
+/// let mut listed = 0usize;
+/// for r in &rules.tiers {
+///     for kind in &r.kinds {
+///         assert_eq!(tier_for_kind(kind), r.tier, "{kind} is listed under the wrong tier");
+///         listed += 1;
+///     }
+/// }
+/// let mut all: Vec<&str> = rules.tiers.iter().flat_map(|r| &r.kinds).map(String::as_str).collect();
+/// all.sort();
+/// all.dedup();
+/// assert_eq!(all.len(), listed, "a kind is listed under one tier only");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct TierRule {
     /// The tier.
@@ -270,6 +494,46 @@ pub struct TierRule {
 }
 
 /// One edge of the composed graph, and what the compiler does with it.
+///
+/// Every edge kind the graph declares gets a row, followed or not, which is the property
+/// that makes this projection worth reading: an edge added to the graph and not to the
+/// traversal table appears here as `refused` with a reason saying the compiler has no rule
+/// for it, rather than being silently unfollowed. A table that only listed the edges it
+/// followed could not tell you what it was ignoring.
+///
+/// `forward` and `reverse` are absent rather than zero when the edge is not followed that
+/// way, so "not followed" is one representation and not two. `means` is the graph's own
+/// account of the relation; `reason` is this compiler's account of why it is or is not
+/// context, in both directions.
+///
+/// ```
+/// use majordomus_cli::devcontext::{edge_policy, policy, EdgeRule};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let rules = policy(&ctx).unwrap();
+///
+/// // one row per edge kind the graph declares, followed or refused
+/// let edges: &[EdgeRule] = &rules.edges;
+/// assert!(!edges.is_empty(), "the graph declares edges");
+/// for e in edges {
+///     // the row always says what the relation is and what was decided about it
+///     assert!(!e.means.is_empty() && !e.reason.is_empty(), "{}", e.edge);
+///
+///     if e.refused {
+///         // not followed in either direction, and absent rather than zero
+///         assert!(e.forward.is_none() && e.reverse.is_none(), "{}", e.edge);
+///         assert!(edge_policy(&e.edge).is_none(), "{} is refused and in the table", e.edge);
+///     } else {
+///         // followed at least one way, at a weight the table declares
+///         assert!(e.forward.is_some() || e.reverse.is_some(), "{}", e.edge);
+///         let p = edge_policy(&e.edge).expect("a followed edge has a policy");
+///         assert_eq!(e.forward, (p.forward > 0.0).then_some(p.forward));
+///         assert_eq!(e.reverse, (p.reverse > 0.0).then_some(p.reverse));
+///     }
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct EdgeRule {
     /// The edge kind, as the composed graph names it.
@@ -289,6 +553,32 @@ pub struct EdgeRule {
 }
 
 /// One selector, and whether what it produces was declared or inferred.
+///
+/// Two fields, and the second is the whole reason the projection exists: a caller consuming
+/// a compiled context needs to know which selectors it can trust as repository fact, and
+/// deriving that from the answer would mean inferring it from confidence values. Published
+/// here, it is a rule rather than a pattern a reader noticed.
+///
+/// ```
+/// use majordomus_cli::devcontext::{policy, Selector, SelectorRule};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let rules = policy(&ctx).unwrap();
+///
+/// // every selector is published, and each row agrees with the selector it names
+/// let selectors: &[SelectorRule] = &rules.selectors;
+/// assert_eq!(selectors.len(), Selector::ALL.len());
+/// for r in selectors {
+///     assert_eq!(r.declared, r.selector.declared());
+/// }
+///
+/// // and the inferring one is named, so the guessed half of an answer can be found
+/// let inferred: Vec<Selector> =
+///     selectors.iter().filter(|r| !r.declared).map(|r| r.selector).collect();
+/// assert_eq!(inferred, [Selector::IntentMatch]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SelectorRule {
     /// The selector.
@@ -299,6 +589,42 @@ pub struct SelectorRule {
 
 /// The compiler's own rules, so that a caller reads the decision instead of inferring it
 /// from an answer.
+///
+/// This is the answer to "why did I get that", asked once rather than reverse-engineered
+/// from every context. It is a projection of the tables and constants this module is built
+/// from — [`Tier::ORDER`], [`EDGES`](select::EDGES), [`Selector::ALL`] and the four defaults
+/// — and holds no numbers of its own, so the published rules and the code that applies them
+/// cannot drift apart.
+///
+/// The defaults are here because they are what a request gets when it says nothing, and a
+/// caller tuning a request needs to know what it is tuning away from.
+///
+/// ```
+/// use majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};
+/// use majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};
+/// use majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};
+/// use majordomus_cli::graph;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let rules: CompilerPolicy = policy(&ctx).unwrap();
+///
+/// // it names the graph it reads relations from, rather than leaving it to be guessed
+/// assert_eq!(rules.schema, 1);
+/// assert_eq!(rules.graph, graph::COMPOSED);
+///
+/// // the three tables are complete
+/// assert_eq!(rules.tiers.len(), Tier::ORDER.len());
+/// assert_eq!(rules.selectors.len(), Selector::ALL.len());
+/// assert!(!rules.edges.is_empty());
+///
+/// // and the published defaults are the constants a silent request actually gets
+/// assert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);
+/// assert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);
+/// assert_eq!(rules.default_floor, DEFAULT_FLOOR);
+/// assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct CompilerPolicy {
     /// The format of this answer.
@@ -371,6 +697,68 @@ fn resolve_seed(
 }
 
 /// Compile a context. The one entry point; every projection calls this.
+///
+/// The whole call runs over values the process already holds — the index and the composed
+/// graph derived from it — so it reads no file and walks no tree, which is what lets it sit
+/// inside a handler rather than at load time.
+///
+/// It fails only on a request that cannot mean anything: a budget of zero, a relevance floor
+/// outside 0..=1, a path that is not repository-relative, or a named seed this repository
+/// does not hold. Everything else is an answer. In particular a request that names nothing
+/// is valid and does not produce an empty context — the governance applies to every session
+/// whether or not it was asked for.
+///
+/// The budget is a ceiling on what the compiler *chooses*, not on what it must keep: seeds,
+/// the policy and the scope are never dropped, so an answer can come back over budget and
+/// says so rather than omitting the thing it was compiled about.
+///
+/// ```
+/// use majordomus_cli::capability::CapabilityError;
+/// use majordomus_cli::devcontext::{compile, CompileInput, Tier};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+///
+/// // the governance arrives without being asked for, and cannot be dropped
+/// let c = compile(&ctx, CompileInput::default()).unwrap();
+/// let required: Vec<&str> = c
+///     .selected
+///     .iter()
+///     .filter(|e| e.required)
+///     .map(|e| e.kind.as_str())
+///     .collect();
+/// assert!(required.contains(&"policy"), "what every session is held to: {required:?}");
+/// assert!(c.selected.iter().all(|e| e.tier >= Tier::Task));
+///
+/// // a tiny ceiling still keeps what may not be dropped, and says it went over
+/// let squeezed = compile(
+///     &ctx,
+///     CompileInput { budget_tokens: Some(1), ..Default::default() },
+/// )
+/// .unwrap();
+/// assert!(squeezed.selected.iter().any(|e| e.required));
+/// assert!(squeezed.budget.over_budget);
+/// assert_eq!(squeezed.budget.limit_tokens, 1);
+///
+/// // and the refusals are requests that could not mean anything
+/// assert!(matches!(
+///     compile(&ctx, CompileInput { budget_tokens: Some(0), ..Default::default() }),
+///     Err(CapabilityError::InvalidInput(_)),
+/// ));
+/// assert!(matches!(
+///     compile(&ctx, CompileInput { floor: Some(1.5), ..Default::default() }),
+///     Err(CapabilityError::InvalidInput(_)),
+/// ));
+/// assert!(matches!(
+///     compile(&ctx, CompileInput { paths: vec!["/etc".into()], ..Default::default() }),
+///     Err(CapabilityError::InvalidInput(_)),
+/// ));
+/// assert!(matches!(
+///     compile(&ctx, CompileInput { issue: Some("I9999".into()), ..Default::default() }),
+///     Err(CapabilityError::NotFound(_)),
+/// ));
+/// ```
 pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, CapabilityError> {
     let index = ctx.index.as_ref();
     let limit = input.budget_tokens.unwrap_or(DEFAULT_BUDGET_TOKENS);
@@ -539,6 +927,47 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
 }
 
 /// Why one identifier is or is not in the context a request compiles to.
+///
+/// It compiles the request and then looks the identifier up in the result, which is the
+/// only honest way to answer the question: the standing of a thing is a property of a
+/// particular answer, not of the thing. The cost is one compile per question, and the
+/// benefit is that "excluded for budget" is measured against the budget the reply carries
+/// rather than one inferred afterwards.
+///
+/// An identifier this repository does not hold is [`Standing::Unknown`] — an answer, not an
+/// error — because "the index holds nothing under that name" is exactly the fact the caller
+/// asked for. The only refusal is an empty identifier, which is not a question.
+///
+/// ```
+/// use majordomus_cli::capability::CapabilityError;
+/// use majordomus_cli::devcontext::{compile, explain, CompileInput, ExplainInput, Standing};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+///
+/// // the standing is about one compiled answer, so it moves with the request
+/// let generous = compile(&ctx, CompileInput::default()).unwrap();
+/// let uri = generous.selected.last().unwrap().uri.clone();
+/// let selected = explain(&ctx, ExplainInput { uri: uri.clone(), ..Default::default() }).unwrap();
+/// assert_eq!(selected.standing, Standing::Selected);
+/// assert_eq!(selected.entry.as_ref().unwrap().uri, uri);
+///
+/// // an identifier nothing answers: reported as unknown rather than refused
+/// let unknown = explain(
+///     &ctx,
+///     ExplainInput { uri: "majordomus://rule/nothing-like-this@1".into(), ..Default::default() },
+/// )
+/// .unwrap();
+/// assert_eq!(unknown.standing, Standing::Unknown);
+/// assert!(!unknown.detail.is_empty(), "it says so in words too");
+///
+/// // and the one thing that is not a question
+/// assert!(matches!(
+///     explain(&ctx, ExplainInput { uri: "   ".into(), ..Default::default() }),
+///     Err(CapabilityError::InvalidInput(_)),
+/// ));
+/// ```
 pub fn explain(ctx: &Context, input: ExplainInput) -> Result<Explanation, CapabilityError> {
     let uri = input.uri.trim().to_string();
     if uri.is_empty() {
@@ -623,6 +1052,37 @@ pub fn explain(ctx: &Context, input: ExplainInput) -> Result<Explanation, Capabi
 
 /// The compiler's rules: the tiers, every edge of the composed graph and what is done with
 /// it, the selectors, and the defaults.
+///
+/// It takes no request, because the rules do not depend on what is being asked about. It
+/// does take a context, and for one reason: the edge rows are enumerated from the graph
+/// *this* repository derives, so an edge kind the graph gains shows up here as unjudged
+/// rather than going quietly unfollowed. The answer is therefore a function of the
+/// repository's graph and this module's tables, and of nothing else.
+///
+/// Pure over those two: the same tree gives the same answer every time, which is what makes
+/// it safe to publish beside the compiled contexts it explains.
+///
+/// ```
+/// use majordomus_cli::devcontext::{policy, Selector, Tier};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+///
+/// let rules = policy(&ctx).unwrap();
+/// assert_eq!(rules.tiers.len(), Tier::ORDER.len());
+/// assert_eq!(rules.selectors.len(), Selector::ALL.len());
+///
+/// // every edge the graph declares is judged, one way or the other, with a reason
+/// for e in &rules.edges {
+///     assert!(!e.reason.is_empty(), "{} was neither followed nor explained", e.edge);
+///     assert_eq!(e.refused, e.forward.is_none() && e.reverse.is_none());
+/// }
+///
+/// // and asking twice over one tree gives one answer
+/// let again = policy(&ctx).unwrap();
+/// assert_eq!(again, rules);
+/// ```
 pub fn policy(ctx: &Context) -> Result<CompilerPolicy, CapabilityError> {
     let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, ctx.index.as_ref())
         .ok_or_else(|| {
