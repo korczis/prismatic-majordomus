@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# mesh-hub — run this checkout's shared server as an always-on mesh hub, as a systemd
+# user unit, so that the other machines of the fleet have somebody to register with
+# whether or not anyone has a session open here (docs/MESH.md, "This repository's mesh";
+# ADR 0059).
+#
+# A hub is an ordinary `majordomus serve` bound beyond loopback — the declaration in
+# .ai/repo/mesh/ names its address as a rendezvous endpoint — with `--idle 0`, so it
+# outlives its last peer. The unit restarts it every RESTART_SECONDS when it exits: a
+# server that finds another one already serving the checkout exits 0 at once, so the
+# unit polls at that cadence while a hook-started server holds the lease, and takes
+# the checkout back the minute that server idles out. That bound is the difference
+# between this unit and one restarting every two seconds two thousand times over.
+#
+#   scripts/mesh-hub install [--host H] [--port P] [--profile release|debug]
+#                          write the unit, enable lingering, enable and start it
+#   scripts/mesh-hub deploy [--no-pull] [--profile release|debug]
+#                          fast-forward the checkout, build the profile, restart the
+#                          unit, wait for the mesh to be active, and print the nodes
+#   scripts/mesh-hub restart | stop | status | uninstall
+#
+# Linux with a user systemd is what this script drives. On macOS the shared server is
+# started by the session-start hook and the MCP bridge for as long as a session is open,
+# the application firewall drops inbound connections to the unsigned executable, and a
+# hub there is neither reachable nor needed: this script says so and exits 2.
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+unit_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+unit="$unit_dir/majordomus.service"
+RESTART_SECONDS=60
+
+host=0.0.0.0
+port=8791
+profile=release
+pull=1
+cmd="${1:-}"; [ $# -gt 0 ] && shift
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --host) host="$2"; shift 2 ;;
+    --port) port="$2"; shift 2 ;;
+    --profile) profile="$2"; shift 2 ;;
+    --no-pull) pull=0; shift ;;
+    *) printf 'mesh-hub: unknown argument %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
+
+die() { printf 'mesh-hub: %s\n' "$*" >&2; exit "${2:-1}"; }
+
+require_systemd() {
+  case "$(uname -s)" in
+    Linux) ;;
+    Darwin) die "macOS: the hook and the bridge start the shared server for the session's lifetime, and the application firewall drops inbound connections to it; a hub is not what this machine runs (docs/MESH.md)" 2 ;;
+    *) die "$(uname -s): no systemd user session here" 2 ;;
+  esac
+  command -v systemctl >/dev/null 2>&1 || die "systemctl is not on PATH" 2
+  systemctl --user show-environment >/dev/null 2>&1 || die "no systemd user session for $USER (is the user logged in, or lingering enabled?)" 2
+}
+
+binary() { printf '%s/apps/majordomus-cli/target/%s/majordomus' "$root" "$profile"; }
+
+write_unit() {
+  local bin; bin="$(binary)"
+  mkdir -p "$unit_dir"
+  cat > "$unit" <<UNIT
+# Written by scripts/mesh-hub install from $root — edit that script, then run it again.
+[Unit]
+Description=Majordomus mesh hub — the repository AI layer over HTTP, MCP and the Cockpit, and a rendezvous for the fleet
+Documentation=https://majordomus.dev/docs/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=$root
+Environment=MAJORDOMUS_SHARE=$root/share
+# Bound beyond loopback on purpose: the declaration names this address as a rendezvous
+# endpoint. --idle 0 runs until stopped; stdin is null, not a pipe.
+ExecStart=$bin serve --repo $root --host $host --port $port --idle 0
+StandardInput=null
+# A server that finds the checkout already served exits 0 at once; this cadence is how
+# often the unit asks again, and how long the checkout waits for its hub after the
+# hook-started server idles out.
+Restart=always
+RestartSec=$RESTART_SECONDS
+KillSignal=SIGTERM
+TimeoutStopSec=20
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-write
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=default.target
+UNIT
+  printf 'mesh-hub: wrote %s (%s %s:%s, %s build)\n' "$unit" "$(basename "$bin")" "$host" "$port" "$profile"
+}
+
+build() {
+  local manifest="$root/apps/majordomus-cli/Cargo.toml"
+  command -v cargo >/dev/null 2>&1 || [ -x "$HOME/.cargo/bin/cargo" ] || die "cargo is not installed here"
+  PATH="$HOME/.cargo/bin:$PATH"
+  printf 'mesh-hub: building the %s executable\n' "$profile"
+  case "$profile" in
+    release) cargo build --quiet --release --manifest-path "$manifest" ;;
+    debug) cargo build --quiet --manifest-path "$manifest" ;;
+    *) die "--profile is release or debug" 2 ;;
+  esac
+}
+
+wait_active() {
+  local url="http://127.0.0.1:$port" tries=0 body
+  [ "$host" = 0.0.0.0 ] || [ "$host" = 127.0.0.1 ] || url="http://$host:$port"
+  while [ "$tries" -lt 60 ]; do
+    body="$(curl -fsS --max-time 2 "$url/api/v1/mesh" 2>/dev/null || true)"
+    if [ -n "$body" ]; then
+      if printf '%s' "$body" | grep -q '"active": *true'; then
+        printf 'mesh-hub: the mesh is active at %s\n' "$url"
+        "$(binary)" mesh nodes --repo "$root" 2>/dev/null || true
+        return 0
+      fi
+      printf 'mesh-hub: the server answers at %s and its mesh is not active:\n%s\n' "$url" "$body" >&2
+      return 1
+    fi
+    sleep 1; tries=$((tries + 1))
+  done
+  die "no server answered at $url within 60s; journalctl --user -u majordomus.service -n 30"
+}
+
+case "$cmd" in
+  install)
+    require_systemd
+    [ -x "$(binary)" ] || build
+    write_unit
+    loginctl enable-linger "$USER" 2>/dev/null && printf 'mesh-hub: lingering enabled for %s (the unit outlives the login session)\n' "$USER" \
+      || printf 'mesh-hub: could not enable lingering for %s; run: sudo loginctl enable-linger %s\n' "$USER" "$USER" >&2
+    systemctl --user daemon-reload
+    systemctl --user enable --now majordomus.service
+    systemctl --user restart majordomus.service
+    wait_active
+    ;;
+  deploy)
+    require_systemd
+    if [ "$pull" = 1 ]; then
+      printf 'mesh-hub: fast-forwarding %s\n' "$root"
+      git -C "$root" pull --ff-only -q || die "the checkout did not fast-forward; resolve it by hand and run with --no-pull"
+    fi
+    build
+    [ -f "$unit" ] || write_unit
+    systemctl --user daemon-reload
+    systemctl --user restart majordomus.service
+    wait_active
+    ;;
+  restart) require_systemd; systemctl --user restart majordomus.service; wait_active ;;
+  stop) require_systemd; systemctl --user stop majordomus.service; printf 'mesh-hub: stopped\n' ;;
+  status)
+    require_systemd
+    systemctl --user --no-pager status majordomus.service || true
+    "$(binary)" mesh status --repo "$root" 2>/dev/null || true
+    ;;
+  uninstall)
+    require_systemd
+    systemctl --user disable --now majordomus.service 2>/dev/null || true
+    rm -f "$unit"; systemctl --user daemon-reload
+    printf 'mesh-hub: removed %s\n' "$unit"
+    ;;
+  ""|-h|--help) sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  *) die "unknown command: $cmd (install | deploy | restart | stop | status | uninstall)" 2 ;;
+esac
