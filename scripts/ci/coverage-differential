@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# coverage-differential — the changed-code coverage gate of #214, as CI and `check` run it.
+#
+# WHAT IT HOLDS.
+#
+# Every executable line, function and region a change adds or touches against the base must
+# be covered by a test. Repository-wide coverage sits below 100% and legacy debt is real;
+# this gate says nothing about untouched lines. What it refuses is *new* debt: a changed
+# line that runs and no test exercises. `legacy_debt_after <= legacy_debt_before` holds
+# because the gate never looks at a line the change did not touch, and `new_debt == 0`
+# because it fails on the first changed line that does.
+#
+# WHY IT IS A THIN WRAPPER.
+#
+# The coverage judgment exists once, in scripts/rust-coverage: one export, one test-exclusion
+# rule, one line/function/region counter (§9 of the mandate — no second threshold, no second
+# parser, no Cockpit-side arithmetic). This script only decides the base to diff against and
+# turns rust-coverage's verdict into a gate's vocabulary. It adds no measurement of its own.
+#
+# THE BASE.
+#
+#   default            the merge-base of HEAD and origin/master — the change this branch is,
+#                      working tree included, so an uncommitted edit is held like a commit
+#   MJ_COVERAGE_BASE   overrides it (CI passes the PR base; a case passes a fixture commit)
+#   $1                 overrides both
+#
+# FIVE OUTCOMES, never conflated (§13).
+#
+#   PASS      every changed executable item is covered            exit 0
+#   PASS      the change touched no crate source line             exit 0
+#   FAIL      a changed executable item is uncovered              exit 10
+#   UNKNOWN   git cannot resolve the base, or the diff is empty   exit 13
+#             because there is no upstream to diff against
+#   BLOCKED   cargo-llvm-cov is absent or the instrumentation     exit 12
+#             failed — the measurement could not be trusted
+#
+# Unknown is not pass, blocked is not pass, a crashed tool is not green. The exit codes are
+# rust-coverage's own (10 finding, 12 toolchain unusable, 13 base unresolvable), passed
+# straight through so a caller need learn one vocabulary, not two.
+#
+#   scripts/ci/coverage-differential                 diff against origin/master's merge-base
+#   scripts/ci/coverage-differential <base>          diff against <base>
+#   MJ_COVERAGE_EXPORT=<file> scripts/ci/...          reuse an existing llvm-cov json export
+#                                                     instead of instrumenting again
+set -eu
+
+ROOT="${MJ_ROOT:-$(git rev-parse --show-toplevel)}"
+
+base="${1:-${MJ_COVERAGE_BASE:-}}"
+if [ -z "$base" ]; then
+  # The merge-base is the point this branch left the trunk: diffing against it holds exactly
+  # what the branch introduced, not what the trunk moved on to. A shallow clone or a missing
+  # remote leaves no merge-base to name, which is UNKNOWN — the gate cannot invent a base.
+  if base="$(git -C "$ROOT" merge-base HEAD origin/master 2>/dev/null)" && [ -n "$base" ]; then
+    :
+  else
+    echo "coverage-differential: UNKNOWN — no merge-base with origin/master; pass a base explicitly (fetch the remote, or set MJ_COVERAGE_BASE)" >&2
+    exit 13
+  fi
+fi
+
+from_arg=""
+[ -n "${MJ_COVERAGE_EXPORT:-}" ] && [ -f "${MJ_COVERAGE_EXPORT}" ] && from_arg="--from ${MJ_COVERAGE_EXPORT}"
+
+# rust-coverage owns the measurement and the verdict; its exit code is this gate's exit code.
+# shellcheck disable=SC2086
+exec "$ROOT/scripts/rust-coverage" --changed "$base" $from_arg

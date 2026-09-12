@@ -191,6 +191,11 @@ gates:
     runs: just coverage
     summary: coverage of the crate against scripts/rust-coverage-threshold and of the session/continuity domain against scripts/session-coverage-threshold, both measured with test code out of the denominator
 
+  - id: coverage-differential
+    job: coverage
+    runs: scripts/ci/coverage-differential
+    summary: every executable line, function and region a change adds or touches under the crate is covered by a test, measured against the branch's merge-base with the trunk over the same export and test-exclusion as the crate gate; new debt is refused, legacy debt on untouched lines is not this gate's business (project.new-code-is-covered)
+
   # macOS, because the one committed baseline is macOS's. On demand for the reason below:
   # its runner is the scarce one, and a queued benchmark check is not a measurement.
   - id: rust-bench
@@ -388,8 +393,8 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, version-surface, release-check]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, version-surface, release-check]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
   # to ADR 0050, and the architecture document

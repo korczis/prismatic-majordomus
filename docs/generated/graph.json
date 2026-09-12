@@ -1935,6 +1935,14 @@
         "external": true
       },
       {
+        "id": "file:docs/COVERAGE.md",
+        "kind": "file",
+        "label": "COVERAGE.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "docs/COVERAGE.md",
+        "external": true
+      },
+      {
         "id": "file:scripts/ci-plan",
         "kind": "file",
         "label": "ci-plan",
@@ -2436,6 +2444,14 @@
         "label": "why.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/why.html",
+        "external": true
+      },
+      {
+        "id": "file:test/cases/132_coverage_differential.sh",
+        "kind": "file",
+        "label": "132_coverage_differential.sh",
+        "summary": "named by the layer; not an object of this index",
+        "source": "test/cases/132_coverage_differential.sh",
         "external": true
       },
       {
@@ -5788,6 +5804,21 @@
           "responsibility": "none",
           "source": "docs/MODELS.md",
           "test": "test/cases/131_models.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/new-code-is-covered",
+        "kind": "claim",
+        "label": "new-code-is-covered",
+        "summary": "Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fnew-code-is-covered",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "scripts/rust-coverage",
+          "responsibility": "none",
+          "source": "docs/COVERAGE.md",
+          "test": "test/cases/132_coverage_differential.sh"
         }
       },
       {
@@ -39942,6 +39973,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "file:docs/COVERAGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "file:scripts/rust-coverage",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "file:test/cases/132_coverage_differential.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://claim/no-counts-in-context",
         "target": "kind:claim",
         "kind": "is_a"
@@ -53253,8 +53304,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1662,
-      "edges": 3728,
+      "nodes": 1665,
+      "edges": 3732,
       "acyclic": true,
       "truncated": false
     }
