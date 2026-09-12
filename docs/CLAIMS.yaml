@@ -1557,3 +1557,12 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential.
+
+  - id: new-code-is-covered
+    claim: Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone
+    source: docs/COVERAGE.md
+    implementation: scripts/rust-coverage
+    test: test/cases/132_coverage_differential.sh
+    status: guaranteed
+    responsibility: none      # served by the CI gate and scripts/rust-coverage, not a supervised responsibility
+    note: scripts/ci/coverage-differential intersects the one canonical llvm-cov export (test code excluded) with the lines git says the change touched against the branch's merge-base with the trunk, working tree included, and exits 10 on the first changed executable item no test covers. The rule is project.new-code-is-covered; case 132 plants a deliberately uncovered changed line, proves the gate fails, then covers it and proves the gate passes, and proves an unresolvable base is UNKNOWN rather than a silent pass.

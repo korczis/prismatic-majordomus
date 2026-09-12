@@ -1,13 +1,22 @@
 # development-semantics-check baseline — accepted debt for
 # project.development-semantics-are-canonical@1 (ADR 0040).
 #
-# backing:<command>        a public mutating command of share/commands.yaml that
-#                          writes a development object tree and that the capability
-#                          registry does not declare a mutating capability for.
-# surface:<path>:<line>    a layer path or executable name inside a Cockpit tree.
+# backing:<command>                 a public mutating command of share/commands.yaml
+#                                   that writes a development object tree and that the
+#                                   capability registry declares no mutating capability
+#                                   for.
+# surface:<path>:<evidence>:<hash>  a layer path or executable name inside a Cockpit
+#                                   tree, identified by the offending text rather than
+#                                   by a line number: a key carrying a coordinate
+#                                   re-reports accepted debt whenever anything above it
+#                                   is edited. <hash> is sha256 of the line with its
+#                                   whitespace normalised, first 8 hex.
 #
-# This list may shrink and may not grow. Regenerate only when closing an entry:
+# This list may shrink and may not grow. Regenerating retires what is closed:
 #   scripts/development-semantics-check --baseline
+# Accepting a new entry is a separate, deliberate act that names it, and belongs in
+# a commit that says on what grounds ADR 0040 permits it to stay:
+#   scripts/development-semantics-check --baseline --accept <key>
 backing:adr
 backing:checkpoint
 backing:decision
@@ -16,13 +25,8 @@ backing:handover
 backing:init
 backing:migrate
 backing:question
-backing:recover
 backing:rules
 backing:session
 backing:start
 backing:update
 backing:usecase
-surface:apps/majordomus-cli/src/cockpit/pages.rs:2045
-surface:apps/majordomus-cli/src/cockpit/pages.rs:2049
-surface:apps/majordomus-cli/src/cockpit/pages.rs:2051
-surface:apps/majordomus-cli/src/cockpit/pages.rs:2174

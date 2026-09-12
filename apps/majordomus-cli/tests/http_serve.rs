@@ -495,6 +495,32 @@ fn every_route_answers_its_benchmark_cases_and_the_document_shows_them() {
             http.method.as_str(),
             http.path
         );
+        // the document's parameters are exactly the input's properties, case by case and
+        // capability by capability: a GET binds every top-level property and nothing else.
+        // The document said `devcontext.compile` took no parameter at all while the route
+        // bound nine, because the input is a `#[serde(transparent)]` newtype and the
+        // projection read the `$ref` at the root instead of the type it refers to. A
+        // capability with no case would have hidden that below, so it is checked here.
+        if http.method == HttpMethod::Get {
+            let documented: Vec<String> = op["parameters"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{}: a GET operation lists its parameters", c.id))
+                .iter()
+                .map(|p| p["name"].as_str().unwrap_or_default().to_string())
+                .collect();
+            let declared: Vec<String> = c
+                .input
+                .properties()
+                .0
+                .into_iter()
+                .map(|(name, _)| name)
+                .collect();
+            assert_eq!(
+                documented, declared,
+                "{}: the documented parameters are the input's properties",
+                c.id
+            );
+        }
         let provider = ctx
             .registry
             .cases(c.id.as_str())

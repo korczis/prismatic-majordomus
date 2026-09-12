@@ -167,6 +167,7 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own](https://majordomus.dev/guarantees/models-one-declaration/) | `docs/MODELS.md` | `apps/majordomus-cli/src/models/mod.rs` | `test/cases/131_models.sh` |
 | [A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state](https://majordomus.dev/guarantees/models-routing-explains-itself/) | `docs/MODELS.md` | `apps/majordomus-cli/src/models/mod.rs` | `test/cases/131_models.sh` |
 | [The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in](https://majordomus.dev/guarantees/models-no-secret-fields/) | `docs/MODELS.md` | `apps/majordomus-cli/src/models/mod.rs` | `apps/majordomus-cli/src/models/mod.rs` |
+| [Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone](https://majordomus.dev/guarantees/new-code-is-covered/) | `docs/COVERAGE.md` | `scripts/rust-coverage` | `test/cases/132_coverage_differential.sh` |
 
 ## advisory
 
