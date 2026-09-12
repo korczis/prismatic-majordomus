@@ -1475,7 +1475,7 @@ claims:
     test: test/cases/124_evidence.sh
     status: guaranteed
     responsibility: none
-    note: '`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt so existing debt is known rather than blocking. The gate is advisory while the baseline is non-empty and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.'
+    note: '`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt, which records the state per claim rather than a list of names. Two things fail: a guarantee the baseline recorded as supported that no longer is, and a supported guarantee that left the matrix. A claim the baseline never knew, with no recorded run, is new debt — named and counted, never a regression — because a ratchet that fired on growth taxed writing claims down. The gate is advisory while the baseline carries unsupported lines and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.'
 
   - id: mesh-off-by-default
     claim: No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error
