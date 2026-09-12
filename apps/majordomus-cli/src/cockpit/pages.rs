@@ -1693,7 +1693,6 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
     )
 }
 
-
 /// Every open episode of this checkout's store, and not only the one the pointer follows.
 ///
 /// The card above this one is `continuity.state`'s: the episode `session-current.yaml`
@@ -1729,20 +1728,17 @@ fn episodes_card(e: &Episodes) -> El {
             row(vec![
                 cell(mono(x.session_id.clone())),
                 cell(badge(level, x.standing.as_str())),
-                cell(
-                    el("span").text(if x.provider.is_empty() {
-                        "(opened by hand)"
-                    } else {
-                        &x.provider
-                    }),
-                ),
+                cell(el("span").text(if x.provider.is_empty() {
+                    "(opened by hand)"
+                } else {
+                    &x.provider
+                })),
                 cell(mono(x.branch.clone())),
                 text_cell(x.started_at.clone()),
                 cell(if x.last_activity.is_empty() {
                     el("span").text("(has written nothing)")
                 } else {
-                    el("span")
-                        .text(format!("{} · {}", x.last_activity, x.last_event))
+                    el("span").text(format!("{} · {}", x.last_activity, x.last_event))
                 }),
                 cell(if x.tasks.is_empty() {
                     el("span").text("—")
@@ -1796,13 +1792,25 @@ fn runtime_card(r: &RuntimeView) -> El {
     let short = |h: &str| h[..7.min(h.len())].to_string();
     card_with(
         "This process against the repository",
-        badge(if r.agree { "ok" } else { "fail" }, if r.agree { "current" } else { "behind" }),
+        badge(
+            if r.agree { "ok" } else { "fail" },
+            if r.agree { "current" } else { "behind" },
+        ),
         el("div")
             .child(facts(vec![
                 ("Serving", Node::Element(mono(short(&r.served_head)))),
-                ("Repository is on", Node::Element(mono(short(&r.repository_head)))),
-                ("Branch served", Node::Element(mono(r.served_branch.clone()))),
-                ("Branch now", Node::Element(mono(r.repository_branch.clone()))),
+                (
+                    "Repository is on",
+                    Node::Element(mono(short(&r.repository_head))),
+                ),
+                (
+                    "Branch served",
+                    Node::Element(mono(r.served_branch.clone())),
+                ),
+                (
+                    "Branch now",
+                    Node::Element(mono(r.repository_branch.clone())),
+                ),
                 (
                     "Working tree now",
                     Node::Element(el("span").text(&r.repository_working_tree)),
@@ -1832,9 +1840,12 @@ fn providers_card(p: &ProviderLifecycles) -> El {
                 cell(if x.lifecycle.is_empty() {
                     el("span").text("(no lifecycle adapter)")
                 } else {
-                    el("div")
-                        .class("mj-marks")
-                        .children(x.lifecycle.iter().map(|e| tag(e.clone())).collect::<Vec<_>>())
+                    el("div").class("mj-marks").children(
+                        x.lifecycle
+                            .iter()
+                            .map(|e| tag(e.clone()))
+                            .collect::<Vec<_>>(),
+                    )
                 }),
                 cell(badge(
                     if x.prompt_capture { "ok" } else { "info" },
@@ -1884,7 +1895,9 @@ fn providers_card(p: &ProviderLifecycles) -> El {
 /// Every row carries the command that clears it. A finding with no remedy is a complaint,
 /// and a page full of complaints teaches a reader to stop reading it.
 fn recovery_card(r: &Recovery) -> El {
-    let clean = r.stranded.is_empty() && r.orphans.is_empty() && r.balance.agrees
+    let clean = r.stranded.is_empty()
+        && r.orphans.is_empty()
+        && r.balance.agrees
         && r.pointer.layout != PointerLayout::Inline;
     let body = el("div")
         .child(facts(vec![
@@ -1992,17 +2005,15 @@ fn closed_card(c: &ClosedSessions) -> El {
         "Closed episodes",
         badge("info", format!("{} tracked", c.total)),
         el("div")
-            .child(
-                el("div").class("mj-stats").children(vec![
-                    statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
-                    statistic(
-                        c.on_this_branch.to_string(),
-                        "on this branch",
-                        ".ai/repo/sessions",
-                    ),
-                    statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
-                ]),
-            )
+            .child(el("div").class("mj-stats").children(vec![
+                statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
+                statistic(
+                    c.on_this_branch.to_string(),
+                    "on this branch",
+                    ".ai/repo/sessions",
+                ),
+                statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
+            ]))
             .child(table(
                 &["Episode", "Closed", "Branch", "Outcome", "Title"],
                 rows,

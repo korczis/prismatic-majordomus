@@ -89,7 +89,7 @@ fi
 GEN='scripts/generate-site-data'
 if [ -f "$GEN" ]; then
   missing=""
-  for d in $(grep -oE '\$CONTENT_ROOT/[a-z-]+' "$GEN" | sed 's#\$CONTENT_ROOT/##' | sort -u); do
+  for d in $(grep -oE '\$CONTENT_ROOT/[a-z-]+' "$GEN" | sed 's#\$CONTENT_ROOT/##' | LC_ALL=C sort -u); do
     [ -d "site/content/$d" ] || continue
     attr="$(git check-attr merge -- "site/content/$d/probe.md" 2>/dev/null | sed 's/.*merge: //')"
     [ "$attr" = "derived" ] || missing="$missing $d"

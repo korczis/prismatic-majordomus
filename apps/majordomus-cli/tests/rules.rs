@@ -47,8 +47,14 @@ fn a_rule_naming_no_proof_is_unproven_without_being_a_finding() {
 
     assert!(r.rules.iter().all(|p| p.state == RuleState::Unproven));
     assert!(r.rules.iter().all(|p| p.rule.class == Class::Advisory));
-    assert!(r.rules.iter().all(|p| p.rule.enforcement.mode == Mode::Declarative));
-    assert!(r.findings.is_empty(), "an advisory rule owes no executable proof");
+    assert!(r
+        .rules
+        .iter()
+        .all(|p| p.rule.enforcement.mode == Mode::Declarative));
+    assert!(
+        r.findings.is_empty(),
+        "an advisory rule owes no executable proof"
+    );
     assert!(r.satisfied());
     assert_eq!(r.coverage.named_proof, 0);
     assert_eq!(r.coverage.review_only, 0);
@@ -73,7 +79,11 @@ fn a_blocking_rule_naming_a_missing_case_is_a_finding() {
 
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&repo.index().unwrap(), &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-0").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-0")
+        .unwrap();
 
     assert_eq!(p.rule.class, Class::Blocking);
     assert_eq!(p.rule.enforcement.mode, Mode::Gated);
@@ -81,9 +91,16 @@ fn a_blocking_rule_naming_a_missing_case_is_a_finding() {
     assert!(!p.satisfied);
     assert!(!r.satisfied());
 
-    let f = r.findings.iter().find(|f| f.rule == "project.rule-0").unwrap();
+    let f = r
+        .findings
+        .iter()
+        .find(|f| f.rule == "project.rule-0")
+        .unwrap();
     assert!(f.reason.contains("not in the tree"));
-    assert!(!f.reproduce.is_empty(), "a finding names how to see it again");
+    assert!(
+        !f.reproduce.is_empty(),
+        "a finding names how to see it again"
+    );
 }
 
 /// A rule that declares, with its reason, that no program can express it is `reviewed`:
@@ -105,14 +122,24 @@ fn a_declared_exemption_is_counted_apart_from_every_proof() {
 
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&repo.index().unwrap(), &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-1").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-1")
+        .unwrap();
 
     assert_eq!(p.rule.enforcement.mode, Mode::Reviewed);
     assert_eq!(p.state, RuleState::Reviewed);
-    assert!(p.satisfied, "a declared, reasoned exemption is not a finding");
+    assert!(
+        p.satisfied,
+        "a declared, reasoned exemption is not a finding"
+    );
     assert!(!p.state.passing(), "review is not a recorded pass");
     assert_eq!(r.coverage.review_only, 1);
-    assert_eq!(r.coverage.named_proof, 0, "review names no executable proof");
+    assert_eq!(
+        r.coverage.named_proof, 0,
+        "review names no executable proof"
+    );
     assert!(r.findings.is_empty());
 }
 

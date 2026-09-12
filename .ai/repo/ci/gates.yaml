@@ -151,6 +151,17 @@ gates:
     runs: scripts/ci/lease-reader-check
     summary: the shared server's lease is parsed by the one typed reader the executable owns; a second parser anywhere but documentation and the tests is refused
 
+  # A promise names a proof a machine can follow: a rule declared blocking with a validator
+  # or a Verification path that runs, a guaranteed claim whose test names the claim back.
+  # File reads only — the rule front matter and docs/CLAIMS.yaml — so it belongs beside the
+  # other structure checks and needs no build. The debt is ratcheted in
+  # .ai/repo/enforcement-baseline.txt; the gate fails on a new promise, not on the known ones.
+  - id: enforcement
+    job: structure
+    always: true
+    runs: scripts/ci/enforcement-check
+    summary: a rule declared blocking and a claim marked guaranteed each name something that runs; both halves state their denominator, and neither set may grow
+
   - id: rust-quality
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary

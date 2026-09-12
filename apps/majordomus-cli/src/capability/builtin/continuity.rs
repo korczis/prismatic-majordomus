@@ -697,7 +697,10 @@ mod tests {
         for (d, word, trust) in all {
             assert_eq!(d.as_str(), word);
             assert_eq!(d.trustworthy(), trust, "{word}");
-            assert_eq!(serde_json::to_value(d).expect("json"), serde_json::json!(word));
+            assert_eq!(
+                serde_json::to_value(d).expect("json"),
+                serde_json::json!(word)
+            );
         }
         // and the two tiers, which have no third
         assert_eq!(
@@ -722,20 +725,30 @@ mod tests {
         repo.git(&["commit", "-q", "--allow-empty", "-m", "two"]);
         let second = repo.head();
 
-        assert_eq!(divergence(repo.root(), &first, Some(&first)), Divergence::Exact);
+        assert_eq!(
+            divergence(repo.root(), &first, Some(&first)),
+            Divergence::Exact
+        );
         assert_eq!(
             divergence(repo.root(), &first, Some(&second)),
             Divergence::Advanced
         );
         // a commit this history has never seen is not a yes, and not an unknown either
         assert_eq!(
-            divergence(repo.root(), "0000000000000000000000000000000000000000", Some(&second)),
+            divergence(
+                repo.root(),
+                "0000000000000000000000000000000000000000",
+                Some(&second)
+            ),
             Divergence::Diverged
         );
         // this checkout has no head at all
         assert_eq!(divergence(repo.root(), &first, None), Divergence::Unknown);
         // the record names no commit
-        assert_eq!(divergence(repo.root(), "", Some(&second)), Divergence::Unknown);
+        assert_eq!(
+            divergence(repo.root(), "", Some(&second)),
+            Divergence::Unknown
+        );
     }
 
     // ------------------------------------------------------------------ reading
@@ -749,7 +762,10 @@ mod tests {
         assert!(front(&repo.root().join("nothing.md")).is_none());
         assert!(front(&repo.write("plain.md", "just prose, no front matter\n")).is_none());
         assert!(front(&repo.write("broken.md", "---\n: : :\n---\nbody\n")).is_none());
-        let good = repo.write("good.md", &record("2026-01-01T00:00:00Z", "abc", "main", "/w", "Go"));
+        let good = repo.write(
+            "good.md",
+            &record("2026-01-01T00:00:00Z", "abc", "main", "/w", "Go"),
+        );
         let f = front(&good).expect("a record");
         assert_eq!(f.get("branch").map(String::as_str), Some("main"));
         // a list is not a scalar and is dropped rather than stringified
@@ -763,7 +779,10 @@ mod tests {
     fn a_fenceless_document_is_read_whole_and_a_missing_one_is_none() {
         let repo = Repo::new();
         assert!(document(&repo.root().join("nothing.yaml")).is_none());
-        let p = repo.write("session.yaml", "session_id: s-1\nstarted_at: t\nowner: \"me\"\n");
+        let p = repo.write(
+            "session.yaml",
+            "session_id: s-1\nstarted_at: t\nowner: \"me\"\n",
+        );
         let d = document(&p).expect("a document");
         assert_eq!(d.get("session_id").map(String::as_str), Some("s-1"));
         assert_eq!(d.get("owner").map(String::as_str), Some("me"));
@@ -847,14 +866,20 @@ mod tests {
         let (none, skipped) = resolve(repo.root(), &dir, "main", Some(&head));
         assert!(none.is_none() && skipped == 0);
 
-        repo.write("h/elsewhere.md", &record("2026-01-03T00:00:00Z", &head, "main", "/other", "Theirs"));
+        repo.write(
+            "h/elsewhere.md",
+            &record("2026-01-03T00:00:00Z", &head, "main", "/other", "Theirs"),
+        );
         let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
         let r = r.expect("the other worktree's record, for want of one here");
         assert_eq!(r.matched, Match::SameBranch);
         assert_eq!(r.next_action, "Theirs");
 
         // ...and it stops being offered the moment this worktree has one, even an older one
-        repo.write("h/mine.md", &record("2026-01-01T00:00:00Z", &head, "main", &root, "Mine"));
+        repo.write(
+            "h/mine.md",
+            &record("2026-01-01T00:00:00Z", &head, "main", &root, "Mine"),
+        );
         let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
         let r = r.expect("this worktree's record");
         assert_eq!(r.matched, Match::SameWorktreeSameBranch);
@@ -862,15 +887,25 @@ mod tests {
         assert_eq!(r.divergence, Divergence::Exact);
         assert_eq!(r.task_id, "t-1");
         assert_eq!(r.working_tree, "clean");
-        assert!(r.path.starts_with("h/"), "the path is repository-relative: {}", r.path);
+        assert!(
+            r.path.starts_with("h/"),
+            "the path is repository-relative: {}",
+            r.path
+        );
 
         // newer wins inside the tier
-        repo.write("h/newer.md", &record("2026-01-02T00:00:00Z", &head, "main", &root, "Newer"));
+        repo.write(
+            "h/newer.md",
+            &record("2026-01-02T00:00:00Z", &head, "main", &root, "Newer"),
+        );
         let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
         assert_eq!(r.expect("a record").next_action, "Newer");
 
         // another branch is never offered, however new
-        repo.write("h/other-branch.md", &record("2026-09-09T00:00:00Z", &head, "topic", &root, "No"));
+        repo.write(
+            "h/other-branch.md",
+            &record("2026-09-09T00:00:00Z", &head, "topic", &root, "No"),
+        );
         let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
         assert_eq!(r.expect("a record").next_action, "Newer");
     }
@@ -881,10 +916,19 @@ mod tests {
     fn a_detached_checkout_is_offered_no_other_worktrees_record() {
         let repo = Repo::new();
         let head = repo.head();
-        repo.write("h/theirs.md", &record("2026-01-01T00:00:00Z", &head, "DETACHED", "/other", "No"));
+        repo.write(
+            "h/theirs.md",
+            &record("2026-01-01T00:00:00Z", &head, "DETACHED", "/other", "No"),
+        );
         let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "DETACHED", Some(&head));
-        assert!(r.is_none(), "a detached checkout was handed another worktree's record");
-        assert_eq!(skipped, 0, "a record that does not match is not a record that is broken");
+        assert!(
+            r.is_none(),
+            "a detached checkout was handed another worktree's record"
+        );
+        assert_eq!(
+            skipped, 0,
+            "a record that does not match is not a record that is broken"
+        );
     }
 
     /// Each way a file in the store can fail to be a record, counted rather than ignored —
@@ -898,11 +942,18 @@ mod tests {
         let head = repo.head();
         let root = repo.root().to_string_lossy().to_string();
         repo.write("h/prose.md", "no front matter here\n");
-        repo.write("h/no-created.md", "---\nschema_version: 1\nhead: abc\n---\n");
-        repo.write("h/no-head.md", "---\nschema_version: 1\ncreated_at: x\n---\n");
+        repo.write(
+            "h/no-created.md",
+            "---\nschema_version: 1\nhead: abc\n---\n",
+        );
+        repo.write(
+            "h/no-head.md",
+            "---\nschema_version: 1\ncreated_at: x\n---\n",
+        );
         repo.write(
             "h/future.md",
-            &record("2026-01-01T00:00:00Z", &head, "main", &root, "No").replace("schema_version: 1", "schema_version: 2"),
+            &record("2026-01-01T00:00:00Z", &head, "main", &root, "No")
+                .replace("schema_version: 1", "schema_version: 2"),
         );
         // not a record at all, and not counted as a broken one either
         repo.write("h/README.md.yaml", "x\n");
@@ -980,7 +1031,6 @@ mod tests {
         let t = read_task(&q).expect("a task");
         assert!(t.scope.is_empty() && t.requires.is_empty() && t.profile.is_empty());
     }
-
 
     /// The declaration is the only place the id, the tool name, the resource URI and the
     /// route exist. A refactor that dropped one of them would still compile, and every

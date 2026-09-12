@@ -1,8 +1,8 @@
-# The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red
+# The verdict status is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red
 
 ## What it means
 
-There is one status to require, `ci`, and it cannot be green by accident. It is computed from two facts: the plan (which gates this change had to run) and what the jobs reported. A gate the plan selected must have run in a job that succeeded; a job that failed or was cancelled is red whether or not its gate was planned; a plan that selected nothing is a broken plan and red; a failed planning job is red. A gate the plan left out is allowed to be skipped, and the table says why.
+There is one status to require, `ci`, and it cannot be green by accident. Whether anything actually requires it is a separate question, and the answer today is no: see [ci-verdict-is-required](ci-verdict-is-required.md). This claim is about what the status means, not about what it stops. It is computed from two facts: the plan (which gates this change had to run) and what the jobs reported. A gate the plan selected must have run in a job that succeeded; a job that failed or was cancelled is red whether or not its gate was planned; a plan that selected nothing is a broken plan and red; a failed planning job is red. A gate the plan left out is allowed to be skipped, and the table says why.
 
 ## How it works
 
@@ -19,7 +19,7 @@ just test-shell 94_ci_plan
 
 ## What it does not cover
 
-The verdict trusts the jobs' results as GitHub reports them; it does not rerun a gate. A gate the model does not declare is not in any plan and not in any verdict. Branch protection is a repository setting, not a file in this tree: the status exists to be required, and whether it is required is decided on GitHub.
+The verdict trusts the jobs' results as GitHub reports them; it does not rerun a gate. A gate the model does not declare is not in any plan and not in any verdict. Branch protection is a repository setting, not a file in this tree: the status exists to be required, and whether it is required is decided on GitHub. As of 2026-09-11 nothing requires it — `branches/master/protection` answers 404 and `rulesets` answers `[]` — so a red verdict stops no merge. This claim was worded "the one status a branch rule requires" until then, which asserted that it did.
 
 ## Why it exists
 

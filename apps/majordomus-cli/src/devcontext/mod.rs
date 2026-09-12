@@ -61,8 +61,8 @@ pub mod select;
 
 pub use model::{
     tokens_for, Budget, CommitReference, CompiledContext, Conflict, ContextEntry, Deduplicated,
-    Discovery, EntryProvenance, Excluded, ExclusionReason, GitContext, Seed, Selector, TierSpend,
-    Tier, BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS, DEFAULT_MAX_DEPTH,
+    Discovery, EntryProvenance, Excluded, ExclusionReason, GitContext, Seed, Selector, Tier,
+    TierSpend, BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS, DEFAULT_MAX_DEPTH,
 };
 pub use select::{edge_policy, intent_terms, tier_for_kind, EdgePolicy};
 
@@ -396,9 +396,13 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
         seeds.push(resolve_seed(ctx, "milestone", named, "milestone")?);
     }
     for uri in &input.uris {
-        let o = index.objects.iter().find(|o| o.uri == *uri).ok_or_else(|| {
-            CapabilityError::NotFound(format!("the index holds nothing under `{uri}`"))
-        })?;
+        let o = index
+            .objects
+            .iter()
+            .find(|o| o.uri == *uri)
+            .ok_or_else(|| {
+                CapabilityError::NotFound(format!("the index holds nothing under `{uri}`"))
+            })?;
         seeds.push(Seed {
             uri: o.uri.clone(),
             kind: o.kind.clone(),
@@ -440,9 +444,10 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
         .map(intent_terms)
         .unwrap_or_default();
 
-    let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, index).ok_or_else(
-        || CapabilityError::Internal("the composed graph is no longer derived".into()),
-    )?;
+    let graph =
+        crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, index).ok_or_else(|| {
+            CapabilityError::Internal("the composed graph is no longer derived".into())
+        })?;
 
     let request = select::Request {
         seeds: object_seeds.iter().cloned().collect(),
@@ -477,7 +482,10 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
         let Some(i) = index.objects.iter().position(|o| o.uri == entry.uri) else {
             continue;
         };
-        let Some(evidence) = index.objects[i].metadata.get("evidence").and_then(|v| v.as_array())
+        let Some(evidence) = index.objects[i]
+            .metadata
+            .get("evidence")
+            .and_then(|v| v.as_array())
         else {
             continue;
         };
@@ -488,10 +496,7 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
             commits.push(CommitReference {
                 commit: commit.to_string(),
                 named_by: entry.uri.clone(),
-                covers: e
-                    .get("covers")
-                    .and_then(|v| v.as_str())
-                    .map(str::to_string),
+                covers: e.get("covers").and_then(|v| v.as_str()).map(str::to_string),
             });
         }
     }
@@ -578,7 +583,7 @@ pub fn explain(ctx: &Context, input: ExplainInput) -> Result<Explanation, Capabi
     if let Some(d) = compiled
         .deduplicated
         .iter()
-        .find(|d| d.dropped.iter().any(|u| *u == uri))
+        .find(|d| d.dropped.contains(&uri))
     {
         return Ok(Explanation {
             uri,
@@ -687,7 +692,6 @@ pub fn policy(ctx: &Context) -> Result<CompilerPolicy, CapabilityError> {
         bytes_per_token: BYTES_PER_TOKEN,
     })
 }
-
 
 /// A repository with a plan in it, for the compiler's own tests.
 ///
@@ -833,8 +837,14 @@ mod fixture {
             me.write(".ai/repo/sessions/s1.md", "---\nschema: session/v1\nkind: session\nsession_id: s-20260909000000-aaaa\ntitle: What the last session did\nstarted_at: 2026-09-09T00:00:00Z\nclosed_at: 2026-09-09T01:00:00Z\noutcome: closed\nbranch: master\nhead: 0123456789abcdef0123456789abcdef01234567\nworking_tree: clean\nchanged_files:\n  - lib/thing.sh\n---\n\n# Session\n\nIt changed one file.\n")?;
 
             // the code and the case the work is about
-            me.write("lib/thing.sh", "#!/usr/bin/env bash\n# the thing\nmj_thing() { :; }\n")?;
-            me.write("test/cases/01_thing.sh", "#!/usr/bin/env bash\n# the case for the thing\nset -eu\n")?;
+            me.write(
+                "lib/thing.sh",
+                "#!/usr/bin/env bash\n# the thing\nmj_thing() { :; }\n",
+            )?;
+            me.write(
+                "test/cases/01_thing.sh",
+                "#!/usr/bin/env bash\n# the case for the thing\nset -eu\n",
+            )?;
             Ok(me)
         }
 
@@ -1015,8 +1025,7 @@ mod tests {
         )
         .expect("an answer");
         assert!(c.seeds.iter().any(|s| s.kind == "milestone"));
-        let issues: Vec<&ContextEntry> =
-            c.selected.iter().filter(|e| e.kind == "issue").collect();
+        let issues: Vec<&ContextEntry> = c.selected.iter().filter(|e| e.kind == "issue").collect();
         assert_eq!(issues.len(), 2, "both issues of the milestone");
         for i in &issues {
             let via = i
@@ -1024,11 +1033,7 @@ mod tests {
                 .iter()
                 .find(|d| d.edge.as_deref() == Some("belongs_to"))
                 .expect("reached backwards along belongs_to");
-            assert!(
-                via.reason.contains("same milestone"),
-                "{}",
-                via.reason
-            );
+            assert!(via.reason.contains("same milestone"), "{}", via.reason);
         }
         // a milestone's issues declare `lib`, so the code and the case under it come too
         assert!(
@@ -1151,7 +1156,11 @@ mod tests {
             "a one-token budget dropped nothing"
         );
         for e in &tight.excluded {
-            assert!(!e.detail.is_empty(), "{} was dropped without a reason", e.uri);
+            assert!(
+                !e.detail.is_empty(),
+                "{} was dropped without a reason",
+                e.uri
+            );
             assert!(e.cost_tokens > 0, "{} would have cost nothing", e.uri);
         }
         // what may not be dropped is still there, and the answer admits it went over
@@ -1260,7 +1269,11 @@ mod tests {
             .find(|d| d.kept == multi.uri && d.key == "uri")
             .expect("a folded entry with no record of the fold");
         assert_eq!(record.paths, multi.discovered_by.len());
-        assert!(record.detail.contains("discovery path"), "{}", record.detail);
+        assert!(
+            record.detail.contains("discovery path"),
+            "{}",
+            record.detail
+        );
         let selectors: BTreeSet<Selector> =
             multi.discovered_by.iter().map(|d| d.selector).collect();
         assert!(
@@ -1338,7 +1351,10 @@ mod tests {
             },
         )
         .expect("an answer");
-        assert!(named.selected.iter().any(|e| e.uri.contains("project.gamma")));
+        assert!(named
+            .selected
+            .iter()
+            .any(|e| e.uri.contains("project.gamma")));
         assert!(
             named
                 .diagnostics
@@ -1546,7 +1562,11 @@ mod tests {
         )
         .expect("an explanation");
         assert_eq!(unknown.standing, Standing::Unknown);
-        assert!(unknown.detail.contains("holds nothing"), "{}", unknown.detail);
+        assert!(
+            unknown.detail.contains("holds nothing"),
+            "{}",
+            unknown.detail
+        );
 
         // excluded for budget, judged under a budget that cannot hold it
         let tight = CompileInput {
@@ -1573,14 +1593,10 @@ mod tests {
         let far = ctx.index.objects.iter().map(|o| o.uri.clone()).find(|u| {
             !compiled.selected.iter().any(|e| e.uri == *u)
                 && !compiled.excluded.iter().any(|e| e.uri == *u)
-                && !compiled
-                    .deduplicated
-                    .iter()
-                    .any(|d| d.dropped.contains(u))
+                && !compiled.deduplicated.iter().any(|d| d.dropped.contains(u))
         });
         if let Some(uri) = far {
-            let n = explain(&ctx, ExplainInput { uri, request: base })
-                .expect("an explanation");
+            let n = explain(&ctx, ExplainInput { uri, request: base }).expect("an explanation");
             assert_eq!(n.standing, Standing::NotReached);
             assert!(n.detail.contains("no selector"), "{}", n.detail);
         }
@@ -1699,15 +1715,20 @@ mod tests {
             .find(|e| e.kind == "rule")
             .expect("no blocking rule when every one was asked for");
         assert_eq!(rule.tier, Tier::Governance);
-        assert_eq!(rule.facts.get("class").map(String::as_str), Some("blocking"));
+        assert_eq!(
+            rule.facts.get("class").map(String::as_str),
+            Some("blocking")
+        );
         assert_eq!(rule.discovered_by[0].selector, Selector::Governance);
         // an advisory rule is not governance the layer applies to everything
         assert!(!all
             .selected
             .iter()
-            .any(|e| e.facts.get("class").map(String::as_str) == Some("advisory")
-                && e.discovered_by
-                    .iter()
-                    .all(|d| d.selector == Selector::Governance)));
+            .any(
+                |e| e.facts.get("class").map(String::as_str) == Some("advisory")
+                    && e.discovered_by
+                        .iter()
+                        .all(|d| d.selector == Selector::Governance)
+            ));
     }
 }

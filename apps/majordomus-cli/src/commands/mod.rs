@@ -135,9 +135,10 @@ mod tests {
             (&["majordomus", "quality", "report"], |c| {
                 matches!(c, Command::Quality(_))
             }),
-            (&["majordomus", "devcontext", "compile", "--issue", "I1"], |c| {
-                matches!(c, Command::Devcontext(_))
-            }),
+            (
+                &["majordomus", "devcontext", "compile", "--issue", "I1"],
+                |c| matches!(c, Command::Devcontext(_)),
+            ),
         ];
         for (argv, is_expected) in cases {
             let cli =
