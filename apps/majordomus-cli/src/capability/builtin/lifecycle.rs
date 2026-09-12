@@ -311,7 +311,7 @@ pub struct Episode {
 /// let fresh: Episodes = serde_json::from_value(json!({
 ///     "present": false,
 ///     "store": ".ai/local/state/sessions-open",
-///     "worktree": "/tmp/a-fresh-clone",
+///     "worktree": "example/a-fresh-clone",
 /// })).unwrap();
 /// assert!(!fresh.present);
 /// assert!(fresh.episodes.is_empty() && fresh.current.is_empty());
@@ -321,7 +321,7 @@ pub struct Episode {
 /// let busy: Episodes = serde_json::from_value(json!({
 ///     "present": true,
 ///     "store": ".ai/local/state/sessions-open",
-///     "worktree": "/tmp/wt",
+///     "worktree": "example/wt",
 ///     "current": "s-0002",
 ///     "episodes": [
 ///         {"session_id": "s-0001", "path": "a.yaml", "standing": "open",
@@ -686,7 +686,7 @@ pub struct Recovery {
 ///
 /// let view = |served: &str, repo: &str, agree: bool| -> RuntimeView {
 ///     serde_json::from_value(json!({
-///         "root": "/Users/x/repo",
+///         "root": "example/repo",
 ///         "served_head": served, "served_branch": "master", "served_working_tree": "clean",
 ///         "repository_head": repo, "repository_branch": "master",
 ///         "repository_working_tree": "clean",
