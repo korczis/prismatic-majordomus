@@ -3928,6 +3928,33 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0055",
+        "kind": "adr",
+        "label": "adr-0055",
+        "summary": "Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0055",
+        "source": ".ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "related": [
+            "rule:project.accumulation-is-measured",
+            "rule:project.destructive-sweeps-fail-closed",
+            "rule:project.reclaim-only-what-you-own",
+            "rule:project.every-wait-is-bounded",
+            "rule:project.worktree-topology",
+            "test:test/cases/276_disk_is_bounded.sh",
+            "test:test/cases/131_backlog_hygiene.sh"
+          ],
+          "tags": [
+            "operations",
+            "safety",
+            "worktrees",
+            "ci"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -27855,18 +27882,21 @@
         }
       },
       {
-        "id": "majordomus://rule/project.accumulation-is-measured@1",
+        "id": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "rule",
-        "label": "project.accumulation-is-measured@1",
+        "label": "project.accumulation-is-measured@2",
         "summary": "Everything that accumulates is measured, bounded and reaped by a committed command",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.accumulation-is-measured%401",
-        "source": ".ai/repo/rules/project/accumulation-is-measured.v1.md",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.accumulation-is-measured%402",
+        "source": ".ai/repo/rules/project/accumulation-is-measured.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [
             "project.worktree-topology@1",
-            "project.work-is-claimed-before-it-is-built@1"
+            "project.work-is-claimed-before-it-is-built@1",
+            "project.destructive-sweeps-fail-closed@1",
+            "project.reclaim-only-what-you-own@1",
+            "project.every-wait-is-bounded@1"
           ],
           "tags": [
             "operations",
@@ -27875,7 +27905,8 @@
             "safety",
             "agents",
             "coordination",
-            "ci"
+            "ci",
+            "disk"
           ]
         }
       },
@@ -32157,6 +32188,13 @@
         "label": "test/cases/274_commit_policy.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F274_commit_policy.sh",
         "source": "test/cases/274_commit_policy.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "test",
+        "label": "test/cases/276_disk_is_bounded.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F276_disk_is_bounded.sh",
+        "source": "test/cases/276_disk_is_bounded.sh"
       },
       {
         "id": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -38531,6 +38569,46 @@
       {
         "source": "majordomus://adr/adr-0054",
         "target": "majordomus://test/test/cases/274_commit_policy.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://test/test/cases/131_backlog_hygiene.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0055",
+        "target": "majordomus://test/test/cases/276_disk_is_bounded.sh",
         "kind": "put_in_force"
       },
       {
@@ -48739,17 +48817,32 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "depends_on"
       },
@@ -50295,6 +50388,11 @@
       },
       {
         "source": "majordomus://test/test/cases/274_commit_policy.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/276_disk_is_bounded.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54025,8 +54123,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1691,
-      "edges": 3805,
+      "nodes": 1693,
+      "edges": 3817,
       "acyclic": true,
       "truncated": false
     }
