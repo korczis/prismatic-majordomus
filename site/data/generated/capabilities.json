@@ -2120,7 +2120,7 @@
       "implementation": "scripts/evidence-check",
       "test": "test/cases/124_evidence.sh",
       "status": "guaranteed",
-      "note": "`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt so existing debt is known rather than blocking. The gate is advisory while the baseline is non-empty and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.",
+      "note": "`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt, which records the state per claim rather than a list of names. Two things fail: a guarantee the baseline recorded as supported that no longer is, and a supported guarantee that left the matrix. A claim the baseline never knew, with no recorded run, is new debt — named and counted, never a regression — because a ratchet that fired on growth taxed writing claims down. The gate is advisory while the baseline carries unsupported lines and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.",
       "responsibility": "none",
       "source_route": "/docs/evidence/",
       "command": null,
@@ -2203,6 +2203,19 @@
       "source_route": "/docs/models/",
       "command": null,
       "test_case": "apps/majordomus-cli/src/models/mod.rs"
+    },
+    {
+      "id": "new-code-is-covered",
+      "claim": "Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone",
+      "source": "docs/COVERAGE.md",
+      "implementation": "scripts/rust-coverage",
+      "test": "test/cases/132_coverage_differential.sh",
+      "status": "guaranteed",
+      "note": "scripts/ci/coverage-differential intersects the one canonical llvm-cov export (test code excluded) with the lines git says the change touched against the branch's merge-base with the trunk, working tree included, and exits 10 on the first changed executable item no test covers. The rule is project.new-code-is-covered; case 132 plants a deliberately uncovered changed line, proves the gate fails, then covers it and proves the gate passes, and proves an unresolvable base is UNKNOWN rather than a silent pass.",
+      "responsibility": "none",
+      "source_route": "/docs/coverage/",
+      "command": null,
+      "test_case": "132_coverage_differential"
     }
   ]
 }

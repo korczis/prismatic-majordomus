@@ -626,7 +626,7 @@ fn workflow_fingerprint(root: &Path) -> String {
             .filter_map(|e| e.file_name().into_string().ok())
             .map(|name| format!(".just/{name}"))
             .collect();
-        names.sort();
+        crate::order::canonical(&mut names);
         paths.extend(names);
     } else {
         // The absence of the directory is itself part of the fingerprint: creating it must

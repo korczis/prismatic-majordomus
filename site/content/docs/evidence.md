@@ -1,7 +1,7 @@
 +++
 title = "Evidence"
 description = "a claim's proof as a recorded execution rather than a test path that resolves: the test identity derived from the matrix, the seven proof states and how each is derived, why `proven` and `inputs unchanged` are never one state, the ledger's shape and its retention decision, recording a run, the four capabilities with their projections, both directions of the join, the gate and its ratchet, and the limits"
-weight = 54
+weight = 55
 [extra]
 source = "docs/EVIDENCE.md"
 +++
@@ -400,6 +400,7 @@ scripts/evidence-check              # report; 0 clean, 10 with regressions
 scripts/evidence-check --json       # the report, from the capability itself
 scripts/evidence-check --strict     # every unsupported guarantee fails; the baseline is ignored
 scripts/evidence-check --baseline   # rewrite the baseline from what is found now
+scripts/evidence-check --repo PATH  # judge that repository instead of this one
 ```
 
 Only `guaranteed` claims are judged. `advisory` states that enforcement is not observable
@@ -413,15 +414,41 @@ says is not there. A `guaranteed` claim in any of the three passing states — `
 the day the gate arrives every guaranteed claim is `not_run` — true, and as a blocking gate
 it would mean nothing could be merged by anybody until a full suite run had been recorded.
 So the debt that existed at that moment is written to
-[`.ai/repo/evidence-baseline.txt`](../.ai/repo/evidence-baseline.txt) by
-`--baseline`, never by hand, and the ratchet is the one this repository already uses for
-`pipefail-check` and `liveness-check`: a claim in the baseline is known debt and does not
-fail; a claim that is not in it is a regression and does; a baseline line that is now
-supported is reported as stale so the list tightens instead of rotting.
+[`.ai/repo/evidence-baseline.txt`](../.ai/repo/evidence-baseline.txt) by `--baseline`,
+never by hand.
 
-It tightens in one direction only. The baseline shrinks by recording a run that proves a
-claim and rewriting it — never by adding a line. `--strict` is the end state, and CI
-switches to it when the baseline is empty.
+**What the ratchet refuses is not membership of that list.** It was, and that was a defect
+rather than a strictness: a claim written after the baseline is absent from it for the only
+reason a claim can be absent from a snapshot of the past — it did not exist yet — and the
+gate reported every such claim as having "lost the evidence that supported them", evidence
+it had never had. Every newly merged guarantee reddened the trunk for every branch that
+merged after it. A ratchet whose alarm fires on growth rather than on regression measures
+the wrong thing: it taxes writing claims down, which is what the matrix exists to reward.
+
+So the baseline records the *state per claim* — both halves, a `+` line for a guarantee a
+run supported and a bare line for one no run supported — and two things are refused:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| refused | what it is | why membership could not see it |
+|---|---|---|
+| **lost** | a claim the baseline recorded as supported, and the evidence no longer supports | a claim losing its proof joins the unsupported set in exactly the way a newly written claim does |
+| **withdrawn** | a supported guarantee that is no longer a guaranteed claim of the matrix at all | nothing became unproven; the denominator shrank, which is how a ratchet rots without ever going red |
+
+</div>
+
+
+And one thing is deliberately not refused: a guaranteed claim the baseline never knew,
+arriving with no recorded run. That is new debt — reported, counted, and not a regression —
+because refusing it is the broken behaviour above. It is admitted to the baseline by
+`--baseline`, in its own commit, with the reason, and the ratchet holds it from then on.
+The limit is stated rather than hidden: a claim promoted from `advisory` to `guaranteed`
+without a run is new debt too, and is also only reported.
+
+It still tightens in one direction only. The unsupported half shrinks by recording a run
+that proves a claim and rewriting the file — never by adding a line. `--strict` refuses
+every unsupported guarantee; it is the end state, and CI switches to it when the
+unsupported half is empty.
 
 The gate is named in [`.ai/repo/ci/gates.yaml`](../.ai/repo/ci/gates.yaml) as
 `evidence-check`, in the `structure` job, with `always: true` — so the verdict arrives on
@@ -495,7 +522,9 @@ passed against this commit. Whether the test tests the claim is a question for r
 | ``  `x` names no test `` | an argument to `evidence proves` that is neither an identity nor a test path | give `suite:<case>`, `crate:<binary>`, or the path |
 | `evidence-check: no majordomus executable` (exit 12) | the gate could not find a build | build the crate, or set `MAJORDOMUS_BIN` |
 | `evidence-check: … is absent; run scripts/evidence-check --baseline` (exit 12) | the ratchet has no baseline | write one, in its own commit, with the reason |
-| `evidence-check: N guaranteed claim(s) lost the evidence that supported them` (exit 10) | a regression against the baseline | run the named test and record it, or fix what broke |
+| `evidence-check: N guaranteed claim(s) lost the evidence that supported them` (exit 10) | a claim the baseline recorded as supported no longer is | run the named test and record it, or fix what broke |
+| `evidence-check: N supported guarantee(s) left the matrix` (exit 10) | a proven guarantee was deleted or renamed, so the repository proves fewer than the baseline records | restore the claim, or rewrite the baseline in its own commit saying why the guarantee went away |
+| `evidence-check: N guaranteed claim(s) the baseline does not know` | new debt: a claim written after the baseline, with no recorded run — reported, never fatal | record a run, or `scripts/evidence-check --baseline` in its own commit |
 | `evidence-check: N baseline line(s) now supported — tighten the baseline` | debt was paid and the list did not follow | `scripts/evidence-check --baseline`, in its own commit |
 
 </div>

@@ -199,6 +199,13 @@ fi
 #
 # The refusal is by age, not by distance: a publication owed for ninety seconds is a deploy in
 # flight and a publication owed for an hour is a deploy that is not coming.
+#
+# The age is the OLDEST unpublished commit's, not the newest's. `git log -1` over the range
+# answers a different question — how long since the last thing landed — and on a trunk that
+# moves every few minutes that answer is always young, so the window never closes and the
+# gate cannot fire while the repository is busy. That is exactly when a deploy breaks: this
+# check reported ok for five hours while the published site stood 34 commits back, because
+# each new merge reset the age it was reading.
 git fetch -q "$REMOTE" "$TRUNK" 2>/dev/null || true
 if [ "$on_trunk" = 1 ]; then
   trigger=""
@@ -212,7 +219,8 @@ if [ "$on_trunk" = 1 ]; then
   if [ "$#" = 0 ]; then
     note "the trigger paths could not be read from the publication model; every commit ahead counts"
   fi
-  owed="$(git log -1 --first-parent --format='%H %ct' "$source_sha..$REMOTE/$TRUNK" -- "$@" 2>/dev/null || true)"
+  # The oldest commit still unpublished — `| tail -1`, not `log -1`. See the note above.
+  owed="$(git log --first-parent --format='%H %ct' "$source_sha..$REMOTE/$TRUNK" -- "$@" 2>/dev/null | tail -1 || true)"
   if [ -z "$owed" ]; then
     ok "no publication is owed: nothing $TRUNK gained since $source_sha changes what the site is built from"
   else

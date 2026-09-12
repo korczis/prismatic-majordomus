@@ -16,7 +16,7 @@ PATH="$(dirname "$MJ"):$PATH"; export PATH
 
 # --- under budget: the time and the budget on one INFO line; the budget is set so wide
 #     that a loaded machine cannot cross it, because this asserts the mechanism, not the host
-sed -i.bak 's/^    doctor_ms: 3000$/    doctor_ms: 600000/; s/^    watch_ms: 3000$/    watch_ms: 600000/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
+sed -i.bak 's/^    doctor_ms: .*$/    doctor_ms: 600000/; s/^    watch_ms: .*$/    watch_ms: 600000/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
 "$MJ" update >/dev/null
 expect_exit 0 "$MJ" doctor
 expect_grep 'INFO +budget +doctor . [0-9]+ ms of 600000 ms'

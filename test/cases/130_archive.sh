@@ -73,6 +73,9 @@ esac
   || { echo "    the derived file was marked and the archive grew: $before -> $after"; exit 1; }
 
 # ---- the mode survives the container ----------------------------------------------------
+# Proves `archive-fidelity`: an archive that lost the file modes fails rather than
+# travelling — the round trip is measured, and a reader that discards the modes anyway is
+# answered by the restore script putting them back from the manifest.
 if command -v zip >/dev/null 2>&1 && command -v unzip >/dev/null 2>&1; then
   expect_exit 0 "$MJ" archive audit --out "$T/audit.zip"
   expect_grep 'OK   archive'

@@ -5,6 +5,8 @@ template = "architecture.html"
 +++
 ## Ownership
 
+<div class="overflow-x-auto" tabindex="0">
+
 | layer | owns | lives in |
 |---|---|---|
 | product truth | policy schema, profiles, worker instructions, the CLI | `share/skeleton/**`, `bin/`, `lib/` |
@@ -16,20 +18,16 @@ template = "architecture.html"
 | presentation | Zola templates, Flowbite components, Tailwind utilities, Alpine enhancements | `site/templates/**`, `site/tailwind.css` |
 | output | the static site | `site/public/**` |
 
+</div>
+
+
 ## Pipeline
 
-```
-share/skeleton + docs + README + CLAIMS.yaml
-        │  scripts/generate-site-data
-        ▼
-site/data/generated/*.json  +  site/content/docs/*.md
-        │  zola build
-        ▼
-site/public/          ← Tailwind + Flowbite CSS, Flowbite JS, Alpine
-        │  GitHub Actions (pages.yml)
-        ▼
-GitHub Pages
-```
+The pipeline is drawn at the foot of this page rather than typed here. It is rendered from
+`site/data/generated/diagrams.json`, which the generator writes from the inputs it actually
+read, so a canonical file added to the derivation appears in the picture without anyone
+redrawing it. The block that used to sit here was a second, hand-maintained copy of that
+same diagram, and the two already named different things.
 
 ## Sync guarantee
 

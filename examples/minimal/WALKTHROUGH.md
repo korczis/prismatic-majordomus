@@ -104,7 +104,7 @@ INFO skill       .ai/repo/skills/ — no skills; nothing to validate
 INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
 OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
 INFO env         - — bash 5.3.15, git 2.55.0, jq 1.8.2, shellcheck present
-WARN budget      doctor — 27501 ms, over the budget of 3000 ms (policy benchmark.budget.doctor_ms)  [reproduce: MJ_TIMING=1 majordomus doctor]
+WARN budget      doctor — 27501 ms, over the budget of 20000 ms (policy benchmark.budget.doctor_ms)  [reproduce: MJ_TIMING=1 majordomus doctor]
 doctor: 2 failure(s)
 ```
 
@@ -164,7 +164,7 @@ INFO skill       .ai/repo/skills/ — no skills; nothing to validate
 INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
 OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
 INFO env         - — bash 5.3.15, git 2.55.0, jq 1.8.2, shellcheck present
-WARN budget      doctor — 17293 ms, over the budget of 3000 ms (policy benchmark.budget.doctor_ms)  [reproduce: MJ_TIMING=1 majordomus doctor]
+INFO budget      doctor — 17293 ms of 20000 ms  [reproduce: MJ_TIMING=1 majordomus doctor]
 doctor: 0 failure(s)
 ```
 
@@ -339,7 +339,7 @@ OK   session     .ai/local/session-contexts — ignored and untracked
 OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
 OK   state       t-20260906165010-104f — exact (head ad4b3b2)
-WARN budget      watch — 31547 ms, over the budget of 3000 ms (policy benchmark.budget.watch_ms)  [reproduce: MJ_TIMING=1 majordomus watch]
+WARN budget      watch — 31547 ms, over the budget of 20000 ms (policy benchmark.budget.watch_ms)  [reproduce: MJ_TIMING=1 majordomus watch]
 OK   verification t-20260906165010-104f — completed with a finish record
 watch: 2 drift finding(s)
 ```

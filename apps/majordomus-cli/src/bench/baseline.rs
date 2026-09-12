@@ -325,7 +325,7 @@ impl Check {
             .filter(|b| !measured.contains(b.key.as_str()))
             .map(|b| b.key.clone())
             .collect();
-        stale.sort();
+        crate::order::canonical(&mut stale);
         stale.dedup();
         Check {
             platform,
