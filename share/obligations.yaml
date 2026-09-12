@@ -36,7 +36,7 @@ obligations:
     title: The change exists
     summary: The work the task promised is present in the tree.
     discharged_by: none
-    inputs: ["*"]
+    inputs: ["**"]
     remote: false
     established_by: none
     unestablished: Whether the promised work is the work is a judgement, not a fact; the scope and note lines of the contract hold it, and nothing here should pretend to decide it.
@@ -111,17 +111,16 @@ obligations:
 
   - id: deploy
     title: The application is running the expected revision
-    summary: The environment the change targets is serving the revision the task produced.
-    discharged_by: majordomus deployment
+    summary: Every active deployment object is serving the revision the task produced, asked at the address the object declares.
+    discharged_by: bin/majordomus-cli run deploy.verify
     remote: true
-    established_by: none
-    unestablished: A deployment is a fact about a machine this repository never contacts. `majordomus deployment` reads the declared object and says so itself — no capability there reaches the provider, deliberately — and the object it reads is declared rather than running, so there is no host to ask. A person who deployed records what they saw, and the token stays honest about being hand-held.
+    established_by: bin/majordomus-cli run deploy.verify
+    note: Established live by `deploy.verify`, which asks each active deployment for `/api/v1/distribution/build` and compares the commit and version it states with the trunk's. A deployment object that is `declared` rather than `active` is not asked and not pretended about; the report says so by name. The token is implied by the change set, through the deployment plan, whenever an active deployment's build inputs are touched.
 
   - id: verify
     title: The deployed result was looked at
-    summary: A live check against the deployed thing succeeded after it was deployed.
-    discharged_by: scripts/pages verify
+    summary: Every surface the change reaches — the published site, the published release metadata, each active deployment — states the expected revision at its own address, asked after the deployment.
+    discharged_by: bin/majordomus-cli run deploy.verify
     remote: true
-    established_by: none
-    unestablished: The site half of this question is `pages`, which is established above; declaring both would be one fact counted twice. The application half is a request to a deployed host, which needs the same thing `deploy` needs and does not have.
-    note: Separate from `tests` on purpose. A test proves the implementation under controlled conditions; verification proves the thing in the place it was sent to.
+    established_by: bin/majordomus-cli run deploy.verify
+    note: Separate from `tests` on purpose. A test proves the implementation under controlled conditions; verification proves the thing in the place it was sent to. Established live by `deploy.verify` against the trunk's head once the trunk reaches the task's commit; a surface stating an older revision is stale and a surface that does not answer is unreachable, and neither is a pass. Implied by the change set through the deployment plan, so a task that touches what a surface is built from owes it whether or not it said so.

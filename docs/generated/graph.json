@@ -164,6 +164,15 @@
         "status": "query"
       },
       {
+        "id": "capability:deploy.verify",
+        "kind": "capability",
+        "label": "deploy.verify",
+        "summary": "What the deployed surfaces are serving",
+        "route": "/cockpit/capabilities/deploy.verify",
+        "source": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:design.contrast",
         "kind": "capability",
         "label": "design.contrast",
@@ -430,6 +439,15 @@
         "label": "gates.model",
         "summary": "The CI model",
         "route": "/cockpit/capabilities/gates.model",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:gates.policy",
+        "kind": "capability",
+        "label": "gates.policy",
+        "summary": "The completion policy",
+        "route": "/cockpit/capabilities/gates.policy",
         "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
         "status": "query"
       },
@@ -1500,6 +1518,14 @@
         "label": "semantics.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/command_graph/semantics.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/deploy/verify.rs",
+        "kind": "file",
+        "label": "verify.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/deploy/verify.rs",
         "external": true
       },
       {
@@ -3809,6 +3835,34 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0057",
+        "kind": "adr",
+        "label": "adr-0057",
+        "summary": "Completion is proved, not claimed — one completion policy, a derived stage, and live verification of what was deployed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0057",
+        "source": ".ai/repo/adrs/0057-completion-is-proved-not-claimed.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "related": [
+            "rule:project.completion-is-proved",
+            "rule:project.deployment-is-verified-live",
+            "rule:project.tooling-is-derived",
+            "rule:project.the-version-is-measured",
+            "rule:project.never-reported-is-not-green",
+            "test:test/cases/280_completion_is_proved.sh",
+            "test:test/cases/281_deploy_verify_live.sh",
+            "test:test/cases/282_tooling_is_derived.sh"
+          ],
+          "tags": [
+            "governance",
+            "lifecycle",
+            "release",
+            "deployment"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -4753,6 +4807,21 @@
         }
       },
       {
+        "id": "majordomus://claim/completion-is-proved",
+        "kind": "claim",
+        "label": "completion-is-proved",
+        "summary": "The outcome completed is refused while the completion report says complete is false, naming each question of share/completion.yaml still owed and the command that settles it; the stage a task stands at is derived from the answers and never written; and every surface reads that one report",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fcompletion-is-proved",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/gates.sh",
+          "responsibility": "finish",
+          "source": "docs/COMPLETION.md",
+          "test": "test/cases/280_completion_is_proved.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/consistency-check",
         "kind": "claim",
         "label": "consistency-check",
@@ -4948,6 +5017,21 @@
           "responsibility": "state",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/21_decision_question.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/deployment-verified-live",
+        "kind": "claim",
+        "label": "deployment-verified-live",
+        "summary": "Every surface a change reaches — the published site, the release metadata, each active deployment — is asked for the identity it states at its own address and compared with the trunk's revision; a stale, unreachable or unreadable surface refuses, and neither a deploy command's exit code nor an HTTP 200 counts as verification",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fdeployment-verified-live",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/deploy/verify.rs",
+          "responsibility": "finish",
+          "source": "docs/COMPLETION.md",
+          "test": "test/cases/281_deploy_verify_live.sh"
         }
       },
       {
@@ -5901,7 +5985,7 @@
         "id": "majordomus://claim/obligation-establishment",
         "kind": "claim",
         "label": "obligation-establishment",
-        "summary": "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it — and a hand-recorded line neither discharges it nor rescues it",
+        "summary": "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it, a deployed surface that states it — and a hand-recorded line neither discharges it nor rescues it",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fobligation-establishment",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -6859,6 +6943,21 @@
         }
       },
       {
+        "id": "majordomus://claim/tooling-derived",
+        "kind": "claim",
+        "label": "tooling-derived",
+        "summary": "The definition of done reaches every generated provider bootstrap as a fragment rendered from share/completion.yaml by the shell tool and the executable to the same bytes; a bootstrap whose source moved fails generate --check, a hand-edited one fails doctor, and regeneration is the only remedy",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Ftooling-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/providers.rs",
+          "responsibility": "projection",
+          "source": "docs/COMPLETION.md",
+          "test": "test/cases/282_tooling_is_derived.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/typed-outcome",
         "kind": "claim",
         "label": "typed-outcome",
@@ -7485,7 +7584,7 @@
           "requires_repository": true,
           "requires_task": "required",
           "stage": "work",
-          "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
+          "syntax": "majordomus evidence --covers <token> (--command <cmd> | --artifact <ref>) [--type <kind>] [--result <r>] | --gate <id> --exit <status> [--command <cmd>] | --run-gates",
           "visibility": "public",
           "writes": [
             ".ai/local/state/ledger.jsonl"
@@ -8069,7 +8168,7 @@
           "requires_task": "none",
           "stage": "begin",
           "summary": "Begin one scoped task under a profile, and refuse while another is active.",
-          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
+          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>] [--issue <id>|none]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
@@ -9168,6 +9267,14 @@
         "source": "docs/COMMANDS.md"
       },
       {
+        "id": "majordomus://document/docs/COMPLETION.md",
+        "kind": "document",
+        "label": "docs/COMPLETION.md",
+        "summary": "Completion — done as a state the repository decides, not a word a worker uses",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOMPLETION.md",
+        "source": "docs/COMPLETION.md"
+      },
+      {
         "id": "majordomus://document/docs/CONCEPTS.md",
         "kind": "document",
         "label": "docs/CONCEPTS.md",
@@ -9696,6 +9803,14 @@
         "source": "docs/claims/command-surface.md"
       },
       {
+        "id": "majordomus://document/docs/claims/completion-is-proved.md",
+        "kind": "document",
+        "label": "docs/claims/completion-is-proved.md",
+        "summary": "The outcome completed is refused while the completion report says complete is false, and every surface reads that one report",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fcompletion-is-proved.md",
+        "source": "docs/claims/completion-is-proved.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/consistency-check.md",
         "kind": "document",
         "label": "docs/claims/consistency-check.md",
@@ -9790,6 +9905,14 @@
         "summary": "A decision is recorded with its reason, and superseded rather than edited",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fdecision-record.md",
         "source": "docs/claims/decision-record.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/deployment-verified-live.md",
+        "kind": "document",
+        "label": "docs/claims/deployment-verified-live.md",
+        "summary": "Every surface a change reaches is asked what it serves, and a stale or silent one refuses",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fdeployment-verified-live.md",
+        "source": "docs/claims/deployment-verified-live.md"
       },
       {
         "id": "majordomus://document/docs/claims/derivation-one-graph.md",
@@ -10742,6 +10865,14 @@
         "summary": "The tool runs read-only from any location, and two locations of one version agree about one repository",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Ftool-location-independent.md",
         "source": "docs/claims/tool-location-independent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/tooling-derived.md",
+        "kind": "document",
+        "label": "docs/claims/tooling-derived.md",
+        "summary": "The definition of done reaches every generated bootstrap as a fragment both renderers produce byte for byte",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Ftooling-derived.md",
+        "source": "docs/claims/tooling-derived.md"
       },
       {
         "id": "majordomus://document/docs/claims/typed-outcome.md",
@@ -22460,6 +22591,57 @@
         }
       },
       {
+        "id": "majordomus://issue/I1513",
+        "kind": "issue",
+        "label": "I1513",
+        "summary": "One completion policy, a derived stage, and live verification of what was deployed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1513",
+        "source": ".ai/repo/project/issues/I1513.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "finish --outcome completed is refused with every owed question named while complete is false",
+            "deploy.verify reports a surface serving an older revision as stale and a silent one as unreachable",
+            "the shell and Rust renderers produce the same completion fragment byte for byte",
+            "the release model carries a contract phase and the workflow runs it before the build"
+          ],
+          "created_at": "2026-09-12",
+          "depends_on": [],
+          "evidence_required": [
+            "completed_is_refused_without_proof",
+            "a_stale_surface_refuses",
+            "the_bootstrap_fragment_is_derived"
+          ],
+          "milestone": "completion-is-proved",
+          "non_scope": [
+            "Deploying the declared Fly.io application.",
+            "A Cockpit action that deploys. Verification is a read; deployment stays on the trusted paths."
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share",
+            "apps/majordomus-cli",
+            "lib",
+            "scripts",
+            ".ai/repo",
+            ".github/workflows",
+            "docs",
+            "site",
+            "test/cases"
+          ],
+          "slug": "completion-is-proved",
+          "started_at": "2026-09-12T10:58:19Z",
+          "updated_at": "2026-09-12T10:58:19Z",
+          "validation": [
+            "bash test/run.sh 280_completion_is_proved",
+            "bash test/run.sh 281_deploy_verify_live",
+            "bash test/run.sh 282_tooling_is_derived",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates deploy"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -22840,6 +23022,68 @@
             "cargo test --workspace --all-features",
             "majordomus generate --check",
             "scripts/cockpit-probe"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/completion-is-proved",
+        "kind": "milestone",
+        "label": "completion-is-proved",
+        "summary": "A development session is complete when the repository can prove it, and every surface reads the same proof",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmilestone%2Fcompletion-is-proved",
+        "source": ".ai/repo/project/milestones/completion-is-proved.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "share/completion.yaml is the only declaration of what done means, and gates.policy answers it",
+            "finish --outcome completed is refused while the completion report says complete is false, naming each question owed",
+            "deploy.verify asks each applicable surface for its identity and refuses a stale or unreachable one",
+            "The release workflow runs the structural version gate before building an artifact",
+            "AGENTS.md and CLAUDE.md carry the definition of done as a generated fragment both renderers produce byte for byte",
+            "This repository's own session for this milestone passes through the lifecycle and records its evidence"
+          ],
+          "created_at": "2026-09-12",
+          "evidence_required": [
+            "completed_is_refused_without_proof",
+            "a_stale_surface_refuses",
+            "the_bootstrap_fragment_is_derived"
+          ],
+          "non_scope": [
+            "Deploying the declared Fly.io application. The object stays declared; the report says so by name rather than pretending to verify it.",
+            "A second implementation of the completion judgement in any surface. Every surface reads gates.completion.",
+            "Turning on branch protection. A repository setting, and the operator's decision."
+          ],
+          "order": 96,
+          "priority": "p1",
+          "scope": [
+            "share/completion.yaml",
+            "share/obligations.yaml",
+            "share/providers",
+            "share/schemas",
+            "apps/majordomus-cli/src/gates",
+            "apps/majordomus-cli/src/deploy",
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/providers.rs",
+            "apps/majordomus-cli/src/cockpit",
+            "lib",
+            "scripts/ci",
+            ".ai/repo/ci",
+            ".ai/repo/rules/project",
+            ".ai/repo/adrs",
+            ".ai/repo/providers",
+            ".ai/repo/policy.yaml",
+            ".github/workflows",
+            "docs",
+            "site",
+            "test/cases"
+          ],
+          "slug": "completion-is-proved",
+          "updated_at": "2026-09-12",
+          "validation": [
+            "bash test/run.sh 280_completion_is_proved",
+            "bash test/run.sh 281_deploy_verify_live",
+            "bash test/run.sh 282_tooling_is_derived",
+            "scripts/ci/version-matches-surface"
           ]
         }
       },
@@ -27780,6 +28024,29 @@
         }
       },
       {
+        "id": "majordomus://rule/project.completion-is-proved@1",
+        "kind": "rule",
+        "label": "project.completion-is-proved@1",
+        "summary": "Completion is proved by one policy, derived from evidence, and never claimed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.completion-is-proved%401",
+        "source": ".ai/repo/rules/project/completion-is-proved.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.never-reported-is-not-green@1",
+            "project.the-version-is-measured@2",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "completion",
+            "lifecycle",
+            "evidence",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.context-locality@1",
         "kind": "rule",
         "label": "project.context-locality@1",
@@ -27811,6 +28078,28 @@
           "statement": "Commits use the conventional format type(scope): description with the co-author footer the session provides, and land incrementally rather than as one large change.",
           "tags": [
             "git"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.deployment-is-verified-live@1",
+        "kind": "rule",
+        "label": "project.deployment-is-verified-live@1",
+        "summary": "A deployment is verified by asking the deployed surface what it serves",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.deployment-is-verified-live%401",
+        "source": ".ai/repo/rules/project/deployment-is-verified-live.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.land-and-publish@1",
+            "project.completion-is-proved@1"
+          ],
+          "tags": [
+            "deployment",
+            "verification",
+            "evidence",
+            "release"
           ]
         }
       },
@@ -28946,6 +29235,28 @@
             "versioning",
             "contract",
             "evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.tooling-is-derived@1",
+        "kind": "rule",
+        "label": "project.tooling-is-derived@1",
+        "summary": "AI client instructions are derived from canonical repository metadata, never maintained by hand",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.tooling-is-derived%401",
+        "source": ".ai/repo/rules/project/tooling-is-derived.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1",
+            "project.completion-is-proved@1"
+          ],
+          "tags": [
+            "providers",
+            "projections",
+            "governance",
+            "agents"
           ]
         }
       },
@@ -31921,6 +32232,27 @@
         "source": "test/cases/27_foreign_task.sh"
       },
       {
+        "id": "majordomus://test/test/cases/280_completion_is_proved.sh",
+        "kind": "test",
+        "label": "test/cases/280_completion_is_proved.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F280_completion_is_proved.sh",
+        "source": "test/cases/280_completion_is_proved.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/281_deploy_verify_live.sh",
+        "kind": "test",
+        "label": "test/cases/281_deploy_verify_live.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F281_deploy_verify_live.sh",
+        "source": "test/cases/281_deploy_verify_live.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/282_tooling_is_derived.sh",
+        "kind": "test",
+        "label": "test/cases/282_tooling_is_derived.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F282_tooling_is_derived.sh",
+        "source": "test/cases/282_tooling_is_derived.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/28_catalogue.sh",
         "kind": "test",
         "label": "test/cases/28_catalogue.sh",
@@ -34888,6 +35220,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:deploy.verify",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:deploy.verify",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:deploy.verify",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:design.contrast",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -35424,6 +35771,21 @@
       },
       {
         "source": "capability:gates.model",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -38113,6 +38475,51 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0057",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0057",
+        "target": "majordomus://rule/project.completion-is-proved@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0057",
+        "target": "majordomus://rule/project.deployment-is-verified-live@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0057",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0057",
+        "target": "majordomus://rule/project.the-version-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0057",
+        "target": "majordomus://rule/project.tooling-is-derived@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0057",
+        "target": "majordomus://test/test/cases/280_completion_is_proved.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0057",
+        "target": "majordomus://test/test/cases/281_deploy_verify_live.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0057",
+        "target": "majordomus://test/test/cases/282_tooling_is_derived.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -38768,6 +39175,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/completion-is-proved",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/completion-is-proved",
+        "target": "majordomus://document/docs/COMPLETION.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/completion-is-proved",
+        "target": "majordomus://implementation/lib/gates.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/completion-is-proved",
+        "target": "majordomus://test/test/cases/280_completion_is_proved.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/consistency-check",
         "target": "kind:claim",
         "kind": "is_a"
@@ -38995,6 +39422,26 @@
       {
         "source": "majordomus://claim/decision-record",
         "target": "majordomus://test/test/cases/21_decision_question.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/deployment-verified-live",
+        "target": "file:apps/majordomus-cli/src/deploy/verify.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/deployment-verified-live",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/deployment-verified-live",
+        "target": "majordomus://document/docs/COMPLETION.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/deployment-verified-live",
+        "target": "majordomus://test/test/cases/281_deploy_verify_live.sh",
         "kind": "tested_by"
       },
       {
@@ -41308,6 +41755,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/tooling-derived",
+        "target": "file:apps/majordomus-cli/src/providers.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/tooling-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/tooling-derived",
+        "target": "majordomus://document/docs/COMPLETION.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/tooling-derived",
+        "target": "majordomus://test/test/cases/282_tooling_is_derived.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/typed-outcome",
         "target": "kind:claim",
         "kind": "is_a"
@@ -42268,6 +42735,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/COMPLETION.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/CONCEPTS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -42598,6 +43070,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/completion-is-proved.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/consistency-check.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -42654,6 +43131,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/decision-record.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/deployment-verified-live.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -43249,6 +43731,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/tool-location-independent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/tooling-derived.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -47243,6 +47730,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1513",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1513",
+        "target": "majordomus://milestone/completion-is-proved",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -47279,6 +47776,11 @@
       },
       {
         "source": "majordomus://milestone/capability-graph",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/completion-is-proved",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -48343,6 +48845,26 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.completion-is-proved@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.completion-is-proved@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.completion-is-proved@1",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.completion-is-proved@1",
+        "target": "majordomus://rule/project.the-version-is-measured@2",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.context-locality@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -48351,6 +48873,21 @@
         "source": "majordomus://rule/project.conventional-commits@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.deployment-is-verified-live@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.deployment-is-verified-live@1",
+        "target": "majordomus://rule/project.completion-is-proved@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.deployment-is-verified-live@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.derived-files-regenerated@1",
@@ -48995,6 +49532,21 @@
       {
         "source": "majordomus://rule/project.the-version-is-measured@2",
         "target": "majordomus://rule/project.release-is-a-projection@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.tooling-is-derived@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.tooling-is-derived@1",
+        "target": "majordomus://rule/project.completion-is-proved@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.tooling-is-derived@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
       {
@@ -49794,6 +50346,21 @@
       },
       {
         "source": "majordomus://test/test/cases/27_foreign_task.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/280_completion_is_proved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/281_deploy_verify_live.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/282_tooling_is_derived.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -52963,6 +53530,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:deploy",
+        "target": "capability:deploy.verify",
+        "kind": "composes"
+      },
+      {
         "source": "module:design",
         "target": "capability:design.contrast",
         "kind": "composes"
@@ -53110,6 +53682,11 @@
       {
         "source": "module:gates",
         "target": "capability:gates.model",
+        "kind": "composes"
+      },
+      {
+        "source": "module:gates",
+        "target": "capability:gates.policy",
         "kind": "composes"
       },
       {
@@ -53449,8 +54026,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1668,
-      "edges": 3748,
+      "nodes": 1687,
+      "edges": 3797,
       "acyclic": true,
       "truncated": false
     }

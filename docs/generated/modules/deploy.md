@@ -5,7 +5,7 @@
 
 The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.
 
-Stability: behaviorally_verified. Capabilities: 3.
+Stability: behaviorally_verified. Capabilities: 4.
 
 ## `deploy.check` — Would these deployments work
 
@@ -66,4 +66,29 @@ Every deployment the layer declares, typed: the application, the package and bin
 Input: none.
 
 Output: `DeploymentList`.
+
+## `deploy.verify` — What the deployed surfaces are serving
+
+Live verification: every surface the change reaches — the published site, the published release metadata, each active deployment — is asked for the identity it states (the commit, version or tag at its own address) and compared with what this checkout expects. A surface stating an older identity is stale, one that does not answer is unreachable, and neither is a pass: a deploy command that exited 0 with the old revision still live is exactly what this refuses. The request carries no header and the evidence carries no body beyond the fields compared. The one capability of this executable that reaches the network, and it reaches only addresses the repository itself declares.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_deploy_verify` |
+| HTTP | `GET /api/v1/deployments/verify` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::deploy |
+| tags | deployments, verification, evidence, live |
+
+| input | type | required | description |
+|---|---|---|---|
+| `expected_commit` | string or null | no | The commit every target is expected to serve. Absent means this checkout's HEAD. |
+| `targets` | array or null | no | The targets to ask, by id (`pages`, `release`, a deployment's id). Absent means
+every target that applies. |
+| `changed` | array or null | no | The changed paths to derive applicability from. Absent means every target that
+exists is asked, which is the question after a deployment. |
+
+Output: `DeploymentVerification`.
 

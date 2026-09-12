@@ -11,7 +11,12 @@
 . "$ROOT/test/lib.sh"
 BIN="$(rust_bin)" || rust_bin_exit $?
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj131.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-"$MJ" init >/dev/null; "$MJ" update >/dev/null
+"$MJ" init >/dev/null
+# This case measures the gates, not the definition of done: `completed` is earned by every
+# question of share/completion.yaml (case 280), and here a task is finished over a fixture
+# with no handover and no issue on purpose, so the policy's stricter bit is off.
+sed -i.bak 's/^  completed_means_complete: true$/  completed_means_complete: false/' .ai/repo/policy.yaml && rm .ai/repo/policy.yaml.bak
+"$MJ" update >/dev/null
 printf '# Objective\n\nx\n\n# Current State\n\nx\n\n# Next Action\n\nx\n' > "$S/note.md"
 
 # the fixture's own CI model: one gate every plan runs, one per path class, and one that
@@ -142,9 +147,16 @@ git checkout -q -- lib/a.sh
 [ "$(status_of unit)" = pass ] || { echo "    reverting the edit did not restore the run"; exit 1; }
 
 # ---------------------------------------------------------------- the done invariant
-# Nineteen questions, each with the source that answered it and the evidence it read.
-[ "$(completion | jq -r '.questions | length')" = 19 ] \
-  || { echo "    the done invariant is $(completion | jq -r '.questions | length') questions, not 19"; exit 1; }
+# One question per declaration of share/completion.yaml — the one definition of done —
+# each with the source that answered it and the evidence it read. The count is read from
+# the policy, never written here: a question added there is a question asked here.
+declared="$(grep -c '^  - id: ' "$ROOT/share/completion.yaml")"
+stages="$(awk '/^stages:/{s=1;next} /^questions:/{s=0} s && /^  - id: /{n++} END{print n}' "$ROOT/share/completion.yaml")"
+declared=$((declared - stages))
+[ "$(completion | jq -r '.questions | length')" = "$declared" ] \
+  || { echo "    the done invariant is $(completion | jq -r '.questions | length') questions, and the policy declares $declared"; exit 1; }
+completion | jq -e '[.questions[] | select((.stage | length) == 0)] | length == 0' >/dev/null \
+  || { echo "    a question belongs to no stage"; exit 1; }
 completion | jq -e '[.questions[] | select((.source | length) == 0 or (.evidence | length) == 0)] | length == 0' >/dev/null \
   || { echo "    a question carries no source or no evidence"; exit 1; }
 # every gate has reported and passed, so the CI question passes and says what it read
@@ -155,11 +167,23 @@ completion | jq -r '.questions[] | select(.id == "ci") | .evidence' | grep -q 'n
 # this task touched lib/ and test/ paths, so regression is answered from the change set
 [ "$(completion | jq -r '.questions[] | select(.id == "regression-tested") | .status')" = queued ] \
   || { echo "    a change with no test path answered regression-tested with $(completion | jq -r '.questions[] | select(.id == "regression-tested") | .status')"; exit 1; }
-# a question nothing here reaches is unknown and names the command that answers it
-completion | jq -e '.questions[] | select(.id == "parity") | .status == "unknown"' >/dev/null \
-  || { echo "    transport parity was answered by something that cannot answer it"; exit 1; }
-completion | jq -r '.questions[] | select(.id == "issue") | .evidence' | grep -q 'majordomus plan status' \
-  || { echo "    an unreachable question does not name what would answer it"; exit 1; }
+# a question answered by a gate this fixture's model does not declare is not applicable,
+# and says so by name: not asked is a different fact from asked and silent
+completion | jq -e '.questions[] | select(.id == "parity") | .status == "exempt"' >/dev/null \
+  || { echo "    transport parity was answered by a gate the model does not declare"; exit 1; }
+completion | jq -r '.questions[] | select(.id == "parity") | .evidence' | grep -q 'declares no gate' \
+  || { echo "    an unanswerable question does not say why"; exit 1; }
+# and a repository that has published nothing owes no version
+completion | jq -e '.questions[] | select(.id == "version") | .status == "exempt"' >/dev/null \
+  || { echo "    a repository with no release was asked for a version bump"; exit 1; }
+# the task named no issue: owed, and the evidence says how to name one
+[ "$(completion | jq -r '.questions[] | select(.id == "issue") | .status')" = queued ] \
+  || { echo "    a task naming no issue was not told it owes one"; exit 1; }
+# and where the task stands is derived from the answers, never written down
+completion | jq -e '.stage | (.id | length) > 0 and (.state | length) > 0 and (.complete == false)' >/dev/null \
+  || { echo "    the stage is not derived"; exit 1; }
+completion | jq -e '.verified == true and .finishable == true' >/dev/null \
+  || { echo "    every gate reported and passed, and the report does not say verified"; exit 1; }
 # nothing is ever passed without something behind it
 completion | jq -e '[.questions[] | select(.status == "pass")] | length >= 1' >/dev/null \
   || { echo "    no question passed at all on a tree where every gate passes"; exit 1; }

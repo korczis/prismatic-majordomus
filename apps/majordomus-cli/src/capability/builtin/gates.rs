@@ -31,7 +31,7 @@
 //! // command-line arm of its own because `check` and `finish` are the command line's answer
 //! let m = module();
 //! let ids: Vec<&str> = m.capabilities.iter().map(|c| c.capability.id.as_str()).collect();
-//! assert_eq!(ids, ["gates.model", "gates.completion"]);
+//! assert_eq!(ids, ["gates.model", "gates.policy", "gates.completion"]);
 //! for entry in &m.capabilities {
 //!     assert!(entry.capability.exposure.cli.is_none());
 //!     assert!(entry.capability.exposure.http.is_some());
@@ -48,7 +48,11 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::gates::{self, judge, model, Completion};
+use crate::deploy::targets::{self, ApplicationFact, DeploymentPlan, Identity, PlanFacts};
+use crate::gates::{
+    self, judge, model, Completion, CompletionPolicy, HandoverStanding, IssueStanding,
+    ReleaseStanding, VersionSummary,
+};
 use crate::{capability, module};
 
 use super::get;
@@ -60,6 +64,30 @@ pub const GATES_URI: &str = "majordomus://gates";
 
 /// The URI under which this checkout's completion state is read as an MCP resource.
 pub const COMPLETION_URI: &str = "majordomus://gates/completion";
+
+/// The URI under which the completion policy is read as an MCP resource.
+pub const POLICY_URI: &str = "majordomus://gates/policy";
+
+/// The completion policy, as every projection states it: the stages, the questions and
+/// the source each is answered from, plus the fragment the provider bootstraps carry.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct CompletionPolicyReport {
+    /// The policy as read from the distribution.
+    #[serde(flatten)]
+    pub policy: CompletionPolicy,
+    /// The generated section of an instruction file (AGENTS.md, CLAUDE.md): one line per
+    /// stage with the questions that belong to it. The shell tool renders the same bytes.
+    pub fragment: String,
+    /// What does not resolve against the vocabulary the policy is shipped beside: a token
+    /// `share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub problems: Vec<String>,
+    /// The questions answered by a gate this repository's CI model does not declare, as
+    /// `question:gate`. Not a problem: the report answers them `exempt` by name. Listed so
+    /// that a repository can see what the policy would ask and it never does.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unanswered_gates: Vec<String>,
+}
 
 // ---------------------------------------------------------------- output types
 
@@ -145,6 +173,11 @@ pub struct CompletionInput {
     /// Also plan the gates the model marks on-demand. Off by default, because a plan that
     /// selects a gate whose runner is unavailable is a plan whose verdict never arrives.
     pub on_demand: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Settle the obligations something can establish — a commit, a push, the trunk, the
+    /// published site, the deployed surfaces — live, at HEAD. On by default; a report that
+    /// passes `false` reads the ledger alone and says a live token is owed, never proven.
+    pub live: Option<bool>,
 }
 
 impl BenchmarkCases for CompletionInput {
@@ -178,6 +211,228 @@ impl BenchmarkCases for CompletionInput {
 }
 
 // ---------------------------------------------------------------- handlers
+
+/// The completion policy the distribution ships, located the way the vocabulary is.
+fn policy(ctx: &Context) -> Result<CompletionPolicy, String> {
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let share = crate::share::Share::locate(ctx.index.share.as_deref(), &root)
+        .map_err(|e| format!("no distribution to read the completion policy from: {e}"))?;
+    CompletionPolicy::load(share.dir())
+}
+
+fn gates_policy(ctx: &Context, _: Empty) -> Result<CompletionPolicyReport, CapabilityError> {
+    let policy = policy(ctx).map_err(CapabilityError::NotFound)?;
+    let tokens: Vec<String> = vocabulary(ctx)
+        .map(|v| v.into_iter().map(|o| o.id).collect())
+        .unwrap_or_default();
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let gates: Vec<String> = model::GateModel::load(&root)
+        .map(|m| m.gates.iter().map(|g| g.id.clone()).collect())
+        .unwrap_or_default();
+    let problems = policy.validate(&tokens);
+    let unanswered_gates = policy.unanswered_gates(&gates);
+    Ok(CompletionPolicyReport {
+        fragment: policy.bootstrap_fragment(),
+        policy,
+        problems,
+        unanswered_gates,
+    })
+}
+
+/// The structural release analysis, reduced. Asked through the executor so that this
+/// report and `release.analysis` cannot disagree; an analysis that cannot be made (no
+/// release record, no history) is a reason, never a pass.
+fn release_standing(ctx: &Context) -> (ReleaseStanding, Option<VersionSummary>) {
+    if !ctx
+        .index
+        .objects
+        .iter()
+        .any(|o| o.kind == crate::release::changelog::RELEASE_KIND)
+    {
+        return (
+            ReleaseStanding::NotApplicable(
+                "not applicable: this repository has published no release, so there is no \
+                 baseline to measure the contract against"
+                    .into(),
+            ),
+            None,
+        );
+    }
+    match ctx.execute("release.analysis", serde_json::json!({})) {
+        Err(e) => (ReleaseStanding::Unknown(e.to_string()), None),
+        Ok(v) => {
+            let plan: crate::release::compat::VersionPlan = match serde_json::from_value(v) {
+                Ok(p) => p,
+                Err(e) => {
+                    return (
+                        ReleaseStanding::Unknown(format!(
+                            "release.analysis answered something this report cannot read: {e}"
+                        )),
+                        None,
+                    )
+                }
+            };
+            if plan.has_errors() {
+                let why = plan
+                    .diagnostics
+                    .iter()
+                    .map(|d| d.message.clone())
+                    .collect::<Vec<_>>()
+                    .join("; ");
+                return (
+                    ReleaseStanding::Unknown(format!("the release state is incoherent: {why}")),
+                    None,
+                );
+            }
+            let summary = VersionSummary {
+                baseline: plan.baseline.version.clone(),
+                declared: plan.declared_version.clone(),
+                required: plan.required_version.clone(),
+                impact: plan.required.as_str().to_string(),
+                status: match plan.status {
+                    crate::release::compat::Status::Ok => "ok".to_string(),
+                    crate::release::compat::Status::Blocked => "blocked".to_string(),
+                },
+                breaking: plan.breaking,
+                changes: plan.changes.len(),
+            };
+            let ok = summary.ok() && plan.writers_agree;
+            let detail = if !plan.writers_agree {
+                format!(
+                    "the crate declares {} and the shell tool {}: the two writers disagree",
+                    plan.declared_version, plan.tool_version
+                )
+            } else if ok {
+                format!(
+                    "{} required since {} ({} movement(s)); {} declared",
+                    summary.impact, summary.baseline, summary.changes, summary.declared
+                )
+            } else {
+                format!(
+                    "{} required since {} ({} movement(s)): at least {} owed, {} declared",
+                    summary.impact, summary.baseline, summary.changes, summary.required,
+                    summary.declared
+                )
+            };
+            (ReleaseStanding::Measured { ok, detail }, Some(summary))
+        }
+    }
+}
+
+/// The issue the task names, resolved against the plan's objects in the index.
+fn issue_standing(ctx: &Context, task: Option<&super::ActiveTask>) -> IssueStanding {
+    let Some(task) = task else {
+        return IssueStanding::Unknown("no task is active in this checkout".into());
+    };
+    let id = task.issue.trim();
+    if id.is_empty() {
+        return IssueStanding::Undeclared;
+    }
+    if id == "none" {
+        return IssueStanding::DeclaredNone;
+    }
+    match ctx
+        .index
+        .objects
+        .iter()
+        .find(|o| o.kind == crate::plan::ISSUE && o.identity == id)
+    {
+        Some(o) => IssueStanding::Resolved {
+            id: id.to_string(),
+            title: o.title.clone().unwrap_or_default(),
+        },
+        None => IssueStanding::Unresolved { id: id.to_string() },
+    }
+}
+
+/// Whether a handover for this task exists: a record under the continuity store whose
+/// front matter names the task. Read here rather than asked of `continuity.state`, because
+/// that answers "the newest record for this worktree" and this asks "any record for this
+/// task", which is a different question with a different answer.
+fn handover_standing(root: &Path, task: Option<&super::ActiveTask>) -> HandoverStanding {
+    let Some(task) = task else {
+        return HandoverStanding::Unknown("no task is active in this checkout".into());
+    };
+    let dir = root.join(gates::STATE_DIR).join("handovers");
+    let entries = match std::fs::read_dir(&dir) {
+        Ok(e) => e,
+        Err(_) => return HandoverStanding::Absent,
+    };
+    let needle = format!("task_id: {}", task.id);
+    let mut names: Vec<String> = entries
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().extension().is_some_and(|x| x == "md"))
+        .filter(|e| {
+            std::fs::read_to_string(e.path())
+                .map(|t| t.lines().take(20).any(|l| l.trim() == needle))
+                .unwrap_or(false)
+        })
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    match names.pop() {
+        Some(n) => HandoverStanding::Present(n),
+        None => HandoverStanding::Absent,
+    }
+}
+
+/// The deployment plan: which surfaces this change reaches, from what the repository
+/// declares. Shared with `deploy.verify`, which asks the same plan what is live.
+pub(crate) fn deployment_plan(
+    ctx: &Context,
+    m: Option<&gates::GateModel>,
+    changed: &[String],
+    expected_commit: Option<String>,
+    everything: bool,
+) -> DeploymentPlan {
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let latest_release = crate::distribution::Releases::from_index(&ctx.index)
+        .ok()
+        .and_then(|r| {
+            r.latest_stable().map(|rel| Identity {
+                commit: Some(rel.commit.clone()),
+                version: Some(rel.version.clone()),
+                tag: Some(rel.tag.clone()),
+            })
+        });
+    let applications: Vec<ApplicationFact> = ctx
+        .index
+        .objects
+        .iter()
+        .filter(|o| o.kind == crate::deploy::KIND)
+        .filter_map(|o| crate::deploy::Deployment::parse(o).ok())
+        .map(|d| ApplicationFact {
+            id: d.id.clone(),
+            status: match d.status {
+                Some(crate::deploy::Status::Active) => "active".to_string(),
+                Some(crate::deploy::Status::Retired) => "retired".to_string(),
+                Some(crate::deploy::Status::Declared) | None => "declared".to_string(),
+            },
+            url: d.url.clone(),
+            // a build input names a directory or a file; either way the pathspec that
+            // selects a change under it is the input followed by everything below
+            inputs: d
+                .build
+                .inputs
+                .iter()
+                .flat_map(|i| {
+                    let i = i.trim_end_matches('/');
+                    [i.to_string(), format!("{i}/**")]
+                })
+                .collect(),
+        })
+        .collect();
+    let facts = PlanFacts {
+        site_base_url: targets::site_base_url(&root),
+        site_inputs: m.map(|m| m.inputs_of("site-build")).unwrap_or_default(),
+        surface_inputs: m.map(|m| m.inputs_of("version-surface")).unwrap_or_default(),
+        latest_release,
+        applications,
+        expected_commit,
+        declared_version: crate::release::version::declared(&root),
+    };
+    targets::plan(&facts, changed, everything)
+}
 
 /// The vocabulary the distribution ships, read the way every other reader locates it.
 fn vocabulary(ctx: &Context) -> Result<Vec<Obligation>, String> {
@@ -334,7 +589,10 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
     // re-judged here; the state word comes back and is translated once.
     let mut standing: BTreeMap<String, gates::ObligationStanding> = BTreeMap::new();
     let mut closure_reachable = false;
-    match ctx.execute("obligations.closure", serde_json::json!({})) {
+    match ctx.execute(
+        "obligations.closure",
+        serde_json::json!({ "live": input.live.unwrap_or(true) }),
+    ) {
         Ok(value) => match serde_json::from_value::<super::obligations::Closure>(value) {
             Ok(closure) => {
                 closure_reachable = true;
@@ -360,6 +618,26 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         )),
     }
 
+    let policy = match policy(ctx) {
+        Ok(p) => p,
+        Err(e) => return Err(CapabilityError::NotFound(e)),
+    };
+    let (release, version) = release_standing(ctx);
+    let issue = issue_standing(ctx, task.as_ref());
+    let handover = handover_standing(&root, task.as_ref());
+    let head = gates::head_of(&root);
+    let deployment = deployment_plan(ctx, Some(&m), &changed, head, false);
+    let sources = gates::Sources {
+        policy: &policy,
+        standing: &standing,
+        closure_reachable,
+        release,
+        version,
+        issue,
+        handover,
+        deployment,
+    };
+
     Ok(gates::complete(
         &m,
         &changed,
@@ -367,8 +645,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         &vocab,
         &runs,
         &hashes,
-        &standing,
-        closure_reachable,
+        &sources,
         input.on_demand.unwrap_or(false),
         &crate::peers::rfc3339(std::time::SystemTime::now()),
         findings,
@@ -395,7 +672,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
 ///     .iter()
 ///     .filter_map(|e| e.capability.exposure.http.as_ref().map(|h| h.path.as_str()))
 ///     .collect();
-/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/completion"]);
+/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/policy", "/api/v1/gates/completion"]);
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -422,6 +699,25 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["gates", "ci", "completion", "introspection"],
                 cache: CachePolicy::Process { max_entries: 4, ttl_seconds: Some(5) },
                 handler: gates_model,
+            },
+            capability! {
+                id: "gates.policy",
+                title: "The completion policy",
+                description: "The one definition of done: the lifecycle stages in order, every question a task must answer before it may be called finished, and the source each answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the structural release analysis, the change set, the task record or the continuity store. Read from share/completion.yaml; every surface that states what done means, the generated section of the provider bootstraps included, is a projection of this answer. A source the policy names and the repository lacks is reported as a problem rather than silently unanswerable.",
+                input: Empty,
+                output: CompletionPolicyReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_completion_policy".into()),
+                        resource: Some(McpResource { uri: POLICY_URI.into(), name: "completion-policy".into() }),
+                    }),
+                    http: get("/api/v1/gates/policy"),
+                    cli: None,
+                },
+                tags: ["gates", "completion", "policy", "introspection"],
+                cache: CachePolicy::Process { max_entries: 4, ttl_seconds: Some(5) },
+                handler: gates_policy,
             },
             capability! {
                 id: "gates.completion",
@@ -454,7 +750,7 @@ mod tests {
     fn the_module_declares_what_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "gates");
-        assert_eq!(m.capabilities.len(), 2);
+        assert_eq!(m.capabilities.len(), 3);
         for e in &m.capabilities {
             assert_eq!(e.capability.id.namespace(), "gates");
             assert!(

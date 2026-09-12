@@ -250,7 +250,7 @@ mj_derive_gather() {
 # The sections the policy requires, in the order it names them, followed by the ones this
 # generator can also fill. A required section with no writer is a configuration error
 # reported by name; an optional one with no writer is simply not emitted.
-MJ_DERIVE_OPTIONAL_SECTIONS="Decisions Open_Questions Verification"
+MJ_DERIVE_OPTIONAL_SECTIONS="Decisions Open_Questions Verification Completion"
 
 mj_derive_handover_body() {
   mj_derive_gather
@@ -279,6 +279,30 @@ mj_derive_handover_body() {
 
   printf -- '---\n\nDerived by `majordomus handover --derive` from the task record, the ledger, git and the open questions. It asserts nothing that is not in one of those, and no model wrote it.\n'
   return 0
+}
+
+# Where the task stands in the lifecycle, so that the next worker does not rediscover which
+# gates ran, whether the version moved, or that a deployment was never verified. Read from
+# the executable's completion report — the one judgement every surface shows — and rendered
+# as the stage, then each question still owed with the command that settles it. Nothing is
+# asserted that the report did not say; when the report cannot be read, the section says so.
+mj_derive_sec_completion() {
+  local bin out
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"
+  if [ ! -x "$bin" ] || ! command -v jq >/dev/null 2>&1; then
+    printf 'Not derived: the completion report needs the built executable and jq (`bin/majordomus-cli run gates.completion`).\n'; return 0
+  fi
+  local share; share="$(mj_rust_share "$MJ_ROOT")"
+  out="$( ( export MAJORDOMUS_SHARE="$share"; "$bin" run gates.completion --input '{}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -c '.output // empty' 2>/dev/null)"
+  [ -n "$out" ] || { printf 'Not derived: gates.completion could not be answered here.\n'; return 0; }
+  printf 'Stage: %s (%s)%s.\n' "$(printf '%s' "$out" | jq -r '.stage.title')" "$(printf '%s' "$out" | jq -r '.stage.state')" \
+    "$( [ "$(printf '%s' "$out" | jq -r '.complete')" = true ] && printf ' — complete' || printf '')"
+  printf '%s' "$out" | jq -r '.version | select(. != null) | "Version: \(.impact) required since \(.baseline); \(.declared) declared (\(.status))."'
+  printf '%s' "$out" | jq -r '[.deployment.targets[] | select(.applicable) | .id] | select(length > 0) | "Deployment targets reached: \(join(", "))."'
+  local owing; owing="$(printf '%s' "$out" | jq -r '(.questions // [])[] | select(.status != "pass" and .status != "exempt") | "- \(.id) — \(.status): \(.remediation)"')"
+  if [ -n "$owing" ]; then printf '\nStill owed:\n\n%s\n' "$owing"; else printf '\nNothing is owed.\n'; fi
 }
 
 # ---------------------------------------------------------------- checkpoint body

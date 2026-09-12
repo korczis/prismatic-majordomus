@@ -5,6 +5,8 @@
 #   bin/majordomus (MJ_VERSION)        ->  project.json
 #   share/skeleton/profiles/*.yaml     ->  profiles.json
 #   share/skeleton/policy.yaml         ->  policy.json
+#   share/completion.yaml + the tool   ->  completion.json (the definition of done, and the
+#                                          lifecycle provenance of this checkout)
 #   docs/CLAIMS.yaml                   ->  capabilities.json
 #   lib/finish.sh + share/skeleton     ->  lifecycle.json (outcome vocabulary, commands)
 #   share/standard/majordomus/         ->  principles (the rules tagged principle, in package order)
@@ -62,6 +64,7 @@ GEN_VERSION=1
 GEN_T0="$(mj_phase_begin "gen:inputs")"
 INPUTS="bin/majordomus
 share/commands.yaml
+share/completion.yaml
 share/skeleton/policy.yaml
 share/skeleton/ai/repo/workflows/task-lifecycle.md
 share/skeleton/ai/repo/workflows/plan.md
@@ -1225,6 +1228,167 @@ jq -S '{schema: 1, source_schema: .schema, source: "docs/generated/changelog.jso
 [ "$(jq '.sections | length' "$OUT/changelog.json")" -gt 0 ] \
   || { echo "generate-site-data: the changelog has no section" >&2; exit 10; }
 
+# ---------------------------------------------------------------- completion.json (the definition of done)
+GEN_T0="$(mj_phase_begin "gen:completion.json")"
+# share/completion.yaml is the one definition of done: the lifecycle's stages in order, and
+# for each question the stage it belongs to, the source that answers it and the command that
+# would settle it. Nothing here parses that file when a tool is at hand. The executable's
+# policy capability reads it and answers with the same value every other surface of the tool
+# answers with, so this page and `majordomus check` cannot come to differ about what
+# finished means.
+#
+# Beside the policy, the provenance this repository's own lifecycle has reached: the version
+# the tree declares against the version its public surface requires, the release the baseline
+# was read from, and the surfaces a change here has to reach before it is deployed.
+#
+# What is deliberately *not* carried here is everything that moves with an uncommitted edit.
+# The completion report answers for a working tree — which stage a task stands at, which
+# question is owed, how many files a change touched — and a published page derived from that
+# would disagree with itself between two runs of this generator and fail `--check` on the
+# next. The facts below are facts of the repository at a commit: the policy, the release
+# record, the structural analysis of the public surface, and the shape of each deployment
+# surface. The page says so, and points a reader at the command for their own tree.
+#
+# A fresh clone has no executable and cannot be asked. The policy half is then read from the
+# canonical file directly and `provenance.available` is false with the reason, which is how
+# this page degrades: it renders what it has and names what it could not derive, rather than
+# failing a build over a fact nobody can obtain without a toolchain.
+COMPLETION_POLICY="$ROOT/share/completion.yaml"
+[ -f "$COMPLETION_POLICY" ] || { echo "generate-site-data: share/completion.yaml is missing" >&2; exit 10; }
+# The executable, through the launcher every caller shares. MAJORDOMUS_NO_BUILD keeps a site
+# generation from turning into a cargo build: this is a projection step, and a tree without a
+# built executable degrades rather than compiles one behind the caller's back.
+mj_run_capability() { # capability, input -> stdout is the capability's `output`, or nothing
+  MAJORDOMUS_NO_BUILD=1 "$ROOT/bin/majordomus-cli" run "$1" --input "$2" --quiet --format json --repo "$ROOT" 2>/dev/null \
+    | jq -e '.output' 2>/dev/null
+}
+COMPLETION_REASON=""
+# the policy, as the tool answers it. Its `source` is dropped: the capability answers with
+# the absolute path of the file on the machine that ran it, and a published projection may
+# carry no local path. The repository-relative name is stated once, in the dataset, as the
+# input it is.
+mj_run_capability gates.policy '{}' > "$STAGE/completion-policy.json" \
+  || COMPLETION_REASON="the executable could not answer the completion policy"
+if [ -z "$COMPLETION_REASON" ] && ! jq -e '(.stages | length) > 0 and (.questions | length) > 0' "$STAGE/completion-policy.json" >/dev/null 2>&1; then
+  COMPLETION_REASON="the completion policy the executable answered carries no stage"
+fi
+if [ -n "$COMPLETION_REASON" ]; then
+  # No executable, or one that could not answer: the stages and the questions are read from
+  # the canonical file itself. It is the same YAML the tool parses, through the repository's
+  # own flattener, so this is the same value by a slower road — never a second definition.
+  CF="$(flat "$COMPLETION_POLICY")"
+  { printf '{"stages":['
+    i=0; first=1
+    while :; do
+      sid="$(mj_yget "$CF" "stages.$i.id")"; [ -n "$sid" ] || break
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"id":%s,"title":%s,"summary":%s}' "$(jstr "$sid")" \
+        "$(jstr "$(mj_yget "$CF" "stages.$i.title")")" "$(jstr "$(mj_yget "$CF" "stages.$i.summary")")"
+      i=$((i + 1))
+    done
+    printf '],"questions":['
+    i=0; first=1
+    while :; do
+      qid="$(mj_yget "$CF" "questions.$i.id")"; [ -n "$qid" ] || break
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"id":%s,"stage":%s,"question":%s,"source":%s,"remediation":%s}' "$(jstr "$qid")" \
+        "$(jstr "$(mj_yget "$CF" "questions.$i.stage")")" "$(jstr "$(mj_yget "$CF" "questions.$i.question")")" \
+        "$(jstr "$(mj_yget "$CF" "questions.$i.source")")" "$(jstr "$(mj_yget "$CF" "questions.$i.remediation")")"
+      i=$((i + 1))
+    done
+    printf ']}'
+  } > "$STAGE/completion-policy.json"
+  rm -f "$CF"
+  jq -e '(.stages | length) > 0 and (.questions | length) > 0' "$STAGE/completion-policy.json" >/dev/null \
+    || { echo "generate-site-data: share/completion.yaml yielded no stage or no question" >&2; exit 10; }
+fi
+# the baseline: the newest release record the layer holds. Newest by the date the record says
+# it was published at, which is the record's own fact — never by file name, which sorts 0.10
+# before 0.9, and never by mtime, which is a fact of the clone.
+COMPLETION_BASELINE=null
+if ls "$ROOT"/.ai/repo/releases/*.yaml >/dev/null 2>&1; then
+  : > "$STAGE/completion-releases.json"
+  for r in "$ROOT"/.ai/repo/releases/*.yaml; do
+    RF="$(flat "$r")"
+    printf '{"version":%s,"tag":%s,"commit":%s,"published_at":%s,"channel":%s,"notes_url":%s,"targets":%s}\n' \
+      "$(jstr "$(mj_yget "$RF" version)")" "$(jstr "$(mj_yget "$RF" tag)")" "$(jstr "$(mj_yget "$RF" commit)")" \
+      "$(jstr "$(mj_yget "$RF" published_at)")" "$(jstr "$(mj_yget "$RF" channel)")" \
+      "$(jstr "$(mj_yget "$RF" notes_url)")" "$(mj_ylist "$RF" required_targets | jarr)" >> "$STAGE/completion-releases.json"
+    rm -f "$RF"
+  done
+  COMPLETION_BASELINE="$(jq -s 'map(select(.version != "")) | sort_by(.published_at) | last // null' "$STAGE/completion-releases.json")"
+fi
+# the structural version analysis (ADR 0051), reduced to the summary a reader needs: what the
+# public surface implies, what the policy therefore requires, what the tree declares, and
+# whether those agree. The atoms, the fingerprints and the change list stay in the tool.
+COMPLETION_VERSION=null
+if [ -z "$COMPLETION_REASON" ]; then
+  mj_run_capability release.analysis '{}' > "$STAGE/completion-analysis.json" \
+    || COMPLETION_REASON="the executable could not answer the structural version analysis"
+  [ -n "$COMPLETION_REASON" ] || COMPLETION_VERSION="$(jq '{implied, required, declared, declared_version,
+      required_version, status, breaking, changes: ((.changes // []) | length),
+      baseline_version: (.baseline.version // null), baseline_reference: (.baseline.reference // null),
+      policy_mode: (.policy.mode // null)}' "$STAGE/completion-analysis.json")"
+fi
+# the deployment surfaces a change in this repository has to reach, from the completion
+# report run over this checkout with the live probes off — a generator may not depend on a
+# network, and an address that answered once is not evidence a page may keep.
+#
+# Only each surface's own shape is carried: what it is, where it is, and the address that
+# says which revision is serving it. `applicable` and its reason are *not*: they answer for
+# the change set in somebody's working tree, so they differ between two runs of this
+# generator over the same commit, and a page derived from them would be stale the moment it
+# was written. What is stable is whether a surface has an identity address at all — the
+# difference between a deployment that can be verified and one that can only be declared.
+COMPLETION_SURFACES='[]'
+if [ -z "$COMPLETION_REASON" ]; then
+  mj_run_capability gates.completion '{"live":false}' > "$STAGE/completion-report.json" \
+    || COMPLETION_REASON="the executable could not answer the completion report"
+  [ -n "$COMPLETION_REASON" ] || COMPLETION_SURFACES="$(jq '[(.deployment.targets // [])[]
+      | {id, kind, url: (.url // null), identity_url: (.identity_url // null),
+         verifiable: ((.identity_url // null) != null)}]' "$STAGE/completion-report.json")"
+fi
+# the deployment objects the layer declares, with the status each one declares for itself.
+# A `declared` deployment describes something nobody is running yet, and the page says so in
+# the object's own word rather than inferring a state from an absence.
+COMPLETION_DEPLOYMENTS='[]'
+if ls "$ROOT"/.ai/repo/deployments/*.yaml >/dev/null 2>&1; then
+  : > "$STAGE/completion-deployments.json"
+  for d in "$ROOT"/.ai/repo/deployments/*.yaml; do
+    DF="$(flat "$d")"
+    printf '{"id":%s,"title":%s,"status":%s,"application":%s,"provider":%s}\n' \
+      "$(jstr "$(mj_yget "$DF" id)")" "$(jstr "$(mj_yget "$DF" title)")" "$(jstr "$(mj_yget "$DF" status)")" \
+      "$(jstr "$(mj_yget "$DF" application)")" "$(jstr "$(mj_yget "$DF" provider.name)")" >> "$STAGE/completion-deployments.json"
+    rm -f "$DF"
+  done
+  COMPLETION_DEPLOYMENTS="$(jq -s 'map(select(.id != "")) | sort_by(.id)' "$STAGE/completion-deployments.json")"
+fi
+jq -S --slurpfile policy "$STAGE/completion-policy.json" \
+   --argjson baseline "$COMPLETION_BASELINE" --argjson version "$COMPLETION_VERSION" \
+   --argjson surfaces "$COMPLETION_SURFACES" --argjson deployments "$COMPLETION_DEPLOYMENTS" \
+   --arg reason "$COMPLETION_REASON" --arg generator "generate-site-data $GEN_VERSION" \
+   -n '{schema: 1,
+        generator: $generator,
+        source: "share/completion.yaml",
+        policy: {stages: $policy[0].stages,
+                 questions: $policy[0].questions,
+                 counts: {stages: ($policy[0].stages | length), questions: ($policy[0].questions | length)}},
+        provenance: (if $reason == "" then
+                       {available: true, baseline: $baseline, version: $version,
+                        surfaces: $surfaces, deployments: $deployments}
+                     else
+                       {available: false, reason: $reason, baseline: $baseline,
+                        version: null, surfaces: [], deployments: $deployments}
+                     end)}' > "$OUT/completion.json"
+# every question names a stage the policy declares. A question filed under a stage that is
+# not in the lifecycle would render nowhere, which is the one way this page could lose a fact
+# without anybody noticing.
+COMPLETION_ORPHANS="$(jq -r '.policy as $p | ([$p.stages[].id]) as $ids | [$p.questions[] | select(.stage as $s | $ids | index($s) | not) | .id] | join(", ")' "$OUT/completion.json")"
+[ -z "$COMPLETION_ORPHANS" ] \
+  || { echo "generate-site-data: completion questions name a stage the policy does not declare: $COMPLETION_ORPHANS" >&2; exit 10; }
+[ -n "$COMPLETION_REASON" ] && echo "generate-site-data: the lifecycle provenance was not derived ($COMPLETION_REASON); the policy is published without it" >&2
+mj_phase_end "gen:completion.json" "$GEN_T0"
+
 # ---------------------------------------------------------------- openapi.json (the HTTP API, as data)
 # The OpenAPI document the Rust executable generates from its capability registry is committed
 # as docs/generated/openapi.json and checked by `majordomus generate --check`. The site does
@@ -1482,6 +1646,17 @@ CONTENT_ROOT="$STAGE/content"
 rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan" "$CONTENT_ROOT/skills"
 rm -rf "$CONTENT_ROOT/context" "$CONTENT_ROOT/sessions"
 rm -rf "$CONTENT_ROOT/features"
+# the lifecycle's own section: the definition of done, the release provenance of this
+# checkout and the surfaces a change here has to reach, rendered by lifecycle.html from
+# data/generated/completion.json. A section rather than a page because every top-level route
+# of this site is one, and site-check proves a generated section is committed rather than
+# ignored. Front matter only — every word of the body is derived, and the route is the one
+# site/data/nav.toml carries.
+rm -rf "$CONTENT_ROOT/lifecycle"; mkdir -p "$CONTENT_ROOT/lifecycle"
+printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "lifecycle.html"\n[extra]\nsource = "share/completion.yaml"\n+++\n' \
+  "$(jstr "The lifecycle")" \
+  "$(jstr "The one definition of done: every stage, every question, the source that answers it and the command that settles it — beside what this repository's own release record, structural version analysis and deployment surfaces say at the commit this page was built from.")" \
+  > "$CONTENT_ROOT/lifecycle/_index.md"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done

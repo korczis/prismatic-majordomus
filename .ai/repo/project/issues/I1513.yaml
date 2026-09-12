@@ -1,0 +1,43 @@
+id: I1513
+milestone: completion-is-proved
+title: One completion policy, a derived stage, and live verification of what was deployed
+slug: completion-is-proved
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make share/completion.yaml the one definition of done, derive the lifecycle stage and the complete bit from the answers to it, refuse the outcome completed until the bit is true, verify the published site, the release metadata and every active deployment against what the trunk expects, put the structural version gate on the release path, and render the definition of done into every provider bootstrap from the policy rather than by hand."
+why: "Completion could never be refused by a gate that never reported, deployment and verification were hand-held claims, the release path skipped the contract gate, and done was written in five places. A definition of done that lives in prose is the artifact a worker learns to tick."
+current_state: "gates.completion composes obligations, gates and a Rust literal of nineteen questions; finishable ignores unverified gates; deploy and verify are established_by none; release.yml never runs version-matches-surface; the bootstraps carry no definition of done."
+desired_state: "gates.policy reads share/completion.yaml; gates.completion carries stage, verified, complete, the version summary and the deployment plan; deploy.verify asks each applicable surface; finish refuses completed while complete is false; release.yml runs the contract gate; AGENTS.md and CLAUDE.md carry the generated fragment."
+scope:
+  - share
+  - apps/majordomus-cli
+  - lib
+  - scripts
+  - .ai/repo
+  - .github/workflows
+  - docs
+  - site
+  - test/cases
+non_scope:
+  - Deploying the declared Fly.io application.
+  - A Cockpit action that deploys. Verification is a read; deployment stays on the trusted paths.
+depends_on: []
+acceptance_criteria:
+  - finish --outcome completed is refused with every owed question named while complete is false
+  - deploy.verify reports a surface serving an older revision as stale and a silent one as unreachable
+  - the shell and Rust renderers produce the same completion fragment byte for byte
+  - the release model carries a contract phase and the workflow runs it before the build
+validation:
+  - bash test/run.sh 280_completion_is_proved
+  - bash test/run.sh 281_deploy_verify_live
+  - bash test/run.sh 282_tooling_is_derived
+  - cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates deploy
+evidence_required:
+  - completed_is_refused_without_proof
+  - a_stale_surface_refuses
+  - the_bootstrap_fragment_is_derived
+risk: "Medium. A validator that refuses too much teaches a worker to choose a weaker outcome word; the refusal names each question and the command that settles it, and the weaker outcomes record the stage they stopped at."
+created_at: 2026-09-12
+updated_at: 2026-09-12T10:58:19Z
+started_at: 2026-09-12T10:58:19Z

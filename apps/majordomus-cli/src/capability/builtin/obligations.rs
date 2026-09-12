@@ -73,6 +73,7 @@ use crate::{capability, module};
 
 use super::continuity::{self, ActiveTask, Divergence};
 use super::{get, Empty};
+use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 
 /// The URI under which the shipped vocabulary is read as an MCP resource.
 ///
@@ -145,6 +146,230 @@ pub struct Obligation {
     /// What the vocabulary says about the token beyond its summary.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub note: String,
+    /// What settles the fact without asking a worker: `git` for a fact git already holds,
+    /// a command for one a command already answers, `none` (or absent) for one nothing
+    /// can settle. A token that names something is decided live, at HEAD, and its recorded
+    /// evidence is consulted only where the live answer is undecidable.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub established_by: String,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+/// What asking the repository about a fact yielded.
+enum Established {
+    /// The fact holds now, at HEAD; the sentence says what was read.
+    Yes(String),
+    /// The fact does not hold now; the sentence says why.
+    No(String),
+    /// Nothing here could settle it (no remote, no probe, no executable); the recorded
+    /// evidence is consulted as it was before.
+    Undecidable(String),
+}
+
+fn git_out(root: &Path, args: &[&str]) -> Option<String> {
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(args)
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    Some(String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+fn git_ok(root: &Path, args: &[&str]) -> bool {
+    std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(args)
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+/// The remote the trunk is read from, and its default branch as `refs/remotes/<r>/HEAD`.
+fn trunk_ref(root: &Path) -> Result<String, Established> {
+    let upstream = git_out(root, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"])
+        .map(|u| u.split('/').next().unwrap_or("").to_string())
+        .filter(|r| !r.is_empty());
+    let remote = match upstream.or_else(|| {
+        git_out(root, &["remote"]).and_then(|r| r.lines().next().map(str::to_string))
+    }) {
+        Some(r) if !r.is_empty() => r,
+        _ => {
+            return Err(Established::Undecidable(
+                "the checkout has no remote, so the trunk cannot be read here".into(),
+            ))
+        }
+    };
+    match git_out(root, &["symbolic-ref", "--short", &format!("refs/remotes/{remote}/HEAD")]) {
+        Some(def) if !def.is_empty() => Ok(format!("refs/remotes/{def}")),
+        _ => Err(Established::Undecidable(format!(
+            "the checkout records no default branch for '{remote}' (git remote set-head {remote} -a)"
+        ))),
+    }
+}
+
+/// Establish one token live, the way `lib/evidence.sh`'s `mj_obl_est_*` do: the same
+/// questions of git, the same probe of the published site, the same live verification of
+/// the deployed surfaces. A token this cannot settle says so and falls back to the ledger.
+fn establish(ctx: &Context, root: &Path, task: &ActiveTask, o: &Obligation) -> Established {
+    if o.established_by.is_empty() || o.established_by == "none" {
+        return Established::Undecidable("nothing establishes this token; the recorded evidence stands".into());
+    }
+    let head = match git_out(root, &["rev-parse", "HEAD"]) {
+        Some(h) if !h.is_empty() => h,
+        _ => return Established::No("the checkout has no commit at all".into()),
+    };
+    let short = |h: &str| h.chars().take(12).collect::<String>();
+    match o.id.as_str() {
+        "commit" => {
+            let dirty = git_out(root, &["status", "--porcelain=v1"]).unwrap_or_default();
+            let touched: Vec<String> = dirty
+                .lines()
+                .filter(|l| l.len() > 3)
+                .map(|l| l[3..].rsplit(" -> ").next().unwrap_or(&l[3..]).to_string())
+                .filter(|p| {
+                    if task.scope.is_empty() {
+                        !p.starts_with(".ai/")
+                    } else {
+                        task.scope.iter().any(|s| {
+                            let s = s.trim_end_matches('/');
+                            p == s || p.starts_with(&format!("{s}/"))
+                        })
+                    }
+                })
+                .collect();
+            if let Some(first) = touched.first() {
+                return Established::No(format!(
+                    "{} file(s) the task touched are still in the working tree, not in the branch's history ({first}{})",
+                    touched.len(),
+                    if touched.len() > 1 { " and more" } else { "" }
+                ));
+            }
+            if !task.head.is_empty() && task.head != "NONE" && task.head == head {
+                return Established::No(format!(
+                    "the tree is clean and no commit was made since the task started ({})",
+                    short(&head)
+                ));
+            }
+            Established::Yes(format!("exact: the tree is clean and the branch has moved to {}", short(&head)))
+        }
+        "push" => {
+            if git_out(root, &["remote"]).unwrap_or_default().is_empty() {
+                return Established::Undecidable("the checkout has no remote, so a push cannot be established here".into());
+            }
+            if let Some(up) = git_out(root, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"]) {
+                if !up.is_empty() && git_ok(root, &["merge-base", "--is-ancestor", &head, &format!("refs/remotes/{up}")]) {
+                    return Established::Yes(format!("exact: {up} contains {}", short(&head)));
+                }
+            }
+            match git_out(root, &["for-each-ref", "--contains", &head, "--format=%(refname:short)", "refs/remotes"]) {
+                Some(refs) if !refs.trim().is_empty() => Established::Yes(format!(
+                    "exact: {} contains {}",
+                    refs.lines().next().unwrap_or(""),
+                    short(&head)
+                )),
+                _ => Established::No(format!("no remote-tracking ref reaches {}; the commit has not reached the remote", short(&head))),
+            }
+        }
+        "target" => match trunk_ref(root) {
+            Err(u) => u,
+            Ok(trunk) => {
+                if git_ok(root, &["merge-base", "--is-ancestor", &head, &trunk]) {
+                    Established::Yes(format!("exact: {} reaches {}", trunk.trim_start_matches("refs/remotes/"), short(&head)))
+                } else {
+                    Established::No(format!("{} does not reach {}; the work is not integrated", trunk.trim_start_matches("refs/remotes/"), short(&head)))
+                }
+            }
+        },
+        "pages" => {
+            let probe = root.join("scripts/pages");
+            if !probe.is_file() {
+                return Established::Undecidable("this repository has no scripts/pages, so publication cannot be established here".into());
+            }
+            let out = std::process::Command::new(&probe)
+                .args(["verify", "--commit", &head, "--timeout", "0", "--quiet"])
+                .current_dir(root)
+                .output();
+            match out {
+                Ok(o) if o.status.success() => Established::Yes(format!("exact: the published site serves {}", short(&head))),
+                Ok(o) if o.status.code() == Some(10) => {
+                    let text = String::from_utf8_lossy(&o.stdout).to_string() + &String::from_utf8_lossy(&o.stderr);
+                    let why = text.lines().rev().find(|l| l.starts_with("pages verify: ")).map(|l| l.trim_start_matches("pages verify: ").to_string()).unwrap_or_else(|| "the published site does not serve this commit".into());
+                    Established::No(why)
+                }
+                Ok(o) => Established::Undecidable(format!("the published site could not be reached (scripts/pages verify exited {})", o.status.code().unwrap_or(-1))),
+                Err(e) => Established::Undecidable(format!("scripts/pages could not be run: {e}")),
+            }
+        }
+        "verify" | "deploy" => {
+            let trunk = match trunk_ref(root) {
+                Ok(t) => t,
+                Err(u) => return u,
+            };
+            if !git_ok(root, &["merge-base", "--is-ancestor", &head, &trunk]) {
+                return Established::No(format!(
+                    "the trunk ({}) does not reach {}, so nothing deployed can be serving this task yet",
+                    trunk.trim_start_matches("refs/remotes/"),
+                    short(&head)
+                ));
+            }
+            let expected = git_out(root, &["rev-parse", &trunk]).unwrap_or_default();
+            let mut input = serde_json::json!({ "expected_commit": expected });
+            if o.id == "deploy" {
+                let apps: Vec<String> = ctx
+                    .index
+                    .objects
+                    .iter()
+                    .filter(|x| x.kind == crate::deploy::KIND)
+                    .map(|x| x.identity.clone())
+                    .collect();
+                if apps.is_empty() {
+                    return Established::Undecidable("this repository declares no deployment object, so nothing here can establish a deployment; the recorded evidence stands".into());
+                }
+                input["targets"] = serde_json::json!(apps);
+            }
+            match ctx.execute("deploy.verify", input) {
+                Err(e) => Established::Undecidable(format!("deploy.verify could not be executed: {e}")),
+                Ok(v) => {
+                    let ok = v.get("ok").and_then(|b| b.as_bool()).unwrap_or(false);
+                    let asked = v.get("asked").and_then(|n| n.as_u64()).unwrap_or(0);
+                    let detail: Vec<String> = v
+                        .get("verifications")
+                        .and_then(|a| a.as_array())
+                        .map(|a| {
+                            a.iter()
+                                .filter(|x| x.get("status").and_then(|s| s.as_str()) != Some("not_applicable"))
+                                .map(|x| format!(
+                                    "{}: {} — {}",
+                                    x.get("target").and_then(|s| s.as_str()).unwrap_or("?"),
+                                    x.get("status").and_then(|s| s.as_str()).unwrap_or("?"),
+                                    x.get("detail").and_then(|s| s.as_str()).unwrap_or("")
+                                ))
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    if ok {
+                        Established::Yes(format!("exact: every applicable surface serves {} ({})", short(&expected), detail.join("; ")))
+                    } else if asked == 0 {
+                        Established::Yes("no surface applies to this token here".into())
+                    } else {
+                        Established::No(detail.join("; "))
+                    }
+                }
+            }
+        }
+        other => Established::Undecidable(format!(
+            "share/obligations.yaml says '{}' establishes '{other}', and nothing here does it",
+            o.established_by
+        )),
+    }
 }
 
 /// The vocabulary the distribution ships: every token there is.
@@ -343,6 +568,11 @@ pub struct Evidence {
 pub struct ObligationClosure {
     /// The token, as the task's `requires` names it.
     pub id: String,
+    /// True when the task's `requires` names it. An establishable token the task did not
+    /// declare is judged here too, live, so that the completion report can answer for it
+    /// when the change implies it; it never counts toward `closed`.
+    #[serde(default = "default_true")]
+    pub declared: bool,
     /// From the vocabulary; the token itself when it declares none.
     pub title: String,
     /// From the vocabulary.
@@ -580,6 +810,7 @@ fn judge(
     let Some(o) = declared else {
         return ObligationClosure {
             id: token.to_string(),
+            declared: true,
             title: token.to_string(),
             summary: String::new(),
             discharged_by: String::new(),
@@ -614,6 +845,7 @@ fn judge(
     let Some(ev) = evidence else {
         return ObligationClosure {
             id: o.id.clone(),
+            declared: true,
             title: o.title.clone(),
             summary: o.summary.clone(),
             discharged_by: o.discharged_by.clone(),
@@ -672,6 +904,7 @@ fn judge(
 
     ObligationClosure {
         id: o.id.clone(),
+        declared: true,
         title: o.title.clone(),
         summary: o.summary.clone(),
         discharged_by: o.discharged_by.clone(),
@@ -698,7 +931,34 @@ fn obligations_vocabulary(ctx: &Context, _: Empty) -> Result<Vocabulary, Capabil
     vocabulary_at(ctx.index.share.as_deref(), &root).map_err(CapabilityError::Internal)
 }
 
-fn obligations_closure(ctx: &Context, _: Empty) -> Result<Closure, CapabilityError> {
+/// ```
+/// use majordomus_cli::capability::builtin::obligations::ClosureInput;
+/// // the default settles every establishable token live, at HEAD
+/// assert!(ClosureInput::default().live.is_none());
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// How the closure is judged.
+pub struct ClosureInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Settle every token whose fact something can establish — a commit, a push, the
+    /// trunk, the published site, the deployed surfaces — live, at HEAD, before reading
+    /// the ledger. On by default: a page rendered from a cache may pass `false` to read
+    /// the ledger alone, and such a report says a live token is owed rather than proven.
+    pub live: Option<bool>,
+}
+
+impl BenchmarkCases for ClosureInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("live", ClosureInput::default()),
+            NamedCase::new("recorded-only", ClosureInput { live: Some(false) }),
+        ]
+    }
+}
+
+fn obligations_closure(ctx: &Context, input: ClosureInput) -> Result<Closure, CapabilityError> {
+    let live = input.live.unwrap_or(true);
     let root = PathBuf::from(&ctx.index.repository.root);
     let dir = root.join(STATE_DIR);
 
@@ -731,22 +991,63 @@ fn obligations_closure(ctx: &Context, _: Empty) -> Result<Closure, CapabilityErr
                 "task {} declares no obligations, so this rule holds it to nothing beyond the rest of the contract",
                 t.id
             ));
-        } else {
+        }
+        {
             let (evidence, skipped) = evidence_for(&dir.join("ledger.jsonl"), &t.id);
             if skipped > 0 {
                 findings.push(format!(
                     "{skipped} ledger line(s) could not be read and were skipped; run `majordomus doctor`"
                 ));
             }
-            for token in &t.requires {
-                obligations.push(judge(
+            // the declared tokens, then — live only — every token something can establish
+            // that the task did not declare: the completion report answers for those when
+            // the change implies them, and a fact git already holds is not a claim
+            let mut tokens: Vec<(String, bool)> =
+                t.requires.iter().map(|r| (r.clone(), true)).collect();
+            if live {
+                for o in &vocabulary {
+                    let establishable = !o.established_by.is_empty() && o.established_by != "none";
+                    if establishable && !t.requires.iter().any(|r| r == &o.id) {
+                        tokens.push((o.id.clone(), false));
+                    }
+                }
+            }
+            for (token, declared_here) in &tokens {
+                let token = token.as_str();
+                let declared = vocabulary.iter().find(|o| o.id == token);
+                // establishment beats recording in both directions (lib/evidence.sh): a
+                // fact the repository holds discharges without a ledger line and refuses
+                // one that says otherwise; only what nothing can settle reads the ledger
+                let mut judged = judge(
                     &root,
                     token,
-                    vocabulary.iter().find(|o| &o.id == token),
+                    declared,
                     evidence.get(token),
                     head.as_deref(),
                     &branch,
-                ));
+                );
+                judged.declared = *declared_here;
+                if let Some(o) = declared.filter(|_| live) {
+                    match establish(ctx, &root, t, o) {
+                        Established::Yes(detail) => {
+                            judged.state = ObligationState::Discharged;
+                            judged.staleness = Some(Divergence::Exact);
+                            judged.detail = detail;
+                            judged.reproduce = format!("established live by {}", o.established_by);
+                        }
+                        Established::No(detail) => {
+                            judged.state = ObligationState::Owed;
+                            judged.staleness = None;
+                            judged.detail = detail;
+                        }
+                        Established::Undecidable(why) => {
+                            if !why.contains("nothing establishes this token") {
+                                judged.detail = format!("{}; {why}", judged.detail);
+                            }
+                        }
+                    }
+                }
+                obligations.push(judged);
             }
         }
     } else {
@@ -756,7 +1057,7 @@ fn obligations_closure(ctx: &Context, _: Empty) -> Result<Closure, CapabilityErr
     }
 
     let mut tallies: BTreeMap<String, usize> = BTreeMap::new();
-    for o in &obligations {
+    for o in obligations.iter().filter(|o| o.declared) {
         *tallies.entry(o.state.as_str().to_string()).or_default() += 1;
     }
 
@@ -766,9 +1067,10 @@ fn obligations_closure(ctx: &Context, _: Empty) -> Result<Closure, CapabilityErr
         branch,
         head: head.unwrap_or_default(),
         working_tree,
-        closed: !obligations.is_empty()
+        closed: obligations.iter().any(|o| o.declared)
             && obligations
                 .iter()
+                .filter(|o| o.declared)
                 .all(|o| o.state == ObligationState::Discharged),
         task,
         tallies,
@@ -828,7 +1130,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "obligations.closure",
                 title: "What this task still owes",
                 description: "Every obligation the active task declared, joined with what the vocabulary says about it and with the evidence that does or does not discharge it: what is owed, what is discharged, and what has gone stale — with the recorded input hash and the tree's current one, or the recorded commit and its label, so a reader can see against what. The judgement is the one `finish` applies, reproduced rather than re-decided, and the staleness words are the repository's only four. A checkout with no task reports that, rather than reporting nothing owed.",
-                input: Empty,
+                input: ClosureInput,
                 output: Closure,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure {
@@ -958,6 +1260,7 @@ mod tests {
             summary: String::new(),
             discharged_by: "git".into(),
             inputs: Vec::new(),
+            established_by: String::new(),
             remote: true,
             note: String::new(),
         };
@@ -969,6 +1272,7 @@ mod tests {
             // a pathspec git is never asked about, because the root does not exist: the
             // hash is `None`, which compares equal to the empty recorded hash
             inputs: vec!["lib/**".into()],
+            established_by: String::new(),
             remote: false,
             note: String::new(),
         };

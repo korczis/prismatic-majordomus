@@ -209,6 +209,22 @@ mj_validate_completion_gates() {
   blocking="$(printf '%s' "$out" | jq -r '(.blocking // [])[]' 2>/dev/null)"
   unverified="$(printf '%s' "$out" | jq -r '(.unverified // [])[]' 2>/dev/null)"
 
+  # where the task stands, in one line: the stage the policy's fold derived, and what it
+  # still owes there. Derived, never recorded — share/completion.yaml is the one definition
+  # of done and this is its projection for a terminal.
+  local stage stage_state stage_owing complete
+  stage="$(printf '%s' "$out" | jq -r '.stage.title // empty' 2>/dev/null)"
+  stage_state="$(printf '%s' "$out" | jq -r '.stage.state // empty' 2>/dev/null)"
+  stage_owing="$(printf '%s' "$out" | jq -r '(.stage.owing // []) | join(" ")' 2>/dev/null)"
+  complete="$(printf '%s' "$out" | jq -r 'if has("complete") then (.complete | tostring) else "false" end' 2>/dev/null)"
+  [ -z "$stage" ] || mj_info stage "$id" "$stage — $stage_state${stage_owing:+ (owing: $stage_owing)}" \
+    "$bin run gates.completion --input '{}' --format json | jq '.output.stage'"
+  # for the finish record: where the task stood when the outcome was taken, so that a task
+  # closed short of completed carries the stage it stopped at and not only the word
+  MJ_COMPLETION_STAGE="$(printf '%s' "$out" | jq -r '.stage.id // empty' 2>/dev/null)"
+  MJ_COMPLETION_COMPLETE="$complete"
+  export MJ_COMPLETION_STAGE MJ_COMPLETION_COMPLETE
+
   # what is known to be wrong, one finding per gate, each carrying the gate's own reason
   # and the command that would settle it
   for g in $blocking; do
@@ -242,6 +258,22 @@ mj_validate_completion_gates() {
   owing="$(printf '%s' "$out" | jq -r '[(.questions // [])[] | select(.status != "pass" and .status != "exempt") | "\(.id)=\(.status)"] | join(" ")' 2>/dev/null)"
   [ -z "$owing" ] || mj_doctrine_skip "done" "$id" "the done invariant is not yet answered: $owing" \
     "$bin run gates.completion --input '{}' --format json | jq '.output.questions'"
+
+  # `completed` is earned. When the policy says so, the outcome completed is refused unless
+  # the report's one derived bit — `complete`: every question of share/completion.yaml
+  # passes or is exempt — is true, and the refusal names each question still owed with the
+  # command that settles it. Nothing is re-judged here: the bit is the executable's, the same
+  # one the HTTP route, the MCP tool and the Cockpit show (rule project.completion-is-proved).
+  if [ "${MJ_FINISH_OUTCOME:-}" = completed ] && [ "$(mj_pol verification.completed_means_complete)" = true ] && [ "$complete" != true ]; then
+    local q
+    while IFS=$'\t' read -r q qstatus qrem; do
+      [ -n "$q" ] || continue
+      mj_doctrine_fail "done" "$q" "$qstatus: $(printf '%s' "$out" | jq -r --arg q "$q" '.questions[] | select(.id == $q) | .evidence' 2>/dev/null)" "$qrem"
+    done <<EOF
+$(printf '%s' "$out" | jq -r '(.questions // [])[] | select(.status != "pass" and .status != "exempt") | "\(.id)\t\(.status)\t\(.remediation)"' 2>/dev/null)
+EOF
+    return 0
+  fi
 
   if [ -z "$blocking" ] && [ -z "$unverified" ]; then
     mj_doctrine_ok gate "$id" "every gate the change selects has reported over this tree ($(printf '%s' "$out" | jq -r '(.tallies.pass // 0)') passing, $(printf '%s' "$out" | jq -r '(.tallies.exempt // 0)') not applicable)"

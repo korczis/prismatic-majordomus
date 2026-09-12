@@ -352,7 +352,20 @@ pub fn report(root: &Path, objects: &[Object]) -> VersionReport {
         None => super::commits::in_range(root, "HEAD", objects),
     };
     let bump = bump_of(&changes);
-    let next = Version::parse(&declared).map(|v| v.raised(bump).to_string());
+    // The version the commits imply, raised from the *last release* and never from the
+    // declared version: a tree whose version was already bumped for this window would
+    // otherwise be told to bump it again (0.6.0 declared over 0.5.0 released, minor implied,
+    // was answered "0.7.0"). What the tree declares is kept when it is already at or above
+    // what the commits imply; the structural analysis (`release.analysis`) is the authority
+    // either way, and this field is what the commit subjects say beside it.
+    let next = match (&last, Version::parse(&declared)) {
+        (Some((_, released, _)), Some(d)) => match Version::parse(released) {
+            Some(r) => Some(std::cmp::max(d, r.raised(bump)).to_string()),
+            None => Some(d.raised(bump).to_string()),
+        },
+        (None, Some(d)) => Some(d.raised(bump).to_string()),
+        (_, None) => None,
+    };
 
     VersionReport {
         agree: declared == tool_version,

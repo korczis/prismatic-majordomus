@@ -1328,6 +1328,120 @@
         }
       }
     },
+    "/api/v1/deployments/verify": {
+      "get": {
+        "operationId": "deploy.verify",
+        "summary": "What the deployed surfaces are serving",
+        "description": "Live verification: every surface the change reaches — the published site, the published release metadata, each active deployment — is asked for the identity it states (the commit, version or tag at its own address) and compared with what this checkout expects. A surface stating an older identity is stale, one that does not answer is unreachable, and neither is a pass: a deploy command that exited 0 with the old revision still live is exactly what this refuses. The request carries no header and the evidence carries no body beyond the fields compared. The one capability of this executable that reaches the network, and it reaches only addresses the repository itself declares.",
+        "tags": [
+          "deploy"
+        ],
+        "parameters": [
+          {
+            "name": "expected_commit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The commit every target is expected to serve. Absent means this checkout's HEAD."
+          },
+          {
+            "name": "targets",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "The targets to ask, by id (`pages`, `release`, a deployment's id). Absent means\nevery target that applies."
+          },
+          {
+            "name": "changed",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "The changed paths to derive applicability from. Absent means every target that\nexists is asked, which is the question after a deployment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What the deployed surfaces are serving: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentVerification"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "deploy.verify",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::deploy"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_deploy_verify"
+        }
+      }
+    },
     "/api/v1/design": {
       "get": {
         "operationId": "design.system",
@@ -4111,6 +4225,15 @@
                 "value": true
               }
             }
+          },
+          {
+            "name": "live",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Settle the obligations something can establish — a commit, a push, the trunk, the\npublished site, the deployed surfaces — live, at HEAD. On by default; a report that\npasses `false` reads the ledger alone and says a live token is owed, never proven."
           }
         ],
         "responses": {
@@ -4183,6 +4306,91 @@
           "resource": {
             "uri": "majordomus://gates/completion",
             "name": "completion"
+          }
+        }
+      }
+    },
+    "/api/v1/gates/policy": {
+      "get": {
+        "operationId": "gates.policy",
+        "summary": "The completion policy",
+        "description": "The one definition of done: the lifecycle stages in order, every question a task must answer before it may be called finished, and the source each answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the structural release analysis, the change set, the task record or the continuity store. Read from share/completion.yaml; every surface that states what done means, the generated section of the provider bootstraps included, is a projection of this answer. A source the policy names and the repository lacks is reported as a problem rather than silently unanswerable.",
+        "tags": [
+          "gates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The completion policy: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionPolicyReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "gates.policy",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::gates"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 4,
+          "ttl_seconds": 5
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_completion_policy",
+          "resource": {
+            "uri": "majordomus://gates/policy",
+            "name": "completion-policy"
           }
         }
       }
@@ -6048,7 +6256,22 @@
         "tags": [
           "obligations"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "live",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Settle every token whose fact something can establish — a commit, a push, the\ntrunk, the published site, the deployed surfaces — live, at HEAD, before reading\nthe ledger. On by default: a page rendered from a cache may pass `false` to read\nthe ledger alone, and such a report says a live token is owed rather than proven.",
+            "examples": {
+              "recorded-only": {
+                "value": false
+              }
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "What this task still owes: the result.",
@@ -10554,6 +10777,10 @@
           "head": {
             "type": "string",
             "description": "The commit it started at."
+          },
+          "issue": {
+            "type": "string",
+            "description": "The issue of the plan this work serves, or `none` for work the plan does not track,\ndeclared as such. Absent means the task never said, which the completion report\nreports as owed rather than as nothing."
           }
         },
         "required": [
@@ -14379,6 +14606,37 @@
             },
             "description": "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates and the change set; a question nothing here\nreaches is `unknown` and names the command that would answer it."
           },
+          "policy": {
+            "type": "string",
+            "description": "The completion policy the questions were taken from."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/LifecycleStage",
+            "description": "Where the task stands in the lifecycle, derived from the questions in the policy's\norder: the first stage blocked, else the first stage pending, else complete."
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "True when `finishable` holds and every required gate has reported over this tree:\nnothing refuses and nothing is silent."
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "True only when every question of the policy passes or is exempt. This is the one\nfield that may be read as \"done\", and no surface computes it a second time."
+          },
+          "version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The structural version analysis, when it could be made."
+          },
+          "deployment": {
+            "$ref": "#/components/schemas/DeploymentPlan",
+            "description": "Which deployment targets the change reaches, and why each applies or does not."
+          },
           "findings": {
             "type": "array",
             "items": {
@@ -14395,9 +14653,69 @@
           "tallies",
           "gates",
           "obligations",
-          "questions"
+          "questions",
+          "policy",
+          "stage",
+          "verified",
+          "complete",
+          "deployment"
         ],
-        "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": []\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+        "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": [],\n    \"policy\": \"share/completion.yaml\",\n    \"stage\": { \"id\": \"gates\", \"title\": \"Gates\", \"state\": \"pending\", \"complete\": false,\n               \"owing\": [\"ci\"], \"stages\": [] },\n    \"verified\": false,\n    \"complete\": false,\n    \"deployment\": { \"targets\": [] }\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n// and the three words a reader acts on are three different facts\nassert!(!c.verified, \"finishable and unverified: nothing refused, something never reported\");\nassert!(!c.complete, \"and nothing is complete while a question is owed\");\nassert_eq!(c.stage.id, \"gates\");\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+      },
+      "CompletionPolicyReport": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The format version the file states."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where it was read from."
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageDecl"
+            },
+            "description": "The lifecycle, in order."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionDecl"
+            },
+            "description": "Every question, in declaration order."
+          },
+          "fragment": {
+            "type": "string",
+            "description": "The generated section of an instruction file (AGENTS.md, CLAUDE.md): one line per\nstage with the questions that belong to it. The shell tool renders the same bytes."
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What does not resolve against the vocabulary the policy is shipped beside: a token\n`share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so."
+          },
+          "unanswered_gates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The questions answered by a gate this repository's CI model does not declare, as\n`question:gate`. Not a problem: the report answers them `exempt` by name. Listed so\nthat a repository can see what the policy would ask and it never does."
+          }
+        },
+        "required": [
+          "version",
+          "source",
+          "stages",
+          "questions",
+          "fragment"
+        ],
+        "description": "The completion policy, as every projection states it: the stages, the questions and\nthe source each is answered from, plus the fragment the provider bootstraps carry."
       },
       "Concurrency": {
         "type": "object",
@@ -15180,6 +15498,33 @@
         ],
         "description": "Whether the deployments this repository declares would work, decided locally: against\nthe capability registry this process built and the workspace it sits in."
       },
+      "DeploymentIdentity": {
+        "type": "object",
+        "properties": {
+          "commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit, when the surface reports one."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version, when the surface reports one."
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The release tag, when the surface reports one."
+          }
+        },
+        "description": "What a live surface is expected to be serving."
+      },
       "DeploymentList": {
         "type": "object",
         "properties": {
@@ -15210,6 +15555,29 @@
         ],
         "description": "Every deployment the layer declares."
       },
+      "DeploymentPlan": {
+        "type": "object",
+        "properties": {
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentTarget"
+            },
+            "description": "The targets, in a stable order: pages, release, then each application by id."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What could not be derived, each as one line."
+          }
+        },
+        "required": [
+          "targets"
+        ],
+        "description": "Every target, applicable or not."
+      },
       "DeploymentStatus": {
         "oneOf": [
           {
@@ -15229,6 +15597,121 @@
           }
         ],
         "description": "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is."
+      },
+      "DeploymentTarget": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The target's identity: `pages`, `release`, or the deployment object's id."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TargetKind",
+            "description": "Which kind of surface it is."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where it is served, when known."
+          },
+          "identity_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The address that states the surface's own identity, when known."
+          },
+          "applicable": {
+            "type": "boolean",
+            "description": "Whether the change reaches it."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it applies, or why it does not."
+          },
+          "expected": {
+            "$ref": "#/components/schemas/DeploymentIdentity",
+            "description": "What the surface is expected to serve once the change is deployed.",
+            "default": {}
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The pathspecs whose change makes the target applicable, when paths do."
+          },
+          "because": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The changed paths that made it applicable, when paths did."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "applicable",
+          "reason"
+        ],
+        "description": "One surface the change may reach."
+      },
+      "DeploymentVerification": {
+        "type": "object",
+        "properties": {
+          "expected_commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit the targets were expected to serve, when one was known."
+          },
+          "plan": {
+            "$ref": "#/components/schemas/DeploymentPlan",
+            "description": "Which targets exist and which apply."
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "True when every applicable target is verified and none refuses."
+          },
+          "asked": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many targets were asked."
+          },
+          "refusing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The applicable targets whose status refuses."
+          },
+          "verifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Verification"
+            },
+            "description": "Each target, in the plan's order."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What could not be derived, from the plan."
+          }
+        },
+        "required": [
+          "plan",
+          "ok",
+          "asked",
+          "verifications"
+        ],
+        "description": "The plan and the live answers, as one document: what would be asked, what was, and\nwhat each surface stated."
       },
       "DeploymentView": {
         "type": "object",
@@ -15276,6 +15759,14 @@
           "application": {
             "type": "string",
             "description": "The application's name at the provider."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where it answers, once it is active: the public origin a verifier asks for\n`/api/v1/distribution/build`. Stated only for an active deployment; a declared one\nhas nothing to ask.",
+            "default": null
           },
           "build": {
             "$ref": "#/components/schemas/Build",
@@ -16531,6 +17022,10 @@
             "type": "string",
             "description": "The question's identity, stable across reports."
           },
+          "stage": {
+            "type": "string",
+            "description": "The lifecycle stage the policy places it in."
+          },
           "question": {
             "type": "string",
             "description": "The question, as a person would ask it."
@@ -16554,13 +17049,14 @@
         },
         "required": [
           "id",
+          "stage",
           "question",
           "status",
           "evidence",
           "source",
           "remediation"
         ],
-        "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
+        "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
       },
       "DriftedObject": {
         "type": "object",
@@ -20855,6 +21351,49 @@
         ],
         "description": "The C library a Linux artifact is linked against."
       },
+      "LifecycleStage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The stage the task stands at: the first one blocked, else the first one pending,\nelse the last stage of the policy."
+          },
+          "title": {
+            "type": "string",
+            "description": "That stage as a heading."
+          },
+          "state": {
+            "$ref": "#/components/schemas/StageState",
+            "description": "Where it stands."
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "True only when every stage is complete or empty. The word `completed` is earned\nhere and nowhere else."
+          },
+          "owing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The questions still owed or refusing at the stage the task stands at."
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageReport"
+            },
+            "description": "Every stage of the policy, in order."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "complete",
+          "stages"
+        ],
+        "description": "Where the task stands: the one stage a reader acts on, and every stage behind and\nahead of it."
+      },
       "LimitsView": {
         "type": "object",
         "properties": {
@@ -22911,6 +23450,10 @@
           "note": {
             "type": "string",
             "description": "What the vocabulary says about the token beyond its summary."
+          },
+          "established_by": {
+            "type": "string",
+            "description": "What settles the fact without asking a worker: `git` for a fact git already holds,\na command for one a command already answers, `none` (or absent) for one nothing\ncan settle. A token that names something is decided live, at HEAD, and its recorded\nevidence is consulted only where the live answer is undecidable."
           }
         },
         "required": [
@@ -22928,6 +23471,11 @@
           "id": {
             "type": "string",
             "description": "The token, as the task's `requires` names it."
+          },
+          "declared": {
+            "type": "boolean",
+            "description": "True when the task's `requires` names it. An establishable token the task did not\ndeclare is judged here too, live, so that the completion report can answer for it\nwhen the change implies it; it never counts toward `closed`.",
+            "default": true
           },
           "title": {
             "type": "string",
@@ -25504,6 +26052,160 @@
           }
         ],
         "description": "How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning."
+      },
+      "QuestionDecl": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The question's identity, stable across reports."
+          },
+          "stage": {
+            "type": "string",
+            "description": "The stage it belongs to."
+          },
+          "question": {
+            "type": "string",
+            "description": "The question, as a person would ask it."
+          },
+          "source": {
+            "$ref": "#/components/schemas/QuestionSource",
+            "description": "What answers it."
+          },
+          "remediation": {
+            "type": "string",
+            "description": "What would settle it, as a command."
+          }
+        },
+        "required": [
+          "id",
+          "stage",
+          "question",
+          "source",
+          "remediation"
+        ],
+        "description": "One question of the policy, as declared."
+      },
+      "QuestionSource": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "obligation"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "name"
+            ],
+            "description": "A token of `share/obligations.yaml`, judged by `obligations.closure`."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "gates"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "description": "The aggregate of every gate the change selects."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "gate"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "name"
+            ],
+            "description": "One gate of the CI model, by id."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "change-test-path"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "description": "The change set itself: whether a test path is among the touched files."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "release-impact"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "description": "The structural version analysis, `release.analysis`."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "task-issue"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "description": "The task record's `issue` field, resolved against the plan."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "session-handover"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "description": "A continuation record for this task."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "elsewhere"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "name"
+            ],
+            "description": "Nothing reachable from the report; the command that answers it."
+          }
+        ],
+        "description": "Where a question's answer is taken from.\n\n```\nuse majordomus_cli::gates::QuestionSource;\nassert_eq!(QuestionSource::parse(\"obligation:tests\").unwrap(), QuestionSource::Obligation(\"tests\".into()));\nassert_eq!(QuestionSource::parse(\"gate:release-check\").unwrap(), QuestionSource::Gate(\"release-check\".into()));\nassert_eq!(QuestionSource::parse(\"gates\").unwrap(), QuestionSource::Gates);\nassert_eq!(QuestionSource::parse(\"release:impact\").unwrap(), QuestionSource::ReleaseImpact);\nassert!(QuestionSource::parse(\"magic\").is_err(), \"a source nothing answers is refused\");\nassert_eq!(QuestionSource::Elsewhere(\"x y\".into()).to_string(), \"elsewhere:x y\");\n```"
       },
       "Readiness": {
         "type": "object",
@@ -29095,6 +29797,92 @@
         ],
         "description": "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise."
       },
+      "StageDecl": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The stage's identity, stable across reports."
+          },
+          "title": {
+            "type": "string",
+            "description": "The stage as a heading."
+          },
+          "summary": {
+            "type": "string",
+            "description": "What it means for the stage to be complete."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "summary"
+        ],
+        "description": "One stage of the lifecycle, in the order the policy states them."
+      },
+      "StageReport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The stage's identity."
+          },
+          "title": {
+            "type": "string",
+            "description": "The stage as a heading."
+          },
+          "state": {
+            "$ref": "#/components/schemas/StageState",
+            "description": "Where it stands."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The questions of this stage, in policy order."
+          },
+          "owing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The questions still owed or refusing, in policy order."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "state",
+          "questions"
+        ],
+        "description": "One stage of the lifecycle, with what its questions said."
+      },
+      "StageState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "complete",
+            "description": "Every question of the stage passes or is exempt."
+          },
+          {
+            "type": "string",
+            "const": "pending",
+            "description": "A question of the stage has not been answered: queued or unknown."
+          },
+          {
+            "type": "string",
+            "const": "blocked",
+            "description": "A question of the stage refuses: failing, stale, or blocked by one that is."
+          },
+          {
+            "type": "string",
+            "const": "empty",
+            "description": "The stage declares no question that applies here."
+          }
+        ],
+        "description": "Where one stage stands."
+      },
       "Standing": {
         "oneOf": [
           {
@@ -29917,6 +30705,26 @@
           "out_files"
         ],
         "description": "Every tracked file against the scope, counted."
+      },
+      "TargetKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "pages",
+            "description": "The published static site."
+          },
+          {
+            "type": "string",
+            "const": "release",
+            "description": "The published release metadata and artifacts."
+          },
+          {
+            "type": "string",
+            "const": "application",
+            "description": "A running instance of the executable, declared as a deployment object."
+          }
+        ],
+        "description": "The three kinds of surface a deployment target can be."
       },
       "TargetStatus": {
         "oneOf": [
@@ -31220,6 +32028,91 @@
         ],
         "description": "In or out."
       },
+      "Verification": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "The target's identity."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TargetKind",
+            "description": "Which kind of surface it is."
+          },
+          "status": {
+            "$ref": "#/components/schemas/VerificationStatus",
+            "description": "Where it stands."
+          },
+          "asked": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The address that was asked, when one was."
+          },
+          "expected": {
+            "$ref": "#/components/schemas/DeploymentIdentity",
+            "description": "What was expected.",
+            "default": {}
+          },
+          "observed": {
+            "$ref": "#/components/schemas/DeploymentIdentity",
+            "description": "What the surface stated.",
+            "default": {}
+          },
+          "detail": {
+            "type": "string",
+            "description": "What was read, in one sentence: never a restatement of the status."
+          },
+          "checked_at": {
+            "type": "string",
+            "description": "When it was asked."
+          }
+        },
+        "required": [
+          "target",
+          "kind",
+          "status",
+          "detail",
+          "checked_at"
+        ],
+        "description": "One target, asked."
+      },
+      "VerificationStatus": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "verified",
+            "description": "The surface states the expected identity."
+          },
+          {
+            "type": "string",
+            "const": "stale",
+            "description": "The surface answered, and states a different identity: the deployment did not\nland, or an older one is still live."
+          },
+          {
+            "type": "string",
+            "const": "unreachable",
+            "description": "The surface did not answer."
+          },
+          {
+            "type": "string",
+            "const": "unreadable",
+            "description": "The surface answered with something this executable cannot read as an identity."
+          },
+          {
+            "type": "string",
+            "const": "not_applicable",
+            "description": "The target does not apply to this change; nothing was asked."
+          },
+          {
+            "type": "string",
+            "const": "unverifiable",
+            "description": "Nothing is expected of the target, so nothing could be compared; it was reached."
+          }
+        ],
+        "description": "Where one target stands after being asked."
+      },
       "VerifyReport": {
         "type": "object",
         "properties": {
@@ -31280,6 +32173,51 @@
           "findings"
         ],
         "description": "The answer of `objects.verify`."
+      },
+      "VersionSummary": {
+        "type": "object",
+        "properties": {
+          "baseline": {
+            "type": "string",
+            "description": "The last released version the tree was measured against."
+          },
+          "declared": {
+            "type": "string",
+            "description": "The version the tree declares."
+          },
+          "required": {
+            "type": "string",
+            "description": "The smallest version the contract allows the tree to declare."
+          },
+          "impact": {
+            "type": "string",
+            "description": "The impact the contract movement requires (`none`, `patch`, `minor`, `major`)."
+          },
+          "status": {
+            "type": "string",
+            "description": "`ok` when the declared version is at least the required one, else `blocked`."
+          },
+          "breaking": {
+            "type": "boolean",
+            "description": "Whether anything a caller could hold is gone."
+          },
+          "changes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many movements of the contract were found."
+          }
+        },
+        "required": [
+          "baseline",
+          "declared",
+          "required",
+          "impact",
+          "status",
+          "breaking",
+          "changes"
+        ],
+        "description": "```\nuse majordomus_cli::gates::VersionSummary;\nlet v: VersionSummary = serde_json::from_value(serde_json::json!({\n    \"baseline\": \"0.5.0\", \"declared\": \"0.6.0\", \"required\": \"0.6.0\",\n    \"impact\": \"minor\", \"status\": \"ok\", \"breaking\": false, \"changes\": 12\n})).unwrap();\n// the one sentence every surface shows about the version, reduced from the plan\n// `release.analysis` answers with; nothing here is measured a second time\nassert!(v.ok());\n```\nThe structural version analysis, reduced to what a completion report states."
       },
       "Violation": {
         "type": "object",
