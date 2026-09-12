@@ -493,6 +493,7 @@ mj_uc_normalise() { # repo-path
     -e 's/ [0-9]+[mhd] ago/ <age> ago/g' \
     -e 's/(bash|git|jq|shellcheck) [0-9][0-9.]*/\1 <version>/g' \
     -e 's/\(([0-9]+) (KB|MB)\)$/(<size> \2)/' \
+    -e 's/-20[0-9]{6}([.-])/-<date>\1/g' \
     -e 's/^(owner +).*$/\1<owner>/' \
     -e 's/^( *owner=).*$/\1<owner>/' \
     -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \
