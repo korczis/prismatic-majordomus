@@ -1040,6 +1040,74 @@ mj_record_front() { awk 'NR==1&&$0!="---"{exit 2} NR>1&&$0=="---"{exit} NR>1' "$
 # body of a record: everything after the second ---
 mj_record_body()  { awk 'c>=2{print} /^---$/{c++}' "$1"; }
 
+# ---------------------------------------------------------------- front matter, in bulk
+# The front matter of a whole corpus in one awk process instead of two per document.
+#
+# A loader that reads one record at a time pays mj_record_front and mj_yaml_flatten for
+# each of them, and a catalogue whose whole job is to read fifty records spends most of
+# its wall clock forking. mj_front_cache_build flattens the lot in one
+# mj_yaml_flatten_many; mj_front_cache_get answers the loader's per-record call out of it.
+# The loaders keep their shape — they still ask for one record and report one record's
+# reason — and a path the cache does not hold is still flattened on its own, so a corpus
+# that gains a file between the build and the read is read correctly rather than reported
+# missing.
+MJ_FRONT_FLAT=""; MJ_FRONT_ERROR=""
+# A path is not a variable name: every character outside [A-Za-z0-9] becomes "_", and two
+# paths can therefore share a key. The cache stores the path it answered for beside the
+# answer and every lookup compares them, so a collision reads as a miss — which every
+# caller already handles — and never as another record's fields.
+mj_front_cache_build() {
+  local dir="$1" f i=0 key n msg v; shift
+  [ $# -gt 0 ] || return 0
+  mkdir -p "$dir" || return 1
+  mj_yaml_flatten_many "$dir" --numbered --front "$@" || true
+  # --numbered counts the files awk saw records in, and awk sees no records in a
+  # zero-byte file, so one empty document would number every document after it one low
+  # and hand each reader the previous record's fields. The count is the invariant: n
+  # inputs produce outputs 1..n, so a missing "$dir/$#" means some input was skipped.
+  # The cache is then abandoned rather than repaired — every mj_front_cache_get misses
+  # and every caller flattens the way it did before, which is correct and merely slower.
+  # Nothing is deleted: the lookup keys are simply never set, so every get already misses.
+  [ -f "$dir/$#" ] || return 1
+  if [ -f "$dir/.errors" ]; then
+    while IFS="$MJ_TAB" read -r n msg; do
+      case "$n" in ''|*[!0-9]*) continue ;; esac
+      printf -v "MJFC_R_$n" '%s' "$msg"
+    done < "$dir/.errors"
+  fi
+  for f in "$@"; do
+    i=$((i + 1)); key="${f//[!A-Za-z0-9]/_}"; v="MJFC_R_$i"
+    printf -v "MJFC_P_$key" '%s' "$f"
+    printf -v "MJFC_F_$key" '%s' "$dir/$i"
+    printf -v "MJFC_E_$key" '%s' "${!v:-}"
+    unset "MJFC_R_$i"
+  done
+}
+# mj_front_cache_get PATH
+#   0  MJ_FRONT_FLAT is the flattened front matter
+#   1  MJ_FRONT_FLAT is empty and MJ_FRONT_ERROR says why there is none
+#   2  this path is not in the cache; the caller flattens it the way it always did
+mj_front_cache_get() {
+  local f="$1" key p
+  MJ_FRONT_FLAT=""; MJ_FRONT_ERROR=""
+  key="${f//[!A-Za-z0-9]/_}"; p="MJFC_P_$key"
+  [ "${!p:-}" = "$f" ] || return 2
+  p="MJFC_F_$key"; [ -f "${!p:-}" ] || return 2
+  MJ_FRONT_FLAT="${!p}"
+  p="MJFC_E_$key"
+  if [ -n "${!p:-}" ]; then
+    # The batch names the offending line and why it is one. A loader has only ever said
+    # which of the two failures this was, and must go on saying exactly that: the reason
+    # a record carries is part of what the catalogues print.
+    case "${!p}" in
+      'no front matter') MJ_FRONT_ERROR='no front matter' ;;
+      *) MJ_FRONT_ERROR='malformed front matter' ;;
+    esac
+    return 1
+  fi
+  return 0
+}
+
 # refuse a body that carries fields Majordomus computes: prose must not forge identity
 mj_reject_identity() {
   grep -qE '^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files):' "$1"

@@ -111,37 +111,130 @@ mj_uc_flat() {
   printf '%s' "$tmp"
 }
 
+# mj_uc_flat_many <dir> <file>... — what mj_uc_flat returns, for every argument at once,
+# in four processes instead of five per document.
+#
+# mj_uc_flat costs a record-front awk, a flatten, a scenario awk, a second flatten and a
+# sed; over fifty use cases that is most of `validate:catalogue`. The work is the same
+# here and it is done in the same order — front matter, then the scenario folded in under
+# `scenario.` — but each step runs once over the whole corpus instead of once per file.
+# <dir>/rows then holds one "path<TAB>flat<TAB>kind" line per document, in argument order,
+# with "-" for a document that has no flat: the loader reads its answers off that instead
+# of asking a process per file what kind it is.
+#
+# A record whose front matter the batch refuses has no flat, which is the `return 1` that
+# mj_uc_flat gives for the same record. The one case the two spell differently is front
+# matter that is present but yields no keys at all — mj_uc_flat calls that a failure and
+# this calls it an empty flat — and both leave the reader with no fields and no kind, so
+# nothing downstream can tell them apart.
+mj_uc_flat_many() {
+  local d="$1" n i f flat; shift
+  n=$#
+  [ "$n" -gt 0 ] || return 0
+  mkdir -p "$d/front" "$d/scen" "$d/sflat" "$d/flat"
+  : > "$d/paths"
+  for f in "$@"; do printf '%s\n' "$f" >> "$d/paths"; done
+  mj_yaml_flatten_many "$d/front" --numbered --front "$@" || true
+  # --numbered counts the files awk saw a record in, and a zero-byte file has none, so a
+  # single empty document would number every document after it one low and give each row
+  # the previous document's flat. n inputs owe n outputs: when the last one is missing
+  # something was skipped, and the corpus is read one document at a time instead — the
+  # answer this function is a faster spelling of, not a different one.
+  if [ ! -f "$d/front/$n" ]; then
+    : > "$d/rows"
+    for f in "$@"; do
+      if flat="$(mj_uc_flat "$f")" && [ -n "$flat" ]; then
+        printf '%s\t%s\t%s\n' "$f" "$flat" "$(mj_yget "$flat" kind)" >> "$d/rows"
+      else
+        printf '%s\t-\t\n' "$f" >> "$d/rows"
+      fi
+    done
+    return 0
+  fi
+  # every `# Scenario` block in one pass. The rules are mj_uc_scenario_yaml's, in its
+  # order, with `exit` replaced by a per-file flag; the leading `---` keeps a document
+  # with no scenario from being an empty file, which awk skips and which would therefore
+  # shift every number after it.
+  awk -v d="$d/scen" '
+    FNR == 1 { n++; sec = 0; fence = 0; done = 0; out = d "/" n; print "---" > out }
+    done { next }
+    /^# Scenario[ \t]*$/ { sec = 1; next }
+    sec && /^```yaml[ \t]*$/ { fence = 1; next }
+    sec && fence && /^```[ \t]*$/ { done = 1; next }
+    sec && fence { print > out; next }
+    sec && /^# / { done = 1 }
+  ' "$@"
+  set --; i=0
+  while [ "$i" -lt "$n" ]; do i=$((i + 1)); set -- "$@" "$d/scen/$i"; done
+  mj_yaml_flatten_many "$d/sflat" --numbered "$@" || true
+  # the two halves joined and each document's kind read off, in one more process
+  awk -v fd="$d/front" -v sd="$d/sflat" -v od="$d/flat" -v n="$n" \
+      -v errs="$d/front/.errors" -v paths="$d/paths" -v rows="$d/rows" '
+    BEGIN {
+      while ((getline l < paths) > 0) path[++np] = l
+      close(paths)
+      while ((getline l < errs) > 0) { split(l, a, "\t"); bad[a[1] + 0] = 1 }
+      close(errs)
+      for (i = 1; i <= n; i++) {
+        fn = fd "/" i
+        if (i in bad || (r = (getline l < fn)) < 0) {
+          close(fn); printf "%s\t-\t\n", path[i] > rows; continue
+        }
+        out = od "/" i; printf "" > out; kind = ""
+        while (r > 0) {
+          print l > out
+          if (index(l, "kind=") == 1) kind = substr(l, 6)
+          r = (getline l < fn)
+        }
+        close(fn)
+        sn = sd "/" i
+        while ((getline l < sn) > 0) print "scenario." l > out
+        close(sn); close(out)
+        printf "%s\t%s\t%s\n", path[i], out, kind > rows
+      }
+      close(rows)
+    }'
+}
+
 # load every use case and application once: MJ_UC_FILE_<i>, MJ_UC_FLAT_<i>, MJ_UC_ID_<i>;
 # same for applications with AP. Order is the sorted file order, which is stable.
+MJ_UC_CACHE=""
 mj_uc_load() {
   [ "$MJ_UC_LOADED" = 1 ] && return 0
   mj_uc_paths
-  local f i=0 j=0 flat
+  local f i=0 j=0 flat kind
   MJ_UC_IDS=""; MJ_AP_IDS=""
+  MJ_UC_CACHE="$(mktemp -d "${TMPDIR:-/tmp}/mj.ucl.XXXXXX")"
   if [ -n "$MJ_UC_DIR" ] && [ -d "$MJ_UC_DIR" ]; then
-    for f in "$MJ_UC_DIR"/*.md; do
-      [ -f "$f" ] || continue
-      flat="$(mj_uc_flat "$f")" || flat=""
+    set --
+    for f in "$MJ_UC_DIR"/*.md; do [ -f "$f" ] && set -- "$@" "$f"; done
+    mj_uc_flat_many "$MJ_UC_CACHE/uc" "$@"
+    # the loop stays in this shell — a pipe would take the counters into a subshell — and
+    # the rows are in the glob's order, which is the order this has always loaded in
+    while IFS="$MJ_TAB" read -r f flat kind; do
+      [ "$flat" = - ] && flat=""
       # a context document beside the use cases (the section's README) is not a use case
-      [ -n "$flat" ] && [ "$(mj_yget "$flat" kind)" = context ] && { rm -f "$flat"; continue; }
+      [ -n "$flat" ] && [ "$kind" = context ] && { rm -f "$flat"; continue; }
       printf -v "MJ_UC_FILE_$i" '%s' "$f"; printf -v "MJ_UC_FLAT_$i" '%s' "$flat"
       # every field becomes a variable once; the readers below are expansions, not processes
       [ -n "$flat" ] && mj_yload "$flat" "MJUC$i"
       MJ_UC_IDS="$MJ_UC_IDS $(mj_uc_v "$i" id)"
       i=$((i+1))
-    done
+    done < "$MJ_UC_CACHE/uc/rows"
   fi
   MJ_UC_N=$i
   if [ -n "$MJ_AP_DIR" ] && [ -d "$MJ_AP_DIR" ]; then
-    for f in "$MJ_AP_DIR"/*.md; do
-      [ -f "$f" ] || continue
-      flat="$(mj_uc_flat "$f")" || flat=""
-      [ -n "$flat" ] && [ "$(mj_yget "$flat" kind)" = context ] && { rm -f "$flat"; continue; }
+    set --
+    for f in "$MJ_AP_DIR"/*.md; do [ -f "$f" ] && set -- "$@" "$f"; done
+    mj_uc_flat_many "$MJ_UC_CACHE/ap" "$@"
+    while IFS="$MJ_TAB" read -r f flat kind; do
+      [ "$flat" = - ] && flat=""
+      [ -n "$flat" ] && [ "$kind" = context ] && { rm -f "$flat"; continue; }
       printf -v "MJ_AP_FILE_$j" '%s' "$f"; printf -v "MJ_AP_FLAT_$j" '%s' "$flat"
       [ -n "$flat" ] && mj_yload "$flat" "MJAP$j"
       MJ_AP_IDS="$MJ_AP_IDS $(mj_ap_v "$j" id)"
       j=$((j+1))
-    done
+    done < "$MJ_UC_CACHE/ap/rows"
   fi
   MJ_AP_N=$j
   MJ_UC_LOADED=1

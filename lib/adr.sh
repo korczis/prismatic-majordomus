@@ -91,10 +91,45 @@ mj_adr_files() {
 # caller reading the previous record's fields.
 MJ_ADR_FLAT=""
 MJ_ADR_ERROR=""
+# whether MJ_ADR_FLAT points into the prefetched cache, which the next load must not unlink
+MJ_ADR_FLAT_CACHED=0
+MJ_ADR_CACHE=""
+# mj_adr_prefetch <list> — every decision named in <list> flattened in one process, so
+# that mj_adr_load below is a lookup. The walkers call this; `adr validate <file>`
+# deliberately does not, because reading one record must not cost the flatten of fifty.
+#
+# It takes the walker's own list rather than calling mj_adr_files: discovery is not
+# cached, so a prefetch that discovered for itself would pay a second git walk and a
+# second hash of the whole corpus — measured at more than the fifty awk processes it
+# saves. A batch that has to re-derive its input is not a batch, it is a second loop.
+mj_adr_prefetch() {
+  # the list is copied out of $1 first: `set --` below clears the positional parameters,
+  # and the redirection at the end of the loop is expanded after it has
+  local f lst="${1:-}"
+  [ -n "$MJ_ADR_CACHE" ] && return 0
+  [ -n "$lst" ] && [ -f "$lst" ] || return 0
+  MJ_ADR_CACHE="$(mktemp -d "${TMPDIR:-/tmp}/mj.adrc.XXXXXX")"
+  set --
+  while IFS="$MJ_TAB" read -r f _; do
+    [ -n "$f" ] && set -- "$@" "$MJ_ROOT/$f"
+  done < "$lst"
+  # a cache the batch could not build is no cache: every load flattens for itself, which
+  # is what this repository did before, so the failure is slower and never wrong
+  mj_front_cache_build "$MJ_ADR_CACHE" "$@" || return 0
+}
 mj_adr_load() {
-  local f="$1" fm flat
+  local f="$1" fm flat hit=0
   MJ_ADR_ERROR=""
-  [ -n "$MJ_ADR_FLAT" ] && rm -f "$MJ_ADR_FLAT"
+  [ -n "$MJ_ADR_FLAT" ] && [ "$MJ_ADR_FLAT_CACHED" = 0 ] && rm -f "$MJ_ADR_FLAT"
+  MJ_ADR_FLAT_CACHED=0
+  mj_front_cache_get "$f" || hit=$?
+  if [ "$hit" != 2 ]; then
+    # the cache's own output file, empty exactly where the per-record path left an empty
+    # one, so that every reader below sees what it always saw
+    MJ_ADR_FLAT="$MJ_FRONT_FLAT"; MJ_ADR_FLAT_CACHED=1
+    [ "$hit" = 0 ] && return 0
+    MJ_ADR_ERROR="$MJ_FRONT_ERROR"; return 1
+  fi
   fm="$(mktemp "${TMPDIR:-/tmp}/mj.af.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.al.XXXXXX")"; MJ_ADR_FLAT="$flat"
   if ! mj_record_front "$f" > "$fm" 2>/dev/null; then rm -f "$fm"; MJ_ADR_ERROR="no front matter"; return 1; fi
   if ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then rm -f "$fm"; MJ_ADR_ERROR="malformed front matter"; return 1; fi
@@ -232,11 +267,24 @@ MJ_ADR_N=0
 MJ_ADR_INVALID=0
 MJ_ADR_ROWS=""
 mj_adr_catalogue() {
-  local tmp out f base reasons id st date title sb sup
+  local tmp out lst f base reasons id st date title sb sup
   [ -n "$MJ_ADR_ROWS" ] && [ -f "$MJ_ADR_ROWS" ] && return 0
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ac.XXXXXX")"
   out="$(mktemp "${TMPDIR:-/tmp}/mj.ao.XXXXXX")"; MJ_ADR_ROWS="$out"
   MJ_ADR_N=0; MJ_ADR_INVALID=0
+  # discovery once, read twice: the prefetch below and the loop under it are the same walk
+  lst="$(mktemp "${TMPDIR:-/tmp}/mj.adrl.XXXXXX")"; mj_adr_files > "$lst"
+  mj_adr_prefetch "$lst"
+  # The effective rule set, once, here. mj_adr_rel_valid resolves a `related: rule:...`
+  # through mj_rules_load, and it is reached from the validator below through a command
+  # substitution — a subshell, which takes MJ_RULES_LOADED away with it when it exits. So
+  # every record that names a rule reloaded the whole set: `adr list` on this repository
+  # ran mj_rule_scan 3350 times, twenty-five loads of a hundred and thirty-four rules,
+  # where one load is enough. Loading in this shell leaves the cache where the subshells
+  # can see it. A failure is not handled here: the loader records its reason in
+  # MJ_RULES_ERROR without marking itself loaded, so the per-record path below retries and
+  # reports exactly what it reported before.
+  mj_rules_load || true
   # The loop stays in this shell so that the counts survive it, and the front matter is
   # loaded here rather than inside the validator's command substitution: a subshell would
   # take MJ_ADR_FLAT with it and every field below would read the previous record's.
@@ -257,9 +305,9 @@ mj_adr_catalogue() {
     # shift every field after it; "-" stands for empty and is read back as empty
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
       "$f" "${id:--}" "${st:--}" "${date:--}" "${title:--}" "${sb:--}" "${sup:--}" "${reasons:--}" >> "$tmp"
-  done < <(mj_adr_files)
+  done < "$lst"
   LC_ALL=C sort -t"$MJ_TAB" -k2,2 "$tmp" > "$out"
-  rm -f "$tmp"
+  rm -f "$tmp" "$lst"
   return 0
 }
 
@@ -273,7 +321,7 @@ mj_adr_catalogue() {
 # code it governs moved is exactly the judgement a tool may not make, and a command that
 # exited non-zero here would be asserting it had.
 mj_adr_affected() {
-  local mode=worktree base="" changed tmp f id title rel n=0 first=1
+  local mode=worktree base="" changed tmp lst f id title rel n=0 first=1
   while [ $# -gt 0 ]; do case "$1" in
     --base) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--base needs a ref"; mode=base; base="$2"; shift 2 ;;
     --base=*) mode=base; base="${1#--base=}"; shift ;;
@@ -287,6 +335,9 @@ mj_adr_affected() {
     || mj_die "$MJ_EX_USAGE" "adr affected: --base '$base' is not a commit in this repository"
   changed="$(mj_change_set "$mode" "$base" | awk -F"$MJ_TAB" '{ print $2; if ($3 != "") print $3 }' | LC_ALL=C sort -u)"
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.adraff.XXXXXX")"
+  lst="$(mktemp "${TMPDIR:-/tmp}/mj.adral.XXXXXX")"; mj_adr_files > "$lst"
+  mj_adr_prefetch "$lst"
+  mj_rules_load || true    # once in this shell, for the reason mj_adr_catalogue gives
   while IFS="$MJ_TAB" read -r f _; do
     [ -n "$f" ] || continue
     mj_adr_load "$MJ_ROOT/$f" || continue
@@ -300,7 +351,8 @@ mj_adr_affected() {
       printf '%s\n' "$changed" | awk -v r="$rel" '$0 == r || index($0, r "/") == 1 { print; found = 1 } END { exit found ? 0 : 1 }' \
         | while IFS= read -r hit; do printf '%s\t%s\t%s\t%s\n' "${id:--}" "$f" "related" "$hit" >> "$tmp"; done
     done
-  done < <(mj_adr_files)
+  done < "$lst"
+  rm -f "$lst"
   n="$(awk -F"$MJ_TAB" '{ print $1 }' "$tmp" 2>/dev/null | LC_ALL=C sort -u | grep -c . || true)"
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":1,"mode":"%s","base":%s,"affected":[' "$mode" "$([ -n "$base" ] && printf '"%s"' "$(mj_json_esc "$base")" || printf null)"
