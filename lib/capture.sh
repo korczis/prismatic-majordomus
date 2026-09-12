@@ -1397,9 +1397,15 @@ mj_capture_session() {
 # fail the hook would be a new way to lose an episode, which is the failure it exists to
 # make visible. A ledger that cannot be written is itself reported beside the working
 # contexts.
+# The provider's own event name is `provider_event` and not `event`: `event` is the ledger
+# envelope's key, and a line carrying it twice is read as its payload by some readers and as
+# its envelope by others. It was `event` until this was found, and every receipt this
+# repository had written since d5d541850 made `history --validate` exit 10 on the name
+# `start`. `mj_ledger_append` now refuses the collision outright, so this cannot recur here or
+# in any other caller.
 mj_capture_session_receipt() {
   local provider="$1" event="$2" psession="$3" fields
-  fields="\"provider\":\"$(mj_json_esc "$provider")\",\"event\":\"$(mj_json_esc "$event")\""
+  fields="\"provider\":\"$(mj_json_esc "$provider")\",\"provider_event\":\"$(mj_json_esc "$event")\""
   [ -n "$psession" ] && fields="$fields,\"provider_session\":\"$(mj_json_esc "$psession")\""
   mj_ledger_append provider.event.received "$fields" 2>/dev/null \
     || mj_session_context_log "$provider $event event: the receipt could not be appended to the ledger"
@@ -1411,7 +1417,7 @@ mj_capture_session_receipt() {
 # finding in its own right, which is what lets health see a writer that has stopped.
 mj_capture_session_failed() {
   local provider="$1" event="$2" reason="$3" fields
-  fields="\"provider\":\"$(mj_json_esc "$provider")\",\"event\":\"$(mj_json_esc "$event")\""
+  fields="\"provider\":\"$(mj_json_esc "$provider")\",\"provider_event\":\"$(mj_json_esc "$event")\""
   fields="$fields,\"reason\":\"$(mj_json_esc "$reason")\""
   mj_ledger_append provider.event.failed "$fields" 2>/dev/null || true
   mj_session_context_log "$provider $event event: $reason"
