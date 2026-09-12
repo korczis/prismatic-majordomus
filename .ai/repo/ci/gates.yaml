@@ -339,7 +339,7 @@ gates:
     runs: scripts/ci/version-matches-surface
     summary: the declared version is at least what the public contract requires since the last release — capabilities, routes, MCP tools, commands and both schemas of each, compared as contracts rather than as text — and every breaking movement is named
 
-  # `at-finish`, and the only gate that carries it today. Every other gate in this model
+  # `at-finish`. Every other gate in this model
   # measures a tree, so a path class can select it: change the file, run the gate. This one
   # measures a deployment — which commit GitHub Pages is serving, and whether it is still on
   # master — and no change to any file can make it pass or fail. That is why it is in no

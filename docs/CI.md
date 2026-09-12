@@ -100,7 +100,7 @@ rather than a tree: which commit GitHub Pages is serving, whether that commit is
 master, whether anything has landed since. No edit to any file can make that question come
 out differently, so no path class can select it — and being in no class is not the defect
 here that it was for `version-surface`, it is the honest consequence of what the gate
-measures. One gate carries it, `pages-live`.
+measures. `pages-live` carries it.
 
 Which leaves the question owned by nobody. A full plan does ask it, and a full plan runs on
 a push to master — *before* the publication it would judge. The moment it is worth asking is

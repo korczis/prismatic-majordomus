@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "608ce0e963b4a1a6df87355aaa78fe242fa8f612d0af067875a3e3ca5b68a33a",
+    "fingerprint": "f78065f81397610867cf4e63e67a79edd16821b8e18f1ec8dae6309858a9f6fc",
     "summary": {
-      "total": 1417,
+      "total": 1419,
       "builtin": 108,
-      "declarative": 1309,
+      "declarative": 1311,
       "by_kind": {
         "command": 6,
         "query": 102,
-        "resource": 1309
+        "resource": 1311
       },
       "by_stability": {
         "behaviorally_verified": 95,
         "experimental": 7,
-        "implemented": 1315
+        "implemented": 1317
       },
       "mcp_tools": 105,
-      "mcp_resources": 1348,
+      "mcp_resources": 1350,
       "http_routes": 107,
       "cli_commands": 48,
       "modules": 64,
@@ -39224,7 +39224,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 133,
+        "capabilities": 134,
         "capability_ids": []
       },
       {
@@ -39303,7 +39303,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 194,
+        "capabilities": 195,
         "capability_ids": []
       },
       {
@@ -39383,7 +39383,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7976e2d4317f0b74ba904dfd331230108355e9a826c2432ccfd0334eacfd53a2",
+    "fingerprint": "124b41aabc6e8046ed422b48de5cde0fa4c66cd28697522201b3d8d21202f6fd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -39427,12 +39427,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 133,
+      "rule": 134,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 194,
+      "test": 195,
       "use-case": 45,
       "workspace": 1
     },
@@ -43121,7 +43121,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 25932
+        "bytes": 25922
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -49749,6 +49749,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/majordomus.publication-currency@1",
+        "kind": "rule",
+        "identity": "majordomus.publication-currency@1",
+        "title": "A session does not finish behind its own published site",
+        "description": "A repository that publishes has a second tree — the one the public is being served — and no commit-level gate can measure it, because no change to any file can make it right or wrong. A session that lands work and leaves the publication owed has finished nothing the public can see, and every check stays green while that is true. The gates that measure a deployment are declared as such in the CI model, and finish asks them.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/publication-currency.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5770,
+        "tags": [
+          "tasks",
+          "completion",
+          "deployment",
+          "evidence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/majordomus.questions-store-integrity@1",
         "kind": "rule",
         "identity": "majordomus.questions-store-integrity@1",
@@ -52426,6 +52443,14 @@
         "bytes": 8955
       },
       {
+        "uri": "majordomus://test/test/cases/275_publication_is_current.sh",
+        "kind": "test",
+        "identity": "test/cases/275_publication_is_current.sh",
+        "path": "test/cases/275_publication_is_current.sh",
+        "source_class": "case",
+        "bytes": 8129
+      },
+      {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
         "kind": "test",
         "identity": "test/cases/27_foreign_task.sh",
@@ -53919,7 +53944,7 @@
         "id",
         "version"
       ],
-      "objects": 133
+      "objects": 134
     },
     {
       "name": "scope",
@@ -53974,7 +53999,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 194
+      "objects": 195
     },
     {
       "name": "use-case",
