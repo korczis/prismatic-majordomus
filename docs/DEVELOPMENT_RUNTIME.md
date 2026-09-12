@@ -67,9 +67,11 @@ third.
 So the runtime, today, cannot change a single development object, and none of the
 lifecycle is reachable from the Cockpit, MCP or HTTP.
 
-**The Cockpit is not the offender.** Its trees reference the layer exactly once, as a
-display label in `apps/majordomus-cli/src/cockpit/pages.rs:1787`; it reads no state and
-writes none. It is already the pure projection that [`COCKPIT.md`](COCKPIT.md) and ADR 0013
+**The Cockpit is not the offender.** Its trees reference the layer nowhere at all; it reads
+no state and writes none. The one reference this document recorded when ADR 0040 landed was
+a display label — `statistic()`'s provenance caption naming a layer path where every other
+call site names prose — and it has since been written as prose too, which is what the rest
+of the file already did. It is already the pure projection that [`COCKPIT.md`](COCKPIT.md) and ADR 0013
 require. The defect is on the other side: the runtime has no development semantics to
 offer, so a Cockpit asked to become a development surface has two options — reimplement the
 lifecycle, or shell out to `bin/majordomus`. Both create a second implementation, and the
@@ -327,7 +329,7 @@ ADR 0040, not an architecture.
 | knowledge | `.ai/repo/knowledge/` | tracked | `objects.*` | `lib/knowledge.sh` | — | **compiler is shell-only, no capability** |
 | use case | `.ai/repo/use-cases/*.md` | tracked | one resource each, the coverage gate, the site | `lib/usecase.sh` | [`USE_CASES.md`](USE_CASES.md) | `lib/usecase.sh` is a **second writer of `docs/generated/`** |
 | artifact | `generate::Target` (15 targets) | `docs/generated/**`, `site/data/**` | site, docs, `artifacts.list` | `majordomus generate` | [`DYNAMICITY.md`](DYNAMICITY.md) | **two writers**: `src/generate.rs` and a shell set including `lib/usecase.sh`, `bin/majordomus`, `scripts/derive`, `scripts/generate-site-data` |
-| Cockpit | `src/cockpit/` | none | a person | — | [`COCKPIT.md`](COCKPIT.md) | **clean** — one layer reference, a display label at `pages.rs:1787` |
+| Cockpit | `src/cockpit/` | none | a person | — | [`COCKPIT.md`](COCKPIT.md) | **clean** — no layer reference at all; the one display label ADR 0040 recorded is now prose |
 | quality / gates | `.ai/repo/ci/gates.yaml` | tracked | `validate.yml`, `just gate` | hand-edited + `ci-plan --check` | [`CI.md`](CI.md) | `ci-plan --check` prints the gate and class tallies; the cases live in `test/cases/` and `apps/majordomus-cli/tests/` |
 
 ## Gaps against the target pipeline
