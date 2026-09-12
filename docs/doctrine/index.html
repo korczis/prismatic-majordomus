@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6e24a17565c7e2e57965">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -316,6 +316,20 @@ error, not a silent extra. A generic reader may ignore <code>x-majordomus</code>
 the rule. A rule without the block is normative for whoever reads it and enforced by
 nobody, and <code>majordomus rules list</code> says <code>not machine-enforced</code> for it rather than
 implying otherwise. The class still says what a violation means.</p>
+<p>A rule that is <code>class: blocking</code> <em>and</em> has no block is therefore a promise this tool cannot
+keep by itself, and most of this repository's blocking rules are in that position — measure
+it with <code>majordomus doctrine status</code>, which prints the registry's size beside the effective
+set's and names the count on its own line. The count is large, it predates the report, and
+the numbers must be read carefully: most of those rules <em>are</em> enforced, by a gate under
+<code>scripts/ci/</code> or by a case under <code>test/cases/</code> named in their <code># Verification</code> section. What
+the doctrine registry cannot see is not the same as what nothing enforces, and a surface
+that reports one while the reader hears the other is the defect
+<code>project.a-verdict-states-its-subject</code> exists to stop.</p>
+<p><code>scripts/ci/enforcement-check</code> is what decides the difference: a blocking rule must carry
+either an <code>x-majordomus</code> block or a <code># Verification</code> path that exists and runs, and the
+handful that carry neither are ratcheted in <code>.ai/repo/enforcement-baseline.txt</code> so the set
+can shrink and cannot grow. It is answered by wiring the enforcement, never by changing the
+rule's class — moving a promise is not keeping it.</p>
 <h3 id="resolution"><a class="zola-anchor" href="#resolution" aria-label="Anchor link for: resolution">Resolution</a></h3>
 <p><code>majordomus rules list</code> resolves the effective set as a dependency graph, deterministically:
 the vendored package in its manifest order, then project rules in file-name order, ordered
@@ -566,7 +580,7 @@ a check. <code>doctor</code> traces the invocation instead.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e98bfd44a311554d05a0274c6ca1ba6b8c5c9bf3" class="font-mono underline">e98bfd4</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/48a546ebbf83cc8f41079b54146a34bf370ab029" class="font-mono underline">48a546e</a> · inputs <span class="font-mono">146dadcb9699</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
