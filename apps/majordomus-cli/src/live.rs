@@ -35,6 +35,20 @@
 //! actually loses to the frozen picture is the commit it just made, and a commit always
 //! moves git. `git add` moves it too: the staging index is watched.
 //!
+//! # The obligation that comes with watching: this process must not write them
+//!
+//! `git status` and `git diff` refresh the staging index as a side effect, writing back
+//! stat data that has gone stale or is *racily* close to the index's own modification
+//! time. So a served page that asked git about the working tree moved the stamp itself,
+//! and the *next* request paid a whole [`crate::app::App::load`] for a repository that had
+//! not moved — an observer disturbing what it observes, and charging the following caller
+//! for it. Measured over the Cockpit page sweep against a committed fixture:
+//! `repository_scans` 1 → 2 → 4 across `/cockpit/continuity` and `/cockpit/health`, with
+//! `.git/index`'s modification time moving at exactly those two points and its size never
+//! changing. Every read this crate makes therefore goes through
+//! [`crate::git::read_only`], which is that one rule made into a constructor;
+//! `a_page_costs_no_rebuild_of_anything_canonical` holds it, page by page.
+//!
 //! # What a new generation costs, and who pays it
 //!
 //! Rebuilding is a whole [`crate::app::App::load`]: discovery, every declared file read
@@ -192,9 +206,7 @@ impl Stamp {
 }
 
 fn resolve(root: &Path, flag: &str) -> Option<PathBuf> {
-    let out = std::process::Command::new("git")
-        .arg("-C")
-        .arg(root)
+    let out = crate::git::read_only(root)
         .args(["rev-parse", flag])
         .output()
         .ok()?;
