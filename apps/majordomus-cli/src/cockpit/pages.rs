@@ -2843,7 +2843,11 @@ pub fn release(ctx: &Context) -> Page {
                 el("div").class("mj-grid").child(card(
                     "Nothing to measure against yet",
                     el("div")
-                        .child(el("p").class("mj-prose").text(&reason))
+                        // `mj-identity`: the reason names what could not be read, and that
+                        // is an identity — a 40-character commit, or a ref — with no space
+                        // to break at. The cockpit job checks out one commit deep, so this
+                        // is the page CI renders, and it is the one that overflowed 320px.
+                        .child(el("p").class("mj-prose mj-identity").text(&reason))
                         .child(el("p").class("mj-note").text(
                             "The smallest allowed version is measured against the surface the last release published. Until there is one — a release record, and the registry committed at its commit — there is no baseline, and no bump can be derived. A version named deliberately is still written: `majordomus release bump --level minor`.",
                         )),
