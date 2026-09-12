@@ -387,7 +387,7 @@ fn draw(environment: &RepositoryEnvironment, mode: BannerMode, presentation: &Pr
     };
     // Standard error: direnv reads standard output as the environment it is applying.
     eprint!("{text}");
-    let digest = environment.digest();
+    let digest = environment.news_digest();
     if seen.as_deref() != Some(digest.as_str()) {
         let mut cache = Cache::load(root, local_half);
         cache.tiers.last_rendered_digest = Some(digest);
@@ -525,10 +525,16 @@ fn enter_command(
     // snapshot reports it and `doctor` refuses the commit — so the switch takes its
     // default and the resolver is told nothing was read.
     let policy = LoadedPolicy::load(&repository).ok();
-    let (environment, share) = resolve_fast_in(repo, &repository, policy.as_ref());
+    let (mut environment, share) = resolve_fast_in(repo, &repository, policy.as_ref());
 
-    if with_runtime {
-        ensure_runtime(&repository, policy.as_ref(), wait);
+    if with_runtime && ensure_runtime(&repository, policy.as_ref(), wait) {
+        // The snapshot read the lease before the ensure judged it: a lease this entry has
+        // just replaced names a server that is not this checkout's — one that lost the
+        // lease, or runs code no longer on disk — and the snapshot's connection attempt
+        // cannot tell that from the real one. Its addresses would be a green mark and a
+        // `MAJORDOMUS_URL` for the wrong process; the new server's arrive through the
+        // entry file's `watch_file` once it publishes them.
+        superseded(&mut environment);
     }
 
     let share = share.map(|s| s.dir().display().to_string());
@@ -557,16 +563,17 @@ fn enter_command(
 /// It never returns a failure. Nothing about the environment a shell is being handed depends
 /// on the runtime, and an entry that exited non-zero because a server did not come up would
 /// leave direnv reporting that the whole environment failed — over a process the next `cd`
-/// will start.
-fn ensure_runtime(repository: &Repository, policy: Option<&LoadedPolicy>, wait: Duration) {
+/// will start. What it returns is whether it started a server, which means that whatever
+/// the lease named before this call is not what serves this checkout.
+fn ensure_runtime(repository: &Repository, policy: Option<&LoadedPolicy>, wait: Duration) -> bool {
     // Anything but "off" is `auto`: an unset variable, and a value nobody here
     // understands. A typo in a shell profile must not silently turn the runtime off,
     // and it must not fail the entry either.
     if let Ok("off") = std::env::var(RUNTIME_ENV).as_deref() {
-        return;
+        return false;
     }
     if policy.is_some_and(|p| !p.policy.session.ensure_server_on_start) {
-        return;
+        return false;
     }
     let c = match crate::commands::serve::converge(
         repository,
@@ -581,26 +588,50 @@ fn ensure_runtime(repository: &Repository, policy: Option<&LoadedPolicy>, wait: 
             eprintln!(
                 "majordomus: the runtime could not be ensured: {e}; `majordomus serve status` says where it stands"
             );
-            return;
+            return false;
         }
     };
     if c.ready() {
-        return;
+        return false;
     }
     if c.started {
-        eprintln!(
-            "majordomus: nothing was serving this checkout; a server is starting (log: {})",
-            c.log.display()
-        );
-        return;
+        // "Nothing was serving" is true only of an absent lease. A stale or outdated one
+        // names a process that may well still answer, and saying nothing was there sends a
+        // reader looking for a server that never existed instead of the one that did.
+        match (&c.standing, &c.reason) {
+            (crate::capability::builtin::server::ServerStanding::Absent, _) | (_, None) => {
+                eprintln!(
+                    "majordomus: nothing was serving this checkout; a server is starting (log: {})",
+                    c.log.display()
+                )
+            }
+            (_, Some(reason)) => eprintln!(
+                "majordomus: {reason}; a server is starting in its place (log: {})",
+                c.log.display()
+            ),
+        }
+        return true;
     }
     if c.standing == crate::capability::builtin::server::ServerStanding::Starting {
-        return;
+        return false;
     }
     eprintln!(
         "majordomus: the runtime did not converge: {}; `majordomus serve status` says where it stands",
         c.reason.as_deref().unwrap_or("no reason was given")
     );
+    false
+}
+
+/// Forget the addresses a snapshot read from a lease that entry has since replaced, and
+/// where they came from: the services are as they are before any server has published.
+fn superseded(environment: &mut RepositoryEnvironment) {
+    for service in &mut environment.services {
+        service.url = None;
+        service.availability = ServiceAvailability::NotRunning;
+    }
+    environment
+        .provenance
+        .retain(|p| !p.field.starts_with("services."));
 }
 
 /// The resolution each subcommand uses.
