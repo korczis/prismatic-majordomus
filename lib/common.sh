@@ -736,16 +736,42 @@ mj_event_requires() {
 }
 
 # ---------------------------------------------------------------- ledger
+# The keys this function writes itself. A payload may not carry one of them: JSON permits a
+# duplicated key and says nothing about which wins, so a line with two `"event"` keys means
+# different things to different readers — and this repository had exactly that. The receipt
+# every lifecycle hook writes passed a payload field literally named `event` (the provider's
+# own event name), producing
+#
+#   {"ts":...,"event":"provider.event.received",...,"provider":"claude-code","event":"start"}
+#
+# which `history --validate` read as the event `start`, a name share/events.yaml does not
+# declare, and refused with exit 10. Written by d5d541850; it never reached CI because no
+# runner's ledger holds a provider receipt.
+#
+# Declared here rather than checked at each call site, because the whole point is that no
+# caller can get it wrong. Every entry is matched with its opening quote, so a longer key
+# ending in a reserved name (`provider_session`, `session_path`, `ahead`) is not a
+# collision; mj_json_esc turns a quote inside a value into `\"`, so a reserved name appearing
+# inside a string is not one either.
+MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session'
+
 # mj_ledger_append event 'extra json fields without braces'
-# The event must be one share/events.yaml declares, and must carry the payload keys that
-# entry requires. Both are internal errors rather than findings: a command that writes an
-# event the vocabulary does not define is a bug in Majordomus, not a fact about the
-# repository being supervised.
+# The event must be one share/events.yaml declares, must carry the payload keys that entry
+# requires, and must not carry a key from the envelope. All three are internal errors rather
+# than findings: a command that writes an event the vocabulary does not define, or that
+# overwrites the envelope it is being wrapped in, is a bug in Majordomus and not a fact
+# about the repository being supervised.
 mj_ledger_append() {
   local ev="$1" extra="${2:-}" line sid k
   mj_events_load
   mj_event_known "$ev" || mj_die "$MJ_EX_INTERNAL" \
     "unregistered event '$ev'; declare it in share/events.yaml or use one of: $(mj_event_ids | tr '\n' ' ')"
+  for k in $MJ_LEDGER_ENVELOPE_KEYS; do
+    case "$extra" in *"\"$k\":"*)
+        mj_die "$MJ_EX_INTERNAL" \
+          "event '$ev' carries the payload field '$k', which is a ledger envelope key; every line would carry it twice and readers would disagree about which one it means — rename the field (the provider receipt's own '$k' became 'provider_$k')" ;;
+    esac
+  done
   for k in $(mj_event_requires "$ev"); do
     case "$extra" in *"\"$k\":"*) ;;
       *) mj_die "$MJ_EX_INTERNAL" "event '$ev' is missing the required field '$k'" ;;
@@ -1170,8 +1196,17 @@ mj_resolve_latest() {
 # Position of a record in the ledger, zero-padded, or 000000 when nothing recorded it.
 # created_at has second resolution, so two records written inside one second would
 # otherwise resolve in an order decided by a random filename suffix. The ledger is
-# append-only and written in the order the commands ran, which makes it the one portable
-# monotonic tiebreak available without sub-second timestamps.
+# append-only and written in the order the commands ran, which makes it a monotonic
+# tiebreak for "which of these did this machine write last".
+#
+# That, and nothing more: .ai/local/state/ledger.jsonl is gitignored, machine-local and
+# rotated under a retention cap, so this number is not a fact about the repository and
+# **must never order anything that gets published**. mj_session_keys used it, and the
+# committed order of six session records sharing a created_at second was therefore decided
+# by a line number no clone could reproduce; it now breaks that tie on the record's own name
+# instead. The one caller left is mj_resolve_latest, which answers "the record most
+# relevant to this worktree right now" — a question about this machine, whose answer is
+# never committed.
 mj_record_rank() {
   local base n
   base="$(basename "$1")"
@@ -1272,7 +1307,32 @@ mj_freshness_is_history() {
   return 1
 }
 
-# value of a flat JSON key on one ledger line: mj_json_field LINE KEY
+# One awk function, prepended to any program that reads a ledger line, so that every reader
+# of a key agrees on which occurrence of it is the answer: the FIRST, which is the one in the
+# envelope that `mj_ledger_append` wrote.
+#
+# The idiom it replaces is `sub(/^.*"event":"/, "", e)`. awk's `.*` is greedy, so that
+# strips up to the LAST occurrence and returns the payload's value instead of the
+# envelope's. It was in three readers, and on the provider receipts — which carried
+# `"event"` twice until this was fixed — `history --validate` used it to read the event name
+# as `start`, refusing a line the registry does in fact declare. A reader that takes the
+# last of a duplicated key stays wrong about a line written by an older version, so the
+# writer's guard is not a reason to keep it.
+#
+# Prepended rather than copied: three copies of one extraction is how two of them came to
+# disagree with mj_history_render, which had it right all along.
+MJ_LEDGER_FIELD_AWK='
+  function mjfield(line, key,   r) {
+    if (match(line, "\"" key "\":\"")) { r = substr(line, RSTART + RLENGTH); sub(/".*/, "", r); return r }
+    if (match(line, "\"" key "\":"))   { r = substr(line, RSTART + RLENGTH); sub(/[,}].*/, "", r); return r }
+    return ""
+  }
+'
+
+# Value of a flat JSON key on one ledger line: mj_json_field LINE KEY. Already the first
+# occurrence — it is `match`, not a greedy `sub` — and left alone because it distinguishes an
+# absent key (nothing printed) from one whose value is the empty string (an empty line),
+# which mjfield's single return value cannot.
 mj_json_field() {
   printf '%s' "$1" | awk -v k="$2" '
     { s=$0

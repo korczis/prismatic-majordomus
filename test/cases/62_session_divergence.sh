@@ -48,9 +48,19 @@ expect_exit 0 "$MJ" session list
 first_listed="$(printf '%s\n' "$LAST_OUT" | head -1 | awk '{ print $2 }')"
 [ "$first_listed" = "$sid2" ] || { echo "    touching an old record reordered the list"; exit 1; }
 
-# --- two records inside one second still order deterministically, because the ledger is
-#     append-only and written in the order the commands ran. created_at has one-second
-#     resolution, so without that tiebreak the order would come from a random filename.
+# --- two records inside one second still order deterministically, and they order by the
+#     record's own name. created_at has one-second resolution, so something has to break the
+#     tie; it has to be something a clone reproduces.
+#
+#     It used to be the ledger, and this section used to require that. The ledger is
+#     .ai/local/state/ledger.jsonl: gitignored, machine-local, rotated under a retention
+#     cap. This order is published — it is site/data/generated/sessions.json and the `weight`
+#     of every page under site/content/sessions/, both committed and both compared byte for
+#     byte by `scripts/generate-site-data --check` — so a ledger tiebreak made the committed
+#     order a fact about whichever machine last generated it. The six records in this
+#     repository that share a created_at second were ordered by a line number no clone could
+#     reproduce, and CI only stayed green because a runner's ledger names none of them.
+#     test/cases/278 holds the whole property; this section holds the tiebreak itself.
 #
 #     The collision is forced rather than hoped for. Two closes a fraction of a second apart
 #     land in the same second only sometimes, and a case that exercises its own hardest path
@@ -65,15 +75,15 @@ done
 [ "$(sed -n 's/^created_at: //p' "$r3")" = "$(sed -n 's/^created_at: //p' "$r4")" ] \
   || { echo "    the timestamp collision was not applied"; exit 1; }
 
-# The tiebreak must be the LEDGER and not the filename, and the two normally agree — the
-# filename leads with the same timestamp, so an implementation that fell through to it would
-# look right. So make them disagree: swap the two close events in the ledger, which makes r3
-# the later one there while r4 is still the later one by filename. Only an implementation
-# that reads the ledger puts r3 first.
+# The tiebreak must be the record's own NAME and not the ledger, and the two normally agree
+# — the ledger is written in the order the records are — so an implementation that read the
+# ledger would look right. So make them disagree: swap the two close events in the ledger,
+# which makes r3 the later one there while r4 is still the later one by name. Only an
+# implementation that reads nothing machine-local keeps r4 first.
 LED=.ai/local/state/ledger.jsonl
 b3="$(basename "$r3")"; b4="$(basename "$r4")"
 grep -q "$b3" "$LED" && grep -q "$b4" "$LED" \
-  || { echo "    the ledger does not name the records whose order it decides"; exit 1; }
+  || { echo "    the ledger does not name the records, so swapping it discriminates nothing"; exit 1; }
 awk -v b3="$b3" -v b4="$b4" '
   index($0, b3) { l3 = $0; next }
   index($0, b4) { print; print l3; next }
@@ -85,8 +95,12 @@ tail -2 "$LED" | head -1 | grep -q "$b4" || { echo "    the ledger swap did not 
 cmp -s list1.txt list2.txt || { echo "    two listings of the same store disagreed"; exit 1; }
 o3="$(grep -n "$sid3" list1.txt | cut -d: -f1)"; o4="$(grep -n "$sid4" list1.txt | cut -d: -f1)"
 [ -n "$o3" ] && [ -n "$o4" ] || { echo "    a record is missing from the listing"; exit 1; }
-[ "$o3" -lt "$o4" ] || {
-  echo "    inside one second the order came from the filename, not from the ledger"
+# r4 closed after r3, so its name sorts higher, so it is listed first — and the ledger now
+# says the opposite, which is the whole point of the swap above.
+[ "$o4" -lt "$o3" ] || {
+  echo "    inside one second the order came from the machine-local ledger, not from the"
+  echo "    record's own name — and this order is committed, so it must not depend on which"
+  echo "    machine generated it (see test/cases/278_published_order_is_tracked.sh)"
   cat list1.txt; exit 1; }
 
 # --- a rewritten history makes every view say `diverged`, and say it loudly
