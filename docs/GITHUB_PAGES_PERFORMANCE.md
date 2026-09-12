@@ -195,11 +195,59 @@ scripts/pages paths | sed 's/^/      - /'     # paste into the paths: block of p
 ### Budgets
 
 Budgets are controlled latency only, in seconds, warm, on a GitHub-hosted Linux runner. They
-were set from measurement — the local benchmark above and the timing rows every deployment
-writes — and a change to one is expected to cite the run that justified it
-(`project.performance-evidence`). A cold run pays for caches it cannot restore and has its own,
-looser bound. The end-to-end target is reported against every deployment and **not** enforced,
-because the larger half of it is GitHub's.
+are set from measurement — the timing rows every deployment writes — and a change to one is
+expected to cite the run that justified it (`project.performance-evidence`). A cold run pays
+for caches it cannot restore and has its own, looser bound. The end-to-end target is reported
+against every deployment and **not** enforced, because the larger half of it is GitHub's.
+
+Two structural rules, both of which the first set of budgets broke and
+`test/cases/97_pages_fast_path.sh` now asserts:
+
+- **Every row the run measures has a budget.** The timings file gets six rows —
+  `checkout-setup` from the workflow, `fingerprint` and `build` from `scripts/pages build`,
+  `check` and `local-check` from `scripts/pages check`, `publish` from the workflow. The
+  original model named `checkout` and `setup` separately and named nothing for `fingerprint`
+  or `local-check`, so three of the six rows of every job summary printed an empty budget
+  cell while still being summed into the total.
+- **`controlled` is reachable by adding up its own rows.** It was 75 while the phases summed
+  to 105, which made the aggregate stricter than the parts it is made of: a run could be
+  inside every single phase budget and still breach, with nothing to point at.
+
+#### The re-derivation of 2026-09-12
+
+The budgets written when this path was built were never changed after it, and by 2026-09-12
+they were failing every deployment. They came from
+`.ai/repo/benchmarks/pages/baseline.macos-arm64.json` — a local macOS arm64 laptop, five
+samples, `check` median 9799 ms — over a site of **417 routes**. The site `check` walks is now
+**1021 routes**, 2.45x that baseline, and that directory's own README says a baseline of one
+machine says nothing about another.
+
+The replacement is measured on the machine it judges: twenty-five runs of `pages.yml` that
+reached the publish step, 2026-09-10T22:56Z to 2026-09-12T06:38Z, read from
+`gh api repos/korczis/prismatic-majordomus/actions/runs/<id>/jobs`.
+
+<!-- Columns are left-aligned deliberately. A right-aligned markdown column renders as a
+     `style="text-align: right"` attribute, which the site's custom CSS policy forbids and
+     `scripts/site-check` refuses on the publication path — it would fail the deploy. -->
+
+| row | min | median | p90 | max | budget |
+|---|---|---|---|---|---|
+| `checkout-setup` | 7 | 10 | 12 | 15 | 18 |
+| `fingerprint` | 0 | 0 | 0 | 1 | 3 |
+| `build` | 4 | 4 | 5 | 6 | 8 |
+| `check` | 30 | 38 | 46 | 47 | 60 |
+| `local-check` | 0 | 0 | 0 | 1 | 3 |
+| `publish` | 13 | 20 | 24 | 24 | 28 |
+| **controlled** | **60** | **75** | **84** | **86** | **120** |
+
+**Nothing had regressed.** Over those same runs `checkout-setup` held at 7–15 s and `build` at
+4–6 s, so both cache domains below restore; and `check` cost 41 ms per route at 896 routes on
+2026-09-10 (37 s) against 45 ms per route at 1022 routes on 2026-09-12 (46 s). Its growth is
+the corpus it walks, not a defect in how it walks it. What had gone stale was the budget.
+
+The cold bound moved with it. No cold run appears in that window, so it keeps the allowance the
+old pair expressed — 180 against a warm 75, i.e. 105 s for an uncached `npm ci` and Zola
+download — over the new warm budget: 120 + 105 = 225.
 
 ## Caches
 
@@ -253,6 +301,58 @@ in those words rather than reporting a failure: the remainder is the Actions que
 GitHub's own Pages build, which this repository does not spend, and that is an external limit
 rather than a regression here.
 
+### What makes the run red
+
+A deploy run is red when, and only when, the **deployment** failed. That was not true until
+2026-09-12. `scripts/pages report` exits 10 on a budget breach, and the workflow ran it as an
+ordinary step *after* the push to `gh-pages` — so a measurement of work already finished became
+the verdict on that work.
+
+Between 2026-09-11T22:36Z and 2026-09-12T06:38Z, **eleven** runs of this workflow reported
+`failure` from that step (`90a875cf2`, `8ce9d3157`, `e98bfd44a`, `48a546ebb`, `0136bd9eb`,
+`b144b2110`, `bbd5a9791`, `94a018ded`, `497d56d40`, `180687c8f`, `4a4ad6aac`). Every one of
+them had pushed `gh-pages` successfully, and the newest was verified end to end: the live site
+served `4a4ad6aac`. In the same window exactly one run genuinely failed to publish —
+`d5e27a500`, whose `build` step failed, whose `publish` step was skipped, and whose report step
+therefore **passed**, because there was almost nothing to add up.
+
+So the run that had not published was the one where the budget check was green, and it carried
+the same `failure` conclusion as the eleven that had. At the level anybody reads first — the
+tick on the commit, `gh run list`, the notification — the two were identical; only an
+annotation inside the run told them apart. And the report's Markdown goes to
+`$GITHUB_STEP_SUMMARY` rather than to the log, so opening the log gave `Process completed with
+exit code 10` with no number above it.
+
+```mermaid
+flowchart TD
+    P{"did the push to gh-pages happen?"}
+    P -- no --> R["run is RED<br/>::error Not published<br/>pages-live refuses on the next validation"]
+    P -- yes --> G{"did GitHub's own build of gh-pages error?"}
+    G -- yes --> R2["run is RED<br/>::error GitHub's Pages build errored"]
+    G -- "no, or not yet known" --> N["::notice Published<br/>run is GREEN"]
+    N --> B{"controlled path within budget?"}
+    B -- yes --> OK["Pages SLO: PASS in the job summary"]
+    B -- no --> W["run stays GREEN<br/>::warning naming the total and the phase that spent it<br/>OVER BUDGET in the summary, pages-slo in the log"]
+```
+
+The budget is not softened anywhere else. `scripts/pages report` still exits 10 on a breach for
+a person and for any gate that calls it; `--advisory` is passed by exactly one caller — the
+post-publish step that measures a deployment which has already happened — and
+`test/cases/97_pages_fast_path.sh` asserts that it stays exactly one. A breach still produces,
+on every run:
+
+- a `::warning` annotation on the run, carrying the total, the budget and the phase over its own;
+- the full phase table and a bold **OVER BUDGET** verdict in the job summary;
+- a `pages-slo verdict=… controlled=… budget=… over=…` line in the **log**, which is where the
+  eleven red runs above were read from and where nothing used to be printed at all;
+- `verdict`, `controlled`, `budget` and `over` as outputs of the step, for a reader that is not
+  a person.
+
+This is the same division the publication probe above already makes, and for the same reason: a
+gate on a deployment that has already happened is a gate that gets waived. What refuses a
+publication that never happened is the `pages-live` gate of `.ai/repo/ci/gates.yaml`, on the
+next validation of master.
+
 ## Locally
 
 The same commands CI runs. There is no GitHub-only build semantics.
@@ -297,10 +397,14 @@ trade is worth revisiting — with the measurement, not with the preference.
 
 ## Remaining bottlenecks, by expected benefit
 
-1. **`site-check`, 9.7 s of a 10.3 s controlled build.** Its remaining cost is the per-record
-   loops that shell out to `jq` once per claim, command, capability, use case and plan record.
-   The same treatment that took the per-page loops from 25 s to under a second applies:
-   one `jq` program per family instead of one process per record.
+1. **`site-check`, 46 s of an 86 s controlled path on a runner** (9.7 s of 10.3 s locally, on
+   a laptop, over a site less than half the size). It is the only phase that grows with the
+   corpus: 41 ms per route at 896 routes, 45 ms per route at 1022. Its remaining cost is the
+   per-record loops that shell out to `jq` once per claim, command, capability, use case and
+   plan record. The same treatment that took the per-page loops from 25 s to under a second
+   applies: one `jq` program per family instead of one process per record. Until that lands,
+   the site adding routes is the thing that moves `controlled`, and the budget above is what
+   will say so.
 2. **The Actions queue.** On this repository, with several worktrees pushing at once, runs
    have waited minutes for a runner (`gh run list --json createdAt,startedAt`). Nothing in
    these files shortens that. The escalation, if the controlled path is already comfortably
@@ -319,7 +423,17 @@ trade is worth revisiting — with the measurement, not with the preference.
   trigger follow from it.
 - A new path that can change the site goes into a class of `gates.yaml` that names the
   `site-build` gate; then regenerate the workflow's `paths:` block as above.
-- A new budget, or a changed one, goes into `.ai/repo/ci/pages.yaml` and cites the run that
-  justified it.
+- A new budget, or a changed one, goes into `.ai/repo/ci/pages.yaml` and cites the runs that
+  justified it, in the file, with their numbers — the block there is the worked example. A
+  budget derived on a laptop does not bound a runner, and one derived over a site of half the
+  size does not bound this one. `controlled` must stay at least the sum of its phases, and
+  every row the run measures must have a key.
+- A new timing row — a `row` or `timed` call in `scripts/pages`, or a `printf 'pages\t…'` in
+  the workflow — needs a budget key of the same name in the same commit, or it is summed into
+  the total while showing an empty budget cell. `test/cases/97_pages_fast_path.sh` refuses
+  that.
+- Nothing measured after the push to `gh-pages` may become the run's verdict. The run is red
+  for a failed deployment and for nothing else; a latency finding is a `::warning`, a summary
+  and a machine-readable line.
 - A new check over the published bytes goes into `scripts/site-check`, which the publication
   path runs. A new check over the repository goes into the gate model, which it does not.

@@ -129,8 +129,8 @@ jobs:
   # job at 13:56:12 — mid-wait, with the publication already done — so a deployment that had
   # succeeded was reported as `cancelled`.
   #
-  # The three controlled steps below bound 9 minutes between them, against the 65 seconds
-  # .ai/repo/ci/pages.yaml budgets them warm and the 180 it allows the whole controlled half
+  # The three controlled steps below bound 9 minutes between them, against the 96 seconds
+  # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
   # cold; the probe bounds 11, against a wait this repository does not control and that same
   # file says never to budget. 25 covers those 20 plus the unbounded checkout, setup and
   # report steps on a cold runner, and leaves the job's bound where it belongs: as the last
@@ -161,7 +161,7 @@ jobs:
       - name: timings
         run: |
           echo "MJ_PAGES_TIMINGS=$PWD/pages-timings.tsv" >> "$GITHUB_ENV"
-          printf 'pages\tcheckout+setup\t%s\n' "$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" > "$PWD/pages-timings.tsv"
+          printf 'pages\tcheckout-setup\t%s\n' "$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" > "$PWD/pages-timings.tsv"
 
       # the committed derived data proved current by hash, then rendered; no generation
       - name: build
@@ -272,9 +272,37 @@ jobs:
             printf '\nPublication: **not pushed** (publish step: %s). The site still serves an older\ncommit; if no newer run of this workflow follows, the pages-live gate will refuse.\n' "$PUBLISH" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - if: always()
+      # The measurement of a deployment that has already happened — and therefore a report,
+      # for the same reason the publication probe above is `continue-on-error`.
+      #
+      # Until 2026-09-12 this step was the run's verdict. `scripts/pages report` exits 10 when
+      # the controlled path is over its budget, nothing here softened that, and the step runs
+      # after the push to gh-pages — so a breach measured on work already finished turned the
+      # whole run red. Eleven runs went that way between 2026-09-11T22:36Z and
+      # 2026-09-12T06:38Z (90a875cf2, 8ce9d3157, e98bfd44a, 48a546ebb, 0136bd9eb, b144b2110,
+      # bbd5a9791, 94a018ded, 497d56d40, 180687c8f, 4a4ad6aac): every one of them pushed
+      # gh-pages successfully, and the live site was verified to serve the newest of them.
+      #
+      # The proof that this told a reader nothing is the one run in that window which really
+      # did fail to publish: d5e27a500, whose `build` step failed, whose `publish` was skipped
+      # and whose report step therefore PASSED — there was nothing to add up. The run that had
+      # not published was the one where this check was green, and it wore the same `failure`
+      # as the eleven that had. On the tick on the commit, in `gh run list` and in the
+      # notification the two were identical. This step's Markdown goes to
+      # $GITHUB_STEP_SUMMARY and not to the log, so opening the log gave `Process completed
+      # with exit code 10` with no number above it.
+      #
+      # `--advisory` keeps every number — the phase table, the total, the phase that spent it,
+      # the `pages-slo` line, this step's outputs — and makes the breach a ::warning annotation
+      # on the run instead of this run's conclusion. So the deploy job is red when, and only
+      # when, the deployment is: the publish step failing, the build failing, or GitHub's own
+      # build of gh-pages erroring. The budget's teeth are not softened anywhere else: the
+      # default contract of `scripts/pages report` is still exit 10, for a person and for any
+      # gate that calls it.
+      - id: slo
+        if: always()
         run: |
-          scripts/pages report --timings "$MJ_PAGES_TIMINGS" \
+          scripts/pages report --advisory --timings "$MJ_PAGES_TIMINGS" \
             --queue "$(( ${{ steps.t.outputs.start }} - ${{ steps.t.outputs.created }} ))" \
             --pages-build "${{ steps.public.outputs.pages_build || 'not measured' }}" \
             ${{ steps.public.outputs.end_to_end && format('--end-to-end {0}', steps.public.outputs.end_to_end) || '' }}

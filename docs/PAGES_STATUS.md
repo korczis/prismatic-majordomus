@@ -5,7 +5,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md).
 
-Generated from canonical inputs `73576914c2c3`.
+Generated from canonical inputs `0514c5699c4f`.
 
 ## Controlled budget
 
@@ -15,14 +15,14 @@ and reported beside these and never budgeted: they belong to GitHub, not to this
 
 | phase | warm budget |
 |---|---|
-| checkout | 10 s |
-| setup | 30 s |
-| build | 20 s |
-| check | 25 s |
-| publish | 20 s |
-| controlled | 75 s |
+| checkout |  s |
+| setup |  s |
+| build | 8 s |
+| check | 60 s |
+| publish | 28 s |
+| controlled | 120 s |
 
-Cold runner, whole controlled path: 180 s. Push to publicly observable, reported and not
+Cold runner, whole controlled path: 225 s. Push to publicly observable, reported and not
 enforced: 60 s.
 
 ## What starts a publication
