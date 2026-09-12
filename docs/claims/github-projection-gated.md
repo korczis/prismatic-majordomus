@@ -31,7 +31,7 @@ Ratcheted against `.ai/repo/ci/github-drift-baseline.txt`:
 | `adopt` | a counterpart carrying no identity marker |
 
 The baseline may fall and may never rise. Writing it is a deliberate act, in the same idiom
-[`.ai/repo/enforcement-baseline.txt`](../../.ai/repo/enforcement-baseline.txt) already uses
+[`.ai/repo/claim-proof-baseline.txt`](../../.ai/repo/claim-proof-baseline.txt) already uses
 for the rules and claims that name nothing a machine can run.
 
 A gate that cannot reach the remote — no `gh`, no token, no permission — exits 12 and names
