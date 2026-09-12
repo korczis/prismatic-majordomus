@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 108,
-      "covered": 103,
+      "required": 112,
+      "covered": 107,
       "missing": 0,
       "waived": 5
     },
     {
       "scope": "http",
-      "required": 107,
-      "covered": 103,
+      "required": 111,
+      "covered": 107,
       "missing": 0,
       "waived": 4
     },
     {
       "scope": "mcp",
-      "required": 105,
-      "covered": 101,
+      "required": 109,
+      "covered": 105,
       "missing": 0,
       "waived": 4
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 333,
-      "covered": 320,
+      "required": 345,
+      "covered": 332,
       "missing": 0,
       "waived": 13
     }
@@ -127,6 +127,56 @@
         "all",
         "read-only",
         "one-program"
+      ]
+    },
+    {
+      "id": "commit.history",
+      "module": "commit",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "whole-history"
+      ]
+    },
+    {
+      "id": "commit.plan",
+      "module": "commit",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "commit.scopes",
+      "module": "commit",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "commit.validate",
+      "module": "commit",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "conventional",
+        "not-conventional",
+        "merge"
       ]
     },
     {

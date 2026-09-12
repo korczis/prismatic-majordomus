@@ -1,7 +1,7 @@
 +++
 title = "Entering the repository"
 description = "entering the repository: what converges on its own and what is asked for, the three commands of the shared server, what each standing means, what is deliberately not automatic and why, and what to run when it does not come up"
-weight = 28
+weight = 29
 [extra]
 source = "docs/ENTRY.md"
 +++

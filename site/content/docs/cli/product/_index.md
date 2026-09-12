@@ -4,7 +4,7 @@ description = "The product: what this repository's tool does for a person, as th
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 82
+weight = 87
 [extra]
 route = "/docs/cli/product/"
 command = "majordomus product"

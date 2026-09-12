@@ -22,6 +22,70 @@
 //! budget that stopped at the first thing too large would let one big file hide a hundred
 //! small relevant ones; first fit spends the ceiling and names everything it skipped, with
 //! what it would have cost, so raising the budget is an informed decision.
+//!
+//! That last paragraph is the one worth seeing run, because the difference between first
+//! fit and truncation is invisible in a report and total in effect. Below, the most
+//! relevant candidate costs twice the whole ceiling: a truncating budget would have
+//! stopped there and answered with nothing, and this one skips it, says what it would have
+//! cost, and carries on to spend the ceiling on what does fit.
+//!
+//! ```
+//! use std::collections::{BTreeMap, BTreeSet};
+//!
+//! use majordomus_cli::devcontext::budget::spend;
+//! use majordomus_cli::devcontext::select::{Candidate, Selection};
+//! use majordomus_cli::devcontext::{Discovery, ExclusionReason, Selector, Tier};
+//! use majordomus_cli::synthetic::SyntheticRepository;
+//!
+//! let repo = SyntheticRepository::small().unwrap();
+//! let index = repo.index().unwrap();
+//!
+//! // `bytes` as a fact rather than a file: the cost is the one thing this example pins
+//! let candidate = |uri: &str, relevance: f64, bytes: u64| Candidate {
+//!     uri: uri.into(),
+//!     kind: "knowledge".into(),
+//!     title: None,
+//!     tier: Tier::Knowledge,
+//!     relevance,
+//!     depth: 1,
+//!     discovered_by: vec![Discovery {
+//!         selector: Selector::Relation,
+//!         reason: "reached along a declared edge".into(),
+//!         via: None,
+//!         edge: Some("depends_on".into()),
+//!         depth: 1,
+//!         confidence: 1.0,
+//!         weight: 0.9,
+//!     }],
+//!     object: None,
+//!     path: None,
+//!     status: None,
+//!     facts: BTreeMap::from([("bytes".to_string(), bytes.to_string())]),
+//! };
+//!
+//! let mut candidates = BTreeMap::new();
+//! // 8000 bytes is 2000 tokens: twice the ceiling, and the more relevant of the two
+//! candidates.insert("big".to_string(), candidate("majordomus://knowledge/big", 0.9, 8_000));
+//! candidates.insert("small".to_string(), candidate("majordomus://knowledge/small", 0.5, 400));
+//! let selection = Selection { candidates, unresolved: Vec::new(), diagnostics: Vec::new() };
+//!
+//! let (s, _) = spend(&index, selection, &BTreeSet::new(), 1_000, &BTreeMap::new());
+//!
+//! // the walk did not stop at the thing that would not fit
+//! let kept: Vec<&str> = s.selected.iter().map(|e| e.uri.as_str()).collect();
+//! assert_eq!(kept, ["majordomus://knowledge/small"]);
+//!
+//! // and what it skipped is named, with what it would have cost
+//! assert_eq!(s.excluded.len(), 1);
+//! assert_eq!(s.excluded[0].uri, "majordomus://knowledge/big");
+//! assert_eq!(s.excluded[0].reason, ExclusionReason::Budget);
+//! assert_eq!(s.excluded[0].cost_tokens, 2_000, "so raising the ceiling is informed");
+//!
+//! // the ceiling was respected, and `used` is the sum of what is in the answer
+//! assert_eq!(s.budget.used_tokens, 100);
+//! assert_eq!(s.budget.remaining_tokens, 900);
+//! assert!(!s.budget.over_budget);
+//! ```
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -33,7 +97,56 @@ use super::model::{
 };
 use super::select::{version_of, Candidate, Selection};
 
-/// What the budget produced.
+/// Everything the budget decided, as four lists and the arithmetic behind them: what the
+/// session is given, what it is not and why, what collapsed into what, and what disagrees
+/// with what.
+///
+/// The four lists are disjoint views of one walk rather than four separate answers, and the
+/// one invariant that joins them to the budget is that `budget.used_tokens` is exactly the
+/// sum of `selected`'s costs — nothing is spent that is not in the answer, and nothing is in
+/// the answer that was not spent. An under-filled context is debugged from `excluded`, not
+/// by guessing, which is why it carries a reason and a cost per row.
+///
+/// Every field is populated on every call, including with nothing reached: the per-tier
+/// spend always has all six tiers, so a reader never has to distinguish "this tier was
+/// empty" from "this tier is missing from the answer".
+///
+/// ```
+/// use std::collections::{BTreeMap, BTreeSet};
+///
+/// use majordomus_cli::devcontext::budget::{spend, Spend};
+/// use majordomus_cli::devcontext::select::Selection;
+/// use majordomus_cli::devcontext::{Tier, DEFAULT_BUDGET_TOKENS};
+/// use majordomus_cli::model::Diagnostic;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let index = repo.index().unwrap();
+/// let nothing = Selection {
+///     candidates: BTreeMap::new(),
+///     unresolved: Vec::new(),
+///     diagnostics: Vec::new(),
+/// };
+///
+/// // the answer and what could not be read, side by side and neither an error
+/// let (s, diagnostics): (Spend, Vec<Diagnostic>) = spend(
+///     &index, nothing, &BTreeSet::new(), DEFAULT_BUDGET_TOKENS, &BTreeMap::new(),
+/// );
+///
+/// // reaching nothing is an answer, not an error, and it is a complete one
+/// assert!(s.selected.is_empty() && s.excluded.is_empty());
+/// assert!(s.deduplicated.is_empty() && s.conflicts.is_empty());
+/// assert!(diagnostics.is_empty());
+///
+/// // the per-tier spend is always total, so no tier is merely absent
+/// let tiers: Vec<Tier> = s.budget.tiers.iter().map(|t| t.tier).collect();
+/// assert_eq!(tiers, Tier::ORDER.to_vec());
+///
+/// // and the invariant that ties the lists to the arithmetic
+/// let spent: u64 = s.selected.iter().map(|e| e.cost_tokens).sum();
+/// assert_eq!(s.budget.used_tokens, spent);
+/// assert_eq!(s.budget.remaining_tokens, DEFAULT_BUDGET_TOKENS);
+/// ```
 pub struct Spend {
     /// What to give the session, in the order it was spent.
     pub selected: Vec<ContextEntry>,
@@ -93,6 +206,74 @@ fn stem(uri: &str) -> (&str, Option<u32>) {
 }
 
 /// Compile the selection into the answer: fold, decide, order, spend.
+///
+/// The four stages run in that order and none of them re-reads the repository. `seeds` is
+/// what the request asked about, and it is the one input that can push the answer over its
+/// ceiling: a seed is never dropped for budget, and neither is the policy or the scope, so
+/// `limit` bounds what the budget *chooses* and not what it must keep. When the entries it
+/// may not drop cost more than the limit, the answer says `over_budget` rather than
+/// returning a context missing the thing it was compiled about.
+///
+/// `supersedes` maps an identifier to the identifiers it declares it supersedes, and is
+/// what turns two versions of one thing in the answer into one entry and a recorded
+/// conflict. The diagnostics that come back alongside are what could not be read — never an
+/// error, because an absent source is an answer.
+///
+/// ```
+/// use std::collections::{BTreeMap, BTreeSet};
+///
+/// use majordomus_cli::devcontext::budget::spend;
+/// use majordomus_cli::devcontext::select::{Candidate, Selection};
+/// use majordomus_cli::devcontext::{Discovery, Selector, Tier};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let index = repo.index().unwrap();
+///
+/// let seed_uri = "majordomus://issue/I0301";
+/// let candidate = Candidate {
+///     uri: seed_uri.into(),
+///     kind: "issue".into(),
+///     title: Some("the thing being worked on".into()),
+///     tier: Tier::Task,
+///     relevance: 1.0,
+///     depth: 0,
+///     discovered_by: vec![Discovery {
+///         selector: Selector::Seed,
+///         reason: "named in the request".into(),
+///         via: None,
+///         edge: None,
+///         depth: 0,
+///         confidence: 1.0,
+///         weight: 1.0,
+///     }],
+///     object: None,
+///     path: None,
+///     status: None,
+///     // 40_000 bytes is 10_000 tokens, against a ceiling of 10
+///     facts: BTreeMap::from([("bytes".to_string(), "40000".to_string())]),
+/// };
+/// let selection = Selection {
+///     candidates: BTreeMap::from([(seed_uri.to_string(), candidate)]),
+///     unresolved: Vec::new(),
+///     diagnostics: Vec::new(),
+/// };
+/// let seeds = BTreeSet::from([seed_uri.to_string()]);
+///
+/// let (s, _) = spend(&index, selection, &seeds, 10, &BTreeMap::new());
+///
+/// // the seed survives a ceiling it does not fit in: a context that lost the thing it was
+/// // compiled about is not a smaller answer, it is the wrong one
+/// assert_eq!(s.selected.len(), 1);
+/// assert!(s.selected[0].required);
+/// assert!(s.excluded.is_empty());
+///
+/// // and the answer says so rather than pretending it stayed inside the budget
+/// assert!(s.budget.over_budget);
+/// assert_eq!(s.budget.used_tokens, 10_000);
+/// assert_eq!(s.budget.required_tokens, 10_000, "all of it is undroppable");
+/// assert_eq!(s.budget.remaining_tokens, 0, "floored, never negative");
+/// ```
 pub fn spend(
     index: &Index,
     sel: Selection,

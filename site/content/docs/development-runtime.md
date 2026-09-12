@@ -1,7 +1,7 @@
 +++
 title = "The development runtime"
 description = "the development runtime: which program owns the semantics of the plan, tasks, sessions, context, executions, peers, evidence and completion, the measured inventory of every one of them, the storage each is decided to keep, the two event tiers, the derivation chain anything exposed must follow, what each surface may and may not decide, and the ranked gaps between that boundary and the code"
-weight = 35
+weight = 36
 [extra]
 source = "docs/DEVELOPMENT_RUNTIME.md"
 +++
