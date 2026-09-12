@@ -1,7 +1,7 @@
 +++
 title = "objects.list"
 description = "List the declarative objects of the repository's AI layer, optionally by kind or tag."
-weight = 62
+weight = 66
 slug = "objects-list"
 [extra]
 id = "objects.list"

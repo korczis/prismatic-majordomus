@@ -51,6 +51,40 @@
 //! engine for it in this file would be the second source of truth ADR 0052 names. What this
 //! module reports is what it can observe without an opinion: a timestamp as recorded, a
 //! count, a path that exists or does not.
+//!
+//! # The shape of the module, and the constraint it is under
+//!
+//! Two of the paragraphs above are properties of the declaration rather than intentions,
+//! so they can be read off it. Every one of the five capabilities is served — over HTTP and
+//! over MCP — and **none of them declares a command line**, which is what "served, never
+//! published" amounts to mechanically: a command line is how a value reaches a script, a
+//! log and eventually a commit, and nothing under `.ai/local/` may take that path.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::lifecycle;
+//!
+//! let m = lifecycle::module();
+//! assert_eq!(m.id.as_str(), "lifecycle");
+//!
+//! // declaration order, which is the order the five are read in
+//! let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
+//! assert_eq!(ids, [
+//!     "lifecycle.episodes",
+//!     "lifecycle.recovery",
+//!     "lifecycle.runtime",
+//!     "lifecycle.providers",
+//!     "lifecycle.closed",
+//! ]);
+//!
+//! // served everywhere a worker in front of this checkout can reach, and nowhere a
+//! // script can: the local half of the layer never becomes a committed value
+//! for e in &m.capabilities {
+//!     let id = e.capability.id.as_str();
+//!     assert!(e.capability.exposure.http.is_some(), "{id} is not served over HTTP");
+//!     assert!(e.capability.exposure.mcp.is_some(), "{id} is not served over MCP");
+//!     assert!(e.capability.exposure.cli.is_none(), "{id} declares a command line");
+//! }
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -101,6 +135,25 @@ const CLOSED_WINDOW: usize = 20;
 /// Guessing would produce exactly the confident-and-wrong answer this subsystem exists to
 /// avoid, so the vocabulary below is the observable one — where the file is, whose worktree
 /// it names, and whether the pointer follows it — and `note` always says which.
+///
+/// Read as a scale, the four run from "this checkout's own work" to "nobody's work any
+/// more", and only the last is a fault: `current` and `open` are both this worktree's live
+/// episodes and differ only in which one the pointer happens to aim at, `foreign` belongs to
+/// another worktree and is reported rather than adopted, and `stranded` is the one that
+/// needs a person, because nothing can close it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::EpisodeStanding;
+///
+/// // the standings that are somebody's live work, against the one that is nobody's
+/// let live = [EpisodeStanding::Current, EpisodeStanding::Open, EpisodeStanding::Foreign];
+/// assert!(live.iter().all(|s| *s != EpisodeStanding::Stranded));
+///
+/// // serialised as the word `as_str` gives, so the two renderings cannot drift apart
+/// for s in [EpisodeStanding::Current, EpisodeStanding::Foreign, EpisodeStanding::Stranded] {
+///     assert_eq!(serde_json::to_value(s).unwrap(), serde_json::json!(s.as_str()));
+/// }
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -121,11 +174,18 @@ pub enum EpisodeStanding {
 }
 
 impl EpisodeStanding {
-    /// The word as serialised.
+    /// The word this standing is reported and serialised under. One spelling for the
+    /// value, so that the Cockpit, the API and MCP name a stranded episode identically
+    /// and a reader who learned the vocabulary once has learned it everywhere.
     ///
     /// ```
     /// use majordomus_cli::capability::builtin::lifecycle::EpisodeStanding;
     /// assert_eq!(EpisodeStanding::Stranded.as_str(), "stranded");
+    /// // the serialised form is this word, not a second rendering of the same value
+    /// assert_eq!(
+    ///     serde_json::to_value(EpisodeStanding::Stranded).unwrap(),
+    ///     serde_json::json!(EpisodeStanding::Stranded.as_str()),
+    /// );
     /// ```
     pub fn as_str(self) -> &'static str {
         match self {
@@ -138,6 +198,42 @@ impl EpisodeStanding {
 }
 
 /// One open episode, as its file records it and as the ledger has seen it.
+///
+/// Everything here is recorded rather than derived, and almost everything is optional,
+/// which is the point: an episode opened by hand has no provider, a worker that supplied no
+/// identity has none, and an episode that opened and did nothing has no ledger line and so
+/// no `last_activity`. Each of those is ordinary and none is a fault, so each is carried as
+/// absence — the empty fields are skipped on the wire — and a reader must handle their
+/// absence rather than expect a placeholder.
+///
+/// The two fields that are always there are `standing` and `note`: where the episode stands,
+/// and why it stands there in words. A standing a reader cannot act on is the failure this
+/// subsystem was corrected for, so `note` is never empty.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::{Episode, EpisodeStanding};
+/// use serde_json::json;
+///
+/// // the smallest true record: an episode opened by hand that has written nothing yet
+/// let e: Episode = serde_json::from_value(json!({
+///     "session_id": "s-0001",
+///     "path": ".ai/local/state/sessions-open/by-hand.yaml",
+///     "standing": "open",
+///     "events": 0,
+///     "note": "open in this worktree; the pointer names another episode",
+/// })).unwrap();
+///
+/// assert_eq!(e.standing, EpisodeStanding::Open);
+/// assert!(e.provider.is_empty(), "no provider session owns a hand-opened episode");
+/// assert!(e.last_activity.is_empty(), "it has written no ledger line");
+/// assert!(e.tasks.is_empty(), "work outside a task is permitted");
+/// assert!(!e.note.is_empty(), "a standing always says why");
+///
+/// // and absence stays absence: the empty fields are not serialised back as ""
+/// let wire = serde_json::to_value(&e).unwrap();
+/// assert!(wire.get("provider").is_none());
+/// assert_eq!(wire["events"], 0, "a count of zero is a measurement, so it is kept");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Episode {
     /// The episode id the ledger stamps on every line this worker wrote.
@@ -196,7 +292,47 @@ pub struct Episode {
     pub note: String,
 }
 
-/// Every open episode of this checkout's store.
+/// Every open episode of this checkout's store — the answer `continuity.state` cannot give,
+/// because it reads the pointer and this reads the store.
+///
+/// `current` is the one episode the pointer resolves to, and it is one row of `episodes`
+/// rather than a separate thing: the whole correction this type carries is that the pointed-at
+/// episode is *a* member of the set and not the set. On the day this was written the store
+/// held five open episodes in one checkout and every surface could name one of them.
+///
+/// `present: false` is a fresh clone, which is not a fault — nobody has opened an episode
+/// here yet — and is reported as itself rather than as an error.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::Episodes;
+/// use serde_json::json;
+///
+/// // a clone in which no episode has ever been opened: absence, answered as absence
+/// let fresh: Episodes = serde_json::from_value(json!({
+///     "present": false,
+///     "store": ".ai/local/state/sessions-open",
+///     "worktree": "example/a-fresh-clone",
+/// })).unwrap();
+/// assert!(!fresh.present);
+/// assert!(fresh.episodes.is_empty() && fresh.current.is_empty());
+/// assert!(fresh.findings.is_empty(), "nothing to warn about; it is simply new");
+///
+/// // and a store with work in it: `current` names one of the rows, never a sixth thing
+/// let busy: Episodes = serde_json::from_value(json!({
+///     "present": true,
+///     "store": ".ai/local/state/sessions-open",
+///     "worktree": "example/wt",
+///     "current": "s-0002",
+///     "episodes": [
+///         {"session_id": "s-0001", "path": "a.yaml", "standing": "open",
+///          "events": 3, "note": "this worktree, not pointed at"},
+///         {"session_id": "s-0002", "path": "b.yaml", "standing": "current",
+///          "events": 9, "note": "the pointer resolves to it"},
+///     ],
+/// })).unwrap();
+/// assert_eq!(busy.episodes.len(), 2, "the pointer is blind to the first of these");
+/// assert!(busy.episodes.iter().any(|e| e.session_id == busy.current));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Episodes {
     /// Whether the open-episode store exists. False in a fresh clone, which is not a fault.
@@ -225,6 +361,28 @@ pub struct Episodes {
 /// open record: one regular file, one episode per checkout. Seven concurrent sessions on
 /// 2026-09-09 produced one record between them under that layout. A regular file here today
 /// is a checkout that has not run the migration, and its episodes are being overwritten.
+///
+/// Only one of the three is a finding, and it is the middle one. `Pointer` is the current
+/// layout and `Absent` means no episode is open here — a fresh clone, or a worker between
+/// episodes — while `Inline` is a checkout still on the pre-migration layout, where a
+/// second concurrent session silently overwrites the first one's record. So the question a
+/// reader asks of this value is not "which layout" but "is it `Inline`".
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::PointerLayout;
+///
+/// // the two that are fine, and the one that loses records
+/// let loses_records = |l: PointerLayout| l == PointerLayout::Inline;
+/// assert!(!loses_records(PointerLayout::Pointer));
+/// assert!(!loses_records(PointerLayout::Absent), "no episode open is not a fault");
+/// assert!(loses_records(PointerLayout::Inline));
+///
+/// // serialised as the word `as_str` gives
+/// assert_eq!(
+///     serde_json::to_value(PointerLayout::Absent).unwrap(),
+///     serde_json::json!(PointerLayout::Absent.as_str()),
+/// );
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -239,11 +397,18 @@ pub enum PointerLayout {
 }
 
 impl PointerLayout {
-    /// The word as serialised.
+    /// The word this layout is reported and serialised under. Named for what the pointer
+    /// *is* rather than for the migration that produced it, so that the value still reads
+    /// correctly once nobody remembers there was a migration.
     ///
     /// ```
     /// use majordomus_cli::capability::builtin::lifecycle::PointerLayout;
     /// assert_eq!(PointerLayout::Inline.as_str(), "inline");
+    /// // the serialised form is this word, not a second rendering of the same value
+    /// assert_eq!(
+    ///     serde_json::to_value(PointerLayout::Inline).unwrap(),
+    ///     serde_json::json!(PointerLayout::Inline.as_str()),
+    /// );
     /// ```
     pub fn as_str(self) -> &'static str {
         match self {
@@ -255,6 +420,39 @@ impl PointerLayout {
 }
 
 /// What the pointer is and whether it leads anywhere.
+///
+/// `layout` and `resolves` are independent, and the interesting case is the pair
+/// `Pointer` + `resolves: false`: a symlink that survived the episode it named, which is
+/// what a killed close or a hand-removed record leaves behind. The layout is right, the
+/// destination is gone, and `continuity.state` has nothing to report while the store may
+/// still hold open episodes — so this is a dangling pointer, not an empty store.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::{Pointer, PointerLayout};
+/// use serde_json::json;
+///
+/// // the healthy case: the current layout, and it leads to an episode
+/// let live: Pointer = serde_json::from_value(json!({
+///     "layout": "pointer",
+///     "target": "sessions-open/claude-abc.yaml",
+///     "resolves": true,
+///     "session_id": "s-0002",
+///     "note": "the pointer resolves to an open episode",
+/// })).unwrap();
+/// assert_eq!(live.layout, PointerLayout::Pointer);
+/// assert!(live.resolves && !live.session_id.is_empty());
+///
+/// // and the dangling one: the right layout, aimed at a record that is no longer there
+/// let dangling: Pointer = serde_json::from_value(json!({
+///     "layout": "pointer",
+///     "target": "sessions-open/claude-gone.yaml",
+///     "resolves": false,
+///     "note": "the symlink outlived the episode it named",
+/// })).unwrap();
+/// assert_eq!(dangling.layout, PointerLayout::Pointer, "the layout is not the fault");
+/// assert!(!dangling.resolves);
+/// assert!(dangling.session_id.is_empty(), "there is no episode to name");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Pointer {
     /// The layout.
@@ -282,6 +480,23 @@ pub struct Pointer {
 /// detections should become one — a reader and a writer that each decide for themselves
 /// what "stranded" means are two definitions, and this repository has been bitten by that
 /// shape often enough to name it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::Stranded;
+/// use serde_json::json;
+///
+/// let s: Stranded = serde_json::from_value(json!({
+///     "session_id": "s-0007",
+///     "path": ".ai/local/state/sessions-open/claude-7.yaml",
+///     "reason": "the worktree it opened in is gone from disk",
+///     "remedy": "rm .ai/local/state/sessions-open/claude-7.yaml",
+/// })).unwrap();
+///
+/// // the reason is about the world and the remedy is a command: a finding with no
+/// // remedy is a complaint, so both are required fields rather than optional ones
+/// assert!(!s.reason.is_empty() && !s.remedy.is_empty());
+/// assert!(s.remedy.contains(&s.path), "the remedy acts on the file it names");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Stranded {
     /// The episode id.
@@ -300,6 +515,33 @@ pub struct Stranded {
 /// renames it, so that no reader ever sees half a record. A process killed between the two
 /// leaves the temporary file behind, where it is untracked, invisible to every reader of the
 /// section, and — because the directory is tracked — offered to the next `git add .`.
+///
+/// `bytes` is carried because it is the one thing that decides what to do with the file: a
+/// zero-length temporary file is a close that died before it wrote anything and can simply
+/// go, while a large one is a record that was written and never renamed, and is worth
+/// reading before it is deleted.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::Orphan;
+/// use majordomus_cli::order::canonical;
+///
+/// let mut orphans = vec![
+///     Orphan { path: ".ai/repo/project/sessions/.tmp.b2".into(), bytes: 4_812 },
+///     Orphan { path: ".ai/repo/project/sessions/.tmp.a1".into(), bytes: 0 },
+/// ];
+/// canonical(&mut orphans);
+///
+/// // filed under the path, which names one file and so makes the list total
+/// let paths: Vec<&str> = orphans.iter().map(|o| o.path.as_str()).collect();
+/// assert_eq!(paths, [
+///     ".ai/repo/project/sessions/.tmp.a1",
+///     ".ai/repo/project/sessions/.tmp.b2",
+/// ]);
+///
+/// // and the size is what tells a dead stub from a record that was written
+/// assert_eq!(orphans[0].bytes, 0, "nothing was written before the close died");
+/// assert!(orphans[1].bytes > 0, "read this one before removing it");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Orphan {
     /// Repository-relative path.
@@ -322,6 +564,37 @@ impl crate::order::Ordered for Orphan {
 /// that started either closed or is still open. When `started` exceeds `closed + open`, the
 /// difference is episodes whose close was never recorded — the shape of the outage that ADR
 /// describes, where events kept arriving and the records they should have produced did not.
+///
+/// The sign matters and the two directions mean opposite things. Positive `unaccounted` is
+/// the outage: episodes that started, are not open, and produced no closed record — work
+/// that happened and left nothing behind. Negative is ordinary bookkeeping: the ledger was
+/// rotated, or a record was committed from a checkout whose ledger lines are not in this
+/// one, so there are more records than started lines to account for them.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::Balance;
+/// use serde_json::json;
+///
+/// let of = |started, closed, open, unaccounted, agrees| -> Balance {
+///     serde_json::from_value(json!({
+///         "started": started, "closed": closed, "open": open,
+///         "unaccounted": unaccounted, "agrees": agrees, "note": "as measured",
+///     })).unwrap()
+/// };
+///
+/// // the good case: every episode that started either closed or is still open
+/// let sound = of(40, 37, 3, 0, true);
+/// assert_eq!(sound.started as i64 - sound.closed as i64 - sound.open as i64, sound.unaccounted);
+/// assert!(sound.agrees);
+///
+/// // the outage ADR 0052 describes: four closes that were never recorded
+/// let lost = of(40, 33, 3, 4, false);
+/// assert!(lost.unaccounted > 0 && !lost.agrees);
+///
+/// // and a rotated ledger, which is not a fault in either half
+/// let rotated = of(2, 37, 3, -38, false);
+/// assert!(rotated.unaccounted < 0, "more records than lines to account for them");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Balance {
     /// `session.started` lines in the ledger.
@@ -340,6 +613,38 @@ pub struct Balance {
 }
 
 /// What this checkout's session store needs somebody to do.
+///
+/// `findings` is the whole report said once, and an empty `findings` is the verdict: there
+/// is nothing to recover. That is the field to branch on — the three detailed lists and the
+/// arithmetic are what a reader consults *after* deciding there is something to look at,
+/// and each of them can be empty for a good reason while another is not.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::Recovery;
+/// use serde_json::json;
+///
+/// // a healthy checkout: the current layout, nothing stranded, the arithmetic agreeing
+/// let clean: Recovery = serde_json::from_value(json!({
+///     "present": true,
+///     "pointer": {"layout": "pointer", "target": "sessions-open/c.yaml",
+///                 "resolves": true, "session_id": "s-1", "note": "resolves"},
+///     "balance": {"started": 8, "closed": 7, "open": 1,
+///                 "unaccounted": 0, "agrees": true, "note": "they agree"},
+/// })).unwrap();
+///
+/// assert!(clean.findings.is_empty(), "an empty findings list is the good verdict");
+/// assert!(clean.stranded.is_empty() && clean.orphans.is_empty());
+/// assert!(clean.balance.agrees);
+///
+/// // a fresh clone has no local half at all, which is also nothing to recover
+/// let fresh: Recovery = serde_json::from_value(json!({
+///     "present": false,
+///     "pointer": {"layout": "absent", "resolves": false, "note": "no episode is open here"},
+///     "balance": {"started": 0, "closed": 0, "open": 0,
+///                 "unaccounted": 0, "agrees": true, "note": "nothing has happened yet"},
+/// })).unwrap();
+/// assert!(!fresh.present && fresh.findings.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Recovery {
     /// Whether the local half exists at all.
@@ -369,6 +674,38 @@ pub struct Recovery {
 /// server that follows the repository reports them equal and pays one `git` invocation for
 /// the proof; a server that froze its index at start-up reports them different, which is
 /// the only way a reader could ever have found that out.
+///
+/// `agree` is the field with the operational meaning, and what it says is *not* "the
+/// repository is fine" but "the answers you are reading are about the tree you are looking
+/// at". When it is false every other capability this process serves is answering about a
+/// commit that is no longer checked out, and nothing else in the API would tell you.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::RuntimeView;
+/// use serde_json::json;
+///
+/// let view = |served: &str, repo: &str, agree: bool| -> RuntimeView {
+///     serde_json::from_value(json!({
+///         "root": "example/repo",
+///         "served_head": served, "served_branch": "master", "served_working_tree": "clean",
+///         "repository_head": repo, "repository_branch": "master",
+///         "repository_working_tree": "clean",
+///         "agree": agree, "objects": 1319, "index_state": "ok",
+///         "note": "as measured on this call",
+///     })).unwrap()
+/// };
+///
+/// // a server following the repository: one `git` invocation buys the proof
+/// let current = view("a1b2c3d", "a1b2c3d", true);
+/// assert!(current.agree);
+/// assert_eq!(current.served_head, current.repository_head);
+/// assert_eq!(current.index_state, "ok");
+///
+/// // and one that froze its index at start-up: every answer it serves is about the old commit
+/// let frozen = view("a1b2c3d", "9f8e7d6", false);
+/// assert!(!frozen.agree);
+/// assert_ne!(frozen.served_head, frozen.repository_head);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RuntimeView {
     /// The repository root this process is serving.
@@ -405,6 +742,45 @@ pub struct RuntimeView {
 
 /// One provider's lifecycle surface: what its adapter declares it can do, and what this
 /// repository has wired to it.
+///
+/// The two halves come from different places and must not be confused. `lifecycle` and
+/// `prompt_capture` are the *distribution's* declaration — what the shipped adapter can do
+/// for this provider at all — while `wired` is *this repository's* policy naming that
+/// provider's hook in `wired_by`. Either can be empty with the other full, and that pairing
+/// is the interesting finding: a provider this repository wires but the tool ships no
+/// lifecycle for is a hook that will never fire.
+///
+/// Neither half is inferred from a file on disk. Whether a shim is actually installed is
+/// `majordomus capture status`'s question, and this type deliberately does not answer it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::ProviderLifecycle;
+/// use serde_json::json;
+///
+/// // a provider the tool adapts and this repository wires: both halves present
+/// let full: ProviderLifecycle = serde_json::from_value(json!({
+///     "id": "claude",
+///     "title": "Claude Code",
+///     "lifecycle": ["SessionStart", "SessionEnd", "PreCompact"],
+///     "prompt_capture": true,
+///     "client_config": ".mcp.json",
+///     "wired": ["session.start", "session.close"],
+///     "note": "adapted and wired",
+/// })).unwrap();
+/// assert!(!full.lifecycle.is_empty() && !full.wired.is_empty());
+/// assert!(full.prompt_capture);
+///
+/// // and one the tool ships no adapter for: it loses the automation and none of the model,
+/// // because every command remains the same
+/// let unadapted: ProviderLifecycle = serde_json::from_value(json!({
+///     "id": "some-editor",
+///     "title": "Some Editor",
+///     "prompt_capture": false,
+///     "note": "no lifecycle adapter ships for it",
+/// })).unwrap();
+/// assert!(unadapted.lifecycle.is_empty(), "nothing will fire for it");
+/// assert!(unadapted.client_config.is_empty(), "and it reads no project-scoped config");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ProviderLifecycle {
     /// The provider id: the bootstrap template's file stem.
@@ -431,7 +807,32 @@ pub struct ProviderLifecycle {
     pub note: String,
 }
 
-/// Every provider the distribution ships an adapter for.
+/// Every provider the distribution ships a bootstrap for, with the lifecycle half of each.
+///
+/// `with_lifecycle` is a count over `providers` rather than a second list, so the two
+/// cannot disagree; it is there because "how many of the providers we support actually get
+/// the automation" is the question this capability exists to answer, and a reader should not
+/// have to fold the list to find out.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::ProviderLifecycles;
+/// use serde_json::json;
+///
+/// let p: ProviderLifecycles = serde_json::from_value(json!({
+///     "providers": [
+///         {"id": "claude", "title": "Claude Code", "lifecycle": ["SessionStart"],
+///          "prompt_capture": true, "note": "adapted"},
+///         {"id": "plain", "title": "Plain", "prompt_capture": false, "note": "not adapted"},
+///     ],
+///     "with_lifecycle": 1,
+/// })).unwrap();
+///
+/// // the count is over the list, so it is checkable against it
+/// let counted = p.providers.iter().filter(|x| !x.lifecycle.is_empty()).count();
+/// assert_eq!(p.with_lifecycle, counted);
+/// assert_eq!(p.providers.len(), 2, "a provider with no adapter is still reported");
+/// assert!(p.findings.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ProviderLifecycles {
     /// The providers, in declaration order.
@@ -446,7 +847,42 @@ pub struct ProviderLifecycles {
 
 // --------------------------------------------------------------------- closed
 
-/// One closed episode of the tracked, durable projection.
+/// One closed episode of the tracked, durable projection — the half of this subsystem that
+/// survives a clone.
+///
+/// It carries both a `path` and a `uri` because they answer different questions: the path
+/// is where the record is in this checkout, and the `majordomus://session/<identity>`
+/// identifier is what every other surface addresses the same record by, so a reader can
+/// follow it to the object page without constructing one.
+///
+/// Everything but the identity, the identifier and the path is optional, because a record
+/// written by an older close carries fewer fields and is still a record.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::ClosedSession;
+/// use serde_json::json;
+///
+/// let s: ClosedSession = serde_json::from_value(json!({
+///     "session_id": "s-0042",
+///     "uri": "majordomus://session/2026-09-12-s-0042",
+///     "path": ".ai/repo/project/sessions/2026-09-12-s-0042.md",
+///     "created_at": "2026-09-12T15:44:00Z",
+///     "branch": "master",
+///     "head": "cd04012f1",
+///     "outcome": "landed",
+/// })).unwrap();
+///
+/// assert!(s.uri.starts_with("majordomus://session/"), "addressable as an object");
+/// assert_eq!(s.outcome, "landed");
+///
+/// // an older record with less in it is still one, and says so by absence
+/// let sparse: ClosedSession = serde_json::from_value(json!({
+///     "session_id": "s-0001",
+///     "uri": "majordomus://session/2026-08-01-s-0001",
+///     "path": ".ai/repo/project/sessions/2026-08-01-s-0001.md",
+/// })).unwrap();
+/// assert!(sparse.outcome.is_empty() && sparse.title.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ClosedSession {
     /// The episode id.
@@ -473,6 +909,36 @@ pub struct ClosedSession {
 }
 
 /// The tracked half of the subsystem: the records a clone receives.
+///
+/// `total` is exact and `newest` is a window, and keeping them as two numbers is the whole
+/// design of this type. The tracked directory grows without bound and a Cockpit card is not
+/// a listing page, so the rows are capped — but a capped list that did not carry the true
+/// total would quietly understate the repository, which is the shape of defect this
+/// repository has been bitten by often enough to name. `window` says how many rows came
+/// back, so a reader can see the cap rather than infer it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::ClosedSessions;
+/// use serde_json::json;
+///
+/// let row = |id: &str| json!({
+///     "session_id": id,
+///     "uri": format!("majordomus://session/{id}"),
+///     "path": format!(".ai/repo/project/sessions/{id}.md"),
+///     "branch": "master",
+/// });
+/// let c: ClosedSessions = serde_json::from_value(json!({
+///     "total": 137,
+///     "on_this_branch": 41,
+///     "newest": [row("s-0137"), row("s-0136")],
+///     "window": 2,
+/// })).unwrap();
+///
+/// // the window is what came back; the total is what exists
+/// assert_eq!(c.window, c.newest.len());
+/// assert!(c.total > c.window, "the rows are capped and the total is not");
+/// assert!(c.on_this_branch <= c.total);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ClosedSessions {
     /// How many closed records the index holds. Exact.
@@ -1019,7 +1485,48 @@ fn closed(ctx: &Context, _: Empty) -> Result<ClosedSessions, CapabilityError> {
     })
 }
 
-/// The module.
+/// The module's one declaration: the five capabilities, their schemas and every projection
+/// of them.
+///
+/// This function is the canonical definition and not a registration of one made elsewhere.
+/// The HTTP routes, the MCP tools and resources, the OpenAPI components and the Cockpit
+/// cards are all derived from what is declared here, which is why none of them is editable
+/// on its own — a semantic definition repeated across projections is the design defect
+/// ADR 0004 names.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::lifecycle::{self, EPISODES_URI, RECOVERY_URI};
+///
+/// let m = lifecycle::module();
+/// assert_eq!(m.id.as_str(), "lifecycle");
+/// assert_eq!(m.capabilities.len(), 5);
+///
+/// // the routes are derived from the declaration and written down nowhere else
+/// let routes: Vec<&str> = m
+///     .capabilities
+///     .iter()
+///     .filter_map(|e| e.capability.exposure.http.as_ref().map(|h| h.path.as_str()))
+///     .collect();
+/// assert_eq!(routes, [
+///     "/api/v1/lifecycle/episodes",
+///     "/api/v1/lifecycle/recovery",
+///     "/api/v1/lifecycle/runtime",
+///     "/api/v1/lifecycle/providers",
+///     "/api/v1/lifecycle/closed",
+/// ]);
+///
+/// // and the two readable resources are addressed by the constants this module exports,
+/// // so a caller never spells a URI that the declaration does not carry
+/// let resources: Vec<&str> = m
+///     .capabilities
+///     .iter()
+///     .filter_map(|e| e.capability.exposure.mcp.as_ref())
+///     .filter_map(|x| x.resource.as_ref())
+///     .map(|r| r.uri.as_str())
+///     .collect();
+/// assert!(resources.contains(&EPISODES_URI));
+/// assert!(resources.contains(&RECOVERY_URI));
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "lifecycle",

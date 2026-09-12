@@ -1572,6 +1572,33 @@
       "note": "scripts/ci/coverage-differential intersects the one canonical llvm-cov export (test code excluded) with the lines git says the change touched against the branch's merge-base with the trunk, working tree included, and exits 10 on the first changed executable item no test covers. The rule is project.new-code-is-covered; case 132 plants a deliberately uncovered changed line, proves the gate fails, then covers it and proves the gate passes, and proves an unresolvable base is UNKNOWN rather than a silent pass."
     },
     {
+      "id": "claim:commit-message-is-judged",
+      "kind": "claim",
+      "label": "A commit message that does not satisfy the repository's declared commit policy is refused at the moment it is written, and the history's existing debt is recorded and may not grow",
+      "status": "guaranteed",
+      "route": "/guarantees/commit-message-is-judged/",
+      "external": false,
+      "note": "The judge is commit.validate; .githooks/commit-msg asks it with the staged paths, which is the one moment a fix with no test among its files can still be noticed cheaply, and scripts/ci/commit-policy asks the same judge of the history through commit.history. The hook is declared in the policy's enforcement list as commit-policy-on-message and doctor reconciles that wiring. Before this the rule project.conventional-commits was advisory and its failure behaviour read \"No command decides this rule; a reviewer does\"; 48 subjects over the declared width and 38 unknown type words had accumulated unremarked."
+    },
+    {
+      "id": "claim:commit-scopes-are-learned",
+      "kind": "claim",
+      "label": "The scope vocabulary a commit is judged against is learned from this repository's own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal",
+      "status": "guaranteed",
+      "route": "/guarantees/commit-scopes-are-learned/",
+      "external": false,
+      "note": "commit.scopes reads at most 1500 commits of git log and counts each scope's association with directory prefixes four segments deep; suggest() reports a tie as ambiguous rather than breaking it, and answers nothing at all when no prior commit associates any scope with the paths - which is the honest answer for the first commit of a subsystem and better than the repository's most popular scope. The case proves the vocabulary follows the history: a scope unknown before a commit about it is known after."
+    },
+    {
+      "id": "claim:commit-plan-is-refusable",
+      "kind": "claim",
+      "label": "A commit plan carries a fingerprint of the repository, the worktree, HEAD and the exact change set it was derived from, so a plan acted on after the tree moved is refused with the reason rather than applied",
+      "status": "guaranteed",
+      "route": "/guarantees/commit-plan-is-refusable/",
+      "external": false,
+      "note": "Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -1638,6 +1665,27 @@
       "id": "impl:apps/majordomus-cli/src/cli.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/cli.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/commit/plan.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/commit/plan.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/commit/scopes.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/commit/scopes.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/commit/verdict.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/commit/verdict.rs",
       "route": null,
       "external": false
     },
@@ -2286,6 +2334,13 @@
       "external": false
     },
     {
+      "id": "source:docs/COMMIT.md",
+      "kind": "source",
+      "label": "docs/COMMIT.md",
+      "route": "/docs/commit/",
+      "external": false
+    },
+    {
       "id": "source:docs/COMPLETION.md",
       "kind": "source",
       "label": "docs/COMPLETION.md",
@@ -2760,6 +2815,13 @@
       "label": "test/cases/25_continuity_lifecycle.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh"
+    },
+    {
+      "id": "test:test/cases/274_commit_policy.sh",
+      "kind": "test",
+      "label": "test/cases/274_commit_policy.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/274_commit_policy.sh"
     },
     {
       "id": "test:test/cases/27_foreign_task.sh",
@@ -3986,6 +4048,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:commit-message-is-judged",
+      "target": "source:docs/COMMIT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:commit-scopes-are-learned",
+      "target": "source:docs/COMMIT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:commit-plan-is-refusable",
+      "target": "source:docs/COMMIT.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -4806,6 +4883,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:commit-message-is-judged",
+      "target": "impl:apps/majordomus-cli/src/commit/verdict.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:commit-scopes-are-learned",
+      "target": "impl:apps/majordomus-cli/src/commit/scopes.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:commit-plan-is-refusable",
+      "target": "impl:apps/majordomus-cli/src/commit/plan.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -5623,6 +5715,21 @@
     {
       "source": "claim:new-code-is-covered",
       "target": "test:test/cases/132_coverage_differential.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:commit-message-is-judged",
+      "target": "test:test/cases/274_commit_policy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:commit-scopes-are-learned",
+      "target": "test:test/cases/274_commit_policy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:commit-plan-is-refusable",
+      "target": "test:test/cases/274_commit_policy.sh",
       "kind": "proved_by"
     }
   ]

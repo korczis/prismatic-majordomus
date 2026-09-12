@@ -2255,6 +2255,45 @@
       "source_route": "/docs/coverage/",
       "command": null,
       "test_case": "132_coverage_differential"
+    },
+    {
+      "id": "commit-message-is-judged",
+      "claim": "A commit message that does not satisfy the repository's declared commit policy is refused at the moment it is written, and the history's existing debt is recorded and may not grow",
+      "source": "docs/COMMIT.md",
+      "implementation": "apps/majordomus-cli/src/commit/verdict.rs",
+      "test": "test/cases/274_commit_policy.sh",
+      "status": "guaranteed",
+      "note": "The judge is commit.validate; .githooks/commit-msg asks it with the staged paths, which is the one moment a fix with no test among its files can still be noticed cheaply, and scripts/ci/commit-policy asks the same judge of the history through commit.history. The hook is declared in the policy's enforcement list as commit-policy-on-message and doctor reconciles that wiring. Before this the rule project.conventional-commits was advisory and its failure behaviour read \"No command decides this rule; a reviewer does\"; 48 subjects over the declared width and 38 unknown type words had accumulated unremarked.",
+      "responsibility": "policy",
+      "source_route": "/docs/commit/",
+      "command": null,
+      "test_case": "274_commit_policy"
+    },
+    {
+      "id": "commit-scopes-are-learned",
+      "claim": "The scope vocabulary a commit is judged against is learned from this repository's own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal",
+      "source": "docs/COMMIT.md",
+      "implementation": "apps/majordomus-cli/src/commit/scopes.rs",
+      "test": "test/cases/274_commit_policy.sh",
+      "status": "guaranteed",
+      "note": "commit.scopes reads at most 1500 commits of git log and counts each scope's association with directory prefixes four segments deep; suggest() reports a tie as ambiguous rather than breaking it, and answers nothing at all when no prior commit associates any scope with the paths - which is the honest answer for the first commit of a subsystem and better than the repository's most popular scope. The case proves the vocabulary follows the history: a scope unknown before a commit about it is known after.",
+      "responsibility": "policy",
+      "source_route": "/docs/commit/",
+      "command": null,
+      "test_case": "274_commit_policy"
+    },
+    {
+      "id": "commit-plan-is-refusable",
+      "claim": "A commit plan carries a fingerprint of the repository, the worktree, HEAD and the exact change set it was derived from, so a plan acted on after the tree moved is refused with the reason rather than applied",
+      "source": "docs/COMMIT.md",
+      "implementation": "apps/majordomus-cli/src/commit/plan.rs",
+      "test": "test/cases/274_commit_policy.sh",
+      "status": "guaranteed",
+      "note": "Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data.",
+      "responsibility": "policy",
+      "source_route": "/docs/commit/",
+      "command": null,
+      "test_case": "274_commit_policy"
     }
   ]
 }

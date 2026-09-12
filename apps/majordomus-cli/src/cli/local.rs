@@ -230,6 +230,11 @@ pub const LOCAL: &[LocalCommand] = &[
     },
     // ---------------------------------------------------------------- other names
     LocalCommand {
+        command: "commit",
+        reason: LocalReason::Alias("commit plan"),
+        note: "plans when no subcommand follows it, because planning is what a person wants when they ask about committing; the two are one operation typed two ways.",
+    },
+    LocalCommand {
         command: "why",
         reason: LocalReason::Alias("why list"),
         note: "runs the catalogue listing when no subcommand follows it, so the two are one operation typed two ways.",
