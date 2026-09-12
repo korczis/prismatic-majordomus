@@ -1013,7 +1013,10 @@ fn obligations_vocabulary(ctx: &Context, _: Empty) -> Result<Vocabulary, Capabil
 /// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-/// How the closure is judged.
+/// How the closure is judged. The one choice a caller makes is whether the tokens
+/// something can establish are settled live before the ledger is read; the judgement of
+/// each token is the same whichever a caller chooses, and a report that skipped the live
+/// pass says a live token is owed rather than proven.
 pub struct ClosureInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Settle every token whose fact something can establish — a commit, a push, the

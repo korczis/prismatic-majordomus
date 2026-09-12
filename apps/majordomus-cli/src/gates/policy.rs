@@ -61,7 +61,24 @@ use crate::metadata::yaml;
 /// The file, relative to the distribution's `share/` directory.
 pub const POLICY_FILE: &str = "completion.yaml";
 
-/// One stage of the lifecycle, in the order the policy states them.
+/// One stage of the lifecycle, in the order the policy states them. A stage carries no
+/// question of its own: the questions name it by `id`, and
+/// [`CompletionPolicy::questions_of`] gathers them back, so a stage is a heading over
+/// whatever the policy hangs under it.
+///
+/// ```
+/// use majordomus_cli::gates::StageDecl;
+///
+/// let stage = StageDecl {
+///     id: "commit".into(),
+///     title: "Commit and push".into(),
+///     summary: "The work is in the branch's history.".into(),
+/// };
+/// // the same shape the file carries, so a report and the policy agree byte for byte
+/// let json = serde_json::to_value(&stage).unwrap();
+/// assert_eq!(json["id"], "commit");
+/// assert_eq!(serde_json::from_value::<StageDecl>(json).unwrap(), stage);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct StageDecl {
     /// The stage's identity, stable across reports.
@@ -105,7 +122,20 @@ pub enum QuestionSource {
 }
 
 impl QuestionSource {
-    /// Parse the `source:` field of a question.
+    /// Parse the `source:` field of a question. A named form (`obligation:`, `gate:`,
+    /// `elsewhere:`) carries what follows the colon with its whitespace trimmed and must
+    /// name something; a bare word is one of the fixed sources; anything else is refused
+    /// with the list of what would have been accepted, so the fix is one edit of the file.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::QuestionSource;
+    ///
+    /// let parsed = QuestionSource::parse(" gate: release-check ").unwrap();
+    /// assert_eq!(parsed, QuestionSource::Gate("release-check".into()));
+    /// assert_eq!(QuestionSource::parse("task:issue").unwrap(), QuestionSource::TaskIssue);
+    /// assert!(QuestionSource::parse("obligation:").unwrap_err().contains("names nothing"));
+    /// assert!(QuestionSource::parse("nope").unwrap_err().contains("obligation:<token>"));
+    /// ```
     pub fn parse(text: &str) -> Result<Self, String> {
         let text = text.trim();
         if let Some(rest) = text.strip_prefix("obligation:") {
@@ -162,6 +192,21 @@ impl std::fmt::Display for QuestionSource {
 /// dataset written with or without the executable, the bootstrap fragment — then states the
 /// same bytes for the same question, and a reader compares the two by eye. [`Self::kind`]
 /// parses it; [`CompletionPolicy::parse`] has already refused a text nothing answers.
+///
+/// ```
+/// use majordomus_cli::gates::{QuestionDecl, QuestionSource};
+///
+/// let decl = QuestionDecl {
+///     id: "pushed".into(),
+///     stage: "commit".into(),
+///     question: "Has the commit reached the remote?".into(),
+///     source: "obligation:push".into(),
+///     remediation: "git push".into(),
+/// };
+/// assert_eq!(decl.kind(), QuestionSource::Obligation("push".into()));
+/// // the source is carried as text, and serialises as the text the file stated
+/// assert_eq!(serde_json::to_value(&decl).unwrap()["source"], "obligation:push");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct QuestionDecl {
     /// The question's identity, stable across reports.
@@ -180,13 +225,66 @@ impl QuestionDecl {
     /// The source, parsed. A text the parser refuses — impossible for a policy that came
     /// through [`CompletionPolicy::parse`] — is answered by nothing, which is what
     /// [`QuestionSource::Elsewhere`] means.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::{QuestionDecl, QuestionSource};
+    ///
+    /// let mut decl = QuestionDecl {
+    ///     id: "ci".into(),
+    ///     stage: "gates".into(),
+    ///     question: "Did every gate pass?".into(),
+    ///     source: "gates".into(),
+    ///     remediation: "majordomus evidence --run-gates".into(),
+    /// };
+    /// assert_eq!(decl.kind(), QuestionSource::Gates);
+    /// // a text the parser refuses is answered by nothing, and says so rather than failing
+    /// decl.source = "oracle".into();
+    /// assert_eq!(decl.kind(), QuestionSource::Elsewhere("oracle".into()));
+    /// ```
     pub fn kind(&self) -> QuestionSource {
         QuestionSource::parse(&self.source)
             .unwrap_or_else(|_| QuestionSource::Elsewhere(self.source.clone()))
     }
 }
 
-/// The policy, as read.
+/// The policy, as read: the lifecycle's stages in order and every question with the
+/// source that answers it. It is the one definition of done, and every projection of that
+/// definition — the completion report, the bootstrap fragment, the site's dataset — is
+/// derived from a value of this type rather than restated beside it. A value only exists
+/// once [`Self::parse`] has accepted the file, so a policy in hand is structurally sound:
+/// every question names a declared stage and a source this executable answers.
+///
+/// ```
+/// use majordomus_cli::gates::CompletionPolicy;
+///
+/// let text = "\
+/// version: 1
+/// stages:
+///   - id: build
+///     title: Build
+///     summary: The work exists.
+///   - id: ship
+///     title: Ship
+///     summary: It is out.
+/// questions:
+///   - id: committed
+///     stage: build
+///     question: Is it committed?
+///     source: obligation:commit
+///     remediation: git commit
+///   - id: changelog
+///     stage: ship
+///     question: Is the release record current?
+///     source: gate:release-check
+///     remediation: scripts/ci/release-check
+/// ";
+/// let policy = CompletionPolicy::parse(text, "inline").unwrap();
+/// assert_eq!(policy.version, 1);
+/// assert_eq!(policy.source, "inline");
+/// assert_eq!(policy.stages[1].title, "Ship");
+/// assert_eq!(policy.questions_of("build").count(), 1);
+/// assert_eq!(policy.bootstrap_fragment(), "- Build: committed\n- Ship: changelog\n");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CompletionPolicy {
     /// The format version the file states.
@@ -216,7 +314,38 @@ struct RawFile {
 }
 
 impl CompletionPolicy {
-    /// Parse the policy text. `source` is what the report names as where it came from.
+    /// Parse the policy text. `source` is what the report names as where it came from,
+    /// and every refusal starts with it. A file of another version, a question whose
+    /// source nothing answers, a stage declared twice or never declared, an empty question
+    /// and a policy with no question at all are all refused here, so that no later reader
+    /// meets them.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::CompletionPolicy;
+    ///
+    /// let text = "\
+    /// version: 1
+    /// stages:
+    ///   - id: build
+    ///     title: Build
+    ///     summary: The work exists.
+    /// questions:
+    ///   - id: committed
+    ///     stage: build
+    ///     question: Is it committed?
+    ///     source: '  obligation:commit  '
+    ///     remediation: git commit
+    /// ";
+    /// let policy = CompletionPolicy::parse(text, "share/completion.yaml").unwrap();
+    /// assert_eq!(policy.questions[0].source, "obligation:commit", "trimmed as it is read");
+    ///
+    /// // a source nothing answers is refused by question, and the refusal names the file
+    /// let err = CompletionPolicy::parse(&text.replace("obligation:commit", "oracle"), "t").unwrap_err();
+    /// assert!(err.starts_with("t: question 'committed'"), "{err}");
+    /// assert!(CompletionPolicy::parse("version: 2\nstages: []\nquestions: []\n", "t")
+    ///     .unwrap_err()
+    ///     .contains("version 1"));
+    /// ```
     pub fn parse(text: &str, source: &str) -> Result<Self, String> {
         let raw: RawFile = yaml::parse_into(text).map_err(|e| format!("{source}: {e}"))?;
         if raw.version != 1 {
@@ -250,7 +379,26 @@ impl CompletionPolicy {
         Ok(policy)
     }
 
-    /// Read the policy from a distribution's `share/` directory.
+    /// Read the policy from a distribution's `share/` directory: the file [`POLICY_FILE`]
+    /// under it, parsed with the path as its source. A directory without the file is an
+    /// error naming the path, since a distribution without a definition of done is not
+    /// one this executable can judge completion against.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::{CompletionPolicy, POLICY_FILE};
+    ///
+    /// let share = tempfile::tempdir().unwrap();
+    /// assert!(CompletionPolicy::load(share.path()).unwrap_err().contains(POLICY_FILE));
+    ///
+    /// std::fs::write(
+    ///     share.path().join(POLICY_FILE),
+    ///     "version: 1\nstages:\n  - id: a\n    title: Alpha\n    summary: s\nquestions:\n  - id: q\n    stage: a\n    question: Is it?\n    source: gates\n    remediation: run it\n",
+    /// )
+    /// .unwrap();
+    /// let policy = CompletionPolicy::load(share.path()).unwrap();
+    /// assert!(policy.source.ends_with(POLICY_FILE), "the report names where it came from");
+    /// assert_eq!(policy.questions[0].id, "q");
+    /// ```
     pub fn load(share_dir: &std::path::Path) -> Result<Self, String> {
         let path = share_dir.join(POLICY_FILE);
         let text =
@@ -300,6 +448,38 @@ impl CompletionPolicy {
     /// A gate the *repository's* CI model does not declare is not a problem: the model is
     /// the repository's, the policy is shipped, and a question a repository never asks is
     /// answered `exempt` by name in the report. [`Self::unanswered_gates`] lists those.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::CompletionPolicy;
+    ///
+    /// let text = "\
+    /// version: 1
+    /// stages:
+    ///   - id: build
+    ///     title: Build
+    ///     summary: The work exists.
+    ///   - id: ship
+    ///     title: Ship
+    ///     summary: It is out.
+    /// questions:
+    ///   - id: committed
+    ///     stage: build
+    ///     question: Is it committed?
+    ///     source: obligation:commit
+    ///     remediation: git commit
+    ///   - id: changelog
+    ///     stage: ship
+    ///     question: Is the release record current?
+    ///     source: gate:release-check
+    ///     remediation: scripts/ci/release-check
+    /// ";
+    /// let policy = CompletionPolicy::parse(text, "t").unwrap();
+    /// assert!(policy.validate(&["commit".into(), "push".into()]).is_empty());
+    ///
+    /// let problems = policy.validate(&["push".into()]);
+    /// assert_eq!(problems.len(), 1);
+    /// assert!(problems[0].contains("question 'committed'") && problems[0].contains("'commit'"));
+    /// ```
     pub fn validate(&self, obligations: &[String]) -> Vec<String> {
         let mut out = self.structural_problems();
         for q in &self.questions {
@@ -318,6 +498,36 @@ impl CompletionPolicy {
 
     /// The questions answered by a gate this repository's CI model does not declare, as
     /// `question:gate` pairs: what the policy would ask and the repository never does.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::CompletionPolicy;
+    ///
+    /// let text = "\
+    /// version: 1
+    /// stages:
+    ///   - id: build
+    ///     title: Build
+    ///     summary: The work exists.
+    ///   - id: ship
+    ///     title: Ship
+    ///     summary: It is out.
+    /// questions:
+    ///   - id: committed
+    ///     stage: build
+    ///     question: Is it committed?
+    ///     source: obligation:commit
+    ///     remediation: git commit
+    ///   - id: changelog
+    ///     stage: ship
+    ///     question: Is the release record current?
+    ///     source: gate:release-check
+    ///     remediation: scripts/ci/release-check
+    /// ";
+    /// let policy = CompletionPolicy::parse(text, "t").unwrap();
+    /// assert!(policy.unanswered_gates(&["release-check".into()]).is_empty());
+    /// // a repository whose model declares no such gate is told which question it never asks
+    /// assert_eq!(policy.unanswered_gates(&["rust-check".into()]), ["changelog:release-check"]);
+    /// ```
     pub fn unanswered_gates(&self, gates: &[String]) -> Vec<String> {
         self.questions
             .iter()
@@ -328,7 +538,39 @@ impl CompletionPolicy {
             .collect()
     }
 
-    /// The questions of one stage, in declaration order.
+    /// The questions of one stage, in declaration order. A stage the policy declares and
+    /// no question names yields nothing, and so does a stage id the policy never declared;
+    /// the difference is the stage list's to state, not this iterator's.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::CompletionPolicy;
+    ///
+    /// let text = "\
+    /// version: 1
+    /// stages:
+    ///   - id: build
+    ///     title: Build
+    ///     summary: The work exists.
+    ///   - id: ship
+    ///     title: Ship
+    ///     summary: It is out.
+    /// questions:
+    ///   - id: committed
+    ///     stage: build
+    ///     question: Is it committed?
+    ///     source: obligation:commit
+    ///     remediation: git commit
+    ///   - id: changelog
+    ///     stage: ship
+    ///     question: Is the release record current?
+    ///     source: gate:release-check
+    ///     remediation: scripts/ci/release-check
+    /// ";
+    /// let policy = CompletionPolicy::parse(text, "t").unwrap();
+    /// let ids: Vec<&str> = policy.questions_of("ship").map(|q| q.id.as_str()).collect();
+    /// assert_eq!(ids, ["changelog"]);
+    /// assert_eq!(policy.questions_of("nowhere").count(), 0);
+    /// ```
     pub fn questions_of<'a>(
         &'a self,
         stage: &'a str,

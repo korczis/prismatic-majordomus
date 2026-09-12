@@ -169,7 +169,31 @@ pub struct Fragments {
 }
 
 impl Fragments {
-    /// Build every fragment from the distribution's `share/` directory.
+    /// Build every fragment from the distribution's `share/` directory. The completion
+    /// contract is read from `share/completion.yaml` through [`crate::gates::CompletionPolicy`],
+    /// and a distribution whose policy is missing or malformed is an error naming that
+    /// file, because a bootstrap rendered without its definition of done would be a stale
+    /// projection from the moment it was written.
+    ///
+    /// ```
+    /// use majordomus_cli::providers::Fragments;
+    /// use majordomus_cli::share::{Share, KINDS_FILE};
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join(KINDS_FILE), "kinds: []\n").unwrap();
+    /// std::fs::write(
+    ///     dir.path().join("completion.yaml"),
+    ///     "version: 1\nstages:\n  - id: a\n    title: Alpha\n    summary: s\nquestions:\n  - id: q\n    stage: a\n    question: Is it?\n    source: gates\n    remediation: run it\n",
+    /// )
+    /// .unwrap();
+    /// let share = Share::locate(Some(dir.path()), dir.path()).unwrap();
+    /// let fragments = Fragments::from_share(&share).unwrap();
+    /// assert_eq!(fragments.completion_contract, "- Alpha: q\n");
+    ///
+    /// // a distribution without the policy cannot render a bootstrap, and the error says which file
+    /// std::fs::remove_file(dir.path().join("completion.yaml")).unwrap();
+    /// assert!(Fragments::from_share(&share).unwrap_err().to_string().contains("completion.yaml"));
+    /// ```
     pub fn from_share(share: &Share) -> Result<Self> {
         let policy = crate::gates::CompletionPolicy::load(share.dir()).map_err(|reason| {
             Error::InvalidProjection {
@@ -182,7 +206,18 @@ impl Fragments {
         })
     }
 
-    /// The fragment a whole-line token names, when one is built here.
+    /// The fragment a whole-line token names, when one is built here. A token nothing
+    /// builds is `None`, and [`render`] then treats the line as an ordinary one, so an
+    /// unknown inline token is still refused by the inline pass rather than silently kept.
+    ///
+    /// ```
+    /// use majordomus_cli::providers::Fragments;
+    ///
+    /// let f = Fragments { completion_contract: "- Build: committed\n".into() };
+    /// assert_eq!(f.get("COMPLETION_CONTRACT"), Some("- Build: committed\n"));
+    /// assert_eq!(f.get("DEFAULT_PROFILE"), None, "an inline token is the policy's, not a fragment");
+    /// assert_eq!(Fragments::default().get("COMPLETION_CONTRACT"), Some(""));
+    /// ```
     pub fn get(&self, token: &str) -> Option<&str> {
         match token {
             "COMPLETION_CONTRACT" => Some(self.completion_contract.as_str()),

@@ -23,6 +23,27 @@
 //! A target that does not apply is in the plan with the reason, because "not applicable
 //! because the change touches nothing the site is built from" and "not checked" are
 //! different findings and a reader is entitled to the difference.
+//!
+//! The facts are handed in as a [`PlanFacts`], so a plan can be derived from values a
+//! test writes down as well as from a repository. A documentation change reaches the
+//! site and not the release:
+//!
+//! ```
+//! use majordomus_cli::deploy::targets::{plan, Identity, PlanFacts, TargetKind};
+//!
+//! let facts = PlanFacts {
+//!     site_base_url: Some("https://example.test".into()),
+//!     site_inputs: vec!["docs/**".into()],
+//!     surface_inputs: vec!["apps/**".into()],
+//!     latest_release: Some(Identity { tag: Some("v0.5.0".into()), ..Default::default() }),
+//!     ..Default::default()
+//! };
+//! let deployment = plan(&facts, &["docs/CLI.md".into()], false);
+//! let by = |kind| deployment.targets.iter().find(|t| t.kind == kind).unwrap();
+//! assert!(by(TargetKind::Pages).applicable, "a documentation change reaches the site");
+//! assert_eq!(by(TargetKind::Pages).because, ["docs/CLI.md"]);
+//! assert!(!by(TargetKind::Release).applicable, "{}", by(TargetKind::Release).reason);
+//! ```
 
 use std::path::Path;
 
@@ -31,7 +52,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::discovery::glob::Glob;
 
-/// The three kinds of surface a deployment target can be.
+/// The three kinds of surface a deployment target can be. The order is the plan's order:
+/// pages, then the release, then each application, so a report reads the same way every
+/// time, and the serialised word is the lowercase name.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::TargetKind;
+///
+/// assert!(TargetKind::Pages < TargetKind::Release);
+/// assert!(TargetKind::Release < TargetKind::Application);
+/// let json = serde_json::to_string(&TargetKind::Application).unwrap();
+/// assert_eq!(json, "\"application\"");
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -46,7 +78,16 @@ pub enum TargetKind {
 }
 
 impl TargetKind {
-    /// The word, as serialised.
+    /// The word the kind is serialised as, which is the word a plan, a report and a JSON
+    /// reader all agree on. A caller holding a kind compares against this rather than
+    /// against a string of its own.
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::targets::TargetKind;
+    ///
+    /// assert_eq!(TargetKind::Pages.as_str(), "pages");
+    /// assert_eq!(TargetKind::Application.as_str(), "application");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Pages => "pages",
@@ -56,7 +97,22 @@ impl TargetKind {
     }
 }
 
-/// What a live surface is expected to be serving.
+/// What a live surface is expected to be serving, or what it states it serves: the same
+/// shape on both sides of a comparison. Every field is optional because no surface states
+/// all three, and a field that is absent is not written when the identity is serialised.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::Identity;
+///
+/// let expected = Identity {
+///     commit: Some("abc123".into()),
+///     version: Some("0.6.0".into()),
+///     tag: None,
+/// };
+/// assert!(!expected.is_empty());
+/// let json = serde_json::to_string(&expected).unwrap();
+/// assert!(!json.contains("tag"), "an absent field is not written: {json}");
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "DeploymentIdentity")]
 pub struct Identity {
@@ -74,12 +130,43 @@ pub struct Identity {
 impl Identity {
     /// Whether nothing at all is expected — a target with no expectation cannot be
     /// verified, only reached.
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::targets::Identity;
+    ///
+    /// assert!(Identity::default().is_empty());
+    /// let tagged = Identity { tag: Some("v0.5.0".into()), ..Default::default() };
+    /// assert!(!tagged.is_empty(), "one field is enough to compare against");
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.commit.is_none() && self.version.is_none() && self.tag.is_none()
     }
 }
 
-/// One surface the change may reach.
+/// One surface the change may reach, applicable or not, with the reason either way. A
+/// target is normally derived by [`plan`]; the fields are public so that a test, or a
+/// caller that already knows its surfaces, can write one down, and the empty lists are
+/// left out of the serialised form.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{DeploymentTarget, Identity, TargetKind};
+///
+/// let target = DeploymentTarget {
+///     id: "pages".into(),
+///     kind: TargetKind::Pages,
+///     url: Some("https://example.test".into()),
+///     identity_url: Some("https://example.test/build.json".into()),
+///     applicable: false,
+///     reason: "the change touches nothing the site is built from".into(),
+///     expected: Identity::default(),
+///     inputs: vec!["docs/**".into()],
+///     because: vec![],
+/// };
+/// let json = serde_json::to_value(&target).unwrap();
+/// assert_eq!(json["kind"], "pages");
+/// assert_eq!(json["inputs"], serde_json::json!(["docs/**"]));
+/// assert!(json.get("because").is_none(), "an empty list is not written");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DeploymentTarget {
     /// The target's identity: `pages`, `release`, or the deployment object's id.
@@ -107,7 +194,28 @@ pub struct DeploymentTarget {
     pub because: Vec<String>,
 }
 
-/// Every target, applicable or not.
+/// Every target, applicable or not, with what could not be derived alongside. The plan
+/// is what a deployment command shows before it acts and what a verifier is handed
+/// afterwards: the applicable targets are asked, and the rest are reported with the reason
+/// the plan gave, never silently dropped.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{plan, DeploymentPlan, PlanFacts};
+///
+/// let facts = PlanFacts {
+///     site_base_url: Some("https://example.test".into()),
+///     site_inputs: vec!["docs/**".into()],
+///     ..Default::default()
+/// };
+/// let deployment: DeploymentPlan = plan(&facts, &["README.md".into()], false);
+/// assert_eq!(deployment.targets.len(), 1, "the site is a target even when not reached");
+/// assert_eq!(deployment.applicable().count(), 0);
+/// assert!(
+///     deployment.findings.iter().any(|f| f.contains("no release record")),
+///     "{:?}",
+///     deployment.findings
+/// );
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DeploymentPlan {
     /// The targets, in a stable order: pages, release, then each application by id.
@@ -118,13 +226,43 @@ pub struct DeploymentPlan {
 }
 
 impl DeploymentPlan {
-    /// The applicable targets.
+    /// The targets the change reaches, in the plan's order. A verifier asks these and no
+    /// other; a target that is in the plan and not among them is reported with its reason
+    /// and never asked.
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::targets::{plan, PlanFacts};
+    ///
+    /// let facts = PlanFacts {
+    ///     site_base_url: Some("https://example.test".into()),
+    ///     site_inputs: vec!["docs/**".into()],
+    ///     ..Default::default()
+    /// };
+    /// let unrelated = plan(&facts, &["README.md".into()], false);
+    /// assert_eq!(unrelated.applicable().count(), 0, "nothing the site is built from changed");
+    /// let after = plan(&facts, &[], true);
+    /// let ids: Vec<&str> = after.applicable().map(|t| t.id.as_str()).collect();
+    /// assert_eq!(ids, ["pages"]);
+    /// ```
     pub fn applicable(&self) -> impl Iterator<Item = &DeploymentTarget> {
         self.targets.iter().filter(|t| t.applicable)
     }
 }
 
-/// What the plan is derived from. Every field is a fact something else already holds.
+/// What the plan is derived from. Every field is a fact something else already holds —
+/// the site configuration, the CI model, the release records, the deployment objects —
+/// gathered here so that [`plan`] reads values and never files. A missing fact is not an
+/// error: it removes the target the fact would have produced and leaves a finding saying
+/// so.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{plan, PlanFacts};
+///
+/// let nothing = plan(&PlanFacts::default(), &["docs/x.md".into()], false);
+/// assert!(nothing.targets.is_empty());
+/// assert_eq!(nothing.findings.len(), 2, "{:?}", nothing.findings);
+/// assert!(nothing.findings[0].contains("base_url"));
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct PlanFacts {
     /// The site's published origin, from `site/config.toml`.
@@ -144,7 +282,33 @@ pub struct PlanFacts {
     pub declared_version: Option<String>,
 }
 
-/// One declared application deployment, as the plan reads it.
+/// One declared application deployment, as the plan reads it: the id, the status word,
+/// the address it answers at and the paths its image is built from. Only an active one
+/// with an address becomes an applicable target, and only when the change touches what
+/// its image is built from.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{plan, ApplicationFact, PlanFacts};
+///
+/// let facts = PlanFacts {
+///     applications: vec![ApplicationFact {
+///         id: "staging".into(),
+///         status: "active".into(),
+///         url: Some("https://staging.test/".into()),
+///         inputs: vec!["apps/**".into()],
+///     }],
+///     ..Default::default()
+/// };
+/// let code = plan(&facts, &["apps/majordomus-cli/src/lib.rs".into()], false);
+/// let staging = &code.targets[0];
+/// assert!(staging.applicable, "{}", staging.reason);
+/// assert_eq!(
+///     staging.identity_url.as_deref(),
+///     Some("https://staging.test/api/v1/distribution/build")
+/// );
+/// let docs = plan(&facts, &["docs/x.md".into()], false);
+/// assert!(!docs.targets[0].applicable, "{}", docs.targets[0].reason);
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct ApplicationFact {
     /// The deployment object's id.
@@ -169,6 +333,38 @@ fn hits(inputs: &[String], changed: &[String]) -> Vec<String> {
 /// Derive the plan. `changed` is the change set; an empty one, with `everything` set,
 /// means "every target that exists" — what a verifier asks after a deployment, when the
 /// question is no longer which targets the change reaches but whether each is serving it.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{plan, ApplicationFact, Identity, PlanFacts};
+///
+/// let facts = PlanFacts {
+///     site_base_url: Some("https://example.test".into()),
+///     site_inputs: vec!["docs/**".into()],
+///     surface_inputs: vec!["apps/**".into()],
+///     latest_release: Some(Identity { tag: Some("v0.5.0".into()), ..Default::default() }),
+///     applications: vec![ApplicationFact {
+///         id: "retired".into(),
+///         status: "retired".into(),
+///         url: Some("https://old.test".into()),
+///         inputs: vec!["apps/**".into()],
+///     }],
+///     expected_commit: Some("abc".into()),
+///     declared_version: Some("0.6.0".into()),
+/// };
+///
+/// // after a deployment: every surface, in a stable order, with the reason each way
+/// let after = plan(&facts, &[], true);
+/// let ids: Vec<&str> = after.targets.iter().map(|t| t.id.as_str()).collect();
+/// assert_eq!(ids, ["pages", "release", "retired"]);
+/// assert_eq!(after.applicable().count(), 2, "a retired deployment is not asked");
+/// assert!(after.targets[2].reason.contains("`retired`"));
+///
+/// // before one: a crate change reaches the release, which expects its newest record
+/// let code = plan(&facts, &["apps/majordomus-cli/src/lib.rs".into()], false);
+/// assert!(code.targets[1].applicable);
+/// assert_eq!(code.targets[1].expected.tag.as_deref(), Some("v0.5.0"));
+/// assert!(!code.targets[0].applicable, "{}", code.targets[0].reason);
+/// ```
 pub fn plan(facts: &PlanFacts, changed: &[String], everything: bool) -> DeploymentPlan {
     let mut targets = Vec::new();
     let mut findings = Vec::new();
@@ -302,6 +498,25 @@ pub fn plan(facts: &PlanFacts, changed: &[String], everything: bool) -> Deployme
 
 /// The site's published origin, from `site/config.toml`: the one `base_url = "..."` line
 /// Zola reads. Read here rather than restated, so a moved site moves every target.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::site_base_url;
+///
+/// let root = std::env::temp_dir().join(format!("site-base-url-{}", std::process::id()));
+/// std::fs::create_dir_all(root.join("site")).unwrap();
+/// std::fs::write(
+///     root.join("site/config.toml"),
+///     "title = \"x\"\nbase_url = \"https://majordomus.test/\"\n",
+/// )
+/// .unwrap();
+/// assert_eq!(
+///     site_base_url(&root).as_deref(),
+///     Some("https://majordomus.test"),
+///     "the trailing slash is dropped"
+/// );
+/// std::fs::remove_dir_all(&root).unwrap();
+/// assert_eq!(site_base_url(&root), None, "no configuration, no origin");
+/// ```
 pub fn site_base_url(root: &Path) -> Option<String> {
     let text = std::fs::read_to_string(root.join("site/config.toml")).ok()?;
     text.lines().find_map(|line| {

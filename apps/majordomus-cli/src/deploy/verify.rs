@@ -22,6 +22,36 @@
 //! recorded — and a test supplies answers of its own. The evidence a verification produces
 //! carries the URL that was asked and the identity it stated, never a header, a token or
 //! a body beyond the fields compared.
+//!
+//! The lifecycle is a plan, a fetcher and a report. The deploy command below exited 0 and
+//! the site still serves the previous commit, and then the deployment lands:
+//!
+//! ```
+//! use majordomus_cli::deploy::targets::{plan, PlanFacts};
+//! use majordomus_cli::deploy::verify::{verify, StaticFetcher, VerificationStatus};
+//!
+//! let facts = PlanFacts {
+//!     site_base_url: Some("https://site.test".into()),
+//!     site_inputs: vec!["docs/**".into()],
+//!     expected_commit: Some("bbbbbbbbbbbb".into()),
+//!     ..Default::default()
+//! };
+//! let deployment = plan(&facts, &["docs/CLI.md".into()], false);
+//!
+//! let stale = StaticFetcher::default()
+//!     .answers("https://site.test/build.json", r#"{"commit":"aaaaaaaaaaaa"}"#);
+//! let report = verify(&deployment, &stale, "2026-09-12T10:00:00Z");
+//! assert!(!report.ok);
+//! assert_eq!(report.refusing, ["pages"]);
+//! assert_eq!(report.verifications[0].status, VerificationStatus::Stale);
+//! assert_eq!(report.verifications[0].detail, "commit aaaaaaaaaaaa is live, bbbbbbbbbbbb expected");
+//!
+//! let landed = StaticFetcher::default()
+//!     .answers("https://site.test/build.json", r#"{"commit":"bbbbbbbbbbbbcccc"}"#);
+//! let report = verify(&deployment, &landed, "2026-09-12T10:05:00Z");
+//! assert!(report.ok, "{:?}", report.refusing);
+//! assert_eq!(report.verifications[0].detail, "states commit bbbbbbbbbbbb");
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -31,7 +61,19 @@ use super::targets::{DeploymentPlan, DeploymentTarget, Identity, TargetKind};
 /// How long one identity request may take.
 pub const TIMEOUT_SECONDS: u64 = 20;
 
-/// Where one target stands after being asked.
+/// Where one target stands after being asked. Three of the six states refuse completion,
+/// and a report is ok only when none of its targets is in one of them; the other three
+/// record that nothing was asked, or that nothing could be compared, without pretending
+/// either is a pass.
+///
+/// ```
+/// use majordomus_cli::deploy::verify::VerificationStatus;
+///
+/// assert!(VerificationStatus::Stale.refuses());
+/// assert!(!VerificationStatus::NotApplicable.refuses());
+/// let json = serde_json::to_string(&VerificationStatus::Unreachable).unwrap();
+/// assert_eq!(json, "\"unreachable\"");
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -53,11 +95,45 @@ pub enum VerificationStatus {
 }
 
 impl VerificationStatus {
-    /// Whether this status refuses completion.
+    /// Whether a target in this state refuses completion: it was asked and did not prove
+    /// the deployment, by answering with another identity, with nothing readable, or not
+    /// at all. A target nothing was asked of, or nothing was expected of, contradicts
+    /// nothing and so refuses nothing.
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::verify::VerificationStatus;
+    ///
+    /// let all = [
+    ///     VerificationStatus::Verified,
+    ///     VerificationStatus::Stale,
+    ///     VerificationStatus::Unreachable,
+    ///     VerificationStatus::Unreadable,
+    ///     VerificationStatus::NotApplicable,
+    ///     VerificationStatus::Unverifiable,
+    /// ];
+    /// let refusing: Vec<_> = all.into_iter().filter(|s| s.refuses()).collect();
+    /// assert_eq!(
+    ///     refusing,
+    ///     [
+    ///         VerificationStatus::Stale,
+    ///         VerificationStatus::Unreachable,
+    ///         VerificationStatus::Unreadable,
+    ///     ]
+    /// );
+    /// ```
     pub fn refuses(self) -> bool {
         matches!(self, Self::Stale | Self::Unreachable | Self::Unreadable)
     }
-    /// The word, as serialised.
+    /// The word the status is serialised as, in snake case, so that a report read as JSON
+    /// and a report read as text name each state the same way. A caller comparing against
+    /// a status word uses this rather than a string of its own.
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::verify::VerificationStatus;
+    ///
+    /// assert_eq!(VerificationStatus::Verified.as_str(), "verified");
+    /// assert_eq!(VerificationStatus::NotApplicable.as_str(), "not_applicable");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Verified => "verified",
@@ -70,7 +146,38 @@ impl VerificationStatus {
     }
 }
 
-/// One target, asked.
+/// One target, asked, and what came of it. The evidence is the address that was asked,
+/// the identity expected, the identity stated and one sentence of detail; a header, a
+/// token or a body field outside the comparison is never carried, so the record can be
+/// written into a session without a second look.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{DeploymentTarget, Identity, TargetKind};
+/// use majordomus_cli::deploy::verify::{verify_target, StaticFetcher, Verification};
+/// use majordomus_cli::deploy::verify::VerificationStatus;
+///
+/// let target = DeploymentTarget {
+///     id: "release".into(),
+///     kind: TargetKind::Release,
+///     url: Some("https://site.test/releases/".into()),
+///     identity_url: Some("https://site.test/releases/latest.json".into()),
+///     applicable: true,
+///     reason: "every published surface is asked after a deployment".into(),
+///     expected: Identity { tag: Some("v0.5.0".into()), ..Default::default() },
+///     inputs: vec![],
+///     because: vec![],
+/// };
+/// let fetcher = StaticFetcher::default().answers(
+///     "https://site.test/releases/latest.json",
+///     r#"{"tag":"v0.5.0","version":"0.5.0","token":"ghp_secret"}"#,
+/// );
+/// let v: Verification = verify_target(&target, &fetcher, "2026-09-12T10:00:00Z");
+/// assert_eq!(v.status, VerificationStatus::Verified);
+/// assert_eq!(v.asked.as_deref(), Some("https://site.test/releases/latest.json"));
+/// assert_eq!(v.observed.version.as_deref(), Some("0.5.0"));
+/// assert_eq!(v.detail, "states tag v0.5.0, version 0.5.0");
+/// assert!(!serde_json::to_string(&v).unwrap().contains("ghp_secret"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Verification {
     /// The target's identity.
@@ -94,7 +201,27 @@ pub struct Verification {
     pub checked_at: String,
 }
 
-/// Every target, asked.
+/// Every target of a plan, asked, and the one verdict a caller acts on. The report is ok
+/// only when something was asked and nothing refused, so a plan with no applicable target
+/// is not ok, and `refusing` names the targets a reader should look at first.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{plan, PlanFacts};
+/// use majordomus_cli::deploy::verify::{verify, StaticFetcher, VerificationReport};
+///
+/// let facts = PlanFacts {
+///     site_base_url: Some("https://site.test".into()),
+///     site_inputs: vec!["docs/**".into()],
+///     ..Default::default()
+/// };
+/// let deployment = plan(&facts, &["docs/x.md".into()], false);
+/// let silent = StaticFetcher::default();
+/// let report: VerificationReport = verify(&deployment, &silent, "now");
+/// assert!(!report.ok, "a site that does not answer refuses");
+/// assert_eq!(report.asked, 1);
+/// assert_eq!(report.refusing, ["pages"]);
+/// assert!(report.findings.iter().any(|f| f.contains("no release record")));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct VerificationReport {
     /// True when every applicable target is verified and none refuses.
@@ -111,14 +238,54 @@ pub struct VerificationReport {
     pub findings: Vec<String>,
 }
 
-/// The one seam to the network.
+/// The one seam to the network. A verification is written against this trait and
+/// nothing else, so the comparison runs the same way over `curl` in production and over a
+/// table of answers in a test; an implementation returns a body or the reason there is
+/// none, and never a header.
+///
+/// ```
+/// use majordomus_cli::deploy::verify::Fetcher;
+///
+/// struct Always(&'static str);
+/// impl Fetcher for Always {
+///     fn get(&self, _url: &str) -> Result<String, String> {
+///         Ok(self.0.to_string())
+///     }
+/// }
+/// let fetcher: &dyn Fetcher = &Always(r#"{"commit":"abc"}"#);
+/// assert_eq!(fetcher.get("https://anything.test").unwrap(), r#"{"commit":"abc"}"#);
+/// ```
 pub trait Fetcher {
     /// GET a URL and return its body, or why it could not be read. No headers are ever
     /// sent and none are returned.
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::verify::{Fetcher, StaticFetcher};
+    ///
+    /// let fetcher = StaticFetcher::default().refuses("https://down.test/build.json", "curl exited 7");
+    /// assert_eq!(
+    ///     fetcher.get("https://down.test/build.json"),
+    ///     Err("curl exited 7".to_string())
+    /// );
+    /// assert_eq!(
+    ///     fetcher.get("https://unknown.test"),
+    ///     Err("no answer for https://unknown.test".to_string())
+    /// );
+    /// ```
     fn get(&self, url: &str) -> Result<String, String>;
 }
 
-/// The default: `curl`, bounded, silent, following redirects, with no header.
+/// The default: `curl`, bounded, silent, following redirects, with no header. A failure
+/// is reported as what `curl` said — its exit status and the URL — or as the reason it
+/// could not be run at all, so an unreachable target's detail names the cause.
+///
+/// ```
+/// use majordomus_cli::deploy::verify::{CurlFetcher, Fetcher};
+///
+/// // a malformed URL is refused by curl itself, before any network is touched
+/// let why = CurlFetcher.get("::not a url::").unwrap_err();
+/// assert!(why.starts_with("curl "), "{why}");
+/// ```
 pub struct CurlFetcher;
 
 impl Fetcher for CurlFetcher {
@@ -144,19 +311,53 @@ impl Fetcher for CurlFetcher {
     }
 }
 
-/// A fetcher that answers from a table: what a test uses.
+/// A fetcher that answers from a table: what a test uses. Each URL is given a body or a
+/// refusal ahead of time, and a URL nobody wrote down is refused with a message naming
+/// it, so a verification against this fetcher exercises the same paths as one against the
+/// network.
+///
+/// ```
+/// use majordomus_cli::deploy::verify::{Fetcher, StaticFetcher};
+///
+/// let fetcher = StaticFetcher::default()
+///     .answers("https://site.test/build.json", r#"{"commit":"abc"}"#)
+///     .refuses("https://app.test/api/v1/distribution/build", "curl exited 22");
+/// assert_eq!(fetcher.get("https://site.test/build.json").unwrap(), r#"{"commit":"abc"}"#);
+/// assert!(fetcher.get("https://app.test/api/v1/distribution/build").is_err());
+/// ```
 #[derive(Default)]
 pub struct StaticFetcher {
     answers: std::collections::BTreeMap<String, Result<String, String>>,
 }
 
 impl StaticFetcher {
-    /// Answer `url` with `body`.
+    /// Answer `url` with `body`, as a surface that is up would. A later entry for the same
+    /// URL replaces the earlier one, so a test can restate a surface after a deployment.
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::verify::{Fetcher, StaticFetcher};
+    ///
+    /// let fetcher = StaticFetcher::default()
+    ///     .answers("https://site.test/build.json", r#"{"commit":"old"}"#)
+    ///     .answers("https://site.test/build.json", r#"{"commit":"new"}"#);
+    /// assert_eq!(fetcher.get("https://site.test/build.json").unwrap(), r#"{"commit":"new"}"#);
+    /// ```
     pub fn answers(mut self, url: &str, body: &str) -> Self {
         self.answers.insert(url.to_string(), Ok(body.to_string()));
         self
     }
-    /// Refuse `url` with `why`.
+    /// Refuse `url` with `why`, as a surface that is down would. The reason becomes the
+    /// detail of the unreachable verification, exactly as `curl`'s would.
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::verify::{Fetcher, StaticFetcher};
+    ///
+    /// let fetcher = StaticFetcher::default().refuses("https://site.test/build.json", "curl exited 22");
+    /// assert_eq!(
+    ///     fetcher.get("https://site.test/build.json"),
+    ///     Err("curl exited 22".to_string())
+    /// );
+    /// ```
     pub fn refuses(mut self, url: &str, why: &str) -> Self {
         self.answers.insert(url.to_string(), Err(why.to_string()));
         self
@@ -228,7 +429,33 @@ fn compare(expected: &Identity, observed: &Identity) -> Vec<String> {
     mismatches
 }
 
-/// Ask one target.
+/// Ask one target, and say where it stands. A target that does not apply is not asked and
+/// carries the plan's reason as its detail; an applicable one is asked at its identity
+/// address, and what it states is compared with what the target expects.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{plan, PlanFacts};
+/// use majordomus_cli::deploy::verify::{verify_target, StaticFetcher, VerificationStatus};
+///
+/// let facts = PlanFacts {
+///     site_base_url: Some("https://site.test".into()),
+///     site_inputs: vec!["docs/**".into()],
+///     expected_commit: Some("abc".into()),
+///     ..Default::default()
+/// };
+/// let fetcher = StaticFetcher::default().answers("https://site.test/build.json", r#"{"commit":"abc"}"#);
+///
+/// let unrelated = plan(&facts, &["README.md".into()], false);
+/// let skipped = verify_target(&unrelated.targets[0], &fetcher, "now");
+/// assert_eq!(skipped.status, VerificationStatus::NotApplicable);
+/// assert!(skipped.asked.is_none(), "nothing was asked");
+/// assert_eq!(skipped.detail, "the change touches nothing the site is built from");
+///
+/// let after = plan(&facts, &[], true);
+/// let asked = verify_target(&after.targets[0], &fetcher, "now");
+/// assert_eq!(asked.status, VerificationStatus::Verified);
+/// assert_eq!(asked.asked.as_deref(), Some("https://site.test/build.json"));
+/// ```
 pub fn verify_target(target: &DeploymentTarget, fetcher: &dyn Fetcher, now: &str) -> Verification {
     let base = Verification {
         target: target.id.clone(),
@@ -316,7 +543,29 @@ fn describe(id: &Identity) -> String {
     parts.join(", ")
 }
 
-/// Ask every target of the plan.
+/// Ask every target of the plan, in the plan's order, and judge the whole. The report is
+/// ok only when at least one target was asked and none refuses; a body that is not an
+/// identity refuses as unreadable, because a 200 proves reachability and nothing else.
+///
+/// ```
+/// use majordomus_cli::deploy::targets::{plan, PlanFacts};
+/// use majordomus_cli::deploy::verify::{verify, StaticFetcher, VerificationStatus};
+///
+/// let facts = PlanFacts {
+///     site_base_url: Some("https://site.test".into()),
+///     expected_commit: Some("abc".into()),
+///     ..Default::default()
+/// };
+/// let html = StaticFetcher::default().answers("https://site.test/build.json", "<html>200 OK</html>");
+///
+/// let report = verify(&plan(&facts, &[], true), &html, "now");
+/// assert_eq!(report.verifications[0].status, VerificationStatus::Unreadable);
+/// assert!(!report.ok, "a 200 is not a verification");
+///
+/// let nothing = verify(&plan(&facts, &[], false), &html, "now");
+/// assert_eq!(nothing.asked, 0);
+/// assert!(!nothing.ok, "a report that asked nothing verified nothing");
+/// ```
 pub fn verify(plan: &DeploymentPlan, fetcher: &dyn Fetcher, now: &str) -> VerificationReport {
     let verifications: Vec<Verification> = plan
         .targets

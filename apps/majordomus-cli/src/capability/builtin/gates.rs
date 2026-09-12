@@ -70,6 +70,30 @@ pub const POLICY_URI: &str = "majordomus://gates/policy";
 
 /// The completion policy, as every projection states it: the stages, the questions and
 /// the source each is answered from, plus the fragment the provider bootstraps carry.
+/// The policy is flattened into the report, so a reader of `gates.policy` sees the same
+/// keys the file carries with the derived fields beside them.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::gates::CompletionPolicyReport;
+/// use majordomus_cli::gates::CompletionPolicy;
+///
+/// let policy = CompletionPolicy::parse(
+///     "version: 1\nstages:\n  - id: a\n    title: Alpha\n    summary: s\nquestions:\n  - id: q\n    stage: a\n    question: Is it?\n    source: gate:site-check\n    remediation: run it\n",
+///     "share/completion.yaml",
+/// )
+/// .unwrap();
+/// let report = CompletionPolicyReport {
+///     fragment: policy.bootstrap_fragment(),
+///     problems: policy.validate(&[]),
+///     unanswered_gates: policy.unanswered_gates(&[]),
+///     policy,
+/// };
+/// assert_eq!(report.fragment, "- Alpha: q\n");
+/// assert_eq!(report.unanswered_gates, ["q:site-check"]);
+/// let json = serde_json::to_value(&report).unwrap();
+/// assert_eq!(json["stages"][0]["id"], "a", "the policy's own keys, flattened");
+/// assert!(json.get("problems").is_none(), "a coherent distribution writes no problems");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CompletionPolicyReport {
     /// The policy as read from the distribution.

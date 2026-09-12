@@ -50,7 +50,19 @@ use super::done::DoneQuestion;
 use super::judge::GateStatus;
 use super::policy::StageDecl;
 
-/// Where one stage stands.
+/// Where one stage stands, folded from the answers to its questions and never set by
+/// anybody. A refusal anywhere in the stage makes it blocked whatever else passed; a
+/// stage with nothing owed is complete; one with an unanswered question is pending; and
+/// a stage the change asks nothing of is empty, which neither blocks nor completes.
+///
+/// ```
+/// use majordomus_cli::gates::StageState;
+///
+/// assert_eq!(StageState::Blocked.as_str(), "blocked");
+/// // serialised as the same word the report prints, so no reader meets two spellings
+/// assert_eq!(serde_json::to_string(&StageState::Pending).unwrap(), "\"pending\"");
+/// assert_eq!(serde_json::from_str::<StageState>("\"empty\"").unwrap(), StageState::Empty);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -67,7 +79,17 @@ pub enum StageState {
 }
 
 impl StageState {
-    /// The word, as serialised.
+    /// The word, as serialised: the same spelling the report carries, so a surface that
+    /// prints the state and one that reads it back from JSON agree on the text.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::StageState;
+    ///
+    /// assert_eq!(StageState::Complete.as_str(), "complete");
+    /// for state in [StageState::Complete, StageState::Pending, StageState::Blocked, StageState::Empty] {
+    ///     assert_eq!(serde_json::to_value(state).unwrap(), state.as_str());
+    /// }
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Complete => "complete",
@@ -78,7 +100,24 @@ impl StageState {
     }
 }
 
-/// One stage of the lifecycle, with what its questions said.
+/// One stage of the lifecycle, with what its questions said. Every stage of the policy
+/// gets one, in the policy's order, so a reader sees the stages behind the task as well
+/// as the one it stands at; `owing` is written only when something is owed.
+///
+/// ```
+/// use majordomus_cli::gates::{StageReport, StageState};
+///
+/// let report = StageReport {
+///     id: "commit".into(),
+///     title: "Commit and push".into(),
+///     state: StageState::Complete,
+///     questions: vec!["committed".into(), "pushed".into()],
+///     owing: Vec::new(),
+/// };
+/// let json = serde_json::to_value(&report).unwrap();
+/// assert_eq!(json["state"], "complete");
+/// assert!(json.get("owing").is_none(), "nothing owed is nothing written");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct StageReport {
     /// The stage's identity.
@@ -95,7 +134,23 @@ pub struct StageReport {
 }
 
 /// Where the task stands: the one stage a reader acts on, and every stage behind and
-/// ahead of it.
+/// ahead of it. Produced by [`derive_stage`] and by nothing else, so the stage a report
+/// names is always the fold over the answers and never a word somebody wrote down.
+///
+/// ```
+/// use majordomus_cli::gates::{DoneQuestion, GateStatus, LifecycleStage, StageDecl, StageState, derive_stage};
+///
+/// let stages = [StageDecl { id: "build".into(), title: "Build".into(), summary: "s".into() }];
+/// let owed = DoneQuestion {
+///     id: "committed".into(), stage: "build".into(), question: "Is it committed?".into(),
+///     status: GateStatus::Queued, evidence: "owed".into(), source: "s".into(), remediation: "git commit".into(),
+/// };
+/// let stage: LifecycleStage = derive_stage(&stages, &[owed]);
+/// assert_eq!((stage.id.as_str(), stage.state), ("build", StageState::Pending));
+/// assert_eq!(stage.owing, ["committed"]);
+/// assert!(!stage.complete, "a question still owed is a task not completed");
+/// assert_eq!(stage.stages.len(), 1);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct LifecycleStage {
     /// The stage the task stands at: the first one blocked, else the first one pending,
@@ -115,7 +170,30 @@ pub struct LifecycleStage {
     pub stages: Vec<StageReport>,
 }
 
-/// Fold the answered questions over the policy's stages.
+/// Fold the answered questions over the policy's stages. The task stands at the first
+/// stage that is blocked, else the first that is pending, else the last stage of the
+/// policy; it is complete only when every stage is complete or empty. A question naming a
+/// stage the policy does not declare is ignored, and no policy at all is no completion.
+///
+/// ```
+/// use majordomus_cli::gates::{DoneQuestion, GateStatus, StageDecl, StageState, derive_stage};
+///
+/// let decl = |id: &str| StageDecl { id: id.into(), title: id.into(), summary: "s".into() };
+/// let q = |id: &str, stage: &str, status: GateStatus| DoneQuestion {
+///     id: id.into(), stage: stage.into(), question: id.into(), status,
+///     evidence: "e".into(), source: "s".into(), remediation: "r".into(),
+/// };
+///
+/// // a later stage that refuses is where the task is, even behind an earlier pending one
+/// let s = derive_stage(&[decl("a"), decl("b")], &[q("x", "a", GateStatus::Queued), q("y", "b", GateStatus::Fail)]);
+/// assert_eq!((s.id.as_str(), s.state), ("b", StageState::Blocked));
+/// assert_eq!(s.stages[0].state, StageState::Pending);
+///
+/// // an empty stage is not owed, and a policy with no stage completes nothing
+/// let s = derive_stage(&[decl("a"), decl("b")], &[q("x", "a", GateStatus::Pass)]);
+/// assert!(s.complete && s.stages[1].state == StageState::Empty);
+/// assert!(!derive_stage(&[], &[]).complete);
+/// ```
 pub fn derive_stage(stages: &[StageDecl], questions: &[DoneQuestion]) -> LifecycleStage {
     let reports: Vec<StageReport> = stages
         .iter()

@@ -108,6 +108,22 @@ pub struct ObligationStanding {
 }
 
 /// What the structural release analysis said, reduced to what the version question needs.
+/// The analysis is `release.analysis`'s own (ADR 0051) and is asked through the executor;
+/// this is its answer as the version question consumes it, and the three shapes are the
+/// three findings a reader is entitled to: measured, not measurable, and not applicable.
+///
+/// ```
+/// use majordomus_cli::gates::ReleaseStanding;
+///
+/// let measured = ReleaseStanding::Measured {
+///     ok: false,
+///     detail: "the contract requires minor and the tree declares 1.4.1".into(),
+/// };
+/// assert!(matches!(measured, ReleaseStanding::Measured { ok: false, .. }));
+/// // no release yet is a different finding from an analysis that could not be made
+/// let first = ReleaseStanding::NotApplicable("no release has been published".into());
+/// assert_ne!(first, ReleaseStanding::Unknown("no release has been published".into()));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReleaseStanding {
     /// The analysis could not be made; why.
@@ -125,7 +141,20 @@ pub enum ReleaseStanding {
     },
 }
 
-/// What the task record says about the issue this work belongs to.
+/// What the task record says about the issue this work belongs to, resolved against the
+/// plan. A task that names an issue the plan holds is resolved; one that names none is
+/// undeclared, which is a debt; one that states `issue: none` has declared its work as
+/// untracked, which is a finding of its own and never confused with silence.
+///
+/// ```
+/// use majordomus_cli::gates::IssueStanding;
+///
+/// let resolved = IssueStanding::Resolved { id: "42".into(), title: "The done invariant".into() };
+/// assert!(matches!(&resolved, IssueStanding::Resolved { id, .. } if id == "42"));
+/// // declared as untracked and never declared are two different standings
+/// assert_ne!(IssueStanding::DeclaredNone, IssueStanding::Undeclared);
+/// assert_eq!(IssueStanding::Unresolved { id: "7".into() }.clone(), IssueStanding::Unresolved { id: "7".into() });
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IssueStanding {
     /// No task is active, or the record could not be read.
@@ -148,7 +177,18 @@ pub enum IssueStanding {
     },
 }
 
-/// Whether a continuation record exists for this task.
+/// Whether a continuation record exists for this task under the continuity store. The
+/// handover question is answered from this and from nothing else, and a store that could
+/// not be read is reported as such rather than as a missing record.
+///
+/// ```
+/// use majordomus_cli::gates::HandoverStanding;
+///
+/// let present = HandoverStanding::Present("2026-09-12-completion.md".into());
+/// assert!(matches!(&present, HandoverStanding::Present(name) if name.ends_with(".md")));
+/// // a store that would not read is not the same finding as a record that is not there
+/// assert_ne!(HandoverStanding::Unknown("permission denied".into()), HandoverStanding::Absent);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HandoverStanding {
     /// The store could not be read; why.
@@ -160,7 +200,36 @@ pub enum HandoverStanding {
 }
 
 /// Everything the invariant is answered from. Every field is a judgement somebody else
-/// already made; nothing is measured by [`answer`], which composes.
+/// already made; nothing is measured by [`answer`], which composes. The capability, a
+/// test and a benchmark all build one of these, so the same questions get the same
+/// answers whichever surface asked.
+///
+/// ```
+/// use std::collections::BTreeMap;
+/// use majordomus_cli::gates::{
+///     DoneInputs, HandoverStanding, IssueStanding, ObligationStanding, ReleaseStanding,
+/// };
+///
+/// let mut standing = BTreeMap::new();
+/// standing.insert("commit".to_string(), ObligationStanding {
+///     state: "discharged".into(), detail: "HEAD is committed".into(), reproduce: String::new(),
+/// });
+/// let changed = vec!["src/lib.rs".to_string()];
+/// let inputs = DoneInputs {
+///     standing: &standing,
+///     implied: &[],
+///     gates: &[],
+///     changed: &changed,
+///     closure_reachable: true,
+///     release: ReleaseStanding::NotApplicable("no release yet".into()),
+///     issue: IssueStanding::DeclaredNone,
+///     handover: HandoverStanding::Absent,
+/// };
+/// // the closure's word is carried verbatim, and a change set with no test path is visible as such
+/// assert_eq!(inputs.standing["commit"].state, "discharged");
+/// assert!(inputs.closure_reachable && inputs.gates.is_empty());
+/// assert!(!inputs.changed.iter().any(|p| p.contains("test")));
+/// ```
 pub struct DoneInputs<'a> {
     /// The obligation closure's word per token.
     pub standing: &'a BTreeMap<String, ObligationStanding>,
