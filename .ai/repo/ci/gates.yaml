@@ -361,6 +361,14 @@ gates:
   # the two the release script reads, nor that they still agree. Until this gate, the second
   # question was asked only when a tag was cut, so a half-applied bump lived on the default
   # branch until somebody tried to publish. File reads only; it belongs in the structure job.
+  # Box art in a published document: a picture nothing can render, link, theme, diff against
+  # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
+  # job; the ratchet is meant to reach zero.
+  - id: diagram-check
+    job: structure
+    runs: scripts/ci/diagram-check
+    summary: no architectural relationship in a published document is typed in box art — every one is a mermaid block, with literal terminal output, file listings and quoted file content exempt by declaration
+
   - id: release-check
     job: structure
     runs: scripts/ci/release-check
@@ -443,7 +451,7 @@ classes:
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
     paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, diagram-check]
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
