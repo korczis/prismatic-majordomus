@@ -164,7 +164,7 @@ and one that was deliberate is released as what it is.
 
 # Verification
 
-`apps/majordomus-cli/src/release/compat/tests.rs` carries the compatibility matrix: every row
+`apps/majordomus-cli/src/release/compat.rs` carries the compatibility matrix: every row
 above, both policy modes, the schema comparison in both directions, and the determinism
 invariants — reordering is not a change, a surface diffed with itself is empty, and the report
 is a function of the two surfaces rather than of the order the registry enumerated them in.

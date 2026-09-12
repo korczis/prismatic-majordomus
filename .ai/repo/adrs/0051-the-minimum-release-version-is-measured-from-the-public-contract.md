@@ -136,7 +136,7 @@ exists, so the disagreement would still be discovered after the number was chose
 first case that matters. Schema compatibility is directional and recursive; implementing it
 over `jq` would produce a program nothing could unit-test, in a language with no types, for a
 question where a wrong answer is silent. The compatibility matrix in
-`release/compat/tests.rs` has thirty-odd rows, and every one of them is a test that could not
+`release/compat.rs`’s test module has thirty-odd rows, and every one of them is a test that could not
 have been written against a shell pipeline.
 
 **Go Elm-strict and start at 1.0.0.** Elm's actual rule: every package begins at `1.0.0`, so
@@ -185,7 +185,7 @@ a release before the registry was committed cannot be compared with at all, whic
 as a refusal rather than absorbed as an empty diff.
 
 What holds it: the compatibility matrix and the policy tables in
-`apps/majordomus-cli/src/release/compat/tests.rs`, including both policy modes and the
+`apps/majordomus-cli/src/release/compat.rs`, including both policy modes and the
 determinism invariants; the surface reader's own tests over the fingerprint, the
 normalisation and every way a baseline can be unreadable; `test/cases/251_version_is_measured.sh`
 over the whole subsystem against the real executable in a repository built for the purpose —

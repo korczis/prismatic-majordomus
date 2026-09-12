@@ -300,7 +300,11 @@ expect_grep 'v1\.2\.1 is tagged and the layer holds no release record'
 # `cmd; status=$?` aborts under `set -e` before the assignment ever runs, so the status of a
 # command expected to be non-zero is captured on the failure branch instead.
 gate=0
-MJ_ROOT="$PWD" MAJORDOMUS_BIN="$RB" sh "$ROOT/scripts/ci/version-matches-surface" >"$S/gate.txt" 2>&1 || gate=$?
+# Executed, not handed to `sh`: the gate declares `#!/usr/bin/env bash` and uses
+# `set -o pipefail`, which dash refuses — and `/bin/sh` is dash on Linux and bash in
+# sh-mode on macOS, so `sh <script>` passes here and fails in CI for a reason that has
+# nothing to do with what this case is testing.
+MJ_ROOT="$PWD" MAJORDOMUS_BIN="$RB" "$ROOT/scripts/ci/version-matches-surface" >"$S/gate.txt" 2>&1 || gate=$?
 engine=0
 "$RB" release analyze >/dev/null 2>&1 || engine=$?
 [ "$gate" = "$engine" ] || {
