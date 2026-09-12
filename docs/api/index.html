@@ -1046,9 +1046,75 @@ palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg
           <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
-          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=16)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_devcontext</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ devcontext compile</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=16)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_devcontext</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ devcontext compile</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,
+its declared scope and the decisions over that scope follow from it.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">issue:</span> &quot;I0001&quot;</span></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">A milestone id or slug, or its canonical identifier.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">milestone:</span> &quot;M000&quot;</span></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">intent</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">What the session is trying to do, in words. The only input the compiler infers
+from, and every entry it produces says so and carries a confidence below one.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">intent:</span> &quot;the context a session is given and the budget it costs&quot;</span></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">paths</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Repository-relative paths the work touches, added to whatever the seeds declare.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">uris</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Canonical identifiers to seed with directly, for a request about something that is
+neither an issue nor a milestone.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">budget_tokens</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">max_depth</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">floor</td>
+                <td class="px-3 py-2 font-mono text-body">number (double)</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]
+when absent.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">all_blocking_rules</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Every blocking rule of the layer, not only the ones the work reaches. Honest and
+usually over budget: the answer then says `over_budget` rather than dropping what it
+may not drop.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr></tbody>
+          </table>
+        </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
         <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/devcontext&quot;</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/devcontext?issue=I0001&amp;milestone=M000&amp;intent=the%20context%20a%20session%20is%20given%20and%20the%20budget%20it%20costs&quot;</pre></div>
 
         <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
         <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -1089,9 +1155,81 @@ palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg
           <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
-          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=8)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_devcontext_explain</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ devcontext explain</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=8)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_devcontext_explain</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ devcontext explain</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">uri</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The canonical identifier to explain.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">absent:</span> &quot;majordomus://rule/nothing-like-this@1&quot;</span><span class="block break-all"><span class="text-body-subtle">policy:</span> &quot;majordomus://policy/.ai/repo/policy.yaml&quot;</span></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,
+its declared scope and the decisions over that scope follow from it.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">A milestone id or slug, or its canonical identifier.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">intent</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">What the session is trying to do, in words. The only input the compiler infers
+from, and every entry it produces says so and carries a confidence below one.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">paths</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Repository-relative paths the work touches, added to whatever the seeds declare.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">uris</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Canonical identifiers to seed with directly, for a request about something that is
+neither an issue nor a milestone.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">budget_tokens</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">max_depth</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">floor</td>
+                <td class="px-3 py-2 font-mono text-body">number (double)</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]
+when absent.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">all_blocking_rules</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Every blocking rule of the layer, not only the ones the work reaches. Honest and
+usually over budget: the answer then says `over_budget` rather than dropping what it
+may not drop.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr></tbody>
+          </table>
+        </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
         <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/devcontext/explain&quot;</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/devcontext/explain?uri=majordomus%3A%2F%2Frule%2Fnothing-like-this%401&quot;</pre></div>
 
         <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
         <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -23910,7 +24048,7 @@ is inferred from similarity.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/33806c04e326007bb0624a7c3da14dd6ca2552d8" class="font-mono underline">33806c0</a> · inputs <span class="font-mono">fd1e0a23b138</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5e31dd498b174e0c9e0420b1b33643f81a24999d" class="font-mono underline">5e31dd4</a> · inputs <span class="font-mono">5600436203d8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
