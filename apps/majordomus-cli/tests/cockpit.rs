@@ -782,7 +782,6 @@ fn urlencode(s: &str) -> String {
     majordomus_cli::http::router::percent_encode(s)
 }
 
-
 /// The stage titles the distribution's completion policy declares, read from the file
 /// rather than written here: a stage added to `share/completion.yaml` is a stage this test
 /// requires the page to name, with no edit.

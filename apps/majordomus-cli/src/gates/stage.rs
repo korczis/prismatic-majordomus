@@ -158,7 +158,11 @@ pub fn derive_stage(stages: &[StageDecl], questions: &[DoneQuestion]) -> Lifecyc
         Some(r) => LifecycleStage {
             id: r.id.clone(),
             title: r.title.clone(),
-            state: if complete { StageState::Complete } else { r.state },
+            state: if complete {
+                StageState::Complete
+            } else {
+                r.state
+            },
             complete,
             owing: r.owing.clone(),
             stages: reports.clone(),
@@ -179,7 +183,11 @@ mod tests {
     use super::*;
 
     fn decl(id: &str) -> StageDecl {
-        StageDecl { id: id.into(), title: id.to_uppercase(), summary: "s".into() }
+        StageDecl {
+            id: id.into(),
+            title: id.to_uppercase(),
+            summary: "s".into(),
+        }
     }
     fn q(id: &str, stage: &str, status: GateStatus) -> DoneQuestion {
         DoneQuestion {
@@ -205,7 +213,10 @@ mod tests {
     fn a_blocked_later_stage_wins_over_an_earlier_pending_one() {
         let s = derive_stage(
             &[decl("a"), decl("b")],
-            &[q("x", "a", GateStatus::Queued), q("y", "b", GateStatus::Fail)],
+            &[
+                q("x", "a", GateStatus::Queued),
+                q("y", "b", GateStatus::Fail),
+            ],
         );
         assert_eq!((s.id.as_str(), s.state), ("b", StageState::Blocked));
         assert_eq!(s.stages[0].state, StageState::Pending);
@@ -224,9 +235,16 @@ mod tests {
     fn the_order_is_the_policy_s_and_a_question_of_no_stage_is_ignored() {
         let s = derive_stage(
             &[decl("b"), decl("a")],
-            &[q("x", "a", GateStatus::Queued), q("y", "b", GateStatus::Queued), q("z", "zz", GateStatus::Fail)],
+            &[
+                q("x", "a", GateStatus::Queued),
+                q("y", "b", GateStatus::Queued),
+                q("z", "zz", GateStatus::Fail),
+            ],
         );
         assert_eq!(s.id, "b", "the first pending stage in policy order");
-        assert_eq!(s.stages.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(), ["b", "a"]);
+        assert_eq!(
+            s.stages.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(),
+            ["b", "a"]
+        );
     }
 }

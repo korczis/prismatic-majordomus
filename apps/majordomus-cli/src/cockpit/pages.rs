@@ -2511,7 +2511,13 @@ pub fn completion(ctx: &Context) -> Page {
         "Deployment",
         el("div")
             .child(table(
-                &["Target", "Kind", "Reaches it", "Expects", "Identity address"],
+                &[
+                    "Target",
+                    "Kind",
+                    "Reaches it",
+                    "Expects",
+                    "Identity address",
+                ],
                 c.deployment
                     .targets
                     .iter()

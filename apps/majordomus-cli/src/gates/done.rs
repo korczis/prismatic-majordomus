@@ -213,15 +213,21 @@ pub(crate) fn answer(policy: &CompletionPolicy, inputs: &DoneInputs<'_>) -> Vec<
                         format!("the release analysis could not be made: {why}"),
                         "release.analysis".to_string(),
                     ),
-                    ReleaseStanding::NotApplicable(why) => {
-                        (GateStatus::Exempt, why.clone(), "release.analysis".to_string())
-                    }
-                    ReleaseStanding::Measured { ok: true, detail } => {
-                        (GateStatus::Pass, detail.clone(), "release.analysis (ADR 0051)".into())
-                    }
-                    ReleaseStanding::Measured { ok: false, detail } => {
-                        (GateStatus::Fail, detail.clone(), "release.analysis (ADR 0051)".into())
-                    }
+                    ReleaseStanding::NotApplicable(why) => (
+                        GateStatus::Exempt,
+                        why.clone(),
+                        "release.analysis".to_string(),
+                    ),
+                    ReleaseStanding::Measured { ok: true, detail } => (
+                        GateStatus::Pass,
+                        detail.clone(),
+                        "release.analysis (ADR 0051)".into(),
+                    ),
+                    ReleaseStanding::Measured { ok: false, detail } => (
+                        GateStatus::Fail,
+                        detail.clone(),
+                        "release.analysis (ADR 0051)".into(),
+                    ),
                 },
                 QuestionSource::TaskIssue => match &inputs.issue {
                     IssueStanding::Unknown(why) => {
@@ -253,9 +259,11 @@ pub(crate) fn answer(policy: &CompletionPolicy, inputs: &DoneInputs<'_>) -> Vec<
                     ),
                 },
                 QuestionSource::SessionHandover => match &inputs.handover {
-                    HandoverStanding::Unknown(why) => {
-                        (GateStatus::Unknown, why.clone(), "the continuity store".into())
-                    }
+                    HandoverStanding::Unknown(why) => (
+                        GateStatus::Unknown,
+                        why.clone(),
+                        "the continuity store".into(),
+                    ),
                     HandoverStanding::Present(name) => (
                         GateStatus::Pass,
                         format!("handover {name}"),
@@ -263,8 +271,7 @@ pub(crate) fn answer(policy: &CompletionPolicy, inputs: &DoneInputs<'_>) -> Vec<
                     ),
                     HandoverStanding::Absent => (
                         GateStatus::Queued,
-                        "no handover for this task; `finish` also accepts a completion note"
-                            .into(),
+                        "no handover for this task; `finish` also accepts a completion note".into(),
                         ".ai/local/state/handovers/".into(),
                     ),
                 },
@@ -389,7 +396,11 @@ fn change(changed: &[String]) -> (GateStatus, String, String) {
     } else {
         (
             GateStatus::Pass,
-            format!("{} test path(s) touched, including {}", tests.len(), tests[0]),
+            format!(
+                "{} test path(s) touched, including {}",
+                tests.len(),
+                tests[0]
+            ),
             "the change set (profile verification.regression_test_required)".to_string(),
         )
     }
@@ -502,7 +513,11 @@ mod tests {
     fn every_question_carries_a_source_a_stage_and_something_to_run() {
         let fx = Fx::new();
         let q = fx.answer();
-        assert_eq!(q.len(), policy().questions.len(), "one answer per declared question");
+        assert_eq!(
+            q.len(),
+            policy().questions.len(),
+            "one answer per declared question"
+        );
         for question in &q {
             assert!(!question.source.is_empty(), "{} has no source", question.id);
             assert!(!question.remediation.is_empty(), "{}", question.id);
@@ -520,20 +535,27 @@ mod tests {
     #[test]
     fn an_obligation_answer_is_the_closures_word_and_not_a_second_opinion() {
         let mut fx = Fx::new();
-        fx.standing.insert("tests".to_string(), standing("discharged"));
+        fx.standing
+            .insert("tests".to_string(), standing("discharged"));
         fx.standing.insert("docs".to_string(), standing("stale"));
         fx.standing.insert("push".to_string(), standing("owed"));
         assert_eq!(fx.by("tested").status, GateStatus::Pass);
         assert_eq!(fx.by("documented").status, GateStatus::Stale);
         assert_eq!(fx.by("pushed").status, GateStatus::Queued);
-        assert!(fx.by("tested").evidence.contains("the closure said discharged"));
+        assert!(fx
+            .by("tested")
+            .evidence
+            .contains("the closure said discharged"));
         assert!(fx.by("tested").source.contains("obligations.closure"));
     }
 
     #[test]
     fn an_obligation_the_change_implies_and_nobody_declared_is_a_debt_not_a_pass() {
         let mut fx = Fx::new();
-        fx.implied = vec![implied_of("tests", true, false), implied_of("deploy", false, false)];
+        fx.implied = vec![
+            implied_of("tests", true, false),
+            implied_of("deploy", false, false),
+        ];
         assert_eq!(fx.by("tested").status, GateStatus::Queued);
         assert!(fx.by("tested").evidence.contains("does not declare it"));
         assert_eq!(
@@ -548,15 +570,24 @@ mod tests {
         let mut fx = Fx::new();
         assert_eq!(fx.by("ci").status, GateStatus::Exempt);
 
-        fx.gates = vec![gate("a", GateStatus::Queued, true), gate("b", GateStatus::Pass, true)];
+        fx.gates = vec![
+            gate("a", GateStatus::Queued, true),
+            gate("b", GateStatus::Pass, true),
+        ];
         assert_eq!(fx.by("ci").status, GateStatus::Queued);
 
-        fx.gates = vec![gate("a", GateStatus::Fail, true), gate("b", GateStatus::Queued, true)];
+        fx.gates = vec![
+            gate("a", GateStatus::Fail, true),
+            gate("b", GateStatus::Queued, true),
+        ];
         let ci = fx.by("ci");
         assert_eq!(ci.status, GateStatus::Fail, "a refusal outranks a silence");
         assert!(ci.evidence.contains("1 refusing") && ci.evidence.contains("1 never reported"));
 
-        fx.gates = vec![gate("a", GateStatus::Pass, true), gate("b", GateStatus::Exempt, false)];
+        fx.gates = vec![
+            gate("a", GateStatus::Pass, true),
+            gate("b", GateStatus::Exempt, false),
+        ];
         assert_eq!(fx.by("ci").status, GateStatus::Pass);
     }
 
@@ -584,11 +615,17 @@ mod tests {
     fn the_version_question_is_the_release_analysis_and_refuses_an_understated_version() {
         let mut fx = Fx::new();
         assert_eq!(fx.by("version").status, GateStatus::Unknown);
-        fx.release = ReleaseStanding::Measured { ok: false, detail: "0.6.0 owed, 0.5.0 declared".into() };
+        fx.release = ReleaseStanding::Measured {
+            ok: false,
+            detail: "0.6.0 owed, 0.5.0 declared".into(),
+        };
         let v = fx.by("version");
         assert_eq!(v.status, GateStatus::Fail);
         assert!(v.evidence.contains("owed"));
-        fx.release = ReleaseStanding::Measured { ok: true, detail: "minor, 0.6.0".into() };
+        fx.release = ReleaseStanding::Measured {
+            ok: true,
+            detail: "minor, 0.6.0".into(),
+        };
         assert_eq!(fx.by("version").status, GateStatus::Pass);
     }
 
@@ -599,10 +636,17 @@ mod tests {
         assert_eq!(fx.by("issue").status, GateStatus::Queued);
         fx.issue = IssueStanding::DeclaredNone;
         assert_eq!(fx.by("issue").status, GateStatus::Exempt);
-        fx.issue = IssueStanding::Resolved { id: "I0001".into(), title: "t".into() };
+        fx.issue = IssueStanding::Resolved {
+            id: "I0001".into(),
+            title: "t".into(),
+        };
         assert_eq!(fx.by("issue").status, GateStatus::Pass);
         fx.issue = IssueStanding::Unresolved { id: "I9999".into() };
-        assert_eq!(fx.by("issue").status, GateStatus::Fail, "a dangling reference refuses");
+        assert_eq!(
+            fx.by("issue").status,
+            GateStatus::Fail,
+            "a dangling reference refuses"
+        );
     }
 
     #[test]
@@ -621,7 +665,8 @@ mod tests {
         let r = fx.by("regression-tested");
         assert_eq!(r.status, GateStatus::Queued);
         assert!(r.evidence.contains("no test path"));
-        fx.changed.push("test/cases/131_completion_gates.sh".to_string());
+        fx.changed
+            .push("test/cases/131_completion_gates.sh".to_string());
         assert_eq!(fx.by("regression-tested").status, GateStatus::Pass);
     }
 
@@ -632,7 +677,10 @@ mod tests {
         assert!(is_test_path("src/foo_test.rs"));
         assert!(is_test_path("web/a.spec.ts"));
         assert!(!is_test_path("lib/check.sh"));
-        assert!(!is_test_path("docs/latest.md"), "a substring is not a segment");
+        assert!(
+            !is_test_path("docs/latest.md"),
+            "a substring is not a segment"
+        );
     }
 
     #[test]

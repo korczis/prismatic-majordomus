@@ -14,7 +14,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{BenchmarkPolicy, Exposure, McpExposure, McpResource, Stability, WaiverReason};
+use crate::capability::model::{
+    BenchmarkPolicy, Exposure, McpExposure, McpResource, Stability, WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::CachePolicy;
 use crate::deploy::targets::DeploymentPlan;
@@ -201,7 +203,10 @@ pub struct DeploymentVerification {
     pub report: VerificationReport,
 }
 
-fn deploy_verify(ctx: &Context, input: VerifyInput) -> Result<DeploymentVerification, CapabilityError> {
+fn deploy_verify(
+    ctx: &Context,
+    input: VerifyInput,
+) -> Result<DeploymentVerification, CapabilityError> {
     let root = std::path::PathBuf::from(&ctx.index.repository.root);
     let expected = match input.expected_commit {
         Some(c) => Some(c),
@@ -210,7 +215,8 @@ fn deploy_verify(ctx: &Context, input: VerifyInput) -> Result<DeploymentVerifica
     let model = crate::gates::GateModel::load(&root).ok();
     let everything = input.changed.is_none();
     let changed = input.changed.unwrap_or_default();
-    let mut plan = super::gates::deployment_plan(ctx, model.as_ref(), &changed, expected.clone(), everything);
+    let mut plan =
+        super::gates::deployment_plan(ctx, model.as_ref(), &changed, expected.clone(), everything);
     if let Some(only) = &input.targets {
         for t in &mut plan.targets {
             if !only.iter().any(|o| o == &t.id) {
@@ -221,7 +227,11 @@ fn deploy_verify(ctx: &Context, input: VerifyInput) -> Result<DeploymentVerifica
     }
     let now = crate::peers::rfc3339(std::time::SystemTime::now());
     let report = verify::verify(&plan, &CurlFetcher, &now);
-    Ok(DeploymentVerification { expected_commit: expected, plan, report })
+    Ok(DeploymentVerification {
+        expected_commit: expected,
+        plan,
+        report,
+    })
 }
 
 pub fn module() -> ModuleDescriptor {
@@ -344,7 +354,10 @@ mod tests {
             .iter()
             .map(|c| c.capability.id.to_string())
             .collect();
-        assert_eq!(ids, ["deploy.list", "deploy.get", "deploy.check", "deploy.verify"]);
+        assert_eq!(
+            ids,
+            ["deploy.list", "deploy.get", "deploy.check", "deploy.verify"]
+        );
     }
 
     /// A deployment id the layer does not have is refused by name rather than answered

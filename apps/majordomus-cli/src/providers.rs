@@ -76,10 +76,11 @@ pub fn artifacts(
             }
         })?;
         let text = std::fs::read_to_string(&template).map_err(|e| Error::io(&template, e))?;
-        let body = render(&text, policy, &fragments).map_err(|reason| Error::InvalidProjection {
-            target: target.clone(),
-            reason: format!("{}: {reason}", template.display()),
-        })?;
+        let body =
+            render(&text, policy, &fragments).map_err(|reason| Error::InvalidProjection {
+                target: target.clone(),
+                reason: format!("{}: {reason}", template.display()),
+            })?;
         let content_sha = sha256_hex(&body);
         let content = match projection.mode {
             ProjectionMode::File => {

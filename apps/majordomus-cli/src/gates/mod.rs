@@ -72,8 +72,7 @@ use crate::capability::builtin::ActiveTask;
 use crate::discovery::glob::Glob;
 
 pub use done::{
-    DoneInputs, DoneQuestion, HandoverStanding, IssueStanding, ObligationStanding,
-    ReleaseStanding,
+    DoneInputs, DoneQuestion, HandoverStanding, IssueStanding, ObligationStanding, ReleaseStanding,
 };
 pub use judge::{Gate, GateRun, GateStatus};
 pub(crate) use model::GateModel;
@@ -214,14 +213,15 @@ pub(crate) fn implied(
     task: Option<&ActiveTask>,
     deployment: &DeploymentPlan,
 ) -> Vec<ImpliedObligation> {
-    let reaches = |pred: &dyn Fn(&crate::deploy::targets::DeploymentTarget) -> bool| -> Vec<String> {
-        deployment
-            .targets
-            .iter()
-            .filter(|t| t.applicable && pred(t))
-            .map(|t| t.id.clone())
-            .collect()
-    };
+    let reaches =
+        |pred: &dyn Fn(&crate::deploy::targets::DeploymentTarget) -> bool| -> Vec<String> {
+            deployment
+                .targets
+                .iter()
+                .filter(|t| t.applicable && pred(t))
+                .map(|t| t.id.clone())
+                .collect()
+        };
     let pages = reaches(&|t| t.kind == crate::deploy::targets::TargetKind::Pages);
     let apps = reaches(&|t| t.kind == crate::deploy::targets::TargetKind::Application);
     let any = reaches(&|_| true);
@@ -671,13 +671,23 @@ classes:
     #[test]
     fn source_modification_implies_tests_and_a_document_change_does_not() {
         let v = vocabulary();
-        let i = implied(&v, &["apps/majordomus-cli/src/lib.rs".into()], None, &DeploymentPlan::default());
+        let i = implied(
+            &v,
+            &["apps/majordomus-cli/src/lib.rs".into()],
+            None,
+            &DeploymentPlan::default(),
+        );
         let tests = i.iter().find(|o| o.id == "tests").unwrap();
         assert!(tests.applicable, "{}", tests.reason);
         assert!(!tests.declared, "the task declared nothing");
         assert!(!i.iter().find(|o| o.id == "docs").unwrap().applicable);
         // and the reverse
-        let i = implied(&v, &["docs/CLI.md".into()], None, &DeploymentPlan::default());
+        let i = implied(
+            &v,
+            &["docs/CLI.md".into()],
+            None,
+            &DeploymentPlan::default(),
+        );
         assert!(i.iter().find(|o| o.id == "docs").unwrap().applicable);
         assert!(!i.iter().find(|o| o.id == "tests").unwrap().applicable);
     }
@@ -692,7 +702,12 @@ classes:
         assert!(!d.applicable, "no change to a tree can imply a deployment");
         assert!(d.reason.contains("outside this tree"));
 
-        let declared = implied(&v, &changed, Some(&task(&["deploy"])), &DeploymentPlan::default());
+        let declared = implied(
+            &v,
+            &changed,
+            Some(&task(&["deploy"])),
+            &DeploymentPlan::default(),
+        );
         let d = declared.iter().find(|o| o.id == "deploy").unwrap();
         assert!(d.applicable && d.declared);
     }
@@ -733,7 +748,10 @@ classes:
         assert!(by("pages").applicable, "{}", by("pages").reason);
         assert!(by("verify").applicable, "{}", by("verify").reason);
         assert!(!by("deploy").applicable, "no active deployment is reached");
-        assert!(by("push").applicable && by("target").applicable, "a change owes the trunk");
+        assert!(
+            by("push").applicable && by("target").applicable,
+            "a change owes the trunk"
+        );
         // and nothing changed: nothing owed
         let none = implied(&v, &[], None, &DeploymentPlan::default());
         assert!(none.iter().all(|o| !o.applicable));

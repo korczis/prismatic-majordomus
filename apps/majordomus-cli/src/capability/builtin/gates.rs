@@ -310,7 +310,10 @@ fn release_standing(ctx: &Context) -> (ReleaseStanding, Option<VersionSummary>) 
             } else {
                 format!(
                     "{} required since {} ({} movement(s)): at least {} owed, {} declared",
-                    summary.impact, summary.baseline, summary.changes, summary.required,
+                    summary.impact,
+                    summary.baseline,
+                    summary.changes,
+                    summary.required,
                     summary.declared
                 )
             };
@@ -425,7 +428,9 @@ pub(crate) fn deployment_plan(
     let facts = PlanFacts {
         site_base_url: targets::site_base_url(&root),
         site_inputs: m.map(|m| m.inputs_of("site-build")).unwrap_or_default(),
-        surface_inputs: m.map(|m| m.inputs_of("version-surface")).unwrap_or_default(),
+        surface_inputs: m
+            .map(|m| m.inputs_of("version-surface"))
+            .unwrap_or_default(),
         latest_release,
         applications,
         expected_commit,
