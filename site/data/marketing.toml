@@ -4,15 +4,15 @@
 # every count). Budget: scripts/site-check fails when this file exceeds 60 lines.
 
 [hero]
-eyebrow = "Intent-driven development"
-title = "Stop telling AI what files to edit."
-subtitle = "Tell it what must become true."
+eyebrow = "A supervisory control layer for AI-assisted work"
+title = "Your repository decides what done means."
+subtitle = "Not the worker, and not the model."
 mantra = ["Not merely implemented.", "Not merely tested.", "Not merely merged."]
-verdict = "Satisfied."
-lead = "Majordomus is a control plane built on a doctrine: the desired state of the system, the constraints that must stay true and the evidence completion requires belong to the repository, not to a prompt. What follows keeps the two halves apart and marks each one — the part that is enforced here today, and the part that is still only the argument."
-cta_primary = "Install"
+verdict = "Proven."
+lead = "Majordomus holds one canonical policy for how AI workers operate in a repository, generates the instruction file each tool reads from it, keeps task state outside every conversation, reports when two workers are about to collide, and refuses to call work finished until a contract is met. It runs locally, in portable shell, and never invokes a model."
+cta_primary = "Get started"
 cta_secondary = "Every feature against every interface"
-console_caption = "Real output, not a mockup. The rows are the features this repository declares and the marks are derived from what each one names; the same answer is on the command line, over HTTP and over MCP."
+console_caption = "Recorded runs, not a mockup. The tabs are the lifecycle the tool declares, in its order; each panel is the stdout of a scenario this site executed while it was being generated, with the machine and the clock redacted and nothing else touched."
 
 [install]
 layer = "What init creates is the layer this site is generated from: one directory, tracked, readable without the tool. The sections below are this repository's own."
@@ -50,3 +50,9 @@ caption = "The contract as the repository's own README works it through — an i
 [architecture]
 lead = "This page is a projection of the repository it describes. Every feature, count, provider, interface and moment on it came out of the same executable that answers agents, and a stale page fails the build before it can be deployed."
 
+
+[refuses]
+kicker = "what it refuses"
+title = "The half a model cannot give you"
+lead = "Every transcript below is a run that happened, of a command of the declared lifecycle, that ended by declining to accept the work. None of it is written here: a command that stops refusing stops appearing, and the page cannot be built with nothing on this list."
+closing = "This is the difference between a tool that tells a worker what to do and one that decides whether what it did counts. A worker can always say it is finished. Here that sentence is a claim the repository evaluates, line by line, against a contract written before the work started — and nothing is recorded while any line of it fails."
