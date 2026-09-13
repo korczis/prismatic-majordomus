@@ -1562,11 +1562,6 @@
       "kind": "sources"
     },
     {
-      "source": "lib/adr.sh",
-      "target": ".ai/repo/adrs/.id.lock",
-      "kind": "uses"
-    },
-    {
       "source": "lib/capture.sh",
       "target": ".ai/local/session-contexts",
       "kind": "uses"
@@ -2020,6 +2015,11 @@
       "source": "lib/watch.sh",
       "target": ".ai/local/state/ledger.jsonl",
       "kind": "uses"
+    },
+    {
+      "source": "lib/adr.sh",
+      "target": ".ai/repo/adrs/.id.lock",
+      "kind": "writes"
     },
     {
       "source": "lib/capture.sh",
