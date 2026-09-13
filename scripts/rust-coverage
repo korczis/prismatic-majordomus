@@ -52,6 +52,11 @@
 # continuity depends on is tested at all: it can sit at zero while the number stays green,
 # which is where it was.
 set -eu
+# pipefail: this script reads the changed lines through `git diff | awk`. Without it a
+# failing git reports the pipeline's status as awk's success, the changed-line file comes
+# out empty, and the gate then answers "every changed line is covered" about a diff it
+# never read — a pass that means "could not ask".
+set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 MODE=gate FROM="" EXPORT="" ONLY="" CHANGED=""
@@ -105,7 +110,22 @@ if [ -z "$FROM" ]; then
   FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX.json")"
   # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
   # measurement. The suite's own verdict is `cargo test`'s; this command's is the coverage.
-  ( cd "$CRATE" && RUSTFLAGS='' cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null
+  # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
+  # measurement. But cargo exits 101 when a test fails, and under `set -e` that status
+  # would escape this script, which answers only 0/10/12/13 and whose caller
+  # scripts/ci/coverage-differential declares the same four. A raw 101 is not a verdict in
+  # that vocabulary; it is cargo's own error wearing this gate's name. So the failure is
+  # caught here, and the export is judged on whether it exists and parses.
+  cov_status=0
+  ( cd "$CRATE" && RUSTFLAGS='' cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null || cov_status=$?
+  if [ ! -s "$FROM" ]; then
+    printf 'rust-coverage: the measurement could not be trusted: cargo llvm-cov exited %s and wrote no export\n' "$cov_status" >&2
+    exit 12
+  fi
+  python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$FROM" 2>/dev/null || {
+    printf 'rust-coverage: the measurement could not be trusted: cargo llvm-cov exited %s and the export is not readable JSON\n' "$cov_status" >&2
+    exit 12; }
+  [ "$cov_status" = 0 ] || printf 'rust-coverage: the suite failed (cargo exit %s); the coverage below is measured from the export it still wrote\n' "$cov_status" >&2
 fi
 [ -z "$EXPORT" ] || cp "$FROM" "$EXPORT"
 
