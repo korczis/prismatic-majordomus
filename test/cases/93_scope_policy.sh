@@ -9,6 +9,8 @@
 # manifest names no scope is read under the distribution's default, which is said.
 #
 # Skips itself when cargo is absent, as the other Rust cases do.
+#
+# Proves claim scope-declared (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
 command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }

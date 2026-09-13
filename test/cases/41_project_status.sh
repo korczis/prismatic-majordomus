@@ -2,6 +2,9 @@
 # majordomus-negative: plan
 # Status derivation. No issue file carries a status; every state below is computed from
 # what was recorded about the issue and from the state of its dependencies.
+#
+# Proves claim project-status-derived (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim evidence-gates-done (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 # init adds the local-state ignore line; commit it so the task that follows starts from a clean tree

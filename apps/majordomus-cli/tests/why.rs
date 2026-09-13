@@ -4,6 +4,9 @@
 //!
 //! What is deliberately not here: any list of moments. Every assertion below either counts
 //! what the fixture declares or names the one record the test itself wrote.
+//!
+//! Proves claim why-references-resolve (docs/CLAIMS.yaml), whose `test:` names this case.
+//! Proves claim why-diagnosis-explainable (docs/CLAIMS.yaml), whose `test:` names this case.
 
 mod common;
 

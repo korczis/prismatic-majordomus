@@ -4,6 +4,9 @@
 #
 # A dependency list without validation is a suggestion. Each negative case below is a
 # graph that must be rejected by name rather than silently producing an empty ready set.
+#
+# Proves claim dag-validation (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim execution-waves (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 pj_init

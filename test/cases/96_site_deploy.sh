@@ -5,6 +5,8 @@
 # no GitHub; the deploy path is the same one the Pages workflow and a person run.
 #
 # Skips itself without zola or node_modules, as 12_site_build does; the build is real.
+#
+# Proves claim site-deploy-one-path (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 command -v zola >/dev/null || { echo "    zola absent; skipping"; exit 0; }
 [ -d "$ROOT/node_modules/tailwindcss" ] || { echo "    node_modules absent; skipping"; exit 0; }

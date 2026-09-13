@@ -7,6 +7,8 @@
 # Every scenario is one change in the working tree against HEAD (the default change set),
 # observed through `context affected`, then undone; the tree is committed clean between
 # scenarios so that one scenario's mutation cannot leak into the next.
+#
+# Proves claim context-impact (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 "$MJ" update >/dev/null

@@ -1,5 +1,6 @@
 # majordomus-covers: doctor
 # majordomus-negative: doctor
+# Proves claim profile-validate (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 # not installed
 expect_exit 12 "$MJ" doctor

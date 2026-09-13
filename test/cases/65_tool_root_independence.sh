@@ -1,6 +1,8 @@
 # The tool distribution is read-only and its location is not part of the repository's
 # data. Running the same version from a checkout, from an unrelated absolute path, and
 # through PATH must use the same repository files and write nothing into the distribution.
+#
+# Proves claim tool-location-independent (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 
 # --- a second copy of the distribution, somewhere that is not the repository

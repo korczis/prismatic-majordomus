@@ -2,6 +2,8 @@
 # The GitHub projection, computed offline. No case here reaches the network: what is
 # proved is that the payload the adapter would post is derived from the canonical model
 # and from nothing else.
+#
+# Proves claim github-projection (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 SYNC="$ROOT/scripts/github-sync"
 "$MJ" init >/dev/null

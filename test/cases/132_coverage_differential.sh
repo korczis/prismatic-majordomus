@@ -11,6 +11,8 @@
 # The gate resolves paths against its own repo root, so the case places the sample source at
 # a crate path in a scratch git repo, rewrites the export's filename to point there, and
 # synthesises diffs against a base commit with `git diff`.
+#
+# Proves claim new-code-is-covered (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 
 FX_SRC="$ROOT/test/fixtures/coverage/sample.rs"

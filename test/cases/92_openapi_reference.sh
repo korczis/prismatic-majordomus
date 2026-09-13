@@ -11,6 +11,8 @@
 # no network client here).
 #
 # Skips itself when cargo is absent, as the site cases do for zola.
+#
+# Proves claim openapi-inferred (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"

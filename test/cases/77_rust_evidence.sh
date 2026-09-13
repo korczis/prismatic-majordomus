@@ -14,6 +14,10 @@
 #
 # The structural half never skips. The behavioural half skips itself when there is
 # neither cargo nor a MAJORDOMUS_BIN to drive, as the other Rust cases do.
+#
+# Proves claim rust-evidence-gates (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim rust-coverage-floor (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim rust-hot-path-benchmarks (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 CRATE="$ROOT/apps/majordomus-cli"
 RC="$ROOT/scripts/rust-check"

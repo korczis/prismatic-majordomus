@@ -19,6 +19,8 @@
 # Every case in this suite is end to end by construction: test/run.sh builds a fresh git
 # repository in a temporary directory and invokes bin/majordomus in it, so there is no
 # separate end-to-end layer to declare and no second runner to keep in step.
+#
+# Proves claim command-coverage (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../../lib/common.sh

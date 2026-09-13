@@ -3,6 +3,10 @@
 # over. The planner is driven with listed paths, never with this checkout's diff, so the
 # case is the same on every machine; the verdict with fixture plans and needs contexts; the
 # runner with a private harness of throwaway cases.
+#
+# Proves claim ci-planned-gates (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim ci-verdict (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim suite-parallel (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 PLAN="$ROOT/scripts/ci-plan"; VERDICT="$ROOT/scripts/ci/verdict"; MODEL="$ROOT/.ai/repo/ci/gates.yaml"
 command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }

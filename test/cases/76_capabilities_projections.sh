@@ -8,6 +8,11 @@
 # here (rule project.no-network-no-eval).
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the site cases do for zola.
+#
+# Proves claim capability-registry (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim interfaces-are-projections (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim schema-driven-kinds (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim generated-projections-checked (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj76.XXXXXX")"; trap 'rm -rf "$S"' EXIT

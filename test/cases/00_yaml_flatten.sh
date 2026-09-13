@@ -1,4 +1,6 @@
 # The YAML subset parser: the foundation everything else validates through.
+#
+# Proves claim policy-parse (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 . "$ROOT/lib/common.sh"
 cat > y.yaml <<'Y'

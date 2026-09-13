@@ -5,6 +5,8 @@
 # mechanism for "stopped until a person answers" could be walked past by finishing the task
 # that asked. This case was written first as a characterisation of that gap (M001/I0101) and
 # rewritten here to assert the behaviour that replaced it (M001/I0103).
+#
+# Proves claim blocker-survives-handover (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 # init adds the local-state ignore line; commit it so the task that follows starts from a clean tree

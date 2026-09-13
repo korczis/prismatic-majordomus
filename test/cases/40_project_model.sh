@@ -4,6 +4,8 @@
 #
 # The schema rule is the same one policy and profiles live under — a key nobody reads is an
 # error, not a comment — so the negative cases here are the point of the file.
+#
+# Proves claim project-schema (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 

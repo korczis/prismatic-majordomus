@@ -2,6 +2,8 @@
 # majordomus-negative: checkpoint
 # Checkpoints: creation, the cap that distinguishes them from handovers, computed identity,
 # task association, resolution, and the ledger record that makes them visible to history.
+#
+# Proves claim checkpoint-record (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base

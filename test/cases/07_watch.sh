@@ -1,5 +1,6 @@
 # majordomus-covers: watch
 # majordomus-negative: watch
+# Proves claim drift-watch (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 expect_exit 11 "$MJ" watch

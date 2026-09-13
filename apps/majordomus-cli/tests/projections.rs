@@ -2,6 +2,8 @@
 //! in MCP, HTTP, OpenAPI, introspection and the generated reference; nothing appears in a
 //! projection that the registry does not hold; and a change to one canonical type
 //! changes every projection without a projection being edited.
+//!
+//! Proves claim site-registry-dataset (docs/CLAIMS.yaml), whose `test:` names this case.
 
 mod common;
 

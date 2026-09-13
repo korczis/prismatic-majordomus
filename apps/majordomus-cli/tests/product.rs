@@ -5,6 +5,10 @@
 //!
 //! What is deliberately not here: any list of features. Every assertion below either
 //! counts what the fixture declares or names the one record the test itself wrote.
+//!
+//! Proves claim product-surfaces-derived (docs/CLAIMS.yaml), whose `test:` names this case.
+//! Proves claim product-references-resolve (docs/CLAIMS.yaml), whose `test:` names this case.
+//! Proves claim product-projection-public-safe (docs/CLAIMS.yaml), whose `test:` names this case.
 
 mod common;
 

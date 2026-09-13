@@ -8,6 +8,10 @@
 # breaks one and watches every surface refuse it the same way; then renames and removes it
 # and watches every derived trace go with it. The Rust and site halves skip themselves
 # when their toolchain is absent, as the other cases do.
+#
+# Proves claim skill-catalogue (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim skill-check (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim skill-site-projection (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj95.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 "$MJ" init >/dev/null; "$MJ" update >/dev/null

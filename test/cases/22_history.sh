@@ -2,6 +2,10 @@
 # majordomus-negative: history doctor watch
 # History: the ledger read back. Ordering, filters, the JSON form, validation of malformed
 # lines, and rotation that archives without deleting.
+#
+# Proves claim ledger-integrity (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim history-ledger-read (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim record-retention (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 
 # An event written before the repository has any commit must still be a well-formed line.

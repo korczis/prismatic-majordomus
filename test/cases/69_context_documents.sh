@@ -1,6 +1,9 @@
 # Scoped context documents: discovery by contract, the ancestor chain, scope, composition,
 # a deterministic order, provider and audience filtering, and every way the tree can be
 # wrong — each refused by name, with the tree unchanged.
+#
+# Proves claim context-documents (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim context-coverage (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 "$MJ" update >/dev/null

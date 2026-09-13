@@ -17,6 +17,8 @@
 # here, not one server and a mkdir. That is the behaviour being asserted, not a workaround.
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
+#
+# Proves claim web-namespaces-reserved (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }

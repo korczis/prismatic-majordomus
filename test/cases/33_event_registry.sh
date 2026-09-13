@@ -9,6 +9,8 @@
 # Four things must agree: share/events.yaml, the mj_ledger_append call sites, the rendering
 # in lib/history.sh, and the table in docs/SCHEMAS.md. Any one of them moving alone is the
 # drift this case exists to catch.
+#
+# Proves claim event-vocabulary (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../../lib/common.sh

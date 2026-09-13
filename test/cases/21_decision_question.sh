@@ -2,6 +2,10 @@
 # majordomus-negative: decision question check finish watch doctor
 # Decisions and open questions: the two stores the finish contract reads. Both must be
 # written by a command, validated by the gates, and impossible to corrupt silently.
+#
+# Proves claim blocker-store (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim decision-record (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim open-question-gate (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base

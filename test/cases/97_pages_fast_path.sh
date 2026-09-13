@@ -8,6 +8,8 @@
 #
 # It reads this repository's own files rather than the disposable fixture, because the subject
 # is this repository's publication path.
+#
+# Proves claim site-deploys-from-verified-run (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 W="$ROOT/.github/workflows/pages.yml"
 V="$ROOT/.github/workflows/validate.yml"

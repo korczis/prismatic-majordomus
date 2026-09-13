@@ -8,6 +8,8 @@
 # leaves a working installation working: a wrong digest, a truncated download, an archive
 # that escapes its own directory, an archive that carries a link, a missing release, and a
 # destination that cannot be written.
+#
+# Proves claim installer-verifies-before-installing (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }

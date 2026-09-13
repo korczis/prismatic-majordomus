@@ -12,6 +12,8 @@
 # The invocation was fixed. What this case holds is the property, not the flag: an archive this
 # packer writes carries every path once and carries nothing but regular files and directories,
 # and a packer that violates that is stopped where it packs rather than where it publishes.
+#
+# Proves claim release-archive-shape (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 command -v tar >/dev/null 2>&1 || { echo "    skip: no tar"; exit 0; }

@@ -1,5 +1,6 @@
 # majordomus-covers: handover
 # majordomus-negative: handover start
+# Proves claim handover-record (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base

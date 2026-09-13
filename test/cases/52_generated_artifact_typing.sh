@@ -9,6 +9,8 @@
 # for — and it proves the one claim Rust cannot make on its own: that a `.yaml` encoding
 # is real YAML and decodes to the same document as its `.json` sibling, read by a YAML
 # parser this repository does not own.
+#
+# Proves claim generated-artifacts-typed (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 MAN="$ROOT/docs/generated/artifacts.json"

@@ -8,6 +8,9 @@
 #
 # The resolver is invoked as few times as the proof allows: one load reads every rule file,
 # and a case that loads after every line would take minutes for no extra evidence.
+#
+# Proves claim vendored-rule-package (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim rule-resolution (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 P=.ai/repo/rules/project
