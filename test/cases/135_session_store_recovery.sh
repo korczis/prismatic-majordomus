@@ -296,7 +296,12 @@ expect_grep 'skipped 1 candidate'
 # share/commands.yaml. Asserting the declaration here, and not only in the gate, is what
 # keeps the two from being separately true — a module renamed to anything but `recover`
 # still generates cleanly, still serves, and still leaves the command unbacked.
-"$MAJORDOMUS_BIN" capabilities list --format json > "$T/caps.json" 2>/dev/null
+# The executable is called directly, from the case's own repository, so it is given the
+# share it would otherwise look for beside itself and not find; and its failure is named
+# rather than discarded, because under `bash -eu` a silent non-zero ends the case with no
+# word of why (CI printed only "FAIL 135_session_store_recovery").
+MAJORDOMUS_SHARE="$ROOT/share" "$MAJORDOMUS_BIN" capabilities list --format json > "$T/caps.json" 2>"$T/caps.err" \
+  || { rc=$?; printf '    capabilities list exited %s: %s\n' "$rc" "$(grep -v ' INFO ' "$T/caps.err" | tail -2)"; exit 1; }
 must "the registry declares recover.orphans, a command of module recover" \
   [ "$(jq '[.capabilities[] | select(.id == "recover.orphans" and .kind == "command" and .module == "recover")] | length' "$T/caps.json")" = 1 ]
 
