@@ -21,6 +21,14 @@
 #   scripts/generate-site-data --no-scenarios
 #                                         derive without executing the use-case scenarios
 #
+# Exit: 0 generated (or, under --check, in sync) · 10 a finding about the repository: an input
+# that does not hold, or derived data that is stale · 12 the run could not reach its subject —
+# jq absent, a canonical input missing, or a read through the tool that failed · 13 the
+# publish itself failed and the previous generation was restored. The distinction 10 vs. 12
+# matters and is the repository's (`bin/majordomus`, project.a-verdict-states-its-subject):
+# a finding is a statement about the repository, and a run that could not read the repository
+# has no statement to make about it.
+#
 # --no-scenarios exists for the cases that test *derivation*: they mutate a canonical input
 # and prove the derived data followed it. Some of those mutations necessarily break the
 # behaviour the scenarios exercise — 12c removes a module's reference to a state file to
@@ -57,6 +65,43 @@ PJ="$(mj_rel "$MJ_PROJECT_DIR")"; AI="$(mj_rel "$MJ_AI_DIR")"; LOCAL="$(mj_rel "
 trap 'rm -rf "$STAGE" "${RULES_TMP:-}"; mj_cleanup' EXIT
 command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exit 12; }
 GEN_VERSION=1
+
+# ---------------------------------------------------------------- reading the repository through the tool
+# Every JSON the generator asks the tool for is a part of its subject, and the subject is
+# this whole repository. A read that fails leaves part of that subject unreachable, and a
+# projection published anyway is a faithful projection of a smaller repository — which is
+# not a verdict about this one (`project.a-verdict-states-its-subject`).
+#
+# This replaces the one read that answered a failure with an empty document:
+#
+#   session list --all --json > raw || printf '{"schema":1,"sessions":[]}' > raw
+#
+# `session list` exits 15 (refused) whenever MAJORDOMUS_SHARE names another worktree of this
+# repository, and the fallback turned that refusal into "this repository has closed no
+# sessions" — silence read as success, on the one channel every caller of this script reads.
+# 12 is this repository's code for could-not-measure, and the code this script already exits
+# when jq is absent or a canonical input is missing: the same answer for the same reason.
+#
+# The parse check is part of the read, not an extra: a tool that dies part way through a JSON
+# document has already written a prefix of it into the redirect, and a document that does not
+# parse is as unreachable as one that was never written.
+mj_tool_read() {   # mj_tool_read <destination> <subject> <argv...>
+  local dest="$1" subject="$2" rc=0
+  shift 2
+  "$ROOT/bin/majordomus" --repo "$ROOT" "$@" > "$dest" 2> "$dest.err" || rc=$?
+  if [ "$rc" = 0 ] && jq empty "$dest" >/dev/null 2>&1; then return 0; fi
+  if [ "$rc" = 0 ]; then
+    echo "generate-site-data: $subject could not be read: 'majordomus $*' exited 0 but did not write JSON that parses" >&2
+  else
+    echo "generate-site-data: $subject could not be read: 'majordomus $*' exited $rc" >&2
+  fi
+  # an `[ ... ] && ...` statement here would be the last command of a `set -e` script when the
+  # test is false, and would exit 1 instead of 12 — the very confusion this function exists
+  # to remove
+  if [ -s "$dest.err" ]; then sed 's/^/  /' "$dest.err" >&2; fi
+  echo "  the site is not generated from a subject this run could not reach" >&2
+  exit 12
+}
 
 # ---------------------------------------------------------------- inputs
 GEN_T0="$(mj_phase_begin "gen:inputs")"
@@ -761,8 +806,7 @@ GEN_T0="$(mj_phase_begin "gen:sessions.json")"
 # The listing's `label` is dropped: it is the divergence of the record against the reader's
 # own worktree and branch, so the same record labels itself differently here and on a CI
 # checkout. A published projection may only carry what the record says about itself.
-"$ROOT/bin/majordomus" --repo "$ROOT" session list --all --json > "$STAGE/sessions.raw.json" 2>/dev/null \
-  || printf '{"schema":1,"sessions":[]}' > "$STAGE/sessions.raw.json"
+mj_tool_read "$STAGE/sessions.raw.json" "the closed sessions" session list --all --json
 : > "$STAGE/sessions.bodies"
 while IFS="$MJ_TAB" read -r sid path; do
   [ -n "$sid" ] || continue
@@ -795,8 +839,7 @@ GEN_T0="$(mj_phase_begin "gen:context.json")"
 # and validates the tree once and reports every document plus the verdict coverage reached
 # for every directory (ADR 0011). Nothing is recomputed here — a second walk of the same
 # files would be a second opinion about what the tree says.
-"$ROOT/bin/majordomus" --repo "$ROOT" context list --json > "$STAGE/context.raw.json" 2> "$STAGE/context.err" || {
-  echo "generate-site-data: context list failed:" >&2; cat "$STAGE/context.err" >&2; exit 10; }
+mj_tool_read "$STAGE/context.raw.json" "the directory contracts" context list --json
 if [ "$(jq '.problems | length' "$STAGE/context.raw.json")" != 0 ]; then
   echo "generate-site-data: the context tree does not validate; run: majordomus context validate" >&2
   jq -r '.problems[] | "  " + .class + " " + .subject + ": " + .message' "$STAGE/context.raw.json" >&2; exit 10
@@ -945,7 +988,7 @@ else
   echo "  reproduce: majordomus usecase run --json" >&2
   exit 10; }
 fi
-"$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
+mj_tool_read "$STAGE/uc-coverage.json" "the use-case coverage" usecase coverage --json
 jq -n \
   --slurpfile ucs <(jq -s . "$STAGE/uc.jsonl") \
   --slurpfile aps <(jq -s . "$STAGE/ap.jsonl") \
