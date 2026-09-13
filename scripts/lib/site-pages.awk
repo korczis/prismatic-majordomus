@@ -12,7 +12,7 @@
 #
 #   <page relative to pub>  <check>  <detail>
 #
-# checks: viewport description main h1 placeholder inlinestyle initflowbite mermaid
+# checks: viewport description main h1 placeholder rustdoc inlinestyle initflowbite mermaid
 #         pre gridcols fixedwidth nojs
 #
 # A page with nothing wrong produces no row. The detail is what site-check prints after the
@@ -30,6 +30,7 @@ function flush() {
   if (!has_main)        print rel "\tmain\t"
   if (n_h1 != 1)        print rel "\th1\t" n_h1
   if (placeholder)      print rel "\tplaceholder\t"
+  if (rustdoc != "")    print rel "\trustdoc\t" rustdoc
   if (inline_style)     print rel "\tinlinestyle\t"
   if (n_initflowbite != 1) print rel "\tinitflowbite\t" n_initflowbite
   if (has_mermaid && !has_mermaid_js) print rel "\tmermaid\t"
@@ -53,6 +54,7 @@ FNR == 1 {
   has_viewport = has_description = has_main = 0
   n_h1 = n_initflowbite = n_pre = nojs = 0
   placeholder = inline_style = gridcols = fixedwidth = 0
+  rustdoc = ""
   has_mermaid = has_mermaid_js = 0
   in_pre = 0; wrapped = 0; seen_format = 0; prev = ""
   redirect = 0
@@ -80,6 +82,15 @@ FNR == 1 {
     gsub(/<code[^>]*>[^<]*<\/code>/, "", stripped)
     if (stripped ~ /\{\{|\{%|\[\[[A-Z_]+\]\]/) placeholder = 1
   }
+  # A rustdoc intra-doc link that reached the reader. A description on this site is a Rust doc
+  # comment carried through the registry, and [`Type::Variant`] is a shortcut reference no
+  # CommonMark renderer can resolve: rendered, it becomes a bracket, a <code>, a bracket, and
+  # published it was a 37-character unbreakable token that made /docs/api/ scroll sideways on a
+  # phone. Inside a <pre> it is a listing, not prose. Only this form is checked: a raw backtick
+  # or emphasis is also unrendered markup, but the site publishes both today through templates
+  # this check did not come with (page and capability descriptions), and a check that is red on
+  # its first day for someone else's pages is a check that gets turned into a warning.
+  if (!in_pre && line ~ /\[<code[^>]*>[^<]*<\/code>\]/) rustdoc = rustdoc "[`x`]"
   if (index(line, "</pre>")) in_pre = 0
 
   # A <pre> needs an overflow container. The original test ran over the page with its newlines
