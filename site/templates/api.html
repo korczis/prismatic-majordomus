@@ -158,8 +158,12 @@
             fence a Rust doc comment usually ends on. That is block content — it cannot live in
             a <p>, where the parser closes the paragraph and hands the <pre> to this article,
             which clips nothing — so it gets a block of its own, one that lets a long listing
-            scroll inside itself and lets `module::path::Type` break inside the word. -#}
-        {%- if s.description %}<div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ s.description | markdown(inline=true) | safe }}</div>{% endif -%}
+            scroll inside itself and lets `module::path::Type` break inside the word.
+            Every heading the parser renders gets an id made from its text, and this block
+            repeats once per schema, so twenty-four types ending on `# Example` put
+            id="example" on the page twenty-four times. Nothing links into a doc comment's
+            headings, so their ids are renamed to data-anchor, as in partials/schema-table.html. -#}
+        {%- if s.description %}<div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ s.description | markdown(inline=true) | replace(from='<h4 id="', to='<h4 data-anchor="') | replace(from='<h5 id="', to='<h5 data-anchor="') | replace(from='<h6 id="', to='<h6 data-anchor="') | safe }}</div>{% endif -%}
         {%- if s.values | length > 0 -%}
         {#- A variant's doc comment is the same CommonMark the type's is, and was the one slot
             here that published it as text: the emphasis kept its asterisks and a code span its
