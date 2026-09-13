@@ -40,7 +40,6 @@ generate --check
 bench coverage --check
 web validate
 quality report
-bench --profile ci --check
 scripts/rust-coverage (crate $threshold%, session domain $domain%)
 artifact $ARTIFACT'
 got="$(grep -oE '^[[:space:]]*step "[^"]+"' "$RC" | sed -E 's/^[[:space:]]*step "//; s/"$//' | grep -v '^rust-check:')"
@@ -48,6 +47,9 @@ got="$(grep -oE '^[[:space:]]*step "[^"]+"' "$RC" | sed -E 's/^[[:space:]]*step 
 expect_grep 'cargo fmt --check$' "$RC"
 expect_grep 'cargo clippy --all-targets --all-features -- -D warnings' "$RC"
 expect_grep 'cargo test --no-fail-fast' "$RC"
+# the baseline comparison belongs to the platform that has a baseline: on the Linux gate it
+# compared nothing, could not fail, and ran the job out of time before the gates after it
+expect_no_grep 'step "bench --profile' "$RC"
 expect_grep "RUSTDOCFLAGS='-D warnings' cargo doc --no-deps" "$RC"
 expect_grep 'cargo bench --no-run' "$RC"
 expect_grep 'cargo run --quiet -- capabilities validate' "$RC"
