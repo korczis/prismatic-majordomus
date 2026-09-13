@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "7b34cae4d21dcefa16d9263a19cdc692b9e70ec0564aebae9bcc3eb7b5b78d70",
+    "fingerprint": "d4766e2c0e09e54c5fe86750b883135d840a1fa60b160e577dab7b1655bc3d9e",
     "summary": {
-      "total": 1449,
+      "total": 1450,
       "builtin": 112,
-      "declarative": 1337,
+      "declarative": 1338,
       "by_kind": {
         "command": 6,
         "query": 106,
-        "resource": 1337
+        "resource": 1338
       },
       "by_stability": {
         "behaviorally_verified": 99,
         "experimental": 7,
-        "implemented": 1343
+        "implemented": 1344
       },
       "mcp_tools": 109,
-      "mcp_resources": 1378,
+      "mcp_resources": 1379,
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
@@ -9973,7 +9973,7 @@
                   "evidence_present",
                   "evidence_commits"
                 ],
-                "description": "What a person authored in the canonical record. Every field is [`FieldProvenance::Explicit`]\nor [`FieldProvenance::Unknown`] and nothing else: a value here was written down, or it\ndoes not exist."
+                "description": "What a person authored in the canonical record. Every field is `FieldProvenance::Explicit`\nor `FieldProvenance::Unknown` and nothing else: a value here was written down, or it\ndoes not exist."
               },
               "AttestedText": {
                 "type": "object",
@@ -19642,7 +19642,7 @@
                 "items": {
                   "$ref": "#/$defs/ClosedSession"
                 },
-                "description": "The newest [`CLOSED_WINDOW`], newest first."
+                "description": "The newest `CLOSED_WINDOW`, newest first."
               },
               "window": {
                 "type": "integer",
@@ -23699,7 +23699,7 @@
               },
               "complete": {
                 "type": "boolean",
-                "description": "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and [`BoardView::reason`] says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
+                "description": "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and `BoardView::reason` says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
               }
             },
             "required": [
@@ -40407,7 +40407,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": []
       },
       {
@@ -40588,7 +40588,7 @@
     ]
   },
   "index": {
-    "fingerprint": "da62f7f09b90d6bf81f27a57543c1a98a11e0e7861b4648b53143b479f49ecd9",
+    "fingerprint": "f3d5f3fc4d23c4536239860efc5f27a39f775475e981e2ea76d8eb39b587defa",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40631,7 +40631,7 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 2,
+      "release-record": 3,
       "rule": 135,
       "scope": 1,
       "session": 22,
@@ -44409,7 +44409,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 118051
+        "bytes": 118314
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -44562,7 +44562,7 @@
         "title": "Entering the repository",
         "path": "docs/ENTRY.md",
         "source_class": "document",
-        "bytes": 13440
+        "bytes": 14002
       },
       {
         "uri": "majordomus://document/docs/ENTRY_AUDIT.md",
@@ -44634,7 +44634,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 9320
+        "bytes": 9422
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -46827,7 +46827,7 @@
         "identity": "lib/archive.sh",
         "path": "lib/archive.sh",
         "source_class": "library",
-        "bytes": 26958
+        "bytes": 27216
       },
       {
         "uri": "majordomus://implementation/lib/bench.sh",
@@ -47091,7 +47091,7 @@
         "identity": "lib/recover.sh",
         "path": "lib/recover.sh",
         "source_class": "library",
-        "bytes": 44819
+        "bytes": 45484
       },
       {
         "uri": "majordomus://implementation/lib/rules.sh",
@@ -50533,6 +50533,16 @@
         "bytes": 2415
       },
       {
+        "uri": "majordomus://release-record/v0.6.0",
+        "kind": "release-record",
+        "identity": "v0.6.0",
+        "title": "v0.6.0",
+        "path": ".ai/repo/releases/v0.6.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2415
+      },
+      {
         "uri": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "identity": "majordomus.adr-integrity@1",
@@ -53111,7 +53121,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 4182
+        "bytes": 4281
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -53431,7 +53441,7 @@
         "identity": "test/cases/130_context_compiler.sh",
         "path": "test/cases/130_context_compiler.sh",
         "source_class": "case",
-        "bytes": 19944
+        "bytes": 20333
       },
       {
         "uri": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
@@ -53519,7 +53529,7 @@
         "identity": "test/cases/135_session_store_recovery.sh",
         "path": "test/cases/135_session_store_recovery.sh",
         "source_class": "case",
-        "bytes": 20506
+        "bytes": 20876
       },
       {
         "uri": "majordomus://test/test/cases/136_changed_files_classifier.sh",
@@ -53671,7 +53681,7 @@
         "identity": "test/cases/191_entry_races.sh",
         "path": "test/cases/191_entry_races.sh",
         "source_class": "case",
-        "bytes": 14379
+        "bytes": 15004
       },
       {
         "uri": "majordomus://test/test/cases/192_entry_across_checkouts_and_clients.sh",
@@ -55407,7 +55417,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 2
+      "objects": 3
     },
     {
       "name": "rule",
