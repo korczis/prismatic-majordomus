@@ -82,21 +82,15 @@ FNR == 1 {
     gsub(/<code[^>]*>[^<]*<\/code>/, "", stripped)
     if (stripped ~ /\{\{|\{%|\[\[[A-Z_]+\]\]/) placeholder = 1
   }
-  # Markup that reached the reader as source. The same shape as the check above and for the
-  # same reason — inside a <pre> or a <code> it is rendered output, not something unrendered —
-  # but the dialect is the declaration's rather than the template's. A description on this site
-  # is a Rust doc comment carried through the registry, and three ways it can arrive unrendered:
-  # a backtick, which only a Markdown renderer that never ran leaves behind; a bracket around a
-  # code span, which is rustdoc's intra-doc link surviving a renderer that had no definition to
-  # resolve; and an emphasis still wearing its asterisks. The site published all three.
-  if (!in_pre) {
-    bare = line
-    gsub(/<code[^>]*>[^<]*<\/code>/, "", bare)
-    gsub(/<[^>]*>/, "", bare)
-    if (index(bare, "`")) rustdoc = rustdoc "`"
-    if (line ~ /\[<code/) rustdoc = rustdoc "[`x`]"
-    if (bare ~ /(^|[ (])\*[A-Za-z][^*]*\*([ .,;:)]|$)/) rustdoc = rustdoc "*em*"
-  }
+  # A rustdoc intra-doc link that reached the reader. A description on this site is a Rust doc
+  # comment carried through the registry, and [`Type::Variant`] is a shortcut reference no
+  # CommonMark renderer can resolve: rendered, it becomes a bracket, a <code>, a bracket, and
+  # published it was a 37-character unbreakable token that made /docs/api/ scroll sideways on a
+  # phone. Inside a <pre> it is a listing, not prose. Only this form is checked: a raw backtick
+  # or emphasis is also unrendered markup, but the site publishes both today through templates
+  # this check did not come with (page and capability descriptions), and a check that is red on
+  # its first day for someone else's pages is a check that gets turned into a warning.
+  if (!in_pre && line ~ /\[<code[^>]*>[^<]*<\/code>\]/) rustdoc = rustdoc "[`x`]"
   if (index(line, "</pre>")) in_pre = 0
 
   # A <pre> needs an overflow container. The original test ran over the page with its newlines

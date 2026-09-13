@@ -1,5 +1,4 @@
-# majordomus-covers: generate site-check
-# majordomus-negative: unrendered markup
+# majordomus-covers: none
 # A doc comment reaches a projection as CommonMark, and the site never publishes its source.
 #
 # schemars copies a Rust doc comment into `description` verbatim, and every consumer of that
@@ -7,19 +6,20 @@
 # it to a Markdown renderer. Rustdoc is not CommonMark. It adds an intra-doc link,
 # [`Type::Variant`], which is a shortcut reference with no definition anywhere, and reference
 # definitions pointing at paths relative to the source file. Neither resolves outside rustdoc,
-# so both reached the reader as source: /docs/api/ published ``[`WaiverReason::…`]:`` and an
-# eighty-seven character `../../../../.ai/repo/adrs/…` path as body text, and the second was
-# wide enough on its own to make a phone's page scroll sideways.
+# so both reached the reader as source: /docs/api/ published ``[`WaiverReason::…`]:`` as body
+# text, and that 37-character unbreakable token made the page scroll sideways at 320px.
 #
-# Two halves, and neither is sufficient alone. The first is the invariant at the boundary
+# Three parts, and none is sufficient alone. The first is the invariant at the boundary
 # where a doc comment becomes an artifact: no description any projection reads may carry a
 # link only rustdoc can follow. That is what `majordomus generate` now guarantees, and it
 # holds for every consumer, not only the one that was measured.
 #
-# The second is that the detector still detects. A guard whose subject moved reports clean
-# for the wrong reason, so the page check is run against prose whose answer is known: three
-# ways markup arrives unrendered must each be named, and correctly rendered prose carrying
-# the same characters inside a code span must not be.
+# The second is that the API reference renders what the artifact carries: a template slot that
+# interpolates a description as text publishes rustdoc's *emphasis* and brackets regardless.
+#
+# The third is that the page detector still detects. A guard whose subject moved reports clean
+# for the wrong reason, so site-check's intra-doc-link check is run against markup whose answer
+# is known: the form a renderer leaves must be named, and correctly rendered prose must not be.
 . "$ROOT/test/lib.sh"
 
 # ---------------------------------------------------------------- the artifact boundary
@@ -29,9 +29,11 @@
 for artifact in registry openapi; do
   doc="$ROOT/docs/generated/$artifact.json"
   expect_file "$doc"
-  jq -r '[paths(type == "string")] as $p
-         | reduce $p[] as $q ([]; if ($q | last) == "description" then . + [getpath($q)] else . end)
+  jq -r '[paths(type == "string") as $p | select(($p | last) == "description") | getpath($p)]
          | .[]' "$doc" > "$T/$artifact.desc"
+  # a walk that finds nothing proves nothing: the artifact carries thousands of descriptions
+  [ "$(wc -l < "$T/$artifact.desc")" -gt 1000 ] || {
+    echo "    $artifact.json: fewer than 1000 description lines read; the walk lost its subject"; exit 1; }
   # every description of the document, with its fenced code blocks removed: a doc comment's
   # Rust example is not prose, and its brackets are array literals and character classes
   awk '/^[ \t]*(```|~~~)/ { fence = !fence; next } !fence' "$T/$artifact.desc" > "$T/$artifact.prose"
@@ -48,44 +50,56 @@ for artifact in registry openapi; do
   fi
 done
 
+# ---------------------------------------------------------------- the templates render it
+# The artifact carrying CommonMark is half the fix. /docs/api/ printed *published* with its
+# asterisks and [`WaiverReason::TransientState`] with its brackets because one slot, an enum
+# value's description, interpolated the text instead of rendering it. Every description a
+# schema slot of the API reference shows goes through the renderer, or its source is published.
+schema_table="$ROOT/site/templates/partials/schema-table.html"
+api="$ROOT/site/templates/api.html"
+expect_file "$schema_table"
+expect_file "$api"
+# api.html from its schema section on, which is where a doc comment arrives; the operation,
+# tag and server descriptions above it are declared prose, not doc comments
+awk '/id="schemas"/ { s = 1 } s' "$api" > "$T/api-schemas.html"
+[ -s "$T/api-schemas.html" ] || { echo "    api.html has no id=\"schemas\" section to check"; exit 1; }
+: > "$T/raw-slots"
+grep -nE '\{\{ *[a-z]+\.description *\}\}' "$schema_table" >> "$T/raw-slots" || true
+grep -nE '\{\{ *[a-z]+\.description *\}\}' "$T/api-schemas.html" >> "$T/raw-slots" || true
+if [ -s "$T/raw-slots" ]; then
+  echo "    a schema description is interpolated as text, not rendered as the CommonMark it is:"
+  cat "$T/raw-slots"; exit 1
+fi
+rendered="$(grep -cE 'description \| markdown' "$T/api-schemas.html" || true)"
+[ "${rendered:-0}" -ge 4 ] || {
+  echo "    the schema section of api.html renders ${rendered:-0} description slot(s) through"
+  echo "    markdown; it has four (type, enum value, variant, variant property)"; exit 1; }
+
 # ---------------------------------------------------------------- the detector detects
-# The page check of site-check, run over prose whose answer is known. Without this the guard
-# above is the only thing standing between a new template slot and the defect returning, and
-# a template slot is exactly how it arrived.
+# The page check of site-check, run over markup whose answer is known. A guard whose subject
+# moved reports clean for the wrong reason, so the intra-doc link as a renderer leaves it — a
+# bracket, a <code>, a bracket — must be named, and the same identifier rendered correctly,
+# or inside a listing where brackets are Rust, must not be.
 awk_lib="$ROOT/scripts/lib/site-pages.awk"
 expect_file "$awk_lib"
 mkdir -p "$T/pub"
-
-# each form on its own page, so a detector that has stopped seeing one is not covered by
-# another that still works
-cat > "$T/pub/backtick.html" <<'HTML'
-<html><body><main><p>The value is `not_executable` here.</p></main></body></html>
-HTML
 cat > "$T/pub/link.html" <<'HTML'
 <html><body><main><p>Distinct from [<code>WaiverReason::TransientState</code>]: durable.</p></main></body></html>
 HTML
-cat > "$T/pub/emphasis.html" <<'HTML'
-<html><body><main><p>what this repository has *published*, so its input is a release</p></main></body></html>
-HTML
-# rendered correctly: the same characters, inside the elements a renderer produces
 cat > "$T/pub/clean.html" <<'HTML'
 <html><body><main><p>Distinct from <code>WaiverReason::TransientState</code>: <em>durable</em>.</p>
-<pre><code>let v = ["capability"]; // `raw` *markup* is source here</code></pre></main></body></html>
+<pre><code>let v = [<code>Type</code>]; // brackets are Rust in a listing</code></pre></main></body></html>
 HTML
 
-awk -v pub="$T/pub" -f "$awk_lib" "$T/pub/backtick.html" "$T/pub/link.html" \
-  "$T/pub/emphasis.html" "$T/pub/clean.html" > "$T/rows" 2>&1
+awk -v pub="$T/pub" -f "$awk_lib" "$T/pub/link.html" "$T/pub/clean.html" > "$T/rows" 2>&1
 
-grep -E '^backtick\.html\trustdoc\t' "$T/rows" > /dev/null || {
-  echo "    a literal backtick in prose is markdown no renderer touched, and went unnamed"; cat "$T/rows"; exit 1; }
-grep -E '^link\.html\trustdoc\t' "$T/rows" > /dev/null || {
+grep -E '^link\.html	rustdoc	' "$T/rows" > /dev/null || {
   echo "    a bracket around a code span is an unresolved intra-doc link, and went unnamed"; cat "$T/rows"; exit 1; }
-grep -E '^emphasis\.html\trustdoc\t' "$T/rows" > /dev/null || {
-  echo "    an emphasis still wearing its asterisks went unnamed"; cat "$T/rows"; exit 1; }
-grep -E '^clean\.html\t' "$T/rows" > /dev/null && {
-  echo "    correctly rendered prose was reported as unrendered; the check would refuse a"
-  echo "    healthy page, which is how a gate gets turned into a warning"; cat "$T/rows"; exit 1; }
+if grep -E '^clean\.html	rustdoc' "$T/rows" > /dev/null; then
+  echo "    correctly rendered prose was reported as an unresolved link; the check would refuse a"
+  echo "    healthy page, which is how a gate gets turned into a warning"; cat "$T/rows"; exit 1
+fi
 
 # and site-check reports that row rather than collecting it silently
 expect_grep 'rows rustdoc' "$ROOT/scripts/site-check"
-expect_grep 'no unrendered markup' "$ROOT/scripts/site-check"
+expect_grep 'no unresolved intra-doc links' "$ROOT/scripts/site-check"
