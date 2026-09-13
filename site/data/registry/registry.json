@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1",
+    "fingerprint": "d94e67f2e9a47dc3fb61faa68a618fcf76e3afacc507e3c62ab2ea33feaf66fa",
     "summary": {
-      "total": 1450,
+      "total": 1451,
       "builtin": 112,
-      "declarative": 1338,
+      "declarative": 1339,
       "by_kind": {
         "command": 6,
         "query": 106,
-        "resource": 1338
+        "resource": 1339
       },
       "by_stability": {
         "behaviorally_verified": 99,
         "experimental": 7,
-        "implemented": 1344
+        "implemented": 1345
       },
       "mcp_tools": 109,
-      "mcp_resources": 1379,
+      "mcp_resources": 1380,
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
@@ -525,7 +525,7 @@
                     "description": "Declarative content the repository holds: read as it is, never executed."
                   }
                 ],
-                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n(`ExecutionPolicy::writes_repository`).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n`crate::capability::Executable::cancellable` and carried on `ExecutionPolicy`."
               },
               "CanonicalSchema": {
                 "type": "object",
@@ -706,14 +706,14 @@
                   },
                   "path": {
                     "type": "string",
-                    "description": "The absolute path, under [`HttpExposure::PREFIX`]."
+                    "description": "The absolute path, under `HttpExposure::PREFIX`."
                   }
                 },
                 "required": [
                   "method",
                   "path"
                 ],
-                "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`]."
+                "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under `HttpExposure::PREFIX`."
               },
               "HttpMethod": {
                 "oneOf": [
@@ -769,7 +769,7 @@
                     "description": "A process must be running and the caller must be one it has authenticated. Nothing\nin this repository authenticates a caller yet; a surface that does will say so\nhere rather than in the template that renders its link."
                   }
                 ],
-                "description": "Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page's own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n[`Availability::classify`] is the one place the rule lives."
+                "description": "Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page's own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n`Availability::classify` is the one place the rule lives."
               },
               "CapabilityVisibility": {
                 "oneOf": [
@@ -882,7 +882,7 @@
                   {
                     "type": "string",
                     "const": "published_history",
-                    "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from [`WaiverReason::ExternalDependency`]: nothing outside this process is\nconsulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,\nit simply does not exist yet where the benchmark runs."
+                    "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
                   }
                 ],
                 "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
@@ -955,7 +955,7 @@
                   "cancellable",
                   "concurrency"
                 ],
-                "description": "What running a capability as an execution means: what it changes, whether asking it to\nstop achieves anything, and whether two of them may overlap.\n\nThe effect and the concurrency are classified from the kind by\n[`ExecutionPolicy::classify`], for the same reason [`Availability`] is: the facts are\nalready on the declaration, and asking each `capability!` block to restate them would be\none more thing that can disagree with itself.\n\nCancellability is the one thing the kind cannot decide, because it is a fact about the\nhandler: whether it looks at its cancellation flag and stops. A handler that does says\nso with [`crate::capability::Executable::cancellable`], and a client is then told\nwhether a Cancel button will achieve anything instead of being given one that lies."
+                "description": "What running a capability as an execution means: what it changes, whether asking it to\nstop achieves anything, and whether two of them may overlap.\n\nThe effect and the concurrency are classified from the kind by\n`ExecutionPolicy::classify`, for the same reason `Availability` is: the facts are\nalready on the declaration, and asking each `capability!` block to restate them would be\none more thing that can disagree with itself.\n\nCancellability is the one thing the kind cannot decide, because it is a fact about the\nhandler: whether it looks at its cancellation flag and stops. A handler that does says\nso with `crate::capability::Executable::cancellable`, and a client is then told\nwhether a Cancel button will achieve anything instead of being given one that lies."
               },
               "ExecutionEffect": {
                 "oneOf": [
@@ -972,7 +972,7 @@
                   {
                     "type": "string",
                     "const": "repository_mutation",
-                    "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n[`ExecutionPolicy::writes_repository`], the way one that stops says so with\n[`ExecutionPolicy::stoppable`].\n\n[ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                    "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with ADR 0040: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`."
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -1293,7 +1293,7 @@
                     "description": "Declarative content the repository holds: read as it is, never executed."
                   }
                 ],
-                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n(`ExecutionPolicy::writes_repository`).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n`crate::capability::Executable::cancellable` and carried on `ExecutionPolicy`."
               },
               "CapabilityProvenance": {
                 "oneOf": [
@@ -1455,14 +1455,14 @@
                   },
                   "path": {
                     "type": "string",
-                    "description": "The absolute path, under [`HttpExposure::PREFIX`]."
+                    "description": "The absolute path, under `HttpExposure::PREFIX`."
                   }
                 },
                 "required": [
                   "method",
                   "path"
                 ],
-                "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`]."
+                "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under `HttpExposure::PREFIX`."
               },
               "HttpMethod": {
                 "oneOf": [
@@ -1586,7 +1586,7 @@
                   {
                     "type": "string",
                     "const": "published_history",
-                    "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from [`WaiverReason::ExternalDependency`]: nothing outside this process is\nconsulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,\nit simply does not exist yet where the benchmark runs."
+                    "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
                   }
                 ],
                 "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
@@ -1734,7 +1734,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "Of those, the ones [`crate::cli::local::LOCAL`] does not explain either: a command\nthat is neither the projection of a capability nor declared command-line-only with\na reason. Empty is the closure the rule asks for; anything here is an operation\nthat left the API by accident rather than by decision."
+                "description": "Of those, the ones `crate::cli::local::LOCAL` does not explain either: a command\nthat is neither the projection of a capability nor declared command-line-only with\na reason. Empty is the closure the rule asks for; anything here is an operation\nthat left the API by accident rather than by decision."
               }
             },
             "required": [
@@ -2619,7 +2619,7 @@
                 "required": [
                   "docs"
                 ],
-                "description": "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
+                "description": "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by `super::policy`. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
               }
             }
           }
@@ -3467,7 +3467,7 @@
                 "required": [
                   "docs"
                 ],
-                "description": "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
+                "description": "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by `super::policy`. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
               },
               "CommandDiagnostic": {
                 "type": "object",
@@ -3735,7 +3735,7 @@
                 "required": [
                   "docs"
                 ],
-                "description": "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
+                "description": "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by `super::policy`. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
               }
             }
           }
@@ -4136,7 +4136,7 @@
                   },
                   "stage": {
                     "$ref": "#/$defs/ChangeStage",
-                    "description": "Whether it is staged, unstaged or untracked. A path modified both in the index and\nin the working tree appears once, as [`ChangeStage::Staged`], with `partial` set."
+                    "description": "Whether it is staged, unstaged or untracked. A path modified both in the index and\nin the working tree appears once, as `ChangeStage::Staged`, with `partial` set."
                   },
                   "status": {
                     "type": "string",
@@ -4246,7 +4246,7 @@
                   },
                   "kind": {
                     "$ref": "#/$defs/ReleaseChangeKind",
-                    "description": "What [`Self::word`] names; [`ChangeKind::Other`] for a word the convention does not\ndefine, and for a subject with no head."
+                    "description": "What `Self::word` names; `ChangeKind::Other` for a word the convention does not\ndefine, and for a subject with no head."
                   },
                   "scope": {
                     "type": [
@@ -4257,7 +4257,7 @@
                   },
                   "breaking": {
                     "type": "boolean",
-                    "description": "Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by [`crate::commit::CommitMessage`]."
+                    "description": "Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by `crate::commit::CommitMessage`."
                   },
                   "subject": {
                     "type": "string",
@@ -4340,7 +4340,7 @@
                     "description": "A commit whose subject does not parse as a conventional commit."
                   }
                 ],
-                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
               },
               "CommitTrailer": {
                 "type": "object",
@@ -4694,7 +4694,7 @@
                 "items": {
                   "$ref": "#/$defs/Diagnostic"
                 },
-                "description": "Every finding, in [`CommitRule::ALL`] order."
+                "description": "Every finding, in `CommitRule::ALL` order."
               }
             },
             "required": [
@@ -4702,7 +4702,7 @@
               "passed",
               "findings"
             ],
-            "description": "What the judge concluded: the message as it was parsed, whether anything of error\nseverity was found, the exemption when git composed the subject rather than a person, and\nevery finding in [`CommitRule::ALL`] order — which is the order the evidence for them\nappears in the message, so a person reads them in the order they would fix them.\n\n```\nuse majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};\nlet v: CommitVerdict = judge(&CommitSubject::of(\"update stuff\"), &CommitPolicy::default());\nassert!(!v.passed);\nassert_eq!(v.findings[0].code, \"commit.not_conventional\");\nassert_eq!(v.message.header.subject, \"update stuff\", \"what was judged, not what was typed\");\n```",
+            "description": "What the judge concluded: the message as it was parsed, whether anything of error\nseverity was found, the exemption when git composed the subject rather than a person, and\nevery finding in `CommitRule::ALL` order — which is the order the evidence for them\nappears in the message, so a person reads them in the order they would fix them.\n\n```\nuse majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};\nlet v: CommitVerdict = judge(&CommitSubject::of(\"update stuff\"), &CommitPolicy::default());\nassert!(!v.passed);\nassert_eq!(v.findings[0].code, \"commit.not_conventional\");\nassert_eq!(v.message.header.subject, \"update stuff\", \"what was judged, not what was typed\");\n```",
             "title": "CommitVerdict",
             "$defs": {
               "CommitMessage": {
@@ -4740,7 +4740,7 @@
                   },
                   "kind": {
                     "$ref": "#/$defs/ReleaseChangeKind",
-                    "description": "What [`Self::word`] names; [`ChangeKind::Other`] for a word the convention does not\ndefine, and for a subject with no head."
+                    "description": "What `Self::word` names; `ChangeKind::Other` for a word the convention does not\ndefine, and for a subject with no head."
                   },
                   "scope": {
                     "type": [
@@ -4751,7 +4751,7 @@
                   },
                   "breaking": {
                     "type": "boolean",
-                    "description": "Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by [`crate::commit::CommitMessage`]."
+                    "description": "Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by `crate::commit::CommitMessage`."
                   },
                   "subject": {
                     "type": "string",
@@ -4834,7 +4834,7 @@
                     "description": "A commit whose subject does not parse as a conventional commit."
                   }
                 ],
-                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
               },
               "CommitTrailer": {
                 "type": "object",
@@ -5152,7 +5152,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared."
+                    "description": "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n`super::obligations` is what judges each of these against its evidence; here it\nis reported as declared."
                   },
                   "started_at": {
                     "type": "string",
@@ -5318,7 +5318,7 @@
                     "description": "A timestamp that does not parse, or one in the future."
                   }
                 ],
-                "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. [`Freshness::history`] is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\"stale\"));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() && Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \"undated is not old\");\nassert!(!Freshness::Fresh.history() && !Freshness::Aging.history());\n```"
+                "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. `Divergence` says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as `Freshness::Unknown` naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. `Freshness::history` is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\"stale\"));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() && Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \"undated is not old\");\nassert!(!Freshness::Fresh.history() && !Freshness::Aging.history());\n```"
               }
             }
           }
@@ -6927,12 +6927,12 @@
                   {
                     "type": "string",
                     "const": "text",
-                    "description": "Text: held to [`MINIMUM_TEXT`]."
+                    "description": "Text: held to `MINIMUM_TEXT`."
                   },
                   {
                     "type": "string",
                     "const": "non_text",
-                    "description": "A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced."
+                    "description": "A border or an outline: measured against `MINIMUM_NON_TEXT`, reported, not enforced."
                   }
                 ],
                 "description": "What a colour is doing where it was found."
@@ -7844,7 +7844,7 @@
           "name": "DevContextInput",
           "schema": {
             "$ref": "#/$defs/CompileInput",
-            "description": "The input of `devcontext.compile`: what to compile a context about.\n\nA newtype over [`devcontext::CompileInput`] so that the schema component the OpenAPI\ndocument carries is named for the operation rather than for the domain type, the way\nevery other module's input is.",
+            "description": "The input of `devcontext.compile`: what to compile a context about.\n\nA newtype over `devcontext::CompileInput` so that the schema component the OpenAPI\ndocument carries is named for the operation rather than for the domain type, the way\nevery other module's input is.",
             "title": "DevContextInput",
             "$defs": {
               "CompileInput": {
@@ -7893,7 +7893,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent."
+                    "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent."
                   },
                   "max_depth": {
                     "type": [
@@ -7902,7 +7902,7 @@
                     ],
                     "format": "uint",
                     "minimum": 0,
-                    "description": "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent."
+                    "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent."
                   },
                   "floor": {
                     "type": [
@@ -7910,7 +7910,7 @@
                       "null"
                     ],
                     "format": "double",
-                    "description": "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent."
+                    "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent."
                   },
                   "all_blocking_rules": {
                     "type": [
@@ -7920,7 +7920,7 @@
                     "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
                   }
                 },
-                "description": "What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is.\n\nThe seeds are additive, not alternative: `issue`, `milestone`, `uris`, `paths` and\n`intent` all contribute, and naming several is the normal case rather than a conflict.\n`intent` is the only one the compiler infers from, which is why every entry it produces\ncarries [`Selector::IntentMatch`] and a confidence below one.\n\n`deny_unknown_fields` is deliberate. This is the input of a served capability, so a\nmisspelled field is a request that does not mean what its author thought; refusing it is\nthe difference between a typo and a silently smaller answer.\n\n```\nuse majordomus_cli::devcontext::CompileInput;\nuse serde_json::json;\n\n// the smallest legitimate request, which is not the same as no request\nlet nothing: CompileInput = serde_json::from_value(json!({})).unwrap();\nassert_eq!(nothing, CompileInput::default());\nassert!(nothing.issue.is_none() && nothing.paths.is_empty());\n\n// the seeds combine rather than compete\nlet both: CompileInput = serde_json::from_value(json!({\n    \"issue\": \"I0301\",\n    \"paths\": [\"apps/majordomus-cli/src\"],\n    \"intent\": \"explain the budget\",\n    \"budget_tokens\": 4_000,\n})).unwrap();\nassert_eq!(both.issue.as_deref(), Some(\"I0301\"));\nassert_eq!(both.paths, [\"apps/majordomus-cli/src\"]);\nassert_eq!(both.budget_tokens, Some(4_000));\n\n// and a misspelled field is refused rather than quietly ignored\nlet typo = serde_json::from_value::<CompileInput>(json!({\"max_dept\": 2}));\nassert!(typo.is_err(), \"a typo must not become a smaller answer\");\n```"
+                "description": "What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is.\n\nThe seeds are additive, not alternative: `issue`, `milestone`, `uris`, `paths` and\n`intent` all contribute, and naming several is the normal case rather than a conflict.\n`intent` is the only one the compiler infers from, which is why every entry it produces\ncarries `Selector::IntentMatch` and a confidence below one.\n\n`deny_unknown_fields` is deliberate. This is the input of a served capability, so a\nmisspelled field is a request that does not mean what its author thought; refusing it is\nthe difference between a typo and a silently smaller answer.\n\n```\nuse majordomus_cli::devcontext::CompileInput;\nuse serde_json::json;\n\n// the smallest legitimate request, which is not the same as no request\nlet nothing: CompileInput = serde_json::from_value(json!({})).unwrap();\nassert_eq!(nothing, CompileInput::default());\nassert!(nothing.issue.is_none() && nothing.paths.is_empty());\n\n// the seeds combine rather than compete\nlet both: CompileInput = serde_json::from_value(json!({\n    \"issue\": \"I0301\",\n    \"paths\": [\"apps/majordomus-cli/src\"],\n    \"intent\": \"explain the budget\",\n    \"budget_tokens\": 4_000,\n})).unwrap();\nassert_eq!(both.issue.as_deref(), Some(\"I0301\"));\nassert_eq!(both.paths, [\"apps/majordomus-cli/src\"]);\nassert_eq!(both.budget_tokens, Some(4_000));\n\n// and a misspelled field is refused rather than quietly ignored\nlet typo = serde_json::from_value::<CompileInput>(json!({\"max_dept\": 2}));\nassert!(typo.is_err(), \"a typo must not become a smaller answer\");\n```"
               }
             }
           }
@@ -8148,7 +8148,7 @@
                     "type": "integer",
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "Estimated tokens: the file's bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one."
+                    "description": "Estimated tokens: the file's bytes divided by `BYTES_PER_TOKEN`, never fewer\nthan one. An estimate, said to be one."
                   },
                   "cost_bytes": {
                     "type": "integer",
@@ -8232,7 +8232,7 @@
                   "source_class",
                   "bytes"
                 ],
-                "description": "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own [`crate::model::Provenance`], carried rather than restated.\n\nIt is a copy of the index's provenance and not a re-derivation of it, which is the\nproperty worth relying on: no path here was constructed by this module, so a path in an\nanswer is a path the index discovered, and the two cannot disagree about where something\nlives.\n\n`bytes` is the measured half of an entry's cost — the estimate on top of it is\n[`tokens_for`] — so this is also where the budget's arithmetic starts.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, EntryProvenance};\nuse serde_json::json;\n\nlet p: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \".ai/repo/adrs/0052-the-episode-is-the-boundary.md\",\n    \"directory\": \".ai/repo/adrs\",\n    \"source_class\": \"adr\",\n    \"section\": \"adrs\",\n    \"bytes\": 8_192,\n})).unwrap();\n\n// the size is what the cost is computed from, and the estimate says so of itself\nassert_eq!(tokens_for(p.bytes), 2_048);\n\n// a file under no manifest section — a root README, say — carries none rather than \"\"\nlet rootish: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \"README.md\",\n    \"directory\": \".\",\n    \"source_class\": \"readme\",\n    \"bytes\": 4_000,\n})).unwrap();\nassert!(rootish.section.is_none());\nassert_eq!(rootish.directory, \".\", \"the root is `.`, not the empty string\");\n```"
+                "description": "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own `crate::model::Provenance`, carried rather than restated.\n\nIt is a copy of the index's provenance and not a re-derivation of it, which is the\nproperty worth relying on: no path here was constructed by this module, so a path in an\nanswer is a path the index discovered, and the two cannot disagree about where something\nlives.\n\n`bytes` is the measured half of an entry's cost — the estimate on top of it is\n`tokens_for` — so this is also where the budget's arithmetic starts.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, EntryProvenance};\nuse serde_json::json;\n\nlet p: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \".ai/repo/adrs/0052-the-episode-is-the-boundary.md\",\n    \"directory\": \".ai/repo/adrs\",\n    \"source_class\": \"adr\",\n    \"section\": \"adrs\",\n    \"bytes\": 8_192,\n})).unwrap();\n\n// the size is what the cost is computed from, and the estimate says so of itself\nassert_eq!(tokens_for(p.bytes), 2_048);\n\n// a file under no manifest section — a root README, say — carries none rather than \"\"\nlet rootish: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \"README.md\",\n    \"directory\": \".\",\n    \"source_class\": \"readme\",\n    \"bytes\": 4_000,\n})).unwrap();\nassert!(rootish.section.is_none());\nassert_eq!(rootish.directory, \".\", \"the root is `.`, not the empty string\");\n```"
               },
               "Tier": {
                 "oneOf": [
@@ -8318,7 +8318,7 @@
                   "confidence",
                   "weight"
                 ],
-                "description": "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide.\n\nA `Discovery` is a *kind* of way in, not one traversal. Thirty-three issues of one\nmilestone all reach that milestone along `belongs_to`, and recording that thirty-three\ntimes would say the answer had thirty-three reasons when it has one — so a path already\nrecorded for the same selector, edge and reason is kept rather than repeated.\n\n`via` and `edge` are present exactly when they mean something: a seed was not reached\nfrom anything and followed no edge, so both are absent and are skipped on the wire\nrather than serialised as null. `confidence` is 1.0 for every declared selector and less\nonly for [`Selector::IntentMatch`]; `weight` is what this particular path contributes to\nrelevance, which is a different quantity — how much it counts, against how sure it is.\n\n```\nuse majordomus_cli::devcontext::{Discovery, Selector};\nuse serde_json::json;\n\n// the request named it: nothing to come via, no edge followed, depth zero\nlet seed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"seed\",\n    \"reason\": \"named in the request\",\n    \"depth\": 0,\n    \"confidence\": 1.0,\n    \"weight\": 1.0,\n})).unwrap();\nassert_eq!(seed.selector, Selector::Seed);\nassert!(seed.via.is_none() && seed.edge.is_none());\nassert!(seed.selector.declared() && seed.confidence == 1.0);\n\n// the wire form omits them rather than carrying nulls a reader must skip\nlet wire = serde_json::to_value(&seed).unwrap();\nassert!(wire.get(\"via\").is_none() && wire.get(\"edge\").is_none());\n\n// a relation says both where it came from and which edge it followed\nlet walked: Discovery = serde_json::from_value(json!({\n    \"selector\": \"relation\",\n    \"reason\": \"the decision in force over this scope\",\n    \"via\": \"majordomus://issue/I0301\",\n    \"edge\": \"governed_by\",\n    \"depth\": 1,\n    \"confidence\": 1.0,\n    \"weight\": 0.9,\n})).unwrap();\nassert_eq!(walked.edge.as_deref(), Some(\"governed_by\"));\nassert_eq!(walked.via.as_deref(), Some(\"majordomus://issue/I0301\"));\n\n// and a guess says so, in the one field that distinguishes the two halves of an answer\nlet guessed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"intent_match\",\n    \"reason\": \"the intent's words occur in it\",\n    \"depth\": 2,\n    \"confidence\": 0.4,\n    \"weight\": 0.4,\n})).unwrap();\nassert!(!guessed.selector.declared() && guessed.confidence < 1.0);\n```"
+                "description": "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide.\n\nA `Discovery` is a *kind* of way in, not one traversal. Thirty-three issues of one\nmilestone all reach that milestone along `belongs_to`, and recording that thirty-three\ntimes would say the answer had thirty-three reasons when it has one — so a path already\nrecorded for the same selector, edge and reason is kept rather than repeated.\n\n`via` and `edge` are present exactly when they mean something: a seed was not reached\nfrom anything and followed no edge, so both are absent and are skipped on the wire\nrather than serialised as null. `confidence` is 1.0 for every declared selector and less\nonly for `Selector::IntentMatch`; `weight` is what this particular path contributes to\nrelevance, which is a different quantity — how much it counts, against how sure it is.\n\n```\nuse majordomus_cli::devcontext::{Discovery, Selector};\nuse serde_json::json;\n\n// the request named it: nothing to come via, no edge followed, depth zero\nlet seed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"seed\",\n    \"reason\": \"named in the request\",\n    \"depth\": 0,\n    \"confidence\": 1.0,\n    \"weight\": 1.0,\n})).unwrap();\nassert_eq!(seed.selector, Selector::Seed);\nassert!(seed.via.is_none() && seed.edge.is_none());\nassert!(seed.selector.declared() && seed.confidence == 1.0);\n\n// the wire form omits them rather than carrying nulls a reader must skip\nlet wire = serde_json::to_value(&seed).unwrap();\nassert!(wire.get(\"via\").is_none() && wire.get(\"edge\").is_none());\n\n// a relation says both where it came from and which edge it followed\nlet walked: Discovery = serde_json::from_value(json!({\n    \"selector\": \"relation\",\n    \"reason\": \"the decision in force over this scope\",\n    \"via\": \"majordomus://issue/I0301\",\n    \"edge\": \"governed_by\",\n    \"depth\": 1,\n    \"confidence\": 1.0,\n    \"weight\": 0.9,\n})).unwrap();\nassert_eq!(walked.edge.as_deref(), Some(\"governed_by\"));\nassert_eq!(walked.via.as_deref(), Some(\"majordomus://issue/I0301\"));\n\n// and a guess says so, in the one field that distinguishes the two halves of an answer\nlet guessed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"intent_match\",\n    \"reason\": \"the intent's words occur in it\",\n    \"depth\": 2,\n    \"confidence\": 0.4,\n    \"weight\": 0.4,\n})).unwrap();\nassert!(!guessed.selector.declared() && guessed.confidence < 1.0);\n```"
               },
               "Selector": {
                 "oneOf": [
@@ -8358,7 +8358,7 @@
                     "description": "Inferred: the words of the intent occur in the object's own words."
                   }
                 ],
-                "description": "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is [`Selector::declared`], and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec<&str> = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\"intent_match\"]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec<&str> = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\"scope_path\"),\n);\n```"
+                "description": "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is `Selector::declared`, and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec<&str> = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\"intent_match\"]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec<&str> = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\"scope_path\"),\n);\n```"
               },
               "Excluded": {
                 "type": "object",
@@ -8769,7 +8769,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent."
+                    "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent."
                   },
                   "max_depth": {
                     "type": [
@@ -8778,7 +8778,7 @@
                     ],
                     "format": "uint",
                     "minimum": 0,
-                    "description": "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent."
+                    "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent."
                   },
                   "floor": {
                     "type": [
@@ -8786,7 +8786,7 @@
                       "null"
                     ],
                     "format": "double",
-                    "description": "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent."
+                    "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent."
                   },
                   "all_blocking_rules": {
                     "type": [
@@ -8951,7 +8951,7 @@
                     "type": "integer",
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "Estimated tokens: the file's bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one."
+                    "description": "Estimated tokens: the file's bytes divided by `BYTES_PER_TOKEN`, never fewer\nthan one. An estimate, said to be one."
                   },
                   "cost_bytes": {
                     "type": "integer",
@@ -9035,7 +9035,7 @@
                   "source_class",
                   "bytes"
                 ],
-                "description": "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own [`crate::model::Provenance`], carried rather than restated.\n\nIt is a copy of the index's provenance and not a re-derivation of it, which is the\nproperty worth relying on: no path here was constructed by this module, so a path in an\nanswer is a path the index discovered, and the two cannot disagree about where something\nlives.\n\n`bytes` is the measured half of an entry's cost — the estimate on top of it is\n[`tokens_for`] — so this is also where the budget's arithmetic starts.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, EntryProvenance};\nuse serde_json::json;\n\nlet p: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \".ai/repo/adrs/0052-the-episode-is-the-boundary.md\",\n    \"directory\": \".ai/repo/adrs\",\n    \"source_class\": \"adr\",\n    \"section\": \"adrs\",\n    \"bytes\": 8_192,\n})).unwrap();\n\n// the size is what the cost is computed from, and the estimate says so of itself\nassert_eq!(tokens_for(p.bytes), 2_048);\n\n// a file under no manifest section — a root README, say — carries none rather than \"\"\nlet rootish: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \"README.md\",\n    \"directory\": \".\",\n    \"source_class\": \"readme\",\n    \"bytes\": 4_000,\n})).unwrap();\nassert!(rootish.section.is_none());\nassert_eq!(rootish.directory, \".\", \"the root is `.`, not the empty string\");\n```"
+                "description": "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own `crate::model::Provenance`, carried rather than restated.\n\nIt is a copy of the index's provenance and not a re-derivation of it, which is the\nproperty worth relying on: no path here was constructed by this module, so a path in an\nanswer is a path the index discovered, and the two cannot disagree about where something\nlives.\n\n`bytes` is the measured half of an entry's cost — the estimate on top of it is\n`tokens_for` — so this is also where the budget's arithmetic starts.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, EntryProvenance};\nuse serde_json::json;\n\nlet p: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \".ai/repo/adrs/0052-the-episode-is-the-boundary.md\",\n    \"directory\": \".ai/repo/adrs\",\n    \"source_class\": \"adr\",\n    \"section\": \"adrs\",\n    \"bytes\": 8_192,\n})).unwrap();\n\n// the size is what the cost is computed from, and the estimate says so of itself\nassert_eq!(tokens_for(p.bytes), 2_048);\n\n// a file under no manifest section — a root README, say — carries none rather than \"\"\nlet rootish: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \"README.md\",\n    \"directory\": \".\",\n    \"source_class\": \"readme\",\n    \"bytes\": 4_000,\n})).unwrap();\nassert!(rootish.section.is_none());\nassert_eq!(rootish.directory, \".\", \"the root is `.`, not the empty string\");\n```"
               },
               "Tier": {
                 "oneOf": [
@@ -9121,7 +9121,7 @@
                   "confidence",
                   "weight"
                 ],
-                "description": "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide.\n\nA `Discovery` is a *kind* of way in, not one traversal. Thirty-three issues of one\nmilestone all reach that milestone along `belongs_to`, and recording that thirty-three\ntimes would say the answer had thirty-three reasons when it has one — so a path already\nrecorded for the same selector, edge and reason is kept rather than repeated.\n\n`via` and `edge` are present exactly when they mean something: a seed was not reached\nfrom anything and followed no edge, so both are absent and are skipped on the wire\nrather than serialised as null. `confidence` is 1.0 for every declared selector and less\nonly for [`Selector::IntentMatch`]; `weight` is what this particular path contributes to\nrelevance, which is a different quantity — how much it counts, against how sure it is.\n\n```\nuse majordomus_cli::devcontext::{Discovery, Selector};\nuse serde_json::json;\n\n// the request named it: nothing to come via, no edge followed, depth zero\nlet seed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"seed\",\n    \"reason\": \"named in the request\",\n    \"depth\": 0,\n    \"confidence\": 1.0,\n    \"weight\": 1.0,\n})).unwrap();\nassert_eq!(seed.selector, Selector::Seed);\nassert!(seed.via.is_none() && seed.edge.is_none());\nassert!(seed.selector.declared() && seed.confidence == 1.0);\n\n// the wire form omits them rather than carrying nulls a reader must skip\nlet wire = serde_json::to_value(&seed).unwrap();\nassert!(wire.get(\"via\").is_none() && wire.get(\"edge\").is_none());\n\n// a relation says both where it came from and which edge it followed\nlet walked: Discovery = serde_json::from_value(json!({\n    \"selector\": \"relation\",\n    \"reason\": \"the decision in force over this scope\",\n    \"via\": \"majordomus://issue/I0301\",\n    \"edge\": \"governed_by\",\n    \"depth\": 1,\n    \"confidence\": 1.0,\n    \"weight\": 0.9,\n})).unwrap();\nassert_eq!(walked.edge.as_deref(), Some(\"governed_by\"));\nassert_eq!(walked.via.as_deref(), Some(\"majordomus://issue/I0301\"));\n\n// and a guess says so, in the one field that distinguishes the two halves of an answer\nlet guessed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"intent_match\",\n    \"reason\": \"the intent's words occur in it\",\n    \"depth\": 2,\n    \"confidence\": 0.4,\n    \"weight\": 0.4,\n})).unwrap();\nassert!(!guessed.selector.declared() && guessed.confidence < 1.0);\n```"
+                "description": "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide.\n\nA `Discovery` is a *kind* of way in, not one traversal. Thirty-three issues of one\nmilestone all reach that milestone along `belongs_to`, and recording that thirty-three\ntimes would say the answer had thirty-three reasons when it has one — so a path already\nrecorded for the same selector, edge and reason is kept rather than repeated.\n\n`via` and `edge` are present exactly when they mean something: a seed was not reached\nfrom anything and followed no edge, so both are absent and are skipped on the wire\nrather than serialised as null. `confidence` is 1.0 for every declared selector and less\nonly for `Selector::IntentMatch`; `weight` is what this particular path contributes to\nrelevance, which is a different quantity — how much it counts, against how sure it is.\n\n```\nuse majordomus_cli::devcontext::{Discovery, Selector};\nuse serde_json::json;\n\n// the request named it: nothing to come via, no edge followed, depth zero\nlet seed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"seed\",\n    \"reason\": \"named in the request\",\n    \"depth\": 0,\n    \"confidence\": 1.0,\n    \"weight\": 1.0,\n})).unwrap();\nassert_eq!(seed.selector, Selector::Seed);\nassert!(seed.via.is_none() && seed.edge.is_none());\nassert!(seed.selector.declared() && seed.confidence == 1.0);\n\n// the wire form omits them rather than carrying nulls a reader must skip\nlet wire = serde_json::to_value(&seed).unwrap();\nassert!(wire.get(\"via\").is_none() && wire.get(\"edge\").is_none());\n\n// a relation says both where it came from and which edge it followed\nlet walked: Discovery = serde_json::from_value(json!({\n    \"selector\": \"relation\",\n    \"reason\": \"the decision in force over this scope\",\n    \"via\": \"majordomus://issue/I0301\",\n    \"edge\": \"governed_by\",\n    \"depth\": 1,\n    \"confidence\": 1.0,\n    \"weight\": 0.9,\n})).unwrap();\nassert_eq!(walked.edge.as_deref(), Some(\"governed_by\"));\nassert_eq!(walked.via.as_deref(), Some(\"majordomus://issue/I0301\"));\n\n// and a guess says so, in the one field that distinguishes the two halves of an answer\nlet guessed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"intent_match\",\n    \"reason\": \"the intent's words occur in it\",\n    \"depth\": 2,\n    \"confidence\": 0.4,\n    \"weight\": 0.4,\n})).unwrap();\nassert!(!guessed.selector.declared() && guessed.confidence < 1.0);\n```"
               },
               "Selector": {
                 "oneOf": [
@@ -9161,7 +9161,7 @@
                     "description": "Inferred: the words of the intent occur in the object's own words."
                   }
                 ],
-                "description": "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is [`Selector::declared`], and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec<&str> = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\"intent_match\"]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec<&str> = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\"scope_path\"),\n);\n```"
+                "description": "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is `Selector::declared`, and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec<&str> = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\"intent_match\"]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec<&str> = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\"scope_path\"),\n);\n```"
               },
               "Excluded": {
                 "type": "object",
@@ -9516,7 +9516,7 @@
               "default_floor",
               "bytes_per_token"
             ],
-            "description": "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \"why did I get that\", asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`EDGES`](select::EDGES), [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```",
+            "description": "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \"why did I get that\", asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — `Tier::ORDER`, `EDGES`, `Selector::ALL` and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```",
             "title": "CompilerPolicy",
             "$defs": {
               "TierRule": {
@@ -9550,7 +9550,7 @@
                   "meaning",
                   "kinds"
                 ],
-                "description": "One tier, as the policy reports it: its place in the spend order, what it is for, and\nwhich kinds of object land in it.\n\n`position` is 1-based and exists because the wire form has no inherent order a consumer\ncan rely on — the [`Tier`] enum's `Ord` is a Rust fact, not a JSON one — so the rank is\nmade explicit for the readers that are not this crate. `kinds` is the inverse of\n[`tier_for_kind`], published so that a caller can see where a kind will land without\ncompiling an answer and looking.\n\n```\nuse majordomus_cli::devcontext::{policy, tier_for_kind, Tier, TierRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&ctx).unwrap();\n\n// the first tier spent is the one that is never dropped, at position 1\nlet first: &TierRule = &rules.tiers[0];\nassert_eq!(first.tier, Tier::Task);\nassert_eq!(first.position, 1, \"1-based, so the order survives serialisation\");\n\n// every tier is reported, in the order the budget spends in, and explains itself\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nfor (i, r) in rules.tiers.iter().enumerate() {\n    assert_eq!(r.position, i + 1);\n    assert_eq!(r.meaning, r.tier.meaning());\n}\n\n// and every kind is listed under the tier the classifier puts it in, exactly once —\n// so the published table and the function behind it cannot disagree\nlet mut listed = 0usize;\nfor r in &rules.tiers {\n    for kind in &r.kinds {\n        assert_eq!(tier_for_kind(kind), r.tier, \"{kind} is listed under the wrong tier\");\n        listed += 1;\n    }\n}\nlet mut all: Vec<&str> = rules.tiers.iter().flat_map(|r| &r.kinds).map(String::as_str).collect();\nall.sort();\nall.dedup();\nassert_eq!(all.len(), listed, \"a kind is listed under one tier only\");\n```"
+                "description": "One tier, as the policy reports it: its place in the spend order, what it is for, and\nwhich kinds of object land in it.\n\n`position` is 1-based and exists because the wire form has no inherent order a consumer\ncan rely on — the `Tier` enum's `Ord` is a Rust fact, not a JSON one — so the rank is\nmade explicit for the readers that are not this crate. `kinds` is the inverse of\n`tier_for_kind`, published so that a caller can see where a kind will land without\ncompiling an answer and looking.\n\n```\nuse majordomus_cli::devcontext::{policy, tier_for_kind, Tier, TierRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&ctx).unwrap();\n\n// the first tier spent is the one that is never dropped, at position 1\nlet first: &TierRule = &rules.tiers[0];\nassert_eq!(first.tier, Tier::Task);\nassert_eq!(first.position, 1, \"1-based, so the order survives serialisation\");\n\n// every tier is reported, in the order the budget spends in, and explains itself\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nfor (i, r) in rules.tiers.iter().enumerate() {\n    assert_eq!(r.position, i + 1);\n    assert_eq!(r.meaning, r.tier.meaning());\n}\n\n// and every kind is listed under the tier the classifier puts it in, exactly once —\n// so the published table and the function behind it cannot disagree\nlet mut listed = 0usize;\nfor r in &rules.tiers {\n    for kind in &r.kinds {\n        assert_eq!(tier_for_kind(kind), r.tier, \"{kind} is listed under the wrong tier\");\n        listed += 1;\n    }\n}\nlet mut all: Vec<&str> = rules.tiers.iter().flat_map(|r| &r.kinds).map(String::as_str).collect();\nall.sort();\nall.dedup();\nassert_eq!(all.len(), listed, \"a kind is listed under one tier only\");\n```"
               },
               "Tier": {
                 "oneOf": [
@@ -9687,7 +9687,7 @@
                     "description": "Inferred: the words of the intent occur in the object's own words."
                   }
                 ],
-                "description": "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is [`Selector::declared`], and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec<&str> = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\"intent_match\"]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec<&str> = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\"scope_path\"),\n);\n```"
+                "description": "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is `Selector::declared`, and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec<&str> = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\"intent_match\"]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec<&str> = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\"scope_path\"),\n);\n```"
               }
             }
           }
@@ -9941,7 +9941,7 @@
                   },
                   "evidence_commits": {
                     "$ref": "#/$defs/AttestedList",
-                    "description": "The commits the record's own evidence entries name. Authored, and therefore a\ndifferent fact from the commits git finds on the branches — which are in\n[`DevTaskExecution::commits`] and are derived."
+                    "description": "The commits the record's own evidence entries name. Authored, and therefore a\ndifferent fact from the commits git finds on the branches — which are in\n`DevTaskExecution::commits` and are derived."
                   }
                 },
                 "required": [
@@ -10005,7 +10005,7 @@
                   "provenance",
                   "source"
                 ],
-                "description": "One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and [`AttestedText::is_consistent`] states, is\nthat a value is present exactly when the provenance is not [`FieldProvenance::Unknown`].\nWithout it the shape can express \"unknown, and here is the value\", which is the defect\nthis whole module exists to prevent."
+                "description": "One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and `AttestedText::is_consistent` states, is\nthat a value is present exactly when the provenance is not `FieldProvenance::Unknown`.\nWithout it the shape can express \"unknown, and here is the value\", which is the defect\nthis whole module exists to prevent."
               },
               "FieldProvenance": {
                 "oneOf": [
@@ -10155,7 +10155,7 @@
                   "provenance",
                   "source"
                 ],
-                "description": "A count with its provenance. Separate from [`AttestedText`] because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back."
+                "description": "A count with its provenance. Separate from `AttestedText` because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back."
               },
               "DevTaskExecution": {
                 "type": "object",
@@ -10190,7 +10190,7 @@
                   },
                   "sessions_by_branch": {
                     "$ref": "#/$defs/AttestedList",
-                    "description": "The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one."
+                    "description": "The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps `DevTaskExecution::sessions`: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one."
                   }
                 },
                 "required": [
@@ -10737,7 +10737,7 @@
                   "provenance",
                   "source"
                 ],
-                "description": "One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and [`AttestedText::is_consistent`] states, is\nthat a value is present exactly when the provenance is not [`FieldProvenance::Unknown`].\nWithout it the shape can express \"unknown, and here is the value\", which is the defect\nthis whole module exists to prevent."
+                "description": "One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and `AttestedText::is_consistent` states, is\nthat a value is present exactly when the provenance is not `FieldProvenance::Unknown`.\nWithout it the shape can express \"unknown, and here is the value\", which is the defect\nthis whole module exists to prevent."
               },
               "FieldProvenance": {
                 "oneOf": [
@@ -10796,7 +10796,7 @@
                   "provenance",
                   "source"
                 ],
-                "description": "A count with its provenance. Separate from [`AttestedText`] because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back."
+                "description": "A count with its provenance. Separate from `AttestedText` because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back."
               },
               "AttestedList": {
                 "type": "object",
@@ -12009,7 +12009,7 @@
                     "description": "Documented, never built, refused by the installer with its recorded reason."
                   }
                 ],
-                "description": "What the project promises about a target.\n\nSee [`crate::deploy::Status`]: both are `Status` in their own module and neither is in\nthe one component namespace the schema document has."
+                "description": "What the project promises about a target.\n\nSee `crate::deploy::Status`: both are `Status` in their own module and neither is in\nthe one component namespace the schema document has."
               }
             }
           }
@@ -12664,7 +12664,7 @@
               "diagnostics",
               "provenance"
             ],
-            "description": "The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n[`RepositoryEnvironment::generated_at`].",
+            "description": "The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n`RepositoryEnvironment::generated_at`.",
             "title": "RepositoryEnvironment",
             "$defs": {
               "Resolution": {
@@ -12728,7 +12728,7 @@
                   "profile",
                   "commit"
                 ],
-                "description": "What the project is, from the crate manifest and the prose written once in\n[`crate::about`]. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers."
+                "description": "What the project is, from the crate manifest and the prose written once in\n`crate::about`. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers."
               },
               "RepositoryIdentity": {
                 "type": "object",
@@ -13034,7 +13034,7 @@
                     "description": "Neither available; the values are absent and the reason is a diagnostic."
                   }
                 ],
-                "description": "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero."
+                "description": "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n`TierState::Unavailable` with the reason, and its values are absent rather than zero."
               },
               "KindCount": {
                 "type": "object",
@@ -13543,7 +13543,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
+                "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is `ProofState::Stale`.\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
               },
               "reproduce": {
                 "type": [
@@ -13625,7 +13625,7 @@
                 "properties": {
                   "test": {
                     "type": "string",
-                    "description": "The test, in [`TestId::as_string`] form."
+                    "description": "The test, in `TestId::as_string` form."
                   },
                   "runner": {
                     "$ref": "#/$defs/EvidenceRunner",
@@ -13698,7 +13698,7 @@
                     "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                   }
                 ],
-                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
               },
               "EvidenceOutcome": {
                 "oneOf": [
@@ -14064,7 +14064,7 @@
                   },
                   "present": {
                     "type": "boolean",
-                    "description": "Whether the ledger holds at least one execution.\n\nNot whether the file exists. A ledger file holding nothing and no ledger file at\nall are the same answer to the only question a reader is asking — has anything\nbeen recorded — and both make every claim read `not_run`. [`Ledger::present`]\nanswers the filesystem question, and nothing derives a proof state from it."
+                    "description": "Whether the ledger holds at least one execution.\n\nNot whether the file exists. A ledger file holding nothing and no ledger file at\nall are the same answer to the only question a reader is asking — has anything\nbeen recorded — and both make every claim read `not_run`. `Ledger::present`\nanswers the filesystem question, and nothing derives a proof state from it."
                   },
                   "executions": {
                     "type": "integer",
@@ -14084,7 +14084,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "The distinct commits its executions were recorded against. Always emitted, empty\nincluded, for the reason [`ClaimProof::changed`] is."
+                    "description": "The distinct commits its executions were recorded against. Always emitted, empty\nincluded, for the reason `ClaimProof::changed` is."
                   }
                 },
                 "required": [
@@ -14190,7 +14190,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
+                    "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is `ProofState::Stale`.\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
                   },
                   "reproduce": {
                     "type": [
@@ -14208,7 +14208,7 @@
                   "meaning",
                   "changed"
                 ],
-                "description": "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
+                "description": "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by `report`; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
               },
               "ProofState": {
                 "oneOf": [
@@ -14255,7 +14255,7 @@
                 "properties": {
                   "test": {
                     "type": "string",
-                    "description": "The test, in [`TestId::as_string`] form."
+                    "description": "The test, in `TestId::as_string` form."
                   },
                   "runner": {
                     "$ref": "#/$defs/EvidenceRunner",
@@ -14328,7 +14328,7 @@
                     "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                   }
                 ],
-                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
               },
               "EvidenceOutcome": {
                 "oneOf": [
@@ -14547,7 +14547,7 @@
               "reproduce",
               "proves"
             ],
-            "description": "One test, and what it proves.\n\nThe other direction of [`ClaimEvidence`], read from the test's end: its identity, its\nsource and whether that source is still the one that ran, the command that runs it\nagain, and every claim that names it.\n\n```\nuse majordomus_cli::capability::builtin::evidence::TestEvidence;\nuse majordomus_cli::evidence::TestId;\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet answer = TestEvidence {\n    test: id.as_string(),\n    runner: id.runner,\n    source: id.source(),\n    present: true,\n    reproduce: id.reproduce(),\n    execution: None,\n    digest_matches: None,\n    proves: Vec::new(),\n};\nassert_eq!(answer.test, \"crate:why\");\nassert_eq!(answer.reproduce, \"cargo test --test why\");\n\n// nothing recorded: the two provenance keys are absent rather than null, so \"no\n// execution\" cannot be read as an execution that said nothing\nlet json = serde_json::to_value(&answer).unwrap();\nassert!(json.get(\"execution\").is_none() && json.get(\"digest_matches\").is_none());\nassert_eq!(json[\"proves\"], serde_json::json!([]));\n```",
+            "description": "One test, and what it proves.\n\nThe other direction of `ClaimEvidence`, read from the test's end: its identity, its\nsource and whether that source is still the one that ran, the command that runs it\nagain, and every claim that names it.\n\n```\nuse majordomus_cli::capability::builtin::evidence::TestEvidence;\nuse majordomus_cli::evidence::TestId;\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet answer = TestEvidence {\n    test: id.as_string(),\n    runner: id.runner,\n    source: id.source(),\n    present: true,\n    reproduce: id.reproduce(),\n    execution: None,\n    digest_matches: None,\n    proves: Vec::new(),\n};\nassert_eq!(answer.test, \"crate:why\");\nassert_eq!(answer.reproduce, \"cargo test --test why\");\n\n// nothing recorded: the two provenance keys are absent rather than null, so \"no\n// execution\" cannot be read as an execution that said nothing\nlet json = serde_json::to_value(&answer).unwrap();\nassert!(json.get(\"execution\").is_none() && json.get(\"digest_matches\").is_none());\nassert_eq!(json[\"proves\"], serde_json::json!([]));\n```",
             "title": "TestEvidence",
             "$defs": {
               "EvidenceRunner": {
@@ -14563,14 +14563,14 @@
                     "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                   }
                 ],
-                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
               },
               "EvidenceExecution": {
                 "type": "object",
                 "properties": {
                   "test": {
                     "type": "string",
-                    "description": "The test, in [`TestId::as_string`] form."
+                    "description": "The test, in `TestId::as_string` form."
                   },
                   "runner": {
                     "$ref": "#/$defs/EvidenceRunner",
@@ -14747,7 +14747,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
+                    "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is `ProofState::Stale`.\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
                   },
                   "reproduce": {
                     "type": [
@@ -14765,7 +14765,7 @@
                   "meaning",
                   "changed"
                 ],
-                "description": "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
+                "description": "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by `report`; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
               },
               "ProofState": {
                 "oneOf": [
@@ -15081,7 +15081,7 @@
                     "description": "It stopped because it was asked to."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
               },
               "ExecutionError": {
                 "type": "object",
@@ -15635,14 +15635,14 @@
                     "description": "It stopped because it was asked to."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
               },
               "ExecutionEvent": {
                 "type": "object",
                 "properties": {
                   "schema_version": {
                     "type": "string",
-                    "description": "The protocol version, [`PROTOCOL_VERSION`]."
+                    "description": "The protocol version, `PROTOCOL_VERSION`."
                   },
                   "event_id": {
                     "type": "string",
@@ -16366,7 +16366,7 @@
                     "description": "It stopped because it was asked to."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
               },
               "ExecutionError": {
                 "type": "object",
@@ -16770,7 +16770,7 @@
                     "description": "It stopped because it was asked to."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
               }
             }
           }
@@ -17009,7 +17009,7 @@
                     "description": "It stopped because it was asked to."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
               },
               "ExecutionError": {
                 "type": "object",
@@ -17758,7 +17758,7 @@
                     "description": "It stopped because it was asked to."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
               },
               "ExecutionError": {
                 "type": "object",
@@ -18253,7 +18253,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared."
+                    "description": "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n`super::obligations` is what judges each of these against its evidence; here it\nis reported as declared."
                   },
                   "started_at": {
                     "type": "string",
@@ -19106,7 +19106,7 @@
                   },
                   "truncated": {
                     "type": "boolean",
-                    "description": "True when the derivation stopped at [`MAX_NODES`] and the graph is a prefix of\nwhat the repository holds."
+                    "description": "True when the derivation stopped at `MAX_NODES` and the graph is a prefix of\nwhat the repository holds."
                   }
                 },
                 "required": [
@@ -20888,12 +20888,12 @@
                   {
                     "type": "string",
                     "const": "present",
-                    "description": "An advertisement arrived within [`PRESENCE_TTL`]."
+                    "description": "An advertisement arrived within `PRESENCE_TTL`."
                   },
                   {
                     "type": "string",
                     "const": "absent",
-                    "description": "Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil [`RETENTION`] passes, then expires out entirely."
+                    "description": "Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil `RETENTION` passes, then expires out entirely."
                   }
                 ],
                 "description": "Whether the node is answering now, by its own announcements."
@@ -21076,7 +21076,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "Where this node answers HTTP, as `host:port` authorities, at most\n[`MAX_ENDPOINTS`]. Advisory: an endpoint is where to *try*, identity is the key.",
+                    "description": "Where this node answers HTTP, as `host:port` authorities, at most\n`MAX_ENDPOINTS`. Advisory: an endpoint is where to *try*, identity is the key.",
                     "default": []
                   },
                   "caps": {
@@ -21102,7 +21102,7 @@
                   },
                   "sig": {
                     "type": "string",
-                    "description": "Ed25519 over [`Advertisement::signing_bytes`], hex."
+                    "description": "Ed25519 over `Advertisement::signing_bytes`, hex."
                   }
                 },
                 "required": [
@@ -22085,7 +22085,7 @@
                     "description": "Declarative content the repository holds: read as it is, never executed."
                   }
                 ],
-                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n(`ExecutionPolicy::writes_repository`).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n`crate::capability::Executable::cancellable` and carried on `ExecutionPolicy`."
               },
               "CapabilityProvenance": {
                 "oneOf": [
@@ -22214,7 +22214,7 @@
                   "media_type",
                   "content"
                 ],
-                "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
+                "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an `ObjectView` where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
               }
             }
           }
@@ -22896,7 +22896,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared."
+                    "description": "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n`super::obligations` is what judges each of these against its evidence; here it\nis reported as declared."
                   },
                   "started_at": {
                     "type": "string",
@@ -23227,7 +23227,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "The pathspecs the evidence is hashed over. Empty for a token whose fact is remote,\nand empty for one bound to neither: see [`ObligationClosure::staleness`]."
+                    "description": "The pathspecs the evidence is hashed over. Empty for a token whose fact is remote,\nand empty for one bound to neither: see `ObligationClosure::staleness`."
                   },
                   "remote": {
                     "type": "boolean",
@@ -23374,7 +23374,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
+                "description": "The most recently made of `Peer::claims`, for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
               },
               "checkout": {
                 "anyOf": [
@@ -23385,7 +23385,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+                "description": "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
               },
               "overlaps": {
                 "type": "array",
@@ -23633,7 +23633,7 @@
                 "default": "repository"
               }
             },
-            "description": "What to ask of `peers.list`: how wide the board is.\n\nThe same one field, the same word and the same default as\n[`super::server::ServerStatusInput`], because it is the same question asked of the same\nset of checkouts, and a caller should not have to learn it twice.\n\nThe evidence for that is `the_default_board_is_the_repositorys` below rather than a doc\nexample here: this module is `pub(crate)`, so a doc test — which compiles as an external\ncrate — cannot name the type at all.",
+            "description": "What to ask of `peers.list`: how wide the board is.\n\nThe same one field, the same word and the same default as\n`super::server::ServerStatusInput`, because it is the same question asked of the same\nset of checkouts, and a caller should not have to learn it twice.\n\nThe evidence for that is `the_default_board_is_the_repositorys` below rather than a doc\nexample here: this module is `pub(crate)`, so a doc test — which compiles as an external\ncrate — cannot name the type at all.",
             "title": "PeerListInput",
             "$defs": {
               "Checkouts": {
@@ -23674,7 +23674,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "The caller's own peer id, when the call came through an MCP session. A position on\nthis checkout's board, not a durable identity: it is handed out again after a\nreconnect, and [`Peer::checkout`] is the half of a worker's identity that is not."
+                "description": "The caller's own peer id, when the call came through an MCP session. A position on\nthis checkout's board, not a durable identity: it is handed out again after a\nreconnect, and `Peer::checkout` is the half of a worker's identity that is not."
               },
               "peers": {
                 "type": "array",
@@ -23760,7 +23760,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
+                    "description": "The most recently made of `Peer::claims`, for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
                   },
                   "checkout": {
                     "anyOf": [
@@ -23771,7 +23771,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+                    "description": "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
                   }
                 },
                 "required": [
@@ -27668,7 +27668,7 @@
             "properties": {
               "schema": {
                 "type": "string",
-                "description": "[`SCHEMA`]."
+                "description": "`SCHEMA`."
               },
               "fingerprint": {
                 "type": "string",
@@ -28142,7 +28142,7 @@
             "properties": {
               "schema": {
                 "type": "string",
-                "description": "[`SCHEMA`]."
+                "description": "`SCHEMA`."
               },
               "surfaces": {
                 "type": "array",
@@ -28862,7 +28862,7 @@
                 "properties": {
                   "schema": {
                     "type": "string",
-                    "description": "[`SCHEMA`].",
+                    "description": "`SCHEMA`.",
                     "default": ""
                   },
                   "target": {
@@ -29421,7 +29421,7 @@
                     "description": "At or above `1.0.0`: the impact is the requirement."
                   }
                 ],
-                "description": "How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \"anything MAY change at any\ntime\" — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: [`Mode::Semver`] is the ordinary rule, and the transition is\none line of [`Policy::required_of`].\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\"0.9.0\").unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\"1.0.0\").unwrap()).mode, Mode::Semver);\n```"
+                "description": "How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \"anything MAY change at any\ntime\" — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: `Mode::Semver` is the ordinary rule, and the transition is\none line of `Policy::required_of`.\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\"0.9.0\").unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\"1.0.0\").unwrap()).mode, Mode::Semver);\n```"
               },
               "ReleaseBaseline": {
                 "type": "object",
@@ -29636,7 +29636,7 @@
                   "commits",
                   "implied"
                 ],
-                "description": "What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that [`VersionPlan::understated`] can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied < Impact::Minor);\n```"
+                "description": "What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that `VersionPlan::understated` can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied < Impact::Minor);\n```"
               },
               "ReleaseDiagnostic": {
                 "type": "object",
@@ -30014,7 +30014,7 @@
                     "description": "A commit whose subject does not parse as a conventional commit."
                   }
                 ],
-                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
               },
               "ReleaseChange": {
                 "type": "object",
@@ -30384,7 +30384,7 @@
                     "description": "A commit whose subject does not parse as a conventional commit."
                   }
                 ],
-                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+                "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
               },
               "ReleaseReference": {
                 "type": "object",
@@ -30953,7 +30953,7 @@
                     "type": "integer",
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "The format version; only [`SCOPE_VERSION`] is read."
+                    "description": "The format version; only `SCOPE_VERSION` is read."
                   },
                   "in": {
                     "type": "array",
@@ -31278,7 +31278,7 @@
                   {
                     "type": "string",
                     "const": "binary",
-                    "description": "Content with a NUL byte in its first [`SNIFF_BYTES`]: not text."
+                    "description": "Content with a NUL byte in its first `SNIFF_BYTES`: not text."
                   }
                 ],
                 "description": "Why a path is out. The order is the order the rules decide in."
@@ -31486,7 +31486,7 @@
                   {
                     "type": "string",
                     "const": "binary",
-                    "description": "Content with a NUL byte in its first [`SNIFF_BYTES`]: not text."
+                    "description": "Content with a NUL byte in its first `SNIFF_BYTES`: not text."
                   }
                 ],
                 "description": "Why a path is out. The order is the order the rules decide in."
@@ -31599,7 +31599,7 @@
               "proves",
               "sole_proof_of"
             ],
-            "description": "What one test proves: the reverse of [`RuleDetail`].\n# Example\n\nThe reverse of `rules show`: what a test proves, and which rules would be left with no\nproof at all if it were deleted.\n\n```\nuse majordomus_cli::capability::builtin::rules::TestSubjects;\nlet t = TestSubjects {\n    test: Some(\"suite:07_scope\".into()),\n    path: \"test/cases/07_scope.sh\".into(),\n    present: true,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n    proves: vec![],\n    sole_proof_of: vec![],\n};\nassert!(t.present);\n```",
+            "description": "What one test proves: the reverse of `RuleDetail`.\n# Example\n\nThe reverse of `rules show`: what a test proves, and which rules would be left with no\nproof at all if it were deleted.\n\n```\nuse majordomus_cli::capability::builtin::rules::TestSubjects;\nlet t = TestSubjects {\n    test: Some(\"suite:07_scope\".into()),\n    path: \"test/cases/07_scope.sh\".into(),\n    present: true,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n    proves: vec![],\n    sole_proof_of: vec![],\n};\nassert!(t.present);\n```",
             "title": "TestSubjects",
             "$defs": {
               "RuleSummary": {
@@ -31648,7 +31648,7 @@
                     "description": "The front matter declared no class, or one this repository does not know."
                   }
                 ],
-                "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
+                "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as `Class::Unknown` rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
               },
               "RuleState": {
                 "oneOf": [
@@ -31871,7 +31871,7 @@
                     "description": "The front matter declared no class, or one this repository does not know."
                   }
                 ],
-                "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
+                "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as `Class::Unknown` rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
               }
             }
           }
@@ -31993,7 +31993,7 @@
                   "meaning",
                   "satisfied"
                 ],
-                "description": "One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet first: &RuleProof = &r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \"an advisory rule owes no executable proof\");\n```"
+                "description": "One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what `report` produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet first: &RuleProof = &r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \"an advisory rule owes no executable proof\");\n```"
               },
               "RuleDefinition": {
                 "type": "object",
@@ -32081,7 +32081,7 @@
                   "path",
                   "enforcement"
                 ],
-                "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
+                "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
               },
               "RuleClass": {
                 "oneOf": [
@@ -32101,7 +32101,7 @@
                     "description": "The front matter declared no class, or one this repository does not know."
                   }
                 ],
-                "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
+                "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as `Class::Unknown` rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
               },
               "RuleEnforcement": {
                 "type": "object",
@@ -32344,7 +32344,7 @@
                 "properties": {
                   "test": {
                     "type": "string",
-                    "description": "The test, in [`TestId::as_string`] form."
+                    "description": "The test, in `TestId::as_string` form."
                   },
                   "runner": {
                     "$ref": "#/$defs/EvidenceRunner",
@@ -32417,7 +32417,7 @@
                     "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                   }
                 ],
-                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
               },
               "EvidenceOutcome": {
                 "oneOf": [
@@ -32819,7 +32819,7 @@
                   "meaning",
                   "satisfied"
                 ],
-                "description": "One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet first: &RuleProof = &r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \"an advisory rule owes no executable proof\");\n```"
+                "description": "One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what `report` produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet first: &RuleProof = &r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \"an advisory rule owes no executable proof\");\n```"
               },
               "RuleDefinition": {
                 "type": "object",
@@ -32907,7 +32907,7 @@
                   "path",
                   "enforcement"
                 ],
-                "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
+                "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
               },
               "RuleClass": {
                 "oneOf": [
@@ -32927,7 +32927,7 @@
                     "description": "The front matter declared no class, or one this repository does not know."
                   }
                 ],
-                "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
+                "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as `Class::Unknown` rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
               },
               "RuleEnforcement": {
                 "type": "object",
@@ -33170,7 +33170,7 @@
                 "properties": {
                   "test": {
                     "type": "string",
-                    "description": "The test, in [`TestId::as_string`] form."
+                    "description": "The test, in `TestId::as_string` form."
                   },
                   "runner": {
                     "$ref": "#/$defs/EvidenceRunner",
@@ -33243,7 +33243,7 @@
                     "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                   }
                 ],
-                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+                "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
               },
               "EvidenceOutcome": {
                 "oneOf": [
@@ -33538,7 +33538,7 @@
                   "id",
                   "linked"
                 ],
-                "description": "The git repository a checkout belongs to, as distinct from the checkout itself.\n\n[`identity`] names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\"repo\");\nstd::fs::create_dir_all(&root).unwrap();\nlet git = |args: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root).args(args).status().unwrap().success());\ngit(&[\"init\", \"-q\", \".\"]);\ngit(&[\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\", \"commit\", \"-q\", \"--allow-empty\", \"-m\", \"init\"]);\nlet wt = dir.path().join(\"repo-wt\");\ngit(&[\"worktree\", \"add\", \"-q\", \"-b\", \"feature/x\", wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&root).expect(\"a work tree\");\nlet linked: GitIdentity = git_identity(&wt).expect(\"a linked work tree\");\nassert_eq!(primary.id, linked.id, \"one repository\");\nassert_ne!(identity(&root), identity(&wt), \"two checkouts\");\nassert!(!primary.linked && linked.linked);\nassert!(!primary.id.contains('/'), \"a digest, never a path\");\n```"
+                "description": "The git repository a checkout belongs to, as distinct from the checkout itself.\n\n`identity` names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\"repo\");\nstd::fs::create_dir_all(&root).unwrap();\nlet git = |args: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root).args(args).status().unwrap().success());\ngit(&[\"init\", \"-q\", \".\"]);\ngit(&[\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\", \"commit\", \"-q\", \"--allow-empty\", \"-m\", \"init\"]);\nlet wt = dir.path().join(\"repo-wt\");\ngit(&[\"worktree\", \"add\", \"-q\", \"-b\", \"feature/x\", wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&root).expect(\"a work tree\");\nlet linked: GitIdentity = git_identity(&wt).expect(\"a linked work tree\");\nassert_eq!(primary.id, linked.id, \"one repository\");\nassert_ne!(identity(&root), identity(&wt), \"two checkouts\");\nassert!(!primary.linked && linked.linked);\nassert!(!primary.id.contains('/'), \"a digest, never a path\");\n```"
               },
               "Desired": {
                 "type": "object",
@@ -33857,7 +33857,7 @@
                     "items": {
                       "$ref": "#/$defs/RecordedSpelling"
                     },
-                    "description": "How each store spells the same subject, in the order [`crate::order`] gives."
+                    "description": "How each store spells the same subject, in the order `crate::order` gives."
                   },
                   "note": {
                     "type": "string",
@@ -36041,7 +36041,7 @@
             "properties": {
               "schema": {
                 "type": "string",
-                "description": "[`SCHEMA`]."
+                "description": "`SCHEMA`."
               },
               "fingerprint": {
                 "type": "string",
@@ -37764,7 +37764,7 @@
             "properties": {
               "schema": {
                 "type": "string",
-                "description": "[`SCHEMA`]."
+                "description": "`SCHEMA`."
               },
               "container": {
                 "type": "string",
@@ -38428,7 +38428,7 @@
             "properties": {
               "schema": {
                 "type": "string",
-                "description": "[`SCHEMA`]."
+                "description": "`SCHEMA`."
               },
               "repository": {
                 "$ref": "#/$defs/RepositoryView",
@@ -39050,7 +39050,7 @@
             "properties": {
               "schema": {
                 "type": "string",
-                "description": "[`SCHEMA`]."
+                "description": "`SCHEMA`."
               },
               "repository": {
                 "$ref": "#/$defs/RepositoryView",
@@ -40508,7 +40508,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 205,
+        "capabilities": 206,
         "capability_ids": []
       },
       {
@@ -40588,7 +40588,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ab8304ae8916a61c96f028e854bd2e49cd8ab18f142c67fc41788e19299deb6b",
+    "fingerprint": "e1ccb4a0e820065f7aedd8958c38ba0823890f4d4dad9a704a91a35c54d4d89d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40637,7 +40637,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 205,
+      "test": 206,
       "use-case": 46,
       "workspace": 1
     },
@@ -53956,6 +53956,14 @@
         "bytes": 7088
       },
       {
+        "uri": "majordomus://test/test/cases/310_rustdoc_projection.sh",
+        "kind": "test",
+        "identity": "test/cases/310_rustdoc_projection.sh",
+        "path": "test/cases/310_rustdoc_projection.sh",
+        "source_class": "case",
+        "bytes": 5480
+      },
+      {
         "uri": "majordomus://test/test/cases/31_command_coverage.sh",
         "kind": "test",
         "identity": "test/cases/31_command_coverage.sh",
@@ -55483,7 +55491,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 205
+      "objects": 206
     },
     {
       "name": "use-case",

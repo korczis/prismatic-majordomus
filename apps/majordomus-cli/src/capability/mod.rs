@@ -41,6 +41,7 @@ pub mod handler;
 pub mod model;
 pub(crate) mod module;
 pub mod registry;
+pub mod rustdoc;
 pub mod schema;
 
 pub use benchmark::{BenchmarkCases, CaseContext, CaseProvider, NamedCase};
