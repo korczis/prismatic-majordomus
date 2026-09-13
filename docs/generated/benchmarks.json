@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 112,
-      "covered": 107,
+      "required": 113,
+      "covered": 108,
       "missing": 0,
       "waived": 5
     },
     {
       "scope": "http",
-      "required": 111,
-      "covered": 107,
+      "required": 112,
+      "covered": 108,
       "missing": 0,
       "waived": 4
     },
     {
       "scope": "mcp",
-      "required": 109,
-      "covered": 105,
+      "required": 110,
+      "covered": 106,
       "missing": 0,
       "waived": 4
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 345,
-      "covered": 332,
+      "required": 348,
+      "covered": 335,
       "missing": 0,
       "waived": 13
     }
@@ -1103,6 +1103,19 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "recover.orphans",
+      "module": "recover",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "check-twelve-hours",
+        "check-one-second"
       ]
     },
     {

@@ -1593,6 +1593,23 @@
       "tool": "majordomus_quality"
     },
     {
+      "api_anchor": "/docs/api/#op-recover-orphans",
+      "claims": [],
+      "cli": null,
+      "id": "recover.orphans",
+      "kind": "command",
+      "module": "recover",
+      "module_route": "/registry/modules/recover/",
+      "resource": null,
+      "route": "/registry/capabilities/recover-orphans/",
+      "slug": "recover-orphans",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/recover.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/recover.rs",
+      "tests": [],
+      "title": "Classify every stray file of the record stores, and sweep the ones that are nobody's",
+      "tool": "majordomus_recover_orphans"
+    },
+    {
       "api_anchor": "/docs/api/#op-release-analysis",
       "claims": [],
       "cli": null,
@@ -2384,9 +2401,9 @@
     ]
   },
   "counts": {
-    "capabilities": 112,
+    "capabilities": 113,
     "claims": 51,
-    "modules": 36
+    "modules": 37
   },
   "generator": "majordomus-cli 0.6.0",
   "modules": [
@@ -3140,6 +3157,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/quality.rs",
       "title": "Public API quality"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "recover.orphans",
+          "route": "/registry/capabilities/recover-orphans/",
+          "slug": "recover-orphans"
+        }
+      ],
+      "claims": [],
+      "id": "recover",
+      "route": "/registry/modules/recover/",
+      "slug": "recover",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/recover.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/recover.rs",
+      "title": "Recovery of the record stores"
     },
     {
       "capabilities": [

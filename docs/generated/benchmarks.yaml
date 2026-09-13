@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.6.0
 coverage:
   - scope: direct
-    required: 112
-    covered: 107
+    required: 113
+    covered: 108
     missing: 0
     waived: 5
   - scope: http
-    required: 111
-    covered: 107
+    required: 112
+    covered: 108
     missing: 0
     waived: 4
   - scope: mcp
-    required: 109
-    covered: 105
+    required: 110
+    covered: 106
     missing: 0
     waived: 4
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 345
-    covered: 332
+    required: 348
+    covered: 335
     missing: 0
     waived: 13
 capabilities:
@@ -842,6 +842,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: recover.orphans
+    module: recover
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - check-twelve-hours
+      - check-one-second
   - id: release.analysis
     module: release
     kind: query
