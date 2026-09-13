@@ -57,6 +57,28 @@
 //! writing.
 //!
 //! [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+//!
+//! # The one capability, as the registry states it
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::recover;
+//! use majordomus_cli::capability::{CapabilityKind, Effect};
+//!
+//! let m = recover::module();
+//! assert_eq!(m.id.as_str(), "recover");
+//! assert_eq!(m.capabilities.len(), 1);
+//! let c = &m.capabilities[0].capability;
+//! assert_eq!(c.id.as_str(), "recover.orphans");
+//!
+//! // it owns the decision and the destruction: a command whose effect is on the repository
+//! assert!(matches!(c.kind, CapabilityKind::Command));
+//! assert_eq!(c.execution.effect, Effect::RepositoryMutation);
+//!
+//! // and it is asked rather than typed: `majordomus recover` stays the shell command that
+//! // asks it, so the capability has no command-line projection of its own
+//! assert!(c.exposure.cli.is_none());
+//! assert!(c.exposure.mcp.is_some() && c.exposure.http.is_some());
+//! ```
 
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -96,6 +118,18 @@ const STAGE_PREFIX: &str = ".mj-stage.";
 
 /// What kind of stray a path is, decided by where it is and how it is named rather than by
 /// what is in it. The content decides the *verdict*; this decides which question to ask.
+///
+/// The word a kind is reported under is also the word it is read back from, and a word this
+/// version does not know is refused rather than read as the nearest kind:
+///
+/// ```
+/// use majordomus_cli::capability::builtin::recover::StrayKind;
+/// for kind in [StrayKind::PublishTemp, StrayKind::RenameTemp, StrayKind::StagingDir] {
+///     let word = serde_json::to_value(kind).unwrap();
+///     assert_eq!(serde_json::from_value::<StrayKind>(word).unwrap(), kind);
+/// }
+/// assert!(serde_json::from_value::<StrayKind>(serde_json::json!("temp")).is_err());
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -137,6 +171,21 @@ impl StrayKind {
 /// The five words are `lib/recover.sh`'s, deliberately: a person who has read the command's
 /// output should not have to learn the same five facts twice because a second surface chose
 /// its own vocabulary.
+///
+/// That vocabulary is closed. Every verdict reads back as itself, and there is no sixth word:
+/// a surface that invents one gets an error rather than a verdict nobody meant.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::recover::StrayVerdict::{self, *};
+/// let all = [Live, Orphan, Incomplete, Foreign, Unmeasurable];
+/// let words: Vec<&str> = all.iter().map(|v| v.as_str()).collect();
+/// assert_eq!(words, ["live", "orphan", "incomplete", "foreign", "unmeasurable"]);
+/// for v in all {
+///     let word = serde_json::json!(v.as_str());
+///     assert_eq!(serde_json::from_value::<StrayVerdict>(word).unwrap(), v);
+/// }
+/// assert!(serde_json::from_value::<StrayVerdict>(serde_json::json!("stale")).is_err());
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -374,6 +423,18 @@ pub struct RecoverOrphansResult {
 // ---------------------------------------------------------------- the module
 
 /// The module descriptor: one capability, and it writes.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::recover::module;
+/// use majordomus_cli::capability::Effect;
+///
+/// let m = module();
+/// assert_eq!(m.capabilities.len(), 1);
+/// // a sweep of a tracked store is not a read, so every client asks before running it
+/// let policy = &m.capabilities[0].capability.execution;
+/// assert_eq!(policy.effect, Effect::RepositoryMutation);
+/// assert!(policy.needs_confirmation());
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "recover",
