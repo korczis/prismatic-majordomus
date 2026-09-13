@@ -180,9 +180,21 @@ expect_file "$T/shared-target/MARKER"
 
 # ---------------------------------------------------------------- the two consents
 # `--kill` ends servers; it does not delete a hundred gigabytes of build output on the way.
+#
+# `--min-age 999d`, and never `0s`, because the server sweep is the one part of the reaper
+# MJ_ROOT does not confine. It asks `ps -eo pid=,ppid=,...` across the whole machine and
+# takes every `majordomus serve|mcp` whose parent is init — the fixture cannot contain it,
+# because a server's identity is its process, not its path. With `0s` every live server on
+# the machine qualifies, and a draft of another case ended a session's server on port 8741
+# that way: correct by the reaper's predicate, ppid 1 and no client attached, and still
+# somebody's. A case must not act on the machine it measures.
+#
+# The assertion is unchanged by the bound: what is proven here is that `--kill` leaves
+# build output alone, and a sweep that ends no server proves it at least as well as one
+# that ends somebody's.
 mkbuild "$WTS/idle"
 rc=0
-MJ_ROOT="$FIX" "$REAPER" --servers --kill --min-age 0s > "$T/servers.txt" 2>&1 || rc=$?
+MJ_ROOT="$FIX" "$REAPER" --servers --kill --min-age 999d > "$T/servers.txt" 2>&1 || rc=$?
 expect_file "$WTS/idle/apps/majordomus-cli/target/MARKER"
 
 # ---------------------------------------------------------------- the bound
