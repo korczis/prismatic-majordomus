@@ -38,8 +38,11 @@ gate="$MJ${runs#bin/majordomus}"
 
 "$MJ" init >/dev/null
 git add -A >/dev/null && git commit -qm init >/dev/null
-# a repository with nothing claimed twice passes, so the gate is not red by construction
+# a repository with nothing claimed twice passes, so the gate is not red by construction — and
+# it passes by reading the repository, not by reading nothing: a command line that indexes no
+# node exits 0 on every tree, and a green gate that saw nothing states no verdict at all
 expect_exit 0 bash -c "$gate"
+expect_grep 'policy +shared +[0-9a-f]{12} +policy:\.ai/repo/policy\.yaml'
 
 mkdir -p .ai/repo/adrs
 for f in 0007-one-decision 0007-another-decision; do
