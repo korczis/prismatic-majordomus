@@ -7670,7 +7670,8 @@
           "module": "majordomus_cli::capability::builtin::plan"
         },
         "x-majordomus-benchmark": {
-          "policy": "required"
+          "policy": "required_when",
+          "precondition": "plan_holds_an_issue"
         },
         "x-majordomus-cache": {
           "policy": "disabled"
@@ -12087,6 +12088,24 @@
           {
             "type": "object",
             "properties": {
+              "precondition": {
+                "$ref": "#/components/schemas/BenchmarkPrecondition",
+                "description": "What the repository must hold."
+              },
+              "policy": {
+                "type": "string",
+                "const": "required_when"
+              }
+            },
+            "required": [
+              "policy",
+              "precondition"
+            ],
+            "description": "Required exactly like `Required` in a repository where the precondition holds, and\nreported as inapplicable — never covered, never waived — where it does not. Not a\nwaiver: with the precondition met and no case, the requirement is missing."
+          },
+          {
+            "type": "object",
+            "properties": {
               "reason": {
                 "$ref": "#/components/schemas/WaiverReason",
                 "description": "Why."
@@ -12104,6 +12123,16 @@
           }
         ],
         "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides."
+      },
+      "BenchmarkPrecondition": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "plan_holds_an_issue",
+            "description": "The plan holds at least one issue. A command whose every honest case is a refusal\nchosen from an issue's own status has no such refusal in a plan with no issue: the\nonly answer there is a lookup miss, which times an error path and is not the\noperation."
+          }
+        ],
+        "description": "What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver's reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\"\"plan_holds_an_issue\"\"#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```"
       },
       "Blocker": {
         "type": "object",

@@ -127,7 +127,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `plan.record` | `plan` | query | behaviorally_verified | `majordomus_plan_record` | — | `GET /api/v1/plan/record` | — | — | required |
 | `plan.roadmap` | `plan` | query | behaviorally_verified | `majordomus_plan_roadmap` | — | `GET /api/v1/plan/roadmap` | — | — | required |
 | `plan.status` | `plan` | query | behaviorally_verified | `majordomus_plan_status` | — | `GET /api/v1/plan/status` | — | — | required |
-| `plan.transition` | `plan` | command | behaviorally_verified | `majordomus_plan_transition` | — | `POST /api/v1/plan/transition` | — | — | required |
+| `plan.transition` | `plan` | command | behaviorally_verified | `majordomus_plan_transition` | — | `POST /api/v1/plan/transition` | — | — | required when plan_holds_an_issue |
 | `plan.validate` | `plan` | query | behaviorally_verified | `majordomus_plan_validate` | — | `GET /api/v1/plan/validate` | — | — | required |
 | `plan.waves` | `plan` | query | behaviorally_verified | `majordomus_plan_waves` | — | `GET /api/v1/plan/waves` | — | — | required |
 | `product.feature` | `product` | query | behaviorally_verified | `majordomus_feature` | — | `GET /api/v1/product/feature` | `majordomus product show` | process, 64 entries | required |

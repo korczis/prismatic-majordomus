@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 111,
-    "schemas": 521,
+    "schemas": 522,
     "tags": 36
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1354,7 +1354,7 @@
       "is_enum": false,
       "name": "BenchmarkPolicy",
       "properties": [],
-      "type": "one of 2 variants",
+      "type": "one of 3 variants",
       "used_by": [],
       "used_by_schemas": [
         "Capability",
@@ -1371,6 +1371,28 @@
               "refs": [],
               "required": true,
               "type": "\"required\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Required exactly like `Required` in a repository where the precondition holds, and\nreported as inapplicable — never covered, never waived — where it does not. Not a\nwaiver: with the precondition met and no case, the requirement is missing.",
+          "properties": [
+            {
+              "description": "What the repository must hold.",
+              "name": "precondition",
+              "refs": [
+                "BenchmarkPrecondition"
+              ],
+              "required": true,
+              "type": "BenchmarkPrecondition"
+            },
+            {
+              "description": "",
+              "name": "policy",
+              "refs": [],
+              "required": true,
+              "type": "\"required_when\""
             }
           ],
           "type": "object"
@@ -1398,6 +1420,24 @@
           "type": "object"
         }
       ]
+    },
+    {
+      "description": "What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver's reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\"\"plan_holds_an_issue\"\"#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```",
+      "is_enum": true,
+      "name": "BenchmarkPrecondition",
+      "properties": [],
+      "type": "\"plan_holds_an_issue\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BenchmarkPolicy"
+      ],
+      "values": [
+        {
+          "description": "The plan holds at least one issue. A command whose every honest case is a refusal\nchosen from an issue's own status has no such refusal in a plan with no issue: the\nonly answer there is a lookup miss, which times an error path and is not the\noperation.",
+          "value": "plan_holds_an_issue"
+        }
+      ],
+      "variants": []
     },
     {
       "description": "One thing standing between a task and being startable, with what to do about it.",
@@ -33544,7 +33584,7 @@
           "summary": "Where the plan stands"
         },
         {
-          "benchmark": "required",
+          "benchmark": "required_when",
           "benchmark_reason": "",
           "body_examples": [
             {

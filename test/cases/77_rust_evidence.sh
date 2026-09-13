@@ -182,5 +182,5 @@ MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 git add -A >/dev/null && git commit -qm install
 expect_exit 0 "$RB" capabilities validate
 "$RB" capabilities list --format json >"$S/caps.json" 2>/dev/null || { echo "    capabilities list failed"; exit 1; }
-jq -e '[.capabilities[] | select(.kind != "resource")] | length > 0 and all(.benchmark.policy == "required" or (.benchmark.policy == "waived" and ((.benchmark.reason // "") | length) > 0))' "$S/caps.json" >/dev/null \
-  || { echo "    an executable capability has no benchmark policy, or a waiver without a reason"; jq -c '.capabilities[] | select(.kind != "resource") | {id, benchmark}' "$S/caps.json"; exit 1; }
+jq -e '[.capabilities[] | select(.kind != "resource")] | length > 0 and all(.benchmark.policy == "required" or (.benchmark.policy == "required_when" and ((.benchmark.precondition // "") | length) > 0) or (.benchmark.policy == "waived" and ((.benchmark.reason // "") | length) > 0))' "$S/caps.json" >/dev/null \
+  || { echo "    an executable capability has no benchmark policy, a waiver without a reason, or a condition without a precondition"; jq -c '.capabilities[] | select(.kind != "resource") | {id, benchmark}' "$S/caps.json"; exit 1; }

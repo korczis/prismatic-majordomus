@@ -6,7 +6,7 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1",
+    "fingerprint": "ad6091e3527c447879afb60c954647948abf2dc4fdc8c44d92c7fded9eb1c312",
     "summary": {
       "total": 1450,
       "builtin": 112,
@@ -839,6 +839,24 @@
                   {
                     "type": "object",
                     "properties": {
+                      "precondition": {
+                        "$ref": "#/$defs/BenchmarkPrecondition",
+                        "description": "What the repository must hold."
+                      },
+                      "policy": {
+                        "type": "string",
+                        "const": "required_when"
+                      }
+                    },
+                    "required": [
+                      "policy",
+                      "precondition"
+                    ],
+                    "description": "Required exactly like `Required` in a repository where the precondition holds, and\nreported as inapplicable — never covered, never waived — where it does not. Not a\nwaiver: with the precondition met and no case, the requirement is missing."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
                       "reason": {
                         "$ref": "#/$defs/WaiverReason",
                         "description": "Why."
@@ -856,6 +874,16 @@
                   }
                 ],
                 "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides."
+              },
+              "BenchmarkPrecondition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "plan_holds_an_issue",
+                    "description": "The plan holds at least one issue. A command whose every honest case is a refusal\nchosen from an issue's own status has no such refusal in a plan with no issue: the\nonly answer there is a lookup miss, which times an error path and is not the\noperation."
+                  }
+                ],
+                "description": "What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver's reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\"\"plan_holds_an_issue\"\"#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```"
               },
               "WaiverReason": {
                 "oneOf": [
@@ -1543,6 +1571,24 @@
                   {
                     "type": "object",
                     "properties": {
+                      "precondition": {
+                        "$ref": "#/$defs/BenchmarkPrecondition",
+                        "description": "What the repository must hold."
+                      },
+                      "policy": {
+                        "type": "string",
+                        "const": "required_when"
+                      }
+                    },
+                    "required": [
+                      "policy",
+                      "precondition"
+                    ],
+                    "description": "Required exactly like `Required` in a repository where the precondition holds, and\nreported as inapplicable — never covered, never waived — where it does not. Not a\nwaiver: with the precondition met and no case, the requirement is missing."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
                       "reason": {
                         "$ref": "#/$defs/WaiverReason",
                         "description": "Why."
@@ -1560,6 +1606,16 @@
                   }
                 ],
                 "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides."
+              },
+              "BenchmarkPrecondition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "plan_holds_an_issue",
+                    "description": "The plan holds at least one issue. A command whose every honest case is a refusal\nchosen from an issue's own status has no such refusal in a plan with no issue: the\nonly answer there is a lookup miss, which times an error path and is not the\noperation."
+                  }
+                ],
+                "description": "What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver's reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\"\"plan_holds_an_issue\"\"#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```"
               },
               "WaiverReason": {
                 "oneOf": [
@@ -26295,7 +26351,8 @@
           "lifecycle"
         ],
         "benchmark": {
-          "policy": "required"
+          "policy": "required_when",
+          "precondition": "plan_holds_an_issue"
         },
         "cache": {
           "policy": "disabled"
@@ -40588,7 +40645,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ab8304ae8916a61c96f028e854bd2e49cd8ab18f142c67fc41788e19299deb6b",
+    "fingerprint": "c07528d4b8258a7bf3f2aa2735927e457a9d5a2f3538782cc22f7a08b68b0ac8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -52309,7 +52366,7 @@
         "path": ".ai/repo/rules/project/rust-benchmark-coverage.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 2554,
+        "bytes": 2912,
         "tags": [
           "rust",
           "performance",
@@ -54329,7 +54386,7 @@
         "identity": "test/cases/77_rust_evidence.sh",
         "path": "test/cases/77_rust_evidence.sh",
         "source_class": "case",
-        "bytes": 12088
+        "bytes": 12217
       },
       {
         "uri": "majordomus://test/test/cases/79_bench_command.sh",
@@ -54481,7 +54538,7 @@
         "identity": "test/cases/91_canonical_architecture.sh",
         "path": "test/cases/91_canonical_architecture.sh",
         "source_class": "case",
-        "bytes": 8869
+        "bytes": 9202
       },
       {
         "uri": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -54489,7 +54546,7 @@
         "identity": "test/cases/92_openapi_reference.sh",
         "path": "test/cases/92_openapi_reference.sh",
         "source_class": "case",
-        "bytes": 10048
+        "bytes": 11083
       },
       {
         "uri": "majordomus://test/test/cases/93_rust_provider_projections.sh",
@@ -82669,31 +82726,36 @@
           "required": 112,
           "covered": 107,
           "missing": 0,
-          "waived": 5
+          "waived": 5,
+          "inapplicable": 0
         },
         "http": {
           "required": 111,
           "covered": 107,
           "missing": 0,
-          "waived": 4
+          "waived": 4,
+          "inapplicable": 0
         },
         "mcp": {
           "required": 109,
           "covered": 105,
           "missing": 0,
-          "waived": 4
+          "waived": 4,
+          "inapplicable": 0
         },
         "system": {
           "required": 13,
           "covered": 13,
           "missing": 0,
-          "waived": 0
+          "waived": 0,
+          "inapplicable": 0
         },
         "total": {
           "required": 345,
           "covered": 332,
           "missing": 0,
-          "waived": 13
+          "waived": 13,
+          "inapplicable": 0
         }
       }
     },
