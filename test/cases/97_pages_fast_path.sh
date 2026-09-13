@@ -79,15 +79,22 @@ awk '/name: publication state/{f=1} f' "$W" | grep -q 'if: always()' || {
 
 # 4. minimal permissions, and only what the deploy needs
 awk '/^permissions:/{f=1; next} /^[a-z]/{f=0} f && /^  [a-z]/' "$W" | sed 's/^  //' | LC_ALL=C sort > perms.txt
-# `pages: read` joined `contents: write` on 2026-09-11, and it is the whole of publishing
-# rather than an extra: the push to gh-pages is this repository's half and GitHub's own "pages
-# build and deployment" of that branch is the other, and until the run could read that build's
-# status an errored build was the one failure mode of the three that ended in a green tick
-# (2026-09-10 17:35:10Z, gh-pages dfd9c989c, "Page build failed.", 27 minutes of a stale site
-# with nothing red anywhere). The assertion stays an exact set, because least privilege is the
-# point: a third permission here must be argued for the same way.
+# A `pages` permission joined `contents: write` on 2026-09-11, and it is the whole of
+# publishing rather than an extra: the push to gh-pages is this repository's half and GitHub's
+# own "pages build and deployment" of that branch is the other, and until the run could read
+# that build's status an errored build was the one failure mode of the three that ended in a
+# green tick (2026-09-10 17:35:10Z, gh-pages dfd9c989c, "Page build failed.", 27 minutes of a
+# stale site with nothing red anywhere).
+#
+# It became `write` on 2026-09-12, for one call and no other: `POST .../pages/builds`, which
+# asks GitHub to build the branch again. Reading the status said the site was stale; nothing
+# could repair it, and GitHub never retries an errored build itself — nine of them errored on
+# that one day. `write` subsumes `read`, so this is still one permission rather than two, and
+# test/cases/313_an_errored_pages_build_is_rebuilt_once.sh holds what the added half may do.
+# The assertion stays an exact set, because least privilege is the point: a third permission
+# here must be argued for the same way.
 [ "$(cat perms.txt)" = "contents: write
-pages: read" ] || { echo "    pages.yml asks for more than the gh-pages push and GitHub's own build of it need:"; cat perms.txt; exit 1; }
+pages: write" ] || { echo "    pages.yml asks for more than the gh-pages push and GitHub's own build of it need:"; cat perms.txt; exit 1; }
 
 # 5. the heavy gates are not on the publication path, and are still somewhere. Only what the
 #    jobs execute counts: the trigger paths name scripts/site-probe as an input that can change

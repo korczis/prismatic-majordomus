@@ -83,7 +83,14 @@ permissions:
   # "pages build and deployment" of the branch pushed below. Its status is a fact with an API,
   # and until 2026-09-11 this run could not read it — which is why an errored build was the one
   # failure mode of the three that left a green tick.
-  pages: read
+  #
+  # `write` rather than `read` since 2026-09-12, for exactly one call: `POST
+  # repos/{owner}/{repo}/pages/builds`, which asks GitHub to build gh-pages again. Reading the
+  # status told a reader that an errored build had left the site stale; nothing could do
+  # anything about it, and GitHub never retries an errored build itself — so the site stayed
+  # stale until a person noticed. `write` subsumes `read`, so this is one permission and not
+  # two, and `scripts/pages rebuild` is the only thing that uses the added half.
+  pages: write
 
 # The site is a projection of the newest commit, so an older deployment of an older commit is
 # worth nothing the moment a newer push exists. A superseded run is cancelled rather than
@@ -236,18 +243,53 @@ jobs:
       # GitHub's build has either finished or errored long before that returns. This step is
       # the reading, not the wait — which is also what keeps the sum of the step bounds below
       # the job's own, the invariant test/cases/26_ci_wiring.sh holds this file to.
+      #
+      # AND THE ERRORED CASE IS RECOVERED HERE, ONCE, BEFORE IT IS REPORTED. An errored Pages
+      # build is terminal: GitHub does not retry it, so `gh-pages` carries the right tree and
+      # the site serves an older commit until somebody acts. Reporting it red was the whole of
+      # the remedy until 2026-09-12, and a red tick does not publish a site. `scripts/pages
+      # rebuild` sends the one call that does — `POST .../pages/builds` — and this is where it
+      # belongs, because this is the run that knows which commit it pushed, holds the token
+      # that may send it, and is already standing here having just read the failure. The gate
+      # that reads the same status afterwards (`pages-live`) cannot act: it runs on a
+      # validation of master, with no publication authority and no reason to have one.
+      #
+      # Bounded, and bounded twice over. One POST — `pages rebuild` contains no loop, and this
+      # step calls it once — so `project.every-wait-is-bounded` is satisfied by construction
+      # rather than by a counter. And it declines to send anything at all unless GitHub's
+      # newest build is of this very commit, is `errored`, and nothing is `building`: a POST
+      # while a build is running KILLS that build, which is how gh-pages 14e7f1050 errored at
+      # 2026-09-12T20:55:01Z, 88 seconds into a build that a hand-sent rebuild interrupted.
+      #
+      # The retry recovers; it does not prevent. When pushes to gh-pages arrive faster than a
+      # build finishes, every build is superseded, the guard finds something always `building`,
+      # and this does nothing — deliberately, because adding POSTs to an oversubscribed queue
+      # would kill builds that were going to finish. That contention is a separate defect with
+      # a separate remedy; see the pull request that added this.
       - name: GitHub's own build of what we pushed
         if: always() && steps.publish.outcome == 'success'
-        timeout-minutes: 2
+        timeout-minutes: 4
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           rc=0
           scripts/pages built --branch gh-pages --wait 60 || rc=$?
+          if [ "$rc" = 10 ]; then
+            echo "::warning title=GitHub's Pages build errored::requesting one rebuild of gh-pages; GitHub never retries an errored build itself"
+            rc=0
+            scripts/pages rebuild --branch gh-pages --wait 60 || rc=$?
+            case "$rc" in
+              0)  echo "::notice title=Pages build recovered::the rebuild of gh-pages built; the site is publishing"
+                  ;;
+              10) echo "::error title=GitHub's Pages build errored twice::gh-pages was pushed, GitHub could not build it, and the one rebuild this run is allowed also errored"
+                  exit 1 ;;
+              *)  echo "::notice title=Rebuild requested::one rebuild of gh-pages was requested (or declined because a build is already in flight); pages-live will ask again"
+                  ;;
+            esac
+            exit 0
+          fi
           case "$rc" in
             0)  ;;
-            10) echo "::error title=GitHub's Pages build errored::gh-pages was pushed and GitHub could not build it; the site still serves an older commit"
-                exit 1 ;;
             *)  echo "::notice title=Pages build not determined::GitHub's own build of gh-pages was not readable or not finished within the wait; pages-live will ask again"
                 ;;
           esac

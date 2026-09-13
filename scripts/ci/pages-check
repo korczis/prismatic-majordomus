@@ -123,7 +123,11 @@ fi
 
 # ---------------------------------------------------------------- 2. what is being served
 if [ "$OFFLINE" = 1 ]; then
-  ok "the live site was not asked (--offline)"
+  # `note`, not `ok`. The rule is three lines above note()'s own definition — "a check that
+  # is absent must not be readable as a check that passed" — and this file broke it twice, on
+  # the only two checks that can be absent. A reader scanning for FAIL in a green `--offline`
+  # run saw five `ok` lines and had no way to tell that two of them were skips.
+  note "the live site was not asked (--offline)"
 else
   if [ -z "$URL" ]; then
     # The site's own base, from the configuration that generated it — never a literal here,
@@ -248,7 +252,7 @@ fi
 # branch is right, and the site is a commit behind — which is 2026-09-10 17:35 exactly. Its
 # status is a fact with an API, so it is read rather than guessed at from the symptom.
 if [ "$OFFLINE" = 1 ]; then
-  ok "GitHub's own Pages build was not asked (--offline)"
+  note "GitHub's own Pages build was not asked (--offline)"
 else
   # Asked in one place, not two. This gate read `repos/:slug/pages/builds` in its own words
   # until 2026-09-11, and .github/workflows/pages.yml — the run that does the publishing, and
@@ -265,11 +269,20 @@ else
   case "$rc" in
     0)  ok "GitHub's own Pages build of ${b_commit:0:12} is $b_status" ;;
     10) bad "GitHub's own Pages build of ${b_commit:0:12} — the head of $BRANCH — errored: $b_error"
-        say "      the branch is right and the site is not; re-run the build by dispatching the"
-        say "      pages workflow, or push $BRANCH again. The pages workflow goes red for this"
-        say "      now as well, at the moment it happens; this is what notices afterwards." ;;
+        say "      the branch is right and the site is not, and GitHub never retries an errored"
+        say "      build: it is terminal, and the site serves an older commit until something acts."
+        say "      \`scripts/pages rebuild\` is that something — one guarded POST to the Pages build"
+        say "      API — and the publication run sends it itself now, so reaching this line means"
+        say "      either that run never got here or its one rebuild errored too. Run it by hand,"
+        say "      or dispatch the pages workflow on $TRUNK." ;;
     *)  if [ "$b_status" = unreadable ] || [ -z "$b_status" ]; then
           note "GitHub's Pages build could not be read (${b_error:-no gh, no token, or no pages:read}); not measured"
+        elif [ "$b_commit" = "$head_sha" ]; then
+          # Same commit, no verdict: GitHub is building it, or has queued it. Saying "of X,
+          # not the head of gh-pages X" — which this printed verbatim against the real
+          # repository on 2026-09-12 — is a reading a person cannot act on, because the two
+          # halves of it agree and it reports them as a disagreement.
+          note "GitHub's own Pages build of ${b_commit:0:12} — the head of $BRANCH — is $b_status; not a verdict"
         else
           note "GitHub's newest Pages build is of ${b_commit:0:12} ($b_status), not the head of $BRANCH ${head_sha:0:12}"
         fi ;;

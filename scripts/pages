@@ -30,6 +30,11 @@
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
 #                                         10 it serves something else, 12 it never answered
+#   scripts/pages rebuild [--branch B] [--commit SHA] [--wait N]
+#                                         ask GitHub to build that commit again, ONCE, and only
+#                                         when its newest build is that commit's and errored and
+#                                         nothing is building: 0 built, 10 the rebuild errored,
+#                                         12 nothing was requested (and why)
 #
 # The model is .ai/repo/ci/pages.yaml. Nothing here carries a path list, a budget or a gate
 # name of its own. Exit 0 ok, 2 usage, 10 a refusal or a budget exceeded, 12 something missing.
@@ -420,6 +425,17 @@ cmd_verify() {
 
 # ---------------------------------------------------------------- dispatch
 # ---------------------------------------------------------------- GitHub's own build
+# The two facts both GitHub-build commands start from, resolved in one place rather than in
+# each of them: which repository is being asked about, and which commit the branch names.
+# `built` and `rebuild` must agree about both or they are asking different questions.
+mj_pages_origin_slug() {
+  git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||'
+}
+mj_pages_branch_head() {   # mj_pages_branch_head <branch>
+  git -C "$ROOT" fetch -q origin "$1" 2>/dev/null || true
+  git -C "$ROOT" rev-parse "origin/$1" 2>/dev/null || git -C "$ROOT" rev-parse "$1" 2>/dev/null || true
+}
+
 # Publishing is two steps owned by two parties. This repository pushes gh-pages; GitHub's own
 # "pages build and deployment" turns that branch into the bytes a reader gets. The second can
 # fail on a branch that was pushed perfectly, and when it does every signal this repository
@@ -455,12 +471,9 @@ cmd_built() {
     [ "$porcelain" = 1 ] || echo "pages built: gh is not installed, so GitHub's own build was not read" >&2
     return 12; }
   slug="${GITHUB_REPOSITORY:-}"
-  [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+  [ -n "$slug" ] || slug="$(mj_pages_origin_slug)"
   [ -n "$slug" ] || { echo "pages built: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
-  if [ -z "$commit" ]; then
-    git -C "$ROOT" fetch -q origin "$branch" 2>/dev/null || true
-    commit="$(git -C "$ROOT" rev-parse "origin/$branch" 2>/dev/null || git -C "$ROOT" rev-parse "$branch" 2>/dev/null || true)"
-  fi
+  [ -n "$commit" ] || commit="$(mj_pages_branch_head "$branch")"
   [ -n "$commit" ] || { echo "pages built: no commit to ask about (branch $branch is not here)" >&2; return 12; }
   t0="$(now)"
   while :; do
@@ -508,6 +521,113 @@ cmd_built() {
   esac
 }
 
+# ---------------------------------------------------------------- recovering an errored build
+# An errored Pages build is TERMINAL. GitHub does not retry it, and `gh-pages` then carries the
+# right tree while the public site serves an older one for as long as nobody acts. Every other
+# failure on this path self-heals — a cancelled run is followed by a newer run, a superseded
+# build is followed by the build that superseded it — and this one does not. `POST
+# /repos/{owner}/{repo}/pages/builds` asks for the build again; it is the whole remedy, and
+# until now no code in this repository ever sent it.
+#
+# WHAT THIS MUST NOT DO, measured on 2026-09-12. A POST while a build is already running KILLS
+# that build. The 20:55:01Z row of `gh api repos/korczis/prismatic-majordomus/pages/builds` is
+# exactly that: a rebuild was requested by hand while GitHub was building 14e7f1050, and the
+# build of 14e7f1050 errored 88 seconds in. An unconditional retry does not recover a stale
+# site, it manufactures the failure it was written to repair. So the predicate is not "the
+# build errored" but:
+#
+#     the newest build of the repository is OF THIS COMMIT, and it is `errored`,
+#     and nothing is `building` or `queued`.
+#
+# Every clause is load-bearing. `building`/`queued` means GitHub is already doing the thing
+# this would ask for. A newest build of some other commit means `gh-pages` has moved or
+# somebody else is publishing, and the newer build is the live question rather than this one.
+# And the newest build being the one asked about is what makes the error terminal rather than
+# superseded: an errored build with a newer build after it was killed by that newer build, and
+# recovering it would publish a tree that has already been replaced.
+#
+# ONE ATTEMPT, and that is a property of the code rather than a number in a file: there is no
+# loop here, and a caller that wants a second POST has to be written to send one.
+# `project.every-wait-is-bounded` is what forbids the loop; the reason it would be wrong here
+# is narrower than the rule. On the day the pushes arrive faster than a build finishes —
+# 2026-09-12 between 20:07 and 21:08, five builds in a row, each ended at the exact second the
+# next began — a retry that looped would add its own POSTs to a queue that is already
+# oversubscribed and kill builds that were going to finish. The predicate above makes that
+# impossible by construction: during contention there is always something `building`, so this
+# command does nothing at all. It fires only once the chain has stopped, which is the only
+# state in which the site stays stale indefinitely.
+#
+# Exit: 0 GitHub's build of that commit is built (it already was, or the rebuild produced one),
+# 10 the rebuild errored too, 12 nothing to recover and nothing done — no gh, no token, a build
+# in flight, a newest build of another commit, or a requested build that had not finished when
+# the wait ran out. 12 is never an `ok` and never a failure: it is this command declining to
+# act, or declining to claim a verdict it does not have, and saying which.
+cmd_rebuild() {
+  local branch="gh-pages" commit="" wait=60 slug="" all="" newest="" status="" bcommit="" again=""
+  while [ $# -gt 0 ]; do case "$1" in
+    --branch) branch="$2"; shift 2 ;;
+    --commit) commit="$2"; shift 2 ;;
+    --wait) wait="$2"; shift 2 ;;
+    *) echo "pages rebuild: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  case "$wait" in ''|*[!0-9]*) echo "pages rebuild: --wait takes seconds" >&2; exit 2 ;; esac
+  command -v gh >/dev/null 2>&1 || { echo "pages rebuild: gh is not installed; no rebuild was requested" >&2; return 12; }
+  slug="${GITHUB_REPOSITORY:-}"
+  [ -n "$slug" ] || slug="$(mj_pages_origin_slug)"
+  [ -n "$slug" ] || { echo "pages rebuild: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
+  [ -n "$commit" ] || commit="$(mj_pages_branch_head "$branch")"
+  [ -n "$commit" ] || { echo "pages rebuild: no commit to ask about (branch $branch is not here)" >&2; return 12; }
+
+  # The newest build of the repository, whatever it is of. Not the newest build of this
+  # commit: the question here is whether GitHub is busy, and it is busy with whatever is at
+  # the top of the list.
+  all="$(gh api "repos/$slug/pages/builds" --jq '.[] | "\(.status)\t\(.commit)"' 2>/dev/null || true)"
+  newest="$(printf '%s\n' "$all" | head -1)"
+  status="$(printf '%s' "$newest" | cut -f1)"
+  bcommit="$(printf '%s' "$newest" | cut -f2)"
+  [ -n "$status" ] || { echo "pages rebuild: GitHub's Pages builds could not be read (no token, or no pages:read); no rebuild was requested" >&2; return 12; }
+
+  case "$status" in
+    building|queued)
+      printf "pages rebuild: GitHub is already building %s (%s); no rebuild was requested.\n" "${bcommit:0:12}" "$status" >&2
+      printf "               A rebuild requested now would kill that build, which is what happened to\n               gh-pages 14e7f1050 at 2026-09-12T20:55:01Z.\n" >&2
+      return 12 ;;
+  esac
+  if [ "$bcommit" != "$commit" ]; then
+    printf "pages rebuild: GitHub's newest build is of %s (%s), not %s of %s; no rebuild was requested\n" \
+      "${bcommit:0:12}" "$status" "${commit:0:12}" "$branch" >&2
+    return 12
+  fi
+  if [ "$status" = built ]; then
+    printf "pages rebuild: GitHub's own build of %s is already built; nothing to recover\n" "${commit:0:12}"
+    return 0
+  fi
+  if [ "$status" != errored ]; then
+    printf "pages rebuild: GitHub's build of %s is %s, which is not a state a rebuild recovers\n" "${commit:0:12}" "$status" >&2
+    return 12
+  fi
+
+  # Read once more, immediately before acting. Between the read above and the POST below a
+  # build can start, and that is the whole window in which the guard can be wrong; narrowing
+  # it from the seconds a person spends deciding to the milliseconds a process spends is not
+  # a proof and is not claimed as one. What makes this safe is the guard, not the re-read.
+  again="$(gh api "repos/$slug/pages/builds" --jq '.[0] | "\(.status)\t\(.commit)"' 2>/dev/null || true)"
+  if [ "$again" != "$(printf '%s\t%s' "$status" "$bcommit")" ]; then
+    printf "pages rebuild: the newest build changed while this was deciding (now %s); no rebuild was requested\n" "${again:-unreadable}" >&2
+    return 12
+  fi
+
+  printf "pages rebuild: GitHub's build of %s errored and nothing is building; requesting one rebuild\n" "${commit:0:12}"
+  gh api -X POST "repos/$slug/pages/builds" >/dev/null 2>&1 \
+    || { echo "pages rebuild: the rebuild request was refused (sending it needs pages: write)" >&2; return 12; }
+
+  # The verdict is `built`'s, through the one reader, so "did the recovery work" and "did the
+  # build work" cannot come to mean two different things. The wait is the caller's and it is
+  # short by default: what is bounded here is the *asking*, and a build that has not finished
+  # inside it stays 12 — weather, for `pages-check` to judge on the next validation of master.
+  cmd_built --branch "$branch" --commit "$commit" --wait "$wait"
+}
+
 case "${1:-}" in
   build)       shift; cmd_build "$@" ;;
   check)       shift; cmd_check "$@" ;;
@@ -519,7 +639,8 @@ case "${1:-}" in
   benchmark)   shift; cmd_benchmark "$@" ;;
   report)      shift; cmd_report "$@" ;;
   built)       shift; cmd_built "$@" ;;
+  rebuild)     shift; cmd_rebuild "$@" ;;
   verify)      shift; cmd_verify "$@" ;;
-  -h|--help|"") sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//' ;;
+  -h|--help|"") sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) echo "pages: unknown command $1 (scripts/pages --help)" >&2; exit 2 ;;
 esac

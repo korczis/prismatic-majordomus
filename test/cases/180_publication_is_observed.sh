@@ -217,5 +217,8 @@ WF="$ROOT/.github/workflows/pages.yml"
 grep -q 'scripts/pages built' "$WF" || {
   echo "    the pages workflow never reads GitHub's own build of what it pushed;"
   echo "    an errored build would still end in a green tick"; exit 1; }
-grep -q 'pages: read' "$WF" || {
-  echo "    the pages workflow reads the Pages build API without asking for pages: read"; exit 1; }
+# `write` since 2026-09-12, because the run no longer only reads that status: it sends the one
+# POST that rebuilds an errored build. `write` subsumes `read`, so this is the same permission
+# asking for more; case 97 holds it as an exact set and case 313 holds what it may be used for.
+grep -qE 'pages: (read|write)' "$WF" || {
+  echo "    the pages workflow reads the Pages build API without asking for a pages permission"; exit 1; }
