@@ -103,15 +103,24 @@ permissions:
 # stale site, and what reports it is the `pages-live` gate of .ai/repo/ci/gates.yaml, which
 # refuses once a publication has been owed longer than the deploy window.
 #
-# `cancel-in-progress` is a push's privilege, not a dispatch's. A dispatch of this workflow is
-# the recovery path — it is run *because* the automatic one did not publish — and a recovery
-# that kills a deploy which is mid-`git push` to gh-pages, to publish the same tree a moment
-# later, is a race with nothing to win. With the expression false for a dispatch, a manual run
-# waits for the run in flight instead of cancelling it; a push still supersedes everything,
-# because a push always carries a newer tree than whatever is running.
+# Nothing cancels a deploy in flight, neither a dispatch nor a push. A dispatch is the
+# recovery path — it is run *because* the automatic one did not publish — and a recovery that
+# kills a deploy mid-`git push` to gh-pages, to publish the same tree a moment later, is a
+# race with nothing to win. A push was allowed to supersede, on the reasoning that it always
+# carries a newer tree; that reasoning is sound about the trees and wrong about the outcome,
+# because the superseding run is itself superseded and nothing is ever published.
+# A push does NOT cancel a running deploy. Cancelling looks right — a newer commit
+# supersedes an older one — but it starves the publication whenever merges arrive faster
+# than a deploy completes, and the newer run is then cancelled by the one after it. Measured
+# on 2026-09-12: three consecutive runs cancelled (19b275520, 55dbf7b07, and the run before
+# them), the published site 34 commits behind master for three hours, and `pages-check`
+# reporting "inside the deploy window" throughout because each cancellation reset the clock.
+# GitHub already keeps only the newest *pending* run in a concurrency group and cancels the
+# rest, so letting the running one finish costs one extra deploy of an intermediate commit
+# and removes the starvation entirely.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  cancel-in-progress: false
 
 jobs:
   # The bound is over two different kinds of second, so it is written twice, and the two
