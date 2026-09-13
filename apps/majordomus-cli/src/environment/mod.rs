@@ -597,6 +597,20 @@ impl RepositoryEnvironment {
     /// a digest that counted the services made each of those a first look, drawing the whole
     /// box again at a person who had just seen it. A server arriving or leaving is not a
     /// different repository; the short form names the Cockpit when it answers.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::RepositoryEnvironment;
+    /// # fn demo(env: &RepositoryEnvironment) {
+    /// // A server coming up or going away does not make this a different repository,
+    /// // so the news digest is the same across the change and the banner stays warm.
+    /// let quiet = env.news_digest();
+    /// let mut serving = env.clone();
+    /// serving.services.clear();
+    /// assert_eq!(quiet, serving.news_digest());
+    /// // The full digest is a different question and may differ.
+    /// let _ = env.digest();
+    /// # }
+    /// ```
     pub fn news_digest(&self) -> String {
         let mut stable = self.clone();
         stable.services.clear();
