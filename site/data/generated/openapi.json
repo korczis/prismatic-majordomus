@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 111,
-    "schemas": 521,
-    "tags": 36
+    "operations": 112,
+    "schemas": 526,
+    "tags": 37
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -9147,6 +9147,7 @@
         "product.validate",
         "quality.report",
         "health.ready",
+        "recover.orphans",
         "release.analysis",
         "release.version",
         "repository.info",
@@ -20329,6 +20330,92 @@
       "variants": []
     },
     {
+      "description": "The input of `recover.orphans`: how old a stray must be, and whether to act.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansInput;\n\n// The wire form the shell tool, an MCP client or an HTTP POST sends.\nlet act: RecoverOrphansInput =\n    serde_json::from_str(r#\"{\"older_than_seconds\":43200,\"check\":false}\"#).unwrap();\nassert_eq!(act.older_than_seconds, 43_200);\nassert!(!act.check);\n\n// `check` defaults to true, and that direction is deliberate: this capability deletes\n// files, and a caller that forgets the field gets a plan rather than a sweep.\nlet forgot: RecoverOrphansInput =\n    serde_json::from_str(r#\"{\"older_than_seconds\":43200}\"#).unwrap();\nassert!(forgot.check, \"the safe value is the default one\");\n\n// The threshold has no default at all. `session.stranded_after` is a policy value, and\n// a reader that carried its own copy would be a second place the number lives.\nassert!(serde_json::from_str::<RecoverOrphansInput>(r#\"{\"check\":true}\"#).is_err());\n\n// Unknown fields are refused rather than ignored: a caller that misspells `check` is\n// told so instead of having a sweep silently run.\nassert!(serde_json::from_str::<RecoverOrphansInput>(\n    r#\"{\"older_than_seconds\":1,\"chek\":true}\"#).is_err());\n```",
+      "is_enum": false,
+      "name": "RecoverOrphansInput",
+      "properties": [
+        {
+          "description": "How long a stray file must have been untouched before it is a candidate at all, in\nseconds. Required, and refused at zero: the shell tool resolves it from\n`session.stranded_after` with `mj_pol_req`, which fails closed, and nothing here\ninvents one.",
+          "name": "older_than_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Classify and report, and write nothing. The default, because the alternative deletes\nfiles.",
+          "name": "check",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "recover.orphans"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What one sweep found and what it did about it.\n\nThe counts are derived from `strays` rather than accumulated beside it, so a reader can\ncheck the report against itself and a surface that renders the list cannot disagree with\nthe surface that renders the total.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansResult;\n\nlet plan: RecoverOrphansResult = serde_json::from_str(r#\"{\n    \"older_than_seconds\": 43200, \"check\": true, \"strays\": [],\n    \"removable\": 0, \"removed\": 0, \"unmeasurable\": 0\n}\"#).unwrap();\n// a check never removes anything, whatever it found\nassert_eq!(plan.removed, 0);\nassert!(plan.check);\n```",
+      "is_enum": false,
+      "name": "RecoverOrphansResult",
+      "properties": [
+        {
+          "description": "The threshold this sweep measured against, echoed back so that a refusal or a verdict\nnames the value the caller actually got rather than the one it believes it sent.",
+          "name": "older_than_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether this was a check. `true` means nothing was written.",
+          "name": "check",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every stray found, in path order.",
+          "name": "strays",
+          "refs": [
+            "Stray"
+          ],
+          "required": true,
+          "type": "array of Stray"
+        },
+        {
+          "description": "How many of them this call would remove, or did.",
+          "name": "removable",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many it actually removed. Always `0` on a check.",
+          "name": "removed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many candidates could not be measured and were therefore left alone.",
+          "name": "unmeasurable",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "recover.orphans"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What this checkout's session store needs somebody to do.\n\n`findings` is the whole report said once, and an empty `findings` is the verdict: there\nis nothing to recover. That is the field to branch on — the three detailed lists and the\narithmetic are what a reader consults *after* deciding there is something to look at,\nand each of them can be empty for a good reason while another is not.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::Recovery;\nuse serde_json::json;\n\n// a healthy checkout: the current layout, nothing stranded, the arithmetic agreeing\nlet clean: Recovery = serde_json::from_value(json!({\n    \"present\": true,\n    \"pointer\": {\"layout\": \"pointer\", \"target\": \"sessions-open/c.yaml\",\n                \"resolves\": true, \"session_id\": \"s-1\", \"note\": \"resolves\"},\n    \"balance\": {\"started\": 8, \"closed\": 7, \"open\": 1,\n                \"unaccounted\": 0, \"agrees\": true, \"note\": \"they agree\"},\n})).unwrap();\n\nassert!(clean.findings.is_empty(), \"an empty findings list is the good verdict\");\nassert!(clean.stranded.is_empty() && clean.orphans.is_empty());\nassert!(clean.balance.agrees);\n\n// a fresh clone has no local half at all, which is also nothing to recover\nlet fresh: Recovery = serde_json::from_value(json!({\n    \"present\": false,\n    \"pointer\": {\"layout\": \"absent\", \"resolves\": false, \"note\": \"no episode is open here\"},\n    \"balance\": {\"started\": 0, \"closed\": 0, \"open\": 0,\n                \"unaccounted\": 0, \"agrees\": true, \"note\": \"nothing has happened yet\"},\n})).unwrap();\nassert!(!fresh.present && fresh.findings.is_empty());\n```",
       "is_enum": false,
       "name": "Recovery",
@@ -25202,6 +25289,147 @@
         "Recovery"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "One stray file, its verdict, and the evidence that produced it.\n\nEvery field that decided something is carried, because the rule this command is shaped\naround requires the value that decided a verdict to be visible before the verdict acts:\na surface that printed \"orphan\" without the age, the episode and the file that already\nholds it would be asking to be trusted rather than read.\n\n```\nuse majordomus_cli::capability::builtin::recover::{Stray, StrayKind, StrayVerdict};\nuse serde_json::json;\n\nlet s: Stray = serde_json::from_value(json!({\n    \"path\": \".ai/repo/sessions/.tmp.a1b2c3\",\n    \"kind\": \"publish_temp\",\n    \"verdict\": \"orphan\",\n    \"age_seconds\": 90_000,\n    \"session_id\": \"s-0007\",\n    \"published_at\": \".ai/repo/sessions/2026-09-11--s-0007.md\",\n    \"removable\": true,\n    \"removed\": false,\n})).unwrap();\nassert_eq!(s.verdict, StrayVerdict::Orphan);\nassert_eq!(s.kind, StrayKind::PublishTemp);\n// removable and removed are different facts: a check run reports the first and never\n// the second, which is what makes `--check` readable as a plan rather than a report.\nassert!(s.removable && !s.removed);\n\n// and an unmeasurable one carries no age at all, rather than a zero that would read as\n// \"brand new\" to anything that compared it with a threshold\nlet u: Stray = serde_json::from_value(json!({\n    \"path\": \".mj-stage.xyz\", \"kind\": \"staging_dir\", \"verdict\": \"unmeasurable\",\n    \"removable\": false, \"removed\": false,\n})).unwrap();\nassert!(u.age_seconds.is_none());\n```",
+      "is_enum": false,
+      "name": "Stray",
+      "properties": [
+        {
+          "description": "The path, repository-relative. Never the absolute one: a finding that names a disk is\na finding nobody else can act on (`project.no-machine-paths`).",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which of the three shapes this is.",
+          "name": "kind",
+          "refs": [
+            "StrayKind"
+          ],
+          "required": true,
+          "type": "StrayKind"
+        },
+        {
+          "description": "What reading it decided.",
+          "name": "verdict",
+          "refs": [
+            "StrayVerdict"
+          ],
+          "required": true,
+          "type": "StrayVerdict"
+        },
+        {
+          "description": "How old it is, in seconds. Absent when the platform could not say, which is the\n`Unmeasurable` verdict and never a zero.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The episode this publish temp carries, when it carries one.",
+          "name": "session_id",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The record that already holds that episode, when one does. Its presence is what turns\nan `Incomplete` publish temp into an `Orphan`.",
+          "name": "published_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The file a rename temp was going to become. Its presence is what turns an\n`Incomplete` rename temp into an `Orphan`.",
+          "name": "target",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Whether this call would remove it. Decided by the verdict and by\n[`remove_stray`]'s own pattern guard, never by the caller.",
+          "name": "removable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether this call did remove it. Always `false` on a check.",
+          "name": "removed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RecoverOrphansResult"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What kind of stray a path is, decided by where it is and how it is named rather than by\nwhat is in it. The content decides the *verdict*; this decides which question to ask.",
+      "is_enum": true,
+      "name": "StrayKind",
+      "properties": [],
+      "type": "\"publish_temp\" | \"rename_temp\" | \"staging_dir\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Stray"
+      ],
+      "values": [
+        {
+          "description": "A `.tmp.XXXXXX` in a record store: `mj_publish_record` makes them, and only a process\nthat died between the `mktemp` and the `rm` leaves one.",
+          "value": "publish_temp"
+        },
+        {
+          "description": "A `<target>.mj-tmp`: written and renamed in one `&&`, so one that exists means the\nwrite failed or the process died mid-write.",
+          "value": "rename_temp"
+        },
+        {
+          "description": "A `.mj-stage.XXXXXX` at the repository root: `scripts/generate-site-data` stages into\none. Always a directory, and therefore never removed here.",
+          "value": "staging_dir"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What this stray is, decided by reading it.\n\nThe five words are `lib/recover.sh`'s, deliberately: a person who has read the command's\noutput should not have to learn the same five facts twice because a second surface chose\nits own vocabulary.",
+      "is_enum": true,
+      "name": "StrayVerdict",
+      "properties": [],
+      "type": "\"live\" | \"orphan\" | \"incomplete\" | \"foreign\" | \"unmeasurable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Stray"
+      ],
+      "values": [
+        {
+          "description": "Younger than the threshold: a `session close` or a `scripts/derive` running right now\nowns it. Measured, reported, never touched.",
+          "value": "live"
+        },
+        {
+          "description": "Its work completed, or there was never anything in it. Removable — unless it is a\ndirectory, which this runtime never removes.",
+          "value": "orphan"
+        },
+        {
+          "description": "It holds something no other file holds: a record nobody published, or a write whose\ntarget never arrived. Never removed here; the caller decides.",
+          "value": "incomplete"
+        },
+        {
+          "description": "Not written by this tool at all, or written by a version that shaped it differently.\nNever touched; reported with what it is.",
+          "value": "foreign"
+        },
+        {
+          "description": "Its age could not be read on this platform, so nothing here treats it as stale. The\nguard `project.destructive-sweeps-fail-closed` asks for: a predicate that cannot\nmeasure its input is false, never the most extreme value in the set.",
+          "value": "unmeasurable"
+        }
+      ],
       "variants": []
     },
     {
@@ -34169,6 +34397,78 @@
           "result_schema": "QualityAnswer",
           "stability": "behaviorally_verified",
           "summary": "Public API quality report"
+        }
+      ]
+    },
+    {
+      "description": "The stray files a killed publish, an interrupted rename or an unfinished site build leave in the record stores, classified by reading the clock and the content, and swept exactly once. This is the capability that backs `majordomus recover` (ADR 0040): the command no longer decides what a stray is, it asks.",
+      "name": "recover",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "check-one-second",
+              "json": "{\"older_than_seconds\":1,\"check\":true}"
+            },
+            {
+              "case": "check-twelve-hours",
+              "json": "{\"older_than_seconds\":43200,\"check\":true}"
+            }
+          ],
+          "body_schema": "RecoverOrphansInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/recover/orphans\" -H \"content-type: application/json\" -d '{\"older_than_seconds\":1,\"check\":true}'",
+          "description": "Walk the publish temps of every record store, the rename temps under the layer's local half and the tracked sessions section, and the site generator's staging directories at the repository root; give each a verdict by reading its age and then its content; and, unless the call is a check, remove the ones the verdict says nothing is holding. Nothing is deleted for being unrecognised: a temp holding the only copy of a record is reported as `incomplete` and left for the caller to publish, content this version cannot classify is `foreign` and left exactly where it is, a candidate whose age this platform cannot read is `unmeasurable` and never a candidate, and no directory is ever removed. The threshold is required and has no default, because a sweep measuring against an absent threshold would find every file stale.",
+          "id": "recover.orphans",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_recover_orphans",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/recover/orphans",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::recover",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Classify every stray file of the record stores, and sweep the ones that are nobody's: the result.",
+              "schema": "RecoverOrphansResult",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "RecoverOrphansResult",
+          "stability": "behaviorally_verified",
+          "summary": "Classify every stray file of the record stores, and sweep the ones that are nobody's"
         }
       ]
     },

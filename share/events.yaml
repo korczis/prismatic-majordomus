@@ -191,7 +191,7 @@ events:
   - id: task.gate
     title: A validation gate reported against the task
     summary: One gate of the repository's CI model ran and reported an exit status, over the files whose hash is recorded.
-    emitted_by: evidence
+    emitted_by: gates
     requires: [task, gate, exit, inputs_hash]
     public: true
     note: The gate's inputs are derived from the CI model — the union of the paths of the classes that select it — so a change to any of them makes the run stale rather than merely old. A gate that has never emitted this event is reported as queued and never as passing.
