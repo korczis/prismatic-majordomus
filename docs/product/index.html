@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=c686274f6ea6e920aa77">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=b39d83053216aed98cc8">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.0 -->
+     Generator: majordomus-cli 0.6.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -51,7 +51,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.0</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -256,6 +256,36 @@ templates read the dataset and name nothing:</p>
 labels, held to a line budget, carrying no number and no capability claim. Routes that
 moved are declared once in <code>site/data/nav.toml</code> under <code>[[redirects]]</code> and become Zola
 aliases on the page they point at.</p>
+<h2 id="the-terminal-on-the-homepage"><a class="zola-anchor" href="#the-terminal-on-the-homepage" aria-label="Anchor link for: the-terminal-on-the-homepage">The terminal on the homepage</a></h2>
+<p>The page shows the tool running, and every transcript on it is a run that happened.</p>
+<p><code>scripts/generate-site-data</code> writes <code>site/data/generated/terminal.json</code> by joining two
+datasets it has already written: <code>lifecycle.json</code>, the ordered lifecycle the tool declares,
+and <code>catalogue.json</code>, whose <code>use_cases[].evidence.steps[]</code> carry the command line, the exit
+status and the stdout of every use-case scenario the same run executed. The output was
+redacted when it was captured — <code>lib/usecase.sh</code> replaces the repository path, the clock,
+the identifiers and the tool versions with placeholders — so a transcript names no machine
+and reproduces byte for byte on another one.</p>
+<p>Nothing in the dataset, the generator or the template names a command:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Field</th><th>How it is decided</th></tr></thead><tbody>
+<tr><td>the order of the tabs</td><td>the lifecycle's own order</td></tr>
+<tr><td>which run illustrates a step</td><td>among that command's passing scenario steps: one that succeeded before one that was refused, then the longest body, then use case and step id</td></tr>
+<tr><td>which panel opens first</td><td>the one with the most output</td></tr>
+<tr><td>what is in the refusals</td><td>every recorded step of a lifecycle command that exited non-zero, deduplicated by command, status and body, ordered by the lifecycle</td></tr>
+<tr><td>the sentence beside a refusal</td><td>the first <code>FAIL</code> line the run printed, else its last line, up to the reproduce command</td></tr>
+</tbody></table>
+</div>
+<p>Two refusals are built into the generation. A lifecycle step no scenario ran fails it,
+because a page that quietly drops a stage claims a lifecycle nobody walks; and a corpus with
+no recorded refusal fails it, because the section that says the tool refuses may not be
+empty. <code>scripts/site-check</code>'s <code>terminal</code> check then reads the built HTML in both directions:
+every panel the dataset holds is on the page, every panel on the page is a run, each matched
+by its command line, its exit status and its verdict line, and every panel links the scenario
+it was recorded in.</p>
+<p>The consequence worth stating: the homepage cannot show the tool doing something the tool
+does not do, and it cannot keep showing something that stopped happening. A command that
+stops refusing disappears from the page on the next generation, and a transcript edited by
+hand fails the check rather than the reader.</p>
 <h2 id="what-is-refused"><a class="zola-anchor" href="#what-is-refused" aria-label="Anchor link for: what-is-refused">What is refused</a></h2>
 <ul>
 <li>A reference that resolves to nothing. The message names the file, the key and the
@@ -354,7 +384,7 @@ and by none of them once it is gone.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/63cb657511de4cb59b2bb3873014408d1049474f" class="font-mono underline">63cb657</a> · inputs <span class="font-mono">54fdaab12aef</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
