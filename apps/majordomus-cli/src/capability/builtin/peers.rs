@@ -44,7 +44,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CapabilityKind, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::lease;
-use crate::peers::{overlaps_among, Announced, Overlap, Peer, PeerCheckout, PeerId};
+use crate::peers::{overlaps_among, silent_among, Announced, Overlap, Peer, PeerCheckout, PeerId};
 use crate::repository;
 use crate::{capability, module};
 
@@ -113,6 +113,33 @@ pub struct BoardView {
 pub struct PeerList {
     /// How many peers are attached across every board that was read, the caller included.
     pub count: usize,
+    /// How many of those attached peers have claimed nothing, the caller included.
+    ///
+    /// The third fact a reader needs, and the one that was missing. `count`, `complete`
+    /// and `silent` answer three different questions and a reader that has only the first
+    /// two cannot tell the situations apart:
+    ///
+    /// - `count: 0` — nobody is working in this repository.
+    /// - `complete: false` — a checkout could not be asked, so the board is short of the
+    ///   truth by an unknown amount; [`BoardView::reason`] says which and why.
+    /// - `silent: n` — `n` workers are attached *right now* and not one of them has said
+    ///   what it is touching. The board is complete, and it still cannot answer the
+    ///   question it is read for.
+    ///
+    /// Without this the last case wears the first case's face. A worker calls `peers.list`
+    /// before allocating a case number or fanning work out, sees `overlaps: []` and
+    /// `complete: true`, and reads a clean answer — when what it is actually looking at is
+    /// a board with nothing on it to collide with. On 2026-09-12 that cost this repository
+    /// three branches allocating one case number range, three sessions starting the same
+    /// one-line fix, and two sessions editing one case file at once, in a day when every
+    /// one of those sessions was attached and none had announced.
+    ///
+    /// `project.a-verdict-states-its-subject`: a board that is empty because nobody
+    /// announced and a board that is empty because nobody is here must not read the same.
+    /// Computed by the reader over the gathered union, like [`PeerList::overlaps`], and so
+    /// correct across a sibling of any version — a board is asked for its peers, never for
+    /// its opinion about how many of them are quiet.
+    pub silent: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The caller's own peer id, when the call came through an MCP session. A position on
     /// this checkout's board, not a durable identity: it is handed out again after a
@@ -253,6 +280,7 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
 
     Ok(PeerList {
         count: peers.iter().filter(|p| p.attached).count(),
+        silent: silent_among(&peers),
         caller: ctx.caller.clone(),
         overlaps: overlaps_among(&peers),
         peers,

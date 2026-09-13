@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f",
+    "fingerprint": "b1d4fa0e05f858b7dfdb095b8d3281da46493f867edd0a5c9b828e743e02d95e",
     "summary": {
-      "total": 1449,
+      "total": 1450,
       "builtin": 112,
-      "declarative": 1337,
+      "declarative": 1338,
       "by_kind": {
         "command": 6,
         "query": 106,
-        "resource": 1337
+        "resource": 1338
       },
       "by_stability": {
         "behaviorally_verified": 99,
         "experimental": 7,
-        "implemented": 1343
+        "implemented": 1344
       },
       "mcp_tools": 109,
-      "mcp_resources": 1378,
+      "mcp_resources": 1379,
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
@@ -23665,6 +23665,12 @@
                 "minimum": 0,
                 "description": "How many peers are attached across every board that was read, the caller included."
               },
+              "silent": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many of those attached peers have claimed nothing, the caller included.\n\nThe third fact a reader needs, and the one that was missing. `count`, `complete`\nand `silent` answer three different questions and a reader that has only the first\ntwo cannot tell the situations apart:\n\n- `count: 0` — nobody is working in this repository.\n- `complete: false` — a checkout could not be asked, so the board is short of the\n  truth by an unknown amount; [`BoardView::reason`] says which and why.\n- `silent: n` — `n` workers are attached *right now* and not one of them has said\n  what it is touching. The board is complete, and it still cannot answer the\n  question it is read for.\n\nWithout this the last case wears the first case's face. A worker calls `peers.list`\nbefore allocating a case number or fanning work out, sees `overlaps: []` and\n`complete: true`, and reads a clean answer — when what it is actually looking at is\na board with nothing on it to collide with. On 2026-09-12 that cost this repository\nthree branches allocating one case number range, three sessions starting the same\none-line fix, and two sessions editing one case file at once, in a day when every\none of those sessions was attached and none had announced.\n\n`project.a-verdict-states-its-subject`: a board that is empty because nobody\nannounced and a board that is empty because nobody is here must not read the same.\nComputed by the reader over the gathered union, like [`PeerList::overlaps`], and so\ncorrect across a sibling of any version — a board is asked for its peers, never for\nits opinion about how many of them are quiet."
+              },
               "caller": {
                 "anyOf": [
                   {
@@ -23704,6 +23710,7 @@
             },
             "required": [
               "count",
+              "silent",
               "peers",
               "boards",
               "complete"
@@ -40508,7 +40515,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 205,
+        "capabilities": 206,
         "capability_ids": []
       },
       {
@@ -40588,7 +40595,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6e4875d19b490cf14a2dd4745d3fe3bb7db25a928415ed98d5dcc2a582a0fac6",
+    "fingerprint": "f653d8ab852d125524699485c4750eb49a1d359818663622bf10de89ddcfdf0b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40637,7 +40644,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 205,
+      "test": 206,
       "use-case": 46,
       "workspace": 1
     },
@@ -53946,6 +53953,14 @@
         "bytes": 7088
       },
       {
+        "uri": "majordomus://test/test/cases/317_the_board_says_when_it_is_silent.sh",
+        "kind": "test",
+        "identity": "test/cases/317_the_board_says_when_it_is_silent.sh",
+        "path": "test/cases/317_the_board_says_when_it_is_silent.sh",
+        "source_class": "case",
+        "bytes": 15674
+      },
+      {
         "uri": "majordomus://test/test/cases/31_command_coverage.sh",
         "kind": "test",
         "identity": "test/cases/31_command_coverage.sh",
@@ -55473,7 +55488,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 205
+      "objects": 206
     },
     {
       "name": "use-case",

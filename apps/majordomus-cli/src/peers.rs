@@ -642,6 +642,64 @@ fn peer(seq: u64, s: &Slot) -> Peer {
     }
 }
 
+/// Whether this peer is attached and has claimed nothing.
+///
+/// The one definition of *silent* in this crate. A silent peer is the board's blind spot:
+/// it is a worker, it is here now, and the board can say nothing about what it will touch.
+/// Every reader that wants to talk about silence — the `initialize` instructions, the
+/// answer of `peers.list` — asks this function rather than re-deriving the predicate, so
+/// that two surfaces can never come to disagree about what "announced nothing" means
+/// (ADR 0004: a repeated semantic definition across projections is a design defect).
+///
+/// A *departed* peer is not silent, whatever it announced: it is not here, and the point
+/// of the number is how much of the ground being worked right now is unclaimed. A departed
+/// peer that did announce is the opposite problem — a claim standing over ground nobody
+/// holds — and it is counted separately, where it is reported.
+///
+/// ```
+/// use majordomus_cli::peers::{is_silent, PeerBoard, Transport};
+/// let board = PeerBoard::new();
+/// let quiet = board.attach(Transport::Stdio);
+/// let spoken = board.attach(Transport::Http);
+/// board.announce(&spoken, "the ordering rule", vec!["apps/majordomus-cli/src".into()]);
+/// let peers = board.list();
+/// assert!(is_silent(&peers[0]), "attached and claiming nothing");
+/// assert!(!is_silent(&peers[1]), "it said what it is doing");
+/// // and a peer that leaves stops being silent, because it stops being here
+/// board.detach(&quiet);
+/// assert!(!is_silent(&board.list()[0]), "a departed peer is not a blind spot");
+/// ```
+pub fn is_silent(peer: &Peer) -> bool {
+    peer.attached && peer.claims.is_empty()
+}
+
+/// How many of an arbitrary set of peers are attached and have claimed nothing.
+///
+/// Computed over the union by whoever gathered the peers, exactly like [`overlaps_among`]
+/// and for the same reason: silence is a property of the set that was actually read, and
+/// no single board knows what the others hold.
+///
+/// This is the number that separates two answers a reader must never confuse. A board of
+/// `count: 0` means nobody is working in this repository. A board of `count: 5, silent: 5`
+/// means five workers are here and not one of them has said what it is touching — the
+/// same absence of claims, the opposite situation, and only the second is a reason to stop
+/// and ask before allocating an identifier or opening a mandate. Without this number a
+/// reader sees an empty `overlaps` and concludes there is no collision, when the truth is
+/// that the board was never in a position to find one.
+///
+/// ```
+/// use majordomus_cli::peers::{silent_among, PeerBoard, Transport};
+/// let board = PeerBoard::new();
+/// board.attach(Transport::Stdio);
+/// board.attach(Transport::Http);
+/// let spoken = board.attach(Transport::Http);
+/// board.announce(&spoken, "the release model", vec!["apps/majordomus-cli/src/release".into()]);
+/// assert_eq!(silent_among(&board.list()), 2, "three here, one of them speaking");
+/// ```
+pub fn silent_among(peers: &[Peer]) -> usize {
+    peers.iter().filter(|p| is_silent(p)).count()
+}
+
 /// Every pair of claims that meet among an arbitrary set of peers, each pair once.
 ///
 /// The listing side of the overlap question, and the only account of it: [`PeerBoard::overlaps`]
@@ -840,6 +898,57 @@ pub fn epoch_seconds(ts: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `is_silent` asks whether the peer is attached as well as whether it claimed
+    /// anything, and through a [`PeerBoard`] that question can only ever be answered one
+    /// way: [`PeerBoard::detach`] *removes* a peer holding no claims outright and only
+    /// retains one that announced, so no board this crate builds can list a peer that is
+    /// both departed and silent. The behavioural case cannot reach the state either, and a
+    /// mutation that dropped the `attached` term survived the whole suite because of it.
+    ///
+    /// It is reachable over the wire, which is the only place it matters. A gathered board
+    /// is `serde`-parsed from a sibling server's answer, that sibling is a separate process
+    /// of a possibly different version, and `silent_among` is documented as taking an
+    /// arbitrary set of peers. So the guard is tested where the input actually comes from:
+    /// the JSON a sibling sends, not a board this test builds.
+    ///
+    /// What it protects is the meaning of the number. `silent` counts ground being worked
+    /// *now* with nobody saying what they will touch. A departed peer that claimed nothing
+    /// is not that — it is nothing at all — and counting it would inflate the one number a
+    /// worker reads to decide whether the board can be trusted, in the direction that makes
+    /// a quiet board look busier than it is.
+    #[test]
+    fn a_departed_peer_is_not_silent_however_it_arrives() {
+        let wire = serde_json::json!([
+            {
+                "id": "p1",
+                "client": { "name": "worker-gone", "version": "0" },
+                "transport": "http",
+                "connected_at": "2026-09-12T21:00:00Z",
+                "last_seen_seconds_ago": 900,
+                "attached": false
+            },
+            {
+                "id": "p2",
+                "client": { "name": "worker-here", "version": "0" },
+                "transport": "http",
+                "connected_at": "2026-09-12T21:05:00Z",
+                "last_seen_seconds_ago": 1,
+                "attached": true
+            }
+        ]);
+        let peers: Vec<Peer> = serde_json::from_value(wire).expect("a sibling board parses");
+        assert!(
+            !is_silent(&peers[0]),
+            "a peer that is not here is not a blind spot, whatever it claimed"
+        );
+        assert!(is_silent(&peers[1]), "attached and claiming nothing");
+        assert_eq!(
+            silent_among(&peers),
+            1,
+            "only the worker that is actually here counts"
+        );
+    }
 
     /// A board is now read back off the wire: `peers.list` gathers a sibling checkout's
     /// board from that checkout's own server, and `serde` parses the answer into these

@@ -349,11 +349,13 @@ impl Server {
             {
                 text.push_str(" You have not announced anything. If you have worked in this repository before in another session, the board does not know it: announce now, before you start, and again if this connection is ever re-established — your peer id is a position on this board, handed out again on a reconnect, and never your identity.");
             }
+            // `peers::is_silent` and nothing local: the same predicate answers here and in
+            // `peers.list`, which is the surface a worker is instructed to read before it
+            // opens a mandate. Two derivations of "announced nothing" would be two numbers
+            // free to disagree, and the one a worker acts on is not this one.
             let silent = peers
                 .iter()
-                .filter(|p| {
-                    p.attached && p.announcement.is_none() && Some(&p.id) != self.surface.peer()
-                })
+                .filter(|p| Some(&p.id) != self.surface.peer() && crate::peers::is_silent(p))
                 .count();
             if silent > 0 {
                 text.push_str(&format!(

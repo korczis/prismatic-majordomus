@@ -24504,6 +24504,12 @@
             "minimum": 0,
             "description": "How many peers are attached across every board that was read, the caller included."
           },
+          "silent": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of those attached peers have claimed nothing, the caller included.\n\nThe third fact a reader needs, and the one that was missing. `count`, `complete`\nand `silent` answer three different questions and a reader that has only the first\ntwo cannot tell the situations apart:\n\n- `count: 0` — nobody is working in this repository.\n- `complete: false` — a checkout could not be asked, so the board is short of the\n  truth by an unknown amount; [`BoardView::reason`] says which and why.\n- `silent: n` — `n` workers are attached *right now* and not one of them has said\n  what it is touching. The board is complete, and it still cannot answer the\n  question it is read for.\n\nWithout this the last case wears the first case's face. A worker calls `peers.list`\nbefore allocating a case number or fanning work out, sees `overlaps: []` and\n`complete: true`, and reads a clean answer — when what it is actually looking at is\na board with nothing on it to collide with. On 2026-09-12 that cost this repository\nthree branches allocating one case number range, three sessions starting the same\none-line fix, and two sessions editing one case file at once, in a day when every\none of those sessions was attached and none had announced.\n\n`project.a-verdict-states-its-subject`: a board that is empty because nobody\nannounced and a board that is empty because nobody is here must not read the same.\nComputed by the reader over the gathered union, like [`PeerList::overlaps`], and so\ncorrect across a sibling of any version — a board is asked for its peers, never for\nits opinion about how many of them are quiet."
+          },
           "caller": {
             "anyOf": [
               {
@@ -24543,6 +24549,7 @@
         },
         "required": [
           "count",
+          "silent",
           "peers",
           "boards",
           "complete"
