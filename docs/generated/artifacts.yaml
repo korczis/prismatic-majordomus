@@ -387,6 +387,10 @@ documents:
     source: the release record v0.5.0
     formats:
       - json
+  - id: release/v0.6.0
+    source: the release record v0.6.0
+    formats:
+      - json
   - id: schemas/majordomus.adr/v1
     source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
     formats:
@@ -546,8 +550,8 @@ artifacts:
     document: install-guide
     format: markdown
     source: "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)"
-    bytes: 9320
-    sha256: 30974853d20bf3fbb9d9ea11130d5f1c240625d2a6a8e5a40ff2dab250d475d3
+    bytes: 9422
+    sha256: 3f88401669607bf289564b5f201432a4a200ef8f258a42c693e2b7ac73b79efa
   - path: docs/generated/artifacts.json
     document: artifacts
     format: json
@@ -596,21 +600,21 @@ artifacts:
     format: json
     schema: majordomus/changelog/v1
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
-    bytes: 409229
-    sha256: 76e96ab22c2833a022a6f8b573a6cfe76e7cefc458fb2162216248c21a1466cf
+    bytes: 488059
+    sha256: 06541d1dde440ba5012b2cb57e27427486fe4345ac320bc71d10ed1aaba2299e
   - path: docs/generated/changelog.md
     document: changelog
     format: markdown
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
-    bytes: 98525
-    sha256: c3484d835b50daab73dd31cb2db8b0f8531f481f3facf0fb63089bd50d2ee1df
+    bytes: 118565
+    sha256: 395bfcf899bde08a0e865970cd40cc86c9b1c95f35137c46d9b70d72e7f3b123
   - path: docs/generated/changelog.yaml
     document: changelog
     format: yaml
     schema: majordomus/changelog/v1
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
-    bytes: 326020
-    sha256: 6d59a59797d12772e218aab856ab3f1f6ae23b1a55809396dfe33c833eed7a12
+    bytes: 389087
+    sha256: e79202d561438c93e5d3d90b4388bb68a00343637bc36e8ce8fa3036cf15e884
   - path: docs/generated/cli.json
     document: cli
     format: json
@@ -662,8 +666,8 @@ artifacts:
     format: json
     schema: majordomus/capability-graph/v1
     source: the composed graph of the registry and the index
-    bytes: 2060098
-    sha256: d1709bde779c384ddeef24ec1b3224ffb902172edcba3fddf67feebae5d9f5c1
+    bytes: 2061055
+    sha256: d304e3a35fa04e18ca6a002f241c57064136bf4c202c6becf07cccc708399245
   - path: docs/generated/graph.schema.json
     document: graph-schema
     format: json
@@ -1246,7 +1250,7 @@ artifacts:
     format: json
     source: share/distribution.yaml and the release records
     bytes: 3001
-    sha256: 5f49e416917c9296278f906a10ad1e3087bc9e0747dd289634fb900aff87a83d
+    sha256: ff4c1cd116483f5e291317bcb68f8ec1c4d764c17a58d01bf5ad0e72cb41bb4b
   - path: site/data/registry/product-graph.json
     document: site-product-graph
     format: json
@@ -1259,14 +1263,14 @@ artifacts:
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
     bytes: 346642
-    sha256: 503285e7e4e3ceb7ab0504326641bf413f816100cca486db07213266c0ccf4fa
+    sha256: 1f9c81049d59bf43639e9fbdc66a93c3f5c89a876b2e572c804198f1401aefca
   - path: site/data/registry/registry.json
     document: site-registry
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 3485721
-    sha256: 1bc34c09e1b7081a4803d3e039cf911f35fac3be2f0908d4c8ddbb8eb900f68a
+    bytes: 3486019
+    sha256: 4179478c71d7d021c65ef2f0ad03641ad24fc388a25cda20452458504860d633
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json
@@ -1309,7 +1313,7 @@ artifacts:
     format: json
     source: the latest stable release record
     bytes: 2369
-    sha256: 09b2be2b805cf53b41a2b40a6ad5cc3fc8ecd2f909113d707f332a92e617f28e
+    sha256: d77a5b1279df3c7a8225d480c47a54e22530cc3e696cb2e372c1f8d4e3e18d52
   - path: site/static/releases/v0.3.1.json
     document: release/v0.3.1
     format: json
@@ -1322,3 +1326,9 @@ artifacts:
     source: the release record v0.5.0
     bytes: 2369
     sha256: 09b2be2b805cf53b41a2b40a6ad5cc3fc8ecd2f909113d707f332a92e617f28e
+  - path: site/static/releases/v0.6.0.json
+    document: release/v0.6.0
+    format: json
+    source: the release record v0.6.0
+    bytes: 2369
+    sha256: d77a5b1279df3c7a8225d480c47a54e22530cc3e696cb2e372c1f8d4e3e18d52
