@@ -657,7 +657,7 @@ fn peer(seq: u64, s: &Slot) -> Peer {
 /// holds — and it is counted separately, where it is reported.
 ///
 /// ```
-/// use majordomus_cli::peers::{is_silent, PeerBoard, Transport};
+/// use majordomus_cli::peers::{is_silent, silent_among, PeerBoard, Transport};
 /// let board = PeerBoard::new();
 /// let quiet = board.attach(Transport::Stdio);
 /// let spoken = board.attach(Transport::Http);
@@ -665,9 +665,15 @@ fn peer(seq: u64, s: &Slot) -> Peer {
 /// let peers = board.list();
 /// assert!(is_silent(&peers[0]), "attached and claiming nothing");
 /// assert!(!is_silent(&peers[1]), "it said what it is doing");
-/// // and a peer that leaves stops being silent, because it stops being here
+/// // A silent peer that leaves stops being a blind spot by leaving the board outright:
+/// // `detach` retains a peer only for the claim it made, and this one made none. So the
+/// // `attached` term of the predicate is NOT what is exercised here — no board this type
+/// // builds can list a peer that is both departed and silent. That term is reachable only
+/// // where a sibling server's board is parsed off the wire, and it is proven there, in
+/// // `a_departed_peer_is_not_silent_however_it_arrives`.
 /// board.detach(&quiet);
-/// assert!(!is_silent(&board.list()[0]), "a departed peer is not a blind spot");
+/// assert_eq!(board.list().len(), 1, "the silent peer is gone, not retained");
+/// assert_eq!(silent_among(&board.list()), 0, "and nobody left here is quiet");
 /// ```
 pub fn is_silent(peer: &Peer) -> bool {
     peer.attached && peer.claims.is_empty()
