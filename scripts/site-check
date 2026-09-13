@@ -159,10 +159,11 @@ grep -oE 'href="#[a-z-]+"' "$PUB/index.html" | sed 's/href="#//; s/"$//' | LC_AL
   rows main        | cut -f1 | sed 's/$/: no <main> landmark/'
   rows h1          | cut -f1 | sed 's/$/: expected exactly one <h1>/'
   rows placeholder | cut -f1 | sed 's/$/: unresolved template placeholder/'
+  rows rustdoc     | sed 's/\t/: unrendered markup in prose: /'
   rows inlinestyle | cut -f1 | sed 's/$/: inline style attribute (forbidden by the custom CSS policy)/'
 } > "$PAGEROWS.4"
 while IFS= read -r m; do bad route "$m"; done < "$PAGEROWS.4"; rm -f "$PAGEROWS.4"
-ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no inline styles"
+ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no unrendered markup, no inline styles"
 # 5. prefix: every root-absolute href/src carries the deployment path
 # `content` is scanned too, because a canonical or og:url is a real URL — but only when the
 # value is a path. A meta description is prose, and a page that describes the reserved names

@@ -12,7 +12,7 @@
 #
 #   <page relative to pub>  <check>  <detail>
 #
-# checks: viewport description main h1 placeholder inlinestyle initflowbite mermaid
+# checks: viewport description main h1 placeholder rustdoc inlinestyle initflowbite mermaid
 #         pre gridcols fixedwidth nojs
 #
 # A page with nothing wrong produces no row. The detail is what site-check prints after the
@@ -30,6 +30,7 @@ function flush() {
   if (!has_main)        print rel "\tmain\t"
   if (n_h1 != 1)        print rel "\th1\t" n_h1
   if (placeholder)      print rel "\tplaceholder\t"
+  if (rustdoc != "")    print rel "\trustdoc\t" rustdoc
   if (inline_style)     print rel "\tinlinestyle\t"
   if (n_initflowbite != 1) print rel "\tinitflowbite\t" n_initflowbite
   if (has_mermaid && !has_mermaid_js) print rel "\tmermaid\t"
@@ -53,6 +54,7 @@ FNR == 1 {
   has_viewport = has_description = has_main = 0
   n_h1 = n_initflowbite = n_pre = nojs = 0
   placeholder = inline_style = gridcols = fixedwidth = 0
+  rustdoc = ""
   has_mermaid = has_mermaid_js = 0
   in_pre = 0; wrapped = 0; seen_format = 0; prev = ""
   redirect = 0
@@ -79,6 +81,21 @@ FNR == 1 {
     stripped = line
     gsub(/<code[^>]*>[^<]*<\/code>/, "", stripped)
     if (stripped ~ /\{\{|\{%|\[\[[A-Z_]+\]\]/) placeholder = 1
+  }
+  # Markup that reached the reader as source. The same shape as the check above and for the
+  # same reason — inside a <pre> or a <code> it is rendered output, not something unrendered —
+  # but the dialect is the declaration's rather than the template's. A description on this site
+  # is a Rust doc comment carried through the registry, and three ways it can arrive unrendered:
+  # a backtick, which only a Markdown renderer that never ran leaves behind; a bracket around a
+  # code span, which is rustdoc's intra-doc link surviving a renderer that had no definition to
+  # resolve; and an emphasis still wearing its asterisks. The site published all three.
+  if (!in_pre) {
+    bare = line
+    gsub(/<code[^>]*>[^<]*<\/code>/, "", bare)
+    gsub(/<[^>]*>/, "", bare)
+    if (index(bare, "`")) rustdoc = rustdoc "`"
+    if (line ~ /\[<code/) rustdoc = rustdoc "[`x`]"
+    if (bare ~ /(^|[ (])\*[A-Za-z][^*]*\*([ .,;:)]|$)/) rustdoc = rustdoc "*em*"
   }
   if (index(line, "</pre>")) in_pre = 0
 

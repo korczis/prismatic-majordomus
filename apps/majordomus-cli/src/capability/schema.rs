@@ -109,6 +109,11 @@ impl CanonicalSchema {
         if let Value::Object(m) = &mut schema {
             m.remove("$schema");
         }
+        // schemars copies the doc comment into `description` verbatim, and every consumer
+        // of that field — OpenAPI, MCP, Swagger UI, the published site — reads it as
+        // CommonMark. Rustdoc is not CommonMark, so the dialect is translated here, at the
+        // one place a doc comment becomes a projection, rather than by each projection.
+        super::rustdoc::translate_descriptions(&mut schema);
         CanonicalSchema { name, schema }
     }
 

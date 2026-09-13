@@ -161,7 +161,12 @@
             scroll inside itself and lets `module::path::Type` break inside the word. -#}
         {%- if s.description %}<div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ s.description | markdown(inline=true) | safe }}</div>{% endif -%}
         {%- if s.values | length > 0 -%}
-        <ul class="mt-3 space-y-1 text-sm">{% for v in s.values %}<li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">{{ v.value }}</code><span class="min-w-0 text-body">{{ v.description }}</span></li>{% endfor %}</ul>
+        {#- A variant's doc comment is the same CommonMark the type's is, and was the one slot
+            here that published it as text: the emphasis kept its asterisks and a code span its
+            brackets. Rendered, the identifier it names becomes a <code>, which no space breaks —
+            so the same word-breaking its sibling above has, or one enum value sets the width of
+            a phone's page. -#}
+        <ul class="mt-3 space-y-1 text-sm">{% for v in s.values %}<li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">{{ v.value }}</code><span class="min-w-0 break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">{{ v.description | markdown(inline=true) | safe }}</span></li>{% endfor %}</ul>
         {%- endif -%}
         {%- if s.properties | length > 0 -%}
         <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -181,12 +186,12 @@
         </div>
         {%- endif -%}
         {%- for v in s.variants -%}
-        <p class="mt-3 break-words text-sm text-body"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> {{ v.description }}</p>
+        <div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> {{ v.description | markdown(inline=true) | safe }}</div>
         <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
           <table class="w-full min-w-[32rem] text-left text-sm">
             <tbody>
               {%- for p in v.properties -%}
-              <tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td><td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="#schema-{{ r }}" class="text-fg-brand underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td><td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td><td class="px-3 py-2 text-body">{{ p.description }}</td></tr>
+              <tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td><td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="#schema-{{ r }}" class="text-fg-brand underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td><td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">{{ p.description | markdown(inline=true) | safe }}</td></tr>
               {%- endfor -%}
             </tbody>
           </table>

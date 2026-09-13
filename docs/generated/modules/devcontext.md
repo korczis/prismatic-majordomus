@@ -33,9 +33,9 @@ from, and every entry it produces says so and carries a confidence below one. |
 | `paths` | array | no | Repository-relative paths the work touches, added to whatever the seeds declare. |
 | `uris` | array | no | Canonical identifiers to seed with directly, for a request about something that is
 neither an issue nor a milestone. |
-| `budget_tokens` | integer or null | no | The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent. |
-| `max_depth` | integer or null | no | How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent. |
-| `floor` | number or null | no | Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]
+| `budget_tokens` | integer or null | no | The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent. |
+| `max_depth` | integer or null | no | How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent. |
+| `floor` | number or null | no | Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`
 when absent. |
 | `all_blocking_rules` | boolean or null | no | Every blocking rule of the layer, not only the ones the work reaches. Honest and
 usually over budget: the answer then says `over_budget` rather than dropping what it
@@ -70,9 +70,9 @@ from, and every entry it produces says so and carries a confidence below one. |
 | `paths` | array | no | Repository-relative paths the work touches, added to whatever the seeds declare. |
 | `uris` | array | no | Canonical identifiers to seed with directly, for a request about something that is
 neither an issue nor a milestone. |
-| `budget_tokens` | integer or null | no | The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent. |
-| `max_depth` | integer or null | no | How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent. |
-| `floor` | number or null | no | Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]
+| `budget_tokens` | integer or null | no | The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent. |
+| `max_depth` | integer or null | no | How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent. |
+| `floor` | number or null | no | Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`
 when absent. |
 | `all_blocking_rules` | boolean or null | no | Every blocking rule of the layer, not only the ones the work reaches. Honest and
 usually over budget: the answer then says `over_budget` rather than dropping what it
