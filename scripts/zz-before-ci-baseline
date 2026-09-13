@@ -10,7 +10,6 @@
 #
 # Needs the GitHub CLI, authenticated. Exit 0, 2 on usage, 12 when gh cannot answer.
 set -eu
-set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/.ai/repo/ci/baseline.json"; RUNS=8; WORKFLOWS=""; NOTE=""; TABLE=0
 while [ $# -gt 0 ]; do

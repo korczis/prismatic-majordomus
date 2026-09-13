@@ -30,7 +30,6 @@
 #
 # Exit: 0 clean, 10 findings, 12 unusable.
 set -eu
-set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 findings=0
@@ -45,12 +44,8 @@ SCRIPT=scripts/release-version
 # ------------------------------------------------------ 1. the two sites are named the same
 # Both declarations are read; neither is written here, so this gate cannot become a third
 # copy of the fact it is holding together.
-# The first match, taken from the whole reading rather than through `head -n 1`: head closes
-# the pipe after one line, and a sed with a second match to write would die of SIGPIPE and
-# fail the pipeline under pipefail for having found more than the one thing asked for.
-first_line() { printf '%s\n' "${1%%$'\n'*}"; }
-rust_const() { first_line "$(sed -n "s/^pub const $1: &str = \"\\([^\"]*\\)\";/\\1/p" "$MODULE")"; }
-sh_path()    { first_line "$(sed -n "s|^$1=\"\\\$ROOT/\\(.*\\)\"\$|\\1|p" "$SCRIPT")"; }
+rust_const() { sed -n "s/^pub const $1: &str = \"\\([^\"]*\\)\";/\\1/p" "$MODULE" | head -n 1; }
+sh_path()    { sed -n "s|^$1=\"\\\$ROOT/\\(.*\\)\"\$|\\1|p" "$SCRIPT" | head -n 1; }
 
 for site in MANIFEST ENTRY; do
   from_rust="$(rust_const "$site")"
@@ -129,7 +124,7 @@ if [ "$authored" = 0 ]; then ok "no changelog is kept by hand"; fi
 newest=""
 for r in .ai/repo/releases/*.yaml; do
   [ -f "$r" ] || continue
-  v="$(first_line "$(sed -n 's/^version: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' "$r")")"
+  v="$(sed -n 's/^version: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' "$r" | head -n 1)"
   [ -n "$v" ] || continue
   newest="$(printf '%s\n%s\n' "$newest" "$v" | grep -v '^$' | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
 done

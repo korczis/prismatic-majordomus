@@ -7,7 +7,6 @@
 #   scripts/ci/shell-lint            lint everything
 #   scripts/ci/shell-lint --list     print what it would lint, one path per line
 set -eu
-set -o pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 # What is linted is discovered, not listed: every tracked file under bin/, lib/, scripts/
@@ -25,9 +24,7 @@ shell_files() {
       done
 }
 if [ "${1:-}" = --list ]; then shell_files; exit 0; fi
-# A discovery that cannot run is an empty set, and the emptiness is what is reported: the
-# `|| scripts=""` keeps the message below rather than letting pipefail exit 1 without one.
-scripts="$(shell_files | tr '\n' ' ')" || scripts=""
+scripts="$(shell_files | tr '\n' ' ')"
 [ -n "$scripts" ] || { echo "shell-lint: found no shell scripts to lint" >&2; exit 12; }
 echo "==> bash -n"
 # shellcheck disable=SC2086

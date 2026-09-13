@@ -11,6 +11,7 @@
 # repository: the distribution is read-only wherever it is installed. A rule file edited
 # without rewriting the manifest fails `check`, which the test suite runs.
 set -eu
+set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MJ_VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
 export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR

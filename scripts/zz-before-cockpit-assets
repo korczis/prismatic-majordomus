@@ -24,7 +24,6 @@
 # Node is a build dependency and never a runtime one: the Rust executable serves these
 # files from disk and has no idea they were built.
 set -eu
-set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/share/cockpit"
 SRC="$OUT/src/cockpit.css"
@@ -52,10 +51,7 @@ check_palette() {
   while IFS= read -r line; do
     name="${line%%:*}"; value="${line#*: }"
     case "$name" in *-[0-9]*|white|black) ;; *) continue ;; esac
-    # the first declaration, taken from the whole reading rather than through `head -1`,
-    # which closes the pipe and would kill a still-writing sed under pipefail
-    declared="$(sed -n "s/^[[:space:]]*--color-$name: \(.*\);/\1/p" "$theme")"
-    expected="${declared%%$'\n'*}"
+    expected="$(sed -n "s/^[[:space:]]*--color-$name: \(.*\);/\1/p" "$theme" | head -1)"
     [ -n "$expected" ] || { echo "cockpit-assets: palette.$name is named like a Tailwind step and Tailwind has none" >&2; bad=1; continue; }
     [ "$value" = "$expected" ] || { echo "cockpit-assets: palette.$name is $value; Tailwind's --color-$name is $expected" >&2; bad=1; }
   done <<< "$(awk '/^palette:/{p=1;next} p&&/^[a-z]/{p=0} p&&/^  [a-z]/{sub(/^  /,""); n=$0; sub(/:.*$/,"",n); v=$0; sub(/^[^:]*:[ \t]*/,"",v); if (v !~ /^"?#/) sub(/[ \t]+#.*$/,"",v); gsub(/"/,"",v); print n ": " v}' "$ROOT/share/design/tokens.yaml")"

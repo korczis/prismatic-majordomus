@@ -23,7 +23,6 @@
 #                                       rustc, Cargo.lock digest, profile) for a later job
 #   MJ_CI_TIMINGS=FILE                  append "rust-check<TAB>step<TAB>seconds" per step
 set -eu
-set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 # for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"

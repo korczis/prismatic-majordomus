@@ -26,7 +26,6 @@
 # Exit: 0 nothing else claims these paths · 11 something does (drift, the repository's own
 # code for "what you believe and what is true differ") · 2 usage.
 set -eu
-set -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -55,12 +54,8 @@ here="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
 # Every branch that is not this one and is not the base, local and remote. A branch merged
 # long ago still lists here and that is correct: its files are on the base, so the loop
 # below finds no unique claim and says nothing.
-# Read first, filtered second, so that git's failure is git's — a `grep -v` that empties the
-# list returns 1 for having nothing left, which is a repository with one branch and not an
-# error, and under pipefail the two statuses are indistinguishable inside one pipeline.
-all_branches="$(git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin)"
-branches="$(printf '%s\n' "$all_branches" \
-  | grep -v -x -e "$here" -e "$base" -e 'origin/HEAD' | LC_ALL=C sort -u || true)"
+branches="$(git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin \
+  | grep -v -x -e "$here" -e "$base" -e 'origin/HEAD' | LC_ALL=C sort -u)"
 
 found=0
 for path in "${paths[@]}"; do

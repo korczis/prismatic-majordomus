@@ -12,7 +12,6 @@
 # gate whether it was planned, which job carried it, and what that job reported.
 # Exit 0 green, 1 red, 2 usage.
 set -eu
-set -o pipefail
 PLAN=""; NEEDS=""; SUMMARY="${GITHUB_STEP_SUMMARY:-}"
 while [ $# -gt 0 ]; do
   case "$1" in

@@ -30,6 +30,7 @@
 #
 #   scripts/ci/reference-check [ROOT]     ROOT defaults to this checkout
 set -eu
+set -o pipefail
 ROOT="${1:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/mj-refcheck.XXXXXX")"

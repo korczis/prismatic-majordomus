@@ -30,6 +30,7 @@
 #
 # Exit: 0 clean, 10 findings, 12 unusable.
 set -eu
+set -o pipefail
 # Two roots, and conflating them is a bug the behavioural case caught: ROOT is the tree
 # being measured (a fixture, under MJ_ROOT), HERE is the tree this gate lives in. The
 # scanner under scripts/lib/ belongs to the gate, so it is read from HERE; a fixture has no

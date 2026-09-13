@@ -28,6 +28,7 @@
 #
 # Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
 set -eu
+set -o pipefail
 # MJ_ROOT lets the behavioural case point this at a fixture; without it the repository the
 # script lives in is the subject, which is what CI wants.
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"

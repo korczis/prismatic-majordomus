@@ -37,7 +37,6 @@
 #
 # Exit: 0 clean, 10 findings, 12 the site is not built, 13 no browser.
 set -eu
-set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CSS="$ROOT/site/static/app.css"
 # shellcheck source=../lib/rust_bin.sh
@@ -87,9 +86,7 @@ esac
 if [ "$sub" = check ]; then
   files="$( cd "$ROOT" && {
     git ls-files -- '*.html' '*.css' ':!site/public' ':!node_modules' 2>/dev/null || true
-    # an `if`, not `[ -d ] &&`: the AND-list's status is the block's, and under pipefail a
-    # directory that is simply not built would make the whole substitution fail.
-    for d in site/public target/web; do if [ -d "$d" ]; then find "$d" -name '*.html' -type f; fi; done
+    for d in site/public target/web; do [ -d "$d" ] && find "$d" -name '*.html' -type f; done
   } | LC_ALL=C sort -u )"
   [ -n "$files" ] || { echo "ui check: no markup in the work tree"; exit 0; }
   ( cd "$ROOT" && printf '%s\n' "$files" | node --input-type=module -e '

@@ -21,6 +21,7 @@
 #
 # Exit: 0 clean, 10 findings, 12 unusable.
 set -eu
+set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 SUITE=1

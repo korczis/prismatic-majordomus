@@ -8,7 +8,6 @@
 #
 #   MJ_CI_TIMINGS=FILE   append "core-check<TAB>step<TAB>seconds" per step
 set -eu
-set -o pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 t_step=""; last=""
@@ -45,11 +44,7 @@ bin/majordomus context resolve lib | grep -q '^01  ai.layer'
 # itself, not only in a fixture.
 step "continuity subsystem is reachable"
 bin/majordomus context --budget-lines 400 > /dev/null
-# the first byte, read from the whole answer rather than through `head -c 1`: head closes
-# the pipe at once, and under pipefail the command that is still writing its JSON dies of
-# SIGPIPE and a correct answer is read as a failure.
-context_json="$(bin/majordomus context --json)"
-case "$context_json" in '{'*) ;; *) echo "context --json did not answer with an object" >&2; exit 1 ;; esac
+bin/majordomus context --json | head -c 1 | grep -q '{'
 bin/majordomus history --validate
 bin/majordomus handover --resolve > /dev/null
 bin/majordomus checkpoint --list > /dev/null

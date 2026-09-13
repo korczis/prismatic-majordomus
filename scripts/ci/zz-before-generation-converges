@@ -22,7 +22,6 @@
 #
 # Exit: 0 the generator is a fixpoint · 10 it is not · 12 the executable is unusable.
 set -eu
-set -o pipefail
 
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
@@ -48,10 +47,7 @@ if run generate --repo "$ROOT" --check >/dev/null 2>&1; then
 fi
 
 printf 'generation-converges: FAIL generating twice did not converge:\n' >&2
-# `--check` is known to fail here — that is why this branch runs — so its failure is the
-# subject and not an error: the pipeline exists to indent a diagnostic, and under pipefail
-# it would otherwise end the script before the explanation below is printed.
-run generate --repo "$ROOT" --check 2>&1 | sed 's/^/  /' >&2 || true
+run generate --repo "$ROOT" --check 2>&1 | sed 's/^/  /' >&2
 cat >&2 <<'WHY'
 
   An artifact that differs here is written from a value that another artifact of the same

@@ -21,7 +21,6 @@
 #
 # Exit: 0 clean, 10 findings, 12 a dependency is missing.
 set -eu
-set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILT=""
 while [ $# -gt 0 ]; do case "$1" in
@@ -40,10 +39,7 @@ finding() { FINDINGS=$((FINDINGS + 1)); printf 'FAIL %s\n' "$1"; [ -n "${2:-}" ]
 # that is not the publication's would silently publish the wrong links.
 CONFIG="site/config.toml"
 [ -f "$CONFIG" ] || { echo "site-basepath-check: $CONFIG is missing" >&2; exit 12; }
-# the first declaration, taken from the whole reading rather than through `head -1`, which
-# closes the pipe and would kill a still-writing sed under pipefail
-BASE_LINES="$(sed -n 's/^base_url *= *"\(.*\)"/\1/p' "$CONFIG")"
-BASE="${BASE_LINES%%$'\n'*}"
+BASE="$(sed -n 's/^base_url *= *"\(.*\)"/\1/p' "$CONFIG" | head -1)"
 case "$BASE" in
   https://*) : ;;
   *) finding "site/config.toml base_url is '$BASE'" \

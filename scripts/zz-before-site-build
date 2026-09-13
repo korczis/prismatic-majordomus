@@ -13,7 +13,6 @@
 #                                 there is no second copy of the documentation anywhere.
 #   scripts/site-build --output-dir DIR   write the build into DIR instead of site/public
 set -eu
-set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; NODATA=0; BASE=""; OUT=""; SERVE=0
 # where a build for the running server goes and what it is mounted at; the same two values
 # the executable reads from web::discover (DOCS_ARTIFACT, DOCS_MOUNT)
