@@ -82,10 +82,33 @@ mkbuild "$FIX"
 
 # ------------------------------------------------- a porcelain larger than the pipe buffer
 # A `git` that is git in every respect but one: `worktree list --porcelain` is followed by
-# synthetic records, printed a line at a time as git prints its own. Nothing exists at those
-# paths, so the sweep passes over them without a verdict; what they change is the length of
-# the stream, which is the whole of the condition under test. The subcommand is found
-# positionally so that a `--porcelain` belonging to `git status` is never mistaken for this.
+# synthetic records, printed a record at a time. Nothing exists at those paths, so the sweep
+# passes over them without a verdict; what they change is the length of the stream, which is
+# the whole of the condition under test. The subcommand is found positionally so that a
+# `--porcelain` belonging to `git status` is never mistaken for this.
+#
+# The first version of this padding was 2000 records (~238KB) and reproduced the signal on a
+# Mac, while GitHub's ubuntu runner gave `old=0 new=0`. Two things decide whether a reader's
+# `exit` reaches its writer, and that version controlled neither:
+#
+# 1. HOW FAR THE READER READS AHEAD. mawk (Ubuntu's stock awk) asks for 262144 bytes on its
+#    first read of stdin and keeps reading until that buffer is full or the stream ends, before
+#    any rule runs. Traced in a Linux container: over 204KB it read everything in 11 reads, hit
+#    EOF, and only then ran `exit` — the writer had long finished, so nothing was abandoned.
+#    gawk and busybox awk took 141 at the same size; mawk took it at 2MB. So the padding is
+#    sized far past any read-ahead (PAD_RECORDS, and the floor below is asserted in bytes).
+#
+# 2. WHAT THE WRITER DOES WITH A WRITE NOBODY READS. A writer killed by SIGPIPE exits 141; one
+#    that inherited SIGPIPE ignored gets EPIPE instead, and a shell `printf` loop carries on and
+#    exits 0 (measured on macOS and in a Linux container alike). Whether the runner's steps
+#    inherit it ignored is inferred, not measured: its logs carry "sed: couldn't flush stdout:
+#    Broken pipe", which a writer killed by the signal never lives to print. Real git does not
+#    depend on it — it turns EPIPE into 141 itself (write_or_die.c, check_pipe; measured on
+#    macOS with SIGPIPE ignored) — so the padding does what git does: `|| exit 141`.
+#
+# Both are the forcing, and each is mutation-tested. When the signal is still not reproduced,
+# the report names the awk and the disposition it ran under.
+PAD_RECORDS=20000
 REALGIT="$(command -v git)"
 [ -n "$REALGIT" ] || { echo "    no git on PATH"; exit 2; }
 mkdir -p "$T/bin"
@@ -106,9 +129,9 @@ if [ "\$sub" = worktree ] && [ "\$PAD" -gt 0 ]; then
       i=0
       while [ \$i -lt "\$PAD" ]; do
         i=\$((i + 1))
-        printf 'worktree %s/nowhere/pad-%s\n' "$T" "\$i"
-        printf 'HEAD 0000000000000000000000000000000000000000\n'
-        printf 'branch refs/heads/pad-%s\n\n' "\$i"
+        # the forcing: a write nobody reads ends the writer, as in git
+        printf 'worktree %s/nowhere/pad-%s\nHEAD %s\nbranch refs/heads/pad-%s\n\n' \
+          "$T" "\$i" 0000000000000000000000000000000000000000 "\$i" || exit 141
       done
       exit 0 ;;
   esac
@@ -119,19 +142,21 @@ chmod +x "$T/bin/git"
 
 # the shim is git, and with padding asked for it is a much longer git
 plain_bytes="$(PATH="$T/bin:$PATH" git -C "$FIX" worktree list --porcelain | wc -c | tr -d ' ')"
-pad_bytes="$(PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=2000 git -C "$FIX" worktree list --porcelain | wc -c | tr -d ' ')"
+pad_bytes="$(PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS git -C "$FIX" worktree list --porcelain | wc -c | tr -d ' ')"
 [ "$plain_bytes" -gt 0 ] || { echo "    the git shim does not delegate: an unpadded porcelain came back empty"; exit 2; }
-[ "$pad_bytes" -gt 131072 ] || {
-  echo "    the padded porcelain is only $pad_bytes bytes, which no pipe buffer is smaller than;"
-  echo "    this case would pass without measuring anything"; exit 2; }
+# A pipe buffer is 64KB; mawk reads ahead 256KB. Four times the larger leaves a margin for
+# the reader nobody has traced yet.
+[ "$pad_bytes" -gt 1048576 ] || {
+  echo "    the padded porcelain is only $pad_bytes bytes, which a reader's read-ahead can swallow"
+  echo "    whole (mawk reads 256KB before it runs a rule); this case would measure nothing"; exit 2; }
 
 # and the padding does not invent a worktree the sweep has a verdict about
-PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=2000 MJ_ROOT="$FIX" "$REAPER" --targets > "$T/big.txt" 2>&1 || true
+PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS MJ_ROOT="$FIX" "$REAPER" --targets > "$T/big.txt" 2>&1 || true
 expect_no_grep 'pad-[0-9]' "$T/big.txt"
 
 # ---------------------------------------------------------------- 1. it survives the stream
 rc=0
-PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=2000 MJ_ROOT="$FIX" "$REAPER" --targets > "$T/big.txt" 2>&1 || rc=$?
+PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS MJ_ROOT="$FIX" "$REAPER" --targets > "$T/big.txt" 2>&1 || rc=$?
 LAST_OUT="$(cat "$T/big.txt")"
 [ "$rc" != 141 ] || {
   echo "    the sweep died of SIGPIPE (141) reading a $pad_bytes-byte worktree listing:"
@@ -141,6 +166,16 @@ LAST_OUT="$(cat "$T/big.txt")"
 expect_grep 'idle.*would reclaim'
 expect_grep 'reap-orphans: build output —'
 # the primary checkout is still excluded by name, which is the reading that was breaking
+expect_grep "keep — this checkout's own"
+# and the same with SIGPIPE ignored, the disposition CI's runner hands its steps
+rc=0
+(trap '' PIPE; PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS MJ_ROOT="$FIX" \
+  exec "$REAPER" --targets) > "$T/big-ign.txt" 2>&1 || rc=$?
+LAST_OUT="$(cat "$T/big-ign.txt")"
+[ "$rc" = 10 ] || {
+  echo "    with SIGPIPE ignored the sweep over a long listing exited $rc, not 10:"
+  sed 's/^/      /' "$T/big-ign.txt"; exit 1; }
+expect_grep 'idle.*would reclaim'
 expect_grep "keep — this checkout's own"
 
 # ---------------------------------------------------------------- 2. a consent's subject
@@ -253,24 +288,94 @@ mutate() {
 # M0 — the signal itself, on the two readers in isolation. The reaper no longer exits 141
 # because the guard beside the repaired reader converts any failure of that pipeline into a
 # refusal, so the raw 141 is proved here, where nothing stands between it and the assertion.
+#
+# "new" is not a copy of the repaired reader: it is the awk program cut out of the reaper
+# itself, so a reaper whose reader regresses turns this red too. "old" is the reader as it
+# was, kept literally because it is the reference the repair is measured against.
+# Fixed strings, handed to awk through the environment: `-v` would process their backslashes.
+READER_OPEN='  main_wt="$(git -C "$ROOT" worktree list --porcelain 2>/dev/null | awk '"'"
+READER_CLOSE="')\" || main_wt=\"\""
+[ "$(grep -cxF -- "$READER_OPEN" "$REAPER")" = 1 ] || {
+  echo "    the reaper's primary-checkout reader is not where this case looks for it (exactly one"
+  echo "    line reading: $READER_OPEN): the reader under test cannot be located, so it is untested"
+  exit 1; }
+NEW_READER="$(READER_OPEN="$READER_OPEN" READER_CLOSE="$READER_CLOSE" awk '
+  BEGIN { opener = ENVIRON["READER_OPEN"]; closer = ENVIRON["READER_CLOSE"] }
+  !on && $0 == opener { on = 1; next }
+  on {
+    n = length($0) - length(closer)
+    if (n >= 0 && substr($0, n + 1) == closer) { print substr($0, 1, n); found = 1; exit }
+    print
+  }
+  END { if (!found) exit 1 }' "$REAPER")" || {
+  echo "    the reaper's primary-checkout reader has no closing line: it cannot be cut out"
+  exit 1; }
+case "$NEW_READER" in
+  *'$1 == "worktree"'*) : ;;
+  *) echo "    what was cut out of the reaper is not a worktree reader:"
+     printf '%s\n' "$NEW_READER" | sed 's/^/      /'; exit 1 ;;
+esac
+OLD_READER='NR == 1 && $1 == "worktree" { print substr($0, 10); exit }'
+export NEW_READER OLD_READER
+
 cat > "$T/readers.sh" <<'READERS'
 #!/usr/bin/env bash
 set -u
 set -o pipefail
 old=0
-git -C "$1" worktree list --porcelain 2>/dev/null \
-  | awk 'NR == 1 && $1 == "worktree" { print substr($0, 10); exit }' >/dev/null || old=$?
+git -C "$1" worktree list --porcelain 2>/dev/null | awk "$OLD_READER" >/dev/null || old=$?
 new=0
-git -C "$1" worktree list --porcelain 2>/dev/null \
-  | awk '$1 == "worktree" && !seen { seen = 1; f = substr($0, 10) } END { if (seen) print f }' >/dev/null || new=$?
+git -C "$1" worktree list --porcelain 2>/dev/null | awk "$NEW_READER" > "$2" || new=$?
 echo "old=$old new=$new"
 READERS
 chmod +x "$T/readers.sh"
-sig="$(PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=2000 "$T/readers.sh" "$FIX")"
-[ "$sig" = "old=141 new=0" ] || {
-  echo "    over a $pad_bytes-byte porcelain the two readers gave '$sig', not 'old=141 new=0':"
-  echo "    the signal this repair is about was not reproduced, so nothing below measures it"
-  exit 1; }
+
+# The disposition this process inherited, for the report: on Linux it is readable, elsewhere
+# it is at least named as unknown rather than guessed.
+disposition() {
+  local ign
+  ign="$(sed -n 's/^SigIgn:[[:space:]]*//p' /proc/self/status 2>/dev/null || true)"
+  [ -n "$ign" ] || { echo "inherited SIGPIPE disposition unreadable on $(uname -s)"; return; }
+  if [ $(( 0x$ign & 0x1000 )) -ne 0 ]; then echo "SIGPIPE inherited ignored (SigIgn $ign)"
+  else echo "SIGPIPE inherited default (SigIgn $ign)"; fi
+}
+# Which awk: the one on PATH, resolved, with the first line of whichever version flag it has.
+awk_identity() {
+  local p v
+  p="$(command -v awk)"
+  p="$(readlink -f "$p" 2>/dev/null || printf '%s' "$p")"
+  v="$(awk -W version 2>/dev/null </dev/null | head -n 1 || true)"
+  [ -n "$v" ] || v="$(awk --version 2>/dev/null </dev/null | head -n 1 || true)"
+  printf '%s (%s)' "$p" "${v:-version unknown}"
+}
+
+# The primary checkout's name, read to the end with nothing clever: what the reaper's reader
+# must print.
+primary="$(git -C "$FIX" worktree list --porcelain | sed -n 's/^worktree //p' | head -n 1)" || true
+[ -n "$primary" ] || { echo "    the fixture's own porcelain names no primary checkout"; exit 2; }
+
+# Twice: under whatever this process inherited, and with SIGPIPE ignored explicitly — the
+# runner's condition, forced on every platform so that neither disposition is left untested.
+# `trap '' PIPE` before exec leaves the child with SIGPIPE ignored, as a parent that ignores it
+# would. The reverse cannot be forced from a shell: a signal ignored on entry cannot be reset.
+for mode in inherited ignored; do
+  : > "$T/new-reader.out"
+  if [ "$mode" = ignored ]; then
+    sig="$(trap '' PIPE; PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS \
+      exec "$T/readers.sh" "$FIX" "$T/new-reader.out")"
+  else
+    sig="$(PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS \
+      "$T/readers.sh" "$FIX" "$T/new-reader.out")"
+  fi
+  [ "$sig" = "old=141 new=0" ] || {
+    echo "    over a $pad_bytes-byte porcelain, in the '$mode' pass ($(disposition)),"
+    echo "    read by $(awk_identity), the two readers gave '$sig', not 'old=141 new=0':"
+    echo "    the signal this repair is about was not reproduced, so nothing below measures it"
+    exit 1; }
+  [ "$(cat "$T/new-reader.out")" = "$primary" ] || {
+    echo "    with SIGPIPE $mode the reaper's reader survived the stream but printed"
+    echo "    '$(cat "$T/new-reader.out")', not the primary checkout '$primary'"; exit 1; }
+done
 
 # M1 — put the early-exiting reader back into the reaper. It must stop producing a verdict,
 # and must say why: the primary checkout is excluded by name, and over a listing this long
@@ -279,16 +384,28 @@ m="$(mutate sigpipe \
   's/{ seen = 1; first = substr(\$0, 10) }/{ print substr($0, 10); exit }/' \
   'seen = 1; first = substr' \
   'print substr\(\$0, 10\); exit')" || exit 1
-rc=0
-PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=2000 MJ_ROOT="$FIX" "$m" --targets > "$T/m1.txt" 2>&1 || rc=$?
-[ "$rc" != 10 ] || {
-  echo "    M1 (the early-exiting reader restored) still exited 10: the repaired reader is not"
-  echo "    load-bearing and the assertion above proves nothing"; sed 's/^/      /' "$T/m1.txt"; exit 1; }
-grep -q 'primary checkout could not be identified' "$T/m1.txt" || {
-  echo "    M1 failed for some reason other than the reading under test:"; sed 's/^/      /' "$T/m1.txt"; exit 1; }
-# fail-closed even mutated: it refused rather than sweeping without the exclusion
-grep -q 'INCOMPLETE' "$T/m1.txt" || { echo "    M1 did not report itself incomplete"; exit 1; }
-expect_file "$FIX/apps/majordomus-cli/target/MARKER"
+# Under both dispositions, as M0: the runner's is forced here on every platform.
+for mode in inherited ignored; do
+  rc=0
+  if [ "$mode" = ignored ]; then
+    (trap '' PIPE; PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS MJ_ROOT="$FIX" \
+      exec "$m" --targets) > "$T/m1.txt" 2>&1 || rc=$?
+  else
+    PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS MJ_ROOT="$FIX" \
+      "$m" --targets > "$T/m1.txt" 2>&1 || rc=$?
+  fi
+  [ "$rc" != 10 ] || {
+    echo "    M1 (the early-exiting reader restored) still exited 10 with SIGPIPE $mode: the"
+    echo "    repaired reader is not load-bearing and the assertion above proves nothing"
+    sed 's/^/      /' "$T/m1.txt"; exit 1; }
+  grep -q 'primary checkout could not be identified' "$T/m1.txt" || {
+    echo "    M1 failed with SIGPIPE $mode for some reason other than the reading under test:"
+    sed 's/^/      /' "$T/m1.txt"; exit 1; }
+  # fail-closed even mutated: it refused rather than sweeping without the exclusion
+  grep -q 'INCOMPLETE' "$T/m1.txt" || {
+    echo "    M1 did not report itself incomplete ($mode)"; exit 1; }
+  expect_file "$FIX/apps/majordomus-cli/target/MARKER"
+done
 
 # M2 — stop a consent from selecting its subject. The case must see `--reclaim` table servers.
 m="$(mutate scope \
@@ -323,7 +440,7 @@ cp "$REAPER" "$MUT/control"
 chmod +x "$MUT/control"
 mkbuild "$WTS/idle"   # M2's --reclaim consumed it, and a control with nothing to find is not one
 rc=0
-PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=2000 MJ_ROOT="$FIX" "$MUT/control" --targets > "$T/control.txt" 2>&1 || rc=$?
+PATH="$T/bin:$PATH" MJ_PORCELAIN_PAD=$PAD_RECORDS MJ_ROOT="$FIX" "$MUT/control" --targets > "$T/control.txt" 2>&1 || rc=$?
 [ "$rc" = 10 ] || {
   echo "    the unmutated control exited $rc, not 10: the mutants above failed because they"
   echo "    were moved, not because they were mutated"; sed 's/^/      /' "$T/control.txt"; exit 1; }
