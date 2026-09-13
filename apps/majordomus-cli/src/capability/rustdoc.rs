@@ -50,6 +50,16 @@ use serde_json::Value;
 ///
 /// Returns the text unchanged when it carries nothing rustdoc-only, so a description that
 /// was already portable is not rewritten and the generated artifacts do not churn.
+///
+/// ```
+/// use majordomus_cli::capability::rustdoc::to_commonmark;
+///
+/// let doc = "Distinct from [`WaiverReason::ExternalDependency`]: nothing else.";
+/// assert_eq!(to_commonmark(doc), "Distinct from `WaiverReason::ExternalDependency`: nothing else.");
+///
+/// // portable text comes back as it went in
+/// assert_eq!(to_commonmark("Already *CommonMark*."), "Already *CommonMark*.");
+/// ```
 pub fn to_commonmark(doc: &str) -> String {
     // Nothing to do for the overwhelming majority of descriptions: a scan is far cheaper
     // than a rewrite, and this runs for every property of every schema of every capability.
@@ -194,7 +204,11 @@ fn rewrite_links(line: &str, orphaned: &BTreeSet<String>) -> String {
 }
 
 /// The rustdoc link starting at `start`, as the text it should become and where to resume.
-fn link_at<'a>(line: &'a str, start: usize, orphaned: &BTreeSet<String>) -> Option<(&'a str, usize)> {
+fn link_at<'a>(
+    line: &'a str,
+    start: usize,
+    orphaned: &BTreeSet<String>,
+) -> Option<(&'a str, usize)> {
     let rest = &line[start + 1..];
     let close = rest.find(']')?;
     let inner = &rest[..close];
@@ -233,6 +247,20 @@ fn link_at<'a>(line: &'a str, start: usize, orphaned: &BTreeSet<String>) -> Opti
 ///
 /// schemars writes one for the type and one for each field, at every depth the type
 /// reaches, so the walk is the whole document rather than its root.
+///
+/// ```
+/// use majordomus_cli::capability::rustdoc::translate_descriptions;
+///
+/// let mut schema = serde_json::json!({
+///     "description": "A [`Root::Thing`].",
+///     "properties": { "field": { "description": "See [`Other::Field`]." } },
+///     "title": "Only descriptions are prose [`Kept`]."
+/// });
+/// translate_descriptions(&mut schema);
+/// assert_eq!(schema["description"], "A `Root::Thing`.");
+/// assert_eq!(schema["properties"]["field"]["description"], "See `Other::Field`.");
+/// assert_eq!(schema["title"], "Only descriptions are prose [`Kept`].");
+/// ```
 pub fn translate_descriptions(value: &mut Value) {
     match value {
         Value::Object(map) => {
@@ -267,7 +295,10 @@ mod tests {
 
     #[test]
     fn a_long_form_intra_doc_link_loses_its_unreachable_destination() {
-        assert_eq!(to_commonmark("one of [`EDGES`](select::EDGES)"), "one of `EDGES`");
+        assert_eq!(
+            to_commonmark("one of [`EDGES`](select::EDGES)"),
+            "one of `EDGES`"
+        );
     }
 
     #[test]
@@ -315,7 +346,10 @@ mod tests {
         });
         translate_descriptions(&mut value);
         assert_eq!(value["description"], "A `Root::Thing`.");
-        assert_eq!(value["properties"]["field"]["description"], "See `Other::Field`.");
+        assert_eq!(
+            value["properties"]["field"]["description"],
+            "See `Other::Field`."
+        );
         assert_eq!(value["title"], "Untouched [`Not::A::Description`].");
     }
 }
