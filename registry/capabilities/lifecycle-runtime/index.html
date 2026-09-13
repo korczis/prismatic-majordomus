@@ -200,9 +200,9 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;Empty&quot;,
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
+  &quot;title&quot;: &quot;Empty&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -250,66 +250,114 @@ assert_ne!(frozen.served_head, frozen.repository_head);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">repository_head</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The commit the repository is on, read on this call.</td>
+        <td class="px-3 py-2 font-mono text-heading">agree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the two agree on the commit and the branch.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">index_state</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">`ok` or `degraded`.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">root</td>
+        <td class="px-3 py-2 font-mono text-heading">note</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The repository root this process is serving.</td>
+        <td class="px-3 py-2 text-body">What the comparison means, and what to do when it disagrees.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">objects</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many objects the served index holds, and whether it was degraded.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">agree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the two agree on the commit and the branch.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">served_branch</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Its branch, or `DETACHED`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">served_working_tree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Whether the working tree was clean when the index was built.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">note</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the comparison means, and what to do when it disagrees.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repository_branch</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Its branch now.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">repository_head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The commit the repository is on, read on this call.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repository_working_tree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The working tree now.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">root</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The repository root this process is serving.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">served_branch</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Its branch, or `DETACHED`.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">served_head</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The commit the served index was built at.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">served_working_tree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Whether the working tree was clean when the index was built.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.\n\n`agree` is the field with the operational meaning, and what it says is *not* \&quot;the\nrepository is fine\&quot; but \&quot;the answers you are reading are about the tree you are looking\nat\&quot;. When it is false every other capability this process serves is answering about a\ncommit that is no longer checked out, and nothing else in the API would tell you.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::RuntimeView;\nuse serde_json::json;\n\nlet view = |served: &amp;str, repo: &amp;str, agree: bool| -&gt; RuntimeView {\n    serde_json::from_value(json!({\n        \&quot;root\&quot;: \&quot;example/repo\&quot;,\n        \&quot;served_head\&quot;: served, \&quot;served_branch\&quot;: \&quot;master\&quot;, \&quot;served_working_tree\&quot;: \&quot;clean\&quot;,\n        \&quot;repository_head\&quot;: repo, \&quot;repository_branch\&quot;: \&quot;master\&quot;,\n        \&quot;repository_working_tree\&quot;: \&quot;clean\&quot;,\n        \&quot;agree\&quot;: agree, \&quot;objects\&quot;: 1319, \&quot;index_state\&quot;: \&quot;ok\&quot;,\n        \&quot;note\&quot;: \&quot;as measured on this call\&quot;,\n    })).unwrap()\n};\n\n// a server following the repository: one `git` invocation buys the proof\nlet current = view(\&quot;a1b2c3d\&quot;, \&quot;a1b2c3d\&quot;, true);\nassert!(current.agree);\nassert_eq!(current.served_head, current.repository_head);\nassert_eq!(current.index_state, \&quot;ok\&quot;);\n\n// and one that froze its index at start-up: every answer it serves is about the old commit\nlet frozen = view(\&quot;a1b2c3d\&quot;, \&quot;9f8e7d6\&quot;, false);\nassert!(!frozen.agree);\nassert_ne!(frozen.served_head, frozen.repository_head);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;agree&quot;: {
+      &quot;description&quot;: &quot;Whether the two agree on the commit and the branch.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;index_state&quot;: {
+      &quot;description&quot;: &quot;`ok` or `degraded`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;note&quot;: {
+      &quot;description&quot;: &quot;What the comparison means, and what to do when it disagrees.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;objects&quot;: {
+      &quot;description&quot;: &quot;How many objects the served index holds, and whether it was degraded.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;repository_branch&quot;: {
+      &quot;description&quot;: &quot;Its branch now.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;repository_head&quot;: {
+      &quot;description&quot;: &quot;The commit the repository is on, read on this call.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;repository_working_tree&quot;: {
+      &quot;description&quot;: &quot;The working tree now.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;root&quot;: {
+      &quot;description&quot;: &quot;The repository root this process is serving.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;served_branch&quot;: {
+      &quot;description&quot;: &quot;Its branch, or `DETACHED`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;served_head&quot;: {
+      &quot;description&quot;: &quot;The commit the served index was built at.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;served_working_tree&quot;: {
+      &quot;description&quot;: &quot;Whether the working tree was clean when the index was built.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
   &quot;required&quot;: [
     &quot;root&quot;,
     &quot;agree&quot;,
@@ -317,56 +365,8 @@ assert_ne!(frozen.served_head, frozen.repository_head);
     &quot;index_state&quot;,
     &quot;note&quot;
   ],
-  &quot;properties&quot;: {
-    &quot;repository_head&quot;: {
-      &quot;description&quot;: &quot;The commit the repository is on, read on this call.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;index_state&quot;: {
-      &quot;description&quot;: &quot;`ok` or `degraded`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;root&quot;: {
-      &quot;description&quot;: &quot;The repository root this process is serving.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;objects&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;How many objects the served index holds, and whether it was degraded.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0
-    },
-    &quot;agree&quot;: {
-      &quot;description&quot;: &quot;Whether the two agree on the commit and the branch.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;served_branch&quot;: {
-      &quot;description&quot;: &quot;Its branch, or `DETACHED`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;served_working_tree&quot;: {
-      &quot;description&quot;: &quot;Whether the working tree was clean when the index was built.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;note&quot;: {
-      &quot;description&quot;: &quot;What the comparison means, and what to do when it disagrees.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;repository_branch&quot;: {
-      &quot;description&quot;: &quot;Its branch now.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;repository_working_tree&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The working tree now.&quot;
-    },
-    &quot;served_head&quot;: {
-      &quot;description&quot;: &quot;The commit the served index was built at.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.\n\n`agree` is the field with the operational meaning, and what it says is *not* \&quot;the\nrepository is fine\&quot; but \&quot;the answers you are reading are about the tree you are looking\nat\&quot;. When it is false every other capability this process serves is answering about a\ncommit that is no longer checked out, and nothing else in the API would tell you.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::RuntimeView;\nuse serde_json::json;\n\nlet view = |served: &amp;str, repo: &amp;str, agree: bool| -&gt; RuntimeView {\n    serde_json::from_value(json!({\n        \&quot;root\&quot;: \&quot;example/repo\&quot;,\n        \&quot;served_head\&quot;: served, \&quot;served_branch\&quot;: \&quot;master\&quot;, \&quot;served_working_tree\&quot;: \&quot;clean\&quot;,\n        \&quot;repository_head\&quot;: repo, \&quot;repository_branch\&quot;: \&quot;master\&quot;,\n        \&quot;repository_working_tree\&quot;: \&quot;clean\&quot;,\n        \&quot;agree\&quot;: agree, \&quot;objects\&quot;: 1319, \&quot;index_state\&quot;: \&quot;ok\&quot;,\n        \&quot;note\&quot;: \&quot;as measured on this call\&quot;,\n    })).unwrap()\n};\n\n// a server following the repository: one `git` invocation buys the proof\nlet current = view(\&quot;a1b2c3d\&quot;, \&quot;a1b2c3d\&quot;, true);\nassert!(current.agree);\nassert_eq!(current.served_head, current.repository_head);\nassert_eq!(current.index_state, \&quot;ok\&quot;);\n\n// and one that froze its index at start-up: every answer it serves is about the old commit\nlet frozen = view(\&quot;a1b2c3d\&quot;, \&quot;9f8e7d6\&quot;, false);\nassert!(!frozen.agree);\nassert_ne!(frozen.served_head, frozen.repository_head);\n```&quot;,
-  &quot;title&quot;: &quot;RuntimeView&quot;
+  &quot;title&quot;: &quot;RuntimeView&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -400,7 +400,7 @@ assert_ne!(frozen.served_head, frozen.repository_head);
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::lifecycle</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RuntimeView</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -472,7 +472,7 @@ assert_ne!(frozen.served_head, frozen.repository_head);
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

@@ -220,10 +220,8 @@ carries a committed registry.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;ReleaseAnalysisInput&quot;,
-  &quot;description&quot;: &quot;Which release to measure this tree against.\n\n```\nuse majordomus_cli::capability::builtin::release::AnalysisInput;\n// Absent means the last release the layer records, which is the canonical baseline.\nlet input = AnalysisInput::default();\nassert!(input.since.is_none());\nlet explicit = AnalysisInput { since: Some(\&quot;v0.4.0\&quot;.into()) };\nassert_eq!(explicit.since.as_deref(), Some(\&quot;v0.4.0\&quot;));\n```&quot;,
   &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which release to measure this tree against.\n\n```\nuse majordomus_cli::capability::builtin::release::AnalysisInput;\n// Absent means the last release the layer records, which is the canonical baseline.\nlet input = AnalysisInput::default();\nassert!(input.since.is_none());\nlet explicit = AnalysisInput { since: Some(\&quot;v0.4.0\&quot;.into()) };\nassert_eq!(explicit.since.as_deref(), Some(\&quot;v0.4.0\&quot;));\n```&quot;,
   &quot;properties&quot;: {
     &quot;since&quot;: {
       &quot;description&quot;: &quot;A ref to compare with instead of the last release: `v0.4.0`, or any commit that\ncarries a committed registry.&quot;,
@@ -232,7 +230,9 @@ carries a committed registry.</td>
         &quot;null&quot;
       ]
     }
-  }
+  },
+  &quot;title&quot;: &quot;ReleaseAnalysisInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -277,85 +277,85 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">implied</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the surface movement amounts to on its own.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">changes</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every movement of the contract, worst first.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">required</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the policy requires of it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The fingerprint of this tree&#39;s surface.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">understated</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the commit subjects understate what the contract actually did.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">required_version</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The smallest version this tree may declare.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tool_version</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The version `bin/majordomus` prints, and whether the two agree.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">declared</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the two version numbers already represent.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">breaking</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether anything a caller could hold is gone.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">atoms</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many public atoms this tree carries.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">commits</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the commits said about themselves.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Anything incoherent about the release state, whatever the verdict.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">baseline</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The release this was measured against.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">breaking</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether anything a caller could hold is gone.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">changes</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every movement of the contract, worst first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">commits</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What the commits said about themselves.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">declared</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What the two version numbers already represent.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">declared_version</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The version the crate manifest declares.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Anything incoherent about the release state, whatever the verdict.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The fingerprint of this tree&#39;s surface.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">implied</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What the surface movement amounts to on its own.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">policy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The policy the verdict was reached under.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">required</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What the policy requires of it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">required_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The smallest version this tree may declare.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">status</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Whether it does.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">policy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">tool_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The policy the verdict was reached under.</td>
+        <td class="px-3 py-2 text-body">The version `bin/majordomus` prints, and whether the two agree.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">understated</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the commit subjects understate what the contract actually did.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">writers_agree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -366,107 +366,108 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;required&quot;: [
-    &quot;policy&quot;,
-    &quot;baseline&quot;,
-    &quot;declared_version&quot;,
-    &quot;tool_version&quot;,
-    &quot;writers_agree&quot;,
-    &quot;atoms&quot;,
-    &quot;fingerprint&quot;,
-    &quot;implied&quot;,
-    &quot;required&quot;,
-    &quot;declared&quot;,
-    &quot;required_version&quot;,
-    &quot;status&quot;,
-    &quot;breaking&quot;,
-    &quot;changes&quot;,
-    &quot;commits&quot;,
-    &quot;understated&quot;
-  ],
   &quot;$defs&quot;: {
+    &quot;ReleaseBaseline&quot;: {
+      &quot;description&quot;: &quot;The release this tree is measured against, and how it was found.\n\n```\nuse majordomus_cli::release::compat::Baseline;\nlet baseline = Baseline {\n    version: \&quot;0.5.0\&quot;.into(),\n    reference: \&quot;v0.5.0\&quot;.into(),\n    read_at: \&quot;3a032c1e033b\&quot;.into(),\n    commit: \&quot;3a032c1e033b\&quot;.into(),\n    recorded: true,\n    atoms: 300,\n    fingerprint: \&quot;sha256:…\&quot;.into(),\n};\n// `recorded` is the half that matters: a baseline taken from a tag alone is reported.\nassert!(baseline.recorded);\nassert_eq!(baseline.reference, \&quot;v0.5.0\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;atoms&quot;: {
+          &quot;description&quot;: &quot;How many public atoms it published.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The commit that ref resolved to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;fingerprint&quot;: {
+          &quot;description&quot;: &quot;The fingerprint of the surface it published.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;read_at&quot;: {
+          &quot;description&quot;: &quot;The ref the surface was actually read from — the commit the release record names,\nwhich a clone always has, rather than a tag it may not.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;recorded&quot;: {
+          &quot;description&quot;: &quot;Whether the layer holds a release record for it, which is what makes it canonical\nrather than the newest thing that looked like a tag.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;reference&quot;: {
+          &quot;description&quot;: &quot;`v0.5.0`: the release, as a reader recognises it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;`0.5.0`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;version&quot;,
+        &quot;reference&quot;,
+        &quot;read_at&quot;,
+        &quot;commit&quot;,
+        &quot;recorded&quot;,
+        &quot;atoms&quot;,
+        &quot;fingerprint&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseChangeDirection&quot;: {
+      &quot;description&quot;: &quot;Whether a change added, removed or altered part of the contract.\n\n```\nuse majordomus_cli::release::compat::Direction;\nassert_eq!(Direction::Removed.sign(), &#39;-&#39;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;added&quot;,
+          &quot;description&quot;: &quot;It was not there before.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;removed&quot;,
+          &quot;description&quot;: &quot;It was there before and is not now.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;changed&quot;,
+          &quot;description&quot;: &quot;It is there in both, and differs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;ReleaseCommitEvidence&quot;: {
       &quot;description&quot;: &quot;What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that [`VersionPlan::understated`] can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied &lt; Impact::Minor);\n```&quot;,
-      &quot;required&quot;: [
-        &quot;commits&quot;,
-        &quot;implied&quot;
-      ],
       &quot;properties&quot;: {
         &quot;breaking&quot;: {
+          &quot;description&quot;: &quot;The subjects of the ones that claimed to be breaking.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;description&quot;: &quot;The subjects of the ones that claimed to be breaking.&quot;,
           &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;commits&quot;: {
+          &quot;description&quot;: &quot;How many commits since the baseline.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;implied&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
           &quot;description&quot;: &quot;What their conventional-commit types alone would have implied.&quot;
-        },
-        &quot;commits&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many commits since the baseline.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;commits&quot;,
+        &quot;implied&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ReleaseSurfaceKind&quot;: {
-      &quot;description&quot;: &quot;Which projection of the contract a change is in.\n\nNot where it was *found* — everything here is found in the registry — but which promise\nit is, so that a reader sees \&quot;a route is gone\&quot; rather than a JSON pointer.\n\n```\nuse majordomus_cli::release::compat::SurfaceKind;\nassert_eq!(SurfaceKind::Http.as_str(), \&quot;route\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;capability&quot;,
-          &quot;description&quot;: &quot;The capability itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;kind&quot;,
-          &quot;description&quot;: &quot;Whether calling it changes anything.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;An MCP tool name.&quot;,
-          &quot;const&quot;: &quot;mcp_tool&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;An MCP resource URI.&quot;,
-          &quot;const&quot;: &quot;mcp_resource&quot;
-        },
-        {
-          &quot;const&quot;: &quot;http&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;An HTTP method and path.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A command-line path.&quot;,
-          &quot;const&quot;: &quot;cli&quot;
-        },
-        {
-          &quot;const&quot;: &quot;input&quot;,
-          &quot;description&quot;: &quot;What a caller may send.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What a caller is promised back.&quot;,
-          &quot;const&quot;: &quot;output&quot;
-        }
-      ]
     },
     &quot;ReleaseDiagnostic&quot;: {
       &quot;description&quot;: &quot;Something about the release state that a person should be told, whatever the verdict.\n\n```\nuse majordomus_cli::release::compat::{Diagnostic, Severity};\nlet d = Diagnostic {\n    id: \&quot;tag-without-record\&quot;.into(),\n    severity: Severity::Warning,\n    message: \&quot;v0.1.0 is tagged and the layer holds no release record for it\&quot;.into(),\n};\nassert_eq!(d.severity, Severity::Warning, \&quot;a warning states the plan still stands\&quot;);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;`tag-without-record`, `record-without-tag`, `tag-commit-mismatch`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;severity&quot;: {
@@ -478,140 +479,33 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
         &quot;id&quot;,
         &quot;severity&quot;,
         &quot;message&quot;
-      ]
-    },
-    &quot;ReleasePolicyMode&quot;: {
-      &quot;description&quot;: &quot;How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \&quot;anything MAY change at any\ntime\&quot; — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: [`Mode::Semver`] is the ordinary rule, and the transition is\none line of [`Policy::required_of`].\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\&quot;0.9.0\&quot;).unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\&quot;1.0.0\&quot;).unwrap()).mode, Mode::Semver);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;pre1-0-strict&quot;,
-          &quot;description&quot;: &quot;Below `1.0.0`: breaking changes are allowed, and cost a minor rather than nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;At or above `1.0.0`: the impact is the requirement.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;semver&quot;
-        }
-      ]
-    },
-    &quot;ReleaseBaseline&quot;: {
-      &quot;required&quot;: [
-        &quot;version&quot;,
-        &quot;reference&quot;,
-        &quot;read_at&quot;,
-        &quot;commit&quot;,
-        &quot;recorded&quot;,
-        &quot;atoms&quot;,
-        &quot;fingerprint&quot;
       ],
-      &quot;description&quot;: &quot;The release this tree is measured against, and how it was found.\n\n```\nuse majordomus_cli::release::compat::Baseline;\nlet baseline = Baseline {\n    version: \&quot;0.5.0\&quot;.into(),\n    reference: \&quot;v0.5.0\&quot;.into(),\n    read_at: \&quot;3a032c1e033b\&quot;.into(),\n    commit: \&quot;3a032c1e033b\&quot;.into(),\n    recorded: true,\n    atoms: 300,\n    fingerprint: \&quot;sha256:…\&quot;.into(),\n};\n// `recorded` is the half that matters: a baseline taken from a tag alone is reported.\nassert!(baseline.recorded);\nassert_eq!(baseline.reference, \&quot;v0.5.0\&quot;);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;commit&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The commit that ref resolved to.&quot;
-        },
-        &quot;atoms&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many public atoms it published.&quot;
-        },
-        &quot;fingerprint&quot;: {
-          &quot;description&quot;: &quot;The fingerprint of the surface it published.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;read_at&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The ref the surface was actually read from — the commit the release record names,\nwhich a clone always has, rather than a tag it may not.&quot;
-        },
-        &quot;reference&quot;: {
-          &quot;description&quot;: &quot;`v0.5.0`: the release, as a reader recognises it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;version&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`0.5.0`.&quot;
-        },
-        &quot;recorded&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether the layer holds a release record for it, which is what makes it canonical\nrather than the newest thing that looked like a tag.&quot;
-        }
-      }
-    },
-    &quot;ReleaseChangeDirection&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;added&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It was not there before.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It was there before and is not now.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;removed&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;changed&quot;,
-          &quot;description&quot;: &quot;It is there in both, and differs.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Whether a change added, removed or altered part of the contract.\n\n```\nuse majordomus_cli::release::compat::Direction;\nassert_eq!(Direction::Removed.sign(), &#39;-&#39;);\n```&quot;
-    },
-    &quot;ReleaseSurfaceChange&quot;: {
-      &quot;properties&quot;: {
-        &quot;direction&quot;: {
-          &quot;description&quot;: &quot;Added, removed, or altered.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeDirection&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The thing itself: `GET /api/v1/foo`, `majordomus_release_analysis`, `release.analysis`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;impact&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
-          &quot;description&quot;: &quot;How much it moves the contract on its own.&quot;
-        },
-        &quot;capability&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The capability it belongs to.&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;Why this impact and not a smaller one, in one clause.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;surface&quot;: {
-          &quot;description&quot;: &quot;Which promise it is.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseSurfaceKind&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;impact&quot;,
-        &quot;direction&quot;,
-        &quot;surface&quot;,
-        &quot;capability&quot;,
-        &quot;id&quot;,
-        &quot;detail&quot;
-      ],
-      &quot;description&quot;: &quot;One movement of the public contract, with the reason it counts for what it does.\n\n```\nuse majordomus_cli::release::compat::{Direction, Impact, SurfaceChange, SurfaceKind};\nlet change = SurfaceChange {\n    impact: Impact::Major,\n    direction: Direction::Removed,\n    surface: SurfaceKind::Http,\n    capability: \&quot;alpha.list\&quot;.into(),\n    id: \&quot;GET /api/v1/alpha\&quot;.into(),\n    detail: \&quot;the capability survives; this way of reaching it does not\&quot;.into(),\n};\nassert_eq!(change.to_string(), \&quot;- route GET /api/v1/alpha\&quot;);\n```&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;ReleaseSeverity&quot;: {
+    &quot;ReleaseImpact&quot;: {
+      &quot;description&quot;: &quot;How much a change moves the contract.\n\nOrdered, so that \&quot;the declared bump covers what is required\&quot; is a comparison rather than\na table:\n\n```\nuse majordomus_cli::release::compat::Impact;\nassert!(Impact::Major &gt; Impact::Minor);\nassert!(Impact::Minor &gt; Impact::Patch);\nassert!(Impact::Patch &gt; Impact::None);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The plan cannot be trusted; the verdict is blocked.&quot;
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;The contract did not move.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;The plan stands, and something is still wrong.&quot;,
-          &quot;const&quot;: &quot;warning&quot;,
+          &quot;const&quot;: &quot;patch&quot;,
+          &quot;description&quot;: &quot;It moved behind the boundary: a caller cannot tell.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;minor&quot;,
+          &quot;description&quot;: &quot;Something arrived; every existing caller still works.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;major&quot;,
+          &quot;description&quot;: &quot;Something a caller could hold is gone or changed under it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\n```&quot;
+      ]
     },
     &quot;ReleasePolicy&quot;: {
       &quot;description&quot;: &quot;The compatibility policy, named and versioned.\n\n```\nuse majordomus_cli::release::compat::{Impact, Policy, POLICY_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet policy = Policy::for_version(Version::parse(\&quot;0.5.0\&quot;).unwrap());\nassert_eq!(policy.schema, POLICY_SCHEMA, \&quot;a verdict carries the rules it was reached under\&quot;);\nassert_eq!(policy.required_of(Impact::Major), Impact::Minor);\n```&quot;,
@@ -631,6 +525,36 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;ReleasePolicyMode&quot;: {
+      &quot;description&quot;: &quot;How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \&quot;anything MAY change at any\ntime\&quot; — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: [`Mode::Semver`] is the ordinary rule, and the transition is\none line of [`Policy::required_of`].\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\&quot;0.9.0\&quot;).unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\&quot;1.0.0\&quot;).unwrap()).mode, Mode::Semver);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;pre1-0-strict&quot;,
+          &quot;description&quot;: &quot;Below `1.0.0`: breaking changes are allowed, and cost a minor rather than nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;semver&quot;,
+          &quot;description&quot;: &quot;At or above `1.0.0`: the impact is the requirement.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReleaseSeverity&quot;: {
+      &quot;description&quot;: &quot;How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The plan cannot be trusted; the verdict is blocked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;The plan stands, and something is still wrong.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;ReleaseStatus&quot;: {
       &quot;description&quot;: &quot;Whether the tree may land or ship as it stands.\n\n```\nuse majordomus_cli::release::compat::Status;\nassert_ne!(Status::Ok, Status::Blocked);\n```&quot;,
       &quot;oneOf&quot;: [
@@ -646,39 +570,105 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
         }
       ]
     },
-    &quot;ReleaseImpact&quot;: {
-      &quot;description&quot;: &quot;How much a change moves the contract.\n\nOrdered, so that \&quot;the declared bump covers what is required\&quot; is a comparison rather than\na table:\n\n```\nuse majordomus_cli::release::compat::Impact;\nassert!(Impact::Major &gt; Impact::Minor);\nassert!(Impact::Minor &gt; Impact::Patch);\nassert!(Impact::Patch &gt; Impact::None);\n```&quot;,
+    &quot;ReleaseSurfaceChange&quot;: {
+      &quot;description&quot;: &quot;One movement of the public contract, with the reason it counts for what it does.\n\n```\nuse majordomus_cli::release::compat::{Direction, Impact, SurfaceChange, SurfaceKind};\nlet change = SurfaceChange {\n    impact: Impact::Major,\n    direction: Direction::Removed,\n    surface: SurfaceKind::Http,\n    capability: \&quot;alpha.list\&quot;.into(),\n    id: \&quot;GET /api/v1/alpha\&quot;.into(),\n    detail: \&quot;the capability survives; this way of reaching it does not\&quot;.into(),\n};\nassert_eq!(change.to_string(), \&quot;- route GET /api/v1/alpha\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability it belongs to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;Why this impact and not a smaller one, in one clause.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;direction&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeDirection&quot;,
+          &quot;description&quot;: &quot;Added, removed, or altered.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The thing itself: `GET /api/v1/foo`, `majordomus_release_analysis`, `release.analysis`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;impact&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+          &quot;description&quot;: &quot;How much it moves the contract on its own.&quot;
+        },
+        &quot;surface&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseSurfaceKind&quot;,
+          &quot;description&quot;: &quot;Which promise it is.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;impact&quot;,
+        &quot;direction&quot;,
+        &quot;surface&quot;,
+        &quot;capability&quot;,
+        &quot;id&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseSurfaceKind&quot;: {
+      &quot;description&quot;: &quot;Which projection of the contract a change is in.\n\nNot where it was *found* — everything here is found in the registry — but which promise\nit is, so that a reader sees \&quot;a route is gone\&quot; rather than a JSON pointer.\n\n```\nuse majordomus_cli::release::compat::SurfaceKind;\nassert_eq!(SurfaceKind::Http.as_str(), \&quot;route\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;The contract did not move.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;none&quot;
+          &quot;const&quot;: &quot;capability&quot;,
+          &quot;description&quot;: &quot;The capability itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;It moved behind the boundary: a caller cannot tell.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;patch&quot;
+          &quot;const&quot;: &quot;kind&quot;,
+          &quot;description&quot;: &quot;Whether calling it changes anything.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Something arrived; every existing caller still works.&quot;,
-          &quot;const&quot;: &quot;minor&quot;
+          &quot;const&quot;: &quot;mcp_tool&quot;,
+          &quot;description&quot;: &quot;An MCP tool name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Something a caller could hold is gone or changed under it.&quot;,
-          &quot;const&quot;: &quot;major&quot;,
+          &quot;const&quot;: &quot;mcp_resource&quot;,
+          &quot;description&quot;: &quot;An MCP resource URI.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;http&quot;,
+          &quot;description&quot;: &quot;An HTTP method and path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cli&quot;,
+          &quot;description&quot;: &quot;A command-line path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;input&quot;,
+          &quot;description&quot;: &quot;What a caller may send.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;output&quot;,
+          &quot;description&quot;: &quot;What a caller is promised back.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
   },
-  &quot;title&quot;: &quot;ReleaseVersionPlan&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;The whole answer: what moved, what that requires, and what the tree declares.\n\nOne value, and every surface renders it — the command line, `/api/v1/release/analysis`,\nthe MCP tool, the Cockpit panel, the generated document and the CI gate. There is no\nsecond computation anywhere, which is the property that makes the number mean something.\n\n```\nuse majordomus_cli::release::compat::{Status, VersionPlan};\n# use majordomus_cli::release::compat::{Baseline, CommitEvidence, Impact, Policy};\n# use majordomus_cli::release::version::Version;\nlet plan = VersionPlan {\n    policy: Policy::for_version(Version::parse(\&quot;0.5.0\&quot;).unwrap()),\n    baseline: Baseline {\n        version: \&quot;0.5.0\&quot;.into(), reference: \&quot;v0.5.0\&quot;.into(), read_at: \&quot;3a032c1e\&quot;.into(),\n        commit: \&quot;3a032c1e\&quot;.into(), recorded: true, atoms: 300, fingerprint: \&quot;sha256:a\&quot;.into(),\n    },\n    declared_version: \&quot;0.5.0\&quot;.into(),\n    tool_version: \&quot;0.5.0\&quot;.into(),\n    writers_agree: true,\n    atoms: 333,\n    fingerprint: \&quot;sha256:b\&quot;.into(),\n    implied: Impact::Minor,\n    required: Impact::Minor,\n    declared: Impact::None,\n    required_version: \&quot;0.6.0\&quot;.into(),\n    status: Status::Blocked,\n    breaking: false,\n    changes: Vec::new(),\n    commits: CommitEvidence { commits: 24, implied: Impact::Patch, breaking: Vec::new() },\n    understated: true,\n    diagnostics: Vec::new(),\n};\n// The contract requires a minor and the version declares none: this tree may not land.\nassert_eq!(plan.status, Status::Blocked);\nassert!(plan.declared &lt; plan.required);\nassert!(plan.understated, \&quot;the commit subjects claim less than the contract did\&quot;);\n```&quot;,
   &quot;properties&quot;: {
-    &quot;implied&quot;: {
-      &quot;description&quot;: &quot;What the surface movement amounts to on its own.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;
+    &quot;atoms&quot;: {
+      &quot;description&quot;: &quot;How many public atoms this tree carries.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;baseline&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseBaseline&quot;,
+      &quot;description&quot;: &quot;The release this was measured against.&quot;
+    },
+    &quot;breaking&quot;: {
+      &quot;description&quot;: &quot;Whether anything a caller could hold is gone.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;changes&quot;: {
       &quot;description&quot;: &quot;Every movement of the contract, worst first.&quot;,
@@ -687,72 +677,82 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;required&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
-      &quot;description&quot;: &quot;What the policy requires of it.&quot;
-    },
-    &quot;fingerprint&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The fingerprint of this tree&#39;s surface.&quot;
-    },
-    &quot;understated&quot;: {
-      &quot;description&quot;: &quot;Whether the commit subjects understate what the contract actually did.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;required_version&quot;: {
-      &quot;description&quot;: &quot;The smallest version this tree may declare.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;tool_version&quot;: {
-      &quot;description&quot;: &quot;The version `bin/majordomus` prints, and whether the two agree.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;commits&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseCommitEvidence&quot;,
+      &quot;description&quot;: &quot;What the commits said about themselves.&quot;
     },
     &quot;declared&quot;: {
-      &quot;description&quot;: &quot;What the two version numbers already represent.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;
-    },
-    &quot;breaking&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether anything a caller could hold is gone.&quot;
-    },
-    &quot;atoms&quot;: {
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;description&quot;: &quot;How many public atoms this tree carries.&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;commits&quot;: {
-      &quot;description&quot;: &quot;What the commits said about themselves.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseCommitEvidence&quot;
-    },
-    &quot;diagnostics&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ReleaseDiagnostic&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Anything incoherent about the release state, whatever the verdict.&quot;
-    },
-    &quot;baseline&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseBaseline&quot;,
-      &quot;description&quot;: &quot;The release this was measured against.&quot;
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+      &quot;description&quot;: &quot;What the two version numbers already represent.&quot;
     },
     &quot;declared_version&quot;: {
       &quot;description&quot;: &quot;The version the crate manifest declares.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;status&quot;: {
-      &quot;description&quot;: &quot;Whether it does.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseStatus&quot;
+    &quot;diagnostics&quot;: {
+      &quot;description&quot;: &quot;Anything incoherent about the release state, whatever the verdict.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ReleaseDiagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;fingerprint&quot;: {
+      &quot;description&quot;: &quot;The fingerprint of this tree&#39;s surface.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;implied&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+      &quot;description&quot;: &quot;What the surface movement amounts to on its own.&quot;
     },
     &quot;policy&quot;: {
-      &quot;description&quot;: &quot;The policy the verdict was reached under.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ReleasePolicy&quot;
+      &quot;$ref&quot;: &quot;#/$defs/ReleasePolicy&quot;,
+      &quot;description&quot;: &quot;The policy the verdict was reached under.&quot;
+    },
+    &quot;required&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+      &quot;description&quot;: &quot;What the policy requires of it.&quot;
+    },
+    &quot;required_version&quot;: {
+      &quot;description&quot;: &quot;The smallest version this tree may declare.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;status&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseStatus&quot;,
+      &quot;description&quot;: &quot;Whether it does.&quot;
+    },
+    &quot;tool_version&quot;: {
+      &quot;description&quot;: &quot;The version `bin/majordomus` prints, and whether the two agree.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;understated&quot;: {
+      &quot;description&quot;: &quot;Whether the commit subjects understate what the contract actually did.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;writers_agree&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether the two writers of the version state one value.&quot;
+      &quot;description&quot;: &quot;Whether the two writers of the version state one value.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     }
-  }
+  },
+  &quot;required&quot;: [
+    &quot;policy&quot;,
+    &quot;baseline&quot;,
+    &quot;declared_version&quot;,
+    &quot;tool_version&quot;,
+    &quot;writers_agree&quot;,
+    &quot;atoms&quot;,
+    &quot;fingerprint&quot;,
+    &quot;implied&quot;,
+    &quot;required&quot;,
+    &quot;declared&quot;,
+    &quot;required_version&quot;,
+    &quot;status&quot;,
+    &quot;breaking&quot;,
+    &quot;changes&quot;,
+    &quot;commits&quot;,
+    &quot;understated&quot;
+  ],
+  &quot;title&quot;: &quot;ReleaseVersionPlan&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -783,7 +783,7 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::release</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ReleaseAnalysisInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ReleaseVersionPlan</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -855,7 +855,7 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

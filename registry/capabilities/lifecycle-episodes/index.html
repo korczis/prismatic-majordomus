@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -252,16 +252,21 @@ assert!(busy.episodes.iter().any(|e| e.session_id == busy.current));
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">current</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">What a reader should know before trusting the above: a file that does not parse, a
-pointer that resolves to nothing. Empty is the good case.</td>
+        <td class="px-3 py-2 text-body">The episode id the pointer resolves to, when it resolves to one.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">episodes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Every open episode, newest first by recorded start.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">What a reader should know before trusting the above: a file that does not parse, a
+pointer that resolves to nothing. Empty is the good case.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -273,11 +278,6 @@ pointer that resolves to nothing. Empty is the good case.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The store, repository-relative.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">current</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The episode id the pointer resolves to, when it resolves to one.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">worktree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -287,93 +287,63 @@ pointer that resolves to nothing. Empty is the good case.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;Every open episode of this checkout&#39;s store — the answer `continuity.state` cannot give,\nbecause it reads the pointer and this reads the store.\n\n`current` is the one episode the pointer resolves to, and it is one row of `episodes`\nrather than a separate thing: the whole correction this type carries is that the pointed-at\nepisode is *a* member of the set and not the set. On the day this was written the store\nheld five open episodes in one checkout and every surface could name one of them.\n\n`present: false` is a fresh clone, which is not a fault — nobody has opened an episode\nhere yet — and is reported as itself rather than as an error.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::Episodes;\nuse serde_json::json;\n\n// a clone in which no episode has ever been opened: absence, answered as absence\nlet fresh: Episodes = serde_json::from_value(json!({\n    \&quot;present\&quot;: false,\n    \&quot;store\&quot;: \&quot;.ai/local/state/sessions-open\&quot;,\n    \&quot;worktree\&quot;: \&quot;example/a-fresh-clone\&quot;,\n})).unwrap();\nassert!(!fresh.present);\nassert!(fresh.episodes.is_empty() &amp;&amp; fresh.current.is_empty());\nassert!(fresh.findings.is_empty(), \&quot;nothing to warn about; it is simply new\&quot;);\n\n// and a store with work in it: `current` names one of the rows, never a sixth thing\nlet busy: Episodes = serde_json::from_value(json!({\n    \&quot;present\&quot;: true,\n    \&quot;store\&quot;: \&quot;.ai/local/state/sessions-open\&quot;,\n    \&quot;worktree\&quot;: \&quot;example/wt\&quot;,\n    \&quot;current\&quot;: \&quot;s-0002\&quot;,\n    \&quot;episodes\&quot;: [\n        {\&quot;session_id\&quot;: \&quot;s-0001\&quot;, \&quot;path\&quot;: \&quot;a.yaml\&quot;, \&quot;standing\&quot;: \&quot;open\&quot;,\n         \&quot;events\&quot;: 3, \&quot;note\&quot;: \&quot;this worktree, not pointed at\&quot;},\n        {\&quot;session_id\&quot;: \&quot;s-0002\&quot;, \&quot;path\&quot;: \&quot;b.yaml\&quot;, \&quot;standing\&quot;: \&quot;current\&quot;,\n         \&quot;events\&quot;: 9, \&quot;note\&quot;: \&quot;the pointer resolves to it\&quot;},\n    ],\n})).unwrap();\nassert_eq!(busy.episodes.len(), 2, \&quot;the pointer is blind to the first of these\&quot;);\nassert!(busy.episodes.iter().any(|e| e.session_id == busy.current));\n```&quot;,
-  &quot;title&quot;: &quot;Episodes&quot;,
   &quot;$defs&quot;: {
-    &quot;EpisodeStanding&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;current&quot;,
-          &quot;description&quot;: &quot;This checkout&#39;s pointer resolves to it. `continuity.state` is about this one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;open&quot;,
-          &quot;description&quot;: &quot;Open, and it names this worktree, but the pointer names a different episode. Two\nwindows of one provider on one worktree are two workers, and only one is pointed at.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;foreign&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It names another worktree of this repository. Reported, never treated as this\ncheckout&#39;s — a record about somebody else&#39;s work quietly becoming yours is the\nfailure the two-tier resolution rule exists to prevent.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The worktree it names is gone from disk. Nothing can close it: the close path\ncomposes the record from git in the worktree the episode opened in.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;stranded&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where an open episode stands, as far as the repository can observe it.\n\nIt is worth being precise about what is *not* here. Whether the provider that opened an\nepisode is still attached to its conversation is not a fact of this repository: the\nepisode file records no pid, the peer board records no episode id, and a client that\nexits without firing its end event leaves a file identical to one a live worker is using.\nGuessing would produce exactly the confident-and-wrong answer this subsystem exists to\navoid, so the vocabulary below is the observable one — where the file is, whose worktree\nit names, and whether the pointer follows it — and `note` always says which.\n\nRead as a scale, the four run from \&quot;this checkout&#39;s own work\&quot; to \&quot;nobody&#39;s work any\nmore\&quot;, and only the last is a fault: `current` and `open` are both this worktree&#39;s live\nepisodes and differ only in which one the pointer happens to aim at, `foreign` belongs to\nanother worktree and is reported rather than adopted, and `stranded` is the one that\nneeds a person, because nothing can close it.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::EpisodeStanding;\n\n// the standings that are somebody&#39;s live work, against the one that is nobody&#39;s\nlet live = [EpisodeStanding::Current, EpisodeStanding::Open, EpisodeStanding::Foreign];\nassert!(live.iter().all(|s| *s != EpisodeStanding::Stranded));\n\n// serialised as the word `as_str` gives, so the two renderings cannot drift apart\nfor s in [EpisodeStanding::Current, EpisodeStanding::Foreign, EpisodeStanding::Stranded] {\n    assert_eq!(serde_json::to_value(s).unwrap(), serde_json::json!(s.as_str()));\n}\n```&quot;
-    },
     &quot;Episode&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;session_id&quot;,
-        &quot;path&quot;,
-        &quot;standing&quot;,
-        &quot;events&quot;,
-        &quot;note&quot;
-      ],
+      &quot;description&quot;: &quot;One open episode, as its file records it and as the ledger has seen it.\n\nEverything here is recorded rather than derived, and almost everything is optional,\nwhich is the point: an episode opened by hand has no provider, a worker that supplied no\nidentity has none, and an episode that opened and did nothing has no ledger line and so\nno `last_activity`. Each of those is ordinary and none is a fault, so each is carried as\nabsence — the empty fields are skipped on the wire — and a reader must handle their\nabsence rather than expect a placeholder.\n\nThe two fields that are always there are `standing` and `note`: where the episode stands,\nand why it stands there in words. A standing a reader cannot act on is the failure this\nsubsystem was corrected for, so `note` is never empty.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::{Episode, EpisodeStanding};\nuse serde_json::json;\n\n// the smallest true record: an episode opened by hand that has written nothing yet\nlet e: Episode = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0001\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/local/state/sessions-open/by-hand.yaml\&quot;,\n    \&quot;standing\&quot;: \&quot;open\&quot;,\n    \&quot;events\&quot;: 0,\n    \&quot;note\&quot;: \&quot;open in this worktree; the pointer names another episode\&quot;,\n})).unwrap();\n\nassert_eq!(e.standing, EpisodeStanding::Open);\nassert!(e.provider.is_empty(), \&quot;no provider session owns a hand-opened episode\&quot;);\nassert!(e.last_activity.is_empty(), \&quot;it has written no ledger line\&quot;);\nassert!(e.tasks.is_empty(), \&quot;work outside a task is permitted\&quot;);\nassert!(!e.note.is_empty(), \&quot;a standing always says why\&quot;);\n\n// and absence stays absence: the empty fields are not serialised back as \&quot;\&quot;\nlet wire = serde_json::to_value(&amp;e).unwrap();\nassert!(wire.get(\&quot;provider\&quot;).is_none());\nassert_eq!(wire[\&quot;events\&quot;], 0, \&quot;a count of zero is a measurement, so it is kept\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;session_id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The episode id the ledger stamps on every line this worker wrote.&quot;
-        },
-        &quot;note&quot;: {
-          &quot;description&quot;: &quot;Why it stands where it does, in words. Never empty: a standing a reader cannot act\non is the failure this subsystem is being corrected for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;branch&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The branch it opened on.&quot;
+          &quot;description&quot;: &quot;The branch it opened on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;events&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
           &quot;description&quot;: &quot;How many ledger lines carry this episode id. Zero for an episode that opened and did\nnothing, which is ordinary and not a fault.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;provider_session&quot;: {
-          &quot;description&quot;: &quot;That provider&#39;s own session identity: the file&#39;s stem, and the string the prompt\narchive stamps on the same worker&#39;s records.&quot;,
+        &quot;last_activity&quot;: {
+          &quot;description&quot;: &quot;The timestamp of the newest ledger line carrying this episode id, as recorded.\nEmpty when it has written none.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;last_event&quot;: {
           &quot;description&quot;: &quot;That line&#39;s event name.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;provider&quot;: {
-          &quot;description&quot;: &quot;The provider whose event opened it, when one did. Empty for an episode opened by\nhand, which is the one episode no provider session owns.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;start_head&quot;: {
-          &quot;description&quot;: &quot;The commit it opened at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;last_activity&quot;: {
-          &quot;description&quot;: &quot;The timestamp of the newest ledger line carrying this episode id, as recorded.\nEmpty when it has written none.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path of the open record. The body is at the path.&quot;,
+        &quot;note&quot;: {
+          &quot;description&quot;: &quot;Why it stands where it does, in words. Never empty: a standing a reader cannot act\non is the failure this subsystem is being corrected for.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;owner&quot;: {
           &quot;description&quot;: &quot;Who opened it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the open record. The body is at the path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider&quot;: {
+          &quot;description&quot;: &quot;The provider whose event opened it, when one did. Empty for an episode opened by\nhand, which is the one episode no provider session owns.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider_session&quot;: {
+          &quot;description&quot;: &quot;That provider&#39;s own session identity: the file&#39;s stem, and the string the prompt\narchive stamps on the same worker&#39;s records.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;session_id&quot;: {
+          &quot;description&quot;: &quot;The episode id the ledger stamps on every line this worker wrote.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;standing&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/EpisodeStanding&quot;,
           &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;start_head&quot;: {
+          &quot;description&quot;: &quot;The commit it opened at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;When it opened, as recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;tasks&quot;: {
           &quot;description&quot;: &quot;The tasks this episode&#39;s ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode&#39;s own records\nto go unwritten, which is the premise ADR 0052 removes.&quot;,
@@ -386,56 +356,86 @@ pointer that resolves to nothing. Empty is the good case.</td>
           &quot;description&quot;: &quot;The worker identity, when one was supplied. Never inferred.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When it opened, as recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;worktree&quot;: {
           &quot;description&quot;: &quot;The worktree it opened in, absolute, as recorded.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;description&quot;: &quot;One open episode, as its file records it and as the ledger has seen it.\n\nEverything here is recorded rather than derived, and almost everything is optional,\nwhich is the point: an episode opened by hand has no provider, a worker that supplied no\nidentity has none, and an episode that opened and did nothing has no ledger line and so\nno `last_activity`. Each of those is ordinary and none is a fault, so each is carried as\nabsence — the empty fields are skipped on the wire — and a reader must handle their\nabsence rather than expect a placeholder.\n\nThe two fields that are always there are `standing` and `note`: where the episode stands,\nand why it stands there in words. A standing a reader cannot act on is the failure this\nsubsystem was corrected for, so `note` is never empty.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::{Episode, EpisodeStanding};\nuse serde_json::json;\n\n// the smallest true record: an episode opened by hand that has written nothing yet\nlet e: Episode = serde_json::from_value(json!({\n    \&quot;session_id\&quot;: \&quot;s-0001\&quot;,\n    \&quot;path\&quot;: \&quot;.ai/local/state/sessions-open/by-hand.yaml\&quot;,\n    \&quot;standing\&quot;: \&quot;open\&quot;,\n    \&quot;events\&quot;: 0,\n    \&quot;note\&quot;: \&quot;open in this worktree; the pointer names another episode\&quot;,\n})).unwrap();\n\nassert_eq!(e.standing, EpisodeStanding::Open);\nassert!(e.provider.is_empty(), \&quot;no provider session owns a hand-opened episode\&quot;);\nassert!(e.last_activity.is_empty(), \&quot;it has written no ledger line\&quot;);\nassert!(e.tasks.is_empty(), \&quot;work outside a task is permitted\&quot;);\nassert!(!e.note.is_empty(), \&quot;a standing always says why\&quot;);\n\n// and absence stays absence: the empty fields are not serialised back as \&quot;\&quot;\nlet wire = serde_json::to_value(&amp;e).unwrap();\nassert!(wire.get(\&quot;provider\&quot;).is_none());\nassert_eq!(wire[\&quot;events\&quot;], 0, \&quot;a count of zero is a measurement, so it is kept\&quot;);\n```&quot;
+      &quot;required&quot;: [
+        &quot;session_id&quot;,
+        &quot;path&quot;,
+        &quot;standing&quot;,
+        &quot;events&quot;,
+        &quot;note&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EpisodeStanding&quot;: {
+      &quot;description&quot;: &quot;Where an open episode stands, as far as the repository can observe it.\n\nIt is worth being precise about what is *not* here. Whether the provider that opened an\nepisode is still attached to its conversation is not a fact of this repository: the\nepisode file records no pid, the peer board records no episode id, and a client that\nexits without firing its end event leaves a file identical to one a live worker is using.\nGuessing would produce exactly the confident-and-wrong answer this subsystem exists to\navoid, so the vocabulary below is the observable one — where the file is, whose worktree\nit names, and whether the pointer follows it — and `note` always says which.\n\nRead as a scale, the four run from \&quot;this checkout&#39;s own work\&quot; to \&quot;nobody&#39;s work any\nmore\&quot;, and only the last is a fault: `current` and `open` are both this worktree&#39;s live\nepisodes and differ only in which one the pointer happens to aim at, `foreign` belongs to\nanother worktree and is reported rather than adopted, and `stranded` is the one that\nneeds a person, because nothing can close it.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::EpisodeStanding;\n\n// the standings that are somebody&#39;s live work, against the one that is nobody&#39;s\nlet live = [EpisodeStanding::Current, EpisodeStanding::Open, EpisodeStanding::Foreign];\nassert!(live.iter().all(|s| *s != EpisodeStanding::Stranded));\n\n// serialised as the word `as_str` gives, so the two renderings cannot drift apart\nfor s in [EpisodeStanding::Current, EpisodeStanding::Foreign, EpisodeStanding::Stranded] {\n    assert_eq!(serde_json::to_value(s).unwrap(), serde_json::json!(s.as_str()));\n}\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;description&quot;: &quot;This checkout&#39;s pointer resolves to it. `continuity.state` is about this one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;open&quot;,
+          &quot;description&quot;: &quot;Open, and it names this worktree, but the pointer names a different episode. Two\nwindows of one provider on one worktree are two workers, and only one is pointed at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;foreign&quot;,
+          &quot;description&quot;: &quot;It names another worktree of this repository. Reported, never treated as this\ncheckout&#39;s — a record about somebody else&#39;s work quietly becoming yours is the\nfailure the two-tier resolution rule exists to prevent.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stranded&quot;,
+          &quot;description&quot;: &quot;The worktree it names is gone from disk. Nothing can close it: the close path\ncomposes the record from git in the worktree the episode opened in.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     }
   },
+  &quot;description&quot;: &quot;Every open episode of this checkout&#39;s store — the answer `continuity.state` cannot give,\nbecause it reads the pointer and this reads the store.\n\n`current` is the one episode the pointer resolves to, and it is one row of `episodes`\nrather than a separate thing: the whole correction this type carries is that the pointed-at\nepisode is *a* member of the set and not the set. On the day this was written the store\nheld five open episodes in one checkout and every surface could name one of them.\n\n`present: false` is a fresh clone, which is not a fault — nobody has opened an episode\nhere yet — and is reported as itself rather than as an error.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::Episodes;\nuse serde_json::json;\n\n// a clone in which no episode has ever been opened: absence, answered as absence\nlet fresh: Episodes = serde_json::from_value(json!({\n    \&quot;present\&quot;: false,\n    \&quot;store\&quot;: \&quot;.ai/local/state/sessions-open\&quot;,\n    \&quot;worktree\&quot;: \&quot;example/a-fresh-clone\&quot;,\n})).unwrap();\nassert!(!fresh.present);\nassert!(fresh.episodes.is_empty() &amp;&amp; fresh.current.is_empty());\nassert!(fresh.findings.is_empty(), \&quot;nothing to warn about; it is simply new\&quot;);\n\n// and a store with work in it: `current` names one of the rows, never a sixth thing\nlet busy: Episodes = serde_json::from_value(json!({\n    \&quot;present\&quot;: true,\n    \&quot;store\&quot;: \&quot;.ai/local/state/sessions-open\&quot;,\n    \&quot;worktree\&quot;: \&quot;example/wt\&quot;,\n    \&quot;current\&quot;: \&quot;s-0002\&quot;,\n    \&quot;episodes\&quot;: [\n        {\&quot;session_id\&quot;: \&quot;s-0001\&quot;, \&quot;path\&quot;: \&quot;a.yaml\&quot;, \&quot;standing\&quot;: \&quot;open\&quot;,\n         \&quot;events\&quot;: 3, \&quot;note\&quot;: \&quot;this worktree, not pointed at\&quot;},\n        {\&quot;session_id\&quot;: \&quot;s-0002\&quot;, \&quot;path\&quot;: \&quot;b.yaml\&quot;, \&quot;standing\&quot;: \&quot;current\&quot;,\n         \&quot;events\&quot;: 9, \&quot;note\&quot;: \&quot;the pointer resolves to it\&quot;},\n    ],\n})).unwrap();\nassert_eq!(busy.episodes.len(), 2, \&quot;the pointer is blind to the first of these\&quot;);\nassert!(busy.episodes.iter().any(|e| e.session_id == busy.current));\n```&quot;,
   &quot;properties&quot;: {
-    &quot;findings&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;What a reader should know before trusting the above: a file that does not parse, a\npointer that resolves to nothing. Empty is the good case.&quot;
+    &quot;current&quot;: {
+      &quot;description&quot;: &quot;The episode id the pointer resolves to, when it resolves to one.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;episodes&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every open episode, newest first by recorded start.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Episode&quot;
       },
-      &quot;description&quot;: &quot;Every open episode, newest first by recorded start.&quot;
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;What a reader should know before trusting the above: a file that does not parse, a\npointer that resolves to nothing. Empty is the good case.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;present&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether the open-episode store exists. False in a fresh clone, which is not a fault.&quot;
+      &quot;description&quot;: &quot;Whether the open-episode store exists. False in a fresh clone, which is not a fault.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;store&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The store, repository-relative.&quot;
-    },
-    &quot;current&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The episode id the pointer resolves to, when it resolves to one.&quot;
+      &quot;description&quot;: &quot;The store, repository-relative.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;worktree&quot;: {
       &quot;description&quot;: &quot;This worktree, absolute. Every standing above is decided against it.&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
   &quot;required&quot;: [
     &quot;present&quot;,
     &quot;store&quot;,
     &quot;worktree&quot;
-  ]
+  ],
+  &quot;title&quot;: &quot;Episodes&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -469,7 +469,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::lifecycle</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Episodes</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -541,7 +541,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

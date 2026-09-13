@@ -217,19 +217,19 @@ assert!(i.test.starts_with(&quot;test/cases/&quot;));
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;One test, by the path a rule names it with or by its canonical identity.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleTestInput;\nlet i = RuleTestInput { test: \&quot;test/cases/125_rule_proof.sh\&quot;.into() };\nassert!(i.test.starts_with(\&quot;test/cases/\&quot;));\n```&quot;,
   &quot;properties&quot;: {
     &quot;test&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;`test/cases/07_scope.sh`, or `suite:07_scope`, or `crate:product`.&quot;
+      &quot;description&quot;: &quot;`test/cases/07_scope.sh`, or `suite:07_scope`, or `crate:product`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;additionalProperties&quot;: false,
   &quot;required&quot;: [
     &quot;test&quot;
   ],
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;RuleTestInput&quot;
+  &quot;title&quot;: &quot;RuleTestInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -255,87 +255,69 @@ assert!(t.present);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">test</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The canonical test identity, when a runner owns the path.</td>
+        <td class="px-3 py-2 font-mono text-heading">path</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The path as given.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Whether that path is in the tree.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">reproduce</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The command that runs it again.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">path</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The path as given.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">proves</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every rule that names this test, with the state it is in.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reproduce</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The command that runs it again.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">sole_proof_of</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Every rule that would lose its only proof if this test were deleted. This is the
 question the one-way relation could never answer.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">test</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The canonical test identity, when a runner owns the path.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;properties&quot;: {
-    &quot;test&quot;: {
-      &quot;description&quot;: &quot;The canonical test identity, when a runner owns the path.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;present&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether that path is in the tree.&quot;
-    },
-    &quot;reproduce&quot;: {
-      &quot;description&quot;: &quot;The command that runs it again.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;path&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The path as given.&quot;
-    },
-    &quot;proves&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/RuleSummary&quot;
-      },
-      &quot;description&quot;: &quot;Every rule that names this test, with the state it is in.&quot;,
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;sole_proof_of&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;description&quot;: &quot;Every rule that would lose its only proof if this test were deleted. This is the\nquestion the one-way relation could never answer.&quot;
-    }
-  },
   &quot;$defs&quot;: {
+    &quot;RuleClass&quot;: {
+      &quot;description&quot;: &quot;What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \&quot;blocking\&quot;);\nassert_eq!(Class::parse(\&quot;advisory\&quot;), Class::Advisory);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;blocking&quot;,
+          &quot;description&quot;: &quot;A gate refuses work that violates it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;advisory&quot;,
+          &quot;description&quot;: &quot;Normative for whoever reads it; nothing refuses a violation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;The front matter declared no class, or one this repository does not know.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;RuleState&quot;: {
       &quot;description&quot;: &quot;What the repository can say about one rule&#39;s proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule&#39;s state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven &lt; RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;const&quot;: &quot;proven&quot;,
           &quot;description&quot;: &quot;Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;proven&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;inputs_unchanged&quot;,
@@ -343,14 +325,14 @@ question the one-way relation could never answer.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;,
           &quot;description&quot;: &quot;A passing run exists, but something it is about has changed since.&quot;,
-          &quot;const&quot;: &quot;stale&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;gated&quot;,
-          &quot;description&quot;: &quot;An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here.&quot;
+          &quot;description&quot;: &quot;An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;failing&quot;,
@@ -369,8 +351,8 @@ question the one-way relation could never answer.</td>
         },
         {
           &quot;const&quot;: &quot;unrunnable&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The rule names a path no runner in this repository drives.&quot;
+          &quot;description&quot;: &quot;The rule names a path no runner in this repository drives.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;dangling&quot;,
@@ -378,59 +360,78 @@ question the one-way relation could never answer.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one.&quot;,
           &quot;const&quot;: &quot;unproven&quot;,
+          &quot;description&quot;: &quot;The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
-    &quot;RuleClass&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;blocking&quot;,
-          &quot;description&quot;: &quot;A gate refuses work that violates it.&quot;,
+    &quot;RuleSummary&quot;: {
+      &quot;description&quot;: &quot;A rule named from somewhere else, with just enough to decide whether to follow it.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\nlet s = RuleSummary {\n    id: \&quot;project.x\&quot;.into(),\n    title: \&quot;X\&quot;.into(),\n    class: Class::Advisory,\n    state: RuleState::Reviewed,\n};\nassert_eq!(s.state, RuleState::Reviewed);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;class&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;,
+          &quot;description&quot;: &quot;How strongly it binds.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The rule id.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;description&quot;: &quot;Normative for whoever reads it; nothing refuses a violation.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;advisory&quot;
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;,
+          &quot;description&quot;: &quot;What the repository can say about its proof.&quot;
         },
-        {
-          &quot;description&quot;: &quot;The front matter declared no class, or one this repository does not know.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;unknown&quot;
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \&quot;blocking\&quot;);\nassert_eq!(Class::parse(\&quot;advisory\&quot;), Class::Advisory);\n```&quot;
-    },
-    &quot;RuleSummary&quot;: {
+      },
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
         &quot;class&quot;,
         &quot;state&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;A rule named from somewhere else, with just enough to decide whether to follow it.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\nlet s = RuleSummary {\n    id: \&quot;project.x\&quot;.into(),\n    title: \&quot;X\&quot;.into(),\n    class: Class::Advisory,\n    state: RuleState::Reviewed,\n};\nassert_eq!(s.state, RuleState::Reviewed);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;,
-          &quot;description&quot;: &quot;What the repository can say about its proof.&quot;
-        },
-        &quot;class&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;,
-          &quot;description&quot;: &quot;How strongly it binds.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The rule id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;What one test proves: the reverse of [`RuleDetail`].\n# Example\n\nThe reverse of `rules show`: what a test proves, and which rules would be left with no\nproof at all if it were deleted.\n\n```\nuse majordomus_cli::capability::builtin::rules::TestSubjects;\nlet t = TestSubjects {\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    path: \&quot;test/cases/07_scope.sh\&quot;.into(),\n    present: true,\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n    proves: vec![],\n    sole_proof_of: vec![],\n};\nassert!(t.present);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;path&quot;: {
+      &quot;description&quot;: &quot;The path as given.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;present&quot;: {
+      &quot;description&quot;: &quot;Whether that path is in the tree.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;proves&quot;: {
+      &quot;description&quot;: &quot;Every rule that names this test, with the state it is in.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RuleSummary&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reproduce&quot;: {
+      &quot;description&quot;: &quot;The command that runs it again.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;sole_proof_of&quot;: {
+      &quot;description&quot;: &quot;Every rule that would lose its only proof if this test were deleted. This is the\nquestion the one-way relation could never answer.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;The canonical test identity, when a runner owns the path.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     }
   },
   &quot;required&quot;: [
@@ -440,7 +441,6 @@ question the one-way relation could never answer.</td>
     &quot;sole_proof_of&quot;
   ],
   &quot;title&quot;: &quot;TestSubjects&quot;,
-  &quot;description&quot;: &quot;What one test proves: the reverse of [`RuleDetail`].\n# Example\n\nThe reverse of `rules show`: what a test proves, and which rules would be left with no\nproof at all if it were deleted.\n\n```\nuse majordomus_cli::capability::builtin::rules::TestSubjects;\nlet t = TestSubjects {\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    path: \&quot;test/cases/07_scope.sh\&quot;.into(),\n    present: true,\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n    proves: vec![],\n    sole_proof_of: vec![],\n};\nassert!(t.present);\n```&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -472,7 +472,7 @@ question the one-way relation could never answer.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::rules</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">RuleTestInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">TestSubjects</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/rules.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/rules.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/rules.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/rules.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -544,7 +544,7 @@ question the one-way relation could never answer.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

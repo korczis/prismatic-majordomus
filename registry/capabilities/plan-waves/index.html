@@ -211,6 +211,7 @@ active milestone with the rest of the plan as the fallback.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;Which part of the plan to answer about.&quot;,
   &quot;properties&quot;: {
     &quot;milestone&quot;: {
@@ -221,9 +222,8 @@ active milestone with the rest of the plan as the fallback.</td>
       ]
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false,
-  &quot;title&quot;: &quot;PlanMilestoneFilter&quot;
+  &quot;title&quot;: &quot;PlanMilestoneFilter&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -233,11 +233,6 @@ together.</p><div class="mt-3 overflow-x-auto rounded-base border border-default
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">waves</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The waves, lowest first, with the issues of each.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">serialised_by_scope</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -245,88 +240,114 @@ together.</p><div class="mt-3 overflow-x-auto rounded-base border border-default
 necessary condition for running them at once, not a sufficient one: overlapping
 scope serialises them, and the overlap is reported here rather than left for two
 workers to discover in a conflict.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">waves</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The waves, lowest first, with the issues of each.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;properties&quot;: {
-    &quot;waves&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The waves, lowest first, with the issues of each.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PlanWaveView&quot;
-      }
-    },
-    &quot;serialised_by_scope&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PlanFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Scope overlaps between two issues of one wave. Two issues sharing a wave is a\nnecessary condition for running them at once, not a sufficient one: overlapping\nscope serialises them, and the overlap is reported here rather than left for two\nworkers to discover in a conflict.&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;waves&quot;,
-    &quot;serialised_by_scope&quot;
-  ],
   &quot;$defs&quot;: {
     &quot;PlanFinding&quot;: {
       &quot;description&quot;: &quot;One validation finding, in the shape `project.finding-carries-reproduce` asks for.&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;The stable code a reader greps for (`unknown_dependency`, `scope_conflict`, …).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;level&quot;: {
+          &quot;description&quot;: &quot;`FAIL` or `WARN`. A failure means the model is invalid.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;The record the finding is about, or `graph` when it is about the whole graph.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
       &quot;required&quot;: [
         &quot;level&quot;,
         &quot;code&quot;,
         &quot;subject&quot;,
         &quot;message&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The stable code a reader greps for (`unknown_dependency`, `scope_conflict`, …).&quot;
-        },
-        &quot;level&quot;: {
-          &quot;description&quot;: &quot;`FAIL` or `WARN`. A failure means the model is invalid.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The record the finding is about, or `graph` when it is about the whole graph.&quot;
-        },
-        &quot;message&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What is wrong, in one line.&quot;
-        }
-      }
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;PlanIssue&quot;: {
       &quot;description&quot;: &quot;One issue, as its record declares it and as the graph derives it.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
+        &quot;blocked_by&quot;: {
+          &quot;description&quot;: &quot;The dependencies that are not DONE, plus `milestone:&lt;id&gt;` when the milestone gate\nholds the whole outcome back.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;completed_at&quot;: {
+          &quot;description&quot;: &quot;When completion was recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;dependents&quot;: {
+          &quot;description&quot;: &quot;The issues that depend on this one.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
         &quot;depends_on&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          }
+          },
+          &quot;type&quot;: &quot;array&quot;
         },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;One line naming the outcome.&quot;,
+        &quot;evidence_have&quot;: {
+          &quot;description&quot;: &quot;Evidence entries attached.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;evidence_need&quot;: {
+          &quot;description&quot;: &quot;Evidence tokens the record requires before it may be DONE.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The identity, which is also the file name.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;priority&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`p0` … `p3`.&quot;
+        &quot;milestone&quot;: {
+          &quot;description&quot;: &quot;The milestone it belongs to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;description&quot;: &quot;One line: what the issue is for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;parallel_safe&quot;: {
           &quot;description&quot;: &quot;Whether it may run beside another issue of its wave.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
+        &quot;priority&quot;: {
+          &quot;description&quot;: &quot;`p0` … `p3`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;description&quot;: &quot;The execution profile the issue is worked under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The paths it touches; two issues of one wave that share a path are serialised.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;description&quot;: &quot;The paths it touches; two issues of one wave that share a path are serialised.&quot;,
           &quot;type&quot;: &quot;array&quot;
         },
         &quot;slug&quot;: {
@@ -337,65 +358,23 @@ workers to discover in a conflict.</td>
           &quot;description&quot;: &quot;When execution began, when it did.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;objective&quot;: {
-          &quot;description&quot;: &quot;One line: what the issue is for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;status&quot;: {
           &quot;description&quot;: &quot;The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line naming the outcome.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;verified_at&quot;: {
           &quot;description&quot;: &quot;When implementation was declared complete.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;milestone&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The milestone it belongs to.&quot;
-        },
-        &quot;evidence_have&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Evidence entries attached.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint32&quot;
-        },
-        &quot;blocked_by&quot;: {
-          &quot;description&quot;: &quot;The dependencies that are not DONE, plus `milestone:&lt;id&gt;` when the milestone gate\nholds the whole outcome back.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity, which is also the file name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;dependents&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;The issues that depend on this one.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
         &quot;wave&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint32&quot;,
           &quot;description&quot;: &quot;The execution wave: one past the longest path to it through the dependency graph.&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;profile&quot;: {
-          &quot;description&quot;: &quot;The execution profile the issue is worked under.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;completed_at&quot;: {
-          &quot;description&quot;: &quot;When completion was recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;evidence_need&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Evidence tokens the record requires before it may be DONE.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint32&quot;
+          &quot;type&quot;: &quot;integer&quot;
         }
       },
       &quot;required&quot;: [
@@ -418,35 +397,56 @@ workers to discover in a conflict.</td>
         &quot;started_at&quot;,
         &quot;verified_at&quot;,
         &quot;completed_at&quot;
-      ]
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;PlanWaveView&quot;: {
+      &quot;description&quot;: &quot;One wave, with the issues in it.&quot;,
+      &quot;properties&quot;: {
+        &quot;issues&quot;: {
+          &quot;description&quot;: &quot;The issues in it, in id order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/PlanIssue&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;wave&quot;: {
+          &quot;description&quot;: &quot;The layer, from zero.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
       &quot;required&quot;: [
         &quot;wave&quot;,
         &quot;issues&quot;
       ],
-      &quot;properties&quot;: {
-        &quot;issues&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/PlanIssue&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The issues in it, in id order.&quot;
-        },
-        &quot;wave&quot;: {
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;The layer, from zero.&quot;
-        }
-      },
-      &quot;description&quot;: &quot;One wave, with the issues in it.&quot;,
       &quot;type&quot;: &quot;object&quot;
     }
   },
+  &quot;description&quot;: &quot;The execution waves, with the overlaps that serialise issues the graph would let run\ntogether.&quot;,
+  &quot;properties&quot;: {
+    &quot;serialised_by_scope&quot;: {
+      &quot;description&quot;: &quot;Scope overlaps between two issues of one wave. Two issues sharing a wave is a\nnecessary condition for running them at once, not a sufficient one: overlapping\nscope serialises them, and the overlap is reported here rather than left for two\nworkers to discover in a conflict.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PlanFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;waves&quot;: {
+      &quot;description&quot;: &quot;The waves, lowest first, with the issues of each.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PlanWaveView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;waves&quot;,
+    &quot;serialised_by_scope&quot;
+  ],
   &quot;title&quot;: &quot;PlanWaveReport&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;The execution waves, with the overlaps that serialise issues the graph would let run\ntogether.&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -477,7 +477,7 @@ workers to discover in a conflict.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::plan</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">PlanMilestoneFilter</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">PlanWaveReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -549,7 +549,7 @@ workers to discover in a conflict.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

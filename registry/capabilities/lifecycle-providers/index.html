@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -257,37 +257,24 @@ declares no lifecycle for, and the like.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;Every provider the distribution ships a bootstrap for, with the lifecycle half of each.\n\n`with_lifecycle` is a count over `providers` rather than a second list, so the two\ncannot disagree; it is there because \&quot;how many of the providers we support actually get\nthe automation\&quot; is the question this capability exists to answer, and a reader should not\nhave to fold the list to find out.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ProviderLifecycles;\nuse serde_json::json;\n\nlet p: ProviderLifecycles = serde_json::from_value(json!({\n    \&quot;providers\&quot;: [\n        {\&quot;id\&quot;: \&quot;claude\&quot;, \&quot;title\&quot;: \&quot;Claude Code\&quot;, \&quot;lifecycle\&quot;: [\&quot;SessionStart\&quot;],\n         \&quot;prompt_capture\&quot;: true, \&quot;note\&quot;: \&quot;adapted\&quot;},\n        {\&quot;id\&quot;: \&quot;plain\&quot;, \&quot;title\&quot;: \&quot;Plain\&quot;, \&quot;prompt_capture\&quot;: false, \&quot;note\&quot;: \&quot;not adapted\&quot;},\n    ],\n    \&quot;with_lifecycle\&quot;: 1,\n})).unwrap();\n\n// the count is over the list, so it is checkable against it\nlet counted = p.providers.iter().filter(|x| !x.lifecycle.is_empty()).count();\nassert_eq!(p.with_lifecycle, counted);\nassert_eq!(p.providers.len(), 2, \&quot;a provider with no adapter is still reported\&quot;);\nassert!(p.findings.is_empty());\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;findings&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;What a reader should know: a provider this repository wires but the distribution\ndeclares no lifecycle for, and the like.&quot;
-    },
-    &quot;providers&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ProviderLifecycle&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The providers, in declaration order.&quot;
-    },
-    &quot;with_lifecycle&quot;: {
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;How many of them declare a lifecycle adapter.&quot;,
-      &quot;format&quot;: &quot;uint&quot;
-    }
-  },
-  &quot;title&quot;: &quot;ProviderLifecycles&quot;,
   &quot;$defs&quot;: {
     &quot;ProviderLifecycle&quot;: {
       &quot;description&quot;: &quot;One provider&#39;s lifecycle surface: what its adapter declares it can do, and what this\nrepository has wired to it.\n\nThe two halves come from different places and must not be confused. `lifecycle` and\n`prompt_capture` are the *distribution&#39;s* declaration — what the shipped adapter can do\nfor this provider at all — while `wired` is *this repository&#39;s* policy naming that\nprovider&#39;s hook in `wired_by`. Either can be empty with the other full, and that pairing\nis the interesting finding: a provider this repository wires but the tool ships no\nlifecycle for is a hook that will never fire.\n\nNeither half is inferred from a file on disk. Whether a shim is actually installed is\n`majordomus capture status`&#39;s question, and this type deliberately does not answer it.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ProviderLifecycle;\nuse serde_json::json;\n\n// a provider the tool adapts and this repository wires: both halves present\nlet full: ProviderLifecycle = serde_json::from_value(json!({\n    \&quot;id\&quot;: \&quot;claude\&quot;,\n    \&quot;title\&quot;: \&quot;Claude Code\&quot;,\n    \&quot;lifecycle\&quot;: [\&quot;SessionStart\&quot;, \&quot;SessionEnd\&quot;, \&quot;PreCompact\&quot;],\n    \&quot;prompt_capture\&quot;: true,\n    \&quot;client_config\&quot;: \&quot;.mcp.json\&quot;,\n    \&quot;wired\&quot;: [\&quot;session.start\&quot;, \&quot;session.close\&quot;],\n    \&quot;note\&quot;: \&quot;adapted and wired\&quot;,\n})).unwrap();\nassert!(!full.lifecycle.is_empty() &amp;&amp; !full.wired.is_empty());\nassert!(full.prompt_capture);\n\n// and one the tool ships no adapter for: it loses the automation and none of the model,\n// because every command remains the same\nlet unadapted: ProviderLifecycle = serde_json::from_value(json!({\n    \&quot;id\&quot;: \&quot;some-editor\&quot;,\n    \&quot;title\&quot;: \&quot;Some Editor\&quot;,\n    \&quot;prompt_capture\&quot;: false,\n    \&quot;note\&quot;: \&quot;no lifecycle adapter ships for it\&quot;,\n})).unwrap();\nassert!(unadapted.lifecycle.is_empty(), \&quot;nothing will fire for it\&quot;);\nassert!(unadapted.client_config.is_empty(), \&quot;and it reads no project-scoped config\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;client_config&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The file it reads a project-scoped MCP client configuration from, when it has one.&quot;
+          &quot;description&quot;: &quot;The file it reads a project-scoped MCP client configuration from, when it has one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The provider id: the bootstrap template&#39;s file stem.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;lifecycle&quot;: {
+          &quot;description&quot;: &quot;The lifecycle events its adapter declares, in the provider&#39;s own vocabulary\n(`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships no\nlifecycle adapter for it: such a provider loses the automation and none of the\nmodel, because every command remains the same.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         },
         &quot;note&quot;: {
           &quot;description&quot;: &quot;What the two together mean.&quot;,
@@ -303,21 +290,10 @@ declares no lifecycle for, and the like.</td>
         },
         &quot;wired&quot;: {
           &quot;description&quot;: &quot;The enforcement entries of *this repository&#39;s* policy that name this provider&#39;s hook\nin `wired_by`. Declared wiring, not a file on disk: whether a shim is installed is a\nquestion for `majordomus capture status`, which is the command that owns it.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;lifecycle&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The lifecycle events its adapter declares, in the provider&#39;s own vocabulary\n(`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships no\nlifecycle adapter for it: such a provider loses the automation and none of the\nmodel, because every command remains the same.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The provider id: the bootstrap template&#39;s file stem.&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         }
       },
       &quot;required&quot;: [
@@ -329,11 +305,35 @@ declares no lifecycle for, and the like.</td>
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;Every provider the distribution ships a bootstrap for, with the lifecycle half of each.\n\n`with_lifecycle` is a count over `providers` rather than a second list, so the two\ncannot disagree; it is there because \&quot;how many of the providers we support actually get\nthe automation\&quot; is the question this capability exists to answer, and a reader should not\nhave to fold the list to find out.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ProviderLifecycles;\nuse serde_json::json;\n\nlet p: ProviderLifecycles = serde_json::from_value(json!({\n    \&quot;providers\&quot;: [\n        {\&quot;id\&quot;: \&quot;claude\&quot;, \&quot;title\&quot;: \&quot;Claude Code\&quot;, \&quot;lifecycle\&quot;: [\&quot;SessionStart\&quot;],\n         \&quot;prompt_capture\&quot;: true, \&quot;note\&quot;: \&quot;adapted\&quot;},\n        {\&quot;id\&quot;: \&quot;plain\&quot;, \&quot;title\&quot;: \&quot;Plain\&quot;, \&quot;prompt_capture\&quot;: false, \&quot;note\&quot;: \&quot;not adapted\&quot;},\n    ],\n    \&quot;with_lifecycle\&quot;: 1,\n})).unwrap();\n\n// the count is over the list, so it is checkable against it\nlet counted = p.providers.iter().filter(|x| !x.lifecycle.is_empty()).count();\nassert_eq!(p.with_lifecycle, counted);\nassert_eq!(p.providers.len(), 2, \&quot;a provider with no adapter is still reported\&quot;);\nassert!(p.findings.is_empty());\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;What a reader should know: a provider this repository wires but the distribution\ndeclares no lifecycle for, and the like.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;providers&quot;: {
+      &quot;description&quot;: &quot;The providers, in declaration order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ProviderLifecycle&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;with_lifecycle&quot;: {
+      &quot;description&quot;: &quot;How many of them declare a lifecycle adapter.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    }
+  },
   &quot;required&quot;: [
     &quot;providers&quot;,
     &quot;with_lifecycle&quot;
-  ]
+  ],
+  &quot;title&quot;: &quot;ProviderLifecycles&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -367,7 +367,7 @@ declares no lifecycle for, and the like.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::lifecycle</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProviderLifecycles</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -439,7 +439,7 @@ declares no lifecycle for, and the like.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

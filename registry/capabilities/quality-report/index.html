@@ -201,18 +201,6 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">summary_only</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Answer with the counts and leave the findings out. For a caller that wants the
-state of the crate and not the list of what to do about it. <span class="font-mono text-xs text-body-subtle">default false</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">path</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only findings whose file path starts with this, repository-relative
-(`apps/majordomus-cli/src/web`). All of them when absent.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">code</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -229,24 +217,25 @@ The default is what a gate wants: only what is new. This is what a person paying
 debt down wants, and it is what `--write-baseline` must ask for — a baseline written
 from a report that had the baseline applied to it would empty the file, accepting
 nothing and failing on everything the next time it ran. <span class="font-mono text-xs text-body-subtle">default false</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">path</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Only findings whose file path starts with this, repository-relative
+(`apps/majordomus-cli/src/web`). All of them when absent.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">summary_only</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Answer with the counts and leave the findings out. For a caller that wants the
+state of the crate and not the list of what to do about it. <span class="font-mono text-xs text-body-subtle">default false</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;The input of `quality.report`: which findings to answer with.&quot;,
   &quot;properties&quot;: {
-    &quot;summary_only&quot;: {
-      &quot;description&quot;: &quot;Answer with the counts and leave the findings out. For a caller that wants the\nstate of the crate and not the list of what to do about it.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;default&quot;: false
-    },
-    &quot;path&quot;: {
-      &quot;description&quot;: &quot;Only findings whose file path starts with this, repository-relative\n(`apps/majordomus-cli/src/web`). All of them when absent.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
     &quot;code&quot;: {
       &quot;description&quot;: &quot;Only findings carrying this code (`RUST_PUBLIC_MISSING_EXAMPLE`). All of them when\nabsent. A code nothing recognises is refused rather than answered with an empty\nlist, so a typo cannot read as a clean report.&quot;,
       &quot;type&quot;: [
@@ -255,12 +244,23 @@ nothing and failing on everything the next time it ran. <span class="font-mono t
       ]
     },
     &quot;include_baselined&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: false,
       &quot;description&quot;: &quot;Include the findings the ratchet already accepts, which are left out by default.\n\nThe default is what a gate wants: only what is new. This is what a person paying the\ndebt down wants, and it is what `--write-baseline` must ask for — a baseline written\nfrom a report that had the baseline applied to it would empty the file, accepting\nnothing and failing on everything the next time it ran.&quot;,
-      &quot;default&quot;: false
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;path&quot;: {
+      &quot;description&quot;: &quot;Only findings whose file path starts with this, repository-relative\n(`apps/majordomus-cli/src/web`). All of them when absent.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;summary_only&quot;: {
+      &quot;default&quot;: false,
+      &quot;description&quot;: &quot;Answer with the counts and leave the findings out. For a caller that wants the\nstate of the crate and not the list of what to do about it.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     }
   },
-  &quot;description&quot;: &quot;The input of `quality.report`: which findings to answer with.&quot;,
   &quot;title&quot;: &quot;QualityInput&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -284,17 +284,17 @@ outside this count is what fails the gate.</td>
 the layer installs into repositories that carry no Rust crate, and a doctrine that
 cannot apply is not a violation.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">reason</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Why nothing was measured, when nothing was.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">passes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Whether the report as filtered leaves nothing blocking. Answered here so that a
 caller over any transport reads the verdict rather than deriving it, and so that the
 command line&#39;s exit code and this field can never disagree.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reason</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Why nothing was measured, when nothing was.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">report</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -306,304 +306,46 @@ consumer reads one shape either way and `measured` is the only question it must 
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;QualityAnswer&quot;,
-  &quot;required&quot;: [
-    &quot;measured&quot;,
-    &quot;report&quot;,
-    &quot;passes&quot;,
-    &quot;baselined&quot;
-  ],
-  &quot;description&quot;: &quot;The answer: the measurement, or the reason there was not one.&quot;,
-  &quot;properties&quot;: {
-    &quot;baselined&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;The findings the ratchet accepts because they stood when the rule landed. A finding\noutside this count is what fails the gate.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0
-    },
-    &quot;measured&quot;: {
-      &quot;description&quot;: &quot;Whether a crate was found and measured. `false` is a complete answer, not a failure:\nthe layer installs into repositories that carry no Rust crate, and a doctrine that\ncannot apply is not a violation.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why nothing was measured, when nothing was.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;passes&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether the report as filtered leaves nothing blocking. Answered here so that a\ncaller over any transport reads the verdict rather than deriving it, and so that the\ncommand line&#39;s exit code and this field can never disagree.&quot;
-    },
-    &quot;report&quot;: {
-      &quot;description&quot;: &quot;The measurement. Present and empty-of-findings when `measured` is false, so that a\nconsumer reads one shape either way and `measured` is the only question it must ask.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/QualityReport&quot;
-    }
-  },
-  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;OperationParity&quot;: {
-      &quot;description&quot;: &quot;What the canonical operations look like against the transports that project them.&quot;,
-      &quot;required&quot;: [
-        &quot;canonical&quot;,
-        &quot;cli&quot;,
-        &quot;http&quot;,
-        &quot;openapi&quot;,
-        &quot;mcp&quot;,
-        &quot;cli_commands&quot;,
-        &quot;cli_from_capability&quot;,
-        &quot;cli_local&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;http&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;How many declare an HTTP route.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;mcp&quot;: {
-          &quot;description&quot;: &quot;How many declare an MCP tool.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;cli_commands&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Commands of the command line, leaves and runnable parents.&quot;
-        },
-        &quot;cli_local&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many are declared to belong to the command line alone, with a reason.&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;canonical&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Executable capabilities in the registry.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;cli&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;Of those, how many declare a command-line projection.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;cli_from_capability&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Of those, how many are the projection of a capability.&quot;
-        },
-        &quot;openapi&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many the OpenAPI document describes.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      }
-    },
-    &quot;QualitySeverity&quot;: {
-      &quot;description&quot;: &quot;How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;The gate fails.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;error&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Reported, and the gate passes.&quot;,
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;Exemption&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;reason&quot;,
-        &quot;items&quot;
-      ],
+      &quot;description&quot;: &quot;A group of items the example policy does not apply to, with the reason it does not.&quot;,
       &quot;properties&quot;: {
         &quot;items&quot;: {
+          &quot;description&quot;: &quot;How many items it covers.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;How many items it covers.&quot;
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;The reason, as the policy names it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;description&quot;: &quot;A group of items the example policy does not apply to, with the reason it does not.&quot;
-    },
-    &quot;QualityReport&quot;: {
-      &quot;description&quot;: &quot;One measurement of one crate, and everything found wrong in it.&quot;,
-      &quot;properties&quot;: {
-        &quot;target&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What was measured: the crate directory, repository-relative.&quot;
-        },
-        &quot;violations&quot;: {
-          &quot;description&quot;: &quot;Every finding, errors first, then by file and line.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Violation&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;operations&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/OperationParity&quot;,
-          &quot;description&quot;: &quot;The canonical operations against their transports.&quot;
-        },
-        &quot;modules&quot;: {
-          &quot;description&quot;: &quot;The exported module surface.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ModuleQuality&quot;
-        },
-        &quot;schema&quot;: {
-          &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;default&quot;: &quot;&quot;
-        },
-        &quot;public_api&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PublicApiQuality&quot;,
-          &quot;description&quot;: &quot;The exported item surface.&quot;
-        }
-      },
       &quot;required&quot;: [
-        &quot;target&quot;,
-        &quot;public_api&quot;,
-        &quot;modules&quot;,
-        &quot;operations&quot;,
-        &quot;violations&quot;
+        &quot;reason&quot;,
+        &quot;items&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;PublicApiQuality&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;exempt&quot;: {
-          &quot;description&quot;: &quot;How many are exempt from the example policy for a structural reason, and why, by\nreason, so that the exemptions are visible rather than implied by a subtraction.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Exemption&quot;
-          }
-        },
-        &quot;documented&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Of those, how many carry documentation.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;exampled&quot;: {
-          &quot;description&quot;: &quot;Of those, how many have one that counts.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;items&quot;: {
-          &quot;description&quot;: &quot;Items the crate exports, of every kind.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;owe_example&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many owe an executable example under the policy.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;description&quot;: &quot;What the exported item surface looks like.&quot;,
-      &quot;required&quot;: [
-        &quot;items&quot;,
-        &quot;documented&quot;,
-        &quot;owe_example&quot;,
-        &quot;exampled&quot;,
-        &quot;exempt&quot;
-      ]
-    },
-    &quot;Violation&quot;: {
-      &quot;description&quot;: &quot;One finding: what, where, why, and what to do.&quot;,
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;severity&quot;,
-        &quot;rule&quot;,
-        &quot;path&quot;,
-        &quot;symbol&quot;,
-        &quot;message&quot;,
-        &quot;why&quot;,
-        &quot;remediation&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;rule&quot;: {
-          &quot;description&quot;: &quot;The canonical id of the rule that requires this.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/QualitySeverity&quot;,
-          &quot;description&quot;: &quot;How bad it is.&quot;
-        },
-        &quot;line&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;The line, 1-based; `None` when the finding is not about a line.&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;minimum&quot;: 0
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Where it is, repository-relative; empty when the finding is not about a file.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remediation&quot;: {
-          &quot;description&quot;: &quot;What to do, from the code.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;message&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;One sentence, specific to this occurrence.&quot;
-        },
-        &quot;symbol&quot;: {
-          &quot;description&quot;: &quot;The item&#39;s full path, or the command, or the capability id: what the finding is about.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;why&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Why it matters, from the code.&quot;
-        },
-        &quot;code&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ViolationCode&quot;,
-          &quot;description&quot;: &quot;The stable code.&quot;
-        }
-      }
-    },
     &quot;ModuleQuality&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;What the exported module surface looks like.&quot;,
       &quot;properties&quot;: {
         &quot;behaviourally_tested&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
           &quot;description&quot;: &quot;How many something exercises: an in-file test, or a test that names them.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;documented&quot;: {
+          &quot;description&quot;: &quot;Of those, how many carry a `//!` header.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;exampled&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
           &quot;description&quot;: &quot;How many carry an executable example in that header.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;documented&quot;: {
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Of those, how many carry a `//!` header.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;modules&quot;: {
@@ -618,24 +360,246 @@ consumer reads one shape either way and `measured` is the only question it must 
         &quot;documented&quot;,
         &quot;exampled&quot;,
         &quot;behaviourally_tested&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;OperationParity&quot;: {
+      &quot;description&quot;: &quot;What the canonical operations look like against the transports that project them.&quot;,
+      &quot;properties&quot;: {
+        &quot;canonical&quot;: {
+          &quot;description&quot;: &quot;Executable capabilities in the registry.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;cli&quot;: {
+          &quot;description&quot;: &quot;Of those, how many declare a command-line projection.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;cli_commands&quot;: {
+          &quot;description&quot;: &quot;Commands of the command line, leaves and runnable parents.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;cli_from_capability&quot;: {
+          &quot;description&quot;: &quot;Of those, how many are the projection of a capability.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;cli_local&quot;: {
+          &quot;description&quot;: &quot;How many are declared to belong to the command line alone, with a reason.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;http&quot;: {
+          &quot;description&quot;: &quot;How many declare an HTTP route.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;mcp&quot;: {
+          &quot;description&quot;: &quot;How many declare an MCP tool.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;openapi&quot;: {
+          &quot;description&quot;: &quot;How many the OpenAPI document describes.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;canonical&quot;,
+        &quot;cli&quot;,
+        &quot;http&quot;,
+        &quot;openapi&quot;,
+        &quot;mcp&quot;,
+        &quot;cli_commands&quot;,
+        &quot;cli_from_capability&quot;,
+        &quot;cli_local&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;PublicApiQuality&quot;: {
+      &quot;description&quot;: &quot;What the exported item surface looks like.&quot;,
+      &quot;properties&quot;: {
+        &quot;documented&quot;: {
+          &quot;description&quot;: &quot;Of those, how many carry documentation.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;exampled&quot;: {
+          &quot;description&quot;: &quot;Of those, how many have one that counts.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;exempt&quot;: {
+          &quot;description&quot;: &quot;How many are exempt from the example policy for a structural reason, and why, by\nreason, so that the exemptions are visible rather than implied by a subtraction.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Exemption&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;items&quot;: {
+          &quot;description&quot;: &quot;Items the crate exports, of every kind.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;owe_example&quot;: {
+          &quot;description&quot;: &quot;How many owe an executable example under the policy.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;items&quot;,
+        &quot;documented&quot;,
+        &quot;owe_example&quot;,
+        &quot;exampled&quot;,
+        &quot;exempt&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;QualityReport&quot;: {
+      &quot;description&quot;: &quot;One measurement of one crate, and everything found wrong in it.&quot;,
+      &quot;properties&quot;: {
+        &quot;modules&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ModuleQuality&quot;,
+          &quot;description&quot;: &quot;The exported module surface.&quot;
+        },
+        &quot;operations&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/OperationParity&quot;,
+          &quot;description&quot;: &quot;The canonical operations against their transports.&quot;
+        },
+        &quot;public_api&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PublicApiQuality&quot;,
+          &quot;description&quot;: &quot;The exported item surface.&quot;
+        },
+        &quot;schema&quot;: {
+          &quot;default&quot;: &quot;&quot;,
+          &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;target&quot;: {
+          &quot;description&quot;: &quot;What was measured: the crate directory, repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;violations&quot;: {
+          &quot;description&quot;: &quot;Every finding, errors first, then by file and line.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Violation&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;target&quot;,
+        &quot;public_api&quot;,
+        &quot;modules&quot;,
+        &quot;operations&quot;,
+        &quot;violations&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;QualitySeverity&quot;: {
+      &quot;description&quot;: &quot;How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The gate fails.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Reported, and the gate passes.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
       ]
+    },
+    &quot;Violation&quot;: {
+      &quot;description&quot;: &quot;One finding: what, where, why, and what to do.&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ViolationCode&quot;,
+          &quot;description&quot;: &quot;The stable code.&quot;
+        },
+        &quot;line&quot;: {
+          &quot;description&quot;: &quot;The line, 1-based; `None` when the finding is not about a line.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;One sentence, specific to this occurrence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Where it is, repository-relative; empty when the finding is not about a file.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;remediation&quot;: {
+          &quot;description&quot;: &quot;What to do, from the code.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;rule&quot;: {
+          &quot;description&quot;: &quot;The canonical id of the rule that requires this.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/QualitySeverity&quot;,
+          &quot;description&quot;: &quot;How bad it is.&quot;
+        },
+        &quot;symbol&quot;: {
+          &quot;description&quot;: &quot;The item&#39;s full path, or the command, or the capability id: what the finding is about.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;why&quot;: {
+          &quot;description&quot;: &quot;Why it matters, from the code.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;severity&quot;,
+        &quot;rule&quot;,
+        &quot;path&quot;,
+        &quot;symbol&quot;,
+        &quot;message&quot;,
+        &quot;why&quot;,
+        &quot;remediation&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;ViolationCode&quot;: {
       &quot;description&quot;: &quot;What is wrong, as a stable machine-readable code.\n\nThe codes are the contract between the validator and everything downstream: CI\nannotations, Cockpit filters, documentation anchors and an agent deciding what to fix.\nA code is never renamed once it has shipped; a rule that stops existing takes its code\nwith it.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;RUST_PUBLIC_MISSING_DOCS&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;An exported item carries no documentation at all.&quot;
+          &quot;description&quot;: &quot;An exported item carries no documentation at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;RUST_PUBLIC_THIN_DOCS&quot;,
           &quot;description&quot;: &quot;An exported item&#39;s documentation says nothing its signature had not already said.&quot;,
-          &quot;const&quot;: &quot;RUST_PUBLIC_THIN_DOCS&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;An exported item that carries behaviour has no executable example.&quot;,
           &quot;const&quot;: &quot;RUST_PUBLIC_MISSING_EXAMPLE&quot;,
+          &quot;description&quot;: &quot;An exported item that carries behaviour has no executable example.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -645,32 +609,32 @@ consumer reads one shape either way and `measured` is the only question it must 
         },
         {
           &quot;const&quot;: &quot;RUST_EXAMPLE_PLACEHOLDER&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;An example asserts nothing, or asserts something that is true of any program.&quot;
+          &quot;description&quot;: &quot;An example asserts nothing, or asserts something that is true of any program.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;RUST_EXAMPLE_DOES_NOT_NAME_SUBJECT&quot;,
-          &quot;description&quot;: &quot;An example never names the item it is documenting.&quot;
+          &quot;description&quot;: &quot;An example never names the item it is documenting.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;RUST_MODULE_MISSING_DOCS&quot;,
-          &quot;description&quot;: &quot;An exported module carries no module-level documentation.&quot;
+          &quot;description&quot;: &quot;An exported module carries no module-level documentation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;An exported module has no module-level executable example.&quot;,
           &quot;const&quot;: &quot;RUST_MODULE_MISSING_EXAMPLE&quot;,
+          &quot;description&quot;: &quot;An exported module has no module-level executable example.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;RUST_MODULE_MISSING_BEHAVIOURAL_TEST&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;No test names an exported module, and it declares none of its own.&quot;
+          &quot;description&quot;: &quot;No test names an exported module, and it declares none of its own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;A command of the command line is neither a canonical capability nor classified as\nbelonging to the command line alone.&quot;,
           &quot;const&quot;: &quot;OPERATION_CLI_UNCLASSIFIED&quot;,
+          &quot;description&quot;: &quot;A command of the command line is neither a canonical capability nor classified as\nbelonging to the command line alone.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -685,22 +649,58 @@ consumer reads one shape either way and `measured` is the only question it must 
         },
         {
           &quot;const&quot;: &quot;OPERATION_MISSING_OPENAPI&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A capability declares an HTTP route and the OpenAPI document does not describe it.&quot;
+          &quot;description&quot;: &quot;A capability declares an HTTP route and the OpenAPI document does not describe it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;OPERATION_PROJECTION_MISSING&quot;,
           &quot;description&quot;: &quot;A capability declares a projection that the projection itself does not carry.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;OPERATION_PROJECTION_MISSING&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;OPERATION_PROJECTION_ORPHAN&quot;,
           &quot;description&quot;: &quot;A projection carries an entry the registry does not hold.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;OPERATION_PROJECTION_ORPHAN&quot;
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
-  }
+  },
+  &quot;description&quot;: &quot;The answer: the measurement, or the reason there was not one.&quot;,
+  &quot;properties&quot;: {
+    &quot;baselined&quot;: {
+      &quot;description&quot;: &quot;The findings the ratchet accepts because they stood when the rule landed. A finding\noutside this count is what fails the gate.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;measured&quot;: {
+      &quot;description&quot;: &quot;Whether a crate was found and measured. `false` is a complete answer, not a failure:\nthe layer installs into repositories that carry no Rust crate, and a doctrine that\ncannot apply is not a violation.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;passes&quot;: {
+      &quot;description&quot;: &quot;Whether the report as filtered leaves nothing blocking. Answered here so that a\ncaller over any transport reads the verdict rather than deriving it, and so that the\ncommand line&#39;s exit code and this field can never disagree.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why nothing was measured, when nothing was.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;report&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/QualityReport&quot;,
+      &quot;description&quot;: &quot;The measurement. Present and empty-of-findings when `measured` is false, so that a\nconsumer reads one shape either way and `measured` is the only question it must ask.&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;measured&quot;,
+    &quot;report&quot;,
+    &quot;passes&quot;,
+    &quot;baselined&quot;
+  ],
+  &quot;title&quot;: &quot;QualityAnswer&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -731,7 +731,7 @@ consumer reads one shape either way and `measured` is the only question it must 
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::quality</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">QualityInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">QualityAnswer</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/quality.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/quality.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/quality.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/quality.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -803,7 +803,7 @@ consumer reads one shape either way and `measured` is the only question it must 
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

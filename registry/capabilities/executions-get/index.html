@@ -210,19 +210,19 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `executions.get`.&quot;,
   &quot;properties&quot;: {
     &quot;id&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The execution&#39;s id.&quot;
+      &quot;description&quot;: &quot;The execution&#39;s id.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false,
-  &quot;title&quot;: &quot;GetInput&quot;,
-  &quot;description&quot;: &quot;The input of `executions.get`.&quot;,
   &quot;required&quot;: [
     &quot;id&quot;
-  ]
+  ],
+  &quot;title&quot;: &quot;GetInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -231,95 +231,20 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">events_truncated</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the retained event history has lost its oldest entries to the bound.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">actor</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Who asked for it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The findings it reported.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The identity.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">started_at</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">When the handler was entered.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">input</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The input it was given, with every value the input schema marks sensitive replaced.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">output</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">What the handler returned, for a succeeded execution and never before.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">title</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">That capability&#39;s title, so a list needs no second lookup.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">cancellable</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Whether asking to cancel this execution will do anything: the capability&#39;s policy.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">steps</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The steps it entered, in order.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">repository</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Which repository it ran against.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">state</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it is.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The sequence number of the last event: the cursor a client subscribes from.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">capability</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The capability that ran, by its canonical id.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">error</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Why it failed, for a failed execution and never before.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">links</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where to read more.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">progress</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The last progress the handler reported.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">duration_ms</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">How long it ran, in milliseconds, once it has finished.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">correlation_id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -327,90 +252,461 @@
         <td class="px-3 py-2 text-body">The id used in this process&#39;s logs and tracing spans for this execution; the
 execution id itself, carried under the name a reader of a log expects.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">event_count</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many events it has produced, including the ones no longer retained.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">created_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">When it was accepted, RFC 3339 in UTC.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The findings it reported.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">duration_ms</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">How long it ran, in milliseconds, once it has finished.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">error</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Why it failed, for a failed execution and never before.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">event_count</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How many events it has produced, including the ones no longer retained.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">events_truncated</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the retained event history has lost its oldest entries to the bound.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">finished_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">When it reached a final state.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The identity.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">input</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The input it was given, with every value the input schema marks sensitive replaced.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The sequence number of the last event: the cursor a client subscribes from.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">links</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where to read more.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">output</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">What the handler returned, for a succeeded execution and never before.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">progress</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The last progress the handler reported.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">repository</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Which repository it ran against.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">started_at</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">When the handler was entered.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">state</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where it is.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">steps</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The steps it entered, in order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">title</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">That capability&#39;s title, so a list needs no second lookup.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;Actor&quot;: {
+      &quot;description&quot;: &quot;Who asked, and which peer they are when this process knows.&quot;,
+      &quot;properties&quot;: {
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ActorKind&quot;,
+          &quot;description&quot;: &quot;Where the request came from.&quot;
+        },
+        &quot;peer&quot;: {
+          &quot;description&quot;: &quot;The peer id, for a call that arrived through an MCP session.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ActorKind&quot;: {
+      &quot;description&quot;: &quot;Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;http&quot;,
+          &quot;description&quot;: &quot;An HTTP client, which includes the Cockpit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;mcp&quot;,
+          &quot;description&quot;: &quot;An MCP client attached to this process.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cli&quot;,
+          &quot;description&quot;: &quot;The command line of this process.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;internal&quot;,
+          &quot;description&quot;: &quot;This executable&#39;s own tests and benchmarks.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ExecutionDiagnostic&quot;: {
+      &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;A stable machine-readable code.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;The rest, when there is more.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
+        },
+        &quot;suggestion&quot;: {
+          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line, for a person.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ExecutionError&quot;: {
+      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;correlation_id&quot;: {
+          &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What went wrong, for a person.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;suggestion&quot;: {
+          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;message&quot;,
+        &quot;correlation_id&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ExecutionId&quot;: {
+      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;ExecutionLinks&quot;: {
+      &quot;description&quot;: &quot;Where to read more about one execution, in this server&#39;s own terms.\n\nEvery value is derived from the registry&#39;s declared routes and from the live channel&#39;s\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve.&quot;,
+      &quot;properties&quot;: {
+        &quot;cancel&quot;: {
+          &quot;description&quot;: &quot;Where to ask it to stop: `POST /api/v1/executions/cancel`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;cockpit&quot;: {
+          &quot;description&quot;: &quot;The page a person opens.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;events&quot;: {
+          &quot;description&quot;: &quot;The retained history: `GET /api/v1/executions/events?id=…`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;self&quot;: {
+          &quot;description&quot;: &quot;The snapshot: `GET /api/v1/executions/get?id=…`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;websocket&quot;: {
+          &quot;description&quot;: &quot;The live channel, from the beginning: `GET /events?execution=…`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;self&quot;,
+        &quot;events&quot;,
+        &quot;cancel&quot;,
+        &quot;websocket&quot;,
+        &quot;cockpit&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ExecutionState&quot;: {
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;queued&quot;,
+          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;description&quot;: &quot;The handler is running.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelling&quot;,
+          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;succeeded&quot;,
+          &quot;description&quot;: &quot;The handler returned an output.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ProgressView&quot;: {
+      &quot;description&quot;: &quot;How far along an execution is.&quot;,
+      &quot;properties&quot;: {
+        &quot;current&quot;: {
+          &quot;description&quot;: &quot;Units done.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is being done, for a reader.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;total&quot;: {
+          &quot;description&quot;: &quot;Units in total, when the handler knows how many.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;current&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RepositoryRef&quot;: {
+      &quot;description&quot;: &quot;Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \&quot;wherever this process happens to be\&quot;: the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out, when git can say.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The stable identity two processes over one checkout both compute.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The repository&#39;s name: the last component of its root.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;id&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;StepState&quot;: {
+      &quot;description&quot;: &quot;Where a step of an execution stands.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;description&quot;: &quot;Entered and not finished.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;completed&quot;,
+          &quot;description&quot;: &quot;Finished, and what it was asked to do happened.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;Finished, and it did not.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;StepView&quot;: {
+      &quot;description&quot;: &quot;One named phase of an execution, as the handler reported it.&quot;,
+      &quot;properties&quot;: {
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What it said when it finished, when it said anything.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;finished_at&quot;: {
+          &quot;description&quot;: &quot;When it finished, when it has.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;A stable name, unique within the execution.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;When it was entered, RFC 3339 in UTC.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StepState&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line for a reader.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;title&quot;,
+        &quot;state&quot;,
+        &quot;started_at&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;One execution with the links to everything else about it.&quot;,
   &quot;properties&quot;: {
-    &quot;events_truncated&quot;: {
-      &quot;description&quot;: &quot;Whether the retained event history has lost its oldest entries to the bound.&quot;,
+    &quot;actor&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Actor&quot;,
+      &quot;description&quot;: &quot;Who asked for it.&quot;
+    },
+    &quot;cancellable&quot;: {
+      &quot;description&quot;: &quot;Whether asking to cancel this execution will do anything: the capability&#39;s policy.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
-    &quot;actor&quot;: {
-      &quot;description&quot;: &quot;Who asked for it.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/Actor&quot;
+    &quot;capability&quot;: {
+      &quot;description&quot;: &quot;The capability that ran, by its canonical id.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;correlation_id&quot;: {
+      &quot;description&quot;: &quot;The id used in this process&#39;s logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;created_at&quot;: {
+      &quot;description&quot;: &quot;When it was accepted, RFC 3339 in UTC.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;diagnostics&quot;: {
       &quot;description&quot;: &quot;The findings it reported.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
-      }
-    },
-    &quot;id&quot;: {
-      &quot;description&quot;: &quot;The identity.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;
-    },
-    &quot;started_at&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;When the handler was entered.&quot;
-    },
-    &quot;input&quot;: {
-      &quot;description&quot;: &quot;The input it was given, with every value the input schema marks sensitive replaced.&quot;
-    },
-    &quot;output&quot;: {
-      &quot;description&quot;: &quot;What the handler returned, for a succeeded execution and never before.&quot;
-    },
-    &quot;title&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;That capability&#39;s title, so a list needs no second lookup.&quot;
-    },
-    &quot;cancellable&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether asking to cancel this execution will do anything: the capability&#39;s policy.&quot;
-    },
-    &quot;steps&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/StepView&quot;
       },
-      &quot;description&quot;: &quot;The steps it entered, in order.&quot;,
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;repository&quot;: {
-      &quot;description&quot;: &quot;Which repository it ran against.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/RepositoryRef&quot;
-    },
-    &quot;state&quot;: {
-      &quot;description&quot;: &quot;Where it is.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;
-    },
-    &quot;last_sequence&quot;: {
+    &quot;duration_ms&quot;: {
+      &quot;description&quot;: &quot;How long it ran, in milliseconds, once it has finished.&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;The sequence number of the last event: the cursor a client subscribes from.&quot;
-    },
-    &quot;capability&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The capability that ran, by its canonical id.&quot;
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
     },
     &quot;error&quot;: {
       &quot;anyOf&quot;: [
@@ -423,9 +719,42 @@ execution id itself, carried under the name a reader of a log expects.</td>
       ],
       &quot;description&quot;: &quot;Why it failed, for a failed execution and never before.&quot;
     },
+    &quot;event_count&quot;: {
+      &quot;description&quot;: &quot;How many events it has produced, including the ones no longer retained.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;events_truncated&quot;: {
+      &quot;description&quot;: &quot;Whether the retained event history has lost its oldest entries to the bound.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;finished_at&quot;: {
+      &quot;description&quot;: &quot;When it reached a final state.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;id&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
+      &quot;description&quot;: &quot;The identity.&quot;
+    },
+    &quot;input&quot;: {
+      &quot;description&quot;: &quot;The input it was given, with every value the input schema marks sensitive replaced.&quot;
+    },
+    &quot;last_sequence&quot;: {
+      &quot;description&quot;: &quot;The sequence number of the last event: the cursor a client subscribes from.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
     &quot;links&quot;: {
-      &quot;description&quot;: &quot;Where to read more.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ExecutionLinks&quot;
+      &quot;$ref&quot;: &quot;#/$defs/ExecutionLinks&quot;,
+      &quot;description&quot;: &quot;Where to read more.&quot;
+    },
+    &quot;output&quot;: {
+      &quot;description&quot;: &quot;What the handler returned, for a succeeded execution and never before.&quot;
     },
     &quot;progress&quot;: {
       &quot;anyOf&quot;: [
@@ -438,362 +767,33 @@ execution id itself, carried under the name a reader of a log expects.</td>
       ],
       &quot;description&quot;: &quot;The last progress the handler reported.&quot;
     },
-    &quot;duration_ms&quot;: {
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;How long it ran, in milliseconds, once it has finished.&quot;
+    &quot;repository&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/RepositoryRef&quot;,
+      &quot;description&quot;: &quot;Which repository it ran against.&quot;
     },
-    &quot;correlation_id&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The id used in this process&#39;s logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects.&quot;
-    },
-    &quot;event_count&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;How many events it has produced, including the ones no longer retained.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0
-    },
-    &quot;created_at&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;When it was accepted, RFC 3339 in UTC.&quot;
-    },
-    &quot;finished_at&quot;: {
+    &quot;started_at&quot;: {
+      &quot;description&quot;: &quot;When the handler was entered.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;When it reached a final state.&quot;
+      ]
+    },
+    &quot;state&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;,
+      &quot;description&quot;: &quot;Where it is.&quot;
+    },
+    &quot;steps&quot;: {
+      &quot;description&quot;: &quot;The steps it entered, in order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/StepView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;title&quot;: {
+      &quot;description&quot;: &quot;That capability&#39;s title, so a list needs no second lookup.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;$defs&quot;: {
-    &quot;ExecutionDiagnostic&quot;: {
-      &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A stable machine-readable code.&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The rest, when there is more.&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;description&quot;: &quot;How bad.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;
-        },
-        &quot;suggestion&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;One line, for a person.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;summary&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RepositoryRef&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The stable identity two processes over one checkout both compute.&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The repository&#39;s name: the last component of its root.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out, when git can say.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;description&quot;: &quot;Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \&quot;wherever this process happens to be\&quot;: the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them.&quot;,
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;id&quot;
-      ]
-    },
-    &quot;ExecutionError&quot;: {
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;message&quot;,
-        &quot;correlation_id&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;message&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What went wrong, for a person.&quot;
-        },
-        &quot;code&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.&quot;
-        },
-        &quot;suggestion&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;
-        },
-        &quot;correlation_id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;
-        }
-      },
-      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;
-    },
-    &quot;ExecutionId&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;
-    },
-    &quot;ActorKind&quot;: {
-      &quot;description&quot;: &quot;Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;An HTTP client, which includes the Cockpit.&quot;,
-          &quot;const&quot;: &quot;http&quot;
-        },
-        {
-          &quot;description&quot;: &quot;An MCP client attached to this process.&quot;,
-          &quot;const&quot;: &quot;mcp&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cli&quot;,
-          &quot;description&quot;: &quot;The command line of this process.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;This executable&#39;s own tests and benchmarks.&quot;,
-          &quot;const&quot;: &quot;internal&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ExecutionState&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;queued&quot;,
-          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;running&quot;,
-          &quot;description&quot;: &quot;The handler is running.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;cancelling&quot;,
-          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The handler returned an output.&quot;,
-          &quot;const&quot;: &quot;succeeded&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelled&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;
-    },
-    &quot;ProgressView&quot;: {
-      &quot;required&quot;: [
-        &quot;current&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;How far along an execution is.&quot;,
-      &quot;properties&quot;: {
-        &quot;current&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Units done.&quot;
-        },
-        &quot;total&quot;: {
-          &quot;description&quot;: &quot;Units in total, when the handler knows how many.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;minimum&quot;: 0
-        },
-        &quot;message&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;What is being done, for a reader.&quot;
-        }
-      }
-    },
-    &quot;ExecutionLinks&quot;: {
-      &quot;description&quot;: &quot;Where to read more about one execution, in this server&#39;s own terms.\n\nEvery value is derived from the registry&#39;s declared routes and from the live channel&#39;s\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;cancel&quot;: {
-          &quot;description&quot;: &quot;Where to ask it to stop: `POST /api/v1/executions/cancel`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;cockpit&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The page a person opens.&quot;
-        },
-        &quot;websocket&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The live channel, from the beginning: `GET /events?execution=…`.&quot;
-        },
-        &quot;events&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The retained history: `GET /api/v1/executions/events?id=…`.&quot;
-        },
-        &quot;self&quot;: {
-          &quot;description&quot;: &quot;The snapshot: `GET /api/v1/executions/get?id=…`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;self&quot;,
-        &quot;events&quot;,
-        &quot;cancel&quot;,
-        &quot;websocket&quot;,
-        &quot;cockpit&quot;
-      ]
-    },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;
-        }
-      ]
-    },
-    &quot;StepView&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;finished_at&quot;: {
-          &quot;description&quot;: &quot;When it finished, when it has.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;started_at&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;When it was entered, RFC 3339 in UTC.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;One line for a reader.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;A stable name, unique within the execution.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;What it said when it finished, when it said anything.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StepState&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;title&quot;,
-        &quot;state&quot;,
-        &quot;started_at&quot;
-      ],
-      &quot;description&quot;: &quot;One named phase of an execution, as the handler reported it.&quot;
-    },
-    &quot;StepState&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;running&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Entered and not finished.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;completed&quot;,
-          &quot;description&quot;: &quot;Finished, and what it was asked to do happened.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;Finished, and it did not.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where a step of an execution stands.&quot;
-    },
-    &quot;Actor&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;Who asked, and which peer they are when this process knows.&quot;,
-      &quot;properties&quot;: {
-        &quot;peer&quot;: {
-          &quot;description&quot;: &quot;The peer id, for a call that arrived through an MCP session.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;Where the request came from.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ActorKind&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;kind&quot;
-      ]
-    }
-  },
-  &quot;type&quot;: &quot;object&quot;,
   &quot;required&quot;: [
     &quot;id&quot;,
     &quot;capability&quot;,
@@ -811,7 +811,7 @@ execution id itself, carried under the name a reader of a log expects.</td>
     &quot;links&quot;
   ],
   &quot;title&quot;: &quot;ExecutionView&quot;,
-  &quot;description&quot;: &quot;One execution with the links to everything else about it.&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -842,7 +842,7 @@ execution id itself, carried under the name a reader of a log expects.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">GetInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ExecutionView</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -914,7 +914,7 @@ execution id itself, carried under the name a reader of a log expects.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

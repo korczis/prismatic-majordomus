@@ -200,9 +200,9 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -249,36 +249,6 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">default_floor</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">number</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The default relevance floor.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">selectors</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The selectors, and which of them infer.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">edges</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every edge kind the composed graph has, followed or refused.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">default_max_depth</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The default depth limit.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">graph</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The graph the relations are read from.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tiers</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The tiers, in the order the budget spends in.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">bytes_per_token</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -289,23 +259,97 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The default ceiling in estimated tokens.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">default_floor</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">number</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The default relevance floor.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">default_max_depth</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The default depth limit.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">edges</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every edge kind the composed graph has, followed or refused.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">graph</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The graph the relations are read from.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The format of this answer.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">selectors</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The selectors, and which of them infer.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tiers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The tiers, in the order the budget spends in.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;EdgeRule&quot;: {
+      &quot;description&quot;: &quot;One edge of the composed graph, and what the compiler does with it.\n\nEvery edge kind the graph declares gets a row, followed or not, which is the property\nthat makes this projection worth reading: an edge added to the graph and not to the\ntraversal table appears here as `refused` with a reason saying the compiler has no rule\nfor it, rather than being silently unfollowed. A table that only listed the edges it\nfollowed could not tell you what it was ignoring.\n\n`forward` and `reverse` are absent rather than zero when the edge is not followed that\nway, so \&quot;not followed\&quot; is one representation and not two. `means` is the graph&#39;s own\naccount of the relation; `reason` is this compiler&#39;s account of why it is or is not\ncontext, in both directions.\n\n```\nuse majordomus_cli::devcontext::{edge_policy, policy, EdgeRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&amp;ctx).unwrap();\n\n// one row per edge kind the graph declares, followed or refused\nlet edges: &amp;[EdgeRule] = &amp;rules.edges;\nassert!(!edges.is_empty(), \&quot;the graph declares edges\&quot;);\nfor e in edges {\n    // the row always says what the relation is and what was decided about it\n    assert!(!e.means.is_empty() &amp;&amp; !e.reason.is_empty(), \&quot;{}\&quot;, e.edge);\n\n    if e.refused {\n        // not followed in either direction, and absent rather than zero\n        assert!(e.forward.is_none() &amp;&amp; e.reverse.is_none(), \&quot;{}\&quot;, e.edge);\n        assert!(edge_policy(&amp;e.edge).is_none(), \&quot;{} is refused and in the table\&quot;, e.edge);\n    } else {\n        // followed at least one way, at a weight the table declares\n        assert!(e.forward.is_some() || e.reverse.is_some(), \&quot;{}\&quot;, e.edge);\n        let p = edge_policy(&amp;e.edge).expect(\&quot;a followed edge has a policy\&quot;);\n        assert_eq!(e.forward, (p.forward &gt; 0.0).then_some(p.forward));\n        assert_eq!(e.reverse, (p.reverse &gt; 0.0).then_some(p.reverse));\n    }\n}\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;edge&quot;: {
+          &quot;description&quot;: &quot;The edge kind, as the composed graph names it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;forward&quot;: {
+          &quot;description&quot;: &quot;The relevance multiplier when followed source to target; absent when refused.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: [
+            &quot;number&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;means&quot;: {
+          &quot;description&quot;: &quot;What the graph asserts by it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why the target is context for the source, or why the edge is refused.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;refused&quot;: {
+          &quot;description&quot;: &quot;True when the compiler will not follow it in either direction.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;reverse&quot;: {
+          &quot;description&quot;: &quot;The multiplier when followed target to source; absent when refused.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: [
+            &quot;number&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;edge&quot;,
+        &quot;means&quot;,
+        &quot;reason&quot;,
+        &quot;refused&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;Selector&quot;: {
       &quot;description&quot;: &quot;What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is [`Selector::declared`], and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec&lt;&amp;str&gt; = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\&quot;intent_match\&quot;]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec&lt;&amp;str&gt; = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\&quot;scope_path\&quot;),\n);\n```&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;const&quot;: &quot;seed&quot;,
           &quot;description&quot;: &quot;Named in the request.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;seed&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;relation&quot;,
@@ -318,19 +362,19 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;contract&quot;,
           &quot;description&quot;: &quot;A directory contract that reaches one of those paths.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;contract&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;governance&quot;,
-          &quot;description&quot;: &quot;A rule or policy the layer applies to everything.&quot;
+          &quot;description&quot;: &quot;A rule or policy the layer applies to everything.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;session_state&quot;,
           &quot;description&quot;: &quot;A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;session_state&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;intent_match&quot;,
@@ -340,82 +384,39 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
       ]
     },
     &quot;SelectorRule&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;selector&quot;,
-        &quot;declared&quot;
-      ],
       &quot;description&quot;: &quot;One selector, and whether what it produces was declared or inferred.\n\nTwo fields, and the second is the whole reason the projection exists: a caller consuming\na compiled context needs to know which selectors it can trust as repository fact, and\nderiving that from the answer would mean inferring it from confidence values. Published\nhere, it is a rule rather than a pattern a reader noticed.\n\n```\nuse majordomus_cli::devcontext::{policy, Selector, SelectorRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&amp;ctx).unwrap();\n\n// every selector is published, and each row agrees with the selector it names\nlet selectors: &amp;[SelectorRule] = &amp;rules.selectors;\nassert_eq!(selectors.len(), Selector::ALL.len());\nfor r in selectors {\n    assert_eq!(r.declared, r.selector.declared());\n}\n\n// and the inferring one is named, so the guessed half of an answer can be found\nlet inferred: Vec&lt;Selector&gt; =\n    selectors.iter().filter(|r| !r.declared).map(|r| r.selector).collect();\nassert_eq!(inferred, [Selector::IntentMatch]);\n```&quot;,
       &quot;properties&quot;: {
         &quot;declared&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Declared by the repository, or inferred by the compiler.&quot;
+          &quot;description&quot;: &quot;Declared by the repository, or inferred by the compiler.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;selector&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Selector&quot;,
           &quot;description&quot;: &quot;The selector.&quot;
         }
-      }
-    },
-    &quot;EdgeRule&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
+      },
       &quot;required&quot;: [
-        &quot;edge&quot;,
-        &quot;means&quot;,
-        &quot;reason&quot;,
-        &quot;refused&quot;
+        &quot;selector&quot;,
+        &quot;declared&quot;
       ],
-      &quot;description&quot;: &quot;One edge of the composed graph, and what the compiler does with it.\n\nEvery edge kind the graph declares gets a row, followed or not, which is the property\nthat makes this projection worth reading: an edge added to the graph and not to the\ntraversal table appears here as `refused` with a reason saying the compiler has no rule\nfor it, rather than being silently unfollowed. A table that only listed the edges it\nfollowed could not tell you what it was ignoring.\n\n`forward` and `reverse` are absent rather than zero when the edge is not followed that\nway, so \&quot;not followed\&quot; is one representation and not two. `means` is the graph&#39;s own\naccount of the relation; `reason` is this compiler&#39;s account of why it is or is not\ncontext, in both directions.\n\n```\nuse majordomus_cli::devcontext::{edge_policy, policy, EdgeRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&amp;ctx).unwrap();\n\n// one row per edge kind the graph declares, followed or refused\nlet edges: &amp;[EdgeRule] = &amp;rules.edges;\nassert!(!edges.is_empty(), \&quot;the graph declares edges\&quot;);\nfor e in edges {\n    // the row always says what the relation is and what was decided about it\n    assert!(!e.means.is_empty() &amp;&amp; !e.reason.is_empty(), \&quot;{}\&quot;, e.edge);\n\n    if e.refused {\n        // not followed in either direction, and absent rather than zero\n        assert!(e.forward.is_none() &amp;&amp; e.reverse.is_none(), \&quot;{}\&quot;, e.edge);\n        assert!(edge_policy(&amp;e.edge).is_none(), \&quot;{} is refused and in the table\&quot;, e.edge);\n    } else {\n        // followed at least one way, at a weight the table declares\n        assert!(e.forward.is_some() || e.reverse.is_some(), \&quot;{}\&quot;, e.edge);\n        let p = edge_policy(&amp;e.edge).expect(\&quot;a followed edge has a policy\&quot;);\n        assert_eq!(e.forward, (p.forward &gt; 0.0).then_some(p.forward));\n        assert_eq!(e.reverse, (p.reverse &gt; 0.0).then_some(p.reverse));\n    }\n}\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;reverse&quot;: {
-          &quot;type&quot;: [
-            &quot;number&quot;,
-            &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;description&quot;: &quot;The multiplier when followed target to source; absent when refused.&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Why the target is context for the source, or why the edge is refused.&quot;
-        },
-        &quot;means&quot;: {
-          &quot;description&quot;: &quot;What the graph asserts by it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;edge&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The edge kind, as the composed graph names it.&quot;
-        },
-        &quot;refused&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;True when the compiler will not follow it in either direction.&quot;
-        },
-        &quot;forward&quot;: {
-          &quot;description&quot;: &quot;The relevance multiplier when followed source to target; absent when refused.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: [
-            &quot;number&quot;,
-            &quot;null&quot;
-          ]
-        }
-      }
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;Tier&quot;: {
+      &quot;description&quot;: &quot;Where an entry sits in the order the budget spends in.\n\nThe order is this repository&#39;s own: `lib/context.sh` assembles its sections \&quot;in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\&quot; These six tiers are that\nsentence, applied to objects instead of to sections.\n\nThe derived `Ord` is load-bearing: the variants are declared in authority order, so\n`&lt;` means \&quot;spent before\&quot; and \&quot;harder to drop\&quot;, and the budget&#39;s ordering is a plain\n`sort` rather than a table mapping tiers to ranks. A variant added in the wrong place\nwould silently re-rank the whole answer, which is why the declaration order is the one\nthing about this enum to be careful with.\n\n```\nuse majordomus_cli::devcontext::Tier;\n\n// the declaration order *is* the order the budget spends in\nlet mut sorted = Tier::ORDER.to_vec();\nsorted.sort();\nassert_eq!(sorted, Tier::ORDER.to_vec());\n\n// so the strongest authority is the smallest, and it is the one never dropped\nassert_eq!(Tier::ORDER.iter().copied().min(), Some(Tier::Task));\nassert!(Tier::Task &lt; Tier::Governance &amp;&amp; Tier::Governance &lt; Tier::History);\n\n// and the serialised word is the lowercase one the report is read under\nassert_eq!(\n    serde_json::to_value(Tier::Governance).unwrap(),\n    serde_json::json!(Tier::Governance.as_str()),\n);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;task&quot;,
           &quot;description&quot;: &quot;What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one.&quot;,
-          &quot;const&quot;: &quot;task&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;governance&quot;,
           &quot;description&quot;: &quot;What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;governance&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;The code and the cases the work touches.&quot;,
           &quot;const&quot;: &quot;source&quot;,
+          &quot;description&quot;: &quot;The code and the cases the work touches.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -430,102 +431,100 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
         },
         {
           &quot;const&quot;: &quot;history&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Supporting evidence: use cases, claims, features, and the rest of the layer.&quot;
+          &quot;description&quot;: &quot;Supporting evidence: use cases, claims, features, and the rest of the layer.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Where an entry sits in the order the budget spends in.\n\nThe order is this repository&#39;s own: `lib/context.sh` assembles its sections \&quot;in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\&quot; These six tiers are that\nsentence, applied to objects instead of to sections.\n\nThe derived `Ord` is load-bearing: the variants are declared in authority order, so\n`&lt;` means \&quot;spent before\&quot; and \&quot;harder to drop\&quot;, and the budget&#39;s ordering is a plain\n`sort` rather than a table mapping tiers to ranks. A variant added in the wrong place\nwould silently re-rank the whole answer, which is why the declaration order is the one\nthing about this enum to be careful with.\n\n```\nuse majordomus_cli::devcontext::Tier;\n\n// the declaration order *is* the order the budget spends in\nlet mut sorted = Tier::ORDER.to_vec();\nsorted.sort();\nassert_eq!(sorted, Tier::ORDER.to_vec());\n\n// so the strongest authority is the smallest, and it is the one never dropped\nassert_eq!(Tier::ORDER.iter().copied().min(), Some(Tier::Task));\nassert!(Tier::Task &lt; Tier::Governance &amp;&amp; Tier::Governance &lt; Tier::History);\n\n// and the serialised word is the lowercase one the report is read under\nassert_eq!(\n    serde_json::to_value(Tier::Governance).unwrap(),\n    serde_json::json!(Tier::Governance.as_str()),\n);\n```&quot;
+      ]
     },
     &quot;TierRule&quot;: {
+      &quot;description&quot;: &quot;One tier, as the policy reports it: its place in the spend order, what it is for, and\nwhich kinds of object land in it.\n\n`position` is 1-based and exists because the wire form has no inherent order a consumer\ncan rely on — the [`Tier`] enum&#39;s `Ord` is a Rust fact, not a JSON one — so the rank is\nmade explicit for the readers that are not this crate. `kinds` is the inverse of\n[`tier_for_kind`], published so that a caller can see where a kind will land without\ncompiling an answer and looking.\n\n```\nuse majordomus_cli::devcontext::{policy, tier_for_kind, Tier, TierRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&amp;ctx).unwrap();\n\n// the first tier spent is the one that is never dropped, at position 1\nlet first: &amp;TierRule = &amp;rules.tiers[0];\nassert_eq!(first.tier, Tier::Task);\nassert_eq!(first.position, 1, \&quot;1-based, so the order survives serialisation\&quot;);\n\n// every tier is reported, in the order the budget spends in, and explains itself\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nfor (i, r) in rules.tiers.iter().enumerate() {\n    assert_eq!(r.position, i + 1);\n    assert_eq!(r.meaning, r.tier.meaning());\n}\n\n// and every kind is listed under the tier the classifier puts it in, exactly once —\n// so the published table and the function behind it cannot disagree\nlet mut listed = 0usize;\nfor r in &amp;rules.tiers {\n    for kind in &amp;r.kinds {\n        assert_eq!(tier_for_kind(kind), r.tier, \&quot;{kind} is listed under the wrong tier\&quot;);\n        listed += 1;\n    }\n}\nlet mut all: Vec&lt;&amp;str&gt; = rules.tiers.iter().flat_map(|r| &amp;r.kinds).map(String::as_str).collect();\nall.sort();\nall.dedup();\nassert_eq!(all.len(), listed, \&quot;a kind is listed under one tier only\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;kinds&quot;: {
+          &quot;description&quot;: &quot;The kinds of object that land in it.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;meaning&quot;: {
+          &quot;description&quot;: &quot;What it is for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;position&quot;: {
+          &quot;description&quot;: &quot;Its position in the order the budget spends in; 1 is spent first.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;tier&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Tier&quot;,
+          &quot;description&quot;: &quot;The tier.&quot;
+        }
+      },
       &quot;required&quot;: [
         &quot;tier&quot;,
         &quot;position&quot;,
         &quot;meaning&quot;,
         &quot;kinds&quot;
       ],
-      &quot;description&quot;: &quot;One tier, as the policy reports it: its place in the spend order, what it is for, and\nwhich kinds of object land in it.\n\n`position` is 1-based and exists because the wire form has no inherent order a consumer\ncan rely on — the [`Tier`] enum&#39;s `Ord` is a Rust fact, not a JSON one — so the rank is\nmade explicit for the readers that are not this crate. `kinds` is the inverse of\n[`tier_for_kind`], published so that a caller can see where a kind will land without\ncompiling an answer and looking.\n\n```\nuse majordomus_cli::devcontext::{policy, tier_for_kind, Tier, TierRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&amp;ctx).unwrap();\n\n// the first tier spent is the one that is never dropped, at position 1\nlet first: &amp;TierRule = &amp;rules.tiers[0];\nassert_eq!(first.tier, Tier::Task);\nassert_eq!(first.position, 1, \&quot;1-based, so the order survives serialisation\&quot;);\n\n// every tier is reported, in the order the budget spends in, and explains itself\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nfor (i, r) in rules.tiers.iter().enumerate() {\n    assert_eq!(r.position, i + 1);\n    assert_eq!(r.meaning, r.tier.meaning());\n}\n\n// and every kind is listed under the tier the classifier puts it in, exactly once —\n// so the published table and the function behind it cannot disagree\nlet mut listed = 0usize;\nfor r in &amp;rules.tiers {\n    for kind in &amp;r.kinds {\n        assert_eq!(tier_for_kind(kind), r.tier, \&quot;{kind} is listed under the wrong tier\&quot;);\n        listed += 1;\n    }\n}\nlet mut all: Vec&lt;&amp;str&gt; = rules.tiers.iter().flat_map(|r| &amp;r.kinds).map(String::as_str).collect();\nall.sort();\nall.dedup();\nassert_eq!(all.len(), listed, \&quot;a kind is listed under one tier only\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;position&quot;: {
-          &quot;description&quot;: &quot;Its position in the order the budget spends in; 1 is spent first.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;tier&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Tier&quot;,
-          &quot;description&quot;: &quot;The tier.&quot;
-        },
-        &quot;kinds&quot;: {
-          &quot;description&quot;: &quot;The kinds of object that land in it.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;meaning&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What it is for.&quot;
-        }
-      },
       &quot;type&quot;: &quot;object&quot;
     }
   },
   &quot;description&quot;: &quot;The compiler&#39;s own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \&quot;why did I get that\&quot;, asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`EDGES`](select::EDGES), [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&amp;ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
-    &quot;default_floor&quot;: {
-      &quot;format&quot;: &quot;double&quot;,
-      &quot;type&quot;: &quot;number&quot;,
-      &quot;description&quot;: &quot;The default relevance floor.&quot;
+    &quot;bytes_per_token&quot;: {
+      &quot;description&quot;: &quot;Bytes per estimated token.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
     },
-    &quot;selectors&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The selectors, and which of them infer.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/SelectorRule&quot;
-      }
+    &quot;default_budget_tokens&quot;: {
+      &quot;description&quot;: &quot;The default ceiling in estimated tokens.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;default_floor&quot;: {
+      &quot;description&quot;: &quot;The default relevance floor.&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;default_max_depth&quot;: {
+      &quot;description&quot;: &quot;The default depth limit.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
     },
     &quot;edges&quot;: {
+      &quot;description&quot;: &quot;Every edge kind the composed graph has, followed or refused.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/EdgeRule&quot;
       },
-      &quot;description&quot;: &quot;Every edge kind the composed graph has, followed or refused.&quot;,
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;default_max_depth&quot;: {
-      &quot;minimum&quot;: 0,
-      &quot;description&quot;: &quot;The default depth limit.&quot;,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;format&quot;: &quot;uint&quot;
-    },
     &quot;graph&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The graph the relations are read from.&quot;
+      &quot;description&quot;: &quot;The graph the relations are read from.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;The format of this answer.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;selectors&quot;: {
+      &quot;description&quot;: &quot;The selectors, and which of them infer.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/SelectorRule&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;tiers&quot;: {
+      &quot;description&quot;: &quot;The tiers, in the order the budget spends in.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/TierRule&quot;
       },
-      &quot;description&quot;: &quot;The tiers, in the order the budget spends in.&quot;,
       &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;bytes_per_token&quot;: {
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;Bytes per estimated token.&quot;
-    },
-    &quot;default_budget_tokens&quot;: {
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;description&quot;: &quot;The default ceiling in estimated tokens.&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;The format of this answer.&quot;
     }
   },
   &quot;required&quot;: [
@@ -539,7 +538,8 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
     &quot;default_floor&quot;,
     &quot;bytes_per_token&quot;
   ],
-  &quot;title&quot;: &quot;CompilerPolicy&quot;
+  &quot;title&quot;: &quot;CompilerPolicy&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -570,7 +570,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devcontext</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CompilerPolicy</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -642,7 +642,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

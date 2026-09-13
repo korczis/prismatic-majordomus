@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -212,131 +212,133 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">composed</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Declarations skipped because their value is composed at run time.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">One line per enforced pair that falls short, naming role, ground, theme, measured
 ratio and required ratio.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">sources</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The stylesheets read, and whether each was found.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">pairs</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every pair, in a stable order: theme, then what it carries, then the two tokens.</td>
+        <td class="px-3 py-2 text-body">The fingerprint of the declaration measured.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">measured</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many pairs were derived and measured.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">composed</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">minimum_non_text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">number</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Declarations skipped because their value is composed at run time.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">standard</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The standard the thresholds come from.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">readable</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether every enforced pair reaches its threshold.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The fingerprint of the declaration measured.</td>
+        <td class="px-3 py-2 text-body">The ratio asked of a non-text element that carries meaning.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">minimum_text</td>
         <td class="px-3 py-2 font-mono text-xs text-body">number</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The ratio asked of text.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">minimum_non_text</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">number</td>
+        <td class="px-3 py-2 font-mono text-heading">pairs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The ratio asked of a non-text element that carries meaning.</td>
+        <td class="px-3 py-2 text-body">Every pair, in a stable order: theme, then what it carries, then the two tokens.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">readable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether every enforced pair reaches its threshold.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">sources</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The stylesheets read, and whether each was found.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">standard</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The standard the thresholds come from.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;required&quot;: [
-    &quot;fingerprint&quot;,
-    &quot;standard&quot;,
-    &quot;minimum_text&quot;,
-    &quot;minimum_non_text&quot;,
-    &quot;sources&quot;,
-    &quot;measured&quot;,
-    &quot;pairs&quot;,
-    &quot;composed&quot;,
-    &quot;findings&quot;,
-    &quot;readable&quot;
-  ],
-  &quot;title&quot;: &quot;ContrastReport&quot;,
   &quot;$defs&quot;: {
+    &quot;Carries&quot;: {
+      &quot;description&quot;: &quot;What a colour is doing where it was found.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;text&quot;,
+          &quot;description&quot;: &quot;Text: held to [`MINIMUM_TEXT`].&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;non_text&quot;,
+          &quot;description&quot;: &quot;A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;Measured&quot;: {
       &quot;description&quot;: &quot;One measured pair: a foreground on a ground, in one theme.&quot;,
       &quot;properties&quot;: {
-        &quot;ground&quot;: {
-          &quot;description&quot;: &quot;The ground token.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;foreground&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The foreground token, as the declaration names it (`muted`, `ok`).&quot;
-        },
-        &quot;foreground_value&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The literal that entry holds.&quot;
-        },
         &quot;carries&quot;: {
-          &quot;description&quot;: &quot;Text, or a border.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Carries&quot;
-        },
-        &quot;foreground_entry&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The palette entry it resolves to in this theme.&quot;
-        },
-        &quot;ground_value&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The literal that entry holds.&quot;
-        },
-        &quot;passes&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether it reaches it.&quot;
-        },
-        &quot;required&quot;: {
-          &quot;type&quot;: &quot;number&quot;,
-          &quot;description&quot;: &quot;What the standard asks of this pair.&quot;,
-          &quot;format&quot;: &quot;double&quot;
-        },
-        &quot;seen&quot;: {
-          &quot;description&quot;: &quot;Where the pair was read: the stylesheet and the selector that states it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;$ref&quot;: &quot;#/$defs/Carries&quot;,
+          &quot;description&quot;: &quot;Text, or a border.&quot;
         },
         &quot;enforced&quot;: {
           &quot;description&quot;: &quot;Whether falling short is a finding. False for a border; see the module documentation.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
+        &quot;foreground&quot;: {
+          &quot;description&quot;: &quot;The foreground token, as the declaration names it (`muted`, `ok`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;foreground_entry&quot;: {
+          &quot;description&quot;: &quot;The palette entry it resolves to in this theme.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;foreground_value&quot;: {
+          &quot;description&quot;: &quot;The literal that entry holds.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;ground&quot;: {
+          &quot;description&quot;: &quot;The ground token.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;ground_entry&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The palette entry the ground resolves to in this theme.&quot;
+          &quot;description&quot;: &quot;The palette entry the ground resolves to in this theme.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;ground_value&quot;: {
+          &quot;description&quot;: &quot;The literal that entry holds.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;passes&quot;: {
+          &quot;description&quot;: &quot;Whether it reaches it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;ratio&quot;: {
           &quot;description&quot;: &quot;The measured ratio, to two decimal places.&quot;,
           &quot;format&quot;: &quot;double&quot;,
           &quot;type&quot;: &quot;number&quot;
         },
+        &quot;required&quot;: {
+          &quot;description&quot;: &quot;What the standard asks of this pair.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: &quot;number&quot;
+        },
+        &quot;seen&quot;: {
+          &quot;description&quot;: &quot;Where the pair was read: the stylesheet and the selector that states it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;theme&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`light` or `dark`.&quot;
+          &quot;description&quot;: &quot;`light` or `dark`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -357,43 +359,34 @@ ratio and required ratio.</td>
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Source&quot;: {
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;rules&quot;
-      ],
+      &quot;description&quot;: &quot;One stylesheet the pair set was derived from.&quot;,
       &quot;properties&quot;: {
         &quot;path&quot;: {
           &quot;description&quot;: &quot;Where it was read from, as the caller named it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;rules&quot;: {
+          &quot;description&quot;: &quot;How many rules of it state a colour.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;How many rules of it state a colour.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         }
       },
-      &quot;description&quot;: &quot;One stylesheet the pair set was derived from.&quot;,
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;rules&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Carries&quot;: {
-      &quot;description&quot;: &quot;What a colour is doing where it was found.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;text&quot;,
-          &quot;description&quot;: &quot;Text: held to [`MINIMUM_TEXT`].&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced.&quot;,
-          &quot;const&quot;: &quot;non_text&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
     }
   },
   &quot;description&quot;: &quot;Every pair the declaration and its consumers state, measured.&quot;,
   &quot;properties&quot;: {
+    &quot;composed&quot;: {
+      &quot;description&quot;: &quot;Declarations skipped because their value is composed at run time.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
     &quot;findings&quot;: {
       &quot;description&quot;: &quot;One line per enforced pair that falls short, naming role, ground, theme, measured\nratio and required ratio.&quot;,
       &quot;items&quot;: {
@@ -401,55 +394,62 @@ ratio and required ratio.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;sources&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The stylesheets read, and whether each was found.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Source&quot;
-      }
-    },
-    &quot;pairs&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Every pair, in a stable order: theme, then what it carries, then the two tokens.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Measured&quot;
-      }
-    },
-    &quot;measured&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;description&quot;: &quot;How many pairs were derived and measured.&quot;
-    },
-    &quot;composed&quot;: {
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;Declarations skipped because their value is composed at run time.&quot;,
-      &quot;format&quot;: &quot;uint&quot;
-    },
-    &quot;standard&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The standard the thresholds come from.&quot;
-    },
-    &quot;readable&quot;: {
-      &quot;description&quot;: &quot;Whether every enforced pair reaches its threshold.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
     &quot;fingerprint&quot;: {
       &quot;description&quot;: &quot;The fingerprint of the declaration measured.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;minimum_text&quot;: {
-      &quot;format&quot;: &quot;double&quot;,
-      &quot;description&quot;: &quot;The ratio asked of text.&quot;,
-      &quot;type&quot;: &quot;number&quot;
+    &quot;measured&quot;: {
+      &quot;description&quot;: &quot;How many pairs were derived and measured.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
     },
     &quot;minimum_non_text&quot;: {
       &quot;description&quot;: &quot;The ratio asked of a non-text element that carries meaning.&quot;,
       &quot;format&quot;: &quot;double&quot;,
       &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;minimum_text&quot;: {
+      &quot;description&quot;: &quot;The ratio asked of text.&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;pairs&quot;: {
+      &quot;description&quot;: &quot;Every pair, in a stable order: theme, then what it carries, then the two tokens.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Measured&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;readable&quot;: {
+      &quot;description&quot;: &quot;Whether every enforced pair reaches its threshold.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;sources&quot;: {
+      &quot;description&quot;: &quot;The stylesheets read, and whether each was found.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Source&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;standard&quot;: {
+      &quot;description&quot;: &quot;The standard the thresholds come from.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;required&quot;: [
+    &quot;fingerprint&quot;,
+    &quot;standard&quot;,
+    &quot;minimum_text&quot;,
+    &quot;minimum_non_text&quot;,
+    &quot;sources&quot;,
+    &quot;measured&quot;,
+    &quot;pairs&quot;,
+    &quot;composed&quot;,
+    &quot;findings&quot;,
+    &quot;readable&quot;
+  ],
+  &quot;title&quot;: &quot;ContrastReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -481,7 +481,7 @@ ratio and required ratio.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::design</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ContrastReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/design.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/design.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/design.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/design.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -553,7 +553,7 @@ ratio and required ratio.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

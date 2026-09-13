@@ -200,52 +200,57 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · DevContextExplainInput</h3><p class="mt-1 break-words text-sm text-body">The input of `devcontext.explain`: one identifier, and the request to judge it under.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;The input of `devcontext.explain`: one identifier, and the request to judge it under.&quot;,
-  &quot;title&quot;: &quot;DevContextExplainInput&quot;,
   &quot;$defs&quot;: {
     &quot;ExplainInput&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;The input of `devcontext.explain`: one identifier, and the request to judge it under.\n\nThe request is not optional context for the question — it is half of the question.\n\&quot;Why is this ADR not in my context\&quot; has no answer in the abstract: it is in or out of a\n*particular* compiled answer, and \&quot;excluded for budget\&quot; is only actionable when the\nbudget it did not fit in is known. So the same fields `compile` takes are `flatten`ed in\nhere, which also means the wire form is one flat object rather than a nested `request`,\nand the command line can share its flags.\n\n```\nuse majordomus_cli::devcontext::ExplainInput;\nuse serde_json::json;\n\n// flattened: the request&#39;s fields sit beside `uri`, not under it\nlet input: ExplainInput = serde_json::from_value(json!({\n    \&quot;uri\&quot;: \&quot;majordomus://adr/0052\&quot;,\n    \&quot;budget_tokens\&quot;: 2_000,\n    \&quot;max_depth\&quot;: 1,\n})).unwrap();\nassert_eq!(input.uri, \&quot;majordomus://adr/0052\&quot;);\nassert_eq!(input.request.budget_tokens, Some(2_000));\nassert_eq!(input.request.max_depth, Some(1));\n\n// and the identifier alone is a complete question, judged under the default request\nlet bare: ExplainInput = serde_json::from_value(json!({\&quot;uri\&quot;: \&quot;majordomus://adr/0052\&quot;}))\n    .unwrap();\nassert_eq!(bare.request, Default::default());\n```&quot;,
       &quot;properties&quot;: {
+        &quot;all_blocking_rules&quot;: {
+          &quot;description&quot;: &quot;Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.&quot;,
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ]
+        },
         &quot;budget_tokens&quot;: {
+          &quot;description&quot;: &quot;The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: [
             &quot;integer&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent.&quot;
-        },
-        &quot;uri&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The canonical identifier to explain.&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.&quot;
-        },
-        &quot;issue&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.&quot;
-        },
-        &quot;uris&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.&quot;,
-          &quot;type&quot;: &quot;array&quot;
+          ]
         },
         &quot;floor&quot;: {
+          &quot;description&quot;: &quot;Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
           &quot;type&quot;: [
             &quot;number&quot;,
             &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;description&quot;: &quot;Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent.&quot;
+          ]
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;max_depth&quot;: {
+          &quot;description&quot;: &quot;How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;milestone&quot;: {
           &quot;description&quot;: &quot;A milestone id or slug, or its canonical identifier.&quot;,
@@ -261,32 +266,27 @@
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;all_blocking_rules&quot;: {
-          &quot;description&quot;: &quot;Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
+        &quot;uri&quot;: {
+          &quot;description&quot;: &quot;The canonical identifier to explain.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;max_depth&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
+        &quot;uris&quot;: {
+          &quot;description&quot;: &quot;Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         }
       },
       &quot;required&quot;: [
         &quot;uri&quot;
       ],
-      &quot;description&quot;: &quot;The input of `devcontext.explain`: one identifier, and the request to judge it under.\n\nThe request is not optional context for the question — it is half of the question.\n\&quot;Why is this ADR not in my context\&quot; has no answer in the abstract: it is in or out of a\n*particular* compiled answer, and \&quot;excluded for budget\&quot; is only actionable when the\nbudget it did not fit in is known. So the same fields `compile` takes are `flatten`ed in\nhere, which also means the wire form is one flat object rather than a nested `request`,\nand the command line can share its flags.\n\n```\nuse majordomus_cli::devcontext::ExplainInput;\nuse serde_json::json;\n\n// flattened: the request&#39;s fields sit beside `uri`, not under it\nlet input: ExplainInput = serde_json::from_value(json!({\n    \&quot;uri\&quot;: \&quot;majordomus://adr/0052\&quot;,\n    \&quot;budget_tokens\&quot;: 2_000,\n    \&quot;max_depth\&quot;: 1,\n})).unwrap();\nassert_eq!(input.uri, \&quot;majordomus://adr/0052\&quot;);\nassert_eq!(input.request.budget_tokens, Some(2_000));\nassert_eq!(input.request.max_depth, Some(1));\n\n// and the identifier alone is a complete question, judged under the default request\nlet bare: ExplainInput = serde_json::from_value(json!({\&quot;uri\&quot;: \&quot;majordomus://adr/0052\&quot;}))\n    .unwrap();\nassert_eq!(bare.request, Default::default());\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;additionalProperties&quot;: false
+      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;$ref&quot;: &quot;#/$defs/ExplainInput&quot;
+  &quot;$ref&quot;: &quot;#/$defs/ExplainInput&quot;,
+  &quot;description&quot;: &quot;The input of `devcontext.explain`: one identifier, and the request to judge it under.&quot;,
+  &quot;title&quot;: &quot;DevContextExplainInput&quot;
 }</pre></div>
   </details>
 </div>
@@ -335,240 +335,190 @@ assert_eq!(absent.budget.limit_tokens, compiled.budget.limit_tokens);
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">excluded</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The exclusion, when it was reached and not given.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">detail</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The same, in words.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">standing</td>
+        <td class="px-3 py-2 font-mono text-heading">budget</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it stands.</td>
+        <td class="px-3 py-2 text-body">The budget the judgement was made under, so that &quot;excluded for budget&quot; can be acted
+on without a second call.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">deduplicated</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The collapse it was part of, when it was folded or dropped for another.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">uri</td>
+        <td class="px-3 py-2 font-mono text-heading">detail</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What was asked about.</td>
+        <td class="px-3 py-2 text-body">The same, in words.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">entry</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">The entry, when it is in the answer.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">budget</td>
+        <td class="px-3 py-2 font-mono text-heading">excluded</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The exclusion, when it was reached and not given.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">standing</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The budget the judgement was made under, so that &quot;excluded for budget&quot; can be acted
-on without a second call.</td>
+        <td class="px-3 py-2 text-body">Where it stands.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">uri</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What was asked about.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;properties&quot;: {
-    &quot;excluded&quot;: {
-      &quot;description&quot;: &quot;The exclusion, when it was reached and not given.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/Excluded&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;detail&quot;: {
-      &quot;description&quot;: &quot;The same, in words.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;standing&quot;: {
-      &quot;description&quot;: &quot;Where it stands.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/DevContextStanding&quot;
-    },
-    &quot;deduplicated&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/Deduplicated&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The collapse it was part of, when it was folded or dropped for another.&quot;
-    },
-    &quot;uri&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;What was asked about.&quot;
-    },
-    &quot;entry&quot;: {
-      &quot;description&quot;: &quot;The entry, when it is in the answer.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ContextEntry&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;budget&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Budget&quot;,
-      &quot;description&quot;: &quot;The budget the judgement was made under, so that \&quot;excluded for budget\&quot; can be acted\non without a second call.&quot;
-    }
-  },
-  &quot;title&quot;: &quot;Explanation&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;Why one identifier is, or is not, in a compiled context.\n\n`standing` says which of the five cases this is, and the three optional fields are the\nevidence for it: at most one of `entry`, `excluded` and `deduplicated` is populated, and\nwhich one is determined by the standing rather than independent of it. `detail` is the\nsame answer in words, so the value is legible without a reader matching them up.\n\n`budget` is always present, including when the answer is `unknown`, and that is the\npoint of carrying it: the commonest reason to ask this question is an entry that did not\nfit, and an explanation that said \&quot;excluded for budget\&quot; without the budget would need a\nsecond call to act on.\n\n```\nuse majordomus_cli::devcontext::{compile, explain, CompileInput, ExplainInput};\nuse majordomus_cli::devcontext::{Explanation, Standing};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet compiled = compile(&amp;ctx, CompileInput::default()).unwrap();\nlet selected = compiled.selected[0].uri.clone();\n\n// something in the answer: the entry is the evidence, and the other two are empty\nlet e: Explanation =\n    explain(&amp;ctx, ExplainInput { uri: selected.clone(), ..Default::default() }).unwrap();\nassert_eq!(e.standing, Standing::Selected);\nassert_eq!(e.entry.as_ref().unwrap().uri, selected);\nassert!(e.excluded.is_none() &amp;&amp; e.deduplicated.is_none());\nassert!(!e.detail.is_empty(), \&quot;the standing always reads as a sentence too\&quot;);\n\n// something this repository does not hold: an answer, not an error — and the budget\n// the judgement was made under is carried even here\nlet absent: Explanation = explain(\n    &amp;ctx,\n    ExplainInput { uri: \&quot;majordomus://adr/9999\&quot;.into(), ..Default::default() },\n)\n.unwrap();\nassert_eq!(absent.standing, Standing::Unknown);\nassert!(absent.entry.is_none());\nassert_eq!(absent.budget.limit_tokens, compiled.budget.limit_tokens);\n```&quot;,
-  &quot;required&quot;: [
-    &quot;uri&quot;,
-    &quot;standing&quot;,
-    &quot;detail&quot;,
-    &quot;budget&quot;
-  ],
   &quot;$defs&quot;: {
-    &quot;TierSpend&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;tier&quot;,
-        &quot;meaning&quot;,
-        &quot;selected&quot;,
-        &quot;excluded&quot;,
-        &quot;tokens&quot;,
-        &quot;required&quot;
-      ],
-      &quot;description&quot;: &quot;What one tier cost, how much of it survived, and how much of that could not have been\ndropped.\n\nThere is no per-tier ceiling, which is worth saying because the name suggests one: the\nbudget is a single pot spent in tier order, and this is the *report* of what each tier\ntook from it, not an allowance it was given. A tier with many exclusions is therefore\nnot a tier that hit its own limit — it is a tier that was reached after the pot had been\nspent by the tiers above it.\n\n`meaning` is carried so that a reader deciding what to raise the budget for does not\nhave to look up what `knowledge` holds; `required` is the part of `selected` the budget\nhad no say over.\n\n```\nuse majordomus_cli::devcontext::{Tier, TierSpend};\nuse serde_json::json;\n\nlet t: TierSpend = serde_json::from_value(json!({\n    \&quot;tier\&quot;: \&quot;governance\&quot;,\n    \&quot;meaning\&quot;: Tier::Governance.meaning(),\n    \&quot;selected\&quot;: 9,\n    \&quot;excluded\&quot;: 2,\n    \&quot;tokens\&quot;: 6_400,\n    \&quot;required\&quot;: 3,\n})).unwrap();\n\nassert_eq!(t.tier, Tier::Governance);\n// the undroppable part is a part of what survived, never a separate count\nassert!(t.required &lt;= t.selected);\n// and the row explains its own tier, so \&quot;2 excluded\&quot; is actionable\nassert_eq!(t.meaning, Tier::Governance.meaning());\nassert!(t.meaning.contains(\&quot;policy\&quot;));\n```&quot;,
+    &quot;Budget&quot;: {
+      &quot;description&quot;: &quot;The budget, and what became of it.\n\n`over_budget` is the field to read and the one most likely to be misread. It does not\nmean the compiler overspent by accident: every entry the budget has a say over is refused\nthe moment it would not fit, so the only way past the ceiling is through the entries that\nmay not be dropped — the seeds, the policy, the scope, a blocking rule. So\n`over_budget` means *the things this context cannot do without already cost more than you\nallowed*, and `required_tokens` is the explanation of it. The honest answer to that is to\nsay so, not to return a context missing the thing it was compiled about.\n\n`remaining_tokens` is floored at zero rather than going negative, so it is safe to\ndisplay; the overspend is read from `used_tokens` against `limit_tokens`, which is why\nboth are carried.\n\n```\nuse majordomus_cli::devcontext::{Budget, Tier, BYTES_PER_TOKEN};\nuse serde_json::json;\n\nlet tier = |name: &amp;str, tokens: u64, required: usize| json!({\n    \&quot;tier\&quot;: name, \&quot;meaning\&quot;: \&quot;as this tier is for\&quot;, \&quot;selected\&quot;: 1,\n    \&quot;excluded\&quot;: 0, \&quot;tokens\&quot;: tokens, \&quot;required\&quot;: required,\n});\n\n// the undroppable entries alone cost more than the caller allowed\nlet b: Budget = serde_json::from_value(json!({\n    \&quot;limit_tokens\&quot;: 1_000,\n    \&quot;used_tokens\&quot;: 2_500,\n    \&quot;required_tokens\&quot;: 2_500,\n    \&quot;remaining_tokens\&quot;: 0,\n    \&quot;over_budget\&quot;: true,\n    \&quot;bytes_per_token\&quot;: BYTES_PER_TOKEN,\n    \&quot;tiers\&quot;: [tier(\&quot;task\&quot;, 2_000, 1), tier(\&quot;governance\&quot;, 500, 1)],\n})).unwrap();\n\nassert!(b.over_budget);\nassert!(b.used_tokens &gt; b.limit_tokens, \&quot;the overspend is read from these two\&quot;);\nassert_eq!(b.required_tokens, b.used_tokens, \&quot;all of it was undroppable\&quot;);\nassert_eq!(b.remaining_tokens, 0, \&quot;floored, so it is safe to display\&quot;);\n\n// the divisor is carried so a caller measuring tokens differently can convert\n// rather than guess what the estimate meant\nassert_eq!(b.bytes_per_token, BYTES_PER_TOKEN);\n\n// and the tiers are reported in the order the budget spends in\nlet order: Vec&lt;Tier&gt; = b.tiers.iter().map(|t| t.tier).collect();\nassert_eq!(order, [Tier::Task, Tier::Governance]);\nassert!(order.windows(2).all(|w| w[0] &lt; w[1]));\n```&quot;,
       &quot;properties&quot;: {
-        &quot;tokens&quot;: {
+        &quot;bytes_per_token&quot;: {
+          &quot;description&quot;: &quot;Bytes per token, the divisor the estimate uses.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
-          &quot;description&quot;: &quot;Tokens the survivors cost.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;selected&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many entries survived in it.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;excluded&quot;: {
+        &quot;limit_tokens&quot;: {
+          &quot;description&quot;: &quot;The ceiling this answer was compiled under, in estimated tokens.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;How many were dropped from it for budget.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;meaning&quot;: {
-          &quot;description&quot;: &quot;What it is for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;over_budget&quot;: {
+          &quot;description&quot;: &quot;True when the required entries alone exceed the limit.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;required&quot;: {
-          &quot;description&quot;: &quot;Entries in it that cannot be dropped.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
+        &quot;remaining_tokens&quot;: {
+          &quot;description&quot;: &quot;`limit - used`, floored at zero.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;tier&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Tier&quot;,
-          &quot;description&quot;: &quot;The tier.&quot;
+        &quot;required_tokens&quot;: {
+          &quot;description&quot;: &quot;What the entries that cannot be dropped cost. Above the limit, the answer is\nover-budget and says so rather than dropping what it must keep.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;tiers&quot;: {
+          &quot;description&quot;: &quot;Per tier, in the order the budget spends in.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/TierSpend&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;used_tokens&quot;: {
+          &quot;description&quot;: &quot;What the survivors cost.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         }
-      }
+      },
+      &quot;required&quot;: [
+        &quot;limit_tokens&quot;,
+        &quot;used_tokens&quot;,
+        &quot;required_tokens&quot;,
+        &quot;remaining_tokens&quot;,
+        &quot;over_budget&quot;,
+        &quot;bytes_per_token&quot;,
+        &quot;tiers&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
-    &quot;Excluded&quot;: {
-      &quot;description&quot;: &quot;One thing the compiler reached and did not give. Excluded is not the same as absent:\nan under-filled context is debugged from this list, not by guessing.\n\n`cost_tokens` is why this type exists in the shape it does. A budget that reported only\n*that* it dropped things would leave a caller guessing at a new ceiling; one that reports\nwhat each omission would have cost turns \&quot;raise the budget\&quot; into arithmetic. `detail`\ncarries the same in words, so the row is legible without the reader doing that\narithmetic themselves.\n\nThe ordering puts the tier first as an explicit rank, because the tier is the precedence\nthe budget spent in; inside a tier a reader is looking for a reason, and the identifier\nends the key so the list is total and the same tree always prints it the same way.\n\n```\nuse majordomus_cli::devcontext::{Excluded, ExclusionReason, Tier};\nuse majordomus_cli::order::canonical;\nuse serde_json::json;\n\nlet row = |uri: &amp;str, tier: &amp;str, reason: &amp;str, cost: u64| -&gt; Excluded {\n    serde_json::from_value(json!({\n        \&quot;uri\&quot;: uri, \&quot;tier\&quot;: tier, \&quot;reason\&quot;: reason,\n        \&quot;detail\&quot;: \&quot;as measured\&quot;, \&quot;cost_tokens\&quot;: cost, \&quot;relevance\&quot;: 0.4,\n    })).unwrap()\n};\n\nlet mut excluded = vec![\n    row(\&quot;majordomus://knowledge/b\&quot;, \&quot;history\&quot;, \&quot;budget\&quot;, 900),\n    row(\&quot;majordomus://adr/0001\&quot;, \&quot;decision\&quot;, \&quot;superseded\&quot;, 300),\n    row(\&quot;majordomus://knowledge/a\&quot;, \&quot;history\&quot;, \&quot;budget\&quot;, 1_200),\n];\ncanonical(&amp;mut excluded);\n\n// the tier ranks first, so the decision tier precedes history whatever the reason says\nassert_eq!(excluded[0].tier, Tier::Decision);\nassert_eq!(excluded[0].reason, ExclusionReason::Superseded);\n// then the reason, then the identifier — which makes the order total\nlet rest: Vec&lt;&amp;str&gt; = excluded[1..].iter().map(|e| e.uri.as_str()).collect();\nassert_eq!(rest, [\&quot;majordomus://knowledge/a\&quot;, \&quot;majordomus://knowledge/b\&quot;]);\n\n// and the row a caller acts on says what it would have cost to keep\nlet biggest = excluded.iter().max_by_key(|e| e.cost_tokens).unwrap();\nassert_eq!(biggest.cost_tokens, 1_200);\n```&quot;,
+    &quot;ContextEntry&quot;: {
+      &quot;description&quot;: &quot;One thing the compiler decided a session should be given: what it is, how it was\nreached, what it costs, and how far the compiler trusts it.\n\nNotably, it does **not** carry the prose. The identifier is here and the body is not,\nbecause the body belongs to the object and `objects.get` serves it whole; copying it\nwould put the layer in the answer twice and flatten the structure into text before\nanything had decided what to keep. An entry is a decision about an object, not a copy of\none.\n\nThree of the scalars are derived from `discovered_by` rather than independent of it, and\na reader can check them: `confidence` is the highest of any path&#39;s, `depth` the shortest,\nand a `discovered_by` of length above one is the evidence that deduplication happened.\n`required` is the veto — a blocking rule, the policy, the scope, or a seed — and it is\nthe one field that overrides the budget.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, ContextEntry, Selector, Tier};\nuse serde_json::json;\n\n// one ADR, reached twice: once along a declared edge and once by matching the intent\nlet e: ContextEntry = serde_json::from_value(json!({\n    \&quot;uri\&quot;: \&quot;majordomus://adr/0052\&quot;,\n    \&quot;kind\&quot;: \&quot;adr\&quot;,\n    \&quot;title\&quot;: \&quot;The episode is the boundary\&quot;,\n    \&quot;provenance\&quot;: {\n        \&quot;path\&quot;: \&quot;.ai/repo/adrs/0052.md\&quot;, \&quot;directory\&quot;: \&quot;.ai/repo/adrs\&quot;,\n        \&quot;source_class\&quot;: \&quot;adr\&quot;, \&quot;section\&quot;: \&quot;adrs\&quot;, \&quot;bytes\&quot;: 8_192,\n    },\n    \&quot;tier\&quot;: \&quot;decision\&quot;,\n    \&quot;relevance\&quot;: 0.82,\n    \&quot;confidence\&quot;: 1.0,\n    \&quot;discovered_by\&quot;: [\n        {\&quot;selector\&quot;: \&quot;relation\&quot;, \&quot;reason\&quot;: \&quot;in force over this scope\&quot;,\n         \&quot;via\&quot;: \&quot;majordomus://issue/I0301\&quot;, \&quot;edge\&quot;: \&quot;governed_by\&quot;,\n         \&quot;depth\&quot;: 1, \&quot;confidence\&quot;: 1.0, \&quot;weight\&quot;: 0.9},\n        {\&quot;selector\&quot;: \&quot;intent_match\&quot;, \&quot;reason\&quot;: \&quot;the intent&#39;s words occur in it\&quot;,\n         \&quot;depth\&quot;: 2, \&quot;confidence\&quot;: 0.4, \&quot;weight\&quot;: 0.4},\n    ],\n    \&quot;depth\&quot;: 1,\n    \&quot;cost_tokens\&quot;: 2_048,\n    \&quot;cost_bytes\&quot;: 8_192,\n    \&quot;version\&quot;: \&quot;2026-09-11\&quot;,\n    \&quot;status\&quot;: \&quot;accepted\&quot;,\n    \&quot;required\&quot;: false,\n})).unwrap();\n\nassert_eq!(e.tier, Tier::Decision);\n\n// the cost is the estimate over the measured bytes, and the answer carries both halves\nassert_eq!(e.cost_tokens, tokens_for(e.cost_bytes));\n\n// the derived scalars agree with the paths they are derived from\nlet best = e.discovered_by.iter().map(|d| d.confidence).fold(0.0_f64, f64::max);\nassert_eq!(e.confidence, best);\nassert_eq!(e.depth, e.discovered_by.iter().map(|d| d.depth).min().unwrap());\n\n// two paths for one entry: the record that four things pointing here is one entry\nassert_eq!(e.discovered_by.len(), 2);\nassert_eq!(e.discovered_by[0].selector, Selector::Relation, \&quot;best path first\&quot;);\n\n// and the prose is not here: the identifier is how a caller gets the body\nassert!(e.uri.starts_with(\&quot;majordomus://\&quot;));\n```&quot;,
       &quot;properties&quot;: {
-        &quot;relevance&quot;: {
-          &quot;description&quot;: &quot;What its relevance was.&quot;,
-          &quot;type&quot;: &quot;number&quot;,
-          &quot;format&quot;: &quot;double&quot;
+        &quot;confidence&quot;: {
+          &quot;description&quot;: &quot;The highest confidence of any path that reached it.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: &quot;number&quot;
+        },
+        &quot;cost_bytes&quot;: {
+          &quot;description&quot;: &quot;The file&#39;s bytes, the measured half of the cost.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;cost_tokens&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Estimated tokens: the file&#39;s bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
-          &quot;description&quot;: &quot;What it would have cost, so that a reader can decide whether to raise the budget.&quot;,
-          &quot;minimum&quot;: 0
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;reason&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ExclusionReason&quot;,
-          &quot;description&quot;: &quot;Why it is not in the answer.&quot;
+        &quot;depth&quot;: {
+          &quot;description&quot;: &quot;The shortest number of hops from a seed.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;The same, in words.&quot;,
+        &quot;discovered_by&quot;: {
+          &quot;description&quot;: &quot;Every path that reached it, best first. Length above one is the evidence that\ndeduplication happened.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Discovery&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;facts&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Facts worth carrying about this entry that are not the object&#39;s prose — a rule&#39;s\nclass, an issue&#39;s milestone, the commits an issue&#39;s evidence names.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;The kind the layer declared for it.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provenance&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EntryProvenance&quot;,
+          &quot;description&quot;: &quot;Where it lives.&quot;
+        },
+        &quot;relevance&quot;: {
+          &quot;description&quot;: &quot;0.0 to 1.0, deterministic for a given tree and request. The order within a tier.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: &quot;number&quot;
+        },
+        &quot;required&quot;: {
+          &quot;description&quot;: &quot;True when a blocking rule, a policy or the scope: never dropped for budget.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;The status word the object declares, when it declares one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;tier&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Tier&quot;,
-          &quot;description&quot;: &quot;The tier it would have been spent from.&quot;
+          &quot;description&quot;: &quot;Which tier&#39;s budget it is spent from.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;Its title, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;uri&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The canonical identifier, or the name the layer used when nothing resolves.&quot;
+          &quot;description&quot;: &quot;The canonical identifier: `majordomus://&lt;kind&gt;/&lt;identity&gt;`, unique in the answer.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;Its kind, when it resolved to something.&quot;,
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The version or date the object states about itself, when it states one: a rule&#39;s\nversion, an ADR&#39;s date, an issue&#39;s `updated_at`.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         }
       },
-      &quot;required&quot;: [
-        &quot;uri&quot;,
-        &quot;tier&quot;,
-        &quot;reason&quot;,
-        &quot;detail&quot;,
-        &quot;cost_tokens&quot;,
-        &quot;relevance&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EntryProvenance&quot;: {
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;directory&quot;,
-        &quot;source_class&quot;,
-        &quot;bytes&quot;
-      ],
-      &quot;description&quot;: &quot;Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index&#39;s own [`crate::model::Provenance`], carried rather than restated.\n\nIt is a copy of the index&#39;s provenance and not a re-derivation of it, which is the\nproperty worth relying on: no path here was constructed by this module, so a path in an\nanswer is a path the index discovered, and the two cannot disagree about where something\nlives.\n\n`bytes` is the measured half of an entry&#39;s cost — the estimate on top of it is\n[`tokens_for`] — so this is also where the budget&#39;s arithmetic starts.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, EntryProvenance};\nuse serde_json::json;\n\nlet p: EntryProvenance = serde_json::from_value(json!({\n    \&quot;path\&quot;: \&quot;.ai/repo/adrs/0052-the-episode-is-the-boundary.md\&quot;,\n    \&quot;directory\&quot;: \&quot;.ai/repo/adrs\&quot;,\n    \&quot;source_class\&quot;: \&quot;adr\&quot;,\n    \&quot;section\&quot;: \&quot;adrs\&quot;,\n    \&quot;bytes\&quot;: 8_192,\n})).unwrap();\n\n// the size is what the cost is computed from, and the estimate says so of itself\nassert_eq!(tokens_for(p.bytes), 2_048);\n\n// a file under no manifest section — a root README, say — carries none rather than \&quot;\&quot;\nlet rootish: EntryProvenance = serde_json::from_value(json!({\n    \&quot;path\&quot;: \&quot;README.md\&quot;,\n    \&quot;directory\&quot;: \&quot;.\&quot;,\n    \&quot;source_class\&quot;: \&quot;readme\&quot;,\n    \&quot;bytes\&quot;: 4_000,\n})).unwrap();\nassert!(rootish.section.is_none());\nassert_eq!(rootish.directory, \&quot;.\&quot;, \&quot;the root is `.`, not the empty string\&quot;);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Repository-relative path, forward slashes.&quot;
-        },
-        &quot;section&quot;: {
-          &quot;description&quot;: &quot;The manifest section it falls under, when it falls under one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;bytes&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Size of the file in bytes.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;directory&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The directory it sits in.&quot;
-        },
-        &quot;source_class&quot;: {
-          &quot;description&quot;: &quot;The `sources.yaml` class that discovered it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
-    },
-    &quot;ContextEntry&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;uri&quot;,
         &quot;kind&quot;,
@@ -582,94 +532,37 @@ on without a second call.</td>
         &quot;cost_bytes&quot;,
         &quot;required&quot;
       ],
-      &quot;description&quot;: &quot;One thing the compiler decided a session should be given: what it is, how it was\nreached, what it costs, and how far the compiler trusts it.\n\nNotably, it does **not** carry the prose. The identifier is here and the body is not,\nbecause the body belongs to the object and `objects.get` serves it whole; copying it\nwould put the layer in the answer twice and flatten the structure into text before\nanything had decided what to keep. An entry is a decision about an object, not a copy of\none.\n\nThree of the scalars are derived from `discovered_by` rather than independent of it, and\na reader can check them: `confidence` is the highest of any path&#39;s, `depth` the shortest,\nand a `discovered_by` of length above one is the evidence that deduplication happened.\n`required` is the veto — a blocking rule, the policy, the scope, or a seed — and it is\nthe one field that overrides the budget.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, ContextEntry, Selector, Tier};\nuse serde_json::json;\n\n// one ADR, reached twice: once along a declared edge and once by matching the intent\nlet e: ContextEntry = serde_json::from_value(json!({\n    \&quot;uri\&quot;: \&quot;majordomus://adr/0052\&quot;,\n    \&quot;kind\&quot;: \&quot;adr\&quot;,\n    \&quot;title\&quot;: \&quot;The episode is the boundary\&quot;,\n    \&quot;provenance\&quot;: {\n        \&quot;path\&quot;: \&quot;.ai/repo/adrs/0052.md\&quot;, \&quot;directory\&quot;: \&quot;.ai/repo/adrs\&quot;,\n        \&quot;source_class\&quot;: \&quot;adr\&quot;, \&quot;section\&quot;: \&quot;adrs\&quot;, \&quot;bytes\&quot;: 8_192,\n    },\n    \&quot;tier\&quot;: \&quot;decision\&quot;,\n    \&quot;relevance\&quot;: 0.82,\n    \&quot;confidence\&quot;: 1.0,\n    \&quot;discovered_by\&quot;: [\n        {\&quot;selector\&quot;: \&quot;relation\&quot;, \&quot;reason\&quot;: \&quot;in force over this scope\&quot;,\n         \&quot;via\&quot;: \&quot;majordomus://issue/I0301\&quot;, \&quot;edge\&quot;: \&quot;governed_by\&quot;,\n         \&quot;depth\&quot;: 1, \&quot;confidence\&quot;: 1.0, \&quot;weight\&quot;: 0.9},\n        {\&quot;selector\&quot;: \&quot;intent_match\&quot;, \&quot;reason\&quot;: \&quot;the intent&#39;s words occur in it\&quot;,\n         \&quot;depth\&quot;: 2, \&quot;confidence\&quot;: 0.4, \&quot;weight\&quot;: 0.4},\n    ],\n    \&quot;depth\&quot;: 1,\n    \&quot;cost_tokens\&quot;: 2_048,\n    \&quot;cost_bytes\&quot;: 8_192,\n    \&quot;version\&quot;: \&quot;2026-09-11\&quot;,\n    \&quot;status\&quot;: \&quot;accepted\&quot;,\n    \&quot;required\&quot;: false,\n})).unwrap();\n\nassert_eq!(e.tier, Tier::Decision);\n\n// the cost is the estimate over the measured bytes, and the answer carries both halves\nassert_eq!(e.cost_tokens, tokens_for(e.cost_bytes));\n\n// the derived scalars agree with the paths they are derived from\nlet best = e.discovered_by.iter().map(|d| d.confidence).fold(0.0_f64, f64::max);\nassert_eq!(e.confidence, best);\nassert_eq!(e.depth, e.discovered_by.iter().map(|d| d.depth).min().unwrap());\n\n// two paths for one entry: the record that four things pointing here is one entry\nassert_eq!(e.discovered_by.len(), 2);\nassert_eq!(e.discovered_by[0].selector, Selector::Relation, \&quot;best path first\&quot;);\n\n// and the prose is not here: the identifier is how a caller gets the body\nassert!(e.uri.starts_with(\&quot;majordomus://\&quot;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;facts&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;Facts worth carrying about this entry that are not the object&#39;s prose — a rule&#39;s\nclass, an issue&#39;s milestone, the commits an issue&#39;s evidence names.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EntryProvenance&quot;,
-          &quot;description&quot;: &quot;Where it lives.&quot;
-        },
-        &quot;relevance&quot;: {
-          &quot;description&quot;: &quot;0.0 to 1.0, deterministic for a given tree and request. The order within a tier.&quot;,
-          &quot;type&quot;: &quot;number&quot;,
-          &quot;format&quot;: &quot;double&quot;
-        },
-        &quot;required&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;True when a blocking rule, a policy or the scope: never dropped for budget.&quot;
-        },
-        &quot;cost_bytes&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;description&quot;: &quot;The file&#39;s bytes, the measured half of the cost.&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;confidence&quot;: {
-          &quot;type&quot;: &quot;number&quot;,
-          &quot;description&quot;: &quot;The highest confidence of any path that reached it.&quot;,
-          &quot;format&quot;: &quot;double&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;Its title, when it has one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;kind&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The kind the layer declared for it.&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;The status word the object declares, when it declares one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;The canonical identifier: `majordomus://&lt;kind&gt;/&lt;identity&gt;`, unique in the answer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;cost_tokens&quot;: {
-          &quot;description&quot;: &quot;Estimated tokens: the file&#39;s bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint64&quot;
-        },
-        &quot;tier&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Tier&quot;,
-          &quot;description&quot;: &quot;Which tier&#39;s budget it is spent from.&quot;
-        },
-        &quot;version&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The version or date the object states about itself, when it states one: a rule&#39;s\nversion, an ADR&#39;s date, an issue&#39;s `updated_at`.&quot;
-        },
-        &quot;depth&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;The shortest number of hops from a seed.&quot;
-        },
-        &quot;discovered_by&quot;: {
-          &quot;description&quot;: &quot;Every path that reached it, best first. Length above one is the evidence that\ndeduplication happened.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Discovery&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      }
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;Deduplicated&quot;: {
+      &quot;description&quot;: &quot;Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \&quot;why is this ADR listed once when four things point at it\&quot; has an answer that is\nstate rather than a log line.\n\nOne type covers two different collapses, and `dropped` is how a reader tells them apart.\n**Structural** collapse is the same identifier reached several ways: nothing was\ndiscarded, so `dropped` is empty and `paths` is the count that makes the row worth\nprinting — this is the record that four things pointing at one ADR produced one entry.\n**Semantic** collapse is two different identifiers standing for one thing, one file\nindexed under two kinds or one rule at two versions: there `dropped` names what lost,\nbecause something really was discarded and a reader is entitled to know what.\n\n```\nuse majordomus_cli::devcontext::Deduplicated;\nuse serde_json::json;\n\n// structural: one identifier, four ways in, nothing discarded\nlet structural: Deduplicated = serde_json::from_value(json!({\n    \&quot;kept\&quot;: \&quot;majordomus://adr/0052\&quot;,\n    \&quot;dropped\&quot;: [],\n    \&quot;key\&quot;: \&quot;uri\&quot;,\n    \&quot;detail\&quot;: \&quot;one object reached by 4 discovery path(s)\&quot;,\n    \&quot;paths\&quot;: 4,\n})).unwrap();\nassert!(structural.dropped.is_empty(), \&quot;nothing lost; this is a record, not a decision\&quot;);\nassert!(structural.paths &gt; 1, \&quot;which is what makes the row worth printing\&quot;);\nassert_eq!(structural.key, \&quot;uri\&quot;);\n\n// semantic: two identifiers for one rule, and the older version lost\nlet semantic: Deduplicated = serde_json::from_value(json!({\n    \&quot;kept\&quot;: \&quot;majordomus://rule/project.x@2\&quot;,\n    \&quot;dropped\&quot;: [\&quot;majordomus://rule/project.x@1\&quot;],\n    \&quot;key\&quot;: \&quot;identity\&quot;,\n    \&quot;detail\&quot;: \&quot;one rule at two versions; the newer is in the answer\&quot;,\n    \&quot;paths\&quot;: 1,\n})).unwrap();\nassert_eq!(semantic.dropped, [\&quot;majordomus://rule/project.x@1\&quot;]);\nassert_ne!(semantic.kept, semantic.dropped[0], \&quot;two names, and one of them lost\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;The same, in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;dropped&quot;: {
+          &quot;description&quot;: &quot;What was folded into it, or dropped for it.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;kept&quot;: {
+          &quot;description&quot;: &quot;The entry that survived.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;What made them the same thing: `uri`, `path` or `identity`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;How many discovery paths reached the surviving entry.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
       &quot;required&quot;: [
         &quot;kept&quot;,
         &quot;dropped&quot;,
@@ -677,212 +570,52 @@ on without a second call.</td>
         &quot;detail&quot;,
         &quot;paths&quot;
       ],
-      &quot;description&quot;: &quot;Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \&quot;why is this ADR listed once when four things point at it\&quot; has an answer that is\nstate rather than a log line.\n\nOne type covers two different collapses, and `dropped` is how a reader tells them apart.\n**Structural** collapse is the same identifier reached several ways: nothing was\ndiscarded, so `dropped` is empty and `paths` is the count that makes the row worth\nprinting — this is the record that four things pointing at one ADR produced one entry.\n**Semantic** collapse is two different identifiers standing for one thing, one file\nindexed under two kinds or one rule at two versions: there `dropped` names what lost,\nbecause something really was discarded and a reader is entitled to know what.\n\n```\nuse majordomus_cli::devcontext::Deduplicated;\nuse serde_json::json;\n\n// structural: one identifier, four ways in, nothing discarded\nlet structural: Deduplicated = serde_json::from_value(json!({\n    \&quot;kept\&quot;: \&quot;majordomus://adr/0052\&quot;,\n    \&quot;dropped\&quot;: [],\n    \&quot;key\&quot;: \&quot;uri\&quot;,\n    \&quot;detail\&quot;: \&quot;one object reached by 4 discovery path(s)\&quot;,\n    \&quot;paths\&quot;: 4,\n})).unwrap();\nassert!(structural.dropped.is_empty(), \&quot;nothing lost; this is a record, not a decision\&quot;);\nassert!(structural.paths &gt; 1, \&quot;which is what makes the row worth printing\&quot;);\nassert_eq!(structural.key, \&quot;uri\&quot;);\n\n// semantic: two identifiers for one rule, and the older version lost\nlet semantic: Deduplicated = serde_json::from_value(json!({\n    \&quot;kept\&quot;: \&quot;majordomus://rule/project.x@2\&quot;,\n    \&quot;dropped\&quot;: [\&quot;majordomus://rule/project.x@1\&quot;],\n    \&quot;key\&quot;: \&quot;identity\&quot;,\n    \&quot;detail\&quot;: \&quot;one rule at two versions; the newer is in the answer\&quot;,\n    \&quot;paths\&quot;: 1,\n})).unwrap();\nassert_eq!(semantic.dropped, [\&quot;majordomus://rule/project.x@1\&quot;]);\nassert_ne!(semantic.kept, semantic.dropped[0], \&quot;two names, and one of them lost\&quot;);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;kept&quot;: {
-          &quot;description&quot;: &quot;The entry that survived.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many discovery paths reached the surviving entry.&quot;
-        },
-        &quot;dropped&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;What was folded into it, or dropped for it.&quot;
-        },
-        &quot;key&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What made them the same thing: `uri`, `path` or `identity`.&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;The same, in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
+      &quot;type&quot;: &quot;object&quot;
     },
-    &quot;Budget&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;over_budget&quot;: {
-          &quot;description&quot;: &quot;True when the required entries alone exceed the limit.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;bytes_per_token&quot;: {
-          &quot;description&quot;: &quot;Bytes per token, the divisor the estimate uses.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;limit_tokens&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;The ceiling this answer was compiled under, in estimated tokens.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;
-        },
-        &quot;remaining_tokens&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;`limit - used`, floored at zero.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;required_tokens&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;description&quot;: &quot;What the entries that cannot be dropped cost. Above the limit, the answer is\nover-budget and says so rather than dropping what it must keep.&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;tiers&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;Per tier, in the order the budget spends in.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/TierSpend&quot;
-          }
-        },
-        &quot;used_tokens&quot;: {
-          &quot;description&quot;: &quot;What the survivors cost.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0
-        }
-      },
-      &quot;description&quot;: &quot;The budget, and what became of it.\n\n`over_budget` is the field to read and the one most likely to be misread. It does not\nmean the compiler overspent by accident: every entry the budget has a say over is refused\nthe moment it would not fit, so the only way past the ceiling is through the entries that\nmay not be dropped — the seeds, the policy, the scope, a blocking rule. So\n`over_budget` means *the things this context cannot do without already cost more than you\nallowed*, and `required_tokens` is the explanation of it. The honest answer to that is to\nsay so, not to return a context missing the thing it was compiled about.\n\n`remaining_tokens` is floored at zero rather than going negative, so it is safe to\ndisplay; the overspend is read from `used_tokens` against `limit_tokens`, which is why\nboth are carried.\n\n```\nuse majordomus_cli::devcontext::{Budget, Tier, BYTES_PER_TOKEN};\nuse serde_json::json;\n\nlet tier = |name: &amp;str, tokens: u64, required: usize| json!({\n    \&quot;tier\&quot;: name, \&quot;meaning\&quot;: \&quot;as this tier is for\&quot;, \&quot;selected\&quot;: 1,\n    \&quot;excluded\&quot;: 0, \&quot;tokens\&quot;: tokens, \&quot;required\&quot;: required,\n});\n\n// the undroppable entries alone cost more than the caller allowed\nlet b: Budget = serde_json::from_value(json!({\n    \&quot;limit_tokens\&quot;: 1_000,\n    \&quot;used_tokens\&quot;: 2_500,\n    \&quot;required_tokens\&quot;: 2_500,\n    \&quot;remaining_tokens\&quot;: 0,\n    \&quot;over_budget\&quot;: true,\n    \&quot;bytes_per_token\&quot;: BYTES_PER_TOKEN,\n    \&quot;tiers\&quot;: [tier(\&quot;task\&quot;, 2_000, 1), tier(\&quot;governance\&quot;, 500, 1)],\n})).unwrap();\n\nassert!(b.over_budget);\nassert!(b.used_tokens &gt; b.limit_tokens, \&quot;the overspend is read from these two\&quot;);\nassert_eq!(b.required_tokens, b.used_tokens, \&quot;all of it was undroppable\&quot;);\nassert_eq!(b.remaining_tokens, 0, \&quot;floored, so it is safe to display\&quot;);\n\n// the divisor is carried so a caller measuring tokens differently can convert\n// rather than guess what the estimate meant\nassert_eq!(b.bytes_per_token, BYTES_PER_TOKEN);\n\n// and the tiers are reported in the order the budget spends in\nlet order: Vec&lt;Tier&gt; = b.tiers.iter().map(|t| t.tier).collect();\nassert_eq!(order, [Tier::Task, Tier::Governance]);\nassert!(order.windows(2).all(|w| w[0] &lt; w[1]));\n```&quot;,
-      &quot;required&quot;: [
-        &quot;limit_tokens&quot;,
-        &quot;used_tokens&quot;,
-        &quot;required_tokens&quot;,
-        &quot;remaining_tokens&quot;,
-        &quot;over_budget&quot;,
-        &quot;bytes_per_token&quot;,
-        &quot;tiers&quot;
-      ]
-    },
-    &quot;ExclusionReason&quot;: {
+    &quot;DevContextStanding&quot;: {
+      &quot;description&quot;: &quot;What one identifier&#39;s standing in a compiled context is.\nWhere one identifier stands with respect to a compiled context.\n\nThe pair to be careful about is `NotReached` and `Unknown`, because they look alike in a\nrendering and mean opposite things. `NotReached` says the index holds the object and this\nrequest did not reach it — the request is what to change, and raising the depth or the\nbudget may well bring it in. `Unknown` says the index holds nothing under that\nidentifier: the request is fine and the identifier is wrong, or the object is not in\nthis repository. Collapsing the two would send a reader to tune a request that was never\nthe problem.\n\n`Deduplicated` is the third one worth naming: the thing is *in* the answer, under another\nidentifier, which is neither in nor out.\n\n```\nuse majordomus_cli::devcontext::Standing;\n\n// in the answer, one way or another\nlet present = [Standing::Selected, Standing::Deduplicated];\n// reached and not given, so the request is what to change\nlet request_bound = [Standing::Excluded, Standing::NotReached];\nfor s in present {\n    assert!(!request_bound.contains(&amp;s));\n}\n\n// the two that must not be confused: one is the request&#39;s fault, one is not\nassert_eq!(Standing::NotReached.as_str(), \&quot;not_reached\&quot;);\nassert_ne!(Standing::NotReached, Standing::Unknown);\nassert_eq!(\n    serde_json::to_value(Standing::NotReached).unwrap(),\n    serde_json::json!(Standing::NotReached.as_str()),\n);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;budget&quot;,
-          &quot;description&quot;: &quot;The budget ran out before its tier was filled.&quot;,
+          &quot;const&quot;: &quot;selected&quot;,
+          &quot;description&quot;: &quot;In the answer.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;relevance&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Its relevance fell below the floor the request set.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;depth&quot;,
-          &quot;description&quot;: &quot;It is beyond the depth the request allows.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;The object says it is deprecated or superseded.&quot;,
+          &quot;const&quot;: &quot;excluded&quot;,
+          &quot;description&quot;: &quot;Reached and not given; the exclusion says why.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;A newer version of the same thing is in the answer.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;superseded&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;unresolved&quot;,
-          &quot;description&quot;: &quot;The layer names it and holds nothing under that name.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Why something the compiler selected did not survive.\n\nThe six divide into three that a caller can act on by asking again — `Budget`,\n`Relevance` and `Depth` are all consequences of the request&#39;s own limits, so raising the\nlimit brings the entry back — and three that are facts about the repository:\n`Stale` and `Superseded` mean the layer itself says this is not the current thing, and\n`Unresolved` means the layer names something it does not hold, which is a dangling\nreference somebody should fix.\n\n```\nuse majordomus_cli::devcontext::ExclusionReason as Why;\n\n// the ones a different request would change, against the ones it would not\nlet request_bound = [Why::Budget, Why::Relevance, Why::Depth];\nlet repository_bound = [Why::Stale, Why::Superseded, Why::Unresolved];\nfor r in repository_bound {\n    assert!(!request_bound.contains(&amp;r), \&quot;{} is not the caller&#39;s to fix\&quot;, r.as_str());\n}\n\n// and the word is the serialised form, snake_case for the two-word one\nassert_eq!(Why::Superseded.as_str(), \&quot;superseded\&quot;);\nassert_eq!(\n    serde_json::to_value(Why::Unresolved).unwrap(),\n    serde_json::json!(Why::Unresolved.as_str()),\n);\n```&quot;
-    },
-    &quot;Selector&quot;: {
-      &quot;description&quot;: &quot;What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is [`Selector::declared`], and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec&lt;&amp;str&gt; = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\&quot;intent_match\&quot;]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec&lt;&amp;str&gt; = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\&quot;scope_path\&quot;),\n);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Named in the request.&quot;,
-          &quot;const&quot;: &quot;seed&quot;,
+          &quot;const&quot;: &quot;deduplicated&quot;,
+          &quot;description&quot;: &quot;Folded into another identifier, or dropped for one.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Reached along a typed edge of the composed graph.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;relation&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;scope_path&quot;,
-          &quot;description&quot;: &quot;Its path lies under a path the request or a seed declares.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;contract&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A directory contract that reaches one of those paths.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A rule or policy the layer applies to everything.&quot;,
-          &quot;const&quot;: &quot;governance&quot;
-        },
-        {
-          &quot;const&quot;: &quot;session_state&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Inferred: the words of the intent occur in the object&#39;s own words.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;intent_match&quot;
-        }
-      ]
-    },
-    &quot;Tier&quot;: {
-      &quot;description&quot;: &quot;Where an entry sits in the order the budget spends in.\n\nThe order is this repository&#39;s own: `lib/context.sh` assembles its sections \&quot;in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\&quot; These six tiers are that\nsentence, applied to objects instead of to sections.\n\nThe derived `Ord` is load-bearing: the variants are declared in authority order, so\n`&lt;` means \&quot;spent before\&quot; and \&quot;harder to drop\&quot;, and the budget&#39;s ordering is a plain\n`sort` rather than a table mapping tiers to ranks. A variant added in the wrong place\nwould silently re-rank the whole answer, which is why the declaration order is the one\nthing about this enum to be careful with.\n\n```\nuse majordomus_cli::devcontext::Tier;\n\n// the declaration order *is* the order the budget spends in\nlet mut sorted = Tier::ORDER.to_vec();\nsorted.sort();\nassert_eq!(sorted, Tier::ORDER.to_vec());\n\n// so the strongest authority is the smallest, and it is the one never dropped\nassert_eq!(Tier::ORDER.iter().copied().min(), Some(Tier::Task));\nassert!(Tier::Task &lt; Tier::Governance &amp;&amp; Tier::Governance &lt; Tier::History);\n\n// and the serialised word is the lowercase one the report is read under\nassert_eq!(\n    serde_json::to_value(Tier::Governance).unwrap(),\n    serde_json::json!(Tier::Governance.as_str()),\n);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one.&quot;,
-          &quot;const&quot;: &quot;task&quot;,
+          &quot;const&quot;: &quot;not_reached&quot;,
+          &quot;description&quot;: &quot;The index holds it and this request never reached it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped.&quot;,
-          &quot;const&quot;: &quot;governance&quot;,
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;The index holds nothing under that identifier.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;source&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The code and the cases the work touches.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;decision&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The architectural decisions already in force over it.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;What a previous session left: handovers, session records, curated knowledge.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;knowledge&quot;
-        },
-        {
-          &quot;const&quot;: &quot;history&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Supporting evidence: use cases, claims, features, and the rest of the layer.&quot;
         }
       ]
     },
     &quot;Discovery&quot;: {
       &quot;description&quot;: &quot;One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \&quot;five discovery\npaths found the same ADR\&quot; is the interesting fact, not a thing to hide.\n\nA `Discovery` is a *kind* of way in, not one traversal. Thirty-three issues of one\nmilestone all reach that milestone along `belongs_to`, and recording that thirty-three\ntimes would say the answer had thirty-three reasons when it has one — so a path already\nrecorded for the same selector, edge and reason is kept rather than repeated.\n\n`via` and `edge` are present exactly when they mean something: a seed was not reached\nfrom anything and followed no edge, so both are absent and are skipped on the wire\nrather than serialised as null. `confidence` is 1.0 for every declared selector and less\nonly for [`Selector::IntentMatch`]; `weight` is what this particular path contributes to\nrelevance, which is a different quantity — how much it counts, against how sure it is.\n\n```\nuse majordomus_cli::devcontext::{Discovery, Selector};\nuse serde_json::json;\n\n// the request named it: nothing to come via, no edge followed, depth zero\nlet seed: Discovery = serde_json::from_value(json!({\n    \&quot;selector\&quot;: \&quot;seed\&quot;,\n    \&quot;reason\&quot;: \&quot;named in the request\&quot;,\n    \&quot;depth\&quot;: 0,\n    \&quot;confidence\&quot;: 1.0,\n    \&quot;weight\&quot;: 1.0,\n})).unwrap();\nassert_eq!(seed.selector, Selector::Seed);\nassert!(seed.via.is_none() &amp;&amp; seed.edge.is_none());\nassert!(seed.selector.declared() &amp;&amp; seed.confidence == 1.0);\n\n// the wire form omits them rather than carrying nulls a reader must skip\nlet wire = serde_json::to_value(&amp;seed).unwrap();\nassert!(wire.get(\&quot;via\&quot;).is_none() &amp;&amp; wire.get(\&quot;edge\&quot;).is_none());\n\n// a relation says both where it came from and which edge it followed\nlet walked: Discovery = serde_json::from_value(json!({\n    \&quot;selector\&quot;: \&quot;relation\&quot;,\n    \&quot;reason\&quot;: \&quot;the decision in force over this scope\&quot;,\n    \&quot;via\&quot;: \&quot;majordomus://issue/I0301\&quot;,\n    \&quot;edge\&quot;: \&quot;governed_by\&quot;,\n    \&quot;depth\&quot;: 1,\n    \&quot;confidence\&quot;: 1.0,\n    \&quot;weight\&quot;: 0.9,\n})).unwrap();\nassert_eq!(walked.edge.as_deref(), Some(\&quot;governed_by\&quot;));\nassert_eq!(walked.via.as_deref(), Some(\&quot;majordomus://issue/I0301\&quot;));\n\n// and a guess says so, in the one field that distinguishes the two halves of an answer\nlet guessed: Discovery = serde_json::from_value(json!({\n    \&quot;selector\&quot;: \&quot;intent_match\&quot;,\n    \&quot;reason\&quot;: \&quot;the intent&#39;s words occur in it\&quot;,\n    \&quot;depth\&quot;: 2,\n    \&quot;confidence\&quot;: 0.4,\n    \&quot;weight\&quot;: 0.4,\n})).unwrap();\nassert!(!guessed.selector.declared() &amp;&amp; guessed.confidence &lt; 1.0);\n```&quot;,
-      &quot;required&quot;: [
-        &quot;selector&quot;,
-        &quot;reason&quot;,
-        &quot;depth&quot;,
-        &quot;confidence&quot;,
-        &quot;weight&quot;
-      ],
       &quot;properties&quot;: {
+        &quot;confidence&quot;: {
+          &quot;description&quot;: &quot;1.0 when the repository declared this path, less when it was inferred.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: &quot;number&quot;
+        },
+        &quot;depth&quot;: {
+          &quot;description&quot;: &quot;Hops from a seed; a seed is 0.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
         &quot;edge&quot;: {
           &quot;description&quot;: &quot;The edge kind followed, for `Relation`.&quot;,
           &quot;type&quot;: [
@@ -891,17 +624,12 @@ on without a second call.</td>
           ]
         },
         &quot;reason&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Why it was included, in words a person reads without this file.&quot;
+          &quot;description&quot;: &quot;Why it was included, in words a person reads without this file.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;selector&quot;: {
-          &quot;description&quot;: &quot;What reached it.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Selector&quot;
-        },
-        &quot;confidence&quot;: {
-          &quot;type&quot;: &quot;number&quot;,
-          &quot;description&quot;: &quot;1.0 when the repository declared this path, less when it was inferred.&quot;,
-          &quot;format&quot;: &quot;double&quot;
+          &quot;$ref&quot;: &quot;#/$defs/Selector&quot;,
+          &quot;description&quot;: &quot;What reached it.&quot;
         },
         &quot;via&quot;: {
           &quot;description&quot;: &quot;The entry this one was reached from, when it was reached from one.&quot;,
@@ -911,50 +639,322 @@ on without a second call.</td>
           ]
         },
         &quot;weight&quot;: {
+          &quot;description&quot;: &quot;What this path contributes to the entry&#39;s relevance.&quot;,
           &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;,
-          &quot;description&quot;: &quot;What this path contributes to the entry&#39;s relevance.&quot;
-        },
-        &quot;depth&quot;: {
-          &quot;description&quot;: &quot;Hops from a seed; a seed is 0.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
+          &quot;type&quot;: &quot;number&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;selector&quot;,
+        &quot;reason&quot;,
+        &quot;depth&quot;,
+        &quot;confidence&quot;,
+        &quot;weight&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;DevContextStanding&quot;: {
+    &quot;EntryProvenance&quot;: {
+      &quot;description&quot;: &quot;Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index&#39;s own [`crate::model::Provenance`], carried rather than restated.\n\nIt is a copy of the index&#39;s provenance and not a re-derivation of it, which is the\nproperty worth relying on: no path here was constructed by this module, so a path in an\nanswer is a path the index discovered, and the two cannot disagree about where something\nlives.\n\n`bytes` is the measured half of an entry&#39;s cost — the estimate on top of it is\n[`tokens_for`] — so this is also where the budget&#39;s arithmetic starts.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, EntryProvenance};\nuse serde_json::json;\n\nlet p: EntryProvenance = serde_json::from_value(json!({\n    \&quot;path\&quot;: \&quot;.ai/repo/adrs/0052-the-episode-is-the-boundary.md\&quot;,\n    \&quot;directory\&quot;: \&quot;.ai/repo/adrs\&quot;,\n    \&quot;source_class\&quot;: \&quot;adr\&quot;,\n    \&quot;section\&quot;: \&quot;adrs\&quot;,\n    \&quot;bytes\&quot;: 8_192,\n})).unwrap();\n\n// the size is what the cost is computed from, and the estimate says so of itself\nassert_eq!(tokens_for(p.bytes), 2_048);\n\n// a file under no manifest section — a root README, say — carries none rather than \&quot;\&quot;\nlet rootish: EntryProvenance = serde_json::from_value(json!({\n    \&quot;path\&quot;: \&quot;README.md\&quot;,\n    \&quot;directory\&quot;: \&quot;.\&quot;,\n    \&quot;source_class\&quot;: \&quot;readme\&quot;,\n    \&quot;bytes\&quot;: 4_000,\n})).unwrap();\nassert!(rootish.section.is_none());\nassert_eq!(rootish.directory, \&quot;.\&quot;, \&quot;the root is `.`, not the empty string\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;bytes&quot;: {
+          &quot;description&quot;: &quot;Size of the file in bytes.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;directory&quot;: {
+          &quot;description&quot;: &quot;The directory it sits in.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path, forward slashes.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;section&quot;: {
+          &quot;description&quot;: &quot;The manifest section it falls under, when it falls under one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source_class&quot;: {
+          &quot;description&quot;: &quot;The `sources.yaml` class that discovered it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;directory&quot;,
+        &quot;source_class&quot;,
+        &quot;bytes&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Excluded&quot;: {
+      &quot;description&quot;: &quot;One thing the compiler reached and did not give. Excluded is not the same as absent:\nan under-filled context is debugged from this list, not by guessing.\n\n`cost_tokens` is why this type exists in the shape it does. A budget that reported only\n*that* it dropped things would leave a caller guessing at a new ceiling; one that reports\nwhat each omission would have cost turns \&quot;raise the budget\&quot; into arithmetic. `detail`\ncarries the same in words, so the row is legible without the reader doing that\narithmetic themselves.\n\nThe ordering puts the tier first as an explicit rank, because the tier is the precedence\nthe budget spent in; inside a tier a reader is looking for a reason, and the identifier\nends the key so the list is total and the same tree always prints it the same way.\n\n```\nuse majordomus_cli::devcontext::{Excluded, ExclusionReason, Tier};\nuse majordomus_cli::order::canonical;\nuse serde_json::json;\n\nlet row = |uri: &amp;str, tier: &amp;str, reason: &amp;str, cost: u64| -&gt; Excluded {\n    serde_json::from_value(json!({\n        \&quot;uri\&quot;: uri, \&quot;tier\&quot;: tier, \&quot;reason\&quot;: reason,\n        \&quot;detail\&quot;: \&quot;as measured\&quot;, \&quot;cost_tokens\&quot;: cost, \&quot;relevance\&quot;: 0.4,\n    })).unwrap()\n};\n\nlet mut excluded = vec![\n    row(\&quot;majordomus://knowledge/b\&quot;, \&quot;history\&quot;, \&quot;budget\&quot;, 900),\n    row(\&quot;majordomus://adr/0001\&quot;, \&quot;decision\&quot;, \&quot;superseded\&quot;, 300),\n    row(\&quot;majordomus://knowledge/a\&quot;, \&quot;history\&quot;, \&quot;budget\&quot;, 1_200),\n];\ncanonical(&amp;mut excluded);\n\n// the tier ranks first, so the decision tier precedes history whatever the reason says\nassert_eq!(excluded[0].tier, Tier::Decision);\nassert_eq!(excluded[0].reason, ExclusionReason::Superseded);\n// then the reason, then the identifier — which makes the order total\nlet rest: Vec&lt;&amp;str&gt; = excluded[1..].iter().map(|e| e.uri.as_str()).collect();\nassert_eq!(rest, [\&quot;majordomus://knowledge/a\&quot;, \&quot;majordomus://knowledge/b\&quot;]);\n\n// and the row a caller acts on says what it would have cost to keep\nlet biggest = excluded.iter().max_by_key(|e| e.cost_tokens).unwrap();\nassert_eq!(biggest.cost_tokens, 1_200);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;cost_tokens&quot;: {
+          &quot;description&quot;: &quot;What it would have cost, so that a reader can decide whether to raise the budget.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;The same, in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Its kind, when it resolved to something.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;reason&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExclusionReason&quot;,
+          &quot;description&quot;: &quot;Why it is not in the answer.&quot;
+        },
+        &quot;relevance&quot;: {
+          &quot;description&quot;: &quot;What its relevance was.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: &quot;number&quot;
+        },
+        &quot;tier&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Tier&quot;,
+          &quot;description&quot;: &quot;The tier it would have been spent from.&quot;
+        },
+        &quot;uri&quot;: {
+          &quot;description&quot;: &quot;The canonical identifier, or the name the layer used when nothing resolves.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;uri&quot;,
+        &quot;tier&quot;,
+        &quot;reason&quot;,
+        &quot;detail&quot;,
+        &quot;cost_tokens&quot;,
+        &quot;relevance&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ExclusionReason&quot;: {
+      &quot;description&quot;: &quot;Why something the compiler selected did not survive.\n\nThe six divide into three that a caller can act on by asking again — `Budget`,\n`Relevance` and `Depth` are all consequences of the request&#39;s own limits, so raising the\nlimit brings the entry back — and three that are facts about the repository:\n`Stale` and `Superseded` mean the layer itself says this is not the current thing, and\n`Unresolved` means the layer names something it does not hold, which is a dangling\nreference somebody should fix.\n\n```\nuse majordomus_cli::devcontext::ExclusionReason as Why;\n\n// the ones a different request would change, against the ones it would not\nlet request_bound = [Why::Budget, Why::Relevance, Why::Depth];\nlet repository_bound = [Why::Stale, Why::Superseded, Why::Unresolved];\nfor r in repository_bound {\n    assert!(!request_bound.contains(&amp;r), \&quot;{} is not the caller&#39;s to fix\&quot;, r.as_str());\n}\n\n// and the word is the serialised form, snake_case for the two-word one\nassert_eq!(Why::Superseded.as_str(), \&quot;superseded\&quot;);\nassert_eq!(\n    serde_json::to_value(Why::Unresolved).unwrap(),\n    serde_json::json!(Why::Unresolved.as_str()),\n);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;selected&quot;,
-          &quot;description&quot;: &quot;In the answer.&quot;,
+          &quot;const&quot;: &quot;budget&quot;,
+          &quot;description&quot;: &quot;The budget ran out before its tier was filled.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Reached and not given; the exclusion says why.&quot;,
-          &quot;const&quot;: &quot;excluded&quot;,
+          &quot;const&quot;: &quot;relevance&quot;,
+          &quot;description&quot;: &quot;Its relevance fell below the floor the request set.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;deduplicated&quot;,
-          &quot;description&quot;: &quot;Folded into another identifier, or dropped for one.&quot;,
+          &quot;const&quot;: &quot;depth&quot;,
+          &quot;description&quot;: &quot;It is beyond the depth the request allows.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;The index holds it and this request never reached it.&quot;,
-          &quot;const&quot;: &quot;not_reached&quot;,
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;The object says it is deprecated or superseded.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;The index holds nothing under that identifier.&quot;
+          &quot;const&quot;: &quot;superseded&quot;,
+          &quot;description&quot;: &quot;A newer version of the same thing is in the answer.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unresolved&quot;,
+          &quot;description&quot;: &quot;The layer names it and holds nothing under that name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Selector&quot;: {
+      &quot;description&quot;: &quot;What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is [`Selector::declared`], and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec&lt;&amp;str&gt; = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\&quot;intent_match\&quot;]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec&lt;&amp;str&gt; = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\&quot;scope_path\&quot;),\n);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;seed&quot;,
+          &quot;description&quot;: &quot;Named in the request.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;relation&quot;,
+          &quot;description&quot;: &quot;Reached along a typed edge of the composed graph.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;scope_path&quot;,
+          &quot;description&quot;: &quot;Its path lies under a path the request or a seed declares.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;contract&quot;,
+          &quot;description&quot;: &quot;A directory contract that reaches one of those paths.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;governance&quot;,
+          &quot;description&quot;: &quot;A rule or policy the layer applies to everything.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;session_state&quot;,
+          &quot;description&quot;: &quot;A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;intent_match&quot;,
+          &quot;description&quot;: &quot;Inferred: the words of the intent occur in the object&#39;s own words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Tier&quot;: {
+      &quot;description&quot;: &quot;Where an entry sits in the order the budget spends in.\n\nThe order is this repository&#39;s own: `lib/context.sh` assembles its sections \&quot;in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\&quot; These six tiers are that\nsentence, applied to objects instead of to sections.\n\nThe derived `Ord` is load-bearing: the variants are declared in authority order, so\n`&lt;` means \&quot;spent before\&quot; and \&quot;harder to drop\&quot;, and the budget&#39;s ordering is a plain\n`sort` rather than a table mapping tiers to ranks. A variant added in the wrong place\nwould silently re-rank the whole answer, which is why the declaration order is the one\nthing about this enum to be careful with.\n\n```\nuse majordomus_cli::devcontext::Tier;\n\n// the declaration order *is* the order the budget spends in\nlet mut sorted = Tier::ORDER.to_vec();\nsorted.sort();\nassert_eq!(sorted, Tier::ORDER.to_vec());\n\n// so the strongest authority is the smallest, and it is the one never dropped\nassert_eq!(Tier::ORDER.iter().copied().min(), Some(Tier::Task));\nassert!(Tier::Task &lt; Tier::Governance &amp;&amp; Tier::Governance &lt; Tier::History);\n\n// and the serialised word is the lowercase one the report is read under\nassert_eq!(\n    serde_json::to_value(Tier::Governance).unwrap(),\n    serde_json::json!(Tier::Governance.as_str()),\n);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;task&quot;,
+          &quot;description&quot;: &quot;What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;governance&quot;,
+          &quot;description&quot;: &quot;What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;source&quot;,
+          &quot;description&quot;: &quot;The code and the cases the work touches.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;decision&quot;,
+          &quot;description&quot;: &quot;The architectural decisions already in force over it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;knowledge&quot;,
+          &quot;description&quot;: &quot;What a previous session left: handovers, session records, curated knowledge.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;history&quot;,
+          &quot;description&quot;: &quot;Supporting evidence: use cases, claims, features, and the rest of the layer.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TierSpend&quot;: {
+      &quot;description&quot;: &quot;What one tier cost, how much of it survived, and how much of that could not have been\ndropped.\n\nThere is no per-tier ceiling, which is worth saying because the name suggests one: the\nbudget is a single pot spent in tier order, and this is the *report* of what each tier\ntook from it, not an allowance it was given. A tier with many exclusions is therefore\nnot a tier that hit its own limit — it is a tier that was reached after the pot had been\nspent by the tiers above it.\n\n`meaning` is carried so that a reader deciding what to raise the budget for does not\nhave to look up what `knowledge` holds; `required` is the part of `selected` the budget\nhad no say over.\n\n```\nuse majordomus_cli::devcontext::{Tier, TierSpend};\nuse serde_json::json;\n\nlet t: TierSpend = serde_json::from_value(json!({\n    \&quot;tier\&quot;: \&quot;governance\&quot;,\n    \&quot;meaning\&quot;: Tier::Governance.meaning(),\n    \&quot;selected\&quot;: 9,\n    \&quot;excluded\&quot;: 2,\n    \&quot;tokens\&quot;: 6_400,\n    \&quot;required\&quot;: 3,\n})).unwrap();\n\nassert_eq!(t.tier, Tier::Governance);\n// the undroppable part is a part of what survived, never a separate count\nassert!(t.required &lt;= t.selected);\n// and the row explains its own tier, so \&quot;2 excluded\&quot; is actionable\nassert_eq!(t.meaning, Tier::Governance.meaning());\nassert!(t.meaning.contains(\&quot;policy\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;excluded&quot;: {
+          &quot;description&quot;: &quot;How many were dropped from it for budget.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;meaning&quot;: {
+          &quot;description&quot;: &quot;What it is for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;required&quot;: {
+          &quot;description&quot;: &quot;Entries in it that cannot be dropped.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;selected&quot;: {
+          &quot;description&quot;: &quot;How many entries survived in it.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;tier&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Tier&quot;,
+          &quot;description&quot;: &quot;The tier.&quot;
+        },
+        &quot;tokens&quot;: {
+          &quot;description&quot;: &quot;Tokens the survivors cost.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;tier&quot;,
+        &quot;meaning&quot;,
+        &quot;selected&quot;,
+        &quot;excluded&quot;,
+        &quot;tokens&quot;,
+        &quot;required&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;Why one identifier is, or is not, in a compiled context.\n\n`standing` says which of the five cases this is, and the three optional fields are the\nevidence for it: at most one of `entry`, `excluded` and `deduplicated` is populated, and\nwhich one is determined by the standing rather than independent of it. `detail` is the\nsame answer in words, so the value is legible without a reader matching them up.\n\n`budget` is always present, including when the answer is `unknown`, and that is the\npoint of carrying it: the commonest reason to ask this question is an entry that did not\nfit, and an explanation that said \&quot;excluded for budget\&quot; without the budget would need a\nsecond call to act on.\n\n```\nuse majordomus_cli::devcontext::{compile, explain, CompileInput, ExplainInput};\nuse majordomus_cli::devcontext::{Explanation, Standing};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet compiled = compile(&amp;ctx, CompileInput::default()).unwrap();\nlet selected = compiled.selected[0].uri.clone();\n\n// something in the answer: the entry is the evidence, and the other two are empty\nlet e: Explanation =\n    explain(&amp;ctx, ExplainInput { uri: selected.clone(), ..Default::default() }).unwrap();\nassert_eq!(e.standing, Standing::Selected);\nassert_eq!(e.entry.as_ref().unwrap().uri, selected);\nassert!(e.excluded.is_none() &amp;&amp; e.deduplicated.is_none());\nassert!(!e.detail.is_empty(), \&quot;the standing always reads as a sentence too\&quot;);\n\n// something this repository does not hold: an answer, not an error — and the budget\n// the judgement was made under is carried even here\nlet absent: Explanation = explain(\n    &amp;ctx,\n    ExplainInput { uri: \&quot;majordomus://adr/9999\&quot;.into(), ..Default::default() },\n)\n.unwrap();\nassert_eq!(absent.standing, Standing::Unknown);\nassert!(absent.entry.is_none());\nassert_eq!(absent.budget.limit_tokens, compiled.budget.limit_tokens);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;budget&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Budget&quot;,
+      &quot;description&quot;: &quot;The budget the judgement was made under, so that \&quot;excluded for budget\&quot; can be acted\non without a second call.&quot;
+    },
+    &quot;deduplicated&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/Deduplicated&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
         }
       ],
-      &quot;description&quot;: &quot;What one identifier&#39;s standing in a compiled context is.\nWhere one identifier stands with respect to a compiled context.\n\nThe pair to be careful about is `NotReached` and `Unknown`, because they look alike in a\nrendering and mean opposite things. `NotReached` says the index holds the object and this\nrequest did not reach it — the request is what to change, and raising the depth or the\nbudget may well bring it in. `Unknown` says the index holds nothing under that\nidentifier: the request is fine and the identifier is wrong, or the object is not in\nthis repository. Collapsing the two would send a reader to tune a request that was never\nthe problem.\n\n`Deduplicated` is the third one worth naming: the thing is *in* the answer, under another\nidentifier, which is neither in nor out.\n\n```\nuse majordomus_cli::devcontext::Standing;\n\n// in the answer, one way or another\nlet present = [Standing::Selected, Standing::Deduplicated];\n// reached and not given, so the request is what to change\nlet request_bound = [Standing::Excluded, Standing::NotReached];\nfor s in present {\n    assert!(!request_bound.contains(&amp;s));\n}\n\n// the two that must not be confused: one is the request&#39;s fault, one is not\nassert_eq!(Standing::NotReached.as_str(), \&quot;not_reached\&quot;);\nassert_ne!(Standing::NotReached, Standing::Unknown);\nassert_eq!(\n    serde_json::to_value(Standing::NotReached).unwrap(),\n    serde_json::json!(Standing::NotReached.as_str()),\n);\n```&quot;
+      &quot;description&quot;: &quot;The collapse it was part of, when it was folded or dropped for another.&quot;
+    },
+    &quot;detail&quot;: {
+      &quot;description&quot;: &quot;The same, in words.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;entry&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ContextEntry&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The entry, when it is in the answer.&quot;
+    },
+    &quot;excluded&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/Excluded&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The exclusion, when it was reached and not given.&quot;
+    },
+    &quot;standing&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DevContextStanding&quot;,
+      &quot;description&quot;: &quot;Where it stands.&quot;
+    },
+    &quot;uri&quot;: {
+      &quot;description&quot;: &quot;What was asked about.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
-  }
+  },
+  &quot;required&quot;: [
+    &quot;uri&quot;,
+    &quot;standing&quot;,
+    &quot;detail&quot;,
+    &quot;budget&quot;
+  ],
+  &quot;title&quot;: &quot;Explanation&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -985,7 +985,7 @@ on without a second call.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devcontext</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DevContextExplainInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Explanation</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -1057,7 +1057,7 @@ on without a second call.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

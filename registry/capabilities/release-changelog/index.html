@@ -210,7 +210,8 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which part of the changelog to answer with.&quot;,
   &quot;properties&quot;: {
     &quot;version&quot;: {
       &quot;description&quot;: &quot;One version, or `unreleased`; every section when absent.&quot;,
@@ -220,9 +221,8 @@
       ]
     }
   },
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which part of the changelog to answer with.&quot;,
-  &quot;title&quot;: &quot;ReleaseChangelogInput&quot;
+  &quot;title&quot;: &quot;ReleaseChangelogInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -231,11 +231,6 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">produced_by</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Which capability answered, and where else the same value can be had.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">current</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -247,305 +242,40 @@
         <td class="px-3 py-2 text-body">What could not be read, said rather than hidden: a repository with no git history,
 a release record that names no commit, a tag that is not in this clone.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">sections</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Newest first, the unreleased section leading when there is one.</td>
+        <td class="px-3 py-2 font-mono text-heading">produced_by</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Which capability answered, and where else the same value can be had.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The schema this document satisfies.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">sections</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Newest first, the unreleased section leading when there is one.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;current&quot;,
-    &quot;sections&quot;,
-    &quot;diagnostics&quot;
-  ],
   &quot;$defs&quot;: {
-    &quot;ReleaseReference&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;id&quot;,
-        &quot;title&quot;
-      ],
-      &quot;description&quot;: &quot;A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \&quot;issue\&quot;.into(),\n    id: \&quot;I1305\&quot;.into(),\n    title: \&quot;An observed contract has a fingerprint\&quot;.into(),\n    route: Some(\&quot;/plan/i1305/\&quot;.into()),\n};\nlet json = serde_json::to_value(&amp;r).unwrap();\nassert_eq!(json[\&quot;id\&quot;], \&quot;I1305\&quot;);\nassert_eq!(json[\&quot;route\&quot;], \&quot;/plan/i1305/\&quot;);\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&amp;bare).unwrap().get(\&quot;route\&quot;).is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;`issue` or `milestone`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Where it is published on this site, when it has a page.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`I1305`, `M000`.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What it is, from the record itself.&quot;
-        }
-      }
-    },
-    &quot;ReleaseSection&quot;: {
-      &quot;description&quot;: &quot;One version&#39;s worth of changelog.&quot;,
-      &quot;required&quot;: [
-        &quot;version&quot;,
-        &quot;unreleased&quot;,
-        &quot;decisions&quot;,
-        &quot;groups&quot;,
-        &quot;artifacts&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;version&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The version, or `unreleased`.&quot;
-        },
-        &quot;notes_url&quot;: {
-          &quot;description&quot;: &quot;The release notes the record names — the published release itself.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;date&quot;: {
-          &quot;description&quot;: &quot;When it was published, from the record.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;tree_url&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The tree at this release.&quot;
-        },
-        &quot;groups&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The changes, from the commits in this release&#39;s range, grouped by what they did and\nordered by the rank each group carries. The flat list is the concatenation of the\ngroups&#39; own; nothing holds it twice.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeGroup&quot;
-          }
-        },
-        &quot;artifacts&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ReleaseChangelogArtifact&quot;
-          },
-          &quot;description&quot;: &quot;What was published, when this section is a release.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;decisions&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ReleaseDecision&quot;
-          },
-          &quot;description&quot;: &quot;The decisions dated inside this release&#39;s window.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;tag&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The tag, when one was published.&quot;
-        },
-        &quot;compare_url&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Every commit between the previous release and this one, as the forge renders it.&quot;
-        },
-        &quot;unreleased&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether this section is the work that has not been released.&quot;
-        },
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The commit it was published from.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      }
-    },
-    &quot;ReleaseDecision&quot;: {
-      &quot;description&quot;: &quot;One decision, as the layer&#39;s own ADR object states it.&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;status&quot;,
-        &quot;date&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;title&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The decision, in its own words.&quot;
-        },
-        &quot;added&quot;: {
-          &quot;description&quot;: &quot;The commit that added the file, which is what decides the release it belongs to. The\nfront-matter date says when the decision was made; those are different questions.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;url&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Where the decision itself can be read: the file in the repository. The site has no\nper-ADR page, so this is the honest destination rather than an invented route.&quot;
-        },
-        &quot;date&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The date the record carries.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;`adr-0027`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`proposed`, `accepted`, `superseded`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
-    },
-    &quot;ReleaseChangelogArtifact&quot;: {
-      &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The file name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;target&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The platform triple the record names.&quot;
-        },
-        &quot;sha256&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Its SHA-256, as the record read it off the file.&quot;
-        }
-      },
-      &quot;description&quot;: &quot;One published artifact, from the release record&#39;s own evidence.&quot;,
-      &quot;required&quot;: [
-        &quot;target&quot;,
-        &quot;name&quot;,
-        &quot;sha256&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ReleaseChangeGroup&quot;: {
-      &quot;properties&quot;: {
-        &quot;changes&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The changes, in the order the commits were read.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ReleaseChange&quot;
-          }
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
-          &quot;description&quot;: &quot;What the changes in it did.&quot;
-        },
-        &quot;heading&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The heading it is shown under.&quot;
-        },
-        &quot;rank&quot;: {
-          &quot;description&quot;: &quot;Where it sorts among the other groups; ascending.&quot;,
-          &quot;maximum&quot;: 255,
-          &quot;format&quot;: &quot;uint8&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;The changes of one kind, with the heading and the rank that decide where they are shown.\n\nThe grouping is in the document rather than in each renderer. It was in the Markdown\nrenderer alone, and the site — which cannot see a Rust function — grouped alphabetically\ninstead, so the same changelog read in two orders depending on which surface showed it.\nA presentation order stated once and carried is the only kind that survives a projection.&quot;,
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;heading&quot;,
-        &quot;rank&quot;,
-        &quot;changes&quot;
-      ]
-    },
-    &quot;ReleaseProducedBy&quot;: {
-      &quot;properties&quot;: {
-        &quot;http&quot;: {
-          &quot;description&quot;: &quot;The HTTP route that answers with it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;mcp_resource&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The MCP resource URI.&quot;
-        },
-        &quot;mcp_tool&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The MCP tool.&quot;
-        },
-        &quot;cli&quot;: {
-          &quot;description&quot;: &quot;The command line that renders it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;capability&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The capability id.&quot;
-        }
-      },
-      &quot;description&quot;: &quot;Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`&#39;s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \&quot;release.changelog\&quot;.into(),\n    cli: Some(\&quot;majordomus release changelog\&quot;.into()),\n    http: Some(\&quot;/api/v1/changelog\&quot;.into()),\n    mcp_tool: None,\n    mcp_resource: Some(\&quot;majordomus://changelog\&quot;.into()),\n};\nlet json = serde_json::to_value(&amp;by).unwrap();\nassert_eq!(json[\&quot;capability\&quot;], \&quot;release.changelog\&quot;);\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\&quot;mcp_tool\&quot;).is_none());\nassert_eq!(ProducedBy::default().capability, \&quot;\&quot;);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;capability&quot;
-      ]
-    },
     &quot;ReleaseChange&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;subject&quot;,
-        &quot;breaking&quot;,
-        &quot;commit&quot;
-      ],
+      &quot;description&quot;: &quot;One change, from one commit.&quot;,
       &quot;properties&quot;: {
         &quot;breaking&quot;: {
           &quot;description&quot;: &quot;Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;commit&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The abbreviated commit.&quot;
+          &quot;description&quot;: &quot;The abbreviated commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;kind&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
           &quot;description&quot;: &quot;What it did.&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The subject, without the type and scope that prefixed it.&quot;
         },
         &quot;references&quot;: {
           &quot;description&quot;: &quot;The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.&quot;,
@@ -561,6 +291,10 @@ a release record that names no commit, a tag that is not in this clone.</td>
             &quot;null&quot;
           ]
         },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;The subject, without the type and scope that prefixed it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;url&quot;: {
           &quot;description&quot;: &quot;Where that commit can be read, when the repository&#39;s own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry.&quot;,
           &quot;type&quot;: [
@@ -569,34 +303,75 @@ a release record that names no commit, a tag that is not in this clone.</td>
           ]
         }
       },
-      &quot;description&quot;: &quot;One change, from one commit.&quot;
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;subject&quot;,
+        &quot;breaking&quot;,
+        &quot;commit&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseChangeGroup&quot;: {
+      &quot;description&quot;: &quot;The changes of one kind, with the heading and the rank that decide where they are shown.\n\nThe grouping is in the document rather than in each renderer. It was in the Markdown\nrenderer alone, and the site — which cannot see a Rust function — grouped alphabetically\ninstead, so the same changelog read in two orders depending on which surface showed it.\nA presentation order stated once and carried is the only kind that survives a projection.&quot;,
+      &quot;properties&quot;: {
+        &quot;changes&quot;: {
+          &quot;description&quot;: &quot;The changes, in the order the commits were read.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ReleaseChange&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;heading&quot;: {
+          &quot;description&quot;: &quot;The heading it is shown under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
+          &quot;description&quot;: &quot;What the changes in it did.&quot;
+        },
+        &quot;rank&quot;: {
+          &quot;description&quot;: &quot;Where it sorts among the other groups; ascending.&quot;,
+          &quot;format&quot;: &quot;uint8&quot;,
+          &quot;maximum&quot;: 255,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;heading&quot;,
+        &quot;rank&quot;,
+        &quot;changes&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;ReleaseChangeKind&quot;: {
+      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;feat&quot;,
           &quot;description&quot;: &quot;A capability a person did not have before.&quot;,
-          &quot;const&quot;: &quot;feat&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;fix&quot;,
           &quot;description&quot;: &quot;Behaviour that was wrong and is not any more.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;fix&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;perf&quot;,
           &quot;description&quot;: &quot;Performance, with the behaviour unchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;perf&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;refactor&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;
+          &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;docs&quot;,
           &quot;description&quot;: &quot;Documentation.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;docs&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;test&quot;,
@@ -605,28 +380,28 @@ a release record that names no commit, a tag that is not in this clone.</td>
         },
         {
           &quot;const&quot;: &quot;chore&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The build, the pipeline, the tooling.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Continuous integration.&quot;,
-          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;The build, the pipeline, the tooling.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;Continuous integration.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;style&quot;,
           &quot;description&quot;: &quot;Formatting, with the behaviour unchanged.&quot;,
-          &quot;const&quot;: &quot;style&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;build&quot;,
           &quot;description&quot;: &quot;The build system or its dependencies.&quot;,
-          &quot;const&quot;: &quot;build&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;revert&quot;,
           &quot;description&quot;: &quot;A change that undoes another.&quot;,
-          &quot;const&quot;: &quot;revert&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;merge&quot;,
@@ -635,14 +410,245 @@ a release record that names no commit, a tag that is not in this clone.</td>
         },
         {
           &quot;const&quot;: &quot;other&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A commit whose subject does not parse as a conventional commit.&quot;
+          &quot;description&quot;: &quot;A commit whose subject does not parse as a conventional commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
+      ]
+    },
+    &quot;ReleaseChangelogArtifact&quot;: {
+      &quot;description&quot;: &quot;One published artifact, from the release record&#39;s own evidence.&quot;,
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The file name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;sha256&quot;: {
+          &quot;description&quot;: &quot;Its SHA-256, as the record read it off the file.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;target&quot;: {
+          &quot;description&quot;: &quot;The platform triple the record names.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;target&quot;,
+        &quot;name&quot;,
+        &quot;sha256&quot;
       ],
-      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseDecision&quot;: {
+      &quot;description&quot;: &quot;One decision, as the layer&#39;s own ADR object states it.&quot;,
+      &quot;properties&quot;: {
+        &quot;added&quot;: {
+          &quot;description&quot;: &quot;The commit that added the file, which is what decides the release it belongs to. The\nfront-matter date says when the decision was made; those are different questions.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;date&quot;: {
+          &quot;description&quot;: &quot;The date the record carries.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`adr-0027`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;`proposed`, `accepted`, `superseded`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The decision, in its own words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;Where the decision itself can be read: the file in the repository. The site has no\nper-ADR page, so this is the honest destination rather than an invented route.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;status&quot;,
+        &quot;date&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseProducedBy&quot;: {
+      &quot;description&quot;: &quot;Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`&#39;s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \&quot;release.changelog\&quot;.into(),\n    cli: Some(\&quot;majordomus release changelog\&quot;.into()),\n    http: Some(\&quot;/api/v1/changelog\&quot;.into()),\n    mcp_tool: None,\n    mcp_resource: Some(\&quot;majordomus://changelog\&quot;.into()),\n};\nlet json = serde_json::to_value(&amp;by).unwrap();\nassert_eq!(json[\&quot;capability\&quot;], \&quot;release.changelog\&quot;);\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\&quot;mcp_tool\&quot;).is_none());\nassert_eq!(ProducedBy::default().capability, \&quot;\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;cli&quot;: {
+          &quot;description&quot;: &quot;The command line that renders it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;http&quot;: {
+          &quot;description&quot;: &quot;The HTTP route that answers with it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;mcp_resource&quot;: {
+          &quot;description&quot;: &quot;The MCP resource URI.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;mcp_tool&quot;: {
+          &quot;description&quot;: &quot;The MCP tool.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;capability&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseReference&quot;: {
+      &quot;description&quot;: &quot;A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \&quot;issue\&quot;.into(),\n    id: \&quot;I1305\&quot;.into(),\n    title: \&quot;An observed contract has a fingerprint\&quot;.into(),\n    route: Some(\&quot;/plan/i1305/\&quot;.into()),\n};\nlet json = serde_json::to_value(&amp;r).unwrap();\nassert_eq!(json[\&quot;id\&quot;], \&quot;I1305\&quot;);\nassert_eq!(json[\&quot;route\&quot;], \&quot;/plan/i1305/\&quot;);\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&amp;bare).unwrap().get(\&quot;route\&quot;).is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`I1305`, `M000`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;`issue` or `milestone`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;Where it is published on this site, when it has a page.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;What it is, from the record itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;id&quot;,
+        &quot;title&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseSection&quot;: {
+      &quot;description&quot;: &quot;One version&#39;s worth of changelog.&quot;,
+      &quot;properties&quot;: {
+        &quot;artifacts&quot;: {
+          &quot;description&quot;: &quot;What was published, when this section is a release.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ReleaseChangelogArtifact&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The commit it was published from.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;compare_url&quot;: {
+          &quot;description&quot;: &quot;Every commit between the previous release and this one, as the forge renders it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;date&quot;: {
+          &quot;description&quot;: &quot;When it was published, from the record.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;decisions&quot;: {
+          &quot;description&quot;: &quot;The decisions dated inside this release&#39;s window.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ReleaseDecision&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;groups&quot;: {
+          &quot;description&quot;: &quot;The changes, from the commits in this release&#39;s range, grouped by what they did and\nordered by the rank each group carries. The flat list is the concatenation of the\ngroups&#39; own; nothing holds it twice.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeGroup&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;notes_url&quot;: {
+          &quot;description&quot;: &quot;The release notes the record names — the published release itself.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;tag&quot;: {
+          &quot;description&quot;: &quot;The tag, when one was published.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;tree_url&quot;: {
+          &quot;description&quot;: &quot;The tree at this release.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;unreleased&quot;: {
+          &quot;description&quot;: &quot;Whether this section is the work that has not been released.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The version, or `unreleased`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;version&quot;,
+        &quot;unreleased&quot;,
+        &quot;decisions&quot;,
+        &quot;groups&quot;,
+        &quot;artifacts&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
+  &quot;description&quot;: &quot;The whole changelog.&quot;,
   &quot;properties&quot;: {
+    &quot;current&quot;: {
+      &quot;description&quot;: &quot;The version the tree currently declares.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;description&quot;: &quot;What could not be read, said rather than hidden: a repository with no git history,\na release record that names no commit, a tag that is not in this clone.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
     &quot;produced_by&quot;: {
       &quot;anyOf&quot;: [
         {
@@ -654,32 +660,26 @@ a release record that names no commit, a tag that is not in this clone.</td>
       ],
       &quot;description&quot;: &quot;Which capability answered, and where else the same value can be had.&quot;
     },
-    &quot;current&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The version the tree currently declares.&quot;
-    },
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;What could not be read, said rather than hidden: a repository with no git history,\na release record that names no commit, a tag that is not in this clone.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;The schema this document satisfies.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;sections&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;Newest first, the unreleased section leading when there is one.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ReleaseSection&quot;
-      }
-    },
-    &quot;schema&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The schema this document satisfies.&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     }
   },
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;current&quot;,
+    &quot;sections&quot;,
+    &quot;diagnostics&quot;
+  ],
   &quot;title&quot;: &quot;ReleaseChangelog&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;The whole changelog.&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -710,7 +710,7 @@ a release record that names no commit, a tag that is not in this clone.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::release</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ReleaseChangelogInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ReleaseChangelog</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -782,7 +782,7 @@ a release record that names no commit, a tag that is not in this clone.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

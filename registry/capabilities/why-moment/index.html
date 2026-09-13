@@ -210,19 +210,19 @@
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which moment to read.&quot;,
   &quot;properties&quot;: {
     &quot;id&quot;: {
       &quot;description&quot;: &quot;The moment&#39;s id, as `why.list` gives it. This is also its slug and its route.&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which moment to read.&quot;,
   &quot;required&quot;: [
     &quot;id&quot;
   ],
-  &quot;title&quot;: &quot;MomentInput&quot;
+  &quot;title&quot;: &quot;MomentInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -231,96 +231,80 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">severity</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">`low`, `medium` or `high`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">source</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">aliases</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Derived: the repository-relative file the record came from. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
+        <td class="px-3 py-2 text-body">Other words a reader might search for. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">areas</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The operational areas it falls under.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">commands</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Commands of the tool that answer it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">title</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The moment as a heading.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">examples</td>
+        <td class="px-3 py-2 font-mono text-heading">audiences</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The concrete situations.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">hook</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The first-person line an index shows.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">doctrines</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Rules of the effective set that govern it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">related</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Moments explicitly related to this one. The reverse is derived. <span class="font-mono text-xs text-body-subtle">default []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">similar</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: moments sharing an area or an audience with this one and not already
-named by it, nearest first — most shared metadata, then presentation order.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">summary</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">One line: what is actually wrong.</td>
+        <td class="px-3 py-2 text-body">The audiences that recognise it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">backlinks</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Derived: the moments that name this one in their `related`.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">responsibilities</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the responsibilities the claims it names belong to.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-heading">body</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The identity, the slug and the file name.</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The Markdown body, without its front matter.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">related_detail</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the explicitly related moments, summarised so a page needs one call.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">aliases</td>
+        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Other words a reader might search for. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body">Capability ids of the executable that answer it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">claims</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Claims that say what is guaranteed here. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">commands</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Commands of the tool that answer it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">doctrines</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Rules of the effective set that govern it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">examples</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The concrete situations.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">featured</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Whether the homepage shows it. <span class="font-mono text-xs text-body-subtle">default false</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">frequency</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">`rare`, `occasional`, `common` or `constant`.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">use_cases</td>
+        <td class="px-3 py-2 font-mono text-heading">hook</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The first-person line an index shows.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The identity, the slug and the file name.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">lifecycle</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Use cases that show the way out. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body">The stages of work at which it shows up. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">neighbours</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -330,131 +314,123 @@ this moment names, then what names it, then what is nearest by shared metadata,
 each appearing once. The three lists above are the same relations kept apart for a
 reader that wants to know which is which.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">weight</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Presentation order, lowest first. <span class="font-mono text-xs text-body-subtle">default 0</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">featured</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Whether the homepage shows it. <span class="font-mono text-xs text-body-subtle">default false</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
+        <td class="px-3 py-2 font-mono text-heading">related</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Capability ids of the executable that answer it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body">Moments explicitly related to this one. The reverse is derived. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">lifecycle</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The stages of work at which it shows up. <span class="font-mono text-xs text-body-subtle">default []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">claims</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Claims that say what is guaranteed here. <span class="font-mono text-xs text-body-subtle">default []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tags</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Free tags. <span class="font-mono text-xs text-body-subtle">default []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">signals</td>
+        <td class="px-3 py-2 font-mono text-heading">related_detail</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The observable symptoms.</td>
+        <td class="px-3 py-2 text-body">Derived: the explicitly related moments, summarised so a page needs one call.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">status</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">`stable`, `draft` or `deprecated`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">body</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The Markdown body, without its front matter.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">audiences</td>
+        <td class="px-3 py-2 font-mono text-heading">responsibilities</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The audiences that recognise it.</td>
+        <td class="px-3 py-2 text-body">Derived: the responsibilities the claims it names belong to.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">route</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Derived: `/why/&lt;id&gt;/`. Never authored; the schema refuses a `route` key. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">severity</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">`low`, `medium` or `high`.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">short_title</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Two or three words for a narrow column, when the record carries one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">signals</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The observable symptoms.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">similar</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: moments sharing an area or an audience with this one and not already
+named by it, nearest first — most shared metadata, then presentation order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">source</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Derived: the repository-relative file the record came from. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">status</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">`stable`, `draft` or `deprecated`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">summary</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">One line: what is actually wrong.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tags</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Free tags. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">title</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The moment as a heading.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">use_cases</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Use cases that show the way out. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">weight</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Presentation order, lowest first. <span class="font-mono text-xs text-body-subtle">default 0</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;required&quot;: [
-    &quot;id&quot;,
-    &quot;title&quot;,
-    &quot;hook&quot;,
-    &quot;summary&quot;,
-    &quot;status&quot;,
-    &quot;severity&quot;,
-    &quot;frequency&quot;,
-    &quot;audiences&quot;,
-    &quot;areas&quot;,
-    &quot;signals&quot;,
-    &quot;examples&quot;,
-    &quot;responsibilities&quot;,
-    &quot;backlinks&quot;,
-    &quot;similar&quot;,
-    &quot;related_detail&quot;,
-    &quot;neighbours&quot;
-  ],
-  &quot;title&quot;: &quot;MomentDetail&quot;,
-  &quot;description&quot;: &quot;One moment in full, with everything derived that a page shows and no file states.&quot;,
   &quot;$defs&quot;: {
-    &quot;MomentSummary&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One moment as a listing shows it: everything a card needs and nothing a page needs.&quot;,
+    &quot;Example&quot;: {
+      &quot;description&quot;: &quot;One concrete situation, in one audience, with what happens today and what happens\ninstead.&quot;,
       &quot;properties&quot;: {
-        &quot;weight&quot;: {
-          &quot;description&quot;: &quot;Presentation order.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint32&quot;
-        },
-        &quot;hook&quot;: {
-          &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
+        &quot;after&quot;: {
+          &quot;description&quot;: &quot;What happens with it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;featured&quot;: {
-          &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The moment as a heading.&quot;,
+        &quot;audience&quot;: {
+          &quot;description&quot;: &quot;The audience this situation belongs to; must name an audience of the catalogue.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;examples&quot;: {
-          &quot;description&quot;: &quot;How many concrete situations it carries.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;summary&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;One line: what is actually wrong.&quot;
+        &quot;before&quot;: {
+          &quot;description&quot;: &quot;What happens without the tool.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity and the slug.&quot;,
+          &quot;description&quot;: &quot;Unique within the moment.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;severity&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;
-        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line naming the situation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;audience&quot;,
+        &quot;title&quot;,
+        &quot;before&quot;,
+        &quot;after&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;MomentSummary&quot;: {
+      &quot;description&quot;: &quot;One moment as a listing shows it: everything a card needs and nothing a page needs.&quot;,
+      &quot;properties&quot;: {
         &quot;areas&quot;: {
           &quot;description&quot;: &quot;The operational areas it falls under.&quot;,
           &quot;items&quot;: {
@@ -462,41 +438,77 @@ reader that wants to know which is which.</td>
           },
           &quot;type&quot;: &quot;array&quot;
         },
+        &quot;audiences&quot;: {
+          &quot;description&quot;: &quot;The audiences that recognise it.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;examples&quot;: {
+          &quot;description&quot;: &quot;How many concrete situations it carries.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;featured&quot;: {
+          &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;frequency&quot;: {
+          &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;hook&quot;: {
+          &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The identity and the slug.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;label&quot;: {
           &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;route&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`.&quot;
+          &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;frequency&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;
-        },
-        &quot;status&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;
+        &quot;severity&quot;: {
+          &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;signals&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
           &quot;description&quot;: &quot;How many observable symptoms it declares.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;tags&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;Free tags.&quot;
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;audiences&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line: what is actually wrong.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;tags&quot;: {
+          &quot;description&quot;: &quot;Free tags.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;description&quot;: &quot;The audiences that recognise it.&quot;
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The moment as a heading.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;weight&quot;: {
+          &quot;description&quot;: &quot;Presentation order.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         }
       },
       &quot;required&quot;: [
@@ -516,100 +528,86 @@ reader that wants to know which is which.</td>
         &quot;route&quot;,
         &quot;signals&quot;,
         &quot;examples&quot;
-      ]
-    },
-    &quot;Example&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;Unique within the moment.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;One line naming the situation.&quot;
-        },
-        &quot;audience&quot;: {
-          &quot;description&quot;: &quot;The audience this situation belongs to; must name an audience of the catalogue.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;after&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What happens with it.&quot;
-        },
-        &quot;before&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What happens without the tool.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;audience&quot;,
-        &quot;title&quot;,
-        &quot;before&quot;,
-        &quot;after&quot;
       ],
-      &quot;description&quot;: &quot;One concrete situation, in one audience, with what happens today and what happens\ninstead.&quot;
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;Signal&quot;: {
+      &quot;description&quot;: &quot;One observable symptom of a moment: a question a reader can answer about their own\nweek. The questionnaire on the site and the input of `why diagnose` are these and\nnothing else.&quot;,
       &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Unique within the moment; the identity a diagnosis selects by.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;text&quot;: {
           &quot;description&quot;: &quot;The symptom, phrased so a reader can say whether it happened to them.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Unique within the moment; the identity a diagnosis selects by.&quot;
         }
       },
-      &quot;description&quot;: &quot;One observable symptom of a moment: a question a reader can answer about their own\nweek. The questionnaire on the site and the input of `why diagnose` are these and\nnothing else.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;text&quot;
-      ]
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;One moment in full, with everything derived that a page shows and no file states.&quot;,
   &quot;properties&quot;: {
-    &quot;severity&quot;: {
-      &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;source&quot;: {
-      &quot;description&quot;: &quot;Derived: the repository-relative file the record came from.&quot;,
-      &quot;default&quot;: &quot;&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;areas&quot;: {
+    &quot;aliases&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Other words a reader might search for.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;areas&quot;: {
       &quot;description&quot;: &quot;The operational areas it falls under.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;audiences&quot;: {
+      &quot;description&quot;: &quot;The audiences that recognise it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;backlinks&quot;: {
+      &quot;description&quot;: &quot;Derived: the moments that name this one in their `related`.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;body&quot;: {
+      &quot;description&quot;: &quot;The Markdown body, without its front matter.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;capabilities&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Capability ids of the executable that answer it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;claims&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Claims that say what is guaranteed here.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;commands&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Commands of the tool that answer it.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Commands of the tool that answer it.&quot;,
-      &quot;default&quot;: []
-    },
-    &quot;title&quot;: {
-      &quot;description&quot;: &quot;The moment as a heading.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;examples&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Example&quot;
-      },
-      &quot;description&quot;: &quot;The concrete situations.&quot;,
       &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;hook&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The first-person line an index shows.&quot;
     },
     &quot;doctrines&quot;: {
       &quot;default&quot;: [],
@@ -619,156 +617,158 @@ reader that wants to know which is which.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;related&quot;: {
+    &quot;examples&quot;: {
+      &quot;description&quot;: &quot;The concrete situations.&quot;,
       &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Moments explicitly related to this one. The reverse is derived.&quot;,
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;similar&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Derived: moments sharing an area or an audience with this one and not already\nnamed by it, nearest first — most shared metadata, then presentation order.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      }
-    },
-    &quot;summary&quot;: {
-      &quot;description&quot;: &quot;One line: what is actually wrong.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;backlinks&quot;: {
-      &quot;description&quot;: &quot;Derived: the moments that name this one in their `related`.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
+        &quot;$ref&quot;: &quot;#/$defs/Example&quot;
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;responsibilities&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;description&quot;: &quot;Derived: the responsibilities the claims it names belong to.&quot;,
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;id&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;
-    },
-    &quot;related_detail&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Derived: the explicitly related moments, summarised so a page needs one call.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/MomentSummary&quot;
-      }
-    },
-    &quot;aliases&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Other words a reader might search for.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;featured&quot;: {
+      &quot;default&quot;: false,
+      &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;frequency&quot;: {
       &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;use_cases&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;default&quot;: [],
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;description&quot;: &quot;Use cases that show the way out.&quot;
+    &quot;hook&quot;: {
+      &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
-    &quot;neighbours&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;description&quot;: &quot;Derived: what a reader should see next, in one list and in a stated order — what\nthis moment names, then what names it, then what is nearest by shared metadata,\neach appearing once. The three lists above are the same relations kept apart for a\nreader that wants to know which is which.&quot;,
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;weight&quot;: {
-      &quot;description&quot;: &quot;Presentation order, lowest first.&quot;,
-      &quot;format&quot;: &quot;uint32&quot;,
-      &quot;default&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;minimum&quot;: 0
-    },
-    &quot;featured&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;default&quot;: false,
-      &quot;description&quot;: &quot;Whether the homepage shows it.&quot;
-    },
-    &quot;capabilities&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Capability ids of the executable that answer it.&quot;,
-      &quot;default&quot;: [],
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      }
+    &quot;id&quot;: {
+      &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;lifecycle&quot;: {
       &quot;default&quot;: [],
-      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The stages of work at which it shows up.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;description&quot;: &quot;The stages of work at which it shows up.&quot;
+      &quot;type&quot;: &quot;array&quot;
     },
-    &quot;claims&quot;: {
-      &quot;description&quot;: &quot;Claims that say what is guaranteed here.&quot;,
+    &quot;neighbours&quot;: {
+      &quot;description&quot;: &quot;Derived: what a reader should see next, in one list and in a stated order — what\nthis moment names, then what names it, then what is nearest by shared metadata,\neach appearing once. The three lists above are the same relations kept apart for a\nreader that wants to know which is which.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;default&quot;: []
+      &quot;type&quot;: &quot;array&quot;
     },
-    &quot;tags&quot;: {
-      &quot;description&quot;: &quot;Free tags.&quot;,
+    &quot;related&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Moments explicitly related to this one. The reverse is derived.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;default&quot;: []
+      &quot;type&quot;: &quot;array&quot;
     },
-    &quot;signals&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The observable symptoms.&quot;,
+    &quot;related_detail&quot;: {
+      &quot;description&quot;: &quot;Derived: the explicitly related moments, summarised so a page needs one call.&quot;,
       &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Signal&quot;
-      }
+        &quot;$ref&quot;: &quot;#/$defs/MomentSummary&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
-    &quot;status&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;
-    },
-    &quot;body&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The Markdown body, without its front matter.&quot;
-    },
-    &quot;audiences&quot;: {
-      &quot;description&quot;: &quot;The audiences that recognise it.&quot;,
+    &quot;responsibilities&quot;: {
+      &quot;description&quot;: &quot;Derived: the responsibilities the claims it names belong to.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;route&quot;: {
-      &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`. Never authored; the schema refuses a `route` key.&quot;,
       &quot;default&quot;: &quot;&quot;,
+      &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`. Never authored; the schema refuses a `route` key.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;severity&quot;: {
+      &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;short_title&quot;: {
+      &quot;description&quot;: &quot;Two or three words for a narrow column, when the record carries one.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;Two or three words for a narrow column, when the record carries one.&quot;
+      ]
+    },
+    &quot;signals&quot;: {
+      &quot;description&quot;: &quot;The observable symptoms.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Signal&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;similar&quot;: {
+      &quot;description&quot;: &quot;Derived: moments sharing an area or an audience with this one and not already\nnamed by it, nearest first — most shared metadata, then presentation order.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;source&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;description&quot;: &quot;Derived: the repository-relative file the record came from.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;status&quot;: {
+      &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;summary&quot;: {
+      &quot;description&quot;: &quot;One line: what is actually wrong.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;tags&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Free tags.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;title&quot;: {
+      &quot;description&quot;: &quot;The moment as a heading.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;use_cases&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Use cases that show the way out.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;weight&quot;: {
+      &quot;default&quot;: 0,
+      &quot;description&quot;: &quot;Presentation order, lowest first.&quot;,
+      &quot;format&quot;: &quot;uint32&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
     }
-  }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;title&quot;,
+    &quot;hook&quot;,
+    &quot;summary&quot;,
+    &quot;status&quot;,
+    &quot;severity&quot;,
+    &quot;frequency&quot;,
+    &quot;audiences&quot;,
+    &quot;areas&quot;,
+    &quot;signals&quot;,
+    &quot;examples&quot;,
+    &quot;responsibilities&quot;,
+    &quot;backlinks&quot;,
+    &quot;similar&quot;,
+    &quot;related_detail&quot;,
+    &quot;neighbours&quot;
+  ],
+  &quot;title&quot;: &quot;MomentDetail&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -799,7 +799,7 @@ reader that wants to know which is which.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::why</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">MomentInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">MomentDetail</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/why.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/why.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/why.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/why.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -871,7 +871,7 @@ reader that wants to know which is which.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

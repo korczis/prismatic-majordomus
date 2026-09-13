@@ -211,8 +211,8 @@ absent.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;Which field&#39;s provenance to explain.&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;field&quot;: {
       &quot;description&quot;: &quot;The field in dotted form (`services.url`, `capabilities.objects`); every field when\nabsent.&quot;,
@@ -223,7 +223,7 @@ absent.</td>
     }
   },
   &quot;title&quot;: &quot;ExplainInput&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -247,24 +247,44 @@ absent.</td>
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;Confidence&quot;: {
+      &quot;description&quot;: &quot;How far a resolved value can be trusted.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;exact&quot;,
+          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cached&quot;,
+          &quot;description&quot;: &quot;Read from a cache whose fingerprint still matches its inputs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Not resolved.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;FieldSource&quot;: {
       &quot;description&quot;: &quot;Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \&quot;why does it say that\&quot;\nis answered by the tool rather than by reading its source.&quot;,
       &quot;properties&quot;: {
-        &quot;source&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What decided it: a file, a command, a compile-time constant, the cache.&quot;
-        },
         &quot;confidence&quot;: {
-          &quot;description&quot;: &quot;How certain the value is.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Confidence&quot;
+          &quot;$ref&quot;: &quot;#/$defs/Confidence&quot;,
+          &quot;description&quot;: &quot;How certain the value is.&quot;
         },
         &quot;field&quot;: {
           &quot;description&quot;: &quot;The field, in dotted form: `services.cockpit.url`, `vcs.branch`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;resolver&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The part of this executable that read it.&quot;
+          &quot;description&quot;: &quot;The part of this executable that read it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;What decided it: a file, a command, a compile-time constant, the cache.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;value&quot;: {
           &quot;description&quot;: &quot;The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing.&quot;,
@@ -286,33 +306,13 @@ absent.</td>
       &quot;description&quot;: &quot;How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \&quot;there is no server running\&quot; from \&quot;nobody looked\&quot;.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;fast&quot;,
-          &quot;description&quot;: &quot;Only what is cheap enough for a shell prompt; the rest from the cache.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
-          &quot;const&quot;: &quot;full&quot;
-        }
-      ]
-    },
-    &quot;Confidence&quot;: {
-      &quot;description&quot;: &quot;How far a resolved value can be trusted.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;exact&quot;,
-          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
+          &quot;description&quot;: &quot;Only what is cheap enough for a shell prompt; the rest from the cache.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;cached&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Read from a cache whose fingerprint still matches its inputs.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Not resolved.&quot;,
-          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;const&quot;: &quot;full&quot;,
+          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
@@ -336,8 +336,8 @@ absent.</td>
     &quot;resolution&quot;,
     &quot;fields&quot;
   ],
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;EnvironmentProvenance&quot;
+  &quot;title&quot;: &quot;EnvironmentProvenance&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -368,7 +368,7 @@ absent.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::environment</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ExplainInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EnvironmentProvenance</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/environment.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/environment.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/environment.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/environment.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -440,7 +440,7 @@ absent.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

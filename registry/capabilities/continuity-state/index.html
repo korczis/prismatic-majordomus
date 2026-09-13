@@ -200,10 +200,10 @@
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -212,26 +212,37 @@
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">session</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The open episode, or `None`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">task</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The active task, or `None`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">worktree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The worktree this answer is about. Every selection below is scoped to it.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">blockers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Unresolved questions on this branch. Every one refuses `finish --outcome completed`,
 whichever task opened it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">branch</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The branch, or `DETACHED`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checkpoint</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The newest progress note for this worktree and branch, or `None`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">What a reader should know before trusting any of the above: a diverged record, a
+foreign open session, a malformed file that was skipped. Empty is the good case.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">handover</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The record the next worker would resume from, or `None` when nothing resolves here.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The commit this checkout is on.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -243,303 +254,76 @@ It is not &quot;the directory exists&quot;. Several things create that directory
 anything has been recorded in it, so a reader that took its presence for evidence
 would be told the lifecycle had run in a checkout where it never had.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">What a reader should know before trusting any of the above: a diverged record, a
-foreign open session, a malformed file that was skipped. Empty is the good case.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">working_tree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">`clean` or `dirty`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">head</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The commit this checkout is on.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checkpoint</td>
+        <td class="px-3 py-2 font-mono text-heading">session</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The newest progress note for this worktree and branch, or `None`.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">handover</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The record the next worker would resume from, or `None` when nothing resolves here.</td>
+        <td class="px-3 py-2 text-body">The open episode, or `None`.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tallies</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">How many records of each kind this checkout holds, against the policy&#39;s caps.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">branch</td>
+        <td class="px-3 py-2 font-mono text-heading">task</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The active task, or `None`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">working_tree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">`clean` or `dirty`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">worktree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The branch, or `DETACHED`.</td>
+        <td class="px-3 py-2 text-body">The worktree this answer is about. Every selection below is scoped to it.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;properties&quot;: {
-    &quot;session&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/OpenSession&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The open episode, or `None`.&quot;
-    },
-    &quot;task&quot;: {
-      &quot;description&quot;: &quot;The active task, or `None`.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;worktree&quot;: {
-      &quot;description&quot;: &quot;The worktree this answer is about. Every selection below is scoped to it.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;blockers&quot;: {
-      &quot;description&quot;: &quot;Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;present&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether this checkout&#39;s lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \&quot;the directory exists\&quot;. Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had.&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case.&quot;
-    },
-    &quot;working_tree&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;`clean` or `dirty`.&quot;
-    },
-    &quot;head&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The commit this checkout is on.&quot;
-    },
-    &quot;checkpoint&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/Record&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The newest progress note for this worktree and branch, or `None`.&quot;
-    },
-    &quot;handover&quot;: {
-      &quot;description&quot;: &quot;The record the next worker would resume from, or `None` when nothing resolves here.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/Record&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;tallies&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;additionalProperties&quot;: {
-        &quot;minimum&quot;: 0,
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;type&quot;: &quot;integer&quot;
-      },
-      &quot;description&quot;: &quot;How many records of each kind this checkout holds, against the policy&#39;s caps.&quot;
-    },
-    &quot;branch&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The branch, or `DETACHED`.&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;present&quot;,
-    &quot;worktree&quot;,
-    &quot;branch&quot;,
-    &quot;tallies&quot;
-  ],
   &quot;$defs&quot;: {
-    &quot;OpenSession&quot;: {
-      &quot;properties&quot;: {
-        &quot;owner&quot;: {
-          &quot;description&quot;: &quot;Who opened it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;provider_session&quot;: {
-          &quot;description&quot;: &quot;That provider&#39;s own session identity — the string the prompt archive stamps on the\nsame worker&#39;s records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session_id&quot;: {
-          &quot;description&quot;: &quot;The episode&#39;s id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When it opened.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The branch it opened on.&quot;
-        },
-        &quot;provider&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The provider whose event opened it, when one did.&quot;
-        },
-        &quot;worker&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The worker identity, when one was supplied. Never inferred.&quot;
-        },
-        &quot;start_head&quot;: {
-          &quot;description&quot;: &quot;The commit it opened at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;foreign&quot;: {
-          &quot;description&quot;: &quot;True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout&#39;s episode.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;session_id&quot;,
-        &quot;started_at&quot;,
-        &quot;foreign&quot;
-      ],
-      &quot;description&quot;: &quot;The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line.&quot;
-    },
-    &quot;Record&quot;: {
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;created_at&quot;,
-        &quot;task_id&quot;,
-        &quot;branch&quot;,
-        &quot;head&quot;,
-        &quot;working_tree&quot;,
-        &quot;matched&quot;,
-        &quot;divergence&quot;,
-        &quot;freshness&quot;,
-        &quot;freshness_reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The branch it was written on.&quot;
-        },
-        &quot;age_minutes&quot;: {
-          &quot;description&quot;: &quot;Its age in whole minutes, when it has a timestamp that parses.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;divergence&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Divergence&quot;,
-          &quot;description&quot;: &quot;How far its commit is from this one.&quot;
-        },
-        &quot;next_action&quot;: {
-          &quot;description&quot;: &quot;The section a resuming worker acts on, when the record has one and is still current.\nA handover&#39;s `Next Action`; empty for a record that carries no sections, and\ndeliberately empty for one that is `stale` or `invalid` — see `next_action_withheld`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;freshness&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Freshness&quot;,
-          &quot;description&quot;: &quot;How old it is, judged against `session.freshness`. Independent of `divergence`: a\nrecord is routinely `advanced` and `stale` at once, and that pair is what a reader\nmust not collapse into \&quot;trustworthy\&quot;.&quot;
-        },
-        &quot;freshness_reason&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot\nact on is the failure this subsystem is being corrected for.&quot;
-        },
-        &quot;matched&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Match&quot;,
-          &quot;description&quot;: &quot;Which tier of the resolution rule matched.&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it was written at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;next_action_withheld&quot;: {
-          &quot;description&quot;: &quot;Why `next_action` is empty despite the record having one. Set only when it was\nwithheld, never when the record simply carries no such section, so that a reader can\ntell \&quot;there is nothing to do\&quot; from \&quot;what there was to do is six days old\&quot;.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;task_id&quot;: {
-          &quot;description&quot;: &quot;The task it belongs to, or `none`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;working_tree&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Whether the working tree was clean or dirty then.&quot;
-        },
-        &quot;created_at&quot;: {
-          &quot;description&quot;: &quot;When the record says it was written.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Repository-relative path. The body is at the path; it is not copied here.&quot;
-        }
-      },
-      &quot;description&quot;: &quot;One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.&quot;
-    },
     &quot;ActiveTask&quot;: {
       &quot;description&quot;: &quot;The active task of this checkout, when there is one.&quot;,
       &quot;properties&quot;: {
-        &quot;requires&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it started at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The task id.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;outcome&quot;: {
+          &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;description&quot;: &quot;The execution profile it runs under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;requires&quot;: {
+          &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
         &quot;scope&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;The paths it claims.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          }
+          },
+          &quot;type&quot;: &quot;array&quot;
         },
         &quot;started_at&quot;: {
           &quot;description&quot;: &quot;When it started.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;outcome&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it started at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;task&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What is being worked on.&quot;
-        },
-        &quot;profile&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The execution profile it runs under.&quot;
+          &quot;description&quot;: &quot;What is being worked on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -551,11 +335,12 @@ foreign open session, a malformed file that was skipped. Empty is the good case.
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Divergence&quot;: {
+      &quot;description&quot;: &quot;How far a record&#39;s recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool&#39;s, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;exact&quot;,
           &quot;description&quot;: &quot;Written at this commit. Trust it.&quot;,
-          &quot;const&quot;: &quot;exact&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;advanced&quot;,
@@ -573,29 +358,29 @@ foreign open session, a malformed file that was skipped. Empty is the good case.
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Git could not answer, so this process says so rather than guessing `exact`.&quot;,
           &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Git could not answer, so this process says so rather than guessing `exact`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;How far a record&#39;s recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool&#39;s, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.&quot;
+      ]
     },
     &quot;Freshness&quot;: {
+      &quot;description&quot;: &quot;How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record&#39;s\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. [`Freshness::history`] is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\&quot;stale\&quot;));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() &amp;&amp; Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \&quot;undated is not old\&quot;);\nassert!(!Freshness::Fresh.history() &amp;&amp; !Freshness::Aging.history());\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;Inside `session.freshness.fresh_minutes`. Current; act on it.&quot;,
           &quot;const&quot;: &quot;fresh&quot;,
+          &quot;description&quot;: &quot;Inside `session.freshness.fresh_minutes`. Current; act on it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;aging&quot;,
           &quot;description&quot;: &quot;Between the two thresholds. Still current, but its age is worth stating.&quot;,
-          &quot;const&quot;: &quot;aging&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;,
           &quot;description&quot;: &quot;At or beyond `session.freshness.stale_minutes`. History, never current.&quot;,
-          &quot;const&quot;: &quot;stale&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;unknown&quot;,
@@ -603,32 +388,247 @@ foreign open session, a malformed file that was skipped. Empty is the good case.
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;A timestamp that does not parse, or one in the future.&quot;,
           &quot;const&quot;: &quot;invalid&quot;,
+          &quot;description&quot;: &quot;A timestamp that does not parse, or one in the future.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record&#39;s\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. [`Freshness::history`] is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\&quot;stale\&quot;));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() &amp;&amp; Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \&quot;undated is not old\&quot;);\nassert!(!Freshness::Fresh.history() &amp;&amp; !Freshness::Aging.history());\n```&quot;
+      ]
     },
     &quot;Match&quot;: {
+      &quot;description&quot;: &quot;Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;same_worktree_same_branch&quot;,
-          &quot;description&quot;: &quot;Same repository, same worktree, same branch.&quot;
+          &quot;description&quot;: &quot;Same repository, same worktree, same branch.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;same_branch&quot;,
-          &quot;description&quot;: &quot;Same repository, same branch, another worktree of it.&quot;
+          &quot;description&quot;: &quot;Same repository, same branch, another worktree of it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
+      ]
+    },
+    &quot;OpenSession&quot;: {
+      &quot;description&quot;: &quot;The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it opened on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;foreign&quot;: {
+          &quot;description&quot;: &quot;True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout&#39;s episode.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;owner&quot;: {
+          &quot;description&quot;: &quot;Who opened it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider&quot;: {
+          &quot;description&quot;: &quot;The provider whose event opened it, when one did.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider_session&quot;: {
+          &quot;description&quot;: &quot;That provider&#39;s own session identity — the string the prompt archive stamps on the\nsame worker&#39;s records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;session_id&quot;: {
+          &quot;description&quot;: &quot;The episode&#39;s id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;start_head&quot;: {
+          &quot;description&quot;: &quot;The commit it opened at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;When it opened.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;worker&quot;: {
+          &quot;description&quot;: &quot;The worker identity, when one was supplied. Never inferred.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;session_id&quot;,
+        &quot;started_at&quot;,
+        &quot;foreign&quot;
       ],
-      &quot;description&quot;: &quot;Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered.&quot;
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Record&quot;: {
+      &quot;description&quot;: &quot;One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.&quot;,
+      &quot;properties&quot;: {
+        &quot;age_minutes&quot;: {
+          &quot;description&quot;: &quot;Its age in whole minutes, when it has a timestamp that parses.&quot;,
+          &quot;format&quot;: &quot;int64&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it was written on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;created_at&quot;: {
+          &quot;description&quot;: &quot;When the record says it was written.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;divergence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Divergence&quot;,
+          &quot;description&quot;: &quot;How far its commit is from this one.&quot;
+        },
+        &quot;freshness&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Freshness&quot;,
+          &quot;description&quot;: &quot;How old it is, judged against `session.freshness`. Independent of `divergence`: a\nrecord is routinely `advanced` and `stale` at once, and that pair is what a reader\nmust not collapse into \&quot;trustworthy\&quot;.&quot;
+        },
+        &quot;freshness_reason&quot;: {
+          &quot;description&quot;: &quot;Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot\nact on is the failure this subsystem is being corrected for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it was written at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;matched&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Match&quot;,
+          &quot;description&quot;: &quot;Which tier of the resolution rule matched.&quot;
+        },
+        &quot;next_action&quot;: {
+          &quot;description&quot;: &quot;The section a resuming worker acts on, when the record has one and is still current.\nA handover&#39;s `Next Action`; empty for a record that carries no sections, and\ndeliberately empty for one that is `stale` or `invalid` — see `next_action_withheld`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;next_action_withheld&quot;: {
+          &quot;description&quot;: &quot;Why `next_action` is empty despite the record having one. Set only when it was\nwithheld, never when the record simply carries no such section, so that a reader can\ntell \&quot;there is nothing to do\&quot; from \&quot;what there was to do is six days old\&quot;.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path. The body is at the path; it is not copied here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;task_id&quot;: {
+          &quot;description&quot;: &quot;The task it belongs to, or `none`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;working_tree&quot;: {
+          &quot;description&quot;: &quot;Whether the working tree was clean or dirty then.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;created_at&quot;,
+        &quot;task_id&quot;,
+        &quot;branch&quot;,
+        &quot;head&quot;,
+        &quot;working_tree&quot;,
+        &quot;matched&quot;,
+        &quot;divergence&quot;,
+        &quot;freshness&quot;,
+        &quot;freshness_reason&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
+  &quot;description&quot;: &quot;What the lifecycle of this checkout is holding.&quot;,
+  &quot;properties&quot;: {
+    &quot;blockers&quot;: {
+      &quot;description&quot;: &quot;Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;branch&quot;: {
+      &quot;description&quot;: &quot;The branch, or `DETACHED`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;checkpoint&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/Record&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The newest progress note for this worktree and branch, or `None`.&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;handover&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/Record&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The record the next worker would resume from, or `None` when nothing resolves here.&quot;
+    },
+    &quot;head&quot;: {
+      &quot;description&quot;: &quot;The commit this checkout is on.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;present&quot;: {
+      &quot;description&quot;: &quot;Whether this checkout&#39;s lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \&quot;the directory exists\&quot;. Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;session&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/OpenSession&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The open episode, or `None`.&quot;
+    },
+    &quot;tallies&quot;: {
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;
+      },
+      &quot;description&quot;: &quot;How many records of each kind this checkout holds, against the policy&#39;s caps.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;task&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The active task, or `None`.&quot;
+    },
+    &quot;working_tree&quot;: {
+      &quot;description&quot;: &quot;`clean` or `dirty`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;worktree&quot;: {
+      &quot;description&quot;: &quot;The worktree this answer is about. Every selection below is scoped to it.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;present&quot;,
+    &quot;worktree&quot;,
+    &quot;branch&quot;,
+    &quot;tallies&quot;
+  ],
   &quot;title&quot;: &quot;Continuity&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;What the lifecycle of this checkout is holding.&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -659,7 +659,7 @@ foreign open session, a malformed file that was skipped. Empty is the good case.
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::continuity</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Continuity</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3fec8cbf52680dc3e1129f75c82ac0e3876aa5b38266fb40d99b9c5fb697ad3f</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.0</dd></div>
       </dl>
     </div>
@@ -731,7 +731,7 @@ foreign open session, a malformed file that was skipped. Empty is the good case.
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

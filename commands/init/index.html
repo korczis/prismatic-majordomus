@@ -187,10 +187,10 @@
           :class="s === 'extends' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Adding what is missing with --extend</button></div><div x-show="s === 'fresh'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <h3 class="text-base font-semibold text-heading">A repository with no AI layer</h3>
         <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
-            <dt class="text-body">already installed</dt>
+            <dt class="text-body">--extend</dt>
             <dd class="font-mono font-medium text-body-subtle">no</dd>
           </div><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
-            <dt class="text-body">--extend</dt>
+            <dt class="text-body">already installed</dt>
             <dd class="font-mono font-medium text-body-subtle">no</dd>
           </div></dl>
 
@@ -208,12 +208,12 @@ git commit -q --allow-empty -m base 2&gt;/dev/null || true</pre></div><p class="
         <p class="mt-4 text-sm text-body">The skeleton is copied in, the ignore line for .ai/local/ is added, and the two hook lines the policy needs are printed together with the command that will verify they were added. init does not install hooks itself.</p>
       </div><div x-show="s === 'refuses'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <h3 class="text-base font-semibold text-heading">A repository that already has one</h3>
-        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
-            <dt class="text-body">already installed</dt>
-            <dd class="font-mono font-medium text-fg-success-strong">yes</dd>
-          </div><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
             <dt class="text-body">--extend</dt>
             <dd class="font-mono font-medium text-body-subtle">no</dd>
+          </div><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
+            <dt class="text-body">already installed</dt>
+            <dd class="font-mono font-medium text-fg-success-strong">yes</dd>
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
@@ -409,7 +409,7 @@ exists without a manifest, naming the choice between moving it aside and <code>-
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d98a264b5ff4f64e461e0f24147c29a741718b8a" class="font-mono underline">d98a264</a> · inputs <span class="font-mono">56c2de83ce40</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/577d3b4a265815ab5146b31830b75b4988c0ec69" class="font-mono underline">577d3b4</a> · inputs <span class="font-mono">fdda6623e0eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
