@@ -1,7 +1,7 @@
 //! Deduplication, conflict, deterministic order, and what the budget could afford.
 //!
 //! The three happen in that order and none of them re-reads the repository. What arrives is
-//! the [`Selection`](super::select::Selection) — one candidate per canonical identifier,
+//! the [`Selection`] — one candidate per canonical identifier,
 //! already carrying every path that reached it — and what leaves is the answer, with an
 //! entry for everything kept and a reason for everything not.
 //!

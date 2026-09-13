@@ -589,6 +589,20 @@ impl RepositoryEnvironment {
         crate::policy::sha256_hex(&text)
     }
 
+    /// The digest that decides whether a banner is news: [`Self::digest`] without the
+    /// services.
+    ///
+    /// The entry file watches the server's lease, so a server coming up re-evaluates entry
+    /// twice more — once when it claims the lease, once when it publishes its address — and
+    /// a digest that counted the services made each of those a first look, drawing the whole
+    /// box again at a person who had just seen it. A server arriving or leaving is not a
+    /// different repository; the short form names the Cockpit when it answers.
+    pub fn news_digest(&self) -> String {
+        let mut stable = self.clone();
+        stable.services.clear();
+        stable.digest()
+    }
+
     /// The service with this id.
     pub fn service(&self, id: &str) -> Option<&ServiceState> {
         self.services.iter().find(|s| s.id == id)

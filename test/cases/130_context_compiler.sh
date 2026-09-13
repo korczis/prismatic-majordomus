@@ -192,7 +192,12 @@ jq -e --argjson n "$(jq '.selected | length' "$S/tight.json")" '(.selected | len
   || { echo "    a larger budget did not buy more context"; exit 1; }
 
 # --- deduplication: one object reached several ways is one entry, with the fold recorded
-jq -e '[.selected[].uri] | length == ([.selected[].uri] | unique | length)' "$S/a.json" >/dev/null \
+# Both sides are parenthesised because `|` binds looser than `==` in jq. Written as
+# `[…] | length == ([.selected[…]] | …)`, the right-hand side is evaluated with the array of
+# URIs as its input, so it asks that array for `.selected` — indexing an array with a
+# string, which jq refuses whatever the answer contains. The assertion could therefore
+# never pass, and never did.
+jq -e '([.selected[].uri] | length) == ([.selected[].uri] | unique | length)' "$S/a.json" >/dev/null \
   || { echo "    an identifier is in the answer twice"; exit 1; }
 "$RB" devcontext compile --repo "$PWD" --issue I0001 --intent 'the first decision and the context it needs' \
   --budget-tokens 1000000 --format json > "$S/dedup.json"
