@@ -597,6 +597,44 @@ impl RepositoryEnvironment {
     /// a digest that counted the services made each of those a first look, drawing the whole
     /// box again at a person who had just seen it. A server arriving or leaving is not a
     /// different repository; the short form names the Cockpit when it answers.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::{
+    ///     resolve, EnvironmentQuery, Inputs, ServiceAvailability, ServiceState,
+    /// };
+    /// use majordomus_cli::Repository;
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::create_dir_all(dir.path().join(".ai/repo")).unwrap();
+    /// std::fs::write(dir.path().join(".ai/manifest.yaml"),
+    ///     "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").unwrap();
+    /// let repo = Repository::discover(dir.path()).unwrap();
+    ///
+    /// let mut query = EnvironmentQuery::fast();
+    /// query.probe_services = false;
+    /// query.use_cache = false;
+    /// query.write_cache = false;
+    /// let before = resolve(
+    ///     &Inputs { repository: &repo, share: None, index: None, registry: None, policy: None },
+    ///     &query,
+    /// );
+    ///
+    /// // A server comes up and publishes the Cockpit's address.
+    /// let mut after = before.clone();
+    /// after.services.push(ServiceState {
+    ///     id: "cockpit".into(),
+    ///     title: "Cockpit".into(),
+    ///     path: "/cockpit".into(),
+    ///     url: Some("http://127.0.0.1:1/cockpit".into()),
+    ///     availability: ServiceAvailability::Available,
+    /// });
+    ///
+    /// // The full digest moved: this is not the snapshot that was cached.
+    /// assert_ne!(before.digest(), after.digest());
+    /// // The news digest did not, so the banner is not drawn again at a person who has
+    /// // just read it.
+    /// assert_eq!(before.news_digest(), after.news_digest());
+    /// ```
     pub fn news_digest(&self) -> String {
         let mut stable = self.clone();
         stable.services.clear();

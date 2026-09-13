@@ -8,6 +8,27 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// The statistics of one set of samples, in microseconds.
+///
+/// Every field but `samples` is a rank or a moment of the *sorted* samples, so the order
+/// the samples were taken in cannot reach the numbers a baseline is compared on. That is
+/// the property that makes two runs of the same target comparable at all.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::bench::Statistics;
+///
+/// let taken = [9u64, 1, 5, 3, 7].map(Duration::from_micros);
+/// let mut reversed = taken;
+/// reversed.reverse();
+/// assert_eq!(Statistics::of(&taken), Statistics::of(&reversed));
+/// assert_eq!(Statistics::of(&taken).p50_us, 5.0, "the third of five by rank");
+///
+/// // A target that produced no sample is all zeros with `samples: 0`, which reads as
+/// // "not measured" rather than as an answer that took no time.
+/// let nothing = Statistics::of(&[]);
+/// assert_eq!(nothing.samples, 0);
+/// assert_eq!(nothing.p99_us, 0.0);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Statistics {
     /// How many samples.
@@ -88,6 +109,21 @@ impl Statistics {
     }
 
     /// One metric by name (`p50`, `p95`, `p99`, `mean`, `max`, `min`, `p90`).
+    ///
+    /// These seven names are the regression policy's whole vocabulary: a threshold in
+    /// `policy.yaml` is keyed by one of them, and
+    /// [`Check::compare`](crate::bench::baseline::Check::compare) skips a metric this
+    /// answers `None` for instead of comparing against a zero it invented. A policy that
+    /// names `p75` therefore gates nothing, and gates nothing visibly.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::bench::Statistics;
+    /// let s = Statistics::of(&(1..=100).map(Duration::from_micros).collect::<Vec<_>>());
+    /// assert_eq!(s.metric("p95"), Some(s.p95_us));
+    /// assert_eq!(s.metric("mean"), Some(s.mean_us));
+    /// assert_eq!(s.metric("p75"), None, "a name no threshold may use is absent, not zero");
+    /// ```
     pub fn metric(&self, name: &str) -> Option<f64> {
         Some(match name {
             "min" => self.min_us,

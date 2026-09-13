@@ -24,7 +24,30 @@ use super::results::{BenchmarkResult, CacheMode};
 use super::stats::Statistics;
 use super::system::SystemTarget;
 
-/// How much to measure.
+/// How much to measure: the warm-up, the samples per target and cache mode, and the
+/// processes spawned for the one target that needs a fresh one.
+///
+/// A profile is not a speed setting. The sample count decides which metrics the regression
+/// policy will judge at all: `p95` asks for fifty samples and `p99` for two hundred, so a
+/// `quick` run of twenty gates on the median and reports both tails as `SHORT`. Choosing a
+/// profile is choosing how much of the policy is in force.
+///
+/// ```
+/// use majordomus_cli::bench::baseline::Policy;
+/// use majordomus_cli::bench::Profile;
+///
+/// let policy = Policy::default();
+/// // Twenty samples: the median is judged, the tails are reported.
+/// assert!(Profile::QUICK.samples < policy.regression["p95"].minimum_samples);
+/// // Fifty: enough for p95, not for p99.
+/// assert!(Profile::CI.samples >= policy.regression["p95"].minimum_samples);
+/// assert!(Profile::CI.samples < policy.regression["p99"].minimum_samples);
+/// // Two hundred: every metric in the policy gates.
+/// assert!(Profile::FULL.samples >= policy.regression["p99"].minimum_samples);
+///
+/// // Every profile warms up first, so no measurement contains the first-call cost.
+/// assert!([Profile::QUICK, Profile::CI, Profile::FULL].iter().all(|p| p.warmup > 0));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Profile {
     /// The name (`quick`, `full`, `ci`).
@@ -60,7 +83,25 @@ impl Profile {
         cold_spawns: 3,
     };
 
-    /// By name.
+    /// The profile of a name, or `None` for anything else.
+    ///
+    /// There are exactly three and they are not composable: a run is `quick`, `ci` or
+    /// `full`, and the name goes into the result document beside the numbers, so a reader
+    /// of a baseline knows how many samples produced it. An unrecognised name is refused
+    /// rather than defaulted, because defaulting would file a twenty-sample run under a
+    /// profile that promises two hundred.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::Profile;
+    /// assert_eq!(Profile::parse("full"), Some(Profile::FULL));
+    /// assert_eq!(Profile::parse("quick").unwrap().samples, 20);
+    /// assert_eq!(Profile::parse("thorough"), None);
+    ///
+    /// // The name round-trips, which is what makes it usable as a file name and a record.
+    /// for p in [Profile::QUICK, Profile::CI, Profile::FULL] {
+    ///     assert_eq!(Profile::parse(p.name), Some(p));
+    /// }
+    /// ```
     pub fn parse(name: &str) -> Option<Profile> {
         match name {
             "quick" => Some(Profile::QUICK),
@@ -71,7 +112,37 @@ impl Profile {
     }
 }
 
-/// Times targets against one context.
+/// Times targets against one context, over whichever transport each target names.
+///
+/// One runner holds all three transports because two of them cost something to start: the
+/// HTTP socket and the MCP child are created on first use and kept for the rest of the run,
+/// so a hundred targets pay for one server and one child rather than a hundred. That is
+/// also why [`finish`](Runner::finish) exists and takes `self` — the socket and the child
+/// outlive any single measurement and have to be stopped once, at the end.
+///
+/// ```no_run
+/// use majordomus_cli::app::App;
+/// use majordomus_cli::bench::{BenchmarkProjection, Profile, Runner, Transport};
+/// use majordomus_cli::cli::{DiscoveryMode, RepoArgs};
+///
+/// let app = App::load(&RepoArgs {
+///     repo: Some("<repository>".into()),
+///     discovery: DiscoveryMode::Vcs,
+///     strict: false,
+///     share: None,
+/// })
+/// .unwrap();
+/// let projection = BenchmarkProjection::from_context(&app.context);
+/// let mut runner = Runner::new(app.context.clone(), Profile::QUICK, app.repository.root());
+///
+/// // The direct targets need neither the socket nor the child, so neither is started.
+/// let mut measured = 0;
+/// for target in projection.by_transport(Transport::Direct) {
+///     measured += runner.run(target).unwrap().len();
+/// }
+/// assert!(measured >= projection.by_transport(Transport::Direct).count());
+/// runner.finish();
+/// ```
 pub struct Runner {
     ctx: Arc<Context>,
     profile: Profile,
@@ -88,6 +159,30 @@ pub struct Runner {
 
 impl Runner {
     /// A runner over a context; the HTTP socket and the MCP child are started on first use.
+    ///
+    /// Nothing is started here, which is what makes a runner cheap to create and a
+    /// direct-only run free of a server and a child process. The executable to spawn
+    /// defaults to this process's own, so the child measured is the build being measured;
+    /// [`with_executable`](Runner::with_executable) is for the tests that need to say
+    /// otherwise.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::app::App;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::cli::{DiscoveryMode, RepoArgs};
+    ///
+    /// let app = App::load(&RepoArgs {
+    ///     repo: Some("<repository>".into()),
+    ///     discovery: DiscoveryMode::Vcs,
+    ///     strict: false,
+    ///     share: None,
+    /// })
+    /// .unwrap();
+    ///
+    /// // Creating one binds no socket and spawns nothing; dropping it costs nothing either.
+    /// let runner = Runner::new(app.context.clone(), Profile::CI, app.repository.root());
+    /// runner.finish();
+    /// ```
     pub fn new(ctx: Arc<Context>, profile: Profile, repo_root: &std::path::Path) -> Self {
         Runner {
             ctx,
@@ -102,12 +197,62 @@ impl Runner {
     }
 
     /// Spawn this executable for the MCP transport instead of the running one.
+    ///
+    /// The default — this process's own binary — is what makes an MCP measurement a
+    /// measurement of the build under test. The override exists for the integration tests,
+    /// which run inside a test harness whose executable is not a `majordomus` at all and
+    /// must name the built binary explicitly.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::app::App;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::cli::{DiscoveryMode, RepoArgs};
+    ///
+    /// let app = App::load(&RepoArgs {
+    ///     repo: Some("<repository>".into()),
+    ///     discovery: DiscoveryMode::Vcs,
+    ///     strict: false,
+    ///     share: None,
+    /// })
+    /// .unwrap();
+    ///
+    /// // A test that knows where the binary it built is.
+    /// let built = app.repository.root().join("apps/majordomus-cli/target/release/majordomus");
+    /// let runner = Runner::new(app.context.clone(), Profile::QUICK, app.repository.root())
+    ///     .with_executable(built.clone());
+    /// assert!(built.ends_with("majordomus"), "the child is a majordomus, not the test harness");
+    /// runner.finish();
+    /// ```
     pub fn with_executable(mut self, path: std::path::PathBuf) -> Self {
         self.executable = path;
         self
     }
 
     /// The share directory the MCP child reads (`MAJORDOMUS_SHARE`); the parent's.
+    ///
+    /// The kinds and schemas decide what the layer contains, so a child reading a different
+    /// distribution builds a different index and its `tools/list` is a different length. The
+    /// MCP numbers would then be of another repository than the direct ones they are printed
+    /// beside — the same comparison, two subjects.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::app::App;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::cli::{DiscoveryMode, RepoArgs};
+    ///
+    /// let app = App::load(&RepoArgs {
+    ///     repo: Some("<repository>".into()),
+    ///     discovery: DiscoveryMode::Vcs,
+    ///     strict: false,
+    ///     share: None,
+    /// })
+    /// .unwrap();
+    ///
+    /// // Hand the child what the parent resolved, rather than letting it resolve again.
+    /// let runner = Runner::new(app.context.clone(), Profile::QUICK, app.repository.root())
+    ///     .with_share(app.share.dir().to_path_buf());
+    /// runner.finish();
+    /// ```
     pub fn with_share(mut self, share: std::path::PathBuf) -> Self {
         self.share = Some(share);
         self
@@ -115,12 +260,82 @@ impl Runner {
 
     /// Arguments the MCP child gets after `mcp --standalone`, so that it reads the
     /// repository the way the parent did (`--discovery filesystem`, `--strict`).
+    ///
+    /// Discovery is the one that bites. A parent that enumerated the layer with
+    /// `--discovery filesystem` sees a fixture's untracked files; a child left on the
+    /// default asks git and sees none of them, so it indexes fewer objects and answers
+    /// faster — a difference in the measurement produced entirely by the benchmark's own
+    /// setup.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::app::App;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::cli::{DiscoveryMode, RepoArgs};
+    ///
+    /// let args = RepoArgs {
+    ///     repo: Some("<repository>".into()),
+    ///     discovery: DiscoveryMode::Filesystem,
+    ///     strict: true,
+    ///     share: None,
+    /// };
+    /// let app = App::load(&args).unwrap();
+    ///
+    /// // Pass the parent's own reading of the repository down to the child.
+    /// let mut child_args = vec!["--discovery".to_string(), "filesystem".to_string()];
+    /// if args.strict {
+    ///     child_args.push("--strict".to_string());
+    /// }
+    /// let runner = Runner::new(app.context.clone(), Profile::QUICK, app.repository.root())
+    ///     .with_child_args(child_args.clone());
+    /// assert_eq!(child_args.len(), 3, "discovery, its value, and strict");
+    /// runner.finish();
+    /// ```
     pub fn with_child_args(mut self, args: Vec<String>) -> Self {
         self.child_args = args;
         self
     }
 
     /// Time one target: one result per cache mode it has.
+    ///
+    /// The vector's length is decided by the target's cache policy, not by the caller: a
+    /// capability that declares a process cache is measured twice — cold, with the cache
+    /// cleared before every sample, and warm, with the same input repeated — and one that
+    /// declares none is measured once. Two numbers for one target is the point; the
+    /// difference between them is what the cache is worth, and on the direct transport the
+    /// handler-invocation counter says whether the warm run actually hit it.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::app::App;
+    /// use majordomus_cli::bench::results::CacheMode;
+    /// use majordomus_cli::bench::{BenchmarkProjection, Profile, Runner, TargetKind};
+    /// use majordomus_cli::capability::CachePolicy;
+    /// use majordomus_cli::cli::{DiscoveryMode, RepoArgs};
+    ///
+    /// let app = App::load(&RepoArgs {
+    ///     repo: Some("<repository>".into()),
+    ///     discovery: DiscoveryMode::Vcs,
+    ///     strict: false,
+    ///     share: None,
+    /// })
+    /// .unwrap();
+    /// let projection = BenchmarkProjection::from_context(&app.context);
+    /// let mut runner = Runner::new(app.context.clone(), Profile::QUICK, app.repository.root());
+    ///
+    /// for target in &projection.targets {
+    ///     let results = runner.run(target).unwrap();
+    ///     let cached = matches!(
+    ///         &target.kind,
+    ///         TargetKind::Capability { cache, .. } if cache.is_enabled()
+    ///     );
+    ///     assert_eq!(results.len(), if cached { 2 } else { 1 });
+    ///     if cached {
+    ///         assert!(results.iter().any(|r| r.cache_mode == CacheMode::Cold));
+    ///         assert!(results.iter().any(|r| r.cache_mode == CacheMode::Warm));
+    ///     }
+    ///     assert!(results.iter().all(|r| r.key == target.key));
+    /// }
+    /// runner.finish();
+    /// ```
     pub fn run(&mut self, target: &BenchmarkTarget) -> Result<Vec<BenchmarkResult>> {
         match &target.kind {
             TargetKind::Capability {
@@ -454,6 +669,30 @@ impl Runner {
     }
 
     /// Stop the socket and the child.
+    ///
+    /// It takes `self` because there is nothing to run afterwards, and because forgetting
+    /// it would leave a bound port and a live `majordomus mcp` process behind for every run
+    /// — on a machine where several sessions benchmark the same repository, that is how a
+    /// port comes to be held by a process nobody remembers starting. Calling it on a runner
+    /// that never started either is well defined and does nothing.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::app::App;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::cli::{DiscoveryMode, RepoArgs};
+    ///
+    /// let app = App::load(&RepoArgs {
+    ///     repo: Some("<repository>".into()),
+    ///     discovery: DiscoveryMode::Vcs,
+    ///     strict: false,
+    ///     share: None,
+    /// })
+    /// .unwrap();
+    ///
+    /// // Nothing was measured, so no socket and no child were ever started.
+    /// let runner = Runner::new(app.context.clone(), Profile::QUICK, app.repository.root());
+    /// runner.finish();
+    /// ```
     pub fn finish(mut self) {
         if let Some(child) = self.mcp.take() {
             child.close();
