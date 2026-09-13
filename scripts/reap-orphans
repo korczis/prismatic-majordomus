@@ -74,9 +74,14 @@
 #
 # `--kill` and `--reclaim` are separate on purpose: the two subjects are consented to
 # separately, so that a caller already running `--kill` does not one day start deleting a
-# hundred gigabytes it never agreed to.
+# hundred gigabytes it never agreed to. A consent therefore also *selects* its subject: given
+# no explicit `--servers`/`--targets`, `--reclaim` examines build output alone and `--kill`
+# servers alone, so that neither run ever tables the other's subject as something it is about
+# to act on. With no flags at all, both are reported and nothing is touched.
 #
-# Exit: 0 clean or acted, 10 orphans found in report mode, 12 unusable.
+# Exit: 0 clean or acted, 10 orphans found in report mode, 12 unusable. A run that stops
+# before its summary says INCOMPLETE in words and names the subject it never reached — a
+# header with rows beneath it is otherwise indistinguishable from a finished verdict.
 set -eu
 set -o pipefail
 
@@ -128,10 +133,26 @@ while [ $# -gt 0 ]; do
     --targets) [ "$subject" = 1 ] || DO_SERVERS=0; DO_TARGETS=1; subject=1; shift ;;
     --min-age) [ $# -ge 2 ] || die "--min-age needs a value"; MIN_AGE="$(as_seconds "$2")"; shift 2 ;;
     --grace)   [ $# -ge 2 ] || die "--grace needs a value"; GRACE="$(as_seconds "$2")"; shift 2 ;;
-    -h|--help) sed -n '2,80p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,84p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option $1" ;;
   esac
 done
+
+# A consent names its subject. `--kill` and `--reclaim` are separate precisely so that a
+# caller acting on one subject never acts on the other's, and a run that *reports* the other
+# subject undoes that separation in the reader's head: `--reclaim` printed a table of servers
+# under the word "would reap", which invites the belief that `--reclaim` is about to end them
+# — or that it already did. So unless a subject was named explicitly, the consents given are
+# the subjects examined (project.reclaim-only-what-you-own).
+if [ "$subject" -eq 0 ] && [ "$((KILL + RECLAIM))" -gt 0 ]; then
+  DO_SERVERS="$KILL"
+  DO_TARGETS="$RECLAIM"
+fi
+# A consent whose subject was excluded by name would act on nothing while reading as consent.
+[ "$KILL" -eq 0 ] || [ "$DO_SERVERS" -eq 1 ] \
+  || die "--kill is consent for servers, but --targets restricts this run to build output"
+[ "$RECLAIM" -eq 0 ] || [ "$DO_TARGETS" -eq 1 ] \
+  || die "--reclaim is consent for build output, but --servers restricts this run to servers"
 
 command -v lsof >/dev/null 2>&1 || die "lsof is needed to tell an attached server from an abandoned one"
 
@@ -140,6 +161,18 @@ tgt_found=0; tgt_reclaimed=0; tgt_kept=0; tgt_freed=0
 # Candidates excluded because an input could not be read. A hole in a deletion's measurement
 # is the thing project.destructive-sweeps-fail-closed exists to make loud.
 unreadable=0
+
+# How far this run got. A sweep that dies partway has already printed a column header and
+# some rows, and a header with rows under it reads as "here is what I would do" — the exit
+# status is the only thing that says otherwise, and nobody reads an exit status off a
+# terminal. The SIGPIPE this repaired printed exactly that: a header, one server, and a
+# silence that was taken for the whole answer. So an unfinished run states its subject in
+# words — which of the two it examined, which it never reached, and that no consent was
+# acted on for the one it did not (project.a-verdict-states-its-subject).
+PHASE="starting up"
+SRV_REACHED=0
+TGT_REACHED=0
+FINISHED=0
 
 # ------------------------------------------------------------------------------- servers
 
@@ -214,7 +247,31 @@ EOF
 # -------------------------------------------------------------------------- build output
 
 SNAP_PS=""; SNAP_CWD=""
-cleanup() { [ -z "$SNAP_PS" ] || rm -f "$SNAP_PS" "$SNAP_CWD"; }
+
+# What one subject can say about itself when the run stopped. Three answers and no fourth:
+# it was not asked for, it was examined, or it was never reached — and "never reached" is the
+# one that must never be confused with "nothing found there".
+subject_state() { # selected reached noun
+  if [ "$1" -eq 0 ]; then printf 'not selected for this run'
+  elif [ "$2" -eq 1 ]; then printf 'examined'
+  else printf 'NOT REACHED — this run says nothing about %s' "$3"
+  fi
+}
+
+cleanup() {
+  mj_rc=$?
+  [ -z "$SNAP_PS" ] || rm -f "$SNAP_PS" "$SNAP_CWD"
+  # A clean finish reports itself below; `--help` and a usage error are not sweeps at all.
+  if [ "$FINISHED" -eq 0 ] && [ "$mj_rc" -ne 0 ]; then
+    echo
+    echo "reap-orphans: INCOMPLETE — this sweep stopped while $PHASE (exit $mj_rc). It is a"
+    echo "reap-orphans:   failure, not a report: anything printed above is a partial reading."
+    echo "reap-orphans:   servers      — $(subject_state "$DO_SERVERS" "$SRV_REACHED" "abandoned servers")"
+    echo "reap-orphans:   build output — $(subject_state "$DO_TARGETS" "$TGT_REACHED" "reclaimable build directories")"
+    echo "reap-orphans:   No consent was acted on for a subject this run did not reach."
+  fi
+  exit "$mj_rc"
+}
 trap cleanup EXIT
 
 # Who is working, asked of the machine itself. Two readings, because each has a hole the
@@ -318,7 +375,23 @@ reap_targets() {
   # The primary checkout is excluded by name, not by predicate. It sits on master, it is
   # clean more often than not, and it holds the executable other checkouts borrow: a
   # predicate would reclaim it on a quiet afternoon (project.reclaim-only-what-you-own).
-  main_wt="$(git -C "$ROOT" worktree list --porcelain 2>/dev/null | awk 'NR == 1 && $1 == "worktree" { print substr($0, 10); exit }')"
+  # The first `worktree` record of the porcelain is the primary checkout. It is read to the
+  # end rather than abandoned at the first line: an `exit` here closes the pipe while git is
+  # still writing, and this repository's porcelain is 24KB over 143 worktrees — comfortably
+  # past the pipe buffer, so git took SIGPIPE every time. `pipefail` then made the assignment
+  # 141 and `set -e` killed the sweep, after the server table and before this one: a report
+  # that had printed a header and a row, which reads as a verdict and was a corpse.
+  #
+  # The remedy is the reader, not a trap: a `|| true` would have hidden a real git failure,
+  # and an empty `main_wt` is not survivable. The primary checkout is excluded by *name*
+  # (project.reclaim-only-what-you-own) because a predicate would reclaim it on a quiet
+  # afternoon — so failing to learn its name means the sweep cannot exclude it, and a
+  # predicate that cannot be measured is false, not absent.
+  main_wt="$(git -C "$ROOT" worktree list --porcelain 2>/dev/null | awk '
+    $1 == "worktree" && !seen { seen = 1; first = substr($0, 10) }
+    END { if (seen) print first }')" || main_wt=""
+  [ -n "$main_wt" ] \
+    || die "the primary checkout could not be identified, and it is excluded by name rather than by predicate: nothing is reclaimed"
   self_wt="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || true)"
 
   printf '%-58s %8s  %s\n' WORKTREE SIZE STATE
@@ -413,11 +486,18 @@ EOF
 # ------------------------------------------------------------------------------- report
 
 before="$(free_kb "$ROOT")"
-if [ "$DO_SERVERS" -eq 1 ]; then reap_servers; fi
+if [ "$DO_SERVERS" -eq 1 ]; then
+  PHASE="examining servers"
+  reap_servers
+  SRV_REACHED=1
+fi
 if [ "$DO_TARGETS" -eq 1 ]; then
   if [ "$DO_SERVERS" -eq 1 ]; then echo; fi
+  PHASE="examining build output"
   reap_targets
+  TGT_REACHED=1
 fi
+PHASE="summarising"
 
 echo
 if [ "$DO_SERVERS" -eq 1 ]; then
@@ -436,6 +516,10 @@ if [ "$DO_TARGETS" -eq 1 ]; then
   after="$(free_kb "$ROOT")"
   echo "reap-orphans: free space $(human "${before:-0}") before, $(human "${after:-0}") now"
 fi
+
+# Past here the run reached its own summary: whatever it exits with is a verdict about the
+# subjects it named above, and not a sweep that stopped somewhere nobody can see.
+FINISHED=1
 
 if [ "$KILL" -eq 1 ] || [ "$RECLAIM" -eq 1 ]; then exit 0; fi
 if [ "$((srv_found + tgt_found))" -eq 0 ]; then exit 0; fi
