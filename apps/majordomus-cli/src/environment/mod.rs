@@ -597,6 +597,53 @@ impl RepositoryEnvironment {
     /// a digest that counted the services made each of those a first look, drawing the whole
     /// box again at a person who had just seen it. A server arriving or leaving is not a
     /// different repository; the short form names the Cockpit when it answers.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::{
+    ///     resolve, EnvironmentQuery, Inputs, ServiceAvailability, ServiceState,
+    /// };
+    /// use majordomus_cli::Repository;
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::create_dir_all(dir.path().join(".ai/repo")).unwrap();
+    /// std::fs::write(
+    ///     dir.path().join(".ai/manifest.yaml"),
+    ///     "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n",
+    /// )
+    /// .unwrap();
+    /// std::fs::write(
+    ///     dir.path().join(".ai/repo/policy.yaml"),
+    ///     "version: 1\ncontext:\n  always_loaded_budget_lines: 150\n",
+    /// )
+    /// .unwrap();
+    /// let repository = Repository::open(dir.path()).unwrap();
+    /// let seen = resolve(
+    ///     &Inputs {
+    ///         repository: &repository,
+    ///         share: None,
+    ///         index: None,
+    ///         registry: None,
+    ///         policy: None,
+    ///     },
+    ///     // sealed: nothing outside this process is read, probed or written
+    ///     &EnvironmentQuery::fast().sealed(),
+    /// );
+    ///
+    /// // the shared server comes up under `watch_file` and publishes its address, so
+    /// // entry is evaluated a second time against the very same checkout
+    /// let mut with_server = seen.clone();
+    /// with_server.services.push(ServiceState {
+    ///     id: "cockpit".to_string(),
+    ///     title: "Cockpit".to_string(),
+    ///     path: "/cockpit".to_string(),
+    ///     url: Some("http://127.0.0.1:8741/cockpit".to_string()),
+    ///     availability: ServiceAvailability::Available,
+    /// });
+    ///
+    /// // the snapshots differ, and the news they carry does not: the box is drawn once
+    /// assert_ne!(seen.digest(), with_server.digest());
+    /// assert_eq!(seen.news_digest(), with_server.news_digest());
+    /// ```
     pub fn news_digest(&self) -> String {
         let mut stable = self.clone();
         stable.services.clear();
