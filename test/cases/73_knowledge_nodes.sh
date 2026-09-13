@@ -53,7 +53,11 @@ printf '# a case\n' > test/cases/04_start_check.sh
 git add -A >/dev/null && git commit -q -m install
 
 # --- a rebuild produces the same bytes
-"$MJ" knowledge nodes > a.txt
+# guarded, so a refusal names itself: under `bash -eu` a bare call that exits 10 ends the case
+# with no message, and the duplicate_id it refused over is the thing a reader needs to see
+rc=0; "$MJ" knowledge nodes > a.txt 2> a.err || rc=$?
+[ "$rc" = 0 ] || { echo "    knowledge nodes exited $rc on the installed layer:"; grep -h '^FAIL' a.txt a.err | head -3 | sed 's/^/      /'; exit 1; }
+expect_no_grep 'duplicate_id|claimed by' a.txt
 "$MJ" knowledge nodes > b.txt
 cmp -s a.txt b.txt || { echo "    two runs disagreed"; diff a.txt b.txt | head; exit 1; }
 
