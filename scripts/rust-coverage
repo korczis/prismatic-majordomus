@@ -52,6 +52,7 @@
 # continuity depends on is tested at all: it can sit at zero while the number stays green,
 # which is where it was.
 set -eu
+set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 MODE=gate FROM="" EXPORT="" ONLY="" CHANGED=""

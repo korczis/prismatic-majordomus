@@ -1371,6 +1371,9 @@ Events and their extra fields:
 | `provider.event.received` | `provider`, `provider_event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
 | `provider.event.failed` | `provider`, `provider_event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
+| `prompts.pruned` | `records` (how many the sweep examined), `pruned` (how many bodies were replaced by a tombstone), `bytes_left` (what the archive holds after it). The identity and provenance of every record survive the prune; only the body goes, so the count of records never falls |
+| `prompts.reconciled` | `records` (how many the sweep re-examined), `linked` (how many were matched to the episode they belong to), `unlinked` (how many evidence could not place). A record is linked from evidence that still exists, never from a guess, so `unlinked` is a fact about the evidence rather than about the record |
+| `task.gate` | `task`, `gate` (the gate id from the CI model), `exit` (the status it reported), `inputs_hash` (over the files the gate examined). Written by `lib/gates.sh`, which is why the registry names `gates` as its emitter: the event says what a gate did, not what the command around it was called |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 | `use_cases.ran` | `ran`, `failed` (counts; the evidence under `.ai/local/evidence/use-cases/` carries the steps) |
 | `plan_start` | `issue` |
