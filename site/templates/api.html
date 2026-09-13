@@ -161,7 +161,16 @@
             scroll inside itself and lets `module::path::Type` break inside the word. -#}
         {%- if s.description %}<div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ s.description | markdown(inline=true) | safe }}</div>{% endif -%}
         {%- if s.values | length > 0 -%}
-        <ul class="mt-3 space-y-1 text-sm">{% for v in s.values %}<li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">{{ v.value }}</code><span class="min-w-0 text-body">{{ v.description }}</span></li>{% endfor %}</ul>
+        {#- An enum value's description is a Rust doc comment shown as the plain text it is, and a
+            doc comment names its neighbours: WaiverReason::published_history carries an intra-doc
+            link that is one unbreakable 37-character token, wider than the 239px this span gets at
+            a 305px viewport — so it pushed the page sideways where the runner's font, wider than a
+            mac's, spent the remaining slack. Every other description in this template already
+            carries `break-words`; this one did not, and it is the one that overflowed.
+            `break-words` and not `break-all` or `.mj-identity`: breaking anywhere is right for a
+            name and wrong for the sentence around it, so only a word too wide for its own line
+            is broken. -#}
+        <ul class="mt-3 space-y-1 text-sm">{% for v in s.values %}<li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">{{ v.value }}</code><span class="min-w-0 break-words text-body">{{ v.description }}</span></li>{% endfor %}</ul>
         {%- endif -%}
         {%- if s.properties | length > 0 -%}
         <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
