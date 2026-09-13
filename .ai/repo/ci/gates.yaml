@@ -145,6 +145,15 @@ gates:
     runs: scripts/ci/english-only-check
     summary: every authored file is spelled in English; a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, fails — proper nouns and files that use a foreign string as test data are declared with their reason beside the check
 
+  # File reads only, under a second, so it is unconditional rather than classed: the dependency
+  # it refuses can arrive through any manifest, script or configuration file, and a class list
+  # that forgot one would be the gap.
+  - id: prismatic-independence
+    job: structure
+    always: true
+    runs: scripts/ci/prismatic-independence-check
+    summary: no submodule, gitlink, dependency manifest, script, hook, workflow or configuration file names a Prismatic project; the project's own name and the bare brand word are not references, and documents are out of scope
+
   - id: finding-reproduce
     job: structure
     always: true

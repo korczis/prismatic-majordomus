@@ -156,7 +156,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/design.md` | `design` | markdown | 9232 | `f3961746d7993d8d` |
 | `docs/generated/design.yaml` | `design` | yaml | 102269 | `4aed6d65aa9e6f51` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
-| `docs/generated/graph.json` | `graph` | json | 2060502 | `a891b14b78a29c90` |
+| `docs/generated/graph.json` | `graph` | json | 2061976 | `b9eaf824e0d9741e` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `fa0e1f07a682ba2e` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `c3305ae634a85d18` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `381f678e2d198130` |
@@ -253,9 +253,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `6651bb9202c77455` |
 | `site/data/registry/design.json` | `site-design` | json | 9987 | `2915ae78fa801071` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `ff4c1cd116483f5e` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 71420 | `0146dd57178d4efd` |
-| `site/data/registry/product.json` | `site-product` | json | 346640 | `13bd612b23f74bec` |
-| `site/data/registry/registry.json` | `site-registry` | json | 3485693 | `58bbede105214e76` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 71420 | `bf5f21a102622e52` |
+| `site/data/registry/product.json` | `site-product` | json | 346640 | `deff369cf26f5e33` |
+| `site/data/registry/registry.json` | `site-registry` | json | 3486603 | `c2c211c16155b7ee` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `afd55d6d1b8ae91e` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `b0ecdffd60d6a892` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `418b8a5354a8073c` |
