@@ -771,7 +771,10 @@ pub struct PlanTransitionResult {
 /// The refusal must be a *refusal* and not a lookup miss. An earlier version named an issue
 /// that could not exist, which answered 404 rather than 422, and `tests/http_serve.rs` holds
 /// every route to answering its own cases — 200, or 422 for a command that turns a caller
-/// down. Choosing the move from the record keeps the case inside that contract.
+/// down. Choosing the move from the record keeps the case inside that contract, and the
+/// handler's emptiness guard keeps the other case inside it: a repository whose plan holds
+/// nothing refuses before it looks anything up, so the case set is one refusal in *every*
+/// repository rather than a refusal here and no case at all in a freshly initialised one.
 impl BenchmarkCases for PlanTransitionInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         let plan = Plan::build(ctx.index);
@@ -786,18 +789,35 @@ impl BenchmarkCases for PlanTransitionInput {
                 Transition::Start
             }
         };
-        plan.issues
-            .first()
-            .map(|i| {
-                vec![NamedCase::new(
+        vec![plan.issues.first().map_or_else(
+            || {
+                // A repository with no plan is still a benchmark target — the coverage
+                // denominator is the registry, not the corpus — so the empty plan gets
+                // the case its own state provides rather than no case at all, which is
+                // what `project.rust-benchmark-coverage` means by "at least one case
+                // for the repository at hand". The id is the one a first issue would
+                // take; nothing here depends on it existing, because the emptiness
+                // guard in the handler answers before the lookup does, and it answers
+                // with a refusal. So this is a refusal like the other case, not the
+                // lookup miss an earlier version measured.
+                NamedCase::new(
+                    "refused-empty-plan",
+                    PlanTransitionInput {
+                        issue: "I0001".into(),
+                        transition: Transition::Start,
+                    },
+                )
+            },
+            |i| {
+                NamedCase::new(
                     "refused-by-status",
                     PlanTransitionInput {
                         issue: i.id.clone(),
                         transition: refused_move(i),
                     },
-                )]
-            })
-            .unwrap_or_default()
+                )
+            },
+        )]
     }
 }
 
@@ -806,6 +826,23 @@ fn plan_transition(
     input: PlanTransitionInput,
 ) -> Result<PlanTransitionResult, CapabilityError> {
     let plan = Plan::build(&ctx.index);
+
+    // A repository whose plan holds nothing is refusing, not failing to find. The
+    // distinction is the caller's: "no issue 'I0001'" against an empty list reads as a
+    // typo and sends them looking for the record, when what is true is that this
+    // repository has no plan to move anything through — `issue` is an optional source
+    // (`.ai/repo/knowledge/sources.yaml`), so this is an ordinary state and not a defect.
+    // It is also what keeps `plan.transition` inside its own contract everywhere: this
+    // command answers 200 or 422 in *any* repository, rather than only in one whose plan
+    // happens to be populated, which is what `tests/http_serve.rs` holds every route to.
+    if plan.issues.is_empty() {
+        return Err(CapabilityError::Refused(
+            "this repository's plan holds no issues, so there is nothing to transition; \
+             records live in .ai/repo/project/issues/ and `plan.issues` lists them"
+                .into(),
+        ));
+    }
+
     let before = plan
         .issue(&input.issue)
         .ok_or_else(|| {
