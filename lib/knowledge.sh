@@ -245,20 +245,43 @@ mj_knowledge_rows() {
   local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.kn.XXXXXX")"
   mkdir -p "$tmp/yaml" "$tmp/front"
   : > "$tmp/yaml.map"; : > "$tmp/front.map"; : > "$tmp/docs"; : > "$tmp/lines"
-  local ny=0 nf=0
+  # `claimed` holds the identities already emitted, as `<kind>:<path>`.
+  local ny=0 nf=0 claimed=""
   while IFS="$tab" read -r cls scope kind hash path; do
     [ -n "$path" ] || continue
     abs="$MJ_ROOT/$path"
     # A section's README declares itself a context document, whatever class discovered it
     # (share/kinds.yaml: `declared: [context]`). It is read as the kind it declares, not as
     # an instance of the kind that lives beside it, which would be a node nobody meant.
-    if mj_is_context_doc "$abs"; then kind=document; fi
+    #
+    # Two things had to be true for that sentence to hold, and neither was. The kind was set
+    # to `document` — the opposite of "the kind it declares" — and both discovering classes
+    # still produced a row, so one file arrived twice under one identity and the extractor
+    # refused it: eleven `document:<path> claimed by <path> and by <path>` failures in this
+    # repository, naming the same path on both sides because the claimants differed only in
+    # the class nobody printed. The declaration decides the kind, and it decides it once.
+    if mj_is_context_doc "$abs"; then
+      # Scoped to the declared-kind case on purpose, and the scope is the whole argument.
+      # Here the file itself resolves the ambiguity — it says `kind: context`, so a second
+      # class discovering it adds no information and its row is dropped. Where nothing
+      # declares anything, two classes claiming one path stay a refusal:
+      # `test/cases/73_knowledge_nodes.sh` plants a second `kind: policy` class over
+      # `.ai/repo/policy.yaml` and expects exit 10, because "a duplicate id is a defect, not
+      # a last-one-wins merge". Generalising this dedupe to any same-kind pair was tried and
+      # turned that case red — it would have deleted a promise rather than kept one.
+      case "$claimed" in
+        *"|context:$path|"*) continue ;;
+      esac
+      claimed="$claimed|context:$path|"
+      kind=context
+    fi
     printf 'S\t%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$hash" "$path"
     case "$kind" in
       decision|question) printf '%s\n' "$abs" >> "$tmp/lines" ;;
       # a curated note is prose with an identity of its own only sometimes; it is read the
-      # way a document is, for its heading and the links it makes
-      document|knowledge) printf '%s\n' "$abs" >> "$tmp/docs" ;;
+      # way a document is, for its heading and the links it makes. A context document is read
+      # the same way: it is prose that carries a contract, and its heading is its title.
+      document|knowledge|context) printf '%s\n' "$abs" >> "$tmp/docs" ;;
       implementation|test) ;;
       session|handover|checkpoint|prompt|rule|adr|skill|use-case|application) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$tmp/front.map"; printf '%s\n' "$abs" >> "$tmp/front.list" ;;
       policy|scope|profile|milestone|issue|claim|doctrine) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
