@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+# enforcement-gap-check — a rule that is written down and proven by nothing is debt, and
+# the debt does not grow.
+#
+# THE SUBJECT IS RULES, AND ONE PROPERTY OF THEM: whether anything executable proves the
+# rule at all. Claims are not measured here (`scripts/ci/claim-proof-check` is the one
+# reader of docs/CLAIMS.yaml) and neither are capabilities or surfaces (the use-case
+# coverage tally in `majordomus doctor` and its own ratchet own that population). Each
+# verdict below names its population, because three gates over three populations printing
+# bare lists of ids is how this repository once read one gate's findings as another's.
+#
+# WHY IT EXISTS — two numbers that disagreed about the same corpus. `majordomus doctor`
+# printed, in one run:
+#
+#     rules     135 rule(s) — ... 114 carry a validator, 21 are normative text ...
+#     doctrine  45 of 135 rule(s) carry a validator — validator, dispatch, propagation,
+#               test and CI resolve for every one of the 45
+#
+# The 114 was wrong, and the first commit of this branch fixes the sentence: 114 rules
+# carry an *enforcement block*; 45 of those name a validator. The other 69 are not
+# unenforced — 65 are `gated`, naming behavioural cases a runner drives and a CI gate runs,
+# and 4 are `reviewed`, declaring with a reason that a person enforces them. So the gap
+# between the two numbers is a wording defect, not 69 unenforced rules.
+#
+# What the reconciliation did expose is a population nothing holds flat. Read through the
+# executable's own join of rule to proof (`majordomus-cli rules report`, which reads
+# .ai/repo/rules/, .ai/repo/ci/gates.yaml and the tree, and is the only model of this
+# relation), three of its states mean "nothing executable proves this rule":
+#
+#   unproven    the rule names neither a validator nor a test. `scripts/ci/rule-proof-check`
+#               refuses this for a *blocking* rule and looks at no other class; the advisory
+#               ones are measured by nothing at all.
+#   reviewed    the rule declares, with a written reason, that a person enforces it
+#               (ADR 0048). An honest exemption, and the honest thing to do with it is to
+#               hold the list flat: rule-proof-check prints it as a NOTE and can never fail
+#               on it, so today this list may grow without limit. Governance getting weaker
+#               must be as visible as governance getting stronger.
+#   unrunnable  every path the rule names is one no runner drives and no CI gate runs. Empty
+#               today; measured so that it cannot arrive unnoticed.
+#
+# `dangling` — a rule naming a path that is not in the tree — is deliberately NOT here.
+# rule-proof-check refuses it outright and never ratchets it, which is the right treatment
+# for a proof that reads as real and is not; a second gate holding the same finding flat
+# would be the duplicate declaration ADR 0004 is about.
+#
+# NOTHING HERE PARSES A RULE. The population, its states and its denominators are read from
+# `rules report`, so a rule added tomorrow is measured tomorrow, and this script carries no
+# second opinion about what a rule is or about which gate runs what.
+#
+# THE RATCHET is by identity AND state: a baseline line is `<state> <rule-id>`. A rule that
+# moves from `unproven` to `reviewed` is therefore new debt rather than a silent swap —
+# which is exactly the failure this repository has already made once, when a predecessor of
+# claim-proof-check read four rules that had acquired a written exemption as four rules that
+# had acquired a proof, and printed `FIXED`.
+#
+#   scripts/ci/enforcement-gap-check                  report, and fail on new debt
+#   scripts/ci/enforcement-gap-check --strict         fail on any entry, baseline ignored
+#   scripts/ci/enforcement-gap-check --write-baseline record today's debt (a deliberate act)
+#   MJ_ROOT=<dir> scripts/ci/enforcement-gap-check    measure another tree (the case does)
+#   MAJORDOMUS_BIN=<path> ...                         use a prebuilt executable
+#
+# The baseline shrinks by wiring a proof — by naming the behavioural case that proves the
+# rule in its x-majordomus block — never by demoting a rule's class, deleting the rule, or
+# writing a `reviewed_because:` over a rule a case could hold. The last of those would move
+# an entry from `unproven` to `reviewed` and this gate reports it as new debt for that
+# reason.
+#
+# Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable,
+# 13 the executable could not be built.
+set -eu
+# pipefail, so a pipeline reports the failure of any stage rather than the success of its
+# last. Every counting pipeline below therefore ends in `|| true`, because grep and comm
+# exit non-zero on an empty answer and "no findings" is the healthy case, not an error.
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+BASELINE=".ai/repo/enforcement-gap-baseline.txt"
+CRATE="apps/majordomus-cli"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "enforcement-gap-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+[ -d ".ai/repo/rules" ] || { echo "enforcement-gap-check: no rules section here; nothing to measure"; exit 0; }
+
+# The executable that owns the join. Named when borrowed, for the reason scripts/derive-check
+# names it: a check run with a handed-over binary is otherwise indistinguishable in a log
+# from one that built its own, and a binary of another generation has rewritten this tree
+# before.
+if [ -n "${MAJORDOMUS_BIN:-}" ]; then
+  RB="$MAJORDOMUS_BIN"
+  [ -x "$RB" ] || { echo "enforcement-gap-check: MAJORDOMUS_BIN=$RB is not executable" >&2; exit 13; }
+  printf '==> enforcement-gap-check: MAJORDOMUS_BIN=%s (not building)\n' "$RB" >&2
+else
+  command -v cargo >/dev/null 2>&1 || {
+    echo "enforcement-gap-check: no cargo and no MAJORDOMUS_BIN; the rule-to-proof join is the executable's" >&2
+    exit 13
+  }
+  # shellcheck source=../../lib/rust_bin.sh
+  . "$ROOT/lib/rust_bin.sh"
+  RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" || exit 13
+  RB="$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus"
+fi
+
+report="$(mktemp "${TMPDIR:-/tmp}/mj.egc.XXXXXX")"
+trap 'rm -f "$report"' EXIT
+"$RB" rules report --repo "$ROOT" > "$report" 2>/dev/null || {
+  echo "enforcement-gap-check: majordomus-cli rules report failed over $ROOT" >&2
+  exit 12
+}
+
+# The denominator, from the report's own header line: `rules   N — B blocking, A advisory`.
+total="$(awk '$1 == "rules" && $3 == "\xe2\x80\x94" { print $2; exit }' "$report" || true)"
+case "${total:-}" in ''|*[!0-9]*)
+  echo "enforcement-gap-check: the report states no rule count; the reader is broken" >&2
+  exit 12 ;;
+esac
+
+# A rules section that exists and holds no rule is a population that vanished, not one that
+# came back clean. Reporting `no new debt` over it is the defect project.empty-is-not-failure
+# names, and rule-proof-check carries the same guard over the same corpus.
+if [ "$total" = 0 ]; then
+  echo "enforcement-gap-check: the effective rule set is empty — nothing was measured, which is not the same as nothing being wrong" >&2
+  exit 12
+fi
+
+# The three states, one row per rule, as `<state> <rule-id>`. The report prints one line per
+# rule as `<state> <class> <mode> <id>` with indented detail beneath; the anchor and the
+# field count are what keep a detail line out of the population.
+current="$(awk '
+  /^(unproven|reviewed|unrunnable)[ \t]+(blocking|advisory)[ \t]+[a-z]+[ \t]+[A-Za-z0-9._-]+[ \t]*$/ {
+    print $1 " " $4
+  }' "$report" | LC_ALL=C sort -u || true)"
+
+count() { printf '%s\n' "$1" | grep -c '[^[:space:]]' || true; }
+n_gap="$(count "$current")"
+
+if [ "$MODE" = write ]; then
+  { echo "# Rules nothing executable proves, as \`majordomus-cli rules report\` derives it:"
+    echo "# unproven (names neither a validator nor a test), reviewed (declares with a reason"
+    echo "# that a person enforces it), unrunnable (names only paths no runner and no gate"
+    echo "# drives). One line per rule as '<state> <rule-id>', so a rule moving between these"
+    echo "# states is new debt rather than a silent swap."
+    echo "#"
+    echo "# Written by scripts/ci/enforcement-gap-check --write-baseline; never by hand. The"
+    echo "# list shrinks by naming the behavioural case that proves the rule in its"
+    echo "# x-majordomus block — never by demoting the rule's class, deleting the rule, or"
+    echo "# writing a reviewed_because: over a rule a case could hold."
+    echo "#"
+    echo "# Claims are not in this list (scripts/ci/claim-proof-check and"
+    echo "# .ai/repo/claim-proof-baseline.txt); neither are capabilities or surfaces."
+    printf '%s\n' "$current" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "enforcement-gap-check: baseline written with $n_gap rule(s)"
+  exit 0
+fi
+
+known=""
+[ -f "$BASELINE" ] && known="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" | LC_ALL=C sort -u || true)"
+
+# Both denominators, and the populations this gate does not measure, before any finding: a
+# reader who meets a list of ids must not have to guess what they are ids of.
+printf 'rules with no executable proof:  %s of %s rule(s) in .ai/repo/rules (states: unproven, reviewed, unrunnable)\n' \
+  "$n_gap" "$total"
+printf 'guaranteed claims:               not measured here — scripts/ci/claim-proof-check is the one reader of that population\n'
+printf 'capabilities and surfaces:       not measured here — the use-case coverage tally is the one reader of that population\n'
+
+label() { # "<state> <id>" -> FAIL or KNOWN
+  [ "$MODE" = strict ] && { printf 'FAIL'; return; }
+  case "
+$known
+" in *"
+$1
+"*) printf 'KNOWN' ;; *) printf 'FAIL' ;; esac
+}
+[ -n "$current" ] && printf '%s\n' "$current" | grep -v '^$' | while read -r state id; do
+  printf '%s enforcement-gap %-11s %-46s %s  [reproduce: scripts/ci/enforcement-gap-check]\n' \
+    "$(label "$state $id")" "$state" "$id" "nothing executable proves this rule"
+done
+
+if [ "$MODE" = strict ]; then
+  [ "$n_gap" = 0 ] && { echo "enforcement-gap-check: every one of $total rule(s) is proven by something executable"; exit 0; }
+  echo >&2
+  echo "enforcement-gap-check: $n_gap of $total rule(s) are proven by nothing executable (--strict)" >&2
+  exit 10
+fi
+
+new="$(LC_ALL=C comm -23 <(printf '%s\n' "$current" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+gone="$(LC_ALL=C comm -13 <(printf '%s\n' "$current" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+
+if [ -n "$gone" ]; then
+  echo
+  echo "enforcement-gap-check: debt cleared, run --write-baseline to record it:"
+  printf '%s\n' "$gone" | grep -v '^$' | while read -r line; do printf '  %s\n' "$line"; done
+fi
+
+if [ -n "$new" ]; then
+  echo >&2
+  echo "enforcement-gap-check: new debt, not in $BASELINE:" >&2
+  printf '%s\n' "$new" | grep -v '^$' | while read -r line; do printf '  %s\n' "$line" >&2; done
+  echo "  A rule nothing can prove is a rule nothing enforces. Name the behavioural case" >&2
+  echo "  that proves it in its x-majordomus block: tests: [test/cases/NN_name.sh]. A" >&2
+  echo "  reviewed_because: is not an answer to this — it moves the entry, it does not" >&2
+  echo "  remove it." >&2
+  exit 10
+fi
+echo "enforcement-gap-check: no new debt ($(count "$known") rule(s) known, $n_gap measured of $total)"
