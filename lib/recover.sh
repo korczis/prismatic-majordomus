@@ -597,113 +597,181 @@ mj_recover_fold_record() {
 #               a living writer is not legacy, whatever its age. Nothing in this repository
 #               earns it: archive/ and completed/ both still have a writer, which is why
 #               they are reported as `live` with the writer named
-# How old a path is, in seconds, or nothing when it cannot be measured.
 #
-# The guard every stray-file verdict passes through, and it is not decoration. A publish
-# temp a few milliseconds old belongs to a `session close` running right now; a
-# `.mj-stage.XXXXXX` a few minutes old belongs to a `scripts/derive` running right now — on
-# this machine, four of them ran at once while this file was being written, and one of them
-# was this checkout's. Removing either is taking somebody's instrument out of their hands
-# (project.reclaim-only-what-you-own), and "the run that made it did not finish" is a claim,
-# not a measurement, until something reads the clock.
-#
-# `stat` is spelled twice because BSD and GNU disagree, and the ORDER is load-bearing.
-# GNU first. `stat -f` means two different things: on BSD it is "this format string", on GNU
-# it is "report the FILE SYSTEM, not the file". So `stat -f %m` asked GNU for a filesystem
-# field that does not exist, and on Linux every age read failed — the whole subject reported
-# "its age cannot be read on this platform" for all seven candidates and did nothing at all.
-# CI caught it on the first run; macOS never would have, because BSD answers `-f %m`
-# correctly. `stat -c` is unambiguous: GNU accepts it, BSD rejects the option and falls
-# through. The guard behaved perfectly while this was wrong — nothing was deleted, every
-# candidate was skipped and counted — which is the whole point of
-# project.destructive-sweeps-fail-closed: a measurement that breaks must cost an action, not
-# take the wrong one. The test now asserts the ages are read, so neither platform can regress
-# to doing nothing quietly.
-mj_recover_age_secs() {
-  local m now
-  m="$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || true)"
-  case "$m" in ''|*[!0-9]*) return 1 ;; esac
-  now="$(date +%s 2>/dev/null || true)"
-  case "$now" in ''|*[!0-9]*) return 1 ;; esac
-  printf '%s' $((now - m))
-}
+# The five verdicts are now a type rather than a paragraph. `StrayVerdict` in
+# apps/majordomus-cli/src/capability/builtin/recover.rs carries them, the capability decides
+# them, and this file renders them: a vocabulary described in one program's comments and
+# applied in another's code is two definitions, and the word this comment does not have —
+# `unmeasurable`, the candidate whose age could not be read — is what that costs.
 
-# Is this stray path old enough to act on? Prints the measurement either way, because the
-# rule requires the value that decided a verdict to be visible before the verdict acts.
-# 0 act · 1 too young · 2 unmeasurable (the caller counts it as skipped).
-mj_recover_stray_ready() {
-  local path="$1" age
-  age="$(mj_recover_age_secs "$path")" || {
-    mj_warn recover "$(mj_rel "$path")" "its age cannot be read on this platform, so nothing here treats it as stale" "stat $(mj_rel "$path")"
-    return 2
-  }
-  if [ "$age" -lt "$MJ_RECOVER_AGE_SECS" ]; then
-    printf '  live        %s — %s old, under the %s threshold; a run may still be using it\n' \
-      "$(mj_rel "$path")" "$(mj_age_human $((age / 60)))" "$MJ_RECOVER_AGE"
-    return 1
+# Every stray file of the record stores, with the verdict the runtime gave it, one per line
+# as tab-separated fields:
+#
+#   path  kind  verdict  age_seconds  session_id  published_at  target  removed
+#
+# This is the whole of the delegation. `recover.orphans` reads every candidate's age and then
+# its content, decides what it is, and — unless this is a check — removes the ones nothing is
+# holding. Nothing here decides any of it, and that is the point: a surface that shells out
+# to obtain a development semantic owns the argument construction, the exit-code
+# interpretation and the error rendering, which are semantics wherever they are written
+# (project.development-semantics-are-canonical). The argument construction and the exit-code
+# interpretation are here, once, and the semantic is not.
+#
+# It refuses rather than falling back. A shell implementation kept beside the capability "in
+# case the executable is missing" would be the second implementation the rule exists to
+# prevent, and the one that drifts — so a checkout whose executable is not built is told to
+# build it, and nothing is swept. That is also the fail-closed direction for a command that
+# deletes files.
+#
+# The rows go to the file named by $1 rather than to stdout, because every refusal here is
+# an `mj_die` and `mj_die` inside a command substitution can only kill the subshell: the
+# caller would have seen a bare exit 1 where the contract error had been raised.
+mj_recover_strays() {
+  local rows="$1" bin share out rc=0 check
+  check=false; [ "$MJ_RECOVER_CHECK" = 1 ] && check=true
+
+  # shellcheck source=rust_bin.sh
+  # shellcheck disable=SC1091
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"
+  [ -x "$bin" ] || mj_die "$MJ_EX_CONTRACT" \
+    "recover: the runtime that classifies a stray file is not built, and nothing here decides it a second time (build it: bin/majordomus-cli --help)"
+  command -v jq >/dev/null 2>&1 || mj_die "$MJ_EX_CONTRACT" \
+    "recover: jq is not installed, so the runtime's verdicts cannot be read here (brew install jq)"
+
+  # the repository's own distribution when it has one, else the tool's — the same resolution
+  # lib/gates.sh makes for the same reason: a managed repository is not a distribution and
+  # carries no share/ of its own.
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] || { [ -f "$MJ_BIN_DIR/../share/kinds.yaml" ] && share="$MJ_BIN_DIR/../share"; }
+
+  # `run` answers with the execution envelope — the id, the state, the timings — and the
+  # capability's own document under `.output`. The envelope is what makes an execution
+  # inspectable afterwards, so it is unwrapped here rather than asked for without it.
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" run recover.orphans \
+              --input "{\"older_than_seconds\":${MJ_RECOVER_AGE_SECS},\"check\":${check}}" \
+              --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null )" || rc=$?
+  if [ "$rc" != 0 ] || [ -z "$out" ]; then
+    mj_die "$MJ_EX_CONTRACT" "recover: the runtime could not classify the stray files (exit $rc); nothing was swept"
   fi
+  # A missing `.output` is not an empty store. `// empty` on the array would read a refused
+  # call as "no strays", which is the one answer a sweep must never invent, so the envelope
+  # is checked for the key before the rows are read.
+  printf '%s' "$out" | jq -e 'has("output") and (.output | has("strays"))' >/dev/null 2>&1 \
+    || mj_die "$MJ_EX_CONTRACT" "recover: the runtime answered something this renderer cannot read; nothing was swept"
+  printf '%s' "$out" | jq -r '.output.strays[] | [
+      .path, .kind, .verdict, (.age_seconds // 0),
+      (.session_id // ""), (.published_at // ""), (.target // ""), (.removed | tostring)
+    ] | @tsv' > "$rows"
   return 0
 }
 
 mj_recover_orphans() {
   printf 'orphans — stray files in the record stores\n'
-  local n=0 f store
-  store="$(mj_session_store)"
+  # No `store` here any more. Where the record stores are is now the capability's question,
+  # answered from the manifest's own `sessions` section rather than from this tool's
+  # `mj_session_store`, so a second opinion about the path is one fewer thing that can drift.
+  local n=0 f
 
-  # 1. the publish temps of every record store. `mj_publish_record` makes them; only a
-  # process that died between the mktemp and the rm leaves one.
-  local d
-  for d in "$store" "$MJ_STATE_DIR/checkpoints" "$MJ_STATE_DIR/handovers"; do
-    [ -d "$d" ] || continue
-    for f in "$d"/.tmp.*; do
-      [ -f "$f" ] || continue
-      n=$((n + 1))
-      local rdy=0; mj_recover_stray_ready "$f" || rdy=$?
-      case "$rdy" in 1) continue ;; 2) MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1)); continue ;; esac
-      mj_recover_classify_temp "$f"
-    done
-  done
-
-  # 2. the rename temps. Every one of them is `<target>.mj-tmp`, written and renamed in one
-  # `&&`, so one that exists means the write failed or the process died mid-write.
-  local rdy
-  while IFS= read -r f; do
-    [ -n "$f" ] || continue
+  # 1–3. Every stray file of the record stores, classified by the runtime.
+  #
+  # The three sets — the publish temps of every record store, the `<target>.mj-tmp` of every
+  # interrupted rename, and the site generator's `.mj-stage.*` staging directories — used to
+  # be walked and judged here. They are now `recover.orphans`, a capability of the capability
+  # registry, and this function is a consumer of it: it renders the verdicts in the words a
+  # person reads, counts them, and performs the one action the capability deliberately does
+  # not. ADR 0040 is the decision; `scripts/development-semantics-check` is the measurement
+  # that said this command was backed by nothing.
+  #
+  # What did NOT move is publishing. A publish temp that holds the only copy of an episode is
+  # published rather than deleted, and publishing a record is `mj_publish_record`'s semantic
+  # — the same one `session close` and `mj_recover_close_episode` use. Moving one caller of
+  # it into the executable without moving the writer would make a second record writer in a
+  # second program, which is the defect ADR 0040 exists to prevent rather than a step towards
+  # fixing it. So the capability names such a temp `incomplete` and removes nothing; the
+  # publish below is this function's, and it is the next thing to converge.
+  #
+  # The verdicts arrive through a file and not through `verdicts="$(mj_recover_strays)"`.
+  # Inside a command substitution `mj_die` can only kill the subshell, so the refusal that
+  # this function must not survive — no runtime to ask — came back as a plain exit 1 from
+  # the assignment and `recover` reported a generic failure instead of the contract error it
+  # had actually raised. The same trap `mj_pol_req` carries a comment about, thirty lines up.
+  local verdicts; verdicts="$(mktemp "${TMPDIR:-/tmp}/mj.rs.XXXXXX")"
+  mj_recover_strays "$verdicts"
+  local path kind verdict age sid pub target removed
+  while IFS="$(printf '\t')" read -r path kind verdict age sid pub target removed; do
+    [ -n "$path" ] || continue
     n=$((n + 1))
-    rdy=0; mj_recover_stray_ready "$f" || rdy=$?
-    case "$rdy" in 1) continue ;; 2) MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1)); continue ;; esac
-    if [ -e "${f%.mj-tmp}" ]; then
-      printf '  orphan      %s — its target %s exists; the rename completed or was retried\n' \
-        "$(mj_rel "$f")" "$(mj_rel "${f%.mj-tmp}")"
-      MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1))
-      [ "$MJ_RECOVER_CHECK" = 1 ] || rm -f "$f"
-    else
-      printf '  incomplete  %s — its target %s does not exist; a write that never finished\n' \
-        "$(mj_rel "$f")" "$(mj_rel "${f%.mj-tmp}")"
-      mj_warn recover "$(mj_rel "$f")" "an unfinished write whose target is absent; read it before removing it" "cat $(mj_rel "$f")"
-      MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1))
+    f="$MJ_ROOT/$path"
+    case "$verdict" in
+      unmeasurable)
+        # The guard this file exists to demonstrate. An age that cannot be read is not a
+        # large age; the candidate is excluded and counted, and the sweep says so.
+        mj_warn recover "$path" "its age cannot be read on this platform, so nothing here treats it as stale" "stat $path"
+        MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1)) ;;
+      live)
+        printf '  live        %s — %s old, under the %s threshold; a run may still be using it\n' \
+          "$path" "$(mj_age_human $((age / 60)))" "$MJ_RECOVER_AGE" ;;
+      foreign)
+        printf '  foreign     %s — has content but no session_id; not a record this version wrote\n' "$path"
+        mj_warn recover "$path" "content this command cannot classify; read it before removing it" "cat $path"
+        MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1)) ;;
+      orphan)
+        case "$kind" in
+          staging_dir)
+            printf '  orphan      %s — a staging directory of scripts/generate-site-data, %s old; the run that made it did not finish\n' \
+              "$path" "$(mj_age_human $((age / 60)))"
+            # Reported and left where it is. This tool removes no directory tree:
+            # SECURITY.md states "no recursive deletion", and a directory is the one stray
+            # this command cannot account for file by file before removing. The capability
+            # says so too — its verdict is `orphan` and its `removable` is false — so the
+            # refusal is in the runtime and not only in this rendering.
+            # Counted as neither an action nor a skip: an action is something this command
+            # did, and a skip is a candidate whose evidence could not be read. This one was
+            # read and understood, and leaving it is the policy rather than a failure.
+            mj_warn recover "$path" \
+              "a stale staging directory is reported and left in place; look at it, then remove it yourself" \
+              "ls -la $path" ;;
+          rename_temp)
+            printf '  orphan      %s — its target %s exists; the rename completed or was retried\n' "$path" "$target"
+            MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1)) ;;
+          *)
+            if [ -z "$sid" ]; then
+              printf '  orphan      %s — empty; a publish that died before it wrote anything\n' "$path"
+            else
+              printf '  orphan      %s — episode %s is published at %s; the link succeeded and the temp was not removed\n' \
+                "$path" "$sid" "$pub"
+            fi
+            MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1)) ;;
+        esac ;;
+      incomplete)
+        case "$kind" in
+          rename_temp)
+            printf '  incomplete  %s — its target %s does not exist; a write that never finished\n' "$path" "$target"
+            mj_warn recover "$path" "an unfinished write whose target is absent; read it before removing it" "cat $path"
+            MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1)) ;;
+          *)
+            printf '  incomplete  %s — holds the only copy of episode %s; publishing it\n' "$path" "$sid"
+            MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1))
+            [ "$MJ_RECOVER_CHECK" = 1 ] && continue
+            local final
+            final="$(mj_publish_record "$(mj_session_store)" "$sid" "$f")" \
+              || { mj_err "recover: could not publish $path"; continue; }
+            rm -f "$f"
+            mj_ledger_append session.recovered \
+              "\"session_id\":\"$(mj_json_esc "$sid")\",\"reason\":\"an unpublished record was found in a publish temp and published\",\"session_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
+            printf '              published as %s\n' "$(mj_rel "$final")" ;;
+        esac ;;
+    esac
+    # What the runtime says it removed, checked against the disk. A sweep that reported a
+    # removal it did not perform would leave the file for the next run to report again, and
+    # the re-run assertion of test/cases/135 is the only thing that would ever notice.
+    if [ "$removed" = true ] && [ -e "$f" ]; then
+      mj_warn recover "$path" "the runtime reported removing it and it is still here" "ls -la $path"
     fi
-  done < <(find "$MJ_STATE_DIR" "$store" -name '*.mj-tmp' -type f 2>/dev/null | LC_ALL=C sort)
-
-  # 3. the site generator's staging directories at the repository root.
-  for f in "$MJ_ROOT"/.mj-stage.*; do
-    [ -e "$f" ] || continue
-    n=$((n + 1))
-    rdy=0; mj_recover_stray_ready "$f" || rdy=$?
-    case "$rdy" in 1) continue ;; 2) MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1)); continue ;; esac
-    printf '  orphan      %s — a staging directory of scripts/generate-site-data, %s old; the run that made it did not finish\n' \
-      "$(mj_rel "$f")" "$(mj_age_human $(( $(mj_recover_age_secs "$f") / 60 )))"
-    # Reported and left where it is. This tool removes no directory tree: SECURITY.md
-    # states "no recursive deletion", and a directory is the one stray this command cannot
-    # account for file by file before removing — which is the same reason an unfinished
-    # write whose target is absent is reported rather than swept.
-    # Counted as neither an action nor a skip: an action is something this command did, and
-    # a skip is a candidate whose evidence could not be read. This one was read and
-    # understood, and leaving it is the policy rather than a failure to classify.
-    mj_warn recover "$(mj_rel "$f")" \
-      "a stale staging directory is reported and left in place; look at it, then remove it yourself" \
-      "ls -la $(mj_rel "$f")"
-  done
+  done < "$verdicts"
+  rm -f "$verdicts"
 
   # 4. anything in the checkpoint store that is not a checkpoint. The store holds files
   # named by `mj_publish_record`, and nothing in this tool ever puts a directory in it: a
@@ -759,43 +827,4 @@ mj_recover_size() {
   local n; n="$(du -sh "$1" 2>/dev/null | cut -f1)"
   if [ -n "$n" ]; then printf '%s in %s file(s)' "$n" "$(find "$1" -type f 2>/dev/null | wc -l | tr -d ' ')"
   else printf 'size unreadable'; fi
-}
-
-# One publish temp, by what is in it. Nothing is removed on the strength of the name: the
-# file is read, and a temp that turns out to hold a record nobody published is published
-# rather than deleted — that is the whole difference between recovery and a sweep.
-mj_recover_classify_temp() {
-  local f="$1" sid existing
-  if [ ! -s "$f" ]; then
-    printf '  orphan      %s — empty; a publish that died before it wrote anything\n' "$(mj_rel "$f")"
-    MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1))
-    [ "$MJ_RECOVER_CHECK" = 1 ] || rm -f "$f"
-    return 0
-  fi
-  sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
-  if [ -z "$sid" ]; then
-    printf '  foreign     %s — has content but no session_id; not a record this version wrote\n' "$(mj_rel "$f")"
-    mj_warn recover "$(mj_rel "$f")" "content this command cannot classify; read it before removing it" "cat $(mj_rel "$f")"
-    MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1))
-    return 0
-  fi
-  existing="$(grep -rl "^session_id: $sid\$" "$(mj_session_store)" --include='*.md' 2>/dev/null | head -n 1 || true)"
-  if [ -n "$existing" ]; then
-    printf '  orphan      %s — episode %s is published at %s; the link succeeded and the temp was not removed\n' \
-      "$(mj_rel "$f")" "$sid" "$(mj_rel "$existing")"
-    MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1))
-    [ "$MJ_RECOVER_CHECK" = 1 ] || rm -f "$f"
-    return 0
-  fi
-  printf '  incomplete  %s — holds the only copy of episode %s; publishing it\n' "$(mj_rel "$f")" "$sid"
-  MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1))
-  [ "$MJ_RECOVER_CHECK" = 1 ] && return 0
-  local final
-  final="$(mj_publish_record "$(mj_session_store)" "$sid" "$f")" \
-    || { mj_err "recover: could not publish $(mj_rel "$f")"; return 1; }
-  rm -f "$f"
-  mj_ledger_append session.recovered \
-    "\"session_id\":\"$(mj_json_esc "$sid")\",\"reason\":\"an unpublished record was found in a publish temp and published\",\"session_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
-  printf '              published as %s\n' "$(mj_rel "$final")"
-  return 0
 }
