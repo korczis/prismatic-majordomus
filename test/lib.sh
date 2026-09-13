@@ -271,6 +271,23 @@ fixture_repo() {
     if [ ! -f "$dst/$d/README.md" ] && [ -f "$ROOT/$d/README.md" ]; then
       cp "$ROOT/$d/README.md" "$dst/$d/README.md"
     fi
+    # and a contract that tracks files brings the files it tracks. The validator resolves a
+    # `tracks:` entry with `git ls-files`, so a README copied here without its tracked paths
+    # is a broken reference in the fixture that does not exist upstream: .ai/repo/ci/ arrived
+    # through a claim's source path, its README tracks .github/workflows/validate.yml, and
+    # eight cases built on this helper failed `context validate` for a file the fixture had
+    # simply never been given. Resolved with the same pathspec the validator uses, and read
+    # from the front matter only: a body line that happened to start with `tracks: [` would
+    # otherwise copy files no contract named, and nothing would report it.
+    if [ -f "$dst/$d/README.md" ]; then
+      for t in $(awk 'NR==1&&/^---/{f=1;next} f&&/^---/{exit} f&&/^tracks:/{sub(/^tracks:[ \t]*\[/,"");sub(/\].*$/,"");print;exit}' "$dst/$d/README.md" | tr ',' ' '); do
+        for f in $(cd "$ROOT" && git ls-files -- "$t" 2>/dev/null); do
+          [ -e "$dst/$f" ] && continue
+          mkdir -p "$dst/$(dirname "$f")"
+          cp "$ROOT/$f" "$dst/$f"
+        done
+      done
+    fi
     :                       # the loop body never ends on a false test: `set -e` would stop it
   done
 }
