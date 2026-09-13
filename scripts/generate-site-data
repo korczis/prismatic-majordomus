@@ -1029,6 +1029,9 @@ mj_phase_end "gen:catalogue.json" "$GEN_T0"
 # succeeded before one that was refused, then the most output lines, then use case and step id,
 # so the choice is a function of the data and not of an opinion. A lifecycle step no scenario
 # ran would leave a hole in the page's own story, so it is refused below rather than hidden.
+# `default` is the panel a reader lands on: the one with the most to show. The tab order stays
+# the lifecycle's, because that is what the strip is telling them; which panel opens first is
+# a separate question and the data answers it rather than a template picking a favourite.
 #
 # The refusals are the same corpus filtered by what the tool did, not by what reads well: every
 # recorded step of a lifecycle command that exited non-zero, deduplicated by what the reader
@@ -1066,6 +1069,11 @@ jq -S --slurpfile lc "$OUT/lifecycle.json" '
               | ($s.output | split("\n") | map(select(length > 0))) as $lines
               | (($lines | map(select(startswith("FAIL"))) | first) // ($lines | last) // "refused") as $verdict
               | $s | panel($s.argv[0]; ($verdict | split("  [reproduce:") | first))) ),
+      default: ( [ $order | to_entries[] | .key as $i | .value as $cmd
+                   | ($lifesteps | map(select(.argv[0] == $cmd and .result == "pass"))
+                      | sort_by([ (.exit != 0), -( .output | split("\n") | length ), .use_case, .id ]) | first) as $pick
+                   | if $pick == null then empty else { i: $i, n: ($pick.output | split("\n") | length) } end ]
+                 | to_entries | sort_by([ -( .value.n ), .key ]) | first | .key ),
       counts: { lifecycle: ($order | length),
                 walkthrough: ([ $order[] | . as $cmd | $lifesteps | map(select(.argv[0] == $cmd and .result == "pass")) | length | select(. > 0) ] | length),
                 refusals: ( $lifesteps | map(select(.exit != 0)) | group_by([.command, .exit, .output]) | length ),

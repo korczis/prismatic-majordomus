@@ -15,7 +15,7 @@
     and the panel carries neither `x-cloak` nor `hidden`, which is the one combination
     `scripts/site-check` refuses. The tab strip is then a list of headings the reader scrolls
     past rather than a control that does nothing. -#}
-<div class="min-w-0" x-data="{ t: 0 }">
+<div class="min-w-0" x-data="{ t: {{ tx_default | default(value=0) }} }">
   <div role="tablist" aria-label="{{ tx_label }}" class="flex flex-wrap gap-1.5">
     {%- for p in tx -%}
     <button type="button" role="tab" id="{{ tx_id }}-tab-{{ loop.index0 }}" aria-controls="{{ tx_id }}-panel-{{ loop.index0 }}"
@@ -37,8 +37,10 @@
     </figcaption>
     {#- The body is the run's stdout. It scrolls in both directions inside its own box, which
         `scripts/ui check` requires to be reachable from the keyboard, rather than pushing the
-        page sideways on a phone or burying the sections under it on a desktop. -#}
-    <div class="max-h-96 overflow-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body">{{ p.output }}</pre></div>
+        page sideways on a phone or burying the sections under it on a desktop. The box is one
+        size for every panel: a terminal has a size, and a tab strip whose panels each set
+        their own height moves the page under the hand that clicked it. -#}
+    <div class="h-80 overflow-auto sm:h-96" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body">{{ p.output }}</pre></div>
     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">{{ p.what }}</span>
       <a href="{{ base }}{{ p.route }}" class="text-fg-brand hover:underline">{{ p.use_case_title }} &rarr;</a>
