@@ -25373,7 +25373,7 @@
       "variants": []
     },
     {
-      "description": "What kind of stray a path is, decided by where it is and how it is named rather than by\nwhat is in it. The content decides the *verdict*; this decides which question to ask.",
+      "description": "What kind of stray a path is, decided by where it is and how it is named rather than by\nwhat is in it. The content decides the *verdict*; this decides which question to ask.\n\nThe word a kind is reported under is also the word it is read back from, and a word this\nversion does not know is refused rather than read as the nearest kind:\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayKind;\nfor kind in [StrayKind::PublishTemp, StrayKind::RenameTemp, StrayKind::StagingDir] {\n    let word = serde_json::to_value(kind).unwrap();\n    assert_eq!(serde_json::from_value::<StrayKind>(word).unwrap(), kind);\n}\nassert!(serde_json::from_value::<StrayKind>(serde_json::json!(\"temp\")).is_err());\n```",
       "is_enum": true,
       "name": "StrayKind",
       "properties": [],
@@ -25399,7 +25399,7 @@
       "variants": []
     },
     {
-      "description": "What this stray is, decided by reading it.\n\nThe five words are `lib/recover.sh`'s, deliberately: a person who has read the command's\noutput should not have to learn the same five facts twice because a second surface chose\nits own vocabulary.",
+      "description": "What this stray is, decided by reading it.\n\nThe five words are `lib/recover.sh`'s, deliberately: a person who has read the command's\noutput should not have to learn the same five facts twice because a second surface chose\nits own vocabulary.\n\nThat vocabulary is closed. Every verdict reads back as itself, and there is no sixth word:\na surface that invents one gets an error rather than a verdict nobody meant.\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayVerdict::{self, *};\nlet all = [Live, Orphan, Incomplete, Foreign, Unmeasurable];\nlet words: Vec<&str> = all.iter().map(|v| v.as_str()).collect();\nassert_eq!(words, [\"live\", \"orphan\", \"incomplete\", \"foreign\", \"unmeasurable\"]);\nfor v in all {\n    let word = serde_json::json!(v.as_str());\n    assert_eq!(serde_json::from_value::<StrayVerdict>(word).unwrap(), v);\n}\nassert!(serde_json::from_value::<StrayVerdict>(serde_json::json!(\"stale\")).is_err());\n```",
       "is_enum": true,
       "name": "StrayVerdict",
       "properties": [],
