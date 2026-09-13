@@ -1,5 +1,12 @@
 # majordomus-covers: update
 # majordomus-negative: update doctor
+# Proves claim wiring-reconciliation (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim exit-code-contract (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim projection-generation (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim projection-fingerprint (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim no-silent-overwrite (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim context-budget (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim bootstrap-chain (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 expect_exit 0 "$MJ" update

@@ -6,6 +6,8 @@
 //! this file being edited. The few fixed assertions that remain are about semantics one
 //! cannot derive — that `--repo` is global, that `bench baseline update` is three words
 //! deep, that the route of a known path is the route a reader will type.
+//!
+//! Proves claim cli-documentation-executable (docs/CLAIMS.yaml), whose `test:` names this case.
 
 use majordomus_cli::cli::{self, CommandDoc, Expect};
 use proptest::prelude::*;

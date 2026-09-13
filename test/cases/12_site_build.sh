@@ -1,5 +1,7 @@
 # majordomus-exclusive: builds the site into site/public of this checkout and runs site-check over it
 # The built site (when zola is present): routes, sections, derived content, prefix, mermaid, and site-check.
+#
+# Proves claim landing-page-is-a-projection (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 command -v zola >/dev/null || { echo "    zola absent; skipping build test"; exit 0; }
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }

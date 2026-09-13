@@ -1,5 +1,7 @@
 # majordomus-covers: finish
 # majordomus-negative: finish
+# Proves claim finish-contract (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim typed-outcome (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib test && echo a > lib/a && echo t > test/a_test && git add . && git commit -qm base

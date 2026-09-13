@@ -5,6 +5,11 @@
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the site cases do for zola: a CLI-only change needs
 # no Rust toolchain, and CI's rust job runs the crate's own suite on every push.
+#
+# Proves claim mcp-stdio-surface (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim mcp-data-driven (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim mcp-degraded-not-silent (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim mcp-uri-resolution (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 # scratch files live outside the repository, so the "nothing changed" check below sees only

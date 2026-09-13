@@ -6,6 +6,8 @@
 #
 # Nothing here reaches the internet: the fixture release and the origin are local, and the
 # gate is pointed at them with --base.
+#
+# Proves claim advertised-install-command-works (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/install-check"
 expect_file "$GATE"

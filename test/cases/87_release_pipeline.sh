@@ -2,6 +2,8 @@
 # matrix. It may not carry a platform, a runner, an artifact name or a URL of its own, and
 # only the job that publishes may write. This case holds it to all of that without running
 # a release.
+#
+# Proves claim release-is-complete-or-absent (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 MODEL="$ROOT/.ai/repo/ci/release.yaml"
 WF="$ROOT/.github/workflows/release.yml"

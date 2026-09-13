@@ -2,6 +2,10 @@
 # majordomus-negative: prompt search context doctor watch
 # Prompt assets and search: discovery, safe rendering with a closed token set, refusal of
 # anything outside it, and literal retrieval across the record kinds in authority order.
+#
+# Proves claim prompt-assets (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim prompt-asset (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim record-search (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base

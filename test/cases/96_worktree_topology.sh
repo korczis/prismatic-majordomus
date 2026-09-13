@@ -8,6 +8,9 @@
 # The crate's own suite (apps/majordomus-cli/tests/worktree.rs) covers the standings, the
 # conflicts and the refusals in depth. What is here is the part that crosses the two
 # programs and git's own hook mechanism.
+#
+# Proves claim worktree-topology-derived (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim worktree-migration-lossless (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 

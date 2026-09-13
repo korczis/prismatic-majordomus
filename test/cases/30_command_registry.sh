@@ -7,6 +7,8 @@
 #
 # It runs against the repository's own files, because the subject is this repository's
 # command surface, not a fixture's.
+#
+# Proves claim command-surface (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 REG="$ROOT/share/commands.yaml"
 [ -f "$REG" ] || { echo "    no command registry at share/commands.yaml"; exit 1; }

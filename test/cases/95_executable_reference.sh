@@ -10,6 +10,8 @@
 # projections.rs; the rendered side — every entry a page, no page without an entry — is
 # scripts/site-check, run by test/cases/12_site_build.sh. No cargo needed here: the
 # manifest is data, and this case edits the data.
+#
+# Proves claim executable-reference-derived (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases

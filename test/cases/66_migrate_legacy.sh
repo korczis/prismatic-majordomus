@@ -3,6 +3,8 @@
 # migrate moves a repository from the pre-.ai layout (.majordomus/ holding project data)
 # to the portable .ai/ layer: explicitly, previewed, with a verified backup of the local
 # state, never deleting what it does not know, and idempotent afterwards.
+#
+# Proves claim legacy-migration (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 
 # A legacy tree, built by hand: the tool no longer writes one, so the fixture is created on

@@ -6,6 +6,8 @@
 # This case runs in the tool's own checkout rather than a disposable repository: the thing
 # under test is this repository's committed derived data and the hook that guards it, and
 # neither exists anywhere else. It writes nothing — every mutation below is made on a copy.
+#
+# Proves claim derived-data-current (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 
 # ---------------------------------------------------------------- the gate answers

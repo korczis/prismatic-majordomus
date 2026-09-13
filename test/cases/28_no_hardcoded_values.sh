@@ -4,6 +4,8 @@
 # the generator's own declared inputs — so a new command, doctrine, claim or policy key
 # joins these checks by existing, not by someone remembering to add it here. A case that
 # enumerates what it checks is the same second source of truth it is trying to prevent.
+#
+# Proves claim derived-not-declared (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 
 # ---------------------------------------------------------------- policy values

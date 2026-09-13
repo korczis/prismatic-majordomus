@@ -10,6 +10,10 @@
 # socket side is the crate's own suite, tests/mcp_shared.rs, which case 72 and CI run.
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
+#
+# Proves claim mcp-shared-server (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim mcp-lease-resilience (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim mcp-client-autostart (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 [ -n "${MAJORDOMUS_BIN:-}" ] || command -v cargo >/dev/null 2>&1 || { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }
 command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }

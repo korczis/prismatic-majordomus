@@ -3,6 +3,8 @@
 # The wiring verifier is the reason this layer exists, so it is itself mutation-tested:
 # each link of the chain is broken in a throwaway copy and doctor must go red. A verifier
 # that survives broken wiring proves nothing.
+#
+# Proves claim doctrine-registry (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 # The mutations below rewrite the tool itself, so the case runs against its own copy.
 mkdir -p "$T/tool" "$T/tool/.github/workflows"

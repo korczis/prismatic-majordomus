@@ -6,6 +6,8 @@
 # this case fails, two renderers have diverged and one of them is a second source of truth.
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the site cases do for zola.
+#
+# Proves claim provider-projections-one-renderer (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj93.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 RB="$(rust_bin)" || rust_bin_exit $?

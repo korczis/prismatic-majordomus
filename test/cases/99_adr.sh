@@ -13,6 +13,10 @@
 #   two workers proposing at the same moment get two identities. This repository shipped
 #   two 0005s and two 0007s before anything checked, so the concurrent case is exercised
 #   with real concurrent processes rather than asserted.
+#
+# Proves claim adr-catalogue (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim adr-traceability (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim adr-propose (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 git add . && git commit -qm base

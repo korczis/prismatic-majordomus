@@ -2,6 +2,9 @@
 # URL is written, and every projection of it agrees. This case proves the invariants the
 # rule project.distribution-canonical states, and it proves them by mutation: a target
 # added to a copy of the model must change the installer, the matrix and the guide.
+#
+# Proves claim distribution-canonical-model (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim install-command-is-derived (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"

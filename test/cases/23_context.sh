@@ -2,6 +2,10 @@
 # majordomus-negative: context
 # The context builder: authority order, what each profile's context block selects, the
 # budget and its named exclusions, resolution of the right records, and determinism.
+#
+# Proves claim context-assembly (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim context-selection-budget (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim record-resolution (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib docs && echo a > lib/a && echo d > docs/d && git add . && git commit -qm base

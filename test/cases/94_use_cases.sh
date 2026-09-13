@@ -6,6 +6,10 @@
 # from the registry and gated by the policy; a draft scaffolded for a gap runs but never
 # counts; impact traces a changed file to the use cases and cases it affects; and every
 # broken reference, failed step and stale expectation is refused with the entity named.
+#
+# Proves claim use-case-coverage (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim use-case-evidence (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim use-case-impact (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 git add -A >/dev/null && git commit -qm install

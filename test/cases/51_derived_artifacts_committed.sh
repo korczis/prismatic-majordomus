@@ -9,6 +9,8 @@
 # It found a real defect the day it was written: docs/PLAN_STATUS.md recorded the commit it
 # was generated at, so committing it made it name a commit that did not contain it, and
 # --check reported drift on every commit for ever.
+#
+# Proves claim derivation-one-graph (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 

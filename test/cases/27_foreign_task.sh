@@ -3,6 +3,8 @@
 # that moved it — and that checkout must not be held to a scope it never claimed. "One
 # active task per checkout" is checked at start, and this proves the same fact is
 # represented in the record and honoured by every reader.
+#
+# Proves claim worktree-ownership (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 # the tool records git's own toplevel, which on macOS resolves /var to /private/var
 HERE="$(git rev-parse --show-toplevel)"

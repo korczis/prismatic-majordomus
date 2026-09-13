@@ -29,6 +29,8 @@
 # Nothing here is stopped by pattern and no default port is ever bound: this machine runs
 # the servers of other checkouts, every server is started with an ephemeral port, and each
 # is ended through the lease of its own checkout.
+#
+# Proves claim mcp-peers (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }

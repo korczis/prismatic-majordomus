@@ -12,6 +12,8 @@
 //! The whole file is one test on purpose: [`majordomus_cli::lease::lost`] records a fact
 //! about the process that is never unmade — a lease taken over is not given back — so the
 //! before and the after cannot be two tests sharing a binary.
+//!
+//! Proves claim mcp-lease-lost (docs/CLAIMS.yaml), whose `test:` names this case.
 
 mod common;
 

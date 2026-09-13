@@ -1,5 +1,11 @@
 # majordomus-covers: start check
 # majordomus-negative: start check
+# Proves claim scoped-task (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim git-identity (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim consistency-check (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim scope-enforcement (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim divergence-label (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim overlap-report (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib/auth lib/other && echo x > lib/auth/a.txt && echo y > lib/other/b.txt && git add . && git commit -qm base

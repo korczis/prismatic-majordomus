@@ -6,6 +6,8 @@
 # The point of the subsystem is that a worker who has lost its conversation can resume from
 # records. These sequences prove that end to end, in both directions: work that continues
 # through a handover, and work that completes and leaves a reconstructable history.
+#
+# Proves claim continuity-reachable (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib/auth test && echo a > lib/auth/callback && echo t > test/auth_test && git add . && git commit -qm base

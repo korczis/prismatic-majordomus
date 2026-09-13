@@ -11,6 +11,8 @@
 #
 #   no fact about the machine. An absolute path is true of one disk and is disclosure
 #   without purpose in a public repository, so a record that names one is refused.
+#
+# Proves claim session-records (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 "$MJ" update >/dev/null

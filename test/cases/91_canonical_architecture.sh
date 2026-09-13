@@ -9,6 +9,10 @@
 # project.no-network-no-eval): the socket side is the crate's own suite.
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
+#
+# Proves claim capability-modules (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim benchmark-coverage-derived (docs/CLAIMS.yaml), whose `test:` names this case.
+# Proves claim hot-path-no-rebuild (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj91.XXXXXX")"; trap 'rm -rf "$S"' EXIT

@@ -1,6 +1,8 @@
 # The tool's own source must contain none of the constructs SECURITY.md forbids.
 # This is a source scan, not a behavioural test; it exists because there is no behavioural
 # way to prove the absence of a network call.
+#
+# Proves claim no-network (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 files="$ROOT/bin/majordomus $ROOT/lib/*.sh $ROOT/share/providers/*"
 bad=0

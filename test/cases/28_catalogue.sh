@@ -4,6 +4,8 @@
 # doctor red; each asserts the probe took before asserting what it caused, because a sed
 # that matches nothing is silent and would leave the case proving that a no-op causes no
 # failure.
+#
+# Proves claim catalogue-resolves (docs/CLAIMS.yaml), whose `test:` names this case.
 . "$ROOT/test/lib.sh"
 mkdir -p "$T/tool"
 cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/docs" "$T/tool/"
