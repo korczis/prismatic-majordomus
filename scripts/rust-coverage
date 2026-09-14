@@ -107,9 +107,11 @@ if [ -z "$FROM" ]; then
   cargo llvm-cov --version >/dev/null 2>&1 || {
     printf 'rust-coverage: cargo-llvm-cov is not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview)\n' >&2
     exit 12; }
-  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX.json")"
-  # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
-  # measurement. The suite's own verdict is `cargo test`'s; this command's is the coverage.
+  # The X's end the template. BSD mktemp replaces only trailing X's, so `mj-cov.XXXXXX.json`
+  # created that literal name once and failed with "File exists" on every later run on macOS,
+  # before cargo was ever asked; GNU mktemp, on the CI runner, accepts the suffix, which is
+  # why no job saw it. --output-path does not need the extension.
+  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX")"
   # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
   # measurement. But cargo exits 101 when a test fails, and under `set -e` that status
   # would escape this script, which answers only 0/10/12/13 and whose caller
@@ -117,7 +119,24 @@ if [ -z "$FROM" ]; then
   # that vocabulary; it is cargo's own error wearing this gate's name. So the failure is
   # caught here, and the export is judged on whether it exists and parses.
   cov_status=0
-  ( cd "$CRATE" && RUSTFLAGS='' cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null || cov_status=$?
+  # The test harness writes its verdicts to stdout — `test ... FAILED`, the `---- <name> stdout
+  # ----` section and the panic — and this used to send stdout to /dev/null, since the export
+  # goes to --output-path. What survived was cargo's stderr line naming a test binary, so a
+  # failing suite under coverage told the job log that something failed and never what: two
+  # pull requests in a row went red on `to rerun pass --test serve_lifecycle` alone. The run's
+  # stdout is kept, and on a failure the harness's own failure sections are printed; the
+  # thousands of `ok` lines an --all-targets run writes are not, because they would bury the
+  # one line that matters. A failure that never reached the harness (a build error) has no
+  # such section, and then the end of the output is what names it.
+  COV_OUT="$(mktemp "${TMPDIR:-/tmp}/mj-cov-out.XXXXXX")"
+  ( cd "$CRATE" && RUSTFLAGS='' cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) > "$COV_OUT" || cov_status=$?
+  if [ "$cov_status" != 0 ]; then
+    printf 'rust-coverage: cargo llvm-cov exited %s; what the test harness reported:\n' "$cov_status" >&2
+    awk '/^failures:$/ { p = 1 } p && n < 400 { print; n++ } /^test result: / { p = 0 }' "$COV_OUT" > "$COV_OUT.failures"
+    if [ -s "$COV_OUT.failures" ]; then cat "$COV_OUT.failures" >&2; else tail -n 40 "$COV_OUT" >&2; fi
+    rm -f "$COV_OUT.failures"
+  fi
+  rm -f "$COV_OUT"
   if [ ! -s "$FROM" ]; then
     printf 'rust-coverage: the measurement could not be trusted: cargo llvm-cov exited %s and wrote no export\n' "$cov_status" >&2
     exit 12
