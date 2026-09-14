@@ -91,7 +91,7 @@ jq -e '[.capabilities[] | select(.id | startswith("session_domain.")) | select(.
 # ---------------------------------------------------------------- the machine, over HTTP
 serve_up || exit 1
 
-curl -fsS "$U/api/v1/session/machine" > "$S/m.json" \
+curl -fsS --connect-timeout 5 --max-time 30 "$U/api/v1/session/machine" > "$S/m.json" \
   || { echo "    GET /api/v1/session/machine failed"; exit 1; }
 
 # exactly one terminal state, and nothing leaves it. The four records of
@@ -129,7 +129,7 @@ jq -e '.decision | test("0052")' "$S/m.json" >/dev/null \
   || { echo "    the machine does not cite the decision it implements"; exit 1; }
 
 # ---------------------------------------------------------------- the identities
-curl -fsS "$U/api/v1/session/identity" > "$S/i.json" \
+curl -fsS --connect-timeout 5 --max-time 30 "$U/api/v1/session/identity" > "$S/i.json" \
   || { echo "    GET /api/v1/session/identity failed"; exit 1; }
 
 for subject in repository checkout episode provider_session; do
@@ -184,9 +184,9 @@ jq -e '.exposure.http.path == "/api/v1/session/identity"' "$S/identity.json" >/d
 
 # and the routes the declaration claims are the routes the running server actually serves,
 # which is what makes the claim above a measurement rather than a restatement of itself
-[ "$(curl -s -o /dev/null -w '%{http_code}' "$U/api/v1/session/machine")" = 200 ] \
+[ "$(curl -s --connect-timeout 5 --max-time 30 -o /dev/null -w '%{http_code}' "$U/api/v1/session/machine")" = 200 ] \
   || { echo "    the declared route for session_domain.machine is not served"; exit 1; }
-[ "$(curl -s -o /dev/null -w '%{http_code}' "$U/api/v1/session/identity")" = 200 ] \
+[ "$(curl -s --connect-timeout 5 --max-time 30 -o /dev/null -w '%{http_code}' "$U/api/v1/session/identity")" = 200 ] \
   || { echo "    the declared route for session_domain.identity is not served"; exit 1; }
 
 serve_down

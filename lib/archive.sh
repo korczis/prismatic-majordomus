@@ -196,7 +196,11 @@ mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCH
   derived="$(mj_yget "$flat" "profiles.$idx.derived")"
   binary="$(mj_yget "$flat" "profiles.$idx.binary")"
 
-  tmpd="$(mktemp -d "${TMPDIR:-/tmp}/mj.arcsel.XXXXXX")"
+  # Named here rather than copied into the exported name at the end of the function: the
+  # scan that proves no recursive delete leaves a temporary directory trusts a name only
+  # when every assignment to it comes from `mktemp` (test/cases/08).
+  MJ_ARCHIVE_TMPD="$(mktemp -d "${TMPDIR:-/tmp}/mj.arcsel.XXXXXX")"
+  tmpd="$MJ_ARCHIVE_TMPD"
   mj_git ls-files -s > "$tmpd/index" || mj_die "$MJ_EX_INTERNAL" "git ls-files failed"
   # "<mode> <sha> <stage>\t<path>" -> "<mode>\t<path>", gitlinks (160000) dropped: a
   # submodule's content is not in this index and cannot be archived from it
@@ -262,7 +266,6 @@ mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCH
   # awk creates neither output file when it writes no line to it
   [ -f "$out" ] || : > "$out"
   [ -f "$MJ_ARCHIVE_DROPPED" ] || : > "$MJ_ARCHIVE_DROPPED"
-  MJ_ARCHIVE_TMPD="$tmpd"
 }
 
 # ---------------------------------------------------------------- the run

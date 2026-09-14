@@ -68,11 +68,11 @@ pub struct RecordRef<'a> {
 /// * the record's own `issues` key. `share/schemas/majordomus/session-record` describes it
 ///   as "the issues it moved, by id — derived from the ledger's own events for this
 ///   episode; never authored", so it is a canonical link that a machine worked out from
-///   events it can read. That is [`FieldProvenance::Derived`].
+///   events it can read. That is `FieldProvenance::Derived`.
 /// * the branch name. A record always declares the branch it was written on, and
 ///   [`crate::worktree::state::issue_of`] reads an issue id out of one. It is a rule about a
 ///   name and it can be wrong — a branch renamed, an id that is a prefix of another — so it
-///   is [`FieldProvenance::Inferred`].
+///   is `FieldProvenance::Inferred`.
 ///
 /// Reporting both under one provenance would make the weaker of them look like the
 /// stronger, which is the defect this whole module exists to prevent.
@@ -93,8 +93,8 @@ pub struct SessionRef {
 
 // ---------------------------------------------------------------- the groups
 
-/// What a person authored in the canonical record. Every field is [`FieldProvenance::Explicit`]
-/// or [`FieldProvenance::Unknown`] and nothing else: a value here was written down, or it
+/// What a person authored in the canonical record. Every field is `FieldProvenance::Explicit`
+/// or `FieldProvenance::Unknown` and nothing else: a value here was written down, or it
 /// does not exist.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DevTaskDeclaration {

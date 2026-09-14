@@ -1,7 +1,7 @@
 +++
 title = "Keep what an episode learned, without a model and without a conversation"
 description = "Record a decision inside an episode, derive it into a candidate knowledge record from the ledger, read the evidence that the derivation ran, and watch a second derivation change nothing."
-weight = 38
+weight = 39
 [extra]
 id = "keep-what-an-episode-learned"
 source = ".ai/repo/use-cases/keep-what-an-episode-learned.md"

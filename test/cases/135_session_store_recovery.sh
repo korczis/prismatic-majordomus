@@ -255,7 +255,12 @@ expect_exit 0 "$MJ" recover orphans
 must "a temp younger than the threshold is left alone" [ -f .ai/repo/sessions/.tmp.inflight ]
 must "an empty temp is removed" [ ! -f .ai/repo/sessions/.tmp.empty000 ]
 must "so is one whose episode is already published" [ ! -f .ai/repo/sessions/.tmp.publishd ]
-must "and a leftover staging directory" [ ! -d .mj-stage.leftover ]
+# A directory is the one stray this command reports and never removes: SECURITY.md states
+# "no recursive deletion", so the sweep names it, counts it as skipped, and leaves it for a
+# person. Asserting its survival is what keeps a recursive delete from returning quietly.
+must "a leftover staging directory is left where it is" [ -d .mj-stage.leftover ]
+expect_grep 'orphan +\.mj-stage\.leftover'
+expect_grep 'reported and left in place'
 must "and a rename temp whose target arrived" [ ! -f "$S/checkpoints/keep.md.mj-tmp" ]
 # the unpublished record was published rather than deleted
 must "the rescued temp is gone from the store" [ ! -f .ai/repo/sessions/.tmp.rescue00 ]

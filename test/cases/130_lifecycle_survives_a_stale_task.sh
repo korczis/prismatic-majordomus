@@ -91,7 +91,7 @@ must "the briefing lost the divergence label" grep -q 'advanced' "$T/brief.txt"
 
 # The receipt is written before anything decides what to do about the event.
 must "the start event left no receipt in the ledger" \
-  grep -q '"event":"provider.event.received".*"event":"start"' "$LEDGER"
+  grep -q '"event":"provider.event.received".*"provider_event":"start"' "$LEDGER"
 
 # ---------------------------------------------------------------- PreCompact
 # A compaction discards the conversation whether or not a task is open, and whatever
@@ -99,7 +99,7 @@ must "the start event left no receipt in the ledger" \
 compact_event win-stale > "$T/compact.out" 2>"$T/compact.err"
 
 must "the compaction event left no receipt" \
-  grep -q '"event":"provider.event.received".*"event":"compact"' "$LEDGER"
+  grep -q '"event":"provider.event.received".*"provider_event":"compact"' "$LEDGER"
 AFTER_COMPACT="$(count_in "$STATE/checkpoints")"
 [ "$AFTER_COMPACT" -gt "$SEED_CHECKPOINTS" ] || {
   echo "    the compaction wrote no checkpoint: $SEED_CHECKPOINTS before, $AFTER_COMPACT after"
@@ -110,7 +110,7 @@ AFTER_COMPACT="$(count_in "$STATE/checkpoints")"
 end_event win-stale clear > "$T/end.out" 2>"$T/end.err"
 
 must "the end event left no receipt" \
-  grep -q '"event":"provider.event.received".*"event":"end"' "$LEDGER"
+  grep -q '"event":"provider.event.received".*"provider_event":"end"' "$LEDGER"
 AFTER_END="$(count_in "$STATE/handovers")"
 [ "$AFTER_END" -gt "$SEED_HANDOVERS" ] || {
   echo "    the end event wrote no continuation record: $SEED_HANDOVERS before, $AFTER_END after"

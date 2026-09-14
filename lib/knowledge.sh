@@ -624,10 +624,10 @@ mj_knowledge_evidence() {
         d = jstr($0, "decision"); if (d == "") next
         if (task == "" || task == "none") desc = "Recorded as a decision outside a task in episode " sid "."
         else desc = "Recorded as a decision under task " task " in episode " sid "."
-        print "decision", task, ts, "decision.recorded" US task US d, d, desc, "convention", "decided", "decision", ""
+        print "decision", task, ts, "decision.recorded" US d, d, desc, "convention", "decided", "decision", ""
       } else if (e == "question.resolved") {
         q = jstr($0, "question"); a = jstr($0, "answer"); if (a == "") next
-        print "question", task, ts, "question.resolved" US task US q US a, a, \
+        print "question", task, ts, "question.resolved" US q US a, a, \
           "Answers the question \"" q "\" resolved under task " task " in episode " sid ".", "fact", "observed", "question", ""
       } else if (e == "task.finished") {
         o = jstr($0, "outcome")
@@ -654,6 +654,15 @@ mj_knowledge_note_line() {
 # <episode>-<twelve hex characters of sha256 over the canonical evidence>. The digest is of
 # the evidence, not of the record: a change in how a title is worded does not move the
 # file, and the same decision text always lands in the same place.
+#
+# The canonical evidence names what identifies the FACT, never what identifies the run that
+# observed it. A decision is identified by its text and a resolved question by its question
+# and answer, so neither digests the task id: a task id carries the minute it was opened, so
+# digesting it would give the same decision a different file in every repository that
+# recorded it, which is the opposite of what an id is for. The task stays in `derived_from`,
+# where it belongs as provenance. A `task.finished` row is the exception and keeps the task
+# id in its evidence, because there the task is the only thing that distinguishes one
+# outcome from another.
 mj_knowledge_record_id() {
   local sid="$1" canon="$2" digest
   digest="$(printf '%s' "$canon" | tr '\037' '\n' | mj_sha256 /dev/stdin | cut -c1-12)"
@@ -1090,7 +1099,7 @@ mj_knowledge_reject_cmd() {
     || { rm -f "$rec"; mj_die "$MJ_EX_INTERNAL" "knowledge reject: could not rewrite $(mj_rel "$src")"; }
   rm -f "$rec"
   local fields; fields="\"id\":\"$(mj_json_esc "$id")\",\"reason\":\"$(mj_json_esc "$reason")\""
-  [ -n "$by" ] && fields="$fields,\"by\":\"$(mj_json_esc "$by")\""
+  [ -n "$by" ] && fields="$fields,\"superseded_by\":\"$(mj_json_esc "$by")\""
   mj_ledger_append knowledge.rejected "$fields"
   printf '%s\n' "$(mj_rel "$src")"
 }

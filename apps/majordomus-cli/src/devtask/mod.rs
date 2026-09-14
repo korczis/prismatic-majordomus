@@ -5,11 +5,11 @@
 //!
 //! It is **not** a second project model. The canonical records under
 //! `.ai/repo/project/` are the only declaration, [`crate::plan`] is the only derivation of
-//! status, waves, dependents and findings out of them, [`crate::worktree::trace`] is the
+//! status, waves, dependents and findings out of them, `worktree::trace` is the
 //! only derivation of the branches and commits that realised an issue, and
 //! `scripts/github-sync` is the only adapter that projects either onto GitHub. This module
 //! composes those three and adds nothing to them: every status it reports is the status
-//! `plan.issues` reports, and [`task::tests`] holds that equality as an assertion.
+//! `plan.issues` reports, and `task::tests` holds that equality as an assertion.
 //!
 //! What it adds is the thing none of them could add on its own:
 //!

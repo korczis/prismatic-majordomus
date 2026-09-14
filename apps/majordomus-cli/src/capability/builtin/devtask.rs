@@ -15,7 +15,7 @@
 //! * the records are the canonical ones, read through the index like every other object;
 //! * the status, wave, dependents, edges and findings are [`crate::plan`]'s, unchanged —
 //!   `the_status_never_disagrees_with_the_plan` is the assertion;
-//! * the branches and commits are [`crate::worktree::trace`]'s, through the same [`Tracer`]
+//! * the branches and commits are `worktree::trace`'s, through the same [`Tracer`]
 //!   `trace.issue` uses;
 //! * the readiness vocabulary is a projection of the canonical statuses and refines three
 //!   of them without replacing any — [`crate::devtask::readiness`] states which and why;

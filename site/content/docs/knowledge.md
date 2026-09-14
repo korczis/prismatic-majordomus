@@ -144,7 +144,7 @@ written, because an unknown event name is an error.
 |---|---|---|
 | `knowledge.derived` | `episode`, `written`, `unchanged`, `paths`, and `skipped` when a line was refused | every non-dry-run derivation that resolved an episode, even when it wrote nothing |
 | `knowledge.promoted` | `id`, `path` | `knowledge promote` |
-| `knowledge.rejected` | `id`, `reason`, and `by` when `--by` was given | `knowledge reject` |
+| `knowledge.rejected` | `id`, `reason`, and `superseded_by` when `--by` was given | `knowledge reject` |
 
 </div>
 

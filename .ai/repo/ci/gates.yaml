@@ -156,6 +156,16 @@ gates:
     runs: scripts/ci/rule-proof-check
     summary: every blocking rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, a named case that was renamed or deleted fails outright, and the verdict names the population it is not about (claims are the claim-proof gate)
 
+  # The commit policy over the history (rule project.conventional-commits). Needs the
+  # executable, because the judge is the executable's — the gate chooses a range and
+  # compares a count, and carries no grammar of its own. The branch's own commits must pass
+  # outright; the history's existing debt is ratcheted in
+  # .ai/repo/commit-policy-baseline.txt.
+  - id: commit-policy
+    job: structure
+    runs: scripts/ci/commit-policy
+    summary: every commit this branch adds satisfies the repository's commit policy, and the history's recorded debt does not grow
+
   # A grep over the tree, so it costs nothing and runs in every plan: a second parser of
   # the lease can be introduced from a shell script, a recipe, a hook or the crate, and no
   # one path class names all four.
@@ -192,6 +202,11 @@ gates:
     job: coverage
     runs: just coverage
     summary: coverage of the crate against scripts/rust-coverage-threshold and of the session/continuity domain against scripts/session-coverage-threshold, both measured with test code out of the denominator
+
+  - id: coverage-differential
+    job: coverage
+    runs: scripts/ci/coverage-differential
+    summary: every executable line, function and region a change adds or touches under the crate is covered by a test, measured against the branch's merge-base with the trunk over the same export and test-exclusion as the crate gate; new debt is refused, legacy debt on untouched lines is not this gate's business (project.new-code-is-covered)
 
   # macOS, because the one committed baseline is macOS's. On demand for the reason below:
   # its runner is the scarce one, and a queued benchmark check is not a measurement.
@@ -418,8 +433,8 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/rust-check, scripts/rust-coverage, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, version-surface, release-check]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, version-surface, release-check]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
   # to ADR 0050, and the architecture document
@@ -442,6 +457,14 @@ classes:
   - id: governance
     paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/claim-proof-check, .ai/repo/claim-proof-baseline.txt, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, test/cases/230_verdict_states_its_subject.sh, apps/majordomus-cli/src/rules/**]
     gates: [rule-proof, claim-proof, english-only, finding-reproduce, shell-suite, rust-integration]
+
+  # the commit policy: the subsystem that judges a message, the gate that reads the history
+  # through it, the hook that refuses with it, and the baseline of the commits that predate
+  # it. A change to the grammar, the policy or the vocabulary changes what every commit made
+  # afterwards is held to, so the gate and both suites run.
+  - id: commit-policy
+    paths: [apps/majordomus-cli/src/commit/**, apps/majordomus-cli/src/capability/builtin/commit.rs, apps/majordomus-cli/src/commands/commit.rs, scripts/ci/commit-policy, .ai/repo/commit-policy-baseline.txt, .githooks/commit-msg, test/cases/274_commit_policy.sh]
+    gates: [commit-policy, rust-integration, shell-suite, rust-quality]
 
   # the evidence fabric: the ledger of recorded executions, the join that reads it and the
   # gate that ratchets it. A claim's proof is derived from the matrix and the ledger

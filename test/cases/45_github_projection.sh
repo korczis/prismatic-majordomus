@@ -134,6 +134,23 @@ expect_grep 'DRIFT +missing +issue I0002 is not on GitHub'
 expect_exit 11 check_fx
 expect_grep 'DRIFT +unmanaged +issue #10 claims to be I9999'
 
+# a human-written title is not an identity. An issue with no marker whose title does not
+# carry the canonical `<id> — <title>` shape claims no record, so it is not unmanaged: the
+# whole title used to be promoted to a canonical id, which made every hand-written issue on
+# the remote a permanent finding of a gate that had no other one.
+"$SYNC" --render I0002 | grep -v '^<!-- majordomus:record ' \
+  | row 11 'P0: 100% new-code coverage is a blocking invariant' '' > "$FX_I"
+expect_exit 11 check_fx
+expect_no_grep 'DRIFT +unmanaged +issue #11'
+expect_no_grep 'claims to be P0:'
+
+# ...and a title that does carry the canonical shape still claims its record without a
+# marker, so the two title branches stay symmetric and adoption by title is not lost
+"$SYNC" --render I0002 | grep -v '^<!-- majordomus:record ' \
+  | row 12 'I9999 — Gone from the model' '' > "$FX_I"
+expect_exit 11 check_fx
+expect_grep 'DRIFT +unmanaged +issue #12 claims to be I9999'
+
 # a fixture is a remote to read, never one to write
 MJ_GH_FIXTURE_ISSUES="$FX_I" expect_exit 15 "$SYNC" --apply
 expect_grep 'refuses a fixture remote'

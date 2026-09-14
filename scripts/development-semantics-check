@@ -9,7 +9,8 @@
 #
 #   scripts/development-semantics-check              report; exit 0 clean, 10 with findings
 #   scripts/development-semantics-check --json       the findings as JSON
-#   scripts/development-semantics-check --baseline   rewrite the baseline from what is found
+#   scripts/development-semantics-check --baseline   retire the baseline entries that are closed
+#   ... --baseline --accept <key>                    and take <key> on as accepted debt
 #
 # BACKING. A command declared in share/commands.yaml that mutates a development object tree
 # is owed a mutating capability in the registry projection docs/generated/registry.json. A
@@ -20,7 +21,17 @@
 # SURFACE PURITY. The Cockpit renders capability output. A path into the AI layer, or the
 # name of a majordomus executable, inside apps/majordomus-cli/src/cockpit/** or
 # share/cockpit/** is a second implementation starting, and is reported as
-# "surface:<path>:<line>:<evidence>".
+# "surface:<path>:<evidence>:<hash>".
+#
+# A FINDING KEY IS AN IDENTITY, NOT A COORDINATE. The surface key used to end in a line
+# number, and a line number is the one property of a finding that unrelated work changes.
+# Any edit above a baselined line re-reported already-accepted debt as a new regression:
+# one unchanged line of cockpit/pages.rs was simultaneously a regression at :2173 and a
+# stale baseline entry at :1787, and a ratchet that cannot survive an edit elsewhere in the
+# file teaches everyone to ignore it. The key is now the file that carries the offending
+# text, the evidence token a reader needs, and sha256 of the line with its whitespace
+# normalised — stable under movement and reindentation, and changed by an edit to the
+# offending line itself, which is the event that needs re-review.
 #
 # WHAT THIS CANNOT DECIDE. Whether a derivation inside a surface is a semantic or a
 # presentation choice: a template that pluralises a count is not a second implementation and
@@ -34,20 +45,35 @@
 # The baseline is .ai/repo/development-semantics-baseline.txt, one finding key per line. A
 # finding in it is known debt and does not fail; one that is not is a regression and does;
 # a baseline line that matches nothing is reported so the ratchet tightens instead of
-# rotting. The baseline may shrink and may not grow.
+# rotting. The baseline may shrink and may not grow, and --baseline enforces that rather
+# than asserting it: it writes back what was already accepted and is still found, so
+# regenerating retires closed debt and cannot launder a live regression. Taking a new key
+# on is --accept, one key at a time, in a commit that says on what grounds ADR 0040 permits
+# it to stay.
 set -eu
 set -o pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# The gate is part of the tool; the tree it measures is the one under test. They are not
+# always the same tree — the case that proves this gate can fail drives it over a fixture
+# repository — so the gate is located from this script and the model from MJ_ROOT, exactly
+# as scripts/ci/github-check already does. A gate that cannot be shown to fail is
+# decoration, and this one had no case at all while its key was generating false
+# regressions.
+SELF="$(cd "$(dirname "$0")" && pwd)"
+ROOT="${MJ_ROOT:-$(cd "$SELF/.." && pwd)}"
 BASELINE="$ROOT/.ai/repo/development-semantics-baseline.txt"
 COMMANDS="$ROOT/share/commands.yaml"
 REGISTRY="$ROOT/docs/generated/registry.json"
 JSON=0; WRITE=0
+ACCEPTED="$(mktemp "${TMPDIR:-/tmp}/mj-devsem-acc.XXXXXX")"
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) JSON=1; shift ;;
     --baseline) WRITE=1; shift ;;
-    --help|-h) sed -n '2,36p' "$0"; exit 0 ;;
+    --accept)
+      [ $# -ge 2 ] || { echo "development-semantics-check: --accept needs a finding key" >&2; exit 2; }
+      printf '%s\n' "$2" >> "$ACCEPTED"; WRITE=1; shift 2 ;;
+    --help|-h) sed -n '2,52p' "$0"; exit 0 ;;
     *) echo "development-semantics-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -58,7 +84,7 @@ for f in "$COMMANDS" "$REGISTRY"; do
 done
 
 FOUND="$(mktemp "${TMPDIR:-/tmp}/mj-devsem.XXXXXX")"
-trap 'rm -f "$FOUND" "$FOUND.new" "$FOUND.stale" "$FOUND.known"' EXIT
+trap 'rm -f "$FOUND" "$FOUND.new" "$FOUND.stale" "$FOUND.known" "$FOUND.files" "$FOUND.allowed" "$FOUND.write" "$FOUND.open" "$ACCEPTED"' EXIT
 
 # --- backing ---------------------------------------------------------------------------
 # The object trees a development semantic owns. A command that writes one of these is
@@ -110,49 +136,99 @@ PY
 # --- surface purity --------------------------------------------------------------------
 # The Cockpit trees render capability output. A layer path or an executable name in them is
 # a semantic about to be implemented in the wrong place.
-surface_files() {
-  git ls-files -- 'apps/majordomus-cli/src/cockpit' 'share/cockpit' 2>/dev/null \
-    | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done
-}
+# The file list goes through a file, not a pipe: `python3 -` takes its program on stdin, so
+# a heredoc and a pipe cannot both be stdin, and the pipe loses.
+git ls-files -- 'apps/majordomus-cli/src/cockpit' 'share/cockpit' 2>/dev/null > "$FOUND.files" || true
 
-surface_files | while IFS= read -r f; do
-  # `|| true`: a file that names none of these, or whose only mentions are the generated
-  # banner, is the good case, and both greps say so by exiting 1. Under `set -o pipefail`
-  # that ended the scan at the first clean file — which is why the setting belongs here:
-  # without it the same 1 was being swallowed along with any real failure beside it.
-  { grep -nE '\.ai/(repo|local)|bin/majordomus|majordomus-cli' "$f" 2>/dev/null \
-    | grep -vE 'Generator:|generated by|GENERATED FILE' \
-    || true; } \
-    | while IFS= read -r hit; do
-        line="${hit%%:*}"
-        printf 'surface:%s:%s\n' "$f" "$line"
-      done
-done >>"$FOUND"
+python3 - "$FOUND.files" >>"$FOUND" <<'PY'
+import hashlib, os, re, sys
+
+# A layer path or the name of a majordomus executable. The generated banner names the
+# generator rather than reading the layer, so it is not a finding.
+# The trailing run is reported, not required: the same lines match either way, and a reader
+# of a key is told `.ai/repo/sessions` rather than `.ai/repo`.
+DETECT = re.compile(r'\.ai/(?:repo|local)[A-Za-z0-9._/-]*|bin/majordomus|majordomus-cli')
+BANNER = re.compile(r'Generator:|generated by|GENERATED FILE')
+
+for path in (line.rstrip('\n') for line in open(sys.argv[1], encoding='utf-8')):
+    if not path or not os.path.isfile(path):
+        continue
+    with open(path, encoding='utf-8', errors='replace') as fh:
+        for raw in fh:
+            if BANNER.search(raw):
+                continue
+            m = DETECT.search(raw)
+            if not m:
+                continue
+            # The key is the finding's identity, not its coordinates. It used to end in a
+            # line number, and a line number is the one property of a finding that unrelated
+            # work changes: every edit above a baselined line re-reported already-accepted
+            # debt as a new regression, and the same unchanged line of pages.rs was
+            # simultaneously a regression at :2173 and a stale baseline entry at :1787. A
+            # ratchet that cannot survive an edit elsewhere in the file teaches everyone to
+            # ignore it.
+            #
+            # What identifies this finding is the offending text, in the file that carries
+            # it: the evidence token for a reader, and a digest of the line with its
+            # whitespace normalised so that reindentation and movement are both invisible.
+            # Editing the offending line itself does change the key — correctly, because
+            # that is the event that needs re-review. Two identical offending lines in one
+            # file are one finding, deliberately: the gate reports the debt, not a census.
+            digest = hashlib.sha256(' '.join(raw.split()).encode('utf-8')).hexdigest()[:8]
+            print(f'surface:{path}:{m.group(0)}:{digest}')
+PY
 
 LC_ALL=C sort -u "$FOUND" -o "$FOUND"
-
-if [ "$WRITE" -eq 1 ]; then
-  {
-    echo "# development-semantics-check baseline — accepted debt for"
-    echo "# project.development-semantics-are-canonical@1 (ADR 0040)."
-    echo "#"
-    echo "# backing:<command>        a public mutating command of share/commands.yaml that"
-    echo "#                          writes a development object tree and that the capability"
-    echo "#                          registry does not declare a mutating capability for."
-    echo "# surface:<path>:<line>    a layer path or executable name inside a Cockpit tree."
-    echo "#"
-    echo "# This list may shrink and may not grow. Regenerate only when closing an entry:"
-    echo "#   scripts/development-semantics-check --baseline"
-    LC_ALL=C sort -u "$FOUND"
-  } > "$BASELINE"
-  echo "development-semantics-check: baseline rewritten with $(grep -cv '^#' "$BASELINE" || true) entry/entries"
-  exit 0
-fi
 
 if [ -f "$BASELINE" ]; then
   grep -v '^#' "$BASELINE" | grep -v '^[[:space:]]*$' | LC_ALL=C sort -u > "$FOUND.known" || true
 else
   : > "$FOUND.known"
+fi
+
+if [ "$WRITE" -eq 1 ]; then
+  # "May shrink and may not grow" was a sentence in a comment, and the only command that
+  # writes the file wrote everything it had just found — so the one documented way to
+  # retire closed debt was also a one-command way to accept every live regression. The
+  # writer enforces the sentence instead: it keeps what was already accepted and is still
+  # found, drops what is no longer found, and takes a new key only when --accept names it.
+  # A regression neither closed nor named stays a regression, and is reported here too.
+  LC_ALL=C sort -u "$ACCEPTED" -o "$ACCEPTED"
+  LC_ALL=C sort -u "$FOUND.known" "$ACCEPTED" > "$FOUND.allowed"
+  LC_ALL=C comm -12 "$FOUND" "$FOUND.allowed" > "$FOUND.write"
+  LC_ALL=C comm -23 "$FOUND" "$FOUND.allowed" > "$FOUND.open"
+  {
+    echo "# development-semantics-check baseline — accepted debt for"
+    echo "# project.development-semantics-are-canonical@1 (ADR 0040)."
+    echo "#"
+    echo "# backing:<command>                 a public mutating command of share/commands.yaml"
+    echo "#                                   that writes a development object tree and that the"
+    echo "#                                   capability registry declares no mutating capability"
+    echo "#                                   for."
+    echo "# surface:<path>:<evidence>:<hash>  a layer path or executable name inside a Cockpit"
+    echo "#                                   tree, identified by the offending text rather than"
+    echo "#                                   by a line number: a key carrying a coordinate"
+    echo "#                                   re-reports accepted debt whenever anything above it"
+    echo "#                                   is edited. <hash> is sha256 of the line with its"
+    echo "#                                   whitespace normalised, first 8 hex."
+    echo "#"
+    echo "# This list may shrink and may not grow. Regenerating retires what is closed:"
+    echo "#   scripts/development-semantics-check --baseline"
+    echo "# Accepting a new entry is a separate, deliberate act that names it, and belongs in"
+    echo "# a commit that says on what grounds ADR 0040 permits it to stay:"
+    echo "#   scripts/development-semantics-check --baseline --accept <key>"
+    LC_ALL=C sort -u "$FOUND.write"
+  } > "$BASELINE"
+  echo "development-semantics-check: baseline rewritten with $(grep -cv '^#' "$BASELINE" || true) entry/entries"
+  if [ -s "$FOUND.open" ]; then
+    echo
+    echo "NOT accepted — still a regression, and not written to the baseline:"
+    sed 's/^/  FAIL  /' "$FOUND.open"
+    echo
+    echo "  Close it, or accept it deliberately with --accept <key> and say in the commit"
+    echo "  on what grounds ADR 0040 permits it to stay."
+  fi
+  exit 0
 fi
 LC_ALL=C comm -23 "$FOUND" "$FOUND.known" > "$FOUND.new" || true
 LC_ALL=C comm -13 "$FOUND" "$FOUND.known" > "$FOUND.stale" || true

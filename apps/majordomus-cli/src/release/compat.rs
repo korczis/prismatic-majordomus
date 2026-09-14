@@ -28,7 +28,7 @@
 //!
 //! # Why unknown means major
 //!
-//! [`compare_schema`] models the schema mutations it can name and refuses to guess at the
+//! `compare_schema` models the schema mutations it can name and refuses to guess at the
 //! rest: a key it does not understand, changed, is [`Impact::Major`] with a diagnostic
 //! saying which pointer and that it is unmodelled. A false major is an argument; a false
 //! patch is a broken caller who finds out by breaking. Prose keys are normalised away first

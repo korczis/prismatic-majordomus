@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.6.0
 coverage:
   - scope: direct
-    required: 111
-    covered: 106
+    required: 115
+    covered: 110
     missing: 0
     waived: 5
   - scope: http
-    required: 110
-    covered: 106
+    required: 114
+    covered: 110
     missing: 0
     waived: 4
   - scope: mcp
-    required: 108
-    covered: 104
+    required: 112
+    covered: 108
     missing: 0
     waived: 4
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 342
-    covered: 329
+    required: 354
+    covered: 341
     missing: 0
     waived: 13
 capabilities:
@@ -99,6 +99,44 @@ capabilities:
       - all
       - read-only
       - one-program
+  - id: commit.history
+    module: commit
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole-history
+  - id: commit.plan
+    module: commit
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: commit.scopes
+    module: commit
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: commit.validate
+    module: commit
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - conventional
+      - not-conventional
+      - merge
   - id: continuity.state
     module: continuity
     kind: query

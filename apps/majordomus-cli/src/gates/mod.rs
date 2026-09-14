@@ -13,7 +13,7 @@
 //!
 //! # Nothing here is a second declaration
 //!
-//! - **The gates** are `.ai/repo/ci/gates.yaml`, read by [`model::GateModel`]. `scripts/ci-plan`
+//! - **The gates** are `.ai/repo/ci/gates.yaml`, read by `model::GateModel`. `scripts/ci-plan`
 //!   is the other reader; the behavioural case asserts they select the same set.
 //! - **Applicability** is that model's own rules, applied to the task's own change set —
 //!   the paths between the task's starting commit and the working tree. Not a table of
@@ -31,7 +31,7 @@
 //!
 //! A gate run is now a fact the record can hold: `majordomus evidence --gate <id> --exit <n>`
 //! writes a `task.gate` line carrying the hash of the files that select that gate, and
-//! [`judge`] turns those lines into a status. Recording is the shell tool's, because the
+//! `judge` turns those lines into a status. Recording is the shell tool's, because the
 //! ledger has one writer (ADR 0030); judging is here, because a judgement with two
 //! implementations is how `check` and a gate come to disagree.
 //!

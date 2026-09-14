@@ -99,31 +99,93 @@ mj_changed_load_declarations() {
       [ -n "$t" ] && MJ_DERIVED_PATHS="$MJ_DERIVED_PATHS$t"$'\n'
     done < <(awk '$0 !~ /^[[:space:]]*#/ && $0 ~ /merge=derived/ { print $1 }' "$MJ_ROOT/.gitattributes")
   fi
+  mj_changed_build_ere
+  return 0
+}
+
+# The declarations' glob language, translated once into one anchored ERE.
+#
+# The pathspecs come from three vocabularies — scope.yaml's glob subset, a policy target
+# that is a plain path, a gitattributes pattern — and all three are written in globset's
+# syntax, which is what `apps/majordomus-cli/src/scope.rs` matches the same declarations
+# with: `**` crosses separators, `*` does not, and a character class is a class.
+#
+# This reader used to implement three shapes of that syntax — a plain path, a trailing `/`,
+# a trailing `/**` or `/*` — and to match anything else literally. That was described as
+# the safe direction, and it is not one: a declaration written in any other shape excluded
+# nothing at all, silently, and three declarations in this repository are written in shapes
+# it could not read. Measured on the twenty-two records that exist:
+#
+#   site/content/*.md                  .gitattributes, whose managed block scripts/gitattributes
+#                                      writes from the site generator's own publish list — so the
+#                                      tracked, generated pages site/content/_index.md,
+#                                      architecture.md and changelog.md counted as work
+#   .ai/repo/benchmarks/**/baseline.*  scope.yaml out.generated.paths: a ratchet baseline, which
+#                                      a benchmark run rewrites and no worker authors
+#   **/target/ and eight siblings      scope.yaml out.paths. These leak nothing today, because
+#                                      git does not report an ignored path as changed and every
+#                                      one of them is ignored — but the declaration said one
+#                                      thing and the reader did another, which is the defect
+#                                      whether or not it is currently reachable
+#
+# What replaces it is a translation over the syntax, not a longer list of shapes: a
+# declaration form nobody anticipated is translated too. The alternation is built once per
+# process and applied with one match per file, which is also cheaper than walking 179
+# pathspecs for every path in the tree.
+#
+# A trailing `/` means the directory and everything under it. A pathspec with no wildcard
+# at all keeps the reading it had — the path, or anything under it — because a policy target
+# is a plain path and `docs/generated` must still cover the tree below it.
+mj_changed_glob_ere() {
+  local p="$1" out="" i=0 c wild=0 inclass=0
+  case "$p" in */) p="$p**" ;; esac
+  while [ "$i" -lt "${#p}" ]; do
+    c="${p:$i:1}"
+    if [ "$inclass" = 1 ]; then
+      out="$out$c"; [ "$c" = ']' ] && inclass=0; i=$((i + 1)); continue
+    fi
+    case "$c" in
+      '[') out="${out}["; inclass=1; wild=1 ;;
+      '*') wild=1
+           if [ "${p:$i:2}" = '**' ]; then
+             # `**/` at a segment boundary may match no segment at all, so that a
+             # declaration of `**/target/` covers a target/ directory at the root too
+             if [ "${p:$i:3}" = '**/' ]; then out="$out(.*/)?"; i=$((i + 2))
+             else out="$out.*"; i=$((i + 1)); fi
+           else out="${out}[^/]*"; fi ;;
+      '?') out="${out}[^/]"; wild=1 ;;
+      '.' | '^' | '$' | '+' | '(' | ')' | '{' | '}' | '|' | '\') out="$out\\$c" ;;
+      *) out="$out$c" ;;
+    esac
+    i=$((i + 1))
+  done
+  [ "$wild" = 0 ] && out="$out(/.*)?"
+  printf '%s' "$out"
+}
+
+# One alternation over every declared pathspec. Empty when a repository declares none, and
+# the caller then excludes nothing — the same answer as before, reached without a match.
+MJ_DERIVED_ERE=""
+mj_changed_build_ere() {
+  local alt="" t e
+  while IFS= read -r t; do
+    [ -n "$t" ] || continue
+    e="$(mj_changed_glob_ere "$t")"
+    [ -n "$e" ] || continue
+    alt="${alt:+$alt|}$e"
+  done <<EOF
+$MJ_DERIVED_PATHS
+EOF
+  [ -n "$alt" ] && MJ_DERIVED_ERE="^($alt)\$"
   return 0
 }
 
 # Is repository-relative path $1 covered by one of the declarations? 0 yes, 1 no.
-#
-# The pathspecs come from three different vocabularies — scope.yaml's glob subset, a policy
-# target that is a plain path, a gitattributes pattern — and the three agree on the forms
-# that actually appear: a plain path, a trailing `/` for a directory, and a trailing `/**`
-# or `/*`. Those are matched; anything else is matched literally and therefore excludes
-# nothing, which is the safe direction for a filter that decides what a record omits.
 mj_changed_is_derived() {
-  local f="$1" p n
+  local f="$1" n
   mj_changed_load_declarations
-  while IFS= read -r p; do
-    [ -n "$p" ] || continue
-    case "$p" in
-      */'**') [ -z "${f##"${p%'**'}"*}" ] && return 0 ;;
-      */'*')  [ -z "${f##"${p%'*'}"*}" ] && return 0 ;;
-      */)     [ -z "${f##"$p"*}" ] && return 0 ;;
-      *)      [ "$f" = "$p" ] && return 0
-              [ -z "${f##"$p"/*}" ] && return 0 ;;
-    esac
-  done <<EOF
-$MJ_DERIVED_PATHS
-EOF
+  # shellcheck disable=SC2076  # the declaration is a pattern; quoting it would match it literally
+  if [ -n "$MJ_DERIVED_ERE" ] && [[ "$f" =~ $MJ_DERIVED_ERE ]]; then return 0; fi
   while IFS= read -r n; do
     [ -n "$n" ] || continue
     # shellcheck disable=SC2254  # the pattern is the declaration; that is the whole point
@@ -163,8 +225,33 @@ EOF
 
 # The same list as the block a record's front matter carries. One writer, so that a record
 # and the command that explains it can never disagree about the indentation either.
+#
+# Not a pipeline. `mj_changed_files | sed` ran the classifier in a subshell, so the count it
+# left in MJ_CHANGED_EXCLUDED died with that subshell and no caller could ever read it —
+# the comment above the variable promised a number that nothing was able to produce. The
+# list goes through a file instead, and the note below is the thing that promise was for.
 mj_changed_files_block() {
-  mj_changed_files "$@" | sed 's/^/  - /'
+  local tmp; tmp="$(mktemp "${TMPDIR:-/tmp}/mj.cb.XXXXXX")"
+  mj_changed_files "$@" > "$tmp"
+  sed 's/^/  - /' "$tmp"
+  rm -f "$tmp"
+  mj_changed_excluded_note
+  return 0
+}
+
+# What the filter left out, said out loud.
+#
+# A filter that silently shortens a list is indistinguishable from a tree that was cleaner
+# than it was, and a record is evidence: a reader must be able to tell "this episode changed
+# four files" from "this episode changed four files and regenerated ninety". The count goes
+# to stderr, never into the record — the record's front matter is a closed contract whose
+# allow-list refuses an unknown key, so a new key there would make every record this version
+# writes unreadable to a checkout running the last one, and the derived half is in any case
+# recoverable from git over the very commit range the record already names.
+mj_changed_excluded_note() {
+  [ "${MJ_CHANGED_EXCLUDED:-0}" -gt 0 ] || return 0
+  printf '%s: %s derived or checkout-local path(s) classified out of changed_files\n' \
+    "${MJ_SELF##*/}" "$MJ_CHANGED_EXCLUDED" >&2
   return 0
 }
 

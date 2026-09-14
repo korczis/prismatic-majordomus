@@ -2041,13 +2041,13 @@ fn closed_card(c: &ClosedSessions) -> El {
         badge("info", format!("{} tracked", c.total)),
         el("div")
             .child(el("div").class("mj-stats").children(vec![
-                statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
+                statistic(c.total.to_string(), "closed records", "the session records"),
                 statistic(
                     c.on_this_branch.to_string(),
                     "on this branch",
-                    ".ai/repo/sessions",
+                    "the session records",
                 ),
-                statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
+                statistic(c.window.to_string(), "shown below", "the session records"),
             ]))
             .child(table(
                 &["Episode", "Closed", "Branch", "Outcome", "Title"],
@@ -2170,7 +2170,9 @@ pub fn continuity(ctx: &Context) -> Page {
                 el("div").class("mj-stats").children(
                     c.tallies
                         .iter()
-                        .map(|(k, n)| statistic(n.to_string(), k.clone(), ".ai/local/state"))
+                        .map(|(k, n)| {
+                            statistic(n.to_string(), k.clone(), "this checkout's local state")
+                        })
                         .collect::<Vec<_>>(),
                 ),
             )
@@ -2581,7 +2583,7 @@ pub fn mesh(ctx: &Context) -> Page {
         Err(e) => return failed(Area::Mesh, "Mesh", e),
     };
 
-    let mut this_node = facts(vec![(
+    let this_node = facts(vec![(
         "Mesh",
         Node::Element(word_badge(if status.active {
             "active"
@@ -2589,10 +2591,14 @@ pub fn mesh(ctx: &Context) -> Page {
             "inactive"
         })),
     )]);
-    if let Some(reason) = &status.reason {
-        this_node = this_node.child(el("p").class("mj-prose").text(reason));
-    }
     let mut overview = el("div").child(this_node);
+    // Beside the list rather than inside it. `.mj-facts` is a grid whose first column is
+    // `max-content`, so a paragraph placed among its rows becomes a grid item that sizes
+    // that column to the whole sentence: the card then overflows a 320px viewport, which is
+    // what the Cockpit probe measured. A `<p>` is also not a child a `<dl>` may have.
+    if let Some(reason) = &status.reason {
+        overview = overview.child(el("p").class("mj-prose").text(reason));
+    }
     if let Some(identity) = &status.identity {
         overview = overview.child(facts(vec![
             ("Node", Node::Element(mono(identity.node_id.to_string()))),

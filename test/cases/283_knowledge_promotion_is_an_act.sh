@@ -130,5 +130,5 @@ expect_grep '^knowledge candidates: 0 awaiting review'
 P3="$(derive_written)"; ID3="$(basename "$P3" .md)"
 expect_exit 0 "$MJ" knowledge reject "$ID3" --reason "the promoted record says it" --by "$ID1"
 must "superseded_by does not name the replacing record" grep -q "^superseded_by: $ID1$" "$P3"
-must "the knowledge.rejected line does not carry by" grep -q "\"event\":\"knowledge.rejected\".*\"id\":\"$ID3\".*\"by\":\"$ID1\"" "$LEDGER"
+must "the knowledge.rejected line does not carry superseded_by" grep -q "\"event\":\"knowledge.rejected\".*\"id\":\"$ID3\".*\"superseded_by\":\"$ID1\"" "$LEDGER"
 expect_exit 0 "$MJ" knowledge check
