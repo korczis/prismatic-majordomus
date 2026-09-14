@@ -28,7 +28,8 @@ export, test code excluded from both the covered and the total so a test added n
 the number — and reports line, function and region coverage by one rule. Three gates read
 that one judgment. The crate floor (`scripts/rust-coverage-threshold`) is a lower bound on
 the whole executable. The session/continuity domain (`scripts/session-coverage-domain`) is
-held to a floor of its own on lines, functions and regions. And the differential gate
+held to a floor of its own on lines, functions and regions. Both floors are ratchets: each is
+the coverage its subject measured when it was set, and may rise and never fall. And the differential gate
 (`scripts/ci/coverage-differential`, rule `project.new-code-is-covered`) holds every
 executable line, function and region a change adds or touches — measured against the
 branch's merge-base with the trunk, working tree included — so a change that introduces
