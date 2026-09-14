@@ -28580,6 +28580,29 @@
         }
       },
       {
+        "id": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "rule",
+        "label": "project.homepage-tells-a-declared-story@1",
+        "summary": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.homepage-tells-a-declared-story%401",
+        "source": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.navigation-is-declared-once@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "web",
+            "homepage",
+            "navigation",
+            "projections",
+            "documentation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.hot-path-reads-once@1",
         "kind": "rule",
         "label": "project.hot-path-reads-once@1",
@@ -32439,6 +32462,20 @@
         "label": "test/cases/32_schema_integrity.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F32_schema_integrity.sh",
         "source": "test/cases/32_schema_integrity.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "kind": "test",
+        "label": "test/cases/333_homepage_narrative.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F333_homepage_narrative.sh",
+        "source": "test/cases/333_homepage_narrative.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "kind": "test",
+        "label": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F334_ui_audit_hears_uncaught_errors.sh",
+        "source": "test/cases/334_ui_audit_hears_uncaught_errors.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -49447,6 +49484,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.navigation-is-declared-once@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.hot-path-reads-once@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -50723,6 +50775,16 @@
       },
       {
         "source": "majordomus://test/test/cases/32_schema_integrity.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54418,8 +54480,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1709,
-      "edges": 3837,
+      "nodes": 1712,
+      "edges": 3842,
       "acyclic": true,
       "truncated": false
     }

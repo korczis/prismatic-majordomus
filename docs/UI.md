@@ -111,7 +111,10 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
   `data-accordion-target`, `data-tabs-toggle`, `data-tooltip-target`, `data-popover-target`,
   and the toggles beside them) names a target that exists and has an accessible name.
 - **`runtime.console-error` / `runtime.asset-failed`** — the page loaded without an error and
-  without a same-origin request failing. A *cancelled* request is not a failed one:
+  without a same-origin request failing. An exception no script catches counts as an error
+  (reported with the prefix `uncaught:`): the browser raises it as a page error rather than a
+  console message, and a sweep that listened to the console alone missed Mermaid throwing on
+  every diagram page. A *cancelled* request is not a failed one:
   `net::ERR_ABORTED` is the browser saying it no longer needs the response, which is what a
   lazily loaded asset in flight when the audit moves on produces, and it says nothing about
   the site.
