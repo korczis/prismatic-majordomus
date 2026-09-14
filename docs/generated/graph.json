@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.6.0",
+  "generator": "majordomus-cli 0.6.1",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -125,6 +125,42 @@
         "summary": "Every command, one line each",
         "route": "/cockpit/capabilities/commands.list",
         "source": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:commit.history",
+        "kind": "capability",
+        "label": "commit.history",
+        "summary": "Judge a range of history",
+        "route": "/cockpit/capabilities/commit.history",
+        "source": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:commit.plan",
+        "kind": "capability",
+        "label": "commit.plan",
+        "summary": "What the working tree would commit",
+        "route": "/cockpit/capabilities/commit.plan",
+        "source": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:commit.scopes",
+        "kind": "capability",
+        "label": "commit.scopes",
+        "summary": "The scope vocabulary",
+        "route": "/cockpit/capabilities/commit.scopes",
+        "source": "apps/majordomus-cli/src/capability/builtin/commit.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:commit.validate",
+        "kind": "capability",
+        "label": "commit.validate",
+        "summary": "Judge one commit message",
+        "route": "/cockpit/capabilities/commit.validate",
+        "source": "apps/majordomus-cli/src/capability/builtin/commit.rs",
         "status": "query"
       },
       {
@@ -1263,6 +1299,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/commit-policy-baseline.txt",
+        "kind": "file",
+        "label": "commit-policy-baseline.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/commit-policy-baseline.txt",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/evidence-baseline.txt",
         "kind": "file",
         "label": "evidence-baseline.txt",
@@ -1284,6 +1328,14 @@
         "label": "rule-proof-baseline.txt",
         "summary": "named by the layer; not an object of this index",
         "source": ".ai/repo/rule-proof-baseline.txt",
+        "external": true
+      },
+      {
+        "id": "file:.githooks/commit-msg",
+        "kind": "file",
+        "label": "commit-msg",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".githooks/commit-msg",
         "external": true
       },
       {
@@ -1324,6 +1376,14 @@
         "label": "coverage.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/bench/coverage.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/commit.rs",
+        "kind": "file",
+        "label": "commit.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/commit.rs",
         "external": true
       },
       {
@@ -1500,6 +1560,38 @@
         "label": "semantics.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/command_graph/semantics.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/commit/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/commit/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/commit/plan.rs",
+        "kind": "file",
+        "label": "plan.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/commit/plan.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/commit/scopes.rs",
+        "kind": "file",
+        "label": "scopes.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/commit/scopes.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/commit/verdict.rs",
+        "kind": "file",
+        "label": "verdict.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/commit/verdict.rs",
         "external": true
       },
       {
@@ -1767,6 +1859,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/release/commits.rs",
+        "kind": "file",
+        "label": "commits.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/release/commits.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/release/compat.rs",
         "kind": "file",
         "label": "compat.rs",
@@ -1948,6 +2048,14 @@
         "label": "ci-plan",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ci-plan",
+        "external": true
+      },
+      {
+        "id": "file:scripts/ci/commit-policy",
+        "kind": "file",
+        "label": "commit-policy",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/commit-policy",
         "external": true
       },
       {
@@ -3790,6 +3898,44 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0054",
+        "kind": "adr",
+        "label": "adr-0054",
+        "summary": "A commit message is a judged value, not a convention and not a prompt",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0054",
+        "source": ".ai/repo/adrs/0054-a-commit-message-is-a-judged-value-not-a-convention-and-not-a-prompt.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-12",
+          "related": [
+            "rule:project.conventional-commits",
+            "rule:project.interfaces-are-projections",
+            "rule:project.blocking-checks-cheap",
+            "rule:project.no-claim-without-test",
+            "claim:commit-message-is-judged",
+            "claim:commit-scopes-are-learned",
+            "claim:commit-plan-is-refusable",
+            "file:docs/COMMIT.md",
+            "file:.ai/repo/policy.yaml",
+            "file:.ai/repo/rules/project/conventional-commits.v2.md",
+            "file:.ai/repo/commit-policy-baseline.txt",
+            "file:.githooks/commit-msg",
+            "file:scripts/ci/commit-policy",
+            "file:apps/majordomus-cli/src/commit/mod.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/commit.rs",
+            "file:apps/majordomus-cli/src/release/commits.rs",
+            "file:.ai/repo/adrs/0048-a-rule-declares-how-it-is-enforced-and-review-is-one-of-the-three.md",
+            "test:test/cases/274_commit_policy.sh"
+          ],
+          "tags": [
+            "git",
+            "commit",
+            "governance",
+            "projections"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0055",
         "kind": "adr",
         "label": "adr-0055",
@@ -4775,6 +4921,52 @@
           "responsibility": "doctor",
           "source": "docs/DYNAMICITY.md",
           "test": "test/cases/30_command_registry.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/commit-message-is-judged",
+        "kind": "claim",
+        "label": "commit-message-is-judged",
+        "summary": "A commit message that does not satisfy the repository's declared commit policy is refused at the moment it is written, and the history's existing debt is recorded and may not grow",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fcommit-message-is-judged",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A commit message that does not satisfy the repository's declared commit policy is refused at the moment it is written, and the history's existing debt is recorded and may not grow",
+          "implementation": "apps/majordomus-cli/src/commit/verdict.rs",
+          "responsibility": "policy",
+          "source": "docs/COMMIT.md",
+          "test": "test/cases/274_commit_policy.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/commit-plan-is-refusable",
+        "kind": "claim",
+        "label": "commit-plan-is-refusable",
+        "summary": "A commit plan carries a fingerprint of the repository, the worktree, HEAD and the exact change set it was derived from, so a plan acted on after the tree moved is refused with the reason rather than applied",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fcommit-plan-is-refusable",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/commit/plan.rs",
+          "responsibility": "policy",
+          "source": "docs/COMMIT.md",
+          "test": "test/cases/274_commit_policy.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/commit-scopes-are-learned",
+        "kind": "claim",
+        "label": "commit-scopes-are-learned",
+        "summary": "The scope vocabulary a commit is judged against is learned from this repository's own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fcommit-scopes-are-learned",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/commit/scopes.rs",
+          "responsibility": "policy",
+          "source": "docs/COMMIT.md",
+          "test": "test/cases/274_commit_policy.sh"
         }
       },
       {
@@ -5855,6 +6047,21 @@
           "responsibility": "none",
           "source": "docs/MODELS.md",
           "test": "test/cases/131_models.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/new-code-is-covered",
+        "kind": "claim",
+        "label": "new-code-is-covered",
+        "summary": "Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fnew-code-is-covered",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "scripts/rust-coverage",
+          "responsibility": "none",
+          "source": "docs/COVERAGE.md",
+          "test": "test/cases/132_coverage_differential.sh"
         }
       },
       {
@@ -9208,6 +9415,14 @@
         "source": "docs/COMMANDS.md"
       },
       {
+        "id": "majordomus://document/docs/COMMIT.md",
+        "kind": "document",
+        "label": "docs/COMMIT.md",
+        "summary": "The commit",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOMMIT.md",
+        "source": "docs/COMMIT.md"
+      },
+      {
         "id": "majordomus://document/docs/CONCEPTS.md",
         "kind": "document",
         "label": "docs/CONCEPTS.md",
@@ -9230,6 +9445,14 @@
         "summary": "Continuity — how work survives the session that was doing it",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCONTINUITY.md",
         "source": "docs/CONTINUITY.md"
+      },
+      {
+        "id": "majordomus://document/docs/COVERAGE.md",
+        "kind": "document",
+        "label": "docs/COVERAGE.md",
+        "summary": "Coverage: one measurement, two questions",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOVERAGE.md",
+        "source": "docs/COVERAGE.md"
       },
       {
         "id": "majordomus://document/docs/DESIGN.md",
@@ -9734,6 +9957,30 @@
         "summary": "The public command surface is declared, and reconciled against the dispatcher",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fcommand-surface.md",
         "source": "docs/claims/command-surface.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/commit-message-is-judged.md",
+        "kind": "document",
+        "label": "docs/claims/commit-message-is-judged.md",
+        "summary": "A commit message that does not satisfy the policy is refused while it is being written",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fcommit-message-is-judged.md",
+        "source": "docs/claims/commit-message-is-judged.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/commit-plan-is-refusable.md",
+        "kind": "document",
+        "label": "docs/claims/commit-plan-is-refusable.md",
+        "summary": "A commit plan carries what it was derived from, so a stale one is refused rather than applied",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fcommit-plan-is-refusable.md",
+        "source": "docs/claims/commit-plan-is-refusable.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/commit-scopes-are-learned.md",
+        "kind": "document",
+        "label": "docs/claims/commit-scopes-are-learned.md",
+        "summary": "The scope vocabulary is learned from the history, not kept in a table",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fcommit-scopes-are-learned.md",
+        "source": "docs/claims/commit-scopes-are-learned.md"
       },
       {
         "id": "majordomus://document/docs/claims/consistency-check.md",
@@ -10270,6 +10517,14 @@
         "summary": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmodels-routing-explains-itself.md",
         "source": "docs/claims/models-routing-explains-itself.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/new-code-is-covered.md",
+        "kind": "document",
+        "label": "docs/claims/new-code-is-covered.md",
+        "summary": "Every executable line, function and region a change adds or touches in the Rust crate is covered by a test; new debt is refused and untouched legacy debt is left alone",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fnew-code-is-covered.md",
+        "source": "docs/claims/new-code-is-covered.md"
       },
       {
         "id": "majordomus://document/docs/claims/no-counts-in-context.md",
@@ -11070,6 +11325,53 @@
         }
       },
       {
+        "id": "majordomus://feature/commit",
+        "kind": "feature",
+        "label": "commit",
+        "summary": "A commit message is a value this repository judges, not a convention it hopes for",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Fcommit",
+        "source": ".ai/repo/features/commit.md",
+        "status": "stable",
+        "facts": {
+          "adrs": [
+            "adr-0054"
+          ],
+          "areas": [
+            "governance",
+            "work-tracking"
+          ],
+          "claims": [
+            "commit-message-is-judged",
+            "commit-scopes-are-learned",
+            "commit-plan-is-refusable"
+          ],
+          "docs": [
+            "docs/COMMIT.md"
+          ],
+          "featured": true,
+          "modules": [
+            "commit"
+          ],
+          "related": [
+            "doctrine",
+            "declare-once",
+            "provenance"
+          ],
+          "rules": [
+            "project.conventional-commits",
+            "project.derived-files-regenerated",
+            "project.interfaces-are-projections"
+          ],
+          "short_title": "Commits",
+          "tags": [
+            "git",
+            "commit",
+            "governance"
+          ],
+          "weight": 205
+        }
+      },
+      {
         "id": "majordomus://feature/context",
         "kind": "feature",
         "label": "context",
@@ -11302,6 +11604,45 @@
         }
       },
       {
+        "id": "majordomus://feature/coverage",
+        "kind": "feature",
+        "label": "coverage",
+        "summary": "New code is covered, measured once and asked two questions",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Fcoverage",
+        "source": ".ai/repo/features/coverage.md",
+        "status": "stable",
+        "facts": {
+          "areas": [
+            "verification"
+          ],
+          "claims": [
+            "new-code-is-covered"
+          ],
+          "cockpit": [],
+          "commands": [],
+          "docs": [
+            "docs/COVERAGE.md"
+          ],
+          "featured": false,
+          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of",
+          "modules": [],
+          "related": [
+            "doctrine",
+            "ci"
+          ],
+          "rules": [
+            "project.new-code-is-covered"
+          ],
+          "short_title": "Coverage",
+          "tags": [
+            "coverage",
+            "testing"
+          ],
+          "use_cases": [],
+          "weight": 72
+        }
+      },
+      {
         "id": "majordomus://feature/declare-once",
         "kind": "feature",
         "label": "declare-once",
@@ -11518,7 +11859,7 @@
           "docs": [
             "docs/EVIDENCE.md"
           ],
-          "featured": false,
+          "featured": true,
           "modules": [
             "evidence"
           ],
@@ -26508,6 +26849,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.6.0",
+        "kind": "release-record",
+        "label": "v0.6.0",
+        "summary": "v0.6.0",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frelease-record%2Fv0.6.0",
+        "source": ".ai/repo/releases/v0.6.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "d98a264b5ff4f64e461e0f24147c29a741718b8a",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.6.0",
+          "published_at": "2026-09-12T21:29:12Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.6.0"
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "label": "majordomus.adr-integrity@1",
@@ -27867,19 +28231,24 @@
         }
       },
       {
-        "id": "majordomus://rule/project.conventional-commits@1",
+        "id": "majordomus://rule/project.conventional-commits@2",
         "kind": "rule",
-        "label": "project.conventional-commits@1",
-        "summary": "Conventional commits, committed and pushed incrementally",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.conventional-commits%401",
-        "source": ".ai/repo/rules/project/conventional-commits.v1.md",
+        "label": "project.conventional-commits@2",
+        "summary": "A commit message is a value this repository judges, not a convention it hopes for",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.conventional-commits%402",
+        "source": ".ai/repo/rules/project/conventional-commits.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
-          "depends_on": [],
-          "statement": "Commits use the conventional format type(scope): description with the co-author footer the session provides, and land incrementally rather than as one large change.",
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1",
+            "project.blocking-checks-cheap@1",
+            "project.no-claim-without-test@1"
+          ],
           "tags": [
-            "git"
+            "git",
+            "commit",
+            "governance"
           ]
         }
       },
@@ -28436,6 +28805,24 @@
           "tags": [
             "records",
             "continuity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.new-code-is-covered@1",
+        "kind": "rule",
+        "label": "project.new-code-is-covered@1",
+        "summary": "New and changed executable code is covered by a test; legacy debt may only shrink",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.new-code-is-covered%401",
+        "source": ".ai/repo/rules/project/new-code-is-covered.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "coverage",
+            "testing",
+            "doctrine"
           ]
         }
       },
@@ -31675,6 +32062,13 @@
         "source": "test/cases/131_models.sh"
       },
       {
+        "id": "majordomus://test/test/cases/132_coverage_differential.sh",
+        "kind": "test",
+        "label": "test/cases/132_coverage_differential.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F132_coverage_differential.sh",
+        "source": "test/cases/132_coverage_differential.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "kind": "test",
         "label": "test/cases/132_health_sees_a_stopped_writer.sh",
@@ -31976,6 +32370,13 @@
         "source": "test/cases/273_navigation_is_declared_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/274_commit_policy.sh",
+        "kind": "test",
+        "label": "test/cases/274_commit_policy.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F274_commit_policy.sh",
+        "source": "test/cases/274_commit_policy.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/275_publication_is_current.sh",
         "kind": "test",
         "label": "test/cases/275_publication_is_current.sh",
@@ -31990,6 +32391,13 @@
         "source": "test/cases/276_disk_is_bounded.sh"
       },
       {
+        "id": "majordomus://test/test/cases/278_the_gate_runner_clears_the_share.sh",
+        "kind": "test",
+        "label": "test/cases/278_the_gate_runner_clears_the_share.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F278_the_gate_runner_clears_the_share.sh",
+        "source": "test/cases/278_the_gate_runner_clears_the_share.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/279_the_publication_age_is_the_oldest_debt.sh",
         "kind": "test",
         "label": "test/cases/279_the_publication_age_is_the_oldest_debt.sh",
@@ -32002,6 +32410,34 @@
         "label": "test/cases/27_foreign_task.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F27_foreign_task.sh",
         "source": "test/cases/27_foreign_task.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/280_capture_status_states_its_denominator.sh",
+        "kind": "test",
+        "label": "test/cases/280_capture_status_states_its_denominator.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F280_capture_status_states_its_denominator.sh",
+        "source": "test/cases/280_capture_status_states_its_denominator.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/281_published_order_is_tracked.sh",
+        "kind": "test",
+        "label": "test/cases/281_published_order_is_tracked.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F281_published_order_is_tracked.sh",
+        "source": "test/cases/281_published_order_is_tracked.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/282_the_ledger_envelope_is_reserved.sh",
+        "kind": "test",
+        "label": "test/cases/282_the_ledger_envelope_is_reserved.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F282_the_ledger_envelope_is_reserved.sh",
+        "source": "test/cases/282_the_ledger_envelope_is_reserved.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/284_a_record_reads_the_whole_declaration.sh",
+        "kind": "test",
+        "label": "test/cases/284_a_record_reads_the_whole_declaration.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F284_a_record_reads_the_whole_declaration.sh",
+        "source": "test/cases/284_a_record_reads_the_whole_declaration.sh"
       },
       {
         "id": "majordomus://test/test/cases/28_catalogue.sh",
@@ -32583,6 +33019,13 @@
         "label": "test/cases/96_worktree_topology.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F96_worktree_topology.sh",
         "source": "test/cases/96_worktree_topology.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/97_development_semantics_gate.sh",
+        "kind": "test",
+        "label": "test/cases/97_development_semantics_gate.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F97_development_semantics_gate.sh",
+        "source": "test/cases/97_development_semantics_gate.sh"
       },
       {
         "id": "majordomus://test/test/cases/97_github_gate.sh",
@@ -33763,6 +34206,47 @@
         }
       },
       {
+        "id": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "kind": "use-case",
+        "label": "plan-a-commit-and-judge-its-message",
+        "summary": "Divide a working tree into commits, and hold every message to a policy",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Fplan-a-commit-and-judge-its-message",
+        "source": ".ai/repo/use-cases/plan-a-commit-and-judge-its-message.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "maintainer",
+            "contributor",
+            "agent"
+          ],
+          "category": "policy",
+          "claims": [
+            "commit-message-is-judged",
+            "commit-scopes-are-learned",
+            "commit-plan-is-refusable"
+          ],
+          "commands": [
+            "doctrine"
+          ],
+          "difficulty": "intermediate",
+          "doctrines": [
+            "majordomus.enforcement-wiring"
+          ],
+          "mcp_tools": [
+            "majordomus_commit_plan",
+            "majordomus_commit_scopes",
+            "majordomus_commit_validate",
+            "majordomus_commit_history"
+          ],
+          "responsibilities": [
+            "policy"
+          ],
+          "summary": "Ask what this tree would commit and why, learn the scope vocabulary from the history rather than a table, and get a verdict on one message or on a whole range before a reviewer has to give one.",
+          "target": "advisory",
+          "weight": 45
+        }
+      },
+      {
         "id": "majordomus://use-case/plan-the-work-as-data",
         "kind": "use-case",
         "label": "plan-the-work-as-data",
@@ -34604,6 +35088,11 @@
         "label": "commands"
       },
       {
+        "id": "module:commit",
+        "kind": "module",
+        "label": "commit"
+      },
+      {
         "id": "module:continuity",
         "kind": "module",
         "label": "continuity"
@@ -34914,6 +35403,86 @@
       },
       {
         "source": "capability:commands.list",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.history",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.history",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.history",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.history",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.plan",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.plan",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.plan",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.plan",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.scopes",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.scopes",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.scopes",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.scopes",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.validate",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.validate",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.validate",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:commit.validate",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -37254,7 +37823,7 @@
       },
       {
         "source": "majordomus://adr/adr-0029",
-        "target": "majordomus://rule/project.conventional-commits@1",
+        "target": "majordomus://rule/project.conventional-commits@2",
         "kind": "put_in_force"
       },
       {
@@ -38163,6 +38732,96 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0054",
+        "target": "file:.ai/repo/commit-policy-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "file:.githooks/commit-msg",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/commit.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "file:apps/majordomus-cli/src/commit/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "file:apps/majordomus-cli/src/release/commits.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "file:scripts/ci/commit-policy",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://adr/adr-0048",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://claim/commit-message-is-judged",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://claim/commit-plan-is-refusable",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://claim/commit-scopes-are-learned",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://document/docs/COMMIT.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://policy/.ai/repo/policy.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://rule/project.blocking-checks-cheap@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://rule/project.conventional-commits@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0054",
+        "target": "majordomus://test/test/cases/274_commit_policy.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0055",
         "target": "kind:adr",
         "kind": "is_a"
@@ -38860,6 +39519,66 @@
       {
         "source": "majordomus://claim/command-surface",
         "target": "majordomus://test/test/cases/30_command_registry.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/commit-message-is-judged",
+        "target": "file:apps/majordomus-cli/src/commit/verdict.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/commit-message-is-judged",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/commit-message-is-judged",
+        "target": "majordomus://document/docs/COMMIT.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/commit-message-is-judged",
+        "target": "majordomus://test/test/cases/274_commit_policy.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/commit-plan-is-refusable",
+        "target": "file:apps/majordomus-cli/src/commit/plan.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/commit-plan-is-refusable",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/commit-plan-is-refusable",
+        "target": "majordomus://document/docs/COMMIT.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/commit-plan-is-refusable",
+        "target": "majordomus://test/test/cases/274_commit_policy.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/commit-scopes-are-learned",
+        "target": "file:apps/majordomus-cli/src/commit/scopes.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/commit-scopes-are-learned",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/commit-scopes-are-learned",
+        "target": "majordomus://document/docs/COMMIT.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/commit-scopes-are-learned",
+        "target": "majordomus://test/test/cases/274_commit_policy.sh",
         "kind": "tested_by"
       },
       {
@@ -40190,6 +40909,26 @@
       {
         "source": "majordomus://claim/models-routing-explains-itself",
         "target": "majordomus://test/test/cases/131_models.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "file:scripts/rust-coverage",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "majordomus://document/docs/COVERAGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/new-code-is-covered",
+        "target": "majordomus://test/test/cases/132_coverage_differential.sh",
         "kind": "tested_by"
       },
       {
@@ -42383,6 +43122,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/COMMIT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/CONCEPTS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -42394,6 +43138,11 @@
       },
       {
         "source": "majordomus://document/docs/CONTINUITY.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/COVERAGE.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -42709,6 +43458,21 @@
       },
       {
         "source": "majordomus://document/docs/claims/command-surface.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/commit-message-is-judged.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/commit-plan-is-refusable.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/commit-scopes-are-learned.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -43044,6 +43808,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/models-routing-explains-itself.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/new-code-is-covered.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -43458,6 +44227,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://feature/commit",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://feature/context",
         "target": "kind:feature",
         "kind": "is_a"
@@ -43469,6 +44243,11 @@
       },
       {
         "source": "majordomus://feature/coordination",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/coverage",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -47763,6 +48542,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.6.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/majordomus.adr-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -48478,9 +49262,24 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.conventional-commits@1",
+        "source": "majordomus://rule/project.conventional-commits@2",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.conventional-commits@2",
+        "target": "majordomus://rule/project.blocking-checks-cheap@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.conventional-commits@2",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.conventional-commits@2",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.derived-files-regenerated@1",
@@ -48819,6 +49618,11 @@
       },
       {
         "source": "majordomus://rule/project.never-store-transcripts@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.new-code-is-covered@1",
         "target": "kind:rule",
         "kind": "is_a"
       },
@@ -49703,6 +50507,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/132_coverage_differential.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -49918,6 +50727,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/274_commit_policy.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/275_publication_is_current.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -49928,12 +50742,37 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/278_the_gate_runner_clears_the_share.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/279_the_publication_age_is_the_oldest_debt.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/27_foreign_task.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/280_capture_status_states_its_denominator.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/281_published_order_is_tracked.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/282_the_ledger_envelope_is_reserved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/284_a_record_reads_the_whole_declaration.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -50349,6 +51188,11 @@
       },
       {
         "source": "majordomus://test/test/cases/96_worktree_topology.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/97_development_semantics_gate.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -51933,6 +52777,56 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "capability:commit.history",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "capability:commit.plan",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "capability:commit.scopes",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "capability:commit.validate",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "command:doctrine",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "majordomus://claim/commit-message-is-judged",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "majordomus://claim/commit-plan-is-refusable",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "majordomus://claim/commit-scopes-are-learned",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
+        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
+        "kind": "exercises"
+      },
+      {
         "source": "majordomus://use-case/plan-the-work-as-data",
         "target": "command:plan",
         "kind": "runs"
@@ -53088,6 +53982,26 @@
         "kind": "composes"
       },
       {
+        "source": "module:commit",
+        "target": "capability:commit.history",
+        "kind": "composes"
+      },
+      {
+        "source": "module:commit",
+        "target": "capability:commit.plan",
+        "kind": "composes"
+      },
+      {
+        "source": "module:commit",
+        "target": "capability:commit.scopes",
+        "kind": "composes"
+      },
+      {
+        "source": "module:commit",
+        "target": "capability:commit.validate",
+        "kind": "composes"
+      },
+      {
         "source": "module:continuity",
         "target": "capability:continuity.state",
         "kind": "composes"
@@ -53594,8 +54508,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1676,
-      "edges": 3759,
+      "nodes": 1714,
+      "edges": 3844,
       "acyclic": true,
       "truncated": false
     }
