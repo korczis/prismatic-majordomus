@@ -15,9 +15,9 @@ layer holds, which operational moments a feature answers, what is guaranteed and
 only advisory. What a person writes is which parts of the product form one chapter, and in
 what order. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 23](../.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
+[ADR 23](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
 the rule is `project.product-surface-derived`; the directory's own contract is
-[`.ai/repo/features/README.md`](../.ai/repo/features/README.md).
+[`.ai/repo/features/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/features/README.md).
 
 ## The kind
 
@@ -69,7 +69,7 @@ the only place any of this is decided.
 `apps/majordomus-cli/src/capability/builtin/product.rs` declares five capabilities over it
 with `capability!`, so the command line, the HTTP routes, the OpenAPI operations, the MCP
 tools and resources and the generated reference are projections of one declaration
-([ADR 2](../.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
+([ADR 2](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
 
 <div class="overflow-x-auto" tabindex="0">
 

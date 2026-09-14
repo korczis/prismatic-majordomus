@@ -40,7 +40,7 @@ when the archive was taken, so the far end can tell which it is holding.
 ## What is left out, and who decides
 
 Beyond "untracked", the subtractions are declared in
-[`share/archive.yaml`](../share/archive.yaml), one block per profile:
+[`share/archive.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/share/archive.yaml), one block per profile:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -55,14 +55,14 @@ Beyond "untracked", the subtractions are declared in
 
 
 The first of those is the interesting one. Every generated projection in this repository
-is already marked `merge=derived` in [`.gitattributes`](../.gitattributes), for an
+is already marked `merge=derived` in [`.gitattributes`](https://github.com/korczis/prismatic-majordomus/blob/master/.gitattributes), for an
 unrelated reason — a merge of two branches is never the answer for a file whose content
 is a function of the merged tree. An archive for a reader wants to drop exactly that set,
 because each of those files is a projection of a canonical file the archive already
 carries, and carrying both spends the reader's attention on the same statement twice. So
 the archive reads that declaration rather than keeping a second list of generated paths.
 A second list would be the duplication
-[`project.commands-are-projections`](../.ai/repo/rules/project/commands-are-projections.v1.md)
+[`project.commands-are-projections`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/commands-are-projections.v1.md)
 exists to refuse, and it would go stale the first time someone added a generator and
 updated only one of the two.
 
@@ -78,7 +78,7 @@ repository is broken.
 A missing git index is the same class of failure and quieter still. This repository
 enumerates itself with `git ls-files`; a check run in a tree with no `.git` does not fail,
 it examines nothing and reports that nothing is wrong. That is the shape
-[`project.empty-is-not-failure`](../.ai/repo/rules/project/empty-is-not-failure.v1.md)
+[`project.empty-is-not-failure`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/empty-is-not-failure.v1.md)
 was written about, arriving through the archive rather than through the code.
 
 Both are answered inside the archive, not in a note beside it:

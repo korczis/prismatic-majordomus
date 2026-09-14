@@ -6,23 +6,23 @@
     "version": "0.6.1"
   },
   "registry": {
-    "fingerprint": "5b9de0c6781b7efce8bc7e619e12dcff73fa64719a32580223249f87c3f9c92c",
+    "fingerprint": "c173dfe9c698fcba01a2ed253bd14031119ccda981061538b2c6d7dc07907cfa",
     "summary": {
-      "total": 1453,
+      "total": 1457,
       "builtin": 112,
-      "declarative": 1341,
+      "declarative": 1345,
       "by_kind": {
         "command": 6,
         "query": 106,
-        "resource": 1341
+        "resource": 1345
       },
       "by_stability": {
         "behaviorally_verified": 99,
         "experimental": 7,
-        "implemented": 1347
+        "implemented": 1351
       },
       "mcp_tools": 109,
-      "mcp_resources": 1382,
+      "mcp_resources": 1386,
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
@@ -9516,7 +9516,7 @@
               "default_floor",
               "bytes_per_token"
             ],
-            "description": "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \"why did I get that\", asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`EDGES`](select::EDGES), [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```",
+            "description": "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \"why did I get that\", asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`select::EDGES`], [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```",
             "title": "CompilerPolicy",
             "$defs": {
               "TierRule": {
@@ -40429,7 +40429,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 136,
+        "capabilities": 137,
         "capability_ids": []
       },
       {
@@ -40508,7 +40508,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 207,
+        "capabilities": 210,
         "capability_ids": []
       },
       {
@@ -40588,7 +40588,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8bdefc25448351fac6251f07e31a3cbfa006aa979d301346d27af03c6a83f71a",
+    "fingerprint": "df46a794b1c86e5c0d0416e373c4df9fa1a074cdf07c3c195383d081ec3262f4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40632,12 +40632,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 3,
-      "rule": 136,
+      "rule": 137,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 207,
+      "test": 210,
       "use-case": 46,
       "workspace": 1
     },
@@ -44670,7 +44670,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2872
+        "bytes": 3034
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -44796,7 +44796,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 16447
+        "bytes": 19935
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -51779,6 +51779,24 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "rule",
+        "identity": "project.every-link-and-control-is-tested@1",
+        "title": "Every link the site publishes resolves, and every control on it does what a spec says",
+        "description": "No link on the published site is followed to a 404, and no button, field, toggle, tab, filter or scroll region is shipped without a behaviour spec that claims it and a browser run that proves it.",
+        "path": ".ai/repo/rules/project/every-link-and-control-is-tested.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5972,
+        "tags": [
+          "site",
+          "ui",
+          "links",
+          "accessibility",
+          "testing"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.every-wait-is-bounded@1",
         "kind": "rule",
         "identity": "project.every-wait-is-bounded@1",
@@ -54011,7 +54029,31 @@
         "identity": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "path": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "source_class": "case",
-        "bytes": 3054
+        "bytes": 4300
+      },
+      {
+        "uri": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "kind": "test",
+        "identity": "test/cases/335_every_link_resolves.sh",
+        "path": "test/cases/335_every_link_resolves.sh",
+        "source_class": "case",
+        "bytes": 6472
+      },
+      {
+        "uri": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
+        "kind": "test",
+        "identity": "test/cases/336_every_control_is_claimed.sh",
+        "path": "test/cases/336_every_control_is_claimed.sh",
+        "source_class": "case",
+        "bytes": 5438
+      },
+      {
+        "uri": "majordomus://test/test/cases/337_every_control_does_what_it_says.sh",
+        "kind": "test",
+        "identity": "test/cases/337_every_control_does_what_it_says.sh",
+        "path": "test/cases/337_every_control_does_what_it_says.sh",
+        "source_class": "case",
+        "bytes": 5132
       },
       {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
@@ -55462,7 +55504,7 @@
         "id",
         "version"
       ],
-      "objects": 136
+      "objects": 137
     },
     {
       "name": "scope",
@@ -55517,7 +55559,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 207
+      "objects": 210
     },
     {
       "name": "use-case",

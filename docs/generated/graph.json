@@ -28433,6 +28433,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "rule",
+        "label": "project.every-link-and-control-is-tested@1",
+        "summary": "Every link the site publishes resolves, and every control on it does what a spec says",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.every-link-and-control-is-tested%401",
+        "source": ".ai/repo/rules/project/every-link-and-control-is-tested.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.ui-conformance@1",
+            "project.derived-once@1",
+            "project.no-counts-in-prose@1"
+          ],
+          "tags": [
+            "site",
+            "ui",
+            "links",
+            "accessibility",
+            "testing"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.every-wait-is-bounded@1",
         "kind": "rule",
         "label": "project.every-wait-is-bounded@1",
@@ -32476,6 +32500,27 @@
         "label": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F334_ui_audit_hears_uncaught_errors.sh",
         "source": "test/cases/334_ui_audit_hears_uncaught_errors.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "kind": "test",
+        "label": "test/cases/335_every_link_resolves.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F335_every_link_resolves.sh",
+        "source": "test/cases/335_every_link_resolves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
+        "kind": "test",
+        "label": "test/cases/336_every_control_is_claimed.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F336_every_control_is_claimed.sh",
+        "source": "test/cases/336_every_control_is_claimed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/337_every_control_does_what_it_says.sh",
+        "kind": "test",
+        "label": "test/cases/337_every_control_does_what_it_says.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F337_every_control_does_what_it_says.sh",
+        "source": "test/cases/337_every_control_does_what_it_says.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -49389,6 +49434,26 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "target": "majordomus://rule/project.no-counts-in-prose@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.every-wait-is-bounded@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -50785,6 +50850,21 @@
       },
       {
         "source": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/337_every_control_does_what_it_says.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54480,8 +54560,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1712,
-      "edges": 3842,
+      "nodes": 1716,
+      "edges": 3849,
       "acyclic": true,
       "truncated": false
     }

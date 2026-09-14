@@ -99,7 +99,7 @@ run first died on a silent peer.
    Reproduce: with no lease, `bin/majordomus-env export --shell direnv | grep -c URL`.
    The providers named above are examples of the ones that carry a lifecycle adapter and the
    ones that do not; which is which is not a list this document keeps — it is
-   [`docs/generated/providers.md`](generated/providers.md), written from
+   [`docs/generated/providers.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/providers.md), written from
    `share/providers.yaml` by `majordomus generate providers` (ADR 0024).
 
 3. **The episode is one per checkout, keyed on nothing the provider sent.** `session start
