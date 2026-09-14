@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -168,7 +168,7 @@
   </nav>
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/CAPABILITIES.md" class="font-mono underline">docs/CAPABILITIES.md</a> — the same Markdown GitHub shows.</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>How the Rust executable under <a href="../apps/majordomus-cli/"><code>apps/majordomus-cli/</code></a> exposes
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>How the Rust executable under <a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli"><code>apps/majordomus-cli/</code></a> exposes
 what it exposes: one canonical declaration per capability, modules that compose
 capabilities, a root that composes modules, the registry built from them, one executor
 every transport calls, and the projections (MCP, HTTP, OpenAPI, Swagger UI, the command
@@ -176,10 +176,10 @@ line, the benchmark targets, the cache behaviour, the generated reference and ma
 that are derived from the registry and define nothing of their own. Behaviour as
 implemented and tested; where this document and the executable disagree, the document is
 wrong and changes in the same commit. The decisions are
-<a href="../.ai/repo/adrs/0002-canonical-capability-registry.md">ADR 2</a> (the registry and the
-projections), <a href="../.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md">ADR 4</a>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0002-canonical-capability-registry.md">ADR 2</a> (the registry and the
+projections), <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md">ADR 4</a>
 (modules, the executor, benchmarks as evidence) and
-<a href="../.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md">ADR 5</a>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md">ADR 5</a>
 (one projection plan, named owners, the site as a view of the registry); the rules are
 <code>project.interfaces-are-projections</code>, <code>project.rust-canonical-declaration</code>,
 <code>project.rust-benchmark-coverage</code> and <code>project.rust-hot-path</code>.</p>
@@ -198,7 +198,7 @@ and output and the input's benchmark cases) and runs <code>majordomus generate</
 <p>A contributor adding a <strong>command</strong> has one more thing to say, and only one: whether it is
 the projection of a capability (a <code>CliExposure</code> on that capability's declaration) or belongs
 to the command line alone, in which case <code>cli::LOCAL</code> in
-<a href="../apps/majordomus-cli/src/cli/local.rs"><code>src/cli/local.rs</code></a> carries the reason and
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/cli/local.rs"><code>src/cli/local.rs</code></a> carries the reason and
 <code>majordomus quality report</code> checks it. There is no second list: <code>capabilities projections</code>
 answers the commands no capability claims and, of those, the ones that carry no reason, and
 <code>scripts/ci/projection-check</code> refuses the second set. A command that says neither is a gate
@@ -561,7 +561,7 @@ out of date. <code>scripts/derive</code> and <code>scripts/derive-check</code> p
 <p><strong>Every artifact is typed.</strong> It declares the <em>document</em> it projects, the <em>encoding</em> it is
 written in (<code>json</code>, <code>yaml</code>, <code>markdown</code>, <code>text</code>, matching its own suffix), the <em>schema</em> its
 content satisfies when the document has a contract, and the <em>source</em> it was derived from.
-The rule is <a href="../.ai/repo/rules/project/generated-artifacts-are-typed.v1.md"><code>project.generated-artifacts-are-typed@1</code></a>;
+The rule is <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/generated-artifacts-are-typed.v1.md"><code>project.generated-artifacts-are-typed@1</code></a>;
 <code>generate</code> and <code>generate --check</code> verify the plan before a byte is written or compared and
 refuse a half-typed tree.</p>
 <p><strong>A structured document is written in every encoding it is committed in, from one value.</strong>
@@ -709,7 +709,7 @@ Cockpit's Artifacts page and the site's <code>/registry/artifacts/</code> all sh
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

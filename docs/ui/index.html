@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -386,6 +386,70 @@ with the element and the first route it was seen on. Rendered as <em>Not measure
 <code>scripts/lib/ui-static.mjs</code> if it can be decided from markup, and give it a rule name in the
 same <code>area.thing</code> shape as the others. Nothing else changes — not the report, not the gate,
 not this document's tables, because none of them enumerate rules.</p>
+<h2 id="every-link-resolves-and-every-control-does-what-it-says"><a class="zola-anchor" href="#every-link-resolves-and-every-control-does-what-it-says" aria-label="Anchor link for: every-link-resolves-and-every-control-does-what-it-says">Every link resolves, and every control does what it says</a></h2>
+<p>The rule is <code>project.every-link-and-control-is-tested</code>. Both halves are discovered from the build, so a page,
+a link or a control added tomorrow is checked tomorrow with no list to update.</p>
+<p><strong>Links.</strong> <code>scripts/ci/link-check</code> decides every href and src the built site emits, and every sitemap entry,
+without the network:</p>
+<ul>
+<li>A same-origin URL must resolve to a file under <code>site/public</code>.</li>
+<li>A fragment must name an id on the page it lands on.</li>
+<li>A link into this repository on GitHub resolves against git: <code>blob/</code> a tracked file, <code>tree/</code> a tracked
+directory, <code>commit/</code> a commit in the published history, and <code>releases/tag/</code> and <code>compare/</code> real refs.</li>
+<li>A host nothing can decide offline, <code>javascript:</code>, an empty href and a bare <code>#</code> are refused. So is a verdict
+from a shallow clone, which cannot see the history.</li>
+</ul>
+<p><code>scripts/site-check</code> runs it; <code>--list</code> prints every link and its class.</p>
+<p>A projected document's relative links are resolved at their source by <code>scripts/lib/project-links.awk</code>, against
+the directory of the file they came from:</p>
+<ul>
+<li>A document with a page becomes its route.</li>
+<li>A claim document becomes its guarantee page.</li>
+<li>A tracked file or directory becomes its <code>blob</code> or <code>tree</code> on GitHub.</li>
+<li>A path git does not track, such as checkout-local state under <code>.ai/local</code>, keeps its text and loses its link.</li>
+</ul>
+<p><strong>Controls.</strong> A control is anything a reader can operate:</p>
+<ul>
+<li>a button, a field, a summary</li>
+<li>an element an Alpine directive or a Flowbite binding makes act</li>
+<li>an ARIA widget role</li>
+<li>a graph binding</li>
+<li>a keyboard-reachable scroll region</li>
+</ul>
+<p>Plain links are the link check's. Disabled elements are not controls, and a control inside <code>&lt;template&gt;</code> counts.</p>
+<ul>
+<li>
+<p><code>scripts/ci/interaction-check</code> requires every control on every page to be claimed by exactly one behaviour
+spec under <code>scripts/lib/interaction-specs/</code>, and every spec to claim something. <code>--inventory</code> lists every
+control signature with its spec. <code>scripts/site-check</code> runs it.</p>
+<ul>
+<li>It also requires every Alpine expression to compile. Never interpolate text into a JavaScript string in a
+template, as in <code>'{{ title }}'.includes(q)</code>: one apostrophe in the text drops the directive silently.</li>
+<li>Put the text in a data attribute instead, <code>data-text="{{ title | lower }}"</code>, and read <code>$el.dataset.text</code>.</li>
+</ul>
+</li>
+<li>
+<p><code>scripts/interaction-probe</code> opens every page with a control, serving the build at its published origin, and
+each spec drives every control it claims. A page fails when:</p>
+<ul>
+<li>a behaviour does not hold</li>
+<li>the live count of a spec's controls differs from the markup</li>
+<li>the console reports an error or an exception goes uncaught</li>
+<li>a request leaves the site's origin</li>
+<li>a spec drives fewer controls than it claims</li>
+</ul>
+<p><code>--only '&lt;routes&gt;'</code> and <code>--spec &lt;id&gt;</code> narrow a local loop. It runs in CI as the <code>interaction-probe</code> gate, in
+the <code>interactions</code> job.</p>
+</li>
+<li>
+<p><code>MJ_PROBE_LIVE=1 scripts/interaction-probe</code> drives the published site itself. After a deployment, run it
+against the commit <code>scripts/pages verify</code> reports.</p>
+</li>
+</ul>
+<p><strong>Adding a control.</strong> Build the page and run <code>scripts/ci/interaction-check --inventory</code>. A control no spec
+claims is listed as <code>UNCLAIMED</code>. Either it is an instance of a behaviour a spec already asserts, and that spec's
+<code>claims()</code> should include it, or it is new. A new behaviour needs a new spec: <code>claims(el)</code> is a pure function of
+the element's tag and attributes, and <code>exercise(ctx)</code> drives each claimed control and returns how many it drove.</p>
 </article></div>
 </div>
 
@@ -452,7 +516,7 @@ not this document's tables, because none of them enumerate rules.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

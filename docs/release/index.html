@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -170,7 +170,7 @@
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/RELEASE.md" class="font-mono underline">docs/RELEASE.md</a> — the same Markdown GitHub shows.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>What this project has shipped, what it would ship next, and the changelog that says so are
 one typed value, <code>release::Changelog</code>, composed by one module under
-<a href="../apps/majordomus-cli/src/release/"><code>apps/majordomus-cli/src/release/</code></a>. Every surface
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/release"><code>apps/majordomus-cli/src/release/</code></a>. Every surface
 that states any of it renders that value: <code>majordomus release</code> on the command line, the HTTP
 route <code>/api/v1/changelog</code>, the MCP tool <code>majordomus_changelog</code> and the resource
 <code>majordomus://changelog</code>, and the generated document under <code>docs/generated/</code>. Nothing in it
@@ -178,8 +178,8 @@ is authored. There is no <code>CHANGELOG.md</code> in this repository and there 
 Behaviour as implemented and tested; where this document and the executable disagree, the
 document is wrong and changes in the same commit.</p>
 <p>The commands, their arguments and their executable examples are in the generated reference
-(<a href="https://majordomus.dev/docs/release/generated/cli.md"><code>generated/cli.md</code></a>, under <code>majordomus release</code>); the capabilities, their
-routes and their benchmark cases in <a href="https://majordomus.dev/docs/release/generated/capabilities.md"><code>generated/capabilities.md</code></a>,
+(<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md"><code>generated/cli.md</code></a>, under <code>majordomus release</code>); the capabilities, their
+routes and their benchmark cases in <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/capabilities.md"><code>generated/capabilities.md</code></a>,
 module <code>release</code>. Neither is restated here.</p>
 <h2 id="the-version-is-measured-not-claimed"><a class="zola-anchor" href="#the-version-is-measured-not-claimed" aria-label="Anchor link for: the-version-is-measured-not-claimed">The version is measured, not claimed</a></h2>
 <p>The bump a release takes is decided by comparing the public surface of the last release
@@ -214,7 +214,7 @@ caller who finds out by breaking.</p>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> release</span><span class="z-l-8 z-d-8"> bump</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> raise both writers to the measured minimum</span></span></code></pre>
 <p>There is <strong>one</strong> engine and it lives in <code>apps/majordomus-cli/src/release/compat.rs</code>, reading
 <code>release/surface.rs</code>. The gate is an adapter over it; so is the Cockpit panel, the HTTP
-route, the MCP tool and the writer. Until <a href="../.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md">ADR 0051</a>
+route, the MCP tool and the writer. Until <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md">ADR 0051</a>
 there were two answers — a shell comparison in CI and a commit-subject inference inside
 <code>release bump</code> — and the inference won, because the writer runs before the gate does.</p>
 <p><strong>Below 1.0.0 the floor is a minor release</strong> for any surface change, gone or new. Semantic
@@ -234,7 +234,7 @@ in one of them".</p>
 (<code>share/schemas/majordomus/release/release.v1.schema.json</code>) is <code>additionalProperties: false</code>
 and declares no field for a breaking change, and a record is written by the release workflow
 from the artifacts it published and by nobody else
-(<a href="../.ai/repo/releases/README.md"><code>.ai/repo/releases/README.md</code></a>) — so an unreleased version
+(<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/releases/README.md"><code>.ai/repo/releases/README.md</code></a>) — so an unreleased version
 has no record for anything to be written into. The smallest field that would close this is a
 proposal, not a change made here: a schema change does not belong inside a documentation
 change.</p>
@@ -409,7 +409,7 @@ with the letter (<code>Interesting</code>, <code>M1</code>) is not an id.</p>
 <p>The version stays stated in two places, and should. <code>scripts/release-version</code> gives the
 reason and it is a real one: an installed tree has no <code>Cargo.toml</code>, and the crate is
 compiled before the shell tool exists, so neither program can read the other's copy at run
-time. <a href="https://majordomus.dev/docs/release/DISTRIBUTION.md#the-two-versions-and-why-there-are-two"><code>DISTRIBUTION.md</code></a> is where
+time. <a href="https://majordomus.dev/docs/distribution/#the-two-versions-and-why-there-are-two"><code>DISTRIBUTION.md</code></a> is where
 that is argued. What was missing was not a single source — it was a single writer.</p>
 <p><code>majordomus release version</code> answers what both files state and whether they agree. It exits
 10 when they do not, which is the same verdict and the same exit code
@@ -457,7 +457,7 @@ was made and a changelog that was not regenerated disagree, and <code>generate -
 </div>
 <p>Nothing configures that last row. <code>release bump</code> writes tracked files, which
 <code>command_graph/semantics.rs</code> annotates as <code>RepositoryMutation</code>, and the exposure policy of
-<a href="../.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md">ADR 0027</a>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md">ADR 0027</a>
 keeps repository mutations off every machine surface. No capability declares it, and
 <code>majordomus commands explain executable.release.bump</code> prints the reason each surface
 withholds it. The read half is two capabilities, and the command line renders them by
@@ -489,7 +489,7 @@ refusing would make the document unavailable exactly where it is read from a mac
 <h2 id="releasing"><a class="zola-anchor" href="#releasing" aria-label="Anchor link for: releasing">Releasing</a></h2>
 <p>The release procedure itself — the tag, the pipeline, the build matrix, the record written
 from what was published, and recovery from a bad release — is
-<a href="https://majordomus.dev/docs/release/DISTRIBUTION.md#releasing"><code>DISTRIBUTION.md</code></a>. This document owns only the version and the
+<a href="https://majordomus.dev/docs/distribution/#releasing"><code>DISTRIBUTION.md</code></a>. This document owns only the version and the
 changelog it produces. The first step of that procedure is now <code>majordomus release bump</code>
 rather than an editor over two files, and <code>scripts/release-version --check</code> still runs
 after it: the check proves the work of one writer instead of the memory of one person.</p>
@@ -510,7 +510,7 @@ question it asks is a question about a history. A fixture whose history is real 
 thing those answers can be checked against.</p>
 <h2 id="related"><a class="zola-anchor" href="#related" aria-label="Anchor link for: related">Related</a></h2>
 <ul>
-<li><a href="../.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md">ADR 0029</a> — the decision behind this document, and the four alternatives it rejected</li>
+<li><a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md">ADR 0029</a> — the decision behind this document, and the four alternatives it rejected</li>
 <li><a href="https://majordomus.dev/docs/distribution/"><code>DISTRIBUTION.md</code></a> — how the tool is packaged, published and installed, and the release pipeline that writes the records this reads</li>
 <li><a href="https://majordomus.dev/docs/commands/"><code>COMMANDS.md</code></a> — the effect model and the exposure policy that withhold <code>release bump</code></li>
 <li><a href="https://majordomus.dev/docs/capabilities/"><code>CAPABILITIES.md</code></a> — the registry the two read capabilities are declared in</li>
@@ -582,7 +582,7 @@ thing those answers can be checked against.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

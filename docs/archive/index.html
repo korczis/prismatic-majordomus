@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -193,7 +193,7 @@ not. <code>_ARCHIVE/GIT.txt</code> records the commit, the branch and whether th
 when the archive was taken, so the far end can tell which it is holding.</p>
 <h2 id="what-is-left-out-and-who-decides"><a class="zola-anchor" href="#what-is-left-out-and-who-decides" aria-label="Anchor link for: what-is-left-out-and-who-decides">What is left out, and who decides</a></h2>
 <p>Beyond "untracked", the subtractions are declared in
-<a href="../share/archive.yaml"><code>share/archive.yaml</code></a>, one block per profile:</p>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/share/archive.yaml"><code>share/archive.yaml</code></a>, one block per profile:</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>derived: drop</code></td><td>Drop every path <code>.gitattributes</code> marks <code>merge=derived</code>.</td></tr>
@@ -203,14 +203,14 @@ when the archive was taken, so the far end can tell which it is holding.</p>
 </tbody></table>
 </div>
 <p>The first of those is the interesting one. Every generated projection in this repository
-is already marked <code>merge=derived</code> in <a href="../.gitattributes"><code>.gitattributes</code></a>, for an
+is already marked <code>merge=derived</code> in <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.gitattributes"><code>.gitattributes</code></a>, for an
 unrelated reason — a merge of two branches is never the answer for a file whose content
 is a function of the merged tree. An archive for a reader wants to drop exactly that set,
 because each of those files is a projection of a canonical file the archive already
 carries, and carrying both spends the reader's attention on the same statement twice. So
 the archive reads that declaration rather than keeping a second list of generated paths.
 A second list would be the duplication
-<a href="../.ai/repo/rules/project/commands-are-projections.v1.md"><code>project.commands-are-projections</code></a>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/commands-are-projections.v1.md"><code>project.commands-are-projections</code></a>
 exists to refuse, and it would go stale the first time someone added a generator and
 updated only one of the two.</p>
 <p>On this repository that one rule accounts for about 15 MB of the 29 MB tracked.</p>
@@ -222,7 +222,7 @@ repository is broken.</p>
 <p>A missing git index is the same class of failure and quieter still. This repository
 enumerates itself with <code>git ls-files</code>; a check run in a tree with no <code>.git</code> does not fail,
 it examines nothing and reports that nothing is wrong. That is the shape
-<a href="../.ai/repo/rules/project/empty-is-not-failure.v1.md"><code>project.empty-is-not-failure</code></a>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/empty-is-not-failure.v1.md"><code>project.empty-is-not-failure</code></a>
 was written about, arriving through the archive rather than through the code.</p>
 <p>Both are answered inside the archive, not in a note beside it:</p>
 <ul>
@@ -339,7 +339,7 @@ content see <a href="https://majordomus.dev/docs/github-pages-architecture/"><co
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

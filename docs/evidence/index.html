@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -174,10 +174,10 @@ carrying the provenance the run itself did not have; a ledger of the latest exec
 test; and one derivation that joins the two and says, per claim, exactly what can honestly
 be said about it. Behaviour as implemented; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-<a href="../.ai/repo/adrs/0040-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md">ADR 40</a>;
+ADR 40;
 the rules it serves are <code>project.no-claim-without-test</code> and
 <code>project.never-reported-is-not-green</code> under
-<a href="../.ai/repo/rules/project/"><code>.ai/repo/rules/project/</code></a>.</p>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/rules/project"><code>.ai/repo/rules/project/</code></a>.</p>
 <pre class="mermaid" tabindex="0">
 flowchart TD
   claims["docs/CLAIMS.yaml&lt;br&gt;claim → source, implementation,&lt;br&gt;test (a path)"]
@@ -205,12 +205,12 @@ flowchart TD
 subsystem, nobody could answer from the repository whether that case had ever run, against
 which revision, with what result, or whether the result still applied, and the sentence was
 rendered on the public site as a guarantee on the strength of a file existing.</p>
-<p>This is the same defect <a href="../.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md">ADR 30</a>
+<p>This is the same defect <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md">ADR 30</a>
 named one level up: <em>a test result that cannot go stale is a claim about the past presented
 as a claim about the present.</em></p>
 <h2 id="the-model"><a class="zola-anchor" href="#the-model" aria-label="Anchor link for: the-model">The model</a></h2>
 <p>Three objects and one derivation, in
-<a href="../apps/majordomus-cli/src/evidence/"><code>apps/majordomus-cli/src/evidence/</code></a>.</p>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/evidence"><code>apps/majordomus-cli/src/evidence/</code></a>.</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th></th><th>what it is</th></tr></thead><tbody>
 <tr><td><code>TestId</code></td><td>the stable identity of a test: the runner that owns it, and the name that runner knows it by</td></tr>
@@ -398,7 +398,7 @@ name, so it is not recorded as one; and a <code>test result:</code> line with no
 it belongs to no binary and is dropped rather than credited to the previous one.</p>
 <h3 id="in-ci"><a class="zola-anchor" href="#in-ci" aria-label="Anchor link for: in-ci">In CI</a></h3>
 <p>Half the wiring is already there. The <code>suite</code> job of
-<a href="../.github/workflows/validate.yml"><code>.github/workflows/validate.yml</code></a> runs
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.github/workflows/validate.yml"><code>.github/workflows/validate.yml</code></a> runs
 <code>bash test/run.sh</code> with <code>MJ_TEST_REPORT: suite.tsv</code> and uploads that TSV as the
 <code>ci-metrics-suite</code> artifact; the <code>macos</code> job does the same. The recording step is one line
 after the suite step:</p>
@@ -413,7 +413,7 @@ by whoever runs the suite locally and commits it, and the states are honest abou
 result either way.</p>
 <h2 id="the-four-capabilities"><a class="zola-anchor" href="#the-four-capabilities" aria-label="Anchor link for: the-four-capabilities">The four capabilities</a></h2>
 <p>One declaration in
-<a href="../apps/majordomus-cli/src/capability/builtin/evidence.rs"><code>src/capability/builtin/evidence.rs</code></a>;
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs"><code>src/capability/builtin/evidence.rs</code></a>;
 every surface is derived from it (<a href="https://majordomus.dev/docs/capabilities/"><code>CAPABILITIES.md</code></a>).</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>capability</th><th>command line</th><th>HTTP</th><th>MCP</th></tr></thead><tbody>
@@ -454,7 +454,7 @@ every claim that names it with the state each is in.</p>
 does not declare is a not-found rather than an empty answer: a typo that read as "this
 claim has no evidence" is the one answer these capabilities must never give.</p>
 <h2 id="the-gate"><a class="zola-anchor" href="#the-gate" aria-label="Anchor link for: the-gate">The gate</a></h2>
-<p><a href="../scripts/evidence-check"><code>scripts/evidence-check</code></a> renders the executable's own answer
+<p><a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/scripts/evidence-check"><code>scripts/evidence-check</code></a> renders the executable's own answer
 and ratchets it. It derives nothing of its own — a gate with a second opinion about what is
 proven would be a second model of proof.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/evidence-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> report; 0 clean, 10 with regressions</span></span>
@@ -472,7 +472,7 @@ says is not there. A <code>guaranteed</code> claim in any of the three passing s
 the day the gate arrives every guaranteed claim is <code>not_run</code> — true, and as a blocking gate
 it would mean nothing could be merged by anybody until a full suite run had been recorded.
 So the debt that existed at that moment is written to
-<a href="../.ai/repo/evidence-baseline.txt"><code>.ai/repo/evidence-baseline.txt</code></a> by <code>--baseline</code>,
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/evidence-baseline.txt"><code>.ai/repo/evidence-baseline.txt</code></a> by <code>--baseline</code>,
 never by hand.</p>
 <p><strong>What the ratchet refuses is not membership of that list.</strong> It was, and that was a defect
 rather than a strictness: a claim written after the baseline is absent from it for the only
@@ -499,7 +499,7 @@ without a run is new debt too, and is also only reported.</p>
 that proves a claim and rewriting the file — never by adding a line. <code>--strict</code> refuses
 every unsupported guarantee; it is the end state, and CI switches to it when the
 unsupported half is empty.</p>
-<p>The gate is named in <a href="../.ai/repo/ci/gates.yaml"><code>.ai/repo/ci/gates.yaml</code></a> as
+<p>The gate is named in <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/gates.yaml"><code>.ai/repo/ci/gates.yaml</code></a> as
 <code>evidence-check</code>, in the <code>structure</code> job, with <code>always: true</code> — so the verdict arrives on
 every push rather than when somebody remembers to run it, which is the other half of
 <code>project.never-reported-is-not-green</code>. The <code>evidence</code> path class names what can change the
@@ -529,13 +529,13 @@ and is <strong>not</strong> an input to the proof state, which is decided by the
 where the two disagree is a tree where something was recorded against a commit that does
 not describe it, and the <code>working_tree: dirty</code> field is usually the reason.</p>
 <p><strong>It is not the execution control plane.</strong>
-<a href="../apps/majordomus-cli/src/execution/"><code>src/execution/</code></a> and
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/execution"><code>src/execution/</code></a> and
 <a href="https://majordomus.dev/docs/executions/"><code>EXECUTIONS.md</code></a> are about capability executions of a running server —
 in-flight work, progress, typed events, gone with the process. This is about test runs:
 durable, committed, and read long after the process that produced them exited. Two
 different subjects that share an English word.</p>
 <p><strong>It is not the obligation evidence of <code>lib/evidence.sh</code>.</strong> That subsystem
-(<a href="../.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md">ADR 30</a>) is
+(<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md">ADR 30</a>) is
 about what a <em>task</em> owes before it may be called completed, and its ledger is the
 append-only task ledger. The two share an idea — evidence that can go stale — and nothing
 else. Neither reads the other's records.</p>
@@ -656,7 +656,7 @@ passed against this commit. Whether the test tests the claim is a question for r
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

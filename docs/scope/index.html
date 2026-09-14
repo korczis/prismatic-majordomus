@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -169,12 +169,12 @@
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/SCOPE.md" class="font-mono underline">docs/SCOPE.md</a> — the same Markdown GitHub shows.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>What a worker reads of this repository, and what it never reads, declared once as data:
-<a href="../.ai/repo/scope.yaml"><code>.ai/repo/scope.yaml</code></a>. The Rust executable reads it when it
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/scope.yaml"><code>.ai/repo/scope.yaml</code></a>. The Rust executable reads it when it
 starts, discovers and indexes nothing outside it, serves nothing outside it through MCP,
 HTTP or the command line, and answers for any path whether it is in or out and why. The
 shell tool seeds it on <code>init</code> and checks it in <code>doctor</code>. The rule behind it is
-<code>project.scope-is-declared</code> under <a href="../.ai/repo/rules/project/"><code>.ai/repo/rules/project/</code></a>;
-the claim is <code>scope-declared</code> in <a href="https://majordomus.dev/docs/scope/CLAIMS.yaml"><code>CLAIMS.yaml</code></a>.</p>
+<code>project.scope-is-declared</code> under <a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/rules/project"><code>.ai/repo/rules/project/</code></a>;
+the claim is <code>scope-declared</code> in <a href="https://majordomus.dev/guarantees/"><code>CLAIMS.yaml</code></a>.</p>
 <p>The task scope (<code>majordomus start --scope</code>, the paths a task may touch) is a different
 thing with the same word; this document is about the repository's own boundary.</p>
 <h2 id="the-declaration"><a class="zola-anchor" href="#the-declaration" aria-label="Anchor link for: the-declaration">The declaration</a></h2>
@@ -226,7 +226,7 @@ spans any depth, a trailing <code>/</code> names a directory and everything bene
 anchored at the repository root; <code>**/target/</code> is how "at any depth" is said. A <code>names</code>
 list is matched against the file name alone and may not carry a slash. A pattern with a
 leading slash, a <code>:(</code> prefix or a <code>..</code> segment is refused with the file and the key named,
-and so is a key the schema does not declare (<a href="../share/schemas/majordomus/scope/scope.v1.schema.json"><code>share/schemas/majordomus/scope/scope.v1.schema.json</code></a>;
+and so is a key the schema does not declare (<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/scope/scope.v1.schema.json"><code>share/schemas/majordomus/scope/scope.v1.schema.json</code></a>;
 the shell tool's allow-list <code>share/allow/scope.txt</code> is generated from it by
 <code>majordomus generate allow</code>).</p>
 <h2 id="how-a-path-is-judged"><a class="zola-anchor" href="#how-a-path-is-judged" aria-label="Anchor link for: how-a-path-is-judged">How a path is judged</a></h2>
@@ -263,7 +263,7 @@ it should not be in the repository. Content is not read for the tally; a binary 
 innocent name is caught when it is read.</li>
 <li><strong>The origin.</strong> The manifest's <code>scope</code> section names the file. A repository whose
 manifest names none is read under the distribution's default,
-<a href="../share/skeleton/ai/repo/scope.yaml"><code>share/skeleton/ai/repo/scope.yaml</code></a>, the file
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/share/skeleton/ai/repo/scope.yaml"><code>share/skeleton/ai/repo/scope.yaml</code></a>, the file
 <code>init</code> seeds, and the report says <code>distribution</code>. Nothing is assumed silently.</li>
 </ul>
 <p>The declaration is compiled once when the process starts and never re-read per request:
@@ -279,7 +279,7 @@ manifest names none is read under the distribution's default,
 MCP tools <code>majordomus_scope</code> and <code>majordomus_scope_classify</code>, the resource
 <code>majordomus://scope</code>, and the routes <code>GET /api/v1/scope</code> and
 <code>GET /api/v1/scope/classify?path=...</code>; the reference is
-<a href="https://majordomus.dev/docs/scope/generated/modules/repository.md"><code>generated/modules/repository.md</code></a>. A path that is
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/repository.md"><code>generated/modules/repository.md</code></a>. A path that is
 absolute or carries a <code>..</code> segment is an invalid input on every one of them.</p>
 <p>The shell tool's <code>doctor</code> reports the file under <code>layout</code>: its version, how many <code>in</code>
 pathspecs it declares, and that every key is one the schema declares; a manifest naming
@@ -367,7 +367,7 @@ reads the work tree under the same scope).</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

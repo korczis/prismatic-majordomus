@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -232,7 +232,7 @@ faster by having waited.</p>
 <h2 id="what-made-it-slow-and-the-shape-of-each-fix"><a class="zola-anchor" href="#what-made-it-slow-and-the-shape-of-each-fix" aria-label="Anchor link for: what-made-it-slow-and-the-shape-of-each-fix">What made it slow, and the shape of each fix</a></h2>
 <p>Every value named below is measured, and none of them is written here. The current ones are
 in the tracked baseline of the machine that measured them,
-<a href="../.ai/repo/benchmarks/pages/"><code>.ai/repo/benchmarks/pages/</code></a>, written by
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/benchmarks/pages"><code>.ai/repo/benchmarks/pages/</code></a>, written by
 <code>scripts/pages benchmark --write-baseline</code>; the before-and-after of each change is in the
 commit that made it, which is where <code>project.performance-evidence</code> puts them. Where the time
 goes inside one generation is <code>MJ_TIMING=1 scripts/generate-site-data</code>, ranked by phase.</p>
@@ -290,13 +290,13 @@ left is <code>site-check</code>. That is the next thing worth attacking, and it 
 <em>Remaining bottlenecks</em> rather than left implicit.</p>
 <h2 id="the-model"><a class="zola-anchor" href="#the-model" aria-label="Anchor link for: the-model">The model</a></h2>
 <p>Everything the path is allowed to cost, and everything it triggers on, is declared once in
-<a href="../.ai/repo/ci/pages.yaml"><code>.ai/repo/ci/pages.yaml</code></a>. Neither the workflow nor the script
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/pages.yaml"><code>.ai/repo/ci/pages.yaml</code></a>. Neither the workflow nor the script
 carries a budget, a path list or a gate name of its own.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> budget</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the controlled budgets</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> budget</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-json</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the same, for a reader that is not a person</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> paths</span><span class="z-l-10 z-l-i z-d-4 z-d-i">           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what a push must touch for the site to be able to change</span></span></code></pre><h3 id="trigger-invalidation"><a class="zola-anchor" href="#trigger-invalidation" aria-label="Anchor link for: trigger-invalidation">Trigger invalidation</a></h3>
 <p>The trigger paths are <strong>derived</strong>, never written twice. The model names the gate that builds
-the site (<code>site-build</code>); the classes of <a href="../.ai/repo/ci/gates.yaml"><code>gates.yaml</code></a> that name
+the site (<code>site-build</code>); the classes of <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/gates.yaml"><code>gates.yaml</code></a> that name
 that gate are the classes whose paths can change the site; their pathspecs plus the model's
 own <code>extra</code> are the workflow's <code>paths:</code> block.</p>
 <p>A class that escalates the whole plan (<code>gates: full</code>) is deliberately <em>not</em> one of them. That
@@ -577,7 +577,7 @@ path runs. A new check over the repository goes into the gate model, which it do
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

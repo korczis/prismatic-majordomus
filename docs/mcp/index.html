@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -168,12 +168,12 @@
   </nav>
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/MCP.md" class="font-mono underline">docs/MCP.md</a> — the same Markdown GitHub shows.</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>What the Rust executable under <a href="../apps/majordomus-cli/"><code>apps/majordomus-cli/</code></a> serves
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>What the Rust executable under <a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli"><code>apps/majordomus-cli/</code></a> serves
 to an MCP client, where it comes from, and what it refuses. Behaviour as implemented and
 tested; where implementation and this document disagree, the document is wrong and
 changes in the same commit as the fix. The developer-facing detail (architecture, every
 option, the kind schema) is in the application's own
-<a href="../apps/majordomus-cli/README.md"><code>README.md</code></a>.</p>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/README.md"><code>README.md</code></a>.</p>
 <h2 id="what-it-is"><a class="zola-anchor" href="#what-it-is" aria-label="Anchor link for: what-it-is">What it is</a></h2>
 <p>A process the client starts, speaking the Model Context Protocol on its stdin and stdout,
 serving the repository's AI layer read-only, and joining the repository's one shared
@@ -195,7 +195,7 @@ removed when the server stops. It is one projection of the executable's capabili
 registry (<a href="https://majordomus.dev/docs/capabilities/"><code>CAPABILITIES.md</code></a>): the same capabilities are the HTTP routes
 and the <code>capabilities</code> commands, and every tool and resource here is derived from a
 registry entry, none declared in the MCP code. The decision is
-<a href="../.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md"><code>.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md</code></a>.</p>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md"><code>.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md</code></a>.</p>
 <h2 id="one-server-per-checkout"><a class="zola-anchor" href="#one-server-per-checkout" aria-label="Anchor link for: one-server-per-checkout">One server per checkout</a></h2>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th></th><th></th></tr></thead><tbody>
@@ -351,15 +351,15 @@ same launcher, so that the first client to open the repository becomes the serve
 others attach:</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>client</th><th>file</th><th>what it names</th></tr></thead><tbody>
-<tr><td>Claude Code</td><td><a href="../.mcp.json"><code>.mcp.json</code></a></td><td>a stdio server, <code>bin/majordomus-mcp</code>; Claude Code asks once whether to trust a project server</td></tr>
-<tr><td>Gemini CLI</td><td><a href="../.gemini/settings.json"><code>.gemini/settings.json</code></a></td><td>the same launcher under <code>mcpServers.majordomus</code></td></tr>
-<tr><td>Codex</td><td><a href="../.codex/config.toml"><code>.codex/config.toml</code></a></td><td><code>[mcp_servers.majordomus]</code>, loaded when the project is trusted</td></tr>
+<tr><td>Claude Code</td><td><a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.mcp.json"><code>.mcp.json</code></a></td><td>a stdio server, <code>bin/majordomus-mcp</code>; Claude Code asks once whether to trust a project server</td></tr>
+<tr><td>Gemini CLI</td><td><a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.gemini/settings.json"><code>.gemini/settings.json</code></a></td><td>the same launcher under <code>mcpServers.majordomus</code></td></tr>
+<tr><td>Codex</td><td><a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.codex/config.toml"><code>.codex/config.toml</code></a></td><td><code>[mcp_servers.majordomus]</code>, loaded when the project is trusted</td></tr>
 <tr><td>bb</td><td>nothing of its own</td><td>an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with <code>settingSources: project</code>, which loads <code>.mcp.json</code>; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it <code>pending</code> at init and connected afterwards</td></tr>
 </tbody></table>
 </div>
 <p>The rows are the providers whose declaration names a client configuration; the whole set,
 with what each reads and where it keeps its scratch checkouts, is
-<a href="https://majordomus.dev/docs/mcp/generated/providers.md"><code>docs/generated/providers.md</code></a>, generated from the same declaration.</p>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/providers.md"><code>docs/generated/providers.md</code></a>, generated from the same declaration.</p>
 <div class="overflow-x-auto" tabindex="0">
 <p>| anything speaking Streamable HTTP | the running server's <code>/mcp</code> | <code>initialize</code> answers with an <code>Mcp-Session-Id</code>; every later request carries it; <code>DELETE /mcp</code> ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |</p>
 </div>
@@ -582,7 +582,7 @@ resources (<code>majordomus://prompt/&lt;name&gt;</code>), not prompts.</li>
 <li><strong>The hierarchy of bootstrap files.</strong> Root <code>README.md</code>, <code>AGENTS.md</code> and the other
 provider files are served as documents with their directory recorded; nothing merges
 or ranks them, because the repository defines no merge semantics. Recorded in
-<a href="../.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md"><code>.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md</code></a>.</li>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md"><code>.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md</code></a>.</li>
 <li><strong>Any mutation of the repository</strong>, subscriptions, list-change notifications, and a
 server-initiated stream on <code>/mcp</code> (this server sends nothing unasked). The HTTP
 projection of the same registry is served by the shared server and by <code>majordomus serve</code>; see <a href="https://majordomus.dev/docs/capabilities/"><code>CAPABILITIES.md</code></a>.</li>
@@ -617,7 +617,7 @@ an address nobody answers at, and asserts that the check and the status say one 
 one lease. <code>tests/hot_path.rs</code> sends
 hundreds of frames and requires the startup counters (<code>majordomus_perf</code>) unchanged;
 <code>majordomus bench</code> times every tool through a real child process
-(<a href="https://majordomus.dev/docs/capabilities/"><code>CAPABILITIES.md</code></a>). The claims are in <a href="https://majordomus.dev/docs/mcp/CLAIMS.yaml"><code>CLAIMS.yaml</code></a>
+(<a href="https://majordomus.dev/docs/capabilities/"><code>CAPABILITIES.md</code></a>). The claims are in <a href="https://majordomus.dev/guarantees/"><code>CLAIMS.yaml</code></a>
 under <code>mcp-</code>, <code>hot-path-no-rebuild</code> and <code>benchmark-coverage-derived</code>.</p>
 </article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
     <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
@@ -696,7 +696,7 @@ under <code>mcp-</code>, <code>hot-path-no-rebuild</code> and <code>benchmark-co
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

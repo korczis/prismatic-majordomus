@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -170,7 +170,7 @@
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/USE_CASES.md" class="font-mono underline">docs/USE_CASES.md</a> — the same Markdown GitHub shows.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>A use case is a task somebody performs with Majordomus, written once as data and proved
 against the real tool. It is not a tutorial, not a feature list and not a page: it is one
-file under <a href="../.ai/repo/use-cases/"><code>.ai/repo/use-cases/</code></a> whose front matter names the
+file under <a rel="external" href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/use-cases"><code>.ai/repo/use-cases/</code></a> whose front matter names the
 commands, rules, claims, responsibilities and applications it touches and carries a
 scenario, and whose body says what the situation is and what you are left holding. Every
 projection of it is derived: the page, the category it sits in, the links to and from it,
@@ -178,7 +178,7 @@ the tally that says which capabilities have a use case, and the evidence a page 
 The rules behind it are <code>majordomus.catalogue-integrity</code> and
 <code>majordomus.use-case-coverage</code> in the vendored baseline, and the claims are
 <code>use-case-coverage</code>, <code>use-case-evidence</code> and <code>use-case-impact</code> in
-<a href="https://majordomus.dev/docs/use-cases/CLAIMS.yaml"><code>CLAIMS.yaml</code></a>.</p>
+<a href="https://majordomus.dev/guarantees/"><code>CLAIMS.yaml</code></a>.</p>
 <p>The principle, stated once: anything derivable is derived; anything not derivable has one
 canonical home; anything claimed as guaranteed is backed by executable evidence.</p>
 <h2 id="where-things-live"><a class="zola-anchor" href="#where-things-live" aria-label="Anchor link for: where-things-live">Where things live</a></h2>
@@ -292,10 +292,10 @@ counts and prints them apart.</p>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> usecase</span><span class="z-l-8 z-d-8"> run</span><span class="z-l-8 z-d-8"> know-whether-this-work-is-finished</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> by name, whatever its mode</span></span></code></pre>
 <p>Live evidence lands under <code>.ai/local/evidence/live/</code> and is never committed: it describes
 one tree, on one machine, at one minute, and a derived file whose content depends on who
-derived it is what <a href="../.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md">ADR 5</a>
+derived it is what <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md">ADR 5</a>
 forbids. For the same reason <code>usecase coverage</code> counts a live scenario as naming a command
 and never as covering it: a guarantee CI cannot re-run is not a guarantee. The decision is
-<a href="../.ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md">ADR 38</a>.</p>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md">ADR 38</a>.</p>
 <h2 id="running-and-evidence"><a class="zola-anchor" href="#running-and-evidence" aria-label="Anchor link for: running-and-evidence">Running and evidence</a></h2>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> usecase</span><span class="z-l-8 z-d-8"> run</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every fixture scenario; exit 10 when a step fails</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> usecase</span><span class="z-l-8 z-d-8"> run</span><span class="z-l-8 z-d-8"> prove-a-rule-is-enforced</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-keep</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> keep the repository for a look</span></span>
@@ -463,7 +463,7 @@ count to bump, and the related links of every other page recompute themselves.</
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

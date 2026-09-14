@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -173,7 +173,7 @@
 a server this worktree built and started itself. It is phase 01 of the Cockpit IDE /
 control-plane pack and it implements nothing: it establishes what exists, proves it by
 running it, and says what the smallest safe next phase is.</p>
-<p>The architecture it measures against is <a href="../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md">ADR 0040</a>
+<p>The architecture it measures against is <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md">ADR 0040</a>
 and <a href="https://majordomus.dev/docs/development-runtime/"><code>DEVELOPMENT_RUNTIME.md</code></a>: one canonical runtime — the
 capability registry of the Rust executable — and every surface a consumer of it. This
 document is the evidence behind that decision and the plan that follows from it.</p>
@@ -231,7 +231,7 @@ that implements it.</p>
 <h2 id="2-current-canonical-architecture-subject-by-subject"><a class="zola-anchor" href="#2-current-canonical-architecture-subject-by-subject" aria-label="Anchor link for: 2-current-canonical-architecture-subject-by-subject">2. Current canonical architecture, subject by subject</a></h2>
 <p>The full per-concept inventory — canonical owner, storage, schema, discovery, consumers,
 mutation path, events, tests, docs and drift — is in
-<a href="https://majordomus.dev/docs/cockpit-ide-audit/DEVELOPMENT_RUNTIME.md#the-inventory"><code>DEVELOPMENT_RUNTIME.md</code></a> and is not repeated here.
+<a href="https://majordomus.dev/docs/development-runtime/#the-inventory"><code>DEVELOPMENT_RUNTIME.md</code></a> and is not repeated here.
 This section records only what that inventory does not: the entry and projection subjects
 the pack names, and the two-program split that explains most of the rest.</p>
 <h3 id="the-split-that-explains-the-rest"><a class="zola-anchor" href="#the-split-that-explains-the-rest" aria-label="Anchor link for: the-split-that-explains-the-rest">The split that explains the rest</a></h3>
@@ -875,7 +875,7 @@ including these.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

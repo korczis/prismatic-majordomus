@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -212,7 +212,7 @@ from an answer.
 
 This is the answer to &quot;why did I get that&quot;, asked once rather than reverse-engineered
 from every context. It is a projection of the tables and constants this module is built
-from — [`Tier::ORDER`], [`EDGES`](select::EDGES), [`Selector::ALL`] and the four defaults
+from — [`Tier::ORDER`], [`select::EDGES`], [`Selector::ALL`] and the four defaults
 — and holds no numbers of its own, so the published rules and the code that applies them
 cannot drift apart.
 
@@ -469,7 +469,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;The compiler&#39;s own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \&quot;why did I get that\&quot;, asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`EDGES`](select::EDGES), [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&amp;ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```&quot;,
+  &quot;description&quot;: &quot;The compiler&#39;s own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \&quot;why did I get that\&quot;, asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`select::EDGES`], [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&amp;ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```&quot;,
   &quot;properties&quot;: {
     &quot;bytes_per_token&quot;: {
       &quot;description&quot;: &quot;Bytes per estimated token.&quot;,
@@ -569,7 +569,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devcontext</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CompilerPolicy</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5b9de0c6781b7efce8bc7e619e12dcff73fa64719a32580223249f87c3f9c92c</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
       </dl>
     </div>
@@ -641,7 +641,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

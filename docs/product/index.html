@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=bf0763ef9db2c1bb7240">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -175,9 +175,9 @@ layer holds, which operational moments a feature answers, what is guaranteed and
 only advisory. What a person writes is which parts of the product form one chapter, and in
 what order. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-<a href="../.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md">ADR 23</a>;
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md">ADR 23</a>;
 the rule is <code>project.product-surface-derived</code>; the directory's own contract is
-<a href="../.ai/repo/features/README.md"><code>.ai/repo/features/README.md</code></a>.</p>
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/features/README.md"><code>.ai/repo/features/README.md</code></a>.</p>
 <h2 id="the-kind"><a class="zola-anchor" href="#the-kind" aria-label="Anchor link for: the-kind">The kind</a></h2>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>.ai/repo/features/&lt;id&gt;.md    one product feature    schema: feature/v1</span></span></code></pre>
 <p>The file name is the <code>id</code> is the slug is the route: <code>features/worktrees.md</code> is
@@ -215,7 +215,7 @@ the only place any of this is decided.
 <code>apps/majordomus-cli/src/capability/builtin/product.rs</code> declares five capabilities over it
 with <code>capability!</code>, so the command line, the HTTP routes, the OpenAPI operations, the MCP
 tools and resources and the generated reference are projections of one declaration
-(<a href="../.ai/repo/adrs/0002-canonical-capability-registry.md">ADR 2</a>, <code>docs/CAPABILITIES.md</code>).</p>
+(<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0002-canonical-capability-registry.md">ADR 2</a>, <code>docs/CAPABILITIES.md</code>).</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>Answer</th><th>Command line</th><th>HTTP</th><th>MCP</th></tr></thead><tbody>
 <tr><td>every feature</td><td><code>majordomus product list</code></td><td><code>GET /api/v1/product/features</code></td><td><code>majordomus_features</code>, <code>majordomus://product</code></td></tr>
@@ -415,7 +415,7 @@ and by none of them once it is gone.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8cf45700048362db49ff697d170b3b6e2488371e" class="font-mono underline">8cf4570</a> · inputs <span class="font-mono">133f214ca4ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/70685d47382273287f9acbe729d9108ef38da197" class="font-mono underline">70685d4</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
