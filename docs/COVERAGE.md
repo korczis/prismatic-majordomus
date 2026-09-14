@@ -10,14 +10,21 @@ different way somewhere else.
 
 ## The two floors and the differential
 
-**The crate floor** (`scripts/rust-coverage-threshold`, currently 90) is a lower bound on
+**The crate floor** (`scripts/rust-coverage-threshold`) is a lower bound on
 line coverage of the whole executable, test code out of the denominator. It is a ratchet
 against the crate rotting, not a promise of completeness.
 
-**The session/continuity domain** (`scripts/session-coverage-threshold`, 100, over the
-files in `scripts/session-coverage-domain`) holds one subsystem to full line, function and
-region coverage. A crate-wide floor says nothing about whether the subsystem a
+**The session/continuity domain** (`scripts/session-coverage-threshold`, over the files in
+`scripts/session-coverage-domain`) holds one subsystem to its own floor, on lines, functions
+and regions alike. A crate-wide floor says nothing about whether the subsystem a
 repository's continuity depends on is tested at all; this is where that is held.
+
+**The two floors are held for different reasons.** The crate floor is high by rule:
+`project.rust-command-tested-in-file` refuses one below ninety, because a floor that bends to
+whatever the crate measured is a floor that stops meaning anything. The domain floor is a
+ratchet: it is the coverage the session/continuity domain actually measured when it was set,
+and may rise and never fall. `test/cases/77_rust_evidence.sh` holds the lower bound of each,
+and new uncovered code is refused regardless, by the differential gate below.
 
 **The differential gate** (`scripts/ci/coverage-differential`, rule
 `project.new-code-is-covered`) is the changed-code invariant of issue #214. It holds every

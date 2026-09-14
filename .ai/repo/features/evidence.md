@@ -8,7 +8,7 @@ headline: Every claim is joined to the execution recorded for its test — the o
 summary: The claims matrix binds a claim to a test by path, and a path resolving says a file exists rather than that anything ran. The ledger records the latest execution of every test with its provenance; the join is derived on every read and answers, per claim, whether the repository can honestly call it proven, only-not-invalidated, stale, failing or never run.
 status: stable
 weight: 175
-featured: false
+featured: true
 areas: [verification, governance]
 modules: [evidence]
 commands: [evidence]

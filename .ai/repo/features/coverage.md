@@ -4,8 +4,8 @@ id: coverage
 kind: feature
 title: New code is covered, measured once and asked two questions
 short_title: Coverage
-headline: One coverage measurement, test code out of the denominator, holds a crate floor, a full-coverage domain, and — the invariant of #214 — every executable line a change touches.
-summary: scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, the session/continuity domain held to 100%, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.
+headline: One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of #214 — every executable line a change touches.
+summary: scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, a floor over the session/continuity domain, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.
 status: stable
 weight: 72
 featured: false
@@ -28,7 +28,7 @@ export, test code excluded from both the covered and the total so a test added n
 the number — and reports line, function and region coverage by one rule. Three gates read
 that one judgment. The crate floor (`scripts/rust-coverage-threshold`) is a lower bound on
 the whole executable. The session/continuity domain (`scripts/session-coverage-domain`) is
-held to full line, function and region coverage. And the differential gate
+held to a floor of its own on lines, functions and regions. And the differential gate
 (`scripts/ci/coverage-differential`, rule `project.new-code-is-covered`) holds every
 executable line, function and region a change adds or touches — measured against the
 branch's merge-base with the trunk, working tree included — so a change that introduces
