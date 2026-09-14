@@ -601,14 +601,13 @@ impl RepositoryEnvironment {
     /// ```
     /// use majordomus_cli::environment::RepositoryEnvironment;
     /// # fn demo(env: &RepositoryEnvironment) {
-    /// // A server coming up or going away does not make this a different repository,
-    /// // so the news digest is the same across the change and the banner stays warm.
-    /// let quiet = env.news_digest();
-    /// let mut serving = env.clone();
-    /// serving.services.clear();
-    /// assert_eq!(quiet, serving.news_digest());
-    /// // The full digest is a different question and may differ.
-    /// let _ = env.digest();
+    /// // a server arriving or leaving is not a different repository, so clearing the
+    /// // services changes nothing this digest can see
+    /// let mut without = env.clone();
+    /// without.services.clear();
+    /// assert_eq!(env.news_digest(), without.news_digest());
+    /// // and with no services left, the two digests are the same value
+    /// assert_eq!(without.news_digest(), without.digest());
     /// # }
     /// ```
     pub fn news_digest(&self) -> String {
