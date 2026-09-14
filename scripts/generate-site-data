@@ -1015,6 +1015,77 @@ jq -n \
       cat_index: (reduce ($cats | to_entries[]) as $e ({}; . + {($e.value.id): $e.key})) }' > "$OUT/catalogue.json"
 # the bodies travel with the pages, not the data: the content files carry the Markdown
 mj_phase_end "gen:catalogue.json" "$GEN_T0"
+# ---------------------------------------------------------------- terminal.json (the demo, replayed from recorded runs)
+# The landing page's terminal is not a mockup and not a second command list. It is a join of
+# two datasets this script has already written:
+#
+#   lifecycle.json   the ordered lifecycle, as the tool declares it
+#   catalogue.json   every use-case scenario the generator just executed, each step carrying
+#                    the command, the exit status and the stdout the run actually produced,
+#                    already redacted by lib/usecase.sh so it names no machine and no clock
+#
+# Nothing here names a command. The walkthrough is the lifecycle's own order; a lifecycle step
+# is illustrated by the recorded run of that command that shows the most of it — a run that
+# succeeded before one that was refused, then the most output lines, then use case and step id,
+# so the choice is a function of the data and not of an opinion. A lifecycle step no scenario
+# ran would leave a hole in the page's own story, so it is refused below rather than hidden.
+# `default` is the panel a reader lands on: the one with the most to show. The tab order stays
+# the lifecycle's, because that is what the strip is telling them; which panel opens first is
+# a separate question and the data answers it rather than a template picking a favourite.
+#
+# The refusals are the same corpus filtered by what the tool did, not by what reads well: every
+# recorded step of a lifecycle command that exited non-zero, deduplicated by what the reader
+# would see (command, status, output) and ordered by the lifecycle. A command that stops
+# refusing stops appearing here, and `--check` fails on the day that happens.
+GEN_T0="$(mj_phase_begin "gen:terminal.json")"
+jq -S --slurpfile lc "$OUT/lifecycle.json" '
+  ([$lc[0].steps[].command]) as $order
+  | ([ .use_cases[]
+       | select(.evidence != null)
+       | . as $uc
+       | .evidence.steps[]
+       | . + { use_case: $uc.id, use_case_title: $uc.title, route: ("/use-cases/" + $uc.id + "/") } ]) as $steps
+  | ($steps | map(select(.argv[0] as $c | $order | index($c) != null))) as $lifesteps
+  | def panel($label; $what):
+      { label: $label, what: $what, command: .command, argv: .argv, exit: .exit,
+        output: .output, lines: (.output | split("\n") | length),
+        use_case: .use_case, use_case_title: .use_case_title, route: .route,
+        assertions: (.assertions | map({ kind, result, pattern: (.pattern // null), expected: (.expected // null) })) };
+    { schema: 1,
+      source: "lifecycle.json joined to the recorded executions in catalogue.json",
+      walkthrough: [ $order | to_entries[] | .key as $i | .value as $cmd
+        | ($lifesteps
+            | map(select(.argv[0] == $cmd and .result == "pass"))
+            | sort_by([ (.exit != 0), -( .output | split("\n") | length ), .use_case, .id ])
+            | first) as $pick
+        | if $pick == null then empty
+          else ($pick | panel($cmd; $lc[0].steps[$i].what)) + { order: ($i + 1) } end ],
+      refusals: ( $lifesteps
+        | map(select(.exit != 0))
+        | group_by([.command, .exit, .output])
+        | map(first)
+        | sort_by([ (.argv[0] as $c | $order | index($c)), .use_case, .id ])
+        | map(. as $s
+              | ($s.output | split("\n") | map(select(length > 0))) as $lines
+              | (($lines | map(select(startswith("FAIL"))) | first) // ($lines | last) // "refused") as $verdict
+              | $s | panel($s.argv[0]; ($verdict | split("  [reproduce:") | first))) ),
+      default: ( [ $order | to_entries[] | .key as $i | .value as $cmd
+                   | ($lifesteps | map(select(.argv[0] == $cmd and .result == "pass"))
+                      | sort_by([ (.exit != 0), -( .output | split("\n") | length ), .use_case, .id ]) | first) as $pick
+                   | if $pick == null then empty else { i: $i, n: ($pick.output | split("\n") | length) } end ]
+                 | to_entries | sort_by([ -( .value.n ), .key ]) | first | .key ),
+      counts: { lifecycle: ($order | length),
+                walkthrough: ([ $order[] | . as $cmd | $lifesteps | map(select(.argv[0] == $cmd and .result == "pass")) | length | select(. > 0) ] | length),
+                refusals: ( $lifesteps | map(select(.exit != 0)) | group_by([.command, .exit, .output]) | length ),
+                executions: ($steps | length),
+                scenarios: ([ $steps[].use_case ] | unique | length) } }' \
+  "$OUT/catalogue.json" > "$OUT/terminal.json"
+TERM_W="$(jq -r '.counts.walkthrough' "$OUT/terminal.json")"; TERM_L="$(jq -r '.counts.lifecycle' "$OUT/terminal.json")"
+[ "$TERM_W" = "$TERM_L" ] || {
+  echo "generate-site-data: $TERM_W of $TERM_L lifecycle step(s) have a recorded run; the page would show a lifecycle no scenario walks" >&2; exit 10; }
+[ "$(jq -r '.counts.refusals' "$OUT/terminal.json")" -gt 0 ] || {
+  echo "generate-site-data: no recorded refusal; the page may not claim the tool refuses" >&2; exit 10; }
+mj_phase_end "gen:terminal.json" "$GEN_T0"
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
 GEN_T0="$(mj_phase_begin "gen:diagrams.json_Mermaid_source")"
 LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"
