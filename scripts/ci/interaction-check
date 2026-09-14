@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# interaction-check: every interactive control the built site carries is claimed by exactly one behaviour
+# spec, every spec claims something, and every Alpine expression on every page compiles. No browser: the claim is a pure function of the markup, and the
+# behaviour itself is exercised by scripts/interaction-probe. Rule: project.every-link-and-control-is-tested.
+#
+#   scripts/ci/interaction-check              the coverage verdict
+#   scripts/ci/interaction-check --inventory  every control signature, how many there are, on how many
+#                                             pages, and the spec that claims it
+# Exit 0 clean, 10 findings, 12 site/public missing or node absent.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+LIB="$(cd "$(dirname "$0")/../lib" && pwd)"
+command -v node >/dev/null 2>&1 || { echo "interaction-check: node is required" >&2; exit 12; }
+[ -d "$ROOT/site/public" ] || { echo "interaction-check: site/public missing; run scripts/site-build" >&2; exit 12; }
+MODE=check
+for a in "$@"; do case "$a" in --inventory) MODE=inventory ;; *) echo "interaction-check: unknown option $a" >&2; exit 2 ;; esac; done
+SPECS="${MJ_INTERACTION_SPECS:-$LIB/interaction-specs}"
+exec node --input-type=module - "$ROOT/site/public" "$SPECS" "$MODE" "$LIB/interactions.mjs" <<'JS'
+const [pub, specDir, mode, lib] = process.argv.slice(2);
+const { classify, loadSpecs, signature, brokenExpressions, pages } = await import(lib);
+const { readFileSync } = await import('node:fs');
+const specs = await loadSpecs(specDir);
+const rows = classify(pub, specs);
+const groups = new Map();
+for (const r of rows) {
+  const key = `${signature(r.el)}\t${r.specs.join(',') || '-'}`;
+  const g = groups.get(key) || { sig: signature(r.el), specs: r.specs, n: 0, routes: new Set() };
+  g.n++; g.routes.add(r.route); groups.set(key, g);
+}
+if (mode === 'inventory') {
+  for (const g of [...groups.values()].sort((a, b) => b.n - a.n)) {
+    console.log(`${String(g.n).padStart(6)}  ${String(g.routes.size).padStart(4)} page(s)  ${(g.specs.join(',') || 'UNCLAIMED').padEnd(22)}  ${g.sig}  e.g. ${[...g.routes][0]}`);
+  }
+  console.log(`${rows.length} control(s) in ${groups.size} signature(s); ${specs.length} spec(s)`);
+  process.exit(0);
+}
+let fails = 0;
+const fail = (msg) => { fails++; console.log(`FAIL control       ${msg}`); };
+for (const g of groups.values()) {
+  const where = [...g.routes];
+  const pagesTxt = `${where[0]}${where.length > 1 ? ` (and ${where.length - 1} more page(s))` : ''}`;
+  if (g.specs.length === 0) fail(`${pagesTxt}: ${g.sig} is claimed by no behaviour spec (${g.n} instance(s)); add a spec under scripts/lib/interaction-specs/`);
+  else if (g.specs.length > 1) fail(`${pagesTxt}: ${g.sig} is claimed by ${g.specs.join(' and ')}; a control is exercised by exactly one spec`);
+}
+// every Alpine expression compiles: a broken one turns its control off without a sound
+let exprs = 0;
+for (const { route, file } of pages(pub)) {
+  const html = readFileSync(file, 'utf8');
+  if (/http-equiv="refresh"/.test(html)) continue;
+  for (const b of brokenExpressions(html)) {
+    exprs++;
+    fail(`${route}: the ${b.name} expression on a <${b.tag}> does not compile (${b.reason}): ${b.expr.slice(0, 120)}`);
+  }
+}
+const used = new Set(rows.flatMap((r) => r.specs));
+for (const s of specs) if (!used.has(s.id)) fail(`spec ${s.id} (${s.file}) claims no control on the site; delete it or fix its claim`);
+if (fails) { console.log(`interaction-check: ${fails} finding(s) over ${rows.length} control(s) and ${specs.length} spec(s)`); process.exit(10); }
+const perSpec = specs.map((s) => `${rows.filter((r) => r.specs[0] === s.id).length} ${s.id}`).join(', ');
+console.log(`OK   controls     every one of ${rows.length} control(s) is claimed by exactly one of ${specs.length} behaviour spec(s), and every Alpine expression compiles: ${perSpec}`);
+JS

@@ -9,12 +9,12 @@ source = "docs/SCOPE.md"
 {% raw %}
 
 What a worker reads of this repository, and what it never reads, declared once as data:
-[`.ai/repo/scope.yaml`](../.ai/repo/scope.yaml). The Rust executable reads it when it
+[`.ai/repo/scope.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/scope.yaml). The Rust executable reads it when it
 starts, discovers and indexes nothing outside it, serves nothing outside it through MCP,
 HTTP or the command line, and answers for any path whether it is in or out and why. The
 shell tool seeds it on `init` and checks it in `doctor`. The rule behind it is
-`project.scope-is-declared` under [`.ai/repo/rules/project/`](../.ai/repo/rules/project/);
-the claim is `scope-declared` in [`CLAIMS.yaml`](CLAIMS.yaml).
+`project.scope-is-declared` under [`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/rules/project);
+the claim is `scope-declared` in [`CLAIMS.yaml`](@/guarantees/_index.md).
 
 The task scope (`majordomus start --scope`, the paths a task may touch) is a different
 thing with the same word; this document is about the repository's own boundary.
@@ -72,7 +72,7 @@ spans any depth, a trailing `/` names a directory and everything beneath it. The
 anchored at the repository root; `**/target/` is how "at any depth" is said. A `names`
 list is matched against the file name alone and may not carry a slash. A pattern with a
 leading slash, a `:(` prefix or a `..` segment is refused with the file and the key named,
-and so is a key the schema does not declare ([`share/schemas/majordomus/scope/scope.v1.schema.json`](../share/schemas/majordomus/scope/scope.v1.schema.json);
+and so is a key the schema does not declare ([`share/schemas/majordomus/scope/scope.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/scope/scope.v1.schema.json);
 the shell tool's allow-list `share/allow/scope.txt` is generated from it by
 `majordomus generate allow`).
 
@@ -118,7 +118,7 @@ refused where it is read, as `invalid_utf8`.
   innocent name is caught when it is read.
 - **The origin.** The manifest's `scope` section names the file. A repository whose
   manifest names none is read under the distribution's default,
-  [`share/skeleton/ai/repo/scope.yaml`](../share/skeleton/ai/repo/scope.yaml), the file
+  [`share/skeleton/ai/repo/scope.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/share/skeleton/ai/repo/scope.yaml), the file
   `init` seeds, and the report says `distribution`. Nothing is assumed silently.
 
 The declaration is compiled once when the process starts and never re-read per request:
@@ -143,7 +143,7 @@ The same two capabilities, `repository.scope` and `repository.scope_classify`, a
 MCP tools `majordomus_scope` and `majordomus_scope_classify`, the resource
 `majordomus://scope`, and the routes `GET /api/v1/scope` and
 `GET /api/v1/scope/classify?path=...`; the reference is
-[`generated/modules/repository.md`](generated/modules/repository.md). A path that is
+[`generated/modules/repository.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/repository.md). A path that is
 absolute or carries a `..` segment is an invalid input on every one of them.
 
 The shell tool's `doctor` reports the file under `layout`: its version, how many `in`

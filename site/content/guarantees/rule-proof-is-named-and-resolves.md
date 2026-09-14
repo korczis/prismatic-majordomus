@@ -61,7 +61,7 @@ ceiling.
 
 Nor does it run anything. A named case that has never been executed still satisfies this
 claim; whether a run happened, passed, and is younger than what it is about is a different
-question, answered by the proof graph and by [`EVIDENCE.md`](../EVIDENCE.md).
+question, answered by the proof graph and by [`EVIDENCE.md`](@/docs/evidence.md).
 
 ## Why it exists
 

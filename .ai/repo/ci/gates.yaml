@@ -325,6 +325,14 @@ gates:
     runs: SITE_PROBE_JOBS=4 scripts/site-probe
     summary: every route at three widths in a real browser, the menu, the dropdown, the theme toggle, the diagrams
 
+  # Every interactive control on every page of the built site, exercised in a browser by the behaviour spec
+  # that claims it (project.every-link-and-control-is-tested). A job of its own: the site job's browser
+  # steps already use its whole bound, and a gate that shares a job which never finishes enforces nothing.
+  - id: interaction-probe
+    job: interactions
+    runs: scripts/site-build --no-data && scripts/interaction-probe
+    summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
+
   - id: ui-audit
     job: site
     requires: [site-build]
@@ -536,8 +544,8 @@ classes:
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
-    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design, nav-check]
+    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs, scripts/interaction-probe, scripts/lib/interactions.mjs, scripts/lib/interaction-specs/**, scripts/lib/browser.mjs, scripts/lib/project-links.awk]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design, nav-check, interaction-probe]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and
