@@ -14,7 +14,15 @@
 <title>{% block title %}{{ project.name }} — {{ project.tagline | lower | trim_end(pat=".") }}{% endblock title %}</title>
 <meta name="description" content="{% block description %}{{ project.tagline }}{% endblock description %}">
 <link rel="canonical" href="{{ page_url }}">
-{% if page is defined and page.extra.noindex is defined and page.extra.noindex %}<meta name="robots" content="noindex">{% endif %}
+{#- Indexing: a page is kept out of search when its own front matter says so, or when it sits
+    below a section site/data/nav.toml lists under [indexing] unlisted — the receipts, reachable
+    and linked but not ranked. templates/sitemap.xml applies the same test, and
+    scripts/ci/homepage-check holds the two to each other over every built page. -#}
+{%- set nav_declaration = load_data(path="data/nav.toml") -%}
+{%- set indexing = nav_declaration.indexing -%}
+{%- set path_parts = (current_path or "/") | split(pat="/") -%}
+{%- set unlisted = path_parts | length >= 4 and path_parts[1] in indexing.unlisted -%}
+{% if unlisted or (page is defined and page.extra.noindex is defined and page.extra.noindex) %}<meta name="robots" content="noindex">{% endif %}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{ project.name }}">
 <meta property="og:title" content="{% block ogtitle %}{{ project.name }}{% endblock ogtitle %}">
