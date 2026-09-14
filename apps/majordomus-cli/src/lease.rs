@@ -46,6 +46,13 @@ pub const PROBE_TIMEOUT: Duration = Duration::from_secs(2);
 /// client alone.
 pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 
+/// The environment variable a server is started with when the process that started it had
+/// already waited on the lease it found and judged it stale; its value is that lease's
+/// token. The new server's election then takes exactly that lease over without spending the
+/// same patience on it again. Any other lease, including one that changed in between, still
+/// gets [`probe_patiently`]'s wait.
+pub const JUDGED_STALE_ENV: &str = "MAJORDOMUS_LEASE_JUDGED_STALE";
+
 /// The identity of the file an executable was started from: where it is, and the mtime
 /// and size of the file at that path. A server outlives its own binary — a rebuild replaces
 /// the file under a process that keeps serving the code it loaded hours ago — and nothing
@@ -123,8 +130,10 @@ impl ExecutableIdentity {
 pub struct LeaseDocument {
     /// [`SCHEMA`].
     pub schema: String,
-    /// The process id of the server. Informational: a live pid is not a live server, and
-    /// nothing decides liveness from it.
+    /// The process id of the server. A live pid is not a live server: only an answering
+    /// probe says that. What a live pid does decide is patience — a probe that fails
+    /// against a live owner is repeated within [`BIND_GRACE`] before the lease counts as
+    /// stale ([`probe_patiently`]); a dead or zero pid gets no patience at all.
     #[serde(default)]
     pub pid: u32,
     /// What makes the file this process's: only the process holding this token removes it.
@@ -481,7 +490,7 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
         return (Found::Stale(reason), seen);
     }
     let found = match doc.url.as_deref() {
-        Some(url) if probe(url, root) => Found::Live(url.to_string()),
+        Some(url) if election_answers(url, root, &doc) => Found::Live(url.to_string()),
         Some(url) => Found::Stale(format!(
             "stale lease: the server it names at {url} does not answer for this repository"
         )),
@@ -610,6 +619,83 @@ pub fn probe(url: &str, root: &Path) -> bool {
         }
         _ => false,
     }
+}
+
+/// [`probe`], with patience for an owner that is alive but slow.
+///
+/// A probe that times out says nothing about whether the server is gone: a server loading
+/// a large layer, or one on a machine under load (an instrumented test run, a loaded CI
+/// runner), answers late. Taking its lease over then leaves two servers, and the lease names
+/// the one still binding. So when the probe fails and the lease's `pid` is a live process on
+/// this machine, the probe is repeated every second for up to [`BIND_GRACE`], the same grace
+/// a binding owner already gets. The answer is `false` only when every attempt fails.
+///
+/// The patience is bounded on purpose. A live pid can be a wedged server that never answers
+/// again, and a probe that waited on it forever would make every client hang on a ghost. A
+/// dead pid, or pid 0, gets no patience at all, so a killed server is recovered at once.
+///
+/// ```
+/// use majordomus_cli::lease::probe_patiently;
+/// use std::path::Path;
+/// use std::time::{Duration, Instant};
+/// // nothing listens on port 1 and pid 0 names no process: one refused probe, no patience
+/// let t0 = Instant::now();
+/// assert!(!probe_patiently("http://127.0.0.1:1", Path::new("/nowhere"), 0));
+/// assert!(t0.elapsed() < Duration::from_secs(5));
+/// ```
+pub fn probe_patiently(url: &str, root: &Path, pid: u32) -> bool {
+    if probe(url, root) {
+        return true;
+    }
+    if !pid_alive(pid) {
+        return false;
+    }
+    let deadline = Instant::now() + BIND_GRACE;
+    while Instant::now() < deadline {
+        std::thread::sleep(Duration::from_secs(1));
+        if probe(url, root) {
+            return true;
+        }
+        if !pid_alive(pid) {
+            return false;
+        }
+    }
+    false
+}
+
+/// Does the server a lease names answer, as an election judges it?
+///
+/// Patiently ([`probe_patiently`]): a server that judged a slow but live owner gone would
+/// take its lease over and leave two servers, with the lease naming the one still binding.
+/// The one exception is the lease the process that started this one already waited on and
+/// found not answering ([`JUDGED_STALE_ENV`]): waiting on it a second time would only double
+/// the delay before a wedged owner is replaced.
+fn election_answers(url: &str, root: &Path, doc: &LeaseDocument) -> bool {
+    let judged = std::env::var(JUDGED_STALE_ENV).ok();
+    if judged.as_deref() == Some(doc.token.as_str()) {
+        probe(url, root)
+    } else {
+        probe_patiently(url, root, doc.pid)
+    }
+}
+
+/// Is `pid` a live process on this machine? `EPERM` means it exists and belongs to someone
+/// else, which is alive. Pid 0 is never a server.
+#[cfg(unix)]
+fn pid_alive(pid: u32) -> bool {
+    if pid == 0 {
+        return false;
+    }
+    // SAFETY: kill(2) with signal 0 performs the permission and existence checks only; no
+    // signal is delivered and no memory is touched.
+    let rc = unsafe { libc::kill(pid as libc::pid_t, 0) };
+    rc == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
+}
+
+/// Without a portable liveness check, no owner earns patience: the behaviour is [`probe`]'s.
+#[cfg(not(unix))]
+fn pid_alive(_: u32) -> bool {
+    false
 }
 
 impl Lease {
