@@ -592,7 +592,7 @@ pub struct SelectorRule {
 ///
 /// This is the answer to "why did I get that", asked once rather than reverse-engineered
 /// from every context. It is a projection of the tables and constants this module is built
-/// from — [`Tier::ORDER`], [`EDGES`](select::EDGES), [`Selector::ALL`] and the four defaults
+/// from — [`Tier::ORDER`], [`select::EDGES`], [`Selector::ALL`] and the four defaults
 /// — and holds no numbers of its own, so the published rules and the code that applies them
 /// cannot drift apart.
 ///
