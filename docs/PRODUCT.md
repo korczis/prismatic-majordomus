@@ -101,6 +101,41 @@ labels, held to a line budget, carrying no number and no capability claim. Route
 moved are declared once in `site/data/nav.toml` under `[[redirects]]` and become Zola
 aliases on the page they point at.
 
+## The terminal on the homepage
+
+The page shows the tool running, and every transcript on it is a run that happened.
+
+`scripts/generate-site-data` writes `site/data/generated/terminal.json` by joining two
+datasets it has already written: `lifecycle.json`, the ordered lifecycle the tool declares,
+and `catalogue.json`, whose `use_cases[].evidence.steps[]` carry the command line, the exit
+status and the stdout of every use-case scenario the same run executed. The output was
+redacted when it was captured — `lib/usecase.sh` replaces the repository path, the clock,
+the identifiers and the tool versions with placeholders — so a transcript names no machine
+and reproduces byte for byte on another one.
+
+Nothing in the dataset, the generator or the template names a command:
+
+| Field | How it is decided |
+|---|---|
+| the order of the tabs | the lifecycle's own order |
+| which run illustrates a step | among that command's passing scenario steps: one that succeeded before one that was refused, then the longest body, then use case and step id |
+| which panel opens first | the one with the most output |
+| what is in the refusals | every recorded step of a lifecycle command that exited non-zero, deduplicated by command, status and body, ordered by the lifecycle |
+| the sentence beside a refusal | the first `FAIL` line the run printed, else its last line, up to the reproduce command |
+
+Two refusals are built into the generation. A lifecycle step no scenario ran fails it,
+because a page that quietly drops a stage claims a lifecycle nobody walks; and a corpus with
+no recorded refusal fails it, because the section that says the tool refuses may not be
+empty. `scripts/site-check`'s `terminal` check then reads the built HTML in both directions:
+every panel the dataset holds is on the page, every panel on the page is a run, each matched
+by its command line, its exit status and its verdict line, and every panel links the scenario
+it was recorded in.
+
+The consequence worth stating: the homepage cannot show the tool doing something the tool
+does not do, and it cannot keep showing something that stopped happening. A command that
+stops refusing disappears from the page on the next generation, and a transcript edited by
+hand fails the check rather than the reader.
+
 ## What is refused
 
 - A reference that resolves to nothing. The message names the file, the key and the

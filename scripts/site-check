@@ -145,6 +145,41 @@ if [ -f "$PD" ]; then
   done
   [ "$prod_bad" = 0 ] && ok product "$(jq '.counts.features' "$PD") feature(s) over $(jq '.surfaces | length' "$PD") interface(s): every one has its page, no page is an orphan, every featured one is a chapter of the homepage, the matrix shows exactly the marks the model derived, and nothing is named by hand"
 else bad product "site/data/registry/product.json missing (regenerate: majordomus generate site)"; fi
+# 3b. the terminal is a replay, not a mockup. Every panel the homepage shows is a run
+# site/data/generated/terminal.json recorded, and every run the dataset holds is on the page:
+# both directions, because a page that drops a refusal and a dataset that gains one unnoticed
+# are the same defect seen from two sides. The command line, the exit status and the first
+# line of the body are matched against the rendered HTML, so a template that prettifies a
+# transcript, truncates it, or writes one of its own fails here rather than on the site. The
+# body line is compared up to its reproduce command, which is the one part of a finding that
+# carries shell quoting the page's own escaping would have to be replayed byte for byte to
+# compare -- the verdict before it is what a reader is being shown.
+TD="$SITE/data/generated/terminal.json"
+if [ -f "$TD" ]; then
+  term_bad=0
+  HOME_HTML="$(sed 's/&quot;/"/g; s/&#x27;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
+  n=0
+  while IFS="$MJ_TAB" read -r cmd first; do
+    n=$((n + 1))
+    printf '%s' "$HOME_HTML" | grep -qF -- "$ $cmd" \
+      || { bad terminal "the homepage does not carry the recorded run: $cmd"; term_bad=1; }
+    [ -z "$first" ] || printf '%s' "$HOME_HTML" | grep -qF -- "$first" \
+      || { bad terminal "the homepage does not carry the output of: $cmd"; term_bad=1; }
+  done <<EOF
+$(jq -r '[.walkthrough[], .refusals[]] | .[] | [.command, ((.output | split("\n") | map(select(length > 0)) | first // "") | split("  [reproduce:") | first)] | @tsv' "$TD")
+EOF
+  want="$(jq -r '(.walkthrough | length) + (.refusals | length)' "$TD")"
+  [ "$n" = "$want" ] || { bad terminal "the homepage was checked against $n panel(s), the dataset holds $want"; term_bad=1; }
+  # a refusal is a refusal: the dataset may not quietly fill this section with successes
+  jq -e '[.refusals[] | select(.exit == 0)] | length == 0' "$TD" >/dev/null \
+    || { bad terminal "a panel in the refusals list exited 0"; term_bad=1; }
+  # every panel names the scenario it came from, so a reader can run it
+  for r in $(jq -r '[.walkthrough[], .refusals[]] | .[].route' "$TD" | LC_ALL=C sort -u); do
+    grep -qF "$PREFIX$r" "$PUB/index.html" \
+      || { bad terminal "the homepage does not link the scenario $r a panel was recorded in"; term_bad=1; }
+  done
+  [ "$term_bad" = 0 ] && ok terminal "$(jq -r '.counts.walkthrough' "$TD") lifecycle step(s) and $(jq -r '.counts.refusals' "$TD") refusal(s) on the homepage, each the command, the exit status and the stdout of a run recorded in $(jq -r '.counts.scenarios' "$TD") executed scenario(s); nothing on this page is typed"
+else bad terminal "site/data/generated/terminal.json missing (regenerate: scripts/generate-site-data)"; fi
 # 3c. the marketing copy carries no capability claim: the words are positioning, and every
 # fact beside them comes out of the dataset above
 grep -qE '\b(surfaces?|capabilit(y|ies)|command line|MCP|HTTP API)\b *[:=] *\[' "$SITE/data/marketing.toml" \
@@ -574,6 +609,19 @@ while IFS="$(printf '\t')" read -r p hits; do
   bad nojs "$p: $hits element(s) carry x-show and are also hidden statically — unreachable without JavaScript"; bad_ne=1
 done < "$PAGEROWS.nojs"; rm -f "$PAGEROWS.nojs"
 [ "$bad_ne" = 1 ] || ok nojs "no element is hidden by both a runtime and a static rule; every x-show renders without JavaScript"
+
+# 13e. one element per id. An id is a page's address for one element: an in-page link, a
+# label's `for` and an `aria-controls` all resolve to the first match and ignore the rest, so
+# a repeated id is a link that lands where nobody chose. Markdown rendered into a page is where
+# it comes from — every doc comment writing `#### Example` became `id="example"`, two dozen
+# times on /docs/api/ — and the browser audit found it only on a run that reached it. This is
+# the same property, read statically, in the pass that already reads every page.
+bad_di=0
+rows duplicateid > "$PAGEROWS.dupid"
+while IFS="$(printf '\t')" read -r p ids; do
+  bad ids "$p: more than one element carries $ids"; bad_di=1
+done < "$PAGEROWS.dupid"; rm -f "$PAGEROWS.dupid"
+[ "$bad_di" = 1 ] || ok ids "no page carries an id on more than one element"
 
 # 13c. the why section links both ways: every moment reaches its commands, responsibilities and
 # claims, and every one of those pages carries a link back. A one-way link is how the section

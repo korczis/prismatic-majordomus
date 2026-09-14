@@ -8,7 +8,7 @@ headline: The commit message has one grammar, one policy and one verdict; the sc
 summary: The same parse the changelog reads the history with decides whether a new message passes. The policy is data in the repository's own policy file, its subject width measured from the history rather than taken from the convention. The scope vocabulary is observed from at most 1500 commits of the log, so a subsystem committed today is in it today and a scope nobody uses sinks on its own. A plan over the working tree carries a fingerprint of repository, worktree, HEAD and change set, so a plan acted on after the tree moved is refused rather than applied - and a change set holding generated files is one commit, because only the last of several could carry current derived data.
 status: stable
 weight: 205
-featured: false
+featured: true
 areas: [governance, work-tracking]
 modules: [commit]
 rules: [project.conventional-commits, project.derived-files-regenerated, project.interfaces-are-projections]

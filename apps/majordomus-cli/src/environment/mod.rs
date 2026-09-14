@@ -597,6 +597,19 @@ impl RepositoryEnvironment {
     /// a digest that counted the services made each of those a first look, drawing the whole
     /// box again at a person who had just seen it. A server arriving or leaving is not a
     /// different repository; the short form names the Cockpit when it answers.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::RepositoryEnvironment;
+    /// # fn demo(env: &RepositoryEnvironment) {
+    /// // a server arriving or leaving is not a different repository, so clearing the
+    /// // services changes nothing this digest can see
+    /// let mut without = env.clone();
+    /// without.services.clear();
+    /// assert_eq!(env.news_digest(), without.news_digest());
+    /// // and with no services left, the two digests are the same value
+    /// assert_eq!(without.news_digest(), without.digest());
+    /// # }
+    /// ```
     pub fn news_digest(&self) -> String {
         let mut stable = self.clone();
         stable.services.clear();

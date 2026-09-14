@@ -14,9 +14,10 @@
       headings are demoted three levels first, the rule scripts/lib/openapi-site.jq's `demoted`
       applies to the same descriptions on /docs/api/. The leading newline lets a heading on the
       description's first line match. The parser also gives every heading an id made from its
-      text, and a page carries one of these blocks per schema, so two types that each end on
-      `# Example` put id="example" on the page twice. Nothing links into a doc comment's
-      headings, so their ids are renamed to data-anchor; api.html does the same on /docs/api/. -#}
+      text, and a capability page carries two of these blocks, its input and its output, so
+      two types that each end on `# Example` put id="example" on the page twice. Each id a
+      description renders is namespaced under the block's label (`schema-input-example`),
+      the rule api.html applies under the schema's name on /docs/api/. -#}
   {%- if schema.description %}<div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ ("
 " ~ schema.description) | replace(from="
 # ", to="
@@ -24,7 +25,7 @@
 ## ", to="
 ##### ") | replace(from="
 ### ", to="
-###### ") | markdown(inline=true) | replace(from='<h4 id="', to='<h4 data-anchor="') | replace(from='<h5 id="', to='<h5 data-anchor="') | replace(from='<h6 id="', to='<h6 data-anchor="') | safe }}</div>{% endif -%}
+###### ") | markdown(inline=true) | replace(from=' id="', to=' id="schema-' ~ label ~ '-') | safe }}</div>{% endif -%}
   {%- if schema.properties -%}
   <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm">

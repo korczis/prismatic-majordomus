@@ -13,7 +13,7 @@
 #   <page relative to pub>  <check>  <detail>
 #
 # checks: viewport description main h1 placeholder rustdoc inlinestyle initflowbite mermaid
-#         pre gridcols fixedwidth nojs
+#         pre gridcols fixedwidth nojs duplicateid
 #
 # A page with nothing wrong produces no row. The detail is what site-check prints after the
 # route; a check whose message needs no detail leaves it empty. Rows come in the order the
@@ -38,6 +38,7 @@ function flush() {
   if (gridcols)   print rel "\tgridcols\t"
   if (fixedwidth) print rel "\tfixedwidth\t"
   if (nojs > 0)   print rel "\tnojs\t" nojs
+  if (dupids != "") print rel "\tduplicateid\t" substr(dupids, 2)
 }
 
 # the number of times needle occurs in s, which is what `grep -o ... | wc -l` counted
@@ -58,6 +59,7 @@ FNR == 1 {
   has_mermaid = has_mermaid_js = 0
   in_pre = 0; wrapped = 0; seen_format = 0; prev = ""
   redirect = 0
+  split("", ids); split("", dupseen); dupids = ""
 }
 
 {
@@ -128,6 +130,20 @@ FNR == 1 {
   n = split(line, parts, "<")
   for (i = 1; i <= n; i++)
     if (parts[i] ~ /x-show/ && parts[i] ~ /x-cloak|class="[^"]*[ ]hidden[ "]/) nojs++
+
+  # An id is a page's address for one element: an in-page link, a label's `for`, an
+  # `aria-controls` all resolve to the first match and silently ignore the rest. Two elements
+  # sharing one is a link that lands somewhere the author did not choose. Rendered markdown is
+  # where this comes from — every doc comment's `#### Example` becomes `id="example"` — so the
+  # check reads attributes wherever they are, outside <pre> blocks only by construction, since
+  # a code listing carries text and not attributes.
+  rest = line
+  while (match(rest, /[ \t]id="[^"]*"/)) {
+    tok = substr(rest, RSTART + 1, RLENGTH - 1)
+    if (tok in ids) { if (!(tok in dupseen)) { dupseen[tok] = 1; dupids = dupids " " tok } }
+    else ids[tok] = 1
+    rest = substr(rest, RSTART + RLENGTH)
+  }
 
   prev = line
 }
