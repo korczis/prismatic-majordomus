@@ -19,11 +19,12 @@ against the crate rotting, not a promise of completeness.
 and regions alike. A crate-wide floor says nothing about whether the subsystem a
 repository's continuity depends on is tested at all; this is where that is held.
 
-**Both floors are ratchets.** Each is the coverage the crate and the domain actually
-measured when the floor was set, and may rise and never fall; a stated floor no run has met
-is not a gate, it is a number that teaches people to ignore the job. New uncovered code is
-refused regardless, by the differential gate below. `test/cases/77_rust_evidence.sh` holds
-the lower bound of each.
+**The two floors are held for different reasons.** The crate floor is high by rule:
+`project.rust-command-tested-in-file` refuses one below ninety, because a floor that bends to
+whatever the crate measured is a floor that stops meaning anything. The domain floor is a
+ratchet: it is the coverage the session/continuity domain actually measured when it was set,
+and may rise and never fall. `test/cases/77_rust_evidence.sh` holds the lower bound of each,
+and new uncovered code is refused regardless, by the differential gate below.
 
 **The differential gate** (`scripts/ci/coverage-differential`, rule
 `project.new-code-is-covered`) is the changed-code invariant of issue #214. It holds every
