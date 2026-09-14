@@ -11,7 +11,7 @@ source = "docs/WORKTREES.md"
 Where every linked git worktree of this repository belongs, how that is decided, and what
 the tool does about one that is somewhere else. Behaviour as implemented and tested; where
 this document and the executable disagree, the document is wrong and changes in the same
-commit. The decision is [ADR 21](../.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md);
+commit. The decision is [ADR 21](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md);
 the rule is `project.worktree-topology`.
 
 ```text
