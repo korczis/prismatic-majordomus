@@ -12734,7 +12734,7 @@ who disbelieves the state can check the join rather than take it.</p>
 <span class="giallo-l"><span>assert_eq!(json[&quot;changed&quot;], serde_json::json!([]));</span></span>
 <span class="giallo-l"><span>// an execution that does not exist is absent, not a null standing in for one</span></span>
 <span class="giallo-l"><span>assert!(json.get(&quot;execution&quot;).is_none());</span></span>
-<span class="giallo-l"><span>assert_eq!(json[&quot;meaning&quot;], serde_json::json!(ProofState::NotRun.meaning()));</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert_eq!(json[&quot;meaning&quot;], serde_json::json!(ProofState::NotRun.meaning()));</span></span></code></pre><h4 id="schema-EvidenceClaimProof-example">Example</h4>
 <p>A <code>ClaimProof</code> is produced by [<code>report</code>]; its <code>state</code> is the whole answer and its
 <code>meaning</code> is that answer in a sentence, worded once for every surface.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::{report, ClaimProof, Ledger};</span></span>
@@ -12841,7 +12841,7 @@ thing a badge must never be derived from.</p>
 <span class="giallo-l"><span>let back: Execution = serde_json::from_str(&amp;serde_json::to_string(&amp;run).unwrap()).unwrap();</span></span>
 <span class="giallo-l"><span>assert_eq!(back, run);</span></span>
 <span class="giallo-l"><span>assert_eq!(back.test, &quot;crate:why&quot;);</span></span>
-<span class="giallo-l"><span>assert_eq!(back.command, &quot;cargo test --test why&quot;);</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert_eq!(back.command, &quot;cargo test --test why&quot;);</span></span></code></pre><h4 id="schema-EvidenceExecution-example">Example</h4>
 <p>One recorded run, with the provenance the runner did not carry: which commit, which
 tree state, the digest of the test's own source, when, and how to run it again.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};</span></span>
@@ -12941,7 +12941,7 @@ supports instead, and — where running something would settle it — what to ru
 <span class="giallo-l"></span>
 <span class="giallo-l"><span>// the gap is the finding: what the matrix declares against what the ledger holds</span></span>
 <span class="giallo-l"><span>assert_ne!(finding.status, finding.state.label());</span></span>
-<span class="giallo-l"><span>assert!(finding.reproduce.unwrap().starts_with(&quot;bash test/run.sh&quot;));</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert!(finding.reproduce.unwrap().starts_with(&quot;bash test/run.sh&quot;));</span></span></code></pre><h4 id="schema-EvidenceFinding-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::{Finding, ProofState};</span></span>
 <span class="giallo-l"><span>let f = Finding {</span></span>
 <span class="giallo-l"><span>    claim: &quot;some-claim&quot;.into(),</span></span>
@@ -12995,7 +12995,7 @@ newest entry is, and which commits anything was ever recorded against.</p>
 <span class="giallo-l"><span>assert!(!summary.present, &quot;a ledger holding nothing has recorded nothing&quot;);</span></span>
 <span class="giallo-l"><span>assert_eq!(summary.executions, 0);</span></span>
 <span class="giallo-l"><span>assert!(summary.newest.is_none());</span></span>
-<span class="giallo-l"><span>assert!(summary.commits.is_empty());</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert!(summary.commits.is_empty());</span></span></code></pre><h4 id="schema-EvidenceLedgerSummary-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::LedgerSummary;</span></span>
 <span class="giallo-l"><span>let s = LedgerSummary {</span></span>
 <span class="giallo-l"><span>    path: &quot;.ai/repo/evidence/ledger.json&quot;.into(),</span></span>
@@ -13051,7 +13051,7 @@ included, for the reason [<code>ClaimProof::changed</code>] is.</td>
 <span class="giallo-l"><span>assert_eq!(Origin::parse(&quot;local&quot;), Some(Origin::Local));</span></span>
 <span class="giallo-l"><span>// naming the provider is the adapter&#39;s business; the ledger records the kind of run,</span></span>
 <span class="giallo-l"><span>// so a repository that changes CI does not change what its old evidence says</span></span>
-<span class="giallo-l"><span>assert!(Origin::parse(&quot;github-actions&quot;).is_none());</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert!(Origin::parse(&quot;github-actions&quot;).is_none());</span></span></code></pre><h4 id="schema-EvidenceOrigin-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::Origin;</span></span>
 <span class="giallo-l"><span>assert_eq!(Origin::parse(&quot;ci&quot;), Some(Origin::Ci));</span></span>
 <span class="giallo-l"><span>assert_eq!(Origin::parse(&quot;nowhere&quot;), None);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">local</code><span class="min-w-0 basis-full break-words text-body">Someone ran it on their own machine.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ci</code><span class="min-w-0 basis-full break-words text-body">A continuous-integration run.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">release</code><span class="min-w-0 basis-full break-words text-body">A release run.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-EvidenceExecution" class="font-mono text-fg-brand underline">EvidenceExecution</a></p></article><article id="schema-EvidenceOutcome" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -13069,7 +13069,7 @@ among the things that did.</p>
 <span class="giallo-l"><span>// exactly one of the five is evidence of anything; the other four are reasons there</span></span>
 <span class="giallo-l"><span>// is none, kept apart because &quot;it declined&quot; and &quot;the harness broke&quot; are different bugs</span></span>
 <span class="giallo-l"><span>assert_eq!(Outcome::parse(&quot;skipped&quot;), Outcome::Skip);</span></span>
-<span class="giallo-l"><span>assert_eq!(Outcome::parse(&quot;nonsense&quot;), Outcome::Error);</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert_eq!(Outcome::parse(&quot;nonsense&quot;), Outcome::Error);</span></span></code></pre><h4 id="schema-EvidenceOutcome-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::Outcome;</span></span>
 <span class="giallo-l"><span>assert!(Outcome::parse(&quot;ok&quot;).proves());</span></span>
 <span class="giallo-l"><span>assert_eq!(Outcome::parse(&quot;wat&quot;), Outcome::Error);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">pass</code><span class="min-w-0 basis-full break-words text-body">It passed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">fail</code><span class="min-w-0 basis-full break-words text-body">It failed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">skip</code><span class="min-w-0 basis-full break-words text-body">It declined to run and said so (an unmet precondition the case reports itself).</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">timeout</code><span class="min-w-0 basis-full break-words text-body">The bound fired before it finished.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">error</code><span class="min-w-0 basis-full break-words text-body">The harness could not run it at all.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-EvidenceExecution" class="font-mono text-fg-brand underline">EvidenceExecution</a></p></article><article id="schema-EvidenceReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -13105,7 +13105,7 @@ value; the totals and the findings are derived from the claims, never counted tw
 <span class="giallo-l"><span>    reproduce: None,</span></span>
 <span class="giallo-l"><span>});</span></span>
 <span class="giallo-l"><span>// one unsupported guarantee is enough: the gate is not a proportion</span></span>
-<span class="giallo-l"><span>assert!(!report.satisfied());</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert!(!report.satisfied());</span></span></code></pre><h4 id="schema-EvidenceReport-example">Example</h4>
 <p>The whole matrix joined to the ledger. <code>satisfied</code> is true when no claim declares a
 guarantee the recorded evidence does not support.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::{report, EvidenceReport, Ledger};</span></span>
@@ -13171,7 +13171,7 @@ reported as [<code>ProofState::Unrunnable</code>] rather than silently counted a
 <span class="giallo-l"><span>    Runner::Crate</span></span>
 <span class="giallo-l"><span>);</span></span>
 <span class="giallo-l"><span>// and a path under neither directory belongs to no runner at all</span></span>
-<span class="giallo-l"><span>assert!(TestId::of(&quot;test/lib.sh&quot;).is_none());</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert!(TestId::of(&quot;test/lib.sh&quot;).is_none());</span></span></code></pre><h4 id="schema-EvidenceRunner-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::Runner;</span></span>
 <span class="giallo-l"><span>assert_eq!(Runner::Suite.prefix(), &quot;suite&quot;);</span></span>
 <span class="giallo-l"><span>assert_eq!(Runner::Crate.prefix(), &quot;crate&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">suite</code><span class="min-w-0 basis-full break-words text-body">A behavioural case under `test/cases/`, run by `test/run.sh`.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">crate</code><span class="min-w-0 basis-full break-words text-body">An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-EvidenceExecution" class="font-mono text-fg-brand underline">EvidenceExecution</a> <a href="#schema-TestEvidence" class="font-mono text-fg-brand underline">TestEvidence</a></p></article><article id="schema-EvidenceSubject" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -19753,7 +19753,7 @@ that answers.</div><div class="mt-3 overflow-x-auto rounded-base border border-d
 <span class="giallo-l"><span>// of a known invalidation, and collapsing it into `proven` is the unaccountable badge</span></span>
 <span class="giallo-l"><span>assert_ne!(ProofState::Proven, ProofState::InputsUnchanged);</span></span>
 <span class="giallo-l"><span>assert!(ProofState::Proven &lt; ProofState::InputsUnchanged);</span></span>
-<span class="giallo-l"><span>assert!(ProofState::InputsUnchanged.passing());</span></span></code></pre><h4 id="example">Example</h4>
+<span class="giallo-l"><span>assert!(ProofState::InputsUnchanged.passing());</span></span></code></pre><h4 id="schema-ProofState-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::ProofState;</span></span>
 <span class="giallo-l"><span>assert!(ProofState::Proven.passing());</span></span>
 <span class="giallo-l"><span>assert!(!ProofState::NotRun.passing());</span></span>
@@ -22299,7 +22299,7 @@ the repository can show that it passed. A <strong>gate</strong> is an executable
 as its own command: it refuses violations on every run, and this repository records no
 verdict for it, so what can be shown is the mechanism and not the result. Anything else
 a rule names is proof only in prose.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleArtifactKind-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::ArtifactKind;</span></span>
 <span class="giallo-l"><span>assert_eq!(ArtifactKind::Case.label(), &quot;case&quot;);</span></span>
 <span class="giallo-l"><span>assert_eq!(ArtifactKind::Gate.label(), &quot;gate&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">case</code><span class="min-w-0 basis-full break-words text-body">A behavioural case a runner drives; executions of it are recorded.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">gate</code><span class="min-w-0 basis-full break-words text-body">An executable check a CI gate runs as its own command.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body">Neither. Nothing can run it, so nothing can ever record it.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-RuleTestProof" class="font-mono text-fg-brand underline">RuleTestProof</a></p></article><article id="schema-RuleClass" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -22311,7 +22311,7 @@ a rule names is proof only in prose.</p>
 a gate refuses the work, <code>advisory</code> means a reader is expected to have read it. A rule
 whose front matter says neither is reported as [<code>Class::Unknown</code>] rather than defaulted,
 because guessing here is how a blocking rule quietly becomes advice.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleClass-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Class;</span></span>
 <span class="giallo-l"><span>assert_eq!(Class::Blocking.label(), &quot;blocking&quot;);</span></span>
 <span class="giallo-l"><span>assert_eq!(Class::parse(&quot;advisory&quot;), Class::Advisory);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">blocking</code><span class="min-w-0 basis-full break-words text-body">A gate refuses work that violates it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">advisory</code><span class="min-w-0 basis-full break-words text-body">Normative for whoever reads it; nothing refuses a violation.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body">The front matter declared no class, or one this repository does not know.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-rules-report" class="font-mono text-fg-brand hover:underline">rules.report</a> <a href="#schema-RuleDefinition" class="font-mono text-fg-brand underline">RuleDefinition</a> <a href="#schema-RuleFinding" class="font-mono text-fg-brand underline">RuleFinding</a> <a href="#schema-RuleSummary" class="font-mono text-fg-brand underline">RuleSummary</a></p></article><article id="schema-RuleCoverage" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -22321,7 +22321,7 @@ because guessing here is how a blocking rule quietly becomes advice.</p>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How much of the rule corpus carries each part of a proof.</p>
 <p>Every number here is counted from the tree. Nothing in this struct may be written down
 anywhere else: a hardcoded rule count is the defect this repository keeps rediscovering.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleCoverage-example">Example</h4>
 <p>Every number is counted from the tree; an empty corpus counts zero rather than
 reading as complete, which is what <code>Coverage::default</code> is for.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Coverage;</span></span>
@@ -22401,7 +22401,7 @@ summary that folded it into a total would hide exactly that.</td>
           <h3 class="font-mono text-base font-semibold text-heading">RuleDefinition</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule, as the repository canonically declares it.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleDefinition-example">Example</h4>
 <p>Built by [<code>definitions</code>] from the index rather than by hand. Its ordering is the one
 the crate has, so a report over the same tree reads the same twice.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleDefinition};</span></span>
@@ -22505,7 +22505,7 @@ the crate has, so a report over the same tree reads the same twice.</p>
           <h3 class="font-mono text-base font-semibold text-heading">RuleDetail</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule, with everything that proves it and everything that depends on it.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleDetail-example">Example</h4>
 <p>What <code>rules show</code> answers: the proof, the rules either side of it in the dependency
 graph, and the one sentence saying what would make it proven.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::RuleSummary;</span></span>
@@ -22547,7 +22547,7 @@ when it is there already.</td>
           <h3 class="font-mono text-base font-semibold text-heading">RuleEnforcement</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The enforcement block of a rule, read from <code>x-majordomus</code>.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleEnforcement-example">Example</h4>
 <p>Read from front matter rather than built by hand; this is the shape a gated rule
 produces, and the mode is decided by what the block actually names.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Enforcement, Mode};</span></span>
@@ -22606,7 +22606,7 @@ there: a declared exemption with no reason is the debt it exists to replace.</td
           <h3 class="font-mono text-base font-semibold text-heading">RuleFinding</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule whose declared class the proof does not support.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleFinding-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Class, Finding, RuleState};</span></span>
 <span class="giallo-l"><span>let f = Finding {</span></span>
 <span class="giallo-l"><span>    rule: &quot;project.x&quot;.into(),</span></span>
@@ -22650,7 +22650,7 @@ there: a declared exemption with no reason is the debt it exists to replace.</td
           <h3 class="font-mono text-base font-semibold text-heading">RuleMode</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;dispatched&quot; | &quot;gated&quot; | &quot;reviewed&quot; | &quot;declarative&quot;</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How a rule is enforced, as its own front matter declares it.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleMode-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Mode;</span></span>
 <span class="giallo-l"><span>assert_eq!(Mode::Dispatched.label(), &quot;dispatched&quot;);</span></span>
 <span class="giallo-l"><span>assert_eq!(Mode::Declarative.label(), &quot;declarative&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">dispatched</code><span class="min-w-0 basis-full break-words text-body">Names a validator the doctrine dispatcher calls at run time.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">gated</code><span class="min-w-0 basis-full break-words text-body">Names behavioural cases and no validator; a gate runs them.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">reviewed</code><span class="min-w-0 basis-full break-words text-body">Carries a reason why nothing executable can express it, and so declares that a
@@ -22663,7 +22663,7 @@ blocking one.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <
           <h3 class="font-mono text-base font-semibold text-heading">RuleProof</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule, joined to everything the repository can show about it.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleProof-example">Example</h4>
 <p>A <code>RuleProof</code> is what [<code>report</code>] produces per rule; <code>satisfied</code> is whether the state
 supports the class the rule declares, which is the whole question.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{report, RuleProof, RuleState};</span></span>
@@ -22766,7 +22766,7 @@ rule declares and which a reader always wants.</td>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the repository can say about one rule's proof, as a whole.</p>
 <p>Ordered strongest to weakest so that a summary sorted by this reads as a ranking, and so
 that a rule's state is the weakest of its parts by <code>max</code>.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleState-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::RuleState;</span></span>
 <span class="giallo-l"><span>assert!(RuleState::Proven &lt; RuleState::Stale);</span></span>
 <span class="giallo-l"><span>assert!(RuleState::Stale.passing());</span></span>
@@ -22781,7 +22781,7 @@ can express; a defect for a blocking one.</span></li></ul><p class="mt-3 text-xs
           <h3 class="font-mono text-base font-semibold text-heading">RuleSummary</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A rule named from somewhere else, with just enough to decide whether to follow it.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleSummary-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::RuleSummary;</span></span>
 <span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleState};</span></span>
 <span class="giallo-l"><span>let s = RuleSummary {</span></span>
@@ -22820,7 +22820,7 @@ can express; a defect for a blocking one.</span></li></ul><p class="mt-3 text-xs
           <h3 class="font-mono text-base font-semibold text-heading">RuleTestProof</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One test a rule names, joined to what was recorded against it.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleTestProof-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{ArtifactKind, TestProof};</span></span>
 <span class="giallo-l"><span>use majordomus_cli::evidence::ProofState;</span></span>
 <span class="giallo-l"><span>let t = TestProof {</span></span>
@@ -22896,7 +22896,7 @@ the path. Absent means no runner drives it, so no run of it can ever be recorded
 recording here, because it is the one this type was introduced to fix: it makes every
 dispatched rule in the vendored package report as naming something that is not in the
 tree, which is the opposite of true — those are the best-enforced rules there are.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RuleValidator-example">Example</h4>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::ValidatorRef;</span></span>
 <span class="giallo-l"><span>let v = ValidatorRef {</span></span>
 <span class="giallo-l"><span>    name: &quot;adr&quot;.into(),</span></span>
@@ -22934,7 +22934,7 @@ tree, which is the opposite of true — those are the best-enforced rules there 
           <h3 class="font-mono text-base font-semibold text-heading">RulesReport</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The whole rule corpus, verified.</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-RulesReport-example">Example</h4>
 <p>The whole corpus joined to the tree and the ledger. <code>satisfied</code> is true when no rule
 declares a class its proof does not support.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::RulesReport;</span></span>
@@ -24524,7 +24524,7 @@ there is no execution, or the source is not there to hash.</td>
           <h3 class="font-mono text-base font-semibold text-heading">TestSubjects</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What one test proves: the reverse of [<code>RuleDetail</code>].</p>
-<h4 id="example">Example</h4>
+<h4 id="schema-TestSubjects-example">Example</h4>
 <p>The reverse of <code>rules show</code>: what a test proves, and which rules would be left with no
 proof at all if it were deleted.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::TestSubjects;</span></span>
@@ -25990,7 +25990,7 @@ is inferred from similarity.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/63cb657511de4cb59b2bb3873014408d1049474f" class="font-mono underline">63cb657</a> · inputs <span class="font-mono">54fdaab12aef</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/dbaee2dc6f52d44cd5939b7024129f5c62d0133a" class="font-mono underline">dbaee2d</a> · inputs <span class="font-mono">54fdaab12aef</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
