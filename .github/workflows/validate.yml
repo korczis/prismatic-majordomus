@@ -73,6 +73,7 @@ jobs:
       projection_closure: ${{ steps.plan.outputs.projection_closure }}
       web_topology: ${{ steps.plan.outputs.web_topology }}
       rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
+      coverage_differential: ${{ steps.plan.outputs.coverage_differential }}
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
       command_graph: ${{ steps.plan.outputs.command_graph }}
       version_surface: ${{ steps.plan.outputs.version_surface }}
@@ -304,7 +305,7 @@ jobs:
   # that subtracted; it runs the same suite once and post-processes the JSON export.
   coverage:
     needs: plan
-    if: needs.plan.outputs.rust_coverage == 'true'
+    if: needs.plan.outputs.rust_coverage == 'true' || needs.plan.outputs.coverage_differential == 'true'
     timeout-minutes: 25
     runs-on: ubuntu-latest
     defaults:
