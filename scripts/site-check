@@ -609,6 +609,19 @@ while IFS="$(printf '\t')" read -r p hits; do
 done < "$PAGEROWS.nojs"; rm -f "$PAGEROWS.nojs"
 [ "$bad_ne" = 1 ] || ok nojs "no element is hidden by both a runtime and a static rule; every x-show renders without JavaScript"
 
+# 13e. one element per id. An id is a page's address for one element: an in-page link, a
+# label's `for` and an `aria-controls` all resolve to the first match and ignore the rest, so
+# a repeated id is a link that lands where nobody chose. Markdown rendered into a page is where
+# it comes from — every doc comment writing `#### Example` became `id="example"`, two dozen
+# times on /docs/api/ — and the browser audit found it only on a run that reached it. This is
+# the same property, read statically, in the pass that already reads every page.
+bad_di=0
+rows duplicateid > "$PAGEROWS.dupid"
+while IFS="$(printf '\t')" read -r p ids; do
+  bad ids "$p: more than one element carries $ids"; bad_di=1
+done < "$PAGEROWS.dupid"; rm -f "$PAGEROWS.dupid"
+[ "$bad_di" = 1 ] || ok ids "no page carries an id on more than one element"
+
 # 13c. the why section links both ways: every moment reaches its commands, responsibilities and
 # claims, and every one of those pages carries a link back. A one-way link is how the section
 # drifted out of the rest of the site before — the pages knew about the tool, the tool did not
