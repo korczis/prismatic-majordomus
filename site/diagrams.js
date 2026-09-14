@@ -13,10 +13,11 @@
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   }
 
-  // A colour token as #rrggbb. The stylesheet declares its palette in oklch(), which Mermaid's
-  // colour parser rejects with an uncaught "Unsupported color format" while rendering, so a
-  // token is resolved by the browser (var() chains included) and read back from one painted
-  // pixel, which is sRGB whatever notation the stylesheet used.
+  // A colour token as six-digit sRGB hex. The stylesheet declares its palette in OKLCH
+  // notation, which Mermaid's colour parser rejects with an uncaught "Unsupported color
+  // format" while rendering, so a token is resolved by the browser (var() chains included)
+  // and read back from one painted pixel, which is sRGB whatever notation the stylesheet used.
+  // No colour is written here: the pixel is the token.
   var probe = document.createElement('span');
   var canvas = document.createElement('canvas');
   canvas.width = canvas.height = 1;
@@ -27,11 +28,14 @@
     document.body.appendChild(probe);
     var resolved = getComputedStyle(probe).color;
     probe.remove();
+    // a computed colour is always a valid one, so nothing needs resetting between tokens;
+    // save/restore keeps one token's paint from leaking into the next
+    paint.save();
     paint.clearRect(0, 0, 1, 1);
-    paint.fillStyle = '#000';
     paint.fillStyle = resolved;
     paint.fillRect(0, 0, 1, 1);
     var px = paint.getImageData(0, 0, 1, 1).data;
+    paint.restore();
     return '#' + [px[0], px[1], px[2]].map(function (c) { return (c < 16 ? '0' : '') + c.toString(16); }).join('');
   }
 
@@ -63,8 +67,8 @@
       themeVariables: vars({
         primaryColor: '--mj-raised',
         primaryTextColor: '--mj-fg',
-        // edge labels: without these Mermaid's dark theme sets #ccc on #585858, which is 4.43:1
-        // and fails WCAG AA; the page's own text on its own raised surface already passes
+        // edge labels: without these Mermaid's dark theme puts light grey text on a mid-grey
+        // label (4.43:1, below WCAG AA); the page's own text on its raised surface passes
         textColor: '--mj-fg',
         edgeLabelBackground: '--mj-raised',
         primaryBorderColor: '--mj-line',
