@@ -54,7 +54,7 @@ MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
 PJ="$(mj_rel "$MJ_PROJECT_DIR")"; AI="$(mj_rel "$MJ_AI_DIR")"; LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 # common.sh installs its own EXIT trap, so the staging cleanup is chained after sourcing it
 # rather than before, or the later trap would silently replace this one and leak the directory.
-trap 'rm -rf "$STAGE" "${RULES_TMP:-}"; mj_cleanup' EXIT
+trap 'rm -rf "$STAGE" "${RULES_TMP:-}" "${LINK_TRACKED:-}" "${LINK_DOCS:-}"; mj_cleanup' EXIT
 command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exit 12; }
 GEN_VERSION=1
 
@@ -138,10 +138,6 @@ fi
 # rewriting below, the pages, scripts/site-check) reads that field instead of deriving one.
 CLI_SPEC_SLUG="cli-specification"
 doc_slug() { case "$1" in CLI) printf '%s' "$CLI_SPEC_SLUG" ;; *) printf '%s' "$1" | tr 'A-Z_' 'a-z-' ;; esac; }
-# `](NAME.md)` in a document's own Markdown becomes the route of that document. One program,
-# used wherever a canonical document is projected, so the reservation cannot hold in one
-# place and not the other.
-DOCLINK='{ while (match($0, /\]\([A-Z_]+\.md\)/)) { t=substr($0,RSTART+2,RLENGTH-3); gsub(/_/,"-",t); t=tolower(t); if (t == "cli.md") t = spec ".md"; $0=substr($0,1,RSTART-1) "](@/docs/" t ")" substr($0,RSTART+RLENGTH) } print }'
 
 # link rewriting for derived Markdown (repository paths -> site routes)
 SITE_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml" | sed 's#/$##')"
@@ -405,6 +401,42 @@ if jq -r '.problem_md, .not_md, .limitations_md' "$OUT/readme.json" | grep -qE '
 fi
 
 mj_phase_end "gen:readme.json_fragments_the_ho" "$GEN_T0"
+# ---------------------------------------------------------------- the document routes and the link resolver
+# Only the first table of docs/README.md becomes site routes. The "## Reference files" table below it
+# lists repository-only files whose content the site presents through other routes, so it is cut
+# here; site-check requires a route for every entry in docs.json.
+DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md" | sed -E 's/^\| \[`([^`]+)`\]\(([^)]+)\) \| ([^|]+) \| ([^|]+) \|$/\2|\3|\4/' | grep -vE '^\|' \
+  | jq -Rn '[inputs | split("|") | {path: (.[0] | ltrimstr("../")), audience: (.[1]|gsub("^ +| +$";"")), summary: (.[2]|gsub("^ +| +$";""))}]')"
+# the route each document gets, computed once, here, by the rule above. The three documents
+# this run writes into docs/ itself (below, near the end) are routed whether or not they are
+# on disk yet: their absence means this is the first run in a tree that has none, not that
+# they have no page, and deciding a route by the presence of our own output makes the first
+# pass disagree with every later one — which is exactly what --check then reports as drift.
+GENERATED_DOCS="SITE_CLAIMS.md PLAN_STATUS.md PAGES_STATUS.md"
+# A function rather than a `case` inside the substitution below: bash 3.2 re-parses the body
+# of `$(...)` at run time and reads the `)` of a case pattern as the end of the substitution,
+# which is a syntax error on every macOS runner and on no Linux one.
+is_generated_doc() { case " $GENERATED_DOCS " in *" $1 "*) return 0 ;; esac; return 1; }
+DOC_ROUTES="$(printf '%s' "$DOCS" | jq -r '.[].path' | grep -E '^[A-Z_]+\.md$' | while read -r p; do
+  if [ ! -f "$ROOT/docs/$p" ] && ! is_generated_doc "$p"; then continue; fi
+  n="${p%.md}"
+  printf '%s\t/docs/%s/\n' "$p" "$(doc_slug "$n")"
+done | jq -Rn '[inputs | split("\t") | {key: .[0], value: .[1]}] | from_entries')"
+# Every relative link a projected document carries is resolved against the file it came from, by
+# scripts/lib/project-links.awk: a document with a page becomes its route, a tracked file or directory
+# its blob or tree on the forge, and a path git does not track loses its link. The inputs are built once
+# here, from the document routes just computed: git's list of tracked paths and "<path>\t<route>" for
+# each document. These replace the hand-kept LINKSED and DOCLINK rewrites at every call site below,
+# which left every link they did not list resolving against the page URL instead (197 of them 404ed).
+LINK_TRACKED="$(mktemp "${TMPDIR:-/tmp}/mj.links.tracked.XXXXXX")"; LINK_DOCS="$(mktemp "${TMPDIR:-/tmp}/mj.links.docs.XXXXXX")"
+git -C "$ROOT" ls-files > "$LINK_TRACKED" 2>/dev/null || : > "$LINK_TRACKED"
+printf '%s' "$DOC_ROUTES" | jq -r 'to_entries[] | "docs/\(.key)\t\(.value)"' > "$LINK_DOCS"
+LINK_REPO="$(jq -r '.repository_url' "$OUT/project.json")"
+# project_links <path> [zola|url]: rewrite the Markdown on stdin as a page of the site would need it
+project_links() {
+  awk -v src="${1#"$ROOT"/}" -v repo="$LINK_REPO" -v tracked="$LINK_TRACKED" -v docs="$LINK_DOCS" \
+      -v mode="${2:-zola}" -v base="$SITE_BASE" -f "$ROOT/scripts/lib/project-links.awk"
+}
 # ---------------------------------------------------------------- commands.json (from share/commands.yaml)
 GEN_T0="$(mj_phase_begin "gen:commands.json_from_share_com")"
 # The registry owns what a command is; docs/CLI.md supplies the narrative; the coverage
@@ -480,7 +512,7 @@ done
   while [ -n "$(yv "$Kf" "commands.$i.id")" ]; do
     cid="$(yv "$Kf" "commands.$i.id")"
     if [ "$(yv "$Kf" "commands.$i.visibility")" != public ]; then i=$((i+1)); continue; fi
-    body="$(awk -v h="## \`majordomus $cid" 'index($0,h)==1{f=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | sed -E "$LINKSED")"
+    body="$(awk -v h="## \`majordomus $cid" 'index($0,h)==1{f=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | project_links docs/CLI.md url)"
 
     cls="$(yv "$Kf" "commands.$i.class")"
     if [ "$cls" = read-only ]; then ro=true; else ro=false; fi
@@ -575,6 +607,18 @@ EOF
 # Every fact a responsibility page shows comes from the canonical index or the README row,
 # joined here so that the templates only render: the owning command, the files that hold
 # the state, the implementation, and the two deep links into the specification.
+# How each owned path is reached on the forge, decided by git rather than assumed: a tracked
+# file is a blob, a tracked directory a tree, and a path git does not track (the checkout-local
+# state under .ai/local, which the forge has never seen) is named and not linked. Every path
+# used to become blob/master/<path>, which 404s for all of the local state and for every
+# directory; scripts/ci/link-check refuses both.
+forge_paths() {
+  jq -Rn --arg files "$(git -C "$ROOT" ls-files)" '
+    ($files | split("\n") | map(select(. != ""))) as $tracked
+    | ($tracked | map(split("/") | . as $p | range(1; length) | $p[:.] | join("/")) | unique) as $dirs
+    | [inputs | select(. != "") | rtrimstr("/") as $p
+       | {path: $p, forge: (if ($tracked | index($p)) then "blob" elif ($dirs | index($p)) then "tree" else null end)}]'
+}
 RESP_JSON="$(
   i=0; printf '['
   first=1
@@ -588,7 +632,7 @@ RESP_JSON="$(
       --arg cli "$rcli" --arg cli_route "/docs/$(doc_slug CLI)/#$(anchor_slug "$rcli")" \
       --arg schema "$rsch" --arg schema_route "/docs/schemas/#$(anchor_slug "$rsch")" \
       --argjson order "$(jnum_or_str "$(yv "$Rf" "responsibilities.$i.order")")" \
-      --argjson files "$(ylist_json "$Rf" "responsibilities.$i.files")" \
+      --argjson files "$(ylist "$Rf" "responsibilities.$i.files" | forge_paths)" \
       '{id:$id, title:$title, readme_key:$key, command:(if $command=="" then null else $command end),
         implementation:$impl, files:$files, order:$order,
         cli_anchor:$cli, cli_route:$cli_route, schema_anchor:$schema, schema_route:$schema_route}'
@@ -1199,23 +1243,8 @@ GEN_T0="$(mj_phase_begin "gen:docs_index_from_docs_README.")"
 # Only the first table becomes site routes. The "## Reference files" table below it lists
 # repository-only files whose content the site presents through other routes, so it is cut
 # here; site-check requires a route for every entry in docs.json.
-DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md" | sed -E 's/^\| \[`([^`]+)`\]\(([^)]+)\) \| ([^|]+) \| ([^|]+) \|$/\2|\3|\4/' | grep -vE '^\|' \
-  | jq -Rn '[inputs | split("|") | {path: (.[0] | ltrimstr("../")), audience: (.[1]|gsub("^ +| +$";"")), summary: (.[2]|gsub("^ +| +$";""))}]')"
-# the route each document gets, computed once, here, by the rule above. The three documents
-# this run writes into docs/ itself (below, near the end) are routed whether or not they are
-# on disk yet: their absence means this is the first run in a tree that has none, not that
-# they have no page, and deciding a route by the presence of our own output makes the first
-# pass disagree with every later one — which is exactly what --check then reports as drift.
-GENERATED_DOCS="SITE_CLAIMS.md PLAN_STATUS.md PAGES_STATUS.md"
-# A function rather than a `case` inside the substitution below: bash 3.2 re-parses the body
-# of `$(...)` at run time and reads the `)` of a case pattern as the end of the substitution,
-# which is a syntax error on every macOS runner and on no Linux one.
-is_generated_doc() { case " $GENERATED_DOCS " in *" $1 "*) return 0 ;; esac; return 1; }
-DOC_ROUTES="$(printf '%s' "$DOCS" | jq -r '.[].path' | grep -E '^[A-Z_]+\.md$' | while read -r p; do
-  if [ ! -f "$ROOT/docs/$p" ] && ! is_generated_doc "$p"; then continue; fi
-  n="${p%.md}"
-  printf '%s\t/docs/%s/\n' "$p" "$(doc_slug "$n")"
-done | jq -Rn '[inputs | split("\t") | {key: .[0], value: .[1]}] | from_entries')"
+# DOCS and DOC_ROUTES are computed ahead of the commands section (see "the document routes"), because
+# the link resolver every projection uses needs each document's route before any of them is written.
 printf '%s' "$DOCS" | jq --argjson routes "$DOC_ROUTES" '{schema:1, docs: [.[] | . + {route: ($routes[.path] // null)}]}' > "$OUT/docs.json"
 # Every file in docs/ is indexed in one of the two tables. An unindexed document is how the
 # index silently went stale before, so it is an error rather than a warning.
@@ -1256,7 +1285,7 @@ source = "docs/%s.md"
 
 ' "$(jstr "$title")" "$(jstr "$summary")" "$(grep -n "^| \[\`$d.md\`" "$ROOT/docs/README.md" | cut -d: -f1 | head -1)" "$d"
     printf '{%% raw %%}\n'
-    sed '1{/^# /d;}' "$src" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk -v spec="$CLI_SPEC_SLUG" "$DOCLINK"
+    sed '1{/^# /d;}' "$src" | project_links "docs/$d.md" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
     printf '{%% endraw %%}\n'
   } > "$CONTENT/$slug.md"
 }
@@ -1274,7 +1303,7 @@ weight = 90
 source = "AGENTS.md"
 +++
 
-'; printf '{%% raw %%}\n'; sed '1{/^<!--/d;}' "$ROOT/AGENTS.md" | sed '1{/^# /d;}' | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"; printf '{%% endraw %%}\n'; } > "$CONTENT/contract.md"
+'; printf '{%% raw %%}\n'; sed '1{/^<!--/d;}' "$ROOT/AGENTS.md" | sed '1{/^# /d;}' | project_links AGENTS.md | awk -f "$ROOT/scripts/lib/project-markdown.awk"; printf '{%% endraw %%}\n'; } > "$CONTENT/contract.md"
 # ---------------------------------------------------------------- changelog.json (what shipped)
 # The changelog the Rust executable composes from the layer's release records, the decisions
 # dated inside each release's window and the conventional commits in its range, committed as
@@ -1567,7 +1596,7 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
   [ -f "$detail" ] || { echo "generate-site-data: claim $id has no docs/claims/$id.md (every claim needs its detail page)" >&2; exit 10; }
   summary="$(awk '/^## What it means/{f=1;next} f&&/^## /{exit} f&&NF{print; exit}' "$detail" | sed -E 's/`//g; s/\[([^]]+)\]\([^)]+\)/\1/g')"
   { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nclaim_id = %s\nstatus = %s\nsource = "docs/claims/%s.md"\n+++\n{%% raw %%}\n' "$(jstr "$claim")" "$(jstr "${summary:-Status: $st. Source, implementation and test for this claim.}")" "$((i+10))" "$(jstr "$id")" "$(jstr "$st")" "$id"
-    sed '1{/^# /d;}' "$detail" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk -v spec="$CLI_SPEC_SLUG" "$DOCLINK"
+    sed '1{/^# /d;}' "$detail" | project_links "docs/claims/$id.md" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/guarantees/$id.md"; done
 # The count is computed, never written: the repository's own rule is that prose states
 # the command that produces a number rather than the number.
@@ -1615,7 +1644,7 @@ i=0; jq -r '.skills[] | [.id, .title, .description, .status, .version, .path] | 
   { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nstatus = %s\nversion = %s\nsource = %s\n+++\n{%% raw %%}\n' "$(jstr "$title")" "$(printf '%s' "$desc" | jline)" "$i" "$(jstr "$id")" "$(jstr "$st")" "$ver" "$(jstr "$path")"
     # the page template renders the title as the one h1, so the skill's own level-one
     # sections step down one level; fenced code is left alone
-    mj_record_body "$ROOT/$path" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
+    mj_record_body "$ROOT/$path" | project_links "$path" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
       | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/skills/$id.md"; done
 # The Why catalogue's routes: the section, one page per moment, and a page per audience
@@ -1629,7 +1658,7 @@ jq -r '.moments[] | select(.status != "deprecated") | [.id, .title, .summary, .s
   | while IFS="$MJ_TAB" read -r id title summary source status weight; do
   { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nstatus = %s\nsource = %s\n+++\n{%% raw %%}\n' \
       "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$status")" "$(jstr "$source")"
-    mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
+    mj_record_body "$ROOT/$source" | project_links "$source" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/why/$id.md"; done
 printf -- '+++\ntitle = "The map"\ndescription = "Every moment with who recognises it, the area it falls under, and the commands, capabilities, claims, rules and use cases that answer it — derived from the moments themselves."\nweight = 1000\ntemplate = "why-graph.html"\n[extra]\nsource = "majordomus graph get why"\n+++\n' > "$CONTENT_ROOT/why/graph.md"
 # the two taxonomies, each a subsection with one page per entry; both are enumerated from
@@ -1646,7 +1675,7 @@ for tx in audiences areas; do
     | while IFS="$MJ_TAB" read -r id title summary source weight; do
     { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\ntaxonomy = %s\nsource = %s\n+++\n{%% raw %%}\n' \
         "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$tx")" "$(jstr "$source")"
-      mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
+      mj_record_body "$ROOT/$source" | project_links "$source" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
         | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
       printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/why/$tx/$id.md"; done
 done
@@ -1662,7 +1691,7 @@ jq -r '.features[] | select(.status != "draft") | [.id, .title, .summary, .sourc
       "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$status")" "$(jstr "$source")"
     # the page template renders the title as the one h1, so the feature's own level-two
     # sections keep their level and its prose never competes with the heading above it
-    mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
+    mj_record_body "$ROOT/$source" | project_links "$source" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/features/$id.md"; done
 printf -- '+++\ntitle = "Every feature against every interface"\ndescription = "The matrix both ways: each feature against the command line, the HTTP API, MCP, the Cockpit and the documentation, and each capability module, public command and object kind against the features that name it. Every mark is derived; a gap is shown."\nweight = 1000\ntemplate = "features-matrix.html"\n[extra]\nsource = "majordomus product matrix"\n+++\n' > "$CONTENT_ROOT/features/matrix.md"
 
@@ -1755,16 +1784,15 @@ i=0; jq -r '.capabilities[] | [.id, .slug, .source_path] | @tsv' "$OUT/executabl
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\nslug = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$id")" "$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .description' "$REG" | jline)" "$i" "$(jstr "$slug")" "$(jstr "$id")" "$(jstr "$sp")" > "$CONTENT_ROOT/registry/capabilities/$slug.md"; done
 # the executable's own narrative: the crate's README, projected as the documents are, with
 # its relative links rewritten to site routes or to the repository
-# the description is the README's first sentence; the links: ../../docs/X.md to the document's
-# route (the awk lowers the name, as the docs projection does), any other ../../ path to the
-# file on GitHub
+# the description is the README's first sentence; its links are resolved like every other projected
+# document's (project_links)
 { printf -- '+++\ntitle = "The Rust executable"\ndescription = %s\nweight = 1\ntemplate = "registry-executable.html"\n[extra]\nsource = "apps/majordomus-cli/README.md"\n+++\n\n' "$(awk 'NR>2 && NF { printf "%s ", $0 } NR>2 && !NF { exit }' "$ROOT/apps/majordomus-cli/README.md" | sed -E 's/`//g; s/^([^.]*\.)[^.]*.*$/\1/; s/ +$//' | jline)"
   printf '{%% raw %%}\n'
   sed '1{/^# /d;}' "$ROOT/apps/majordomus-cli/README.md" \
-    | awk '{ while (match($0, /\]\(\.\.\/\.\.\/docs\/[A-Z_]+\.md\)/)) { t=substr($0,RSTART+13,RLENGTH-14); gsub(/_/,"-",t); $0=substr($0,1,RSTART-1) "](@/docs/" tolower(t) ")" substr($0,RSTART+RLENGTH) } print }' \
-    | sed -E "s#\]\(\.\./\.\./([^)]+)\)#]($(jq -r '.repository_url' "$OUT/project.json")/blob/master/\1)#g" \
+    | project_links apps/majordomus-cli/README.md \
     | awk -f "$ROOT/scripts/lib/project-markdown.awk"
   printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/registry/executable.md"
+rm -f "$LINK_TRACKED" "$LINK_DOCS"
 mj_phase_end "gen:executable_routes" "$GEN_T0"
 # ---------------------------------------------------------------- /docs/cli/** (the native command line, as routes)
 GEN_T0="$(mj_phase_begin "gen:cli_routes")"

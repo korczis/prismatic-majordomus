@@ -9,7 +9,7 @@ source = "docs/DYNAMICITY.md"
 {% raw %}
 
 How this repository decides where a fact lives, what may be written down twice, and what
-must be derived. The companion file is [`HARDCODING_LEDGER.yaml`](HARDCODING_LEDGER.yaml),
+must be derived. The companion file is [`HARDCODING_LEDGER.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/HARDCODING_LEDGER.yaml),
 which records every place the rules below are currently broken, with a reproduce command
 for each.
 

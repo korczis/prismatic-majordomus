@@ -8,6 +8,8 @@
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set f = [x for x in model.features if x.id == page.extra.id][0] -%}
 {%- set docs = load_data(path="data/generated/docs.json") -%}
+{#- module and capability pages live at the slugs the executable reference gives them; a route rebuilt from an id is the defect scripts/ci/link-check found on every feature page -#}
+{%- set exe = load_data(path="data/generated/executable.json") -%}
 {%- set doctrines = load_data(path="data/generated/doctrines.json") -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 
@@ -36,19 +38,19 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The capabilities behind it</h2>
     <p class="mt-2 text-body">The capability modules of the executable this feature names, each with the capabilities it composes. The command line, the HTTP route, the MCP tool and the reference beside every row are projections of one declaration, not four registrations.</p>
     <div class="mt-4 space-y-4">
-      {%- for mod in f.module_refs %}
+      {%- for mod in f.module_refs %}{%- set mref = [x for x in exe.modules if x.id == mod.id] %}
       <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="flex flex-wrap items-baseline gap-2">
-          <a href="{{ get_url(path='/registry/modules/' ~ mod.id ~ '/', trailing_slash=true) }}" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">{{ mod.title }}</a>
+          <a href="{{ get_url(path='/registry/modules/' ~ mref[0].slug ~ '/', trailing_slash=true) }}" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">{{ mod.title }}</a>
           <code class="font-mono text-xs text-body-subtle">{{ mod.id }}</code>
           <span class="ms-auto font-mono text-xs text-body-subtle">{{ mod.stability | replace(from="_", to=" ") }}</span>
         </p>
         <p class="mt-2 text-sm text-body">{{ mod.description }}</p>
         <ul class="mt-3 divide-y divide-default border-t border-default">
-          {%- for c in mod.capabilities %}
+          {%- for c in mod.capabilities %}{%- set cref = [x for x in exe.capabilities if x.id == c.id] %}
           <li class="py-2">
             <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <a href="{{ get_url(path='/registry/capabilities/' ~ c.id ~ '/', trailing_slash=true) }}" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.title }}</a>
+              <a href="{{ get_url(path='/registry/capabilities/' ~ cref[0].slug ~ '/', trailing_slash=true) }}" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.title }}</a>
               <span class="font-mono text-xs text-body-subtle">{{ c.kind }}</span>
             </p>
             <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body">

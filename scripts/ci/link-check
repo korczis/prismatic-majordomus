@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+# link-check: every link the built site publishes resolves, decided offline against the tree being
+# published, with no network. Rule: project.every-link-and-control-is-tested.
+#
+# A link is any href or src the site emits: <a>, <link>, <script>, <img>, <source>, and every <loc>
+# in sitemap.xml. Each one is exactly one of these, and each is decided:
+#
+#   internal     a same-origin URL, absolute (https://majordomus.dev/x/, which is what Zola emits)
+#                or root-relative (/x/): a file must exist under site/public for it
+#   fragment     #id, or a same-origin URL carrying one: the id must exist on the page it lands on.
+#                A bare "#" goes nowhere and is refused
+#   repository   a URL into this repository on its forge, resolved against git rather than fetched:
+#                blob/<ref>/<path> is a tracked file, tree/<ref>/<path> a tracked directory (or a
+#                file, which the forge redirects), commit/<sha> a commit in the history being
+#                published, releases/tag/<tag> and tree/<tag> a tag, compare/<a>...<b> two refs
+#   refused      javascript:, an empty href, and a host none of the above resolves. A link that
+#                cannot be decided without the network is not published: the finding says so,
+#                and the way to add one is to teach this check how to decide it
+#
+# The internal and fragment classes read site/public alone. The repository class reads git: a shallow
+# clone cannot say whether a commit is in the published history, so the check refuses to report
+# clean there (exit 12) rather than pass over what it did not see.
+#
+# Usage: scripts/ci/link-check [--list]   --list prints every link and its class
+# Exit 0 clean, 10 findings, 12 inputs missing or a clone too shallow to decide.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+LIST=0
+for a in "$@"; do case "$a" in --list) LIST=1 ;; *) echo "link-check: unknown option $a" >&2; exit 2 ;; esac; done
+export MJ_LINK_ROOT="$ROOT" MJ_LINK_LIST="$LIST"
+exec python3 - <<'PY'
+import collections, html, os, re, subprocess, sys, urllib.parse
+
+ROOT = os.environ['MJ_LINK_ROOT']; LIST = os.environ['MJ_LINK_LIST'] == '1'
+PUB = os.path.join(ROOT, 'site', 'public')
+fails = []
+def fail(cls, msg): fails.append((cls, msg)); print(f'FAIL {cls:<12} {msg}')
+def ok(cls, msg): print(f'OK   {cls:<12} {msg}')
+
+cfg = os.path.join(ROOT, 'site', 'config.toml')
+if not os.path.isdir(PUB) or not os.path.isfile(cfg):
+    print('link-check: site/public or site/config.toml missing; run scripts/site-build', file=sys.stderr); sys.exit(12)
+m = re.search(r'^base_url\s*=\s*"([^"]+)"', open(cfg).read(), re.M)
+if not m: print('link-check: site/config.toml declares no base_url', file=sys.stderr); sys.exit(12)
+BASE = urllib.parse.urlsplit(m.group(1)); ORIGIN = f'{BASE.scheme}://{BASE.netloc}'; PREFIX = BASE.path.rstrip('/')
+
+proj = os.path.join(ROOT, 'site', 'data', 'generated', 'project.json')
+REPO = None
+if os.path.isfile(proj):
+    rm = re.search(r'"repository_url"\s*:\s*"([^"]+)"', open(proj).read())
+    if rm: REPO = urllib.parse.urlsplit(rm.group(1).rstrip('/'))
+if REPO is None: print('link-check: site/data/generated/project.json names no repository_url', file=sys.stderr); sys.exit(12)
+
+def git(*args):
+    return subprocess.run(['git', '-C', ROOT, *args], capture_output=True, text=True)
+
+# ------------------------------------------------------------------ the built site
+pages = {}          # route -> html
+files = set()       # every file under site/public, as a path relative to it
+for dirpath, _, names in os.walk(PUB):
+    for n in names:
+        rel = os.path.relpath(os.path.join(dirpath, n), PUB).replace(os.sep, '/')
+        files.add(rel)
+        if n == 'index.html':
+            route = '/' + os.path.dirname(rel) + '/' if os.path.dirname(rel) else '/'
+            pages[route] = open(os.path.join(dirpath, n), encoding='utf-8', errors='replace').read()
+if not pages: print('link-check: site/public holds no page', file=sys.stderr); sys.exit(12)
+
+ID_RX = re.compile(r'\sid="([^"]+)"')
+ids = {r: set(ID_RX.findall(t)) for r, t in pages.items()}
+# every attribute that makes the browser go somewhere; srcset is split into its URLs
+# quote-aware: an attribute value may hold ">" (an Alpine handler's `() => {...}`), which [^>]* would end the tag on
+ATTR_RX = re.compile(r'<(a|link|script|img|source|iframe|area)\b((?:\s+[^\s"\'>/=]+(?:\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s"\'>]+))?)*)\s*/?>', re.I)
+HREF_RX = re.compile(r'\s(href|src|srcset)\s*=\s*"([^"]*)"', re.I)
+
+def resolve_file(path):
+    """A same-origin path to the file the static server would answer with, or None."""
+    p = urllib.parse.unquote(path)
+    if PREFIX and p.startswith(PREFIX): p = p[len(PREFIX):] or '/'
+    p = p.lstrip('/')
+    for cand in (p, p.rstrip('/') + '/index.html' if p else 'index.html', p + '/index.html'):
+        if cand in files: return cand
+    return None
+
+def route_of(file_rel):
+    return '/' + file_rel[:-len('index.html')] if file_rel.endswith('index.html') else None
+
+links = []   # (page, raw)
+for route, t in pages.items():
+    for tag, attrs in ATTR_RX.findall(t):
+        if tag.lower() == 'link' and re.search(r'rel="(preconnect|dns-prefetch)"', attrs): continue
+        for attr, val in HREF_RX.findall(attrs):
+            vals = [v.strip().split(' ')[0] for v in val.split(',')] if attr.lower() == 'srcset' else [val]
+            for v in vals: links.append((route, html.unescape(v)))
+sm = os.path.join(PUB, 'sitemap.xml')
+if os.path.isfile(sm):
+    for loc in re.findall(r'<loc>([^<]+)</loc>', open(sm, encoding='utf-8').read()):
+        links.append(('/sitemap.xml', html.unescape(loc.strip())))
+
+# ------------------------------------------------------------------ the tree being published
+shallow = git('rev-parse', '--is-shallow-repository').stdout.strip() == 'true'
+tracked = set(git('ls-files', '-z').stdout.split('\0')) - {''}
+dirs = set()
+for f in tracked:
+    parts = f.split('/')
+    for i in range(1, len(parts)): dirs.add('/'.join(parts[:i]))
+history = set(git('rev-list', 'HEAD').stdout.split())
+tags = set(git('tag', '-l').stdout.split())
+branches = {b.strip().removeprefix('origin/') for b in git('branch', '-a', '--format=%(refname:short)').stdout.split()}
+def is_ref(x):
+    if x in tags or x in branches: return True
+    return bool(re.fullmatch(r'[0-9a-f]{7,40}', x)) and any(h.startswith(x) for h in history)
+
+counts = collections.Counter(); undecided = []
+def decide(page, raw):
+    if raw == '' : return ('refused', 'an empty href goes nowhere')
+    if raw == '#': return ('refused', 'a bare "#" goes nowhere')
+    low = raw.lower()
+    if low.startswith(('javascript:', 'data:')): return ('refused', f'{raw[:40]} is not a link')
+    if low.startswith(('mailto:', 'tel:')): return ('refused', f'{raw} cannot be decided offline')
+    u = urllib.parse.urlsplit(raw)
+    if u.scheme in ('http', 'https') and u.netloc == REPO.netloc:
+        if not (u.path + '/').startswith(REPO.path + '/'): return ('refused', f'{raw} is on the forge but not this repository')
+        rest = u.path[len(REPO.path):].strip('/')
+        kind, _, tail = rest.partition('/')
+        if kind == '': return ('repository', None)
+        if kind == 'blob':
+            ref, _, path = tail.partition('/'); path = urllib.parse.unquote(path)
+            if not is_ref(ref): return ('repository', f'{raw}: {ref} is no ref of this repository')
+            if path in tracked: return ('repository', None)
+            if path in dirs: return ('repository', f'{raw}: {path} is a directory; the link is tree/, not blob/')
+            return ('repository', f'{raw}: {path} is not a tracked file, so the forge answers 404')
+        if kind == 'tree':
+            ref, _, path = tail.partition('/'); path = urllib.parse.unquote(path.rstrip('/'))
+            if not is_ref(ref): return ('repository', f'{raw}: {ref} is no ref of this repository')
+            if path == '' or path in dirs or path in tracked: return ('repository', None)
+            return ('repository', f'{raw}: {path} is not tracked, so the forge answers 404')
+        if kind in ('commit', 'commits'):
+            ref = tail.strip('/')
+            if kind == 'commits' and (ref in tags or ref in branches): return ('repository', None)
+            if shallow: undecided.append(raw); return ('repository', None)
+            if re.fullmatch(r'[0-9a-f]{7,40}', ref) and any(h.startswith(ref) for h in history): return ('repository', None)
+            return ('repository', f'{raw}: {ref} is not in the history being published')
+        if kind == 'releases':
+            if tail in ('', 'latest'): return ('repository', None)
+            if tail.startswith('tag/'):
+                t = urllib.parse.unquote(tail[4:])
+                return ('repository', None if t in tags else f'{raw}: tag {t} does not exist')
+            if tail.startswith('download/'):
+                t = tail.split('/')[1]
+                return ('repository', None if t in tags else f'{raw}: tag {t} does not exist')
+            return ('repository', f'{raw}: a releases path this check does not know')
+        if kind == 'compare':
+            a, sep, b = tail.partition('...')
+            if not sep: return ('repository', f'{raw}: a compare without "..."')
+            if shallow: undecided.append(raw); return ('repository', None)
+            bad = [x for x in (a, b) if not is_ref(urllib.parse.unquote(x))]
+            return ('repository', f'{raw}: {", ".join(bad)} is no ref of this repository' if bad else None)
+        if kind in ('issues', 'pull', 'actions', 'milestones', 'discussions'):
+            return ('refused', f'{raw}: a {kind} link cannot be decided offline')
+        return ('refused', f'{raw}: a forge path this check does not know how to decide')
+    if u.scheme in ('http', 'https') and u.netloc != BASE.netloc:
+        return ('refused', f'{raw}: {u.netloc} cannot be decided offline')
+    if u.scheme not in ('', 'http', 'https'):
+        return ('refused', f'{raw}: the scheme {u.scheme} cannot be decided')
+    # same origin: absolute, root-relative, or relative to the page
+    if u.netloc == '' and not u.path.startswith('/') and u.path:
+        path = urllib.parse.urljoin(page, u.path)
+    else:
+        path = u.path or page
+    if page == '/sitemap.xml' and not path: path = '/'
+    target = resolve_file(path) if path else None
+    if target is None:
+        return ('internal', f'{raw} resolves to no file under site/public')
+    if u.fragment:
+        r = route_of(target)
+        if r is None: return ('fragment', None)
+        frag = urllib.parse.unquote(u.fragment)
+        if frag not in ids.get(r, set()):
+            return ('fragment', f'{raw} names #{frag}, which {r} does not carry')
+        return ('fragment', None)
+    return ('internal', None)
+
+by_page = collections.defaultdict(list); seen = set()
+for page, raw in links:
+    cls, problem = decide(page, raw)
+    counts[cls] += 1
+    if LIST: print(f'LINK {cls:<12} {page} -> {raw}')
+    if problem and (cls, problem) not in seen:
+        seen.add((cls, problem)); by_page[(cls, problem)].append(page)
+for (cls, problem), where in sorted(by_page.items()):
+    extra = f' (and {len(where) - 1} more page(s))' if len(where) > 1 else ''
+    fail(cls, f'{where[0]}: {problem}{extra}')
+
+total = sum(counts.values())
+summary = ', '.join(f'{counts[c]} {c}' for c in ('internal', 'fragment', 'repository', 'refused') if counts[c])
+if undecided:
+    print(f'link-check: {len(undecided)} commit or compare link(s) cannot be decided in a shallow clone; fetch the history (fetch-depth: 0)', file=sys.stderr)
+    sys.exit(12)
+if fails:
+    print(f'link-check: {len(fails)} finding(s) over {total} link(s) on {len(pages)} page(s): {summary}')
+    sys.exit(10)
+ok('links', f'{total} link(s) on {len(pages)} page(s) resolve: {summary}')
+PY
