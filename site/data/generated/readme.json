@@ -21,7 +21,10 @@
       "command": "update",
       "implementation": "lib/common.sh",
       "files": [
-        ".ai/repo/policy.yaml"
+        {
+          "path": ".ai/repo/policy.yaml",
+          "forge": "blob"
+        }
       ],
       "order": 1,
       "cli_anchor": "majordomus update",
@@ -62,8 +65,14 @@
       "command": "update",
       "implementation": "lib/update.sh",
       "files": [
-        ".ai/repo/policy.yaml",
-        "share/providers"
+        {
+          "path": ".ai/repo/policy.yaml",
+          "forge": "blob"
+        },
+        {
+          "path": "share/providers",
+          "forge": "tree"
+        }
       ],
       "order": 2,
       "cli_anchor": "majordomus update",
@@ -100,8 +109,14 @@
       "command": "start",
       "implementation": "lib/start.sh",
       "files": [
-        ".ai/local/state/current.yaml",
-        ".ai/local/state/ledger.jsonl"
+        {
+          "path": ".ai/local/state/current.yaml",
+          "forge": null
+        },
+        {
+          "path": ".ai/local/state/ledger.jsonl",
+          "forge": null
+        }
       ],
       "order": 3,
       "cli_anchor": "majordomus start <task>",
@@ -137,7 +152,10 @@
       "command": "check",
       "implementation": "lib/check.sh",
       "files": [
-        ".ai/local/state/current.yaml"
+        {
+          "path": ".ai/local/state/current.yaml",
+          "forge": null
+        }
       ],
       "order": 4,
       "cli_anchor": "majordomus check",
@@ -168,7 +186,10 @@
       "command": "check",
       "implementation": "lib/update.sh",
       "files": [
-        ".ai/repo/profiles"
+        {
+          "path": ".ai/repo/profiles",
+          "forge": "tree"
+        }
       ],
       "order": 5,
       "cli_anchor": "majordomus check",
@@ -200,7 +221,10 @@
       "command": "handover",
       "implementation": "lib/handover.sh",
       "files": [
-        ".ai/local/state/handovers"
+        {
+          "path": ".ai/local/state/handovers",
+          "forge": null
+        }
       ],
       "order": 6,
       "cli_anchor": "majordomus handover",
@@ -227,7 +251,10 @@
       "command": "finish",
       "implementation": "lib/finish.sh",
       "files": [
-        ".ai/local/state/ledger.jsonl"
+        {
+          "path": ".ai/local/state/ledger.jsonl",
+          "forge": null
+        }
       ],
       "order": 7,
       "cli_anchor": "majordomus finish",
@@ -257,7 +284,10 @@
       "command": "doctor",
       "implementation": "lib/doctor.sh",
       "files": [
-        ".ai/repo/policy.yaml"
+        {
+          "path": ".ai/repo/policy.yaml",
+          "forge": "blob"
+        }
       ],
       "order": 8,
       "cli_anchor": "majordomus doctor",
@@ -308,7 +338,10 @@
       "command": "watch",
       "implementation": "lib/watch.sh",
       "files": [
-        ".ai/local/state/ledger.jsonl"
+        {
+          "path": ".ai/local/state/ledger.jsonl",
+          "forge": null
+        }
       ],
       "order": 9,
       "cli_anchor": "majordomus watch",
@@ -333,8 +366,14 @@
       "command": "plan",
       "implementation": "lib/project.awk",
       "files": [
-        ".ai/repo/project/milestones",
-        ".ai/repo/project/issues"
+        {
+          "path": ".ai/repo/project/milestones",
+          "forge": "tree"
+        },
+        {
+          "path": ".ai/repo/project/issues",
+          "forge": "tree"
+        }
       ],
       "order": 10,
       "cli_anchor": "majordomus plan",
@@ -366,8 +405,14 @@
       "command": "init",
       "implementation": "lib/init.sh",
       "files": [
-        ".ai/README.md",
-        ".ai/manifest.yaml"
+        {
+          "path": ".ai/README.md",
+          "forge": "blob"
+        },
+        {
+          "path": ".ai/manifest.yaml",
+          "forge": "blob"
+        }
       ],
       "order": 11,
       "cli_anchor": "majordomus init",
