@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "registry": {
-    "fingerprint": "93f8da408d093a21ab481c6b3bf54a805b597905f6aec9cfcbc7bb9cd2f89227",
+    "fingerprint": "d1c4a30a749f1021765cba1d159c6f02e836dd55d3a6616ca5a698d4f8abb737",
     "summary": {
-      "total": 1467,
+      "total": 1471,
       "builtin": 114,
-      "declarative": 1353,
+      "declarative": 1357,
       "by_kind": {
         "command": 6,
         "query": 108,
-        "resource": 1353
+        "resource": 1357
       },
       "by_stability": {
         "behaviorally_verified": 101,
         "experimental": 7,
-        "implemented": 1359
+        "implemented": 1363
       },
       "mcp_tools": 111,
-      "mcp_resources": 1395,
+      "mcp_resources": 1399,
       "http_routes": 113,
       "cli_commands": 52,
       "modules": 65,
@@ -41314,7 +41314,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": []
       },
       {
@@ -41336,7 +41336,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 138,
+        "capabilities": 139,
         "capability_ids": []
       },
       {
@@ -41415,7 +41415,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 208,
+        "capabilities": 210,
         "capability_ids": []
       },
       {
@@ -41495,7 +41495,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a5e44f4d9d13fccb737742cc26c11270fca1ae72ea3e2297fbb6ee560b71e66a",
+    "fingerprint": "e2ad528004995032eaa3a5c0d6c84aebc63e28604ea098bbf19206496c9bddab",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -41538,13 +41538,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 2,
-      "rule": 138,
+      "release-record": 3,
+      "rule": 139,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 208,
+      "test": 210,
       "use-case": 46,
       "workspace": 1
     },
@@ -45354,7 +45354,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 27401
+        "bytes": 27412
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -45444,7 +45444,7 @@
         "title": "Coverage: one measurement, two questions",
         "path": "docs/COVERAGE.md",
         "source_class": "document",
-        "bytes": 5255
+        "bytes": 5830
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -45597,7 +45597,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 9320
+        "bytes": 9422
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -45669,7 +45669,7 @@
         "title": "Product — the features, and the landing page as a projection of them",
         "path": "docs/PRODUCT.md",
         "source_class": "document",
-        "bytes": 8474
+        "bytes": 13367
       },
       {
         "uri": "majordomus://document/docs/QUALITY.md",
@@ -45759,7 +45759,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 16188
+        "bytes": 16447
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -47435,7 +47435,7 @@
         "path": ".ai/repo/features/commit.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3516,
+        "bytes": 3515,
         "tags": [
           "git",
           "commit",
@@ -47494,11 +47494,11 @@
         "kind": "feature",
         "identity": "coverage",
         "title": "New code is covered, measured once and asked two questions",
-        "description": "scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, the session/continuity domain held to 100%, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.",
+        "description": "scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, a floor over the session/continuity domain, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.",
         "path": ".ai/repo/features/coverage.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2834,
+        "bytes": 2865,
         "tags": [
           "coverage",
           "testing"
@@ -47558,7 +47558,7 @@
         "path": ".ai/repo/features/evidence.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2797,
+        "bytes": 2796,
         "tags": [
           "evidence",
           "claims",
@@ -51545,6 +51545,16 @@
         "bytes": 2415
       },
       {
+        "uri": "majordomus://release-record/v0.6.0",
+        "kind": "release-record",
+        "identity": "v0.6.0",
+        "title": "v0.6.0",
+        "path": ".ai/repo/releases/v0.6.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2415
+      },
+      {
         "uri": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "identity": "majordomus.adr-integrity@1",
@@ -52927,6 +52937,24 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "rule",
+        "identity": "project.homepage-tells-a-declared-story@1",
+        "title": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
+        "description": "site/data/homepage.toml declares the homepage's sections as an ordered list of ids; the rendered homepage carries exactly those sections, in that order, each with a link or a derived figure, links no feature the product model does not call stable, and carries every command the distribution model gives a newcomer. site/data/nav.toml declares which sections are receipts under [indexing]; the pages below them are noindex and out of the sitemap, and every other page is indexable and in it.",
+        "path": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3906,
+        "tags": [
+          "web",
+          "homepage",
+          "navigation",
+          "projections",
+          "documentation"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.hot-path-reads-once@1",
         "kind": "rule",
         "identity": "project.hot-path-reads-once@1",
@@ -53572,7 +53600,7 @@
         "path": ".ai/repo/rules/project/ui-conformance.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5105,
+        "bytes": 5275,
         "tags": [
           "ui",
           "accessibility",
@@ -54494,7 +54522,7 @@
         "identity": "test/cases/130_context_compiler.sh",
         "path": "test/cases/130_context_compiler.sh",
         "source_class": "case",
-        "bytes": 19944
+        "bytes": 20333
       },
       {
         "uri": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
@@ -55057,6 +55085,22 @@
         "bytes": 6231
       },
       {
+        "uri": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "kind": "test",
+        "identity": "test/cases/333_homepage_narrative.sh",
+        "path": "test/cases/333_homepage_narrative.sh",
+        "source_class": "case",
+        "bytes": 5624
+      },
+      {
+        "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "kind": "test",
+        "identity": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "path": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "source_class": "case",
+        "bytes": 3054
+      },
+      {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
         "kind": "test",
         "identity": "test/cases/33_event_registry.sh",
@@ -55406,7 +55450,7 @@
         "identity": "test/cases/77_rust_evidence.sh",
         "path": "test/cases/77_rust_evidence.sh",
         "source_class": "case",
-        "bytes": 12088
+        "bytes": 12585
       },
       {
         "uri": "majordomus://test/test/cases/79_bench_command.sh",
@@ -56494,7 +56538,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 2
+      "objects": 3
     },
     {
       "name": "rule",
@@ -56505,7 +56549,7 @@
         "id",
         "version"
       ],
-      "objects": 138
+      "objects": 139
     },
     {
       "name": "scope",
@@ -56560,7 +56604,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 208
+      "objects": 210
     },
     {
       "name": "use-case",

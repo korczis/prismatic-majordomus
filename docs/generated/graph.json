@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.6.0",
+  "generator": "majordomus-cli 0.6.1",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -11433,7 +11433,7 @@
           "docs": [
             "docs/COMMIT.md"
           ],
-          "featured": false,
+          "featured": true,
           "modules": [
             "commit"
           ],
@@ -11709,7 +11709,7 @@
             "docs/COVERAGE.md"
           ],
           "featured": false,
-          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a full-coverage domain, and — the invariant of",
+          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of",
           "modules": [],
           "related": [
             "doctrine",
@@ -11944,7 +11944,7 @@
           "docs": [
             "docs/EVIDENCE.md"
           ],
-          "featured": false,
+          "featured": true,
           "modules": [
             "evidence"
           ],
@@ -27047,6 +27047,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.6.0",
+        "kind": "release-record",
+        "label": "v0.6.0",
+        "summary": "v0.6.0",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frelease-record%2Fv0.6.0",
+        "source": ".ai/repo/releases/v0.6.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "d98a264b5ff4f64e461e0f24147c29a741718b8a",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.6.0",
+          "published_at": "2026-09-12T21:29:12Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.6.0"
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "label": "majordomus.adr-integrity@1",
@@ -28844,6 +28867,29 @@
             "github",
             "enforcement",
             "drift"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "rule",
+        "label": "project.homepage-tells-a-declared-story@1",
+        "summary": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.homepage-tells-a-declared-story%401",
+        "source": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.navigation-is-declared-once@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "web",
+            "homepage",
+            "navigation",
+            "projections",
+            "documentation"
           ]
         }
       },
@@ -32750,6 +32796,20 @@
         "label": "test/cases/32_schema_integrity.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F32_schema_integrity.sh",
         "source": "test/cases/32_schema_integrity.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "kind": "test",
+        "label": "test/cases/333_homepage_narrative.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F333_homepage_narrative.sh",
+        "source": "test/cases/333_homepage_narrative.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "kind": "test",
+        "label": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F334_ui_audit_hears_uncaught_errors.sh",
+        "source": "test/cases/334_ui_audit_hears_uncaught_errors.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -48938,6 +48998,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.6.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/majordomus.adr-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -49955,6 +50020,21 @@
       {
         "source": "majordomus://rule/project.github-projection-gated@1",
         "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.navigation-is-declared-once@1",
         "kind": "depends_on"
       },
       {
@@ -51264,6 +51344,16 @@
       },
       {
         "source": "majordomus://test/test/cases/32_schema_integrity.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54969,8 +55059,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1727,
-      "edges": 3885,
+      "nodes": 1731,
+      "edges": 3891,
       "acyclic": true,
       "truncated": false
     }

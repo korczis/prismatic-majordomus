@@ -18,14 +18,21 @@ different way somewhere else.
 
 ## The two floors and the differential
 
-**The crate floor** (`scripts/rust-coverage-threshold`, currently 90) is a lower bound on
+**The crate floor** (`scripts/rust-coverage-threshold`) is a lower bound on
 line coverage of the whole executable, test code out of the denominator. It is a ratchet
 against the crate rotting, not a promise of completeness.
 
-**The session/continuity domain** (`scripts/session-coverage-threshold`, 100, over the
-files in `scripts/session-coverage-domain`) holds one subsystem to full line, function and
-region coverage. A crate-wide floor says nothing about whether the subsystem a
+**The session/continuity domain** (`scripts/session-coverage-threshold`, over the files in
+`scripts/session-coverage-domain`) holds one subsystem to its own floor, on lines, functions
+and regions alike. A crate-wide floor says nothing about whether the subsystem a
 repository's continuity depends on is tested at all; this is where that is held.
+
+**The two floors are held for different reasons.** The crate floor is high by rule:
+`project.rust-command-tested-in-file` refuses one below ninety, because a floor that bends to
+whatever the crate measured is a floor that stops meaning anything. The domain floor is a
+ratchet: it is the coverage the session/continuity domain actually measured when it was set,
+and may rise and never fall. `test/cases/77_rust_evidence.sh` holds the lower bound of each,
+and new uncovered code is refused regardless, by the differential gate below.
 
 **The differential gate** (`scripts/ci/coverage-differential`, rule
 `project.new-code-is-covered`) is the changed-code invariant of issue #214. It holds every
@@ -40,13 +47,18 @@ floor cannot forbid *new* debt: a change can add uncovered code while the aggreg
 moves. The differential gate draws the line where it can be held without rewriting history
 — at the code a change touches:
 
-```
-new file                     → every executable line/function/region covered
-new function                 → covered
-changed executable line      → covered
-changed branch/region        → covered
-untouched legacy code        → not this gate's business
-```
+<div class="overflow-x-auto" tabindex="0">
+
+| What the change does | What the gate requires |
+|---|---|
+| adds a file | every executable line, function and region in it covered |
+| adds a function | covered |
+| changes an executable line | covered |
+| changes a branch or region | covered |
+| leaves legacy code untouched | nothing: not this gate's business |
+
+</div>
+
 
 The invariant is `new_debt == 0` and `legacy_debt_after <= legacy_debt_before`. The gate
 never looks at a line the change did not touch, so it cannot demand that old debt be paid;

@@ -52,6 +52,7 @@ href = "/method/"
 items = [
   { label = "Doctrine, policy, rule, enforcement", href = "/method/" },
   { label = "Four axes", href = "/method/axes/" },
+  { label = "The full argument", href = "/method/argument/" },
   { label = "Vocabulary", href = "/docs/concepts/" },
   { label = "Canonical policy", href = "/policy/" },
   { label = "Directory contracts", href = "/context/" },
@@ -121,3 +122,16 @@ to = "/features/"
 [[redirects]]
 from = "/outcomes/less-wasted-time/"
 to = "/features/"
+
+# Receipts, not destinations. The detail pages under these sections are the repository's audit
+# trail — one page per issue and milestone, per capability and module, per closed session —
+# and they stay published, linked and reachable, because a claim on this site that cannot be
+# followed to its receipt is not worth making. What they are not is what a search engine
+# should rank for this project: hundreds of them outnumbered every product page ten to one.
+#
+# A section named here keeps its own index page indexed and in the sitemap; every page below
+# that index carries <meta name="robots" content="noindex"> (templates/base.html) and is left
+# out of sitemap.xml (templates/sitemap.xml). scripts/ci/homepage-check holds both directions
+# over every built page, so the policy is this list and nothing else.
+[indexing]
+unlisted = ["plan", "registry", "sessions"]

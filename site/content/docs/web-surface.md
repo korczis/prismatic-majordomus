@@ -37,7 +37,6 @@ documentation arrived the name meant two things; the rule
 | MCP over HTTP for attached clients | `/mcp` | native-route | protocol | internal | served-only | `mcp endpoint` |
 | The OpenAPI document of the capability registry | `/openapi.json` | native-route | api | public | both | `capability registry` |
 | Swagger UI over the OpenAPI document | `/swagger` | native-route | documentation | public | served-only | `http::swagger` |
-| Test results | `/tests` | static-directory | report | public | both | `bash test/run.sh + cargo test, rendered by majordomus web report tests` |
 | The site as it is deployed | `/` | static-directory | documentation | public | published-only | `scripts/site-build` |
 | This process, and everything it serves | `/` | native-route | interface | public | served-only | `web::home` |
 
