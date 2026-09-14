@@ -11,7 +11,7 @@ depends_on: [project.web-surface-topology@1, project.derived-once@1, project.no-
 tags: [ui, accessibility, web, projections]
 
 x-majordomus:
-  tests: [test/cases/85_ui_conformance.sh]
+  tests: [test/cases/85_ui_conformance.sh, test/cases/334_ui_audit_hears_uncaught_errors.sh]
 ---
 
 # Rationale
@@ -40,8 +40,9 @@ layout discontinuity hides.
 **The invariants are executable.** `scripts/ui audit` drives the repository's own server and
 a real browser over that set and checks: no horizontal overflow at any width, one `main` and
 one `h1` per document, no heading level skipped, no duplicate id, every component trigger
-resolving to the target it names and carrying an accessible name, no console error, no
-failed same-origin request, and the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA rules of an
+resolving to the target it names and carrying an accessible name, no console error and no exception left uncaught (a browser
+reports that as a page error, not a console message, so both are listened to), no failed
+same-origin request, and the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA rules of an
 accessibility engine. The verdict is arithmetic over the findings; nothing decides that a
 finding does not count.
 

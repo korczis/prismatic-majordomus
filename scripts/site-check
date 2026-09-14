@@ -227,11 +227,39 @@ if [ -f "$SITE/static/CNAME" ]; then
   elif [ -n "$host" ] && [ "$declared" != "$host" ]; then bad domain "CNAME is $declared; base_url is served from $host"
   else ok domain "the build carries CNAME $declared, the host base_url is published at"; fi
 fi
-# 6. internal links resolve to a generated file
-missing=0
-for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##" | LC_ALL=C sort -u); do
-  t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
-done; [ "$missing" = 0 ] && ok link "every internal link resolves"
+# 6. every link resolves: scripts/ci/link-check, over every href and src the site emits, decided
+# offline against the tree being published. This check used to grep root-relative hrefs, which Zola
+# never emits (it writes https://majordomus.dev/...), so it reported "every internal link resolves"
+# over an empty set while 197 links 404ed. The finding lines are relayed as they are.
+LC_OUT="$(mktemp "${TMPDIR:-/tmp}/mj.linkcheck.XXXXXX")"; lc_rc=0
+MJ_ROOT="$ROOT" "$ROOT/scripts/ci/link-check" > "$LC_OUT" 2>&1 || lc_rc=$?
+while IFS= read -r line; do
+  case "$line" in
+    "OK   "*) ok link "${line#OK   links        }" ;;
+    "FAIL "*) bad link "${line#FAIL }" ;;
+    "") ;;
+    # the closing summary of a run that found something restates its findings; only a run that could not
+    # decide at all (exit 12) has a line of its own to count
+    "link-check: "*) [ "$lc_rc" = 12 ] && bad link "$line" || printf '     %-12s %s\n' link "$line" ;;
+    *) [ "$lc_rc" = 0 ] || bad link "$line" ;;
+  esac
+done < "$LC_OUT"
+rm -f "$LC_OUT"
+
+# 6b. every interactive control is claimed by exactly one behaviour spec: scripts/ci/interaction-check, from the
+# markup alone. What each spec asserts is exercised in a browser by scripts/interaction-probe.
+IC_OUT="$(mktemp "${TMPDIR:-/tmp}/mj.interactioncheck.XXXXXX")"; ic_rc=0
+MJ_ROOT="$ROOT" "$ROOT/scripts/ci/interaction-check" > "$IC_OUT" 2>&1 || ic_rc=$?
+while IFS= read -r line; do
+  case "$line" in
+    "OK   "*) ok controls "${line#OK   controls     }" ;;
+    "FAIL "*) bad controls "${line#FAIL control       }" ;;
+    "") ;;
+    "interaction-check: "*) [ "$ic_rc" = 12 ] && bad controls "$line" || printf '     %-12s %s\n' controls "$line" ;;
+    *) [ "$ic_rc" = 0 ] || bad controls "$line" ;;
+  esac
+done < "$IC_OUT"
+rm -f "$IC_OUT"
 # 7. assets present
 for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
@@ -622,6 +650,21 @@ while IFS="$(printf '\t')" read -r p ids; do
 done < "$PAGEROWS.dupid"; rm -f "$PAGEROWS.dupid"
 [ "$bad_di" = 1 ] || ok ids "no page carries an id on more than one element"
 
+# 13g. the homepage's story and the site's indexing policy, each against its one declaration:
+# site/data/homepage.toml's section order and site/data/nav.toml's [indexing]. The checks are
+# scripts/ci/homepage-check's (rule project.homepage-tells-a-declared-story) and are only
+# reported here, so the one script and test/cases/333 prove the same thing CI runs.
+HOMEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-homepage.XXXXXX")"
+"$ROOT/scripts/ci/homepage-check" > "$HOMEROWS" 2>&1 || true
+while IFS= read -r line; do
+  case "$line" in
+    OK*) printf '%s\n' "$line" ;;
+    FAIL*) printf '%s\n' "$line"; fails=$((fails+1)) ;;
+    *) printf 'FAIL homepage     %s\n' "$line"; fails=$((fails+1)) ;;
+  esac
+done < "$HOMEROWS"
+rm -f "$HOMEROWS"
+
 # 13c. the why section links both ways: every moment reaches its commands, responsibilities and
 # claims, and every one of those pages carries a link back. A one-way link is how the section
 # drifted out of the rest of the site before — the pages knew about the tool, the tool did not
@@ -784,12 +827,21 @@ for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do
     grep -qF ">$heading<" "$page" || { bad supervises "$slug: no '$heading' section"; respbad=1; }
   done
   # the files and the implementation it names are linked, and they exist in this repository
-  for f in $(jq -r --arg s "$slug" '.does[] | select(.slug==$s) | .files[], .implementation' "$SITE/data/generated/readme.json"); do
+  # each path is reached the way git tracks it (a file as blob, a directory as tree), and a path git does not
+  # track (the checkout-local state) is named and never linked: the forge has never seen it, so a link 404s
+  while IFS="$(printf '\t')" read -r f kind; do
+    [ -n "$f" ] || continue
     # a path under the local half is described, never required: the generator applies the
     # same rule, and a fresh clone has none of them
     case "$f" in "$LOCAL"/*) ;; *) [ -e "$ROOT/$f" ] || { bad supervises "$slug: names $f, which does not exist"; respbad=1; } ;; esac
-    grep -qF "blob/master/$f" "$page" || { bad supervises "$slug: does not link $f"; respbad=1; }
-  done
+    case "$kind" in
+      blob|tree) grep -qF "$kind/master/$f\"" "$page" || { bad supervises "$slug: does not link $f as $kind"; respbad=1; } ;;
+      *) grep -qF ">$f<" "$page" || { bad supervises "$slug: does not name $f"; respbad=1; }
+         if grep -qF "/master/$f\"" "$page"; then bad supervises "$slug: links $f, which git does not track"; respbad=1; fi ;;
+    esac
+  done <<EOF
+$(jq -r --arg s "$slug" '.does[] | select(.slug==$s) | ((.files[] | [.path, (.forge // "-")]), [.implementation, "blob"]) | @tsv' "$SITE/data/generated/readme.json")
+EOF
   # each deep link resolves to a heading id on the page it points at, not just to the page
   for pair in cli schema; do
     route="$(jq -r --arg s "$slug" --arg k "${pair}_route" '.does[] | select(.slug==$s) | .[$k]' "$SITE/data/generated/readme.json")"

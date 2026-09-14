@@ -136,6 +136,43 @@ does not do, and it cannot keep showing something that stopped happening. A comm
 stops refusing disappears from the page on the next generation, and a transcript edited by
 hand fails the check rather than the reader.
 
+## The homepage's story, and what search engines are shown
+
+The homepage is an argument with an order, and the order is data: `site/data/homepage.toml`
+lists the ids of the sections the page renders — hero, recognise, how, refuses, chapters, proof,
+built, install — which is what hurts, how this answers it, what it refuses, what it does for the
+part that hurts you, what proves it, what is not built, and how to try it. Nothing about the
+order is decided in `site/templates/index.html`.
+
+| Section | What it shows | Where it comes from |
+|---|---|---|
+| `hero` | the positioning, and the lifecycle replayed | `marketing.toml`, `terminal.json` |
+| `recognise` | the pain, in the first person | the Why catalogue's featured moments |
+| `how` | declare, derive, verify, each with a figure | `manifesto.toml` `[how]`, the rules, the product telemetry, the recorded refusals |
+| `refuses` | every recorded refusal of a lifecycle command | `terminal.json` |
+| `chapters` | every stable feature, grouped by the area it serves, and the composed graph | `product.json`, the Why catalogue's areas |
+| `proof` | the model's size and every claim counted by its real status | `product.json`, `docs/CLAIMS.yaml` |
+| `built` | each stage with its honest mark, the boundary, and what is not built | `manifesto.toml` |
+| `install` | the install, next-step and verification commands | `distribution.json` |
+
+The long-form argument the homepage used to carry section by section is `/method/argument/`,
+moved verbatim, so no sentence of `manifesto.toml` stopped being rendered.
+
+The site is indexed by one declared policy. `[indexing] unlisted` in `site/data/nav.toml` names
+the sections whose detail pages are receipts — the plan's issues and milestones, the registry's
+capabilities and modules, the closed sessions. Those pages stay published and linked; they carry
+a robots `noindex` (`templates/base.html`) and are left out of `sitemap.xml`
+(`templates/sitemap.xml`), while each section's own index page stays indexed.
+
+`scripts/ci/homepage-check` holds all of it, in both directions, under the blocking rule
+`project.homepage-tells-a-declared-story`, and `scripts/site-check` reports its findings, so a
+homepage or a sitemap that drifts from its declaration is refused before the Pages build
+publishes it. `test/cases/333_homepage_narrative.sh` proves each check by breaking it.
+
+To add a homepage section: write it in `index.html` with an `id`, put that id where it belongs
+in `homepage.toml`'s `order`, and give it a link or a derived figure. To unlist a section's
+detail pages: add its name to `[indexing] unlisted`.
+
 ## What is refused
 
 - A reference that resolves to nothing. The message names the file, the key and the
