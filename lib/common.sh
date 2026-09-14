@@ -48,6 +48,29 @@ mj_inputs_hash() {
     | { mj_sha256 /dev/stdin 2>/dev/null || shasum -a 256 | cut -d' ' -f1; }
 }
 
+# The git tree object id of the working tree exactly as it stands: HEAD's tree with every
+# modification, addition and deletion applied. Computed in a temporary index, so the real
+# index keeps its staged content and its stat cache; ignored paths stay out, which is what
+# .ai/local/ is. Empty when git cannot answer, so a caller degrades to knowing nothing
+# rather than to believing something.
+#
+# Not mj_inputs_hash: that fingerprints a list of paths the caller already knows, and the
+# question here is what the whole tree was, including a file no list would have named
+# because it did not exist yet. A tree id is also git's own answer to that question,
+# comparable with every other tree id without this tool being present to explain it.
+mj_worktree_tree_id() {
+  local idx out
+  idx="$(mktemp "${TMPDIR:-/tmp}/mj-index.XXXXXX")" || return 0
+  rm -f "$idx"
+  out="$( cd "$MJ_ROOT" || exit 1
+    export GIT_INDEX_FILE="$idx"
+    if git rev-parse --verify -q HEAD >/dev/null 2>&1; then git read-tree HEAD 2>/dev/null || exit 1; fi
+    git add -A 2>/dev/null || exit 1
+    git write-tree 2>/dev/null )"
+  rm -f "$idx"
+  printf '%s' "$out"
+}
+
 mj_json_esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\n'; }
 
 # ---------------------------------------------------------------- options
