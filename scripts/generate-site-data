@@ -1345,6 +1345,19 @@ template = "api.html"
 source = "docs/generated/openapi.json"
 +++
 ' "$(jq -r '.info.summary' "$OA" | jq -Rn 'input')" "$(grep -n '^| \[`CAPABILITIES.md`' "$ROOT/docs/README.md" | cut -d: -f1 | head -1)" > "$CONTENT/api.md"
+# the reference itself, split so that no route carries the whole document: a page per tag and
+# one of shared types, each holding the operations and schemas scripts/lib/openapi-site.jq homed
+# there. A page declares its own path, so the routes are /docs/api/<tag>/ while the files stay
+# pages of this section; docs-section.html does not list them as documents.
+jq -r '.tags | keys[]' "$OUT/openapi.json" | while read -r i; do
+  name="$(jq -r --argjson i "$i" '.tags[$i].name' "$OUT/openapi.json")"
+  slug="$(jq -r --argjson i "$i" '.tags[$i].slug' "$OUT/openapi.json")"
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\npath = %s\ntemplate = "api-tag.html"\n[extra]\napi_tag = %s\napi_slug = %s\nsource = "docs/generated/openapi.json"\n+++\n' \
+    "$(jstr "HTTP API: $name")" "$(jq -r --argjson i "$i" '.tags[$i].description' "$OUT/openapi.json" | jline)" "$((1000 + i))" \
+    "$(jstr "docs/api/$slug")" "$(jstr "$name")" "$(jstr "$slug")" > "$CONTENT/api-$slug.md"
+done
+printf -- '+++\ntitle = "HTTP API: shared types"\ndescription = %s\nweight = 1999\npath = "docs/api/shared"\ntemplate = "api-tag.html"\n[extra]\napi_tag = "shared"\napi_slug = "shared"\nsource = "docs/generated/openapi.json"\n+++\n' \
+  "$(jstr "The schemas more than one tag's operations use, or that no operation reaches, and any operation carrying more than one tag.")" > "$CONTENT/api-shared.md"
 printf -- '+++
 title = "Documentation"
 description = "Every document in the repository, rendered from the same Markdown GitHub shows."

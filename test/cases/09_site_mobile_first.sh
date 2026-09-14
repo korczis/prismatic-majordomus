@@ -22,19 +22,6 @@ fi
 out="$ROOT/site/public"
 pages="$(find "$out" -name '*.html')"
 [ -n "$pages" ]
-# Check 2 below, as one awk program: "<pre count> <covered count>" for a page. The tags are split
-# on "<" rather than read up to ">", because a class such as [&_:not(pre)>code] carries a ">"
-# of its own.
-PRE_COVERAGE='
-BEGIN { RS = "<" }
-/^[a-zA-Z]/ { direct = ($0 ~ /^[a-zA-Z][a-zA-Z0-9]*([ \t\n]+[a-zA-Z-]+="[^"]*")*[ \t\n]+class="([^"]*[ \t\n])?overflow-x-auto([ \t\n][^"]*)?"[^>]*>[ \t\n]*$/) }
-/^(div|article|section)[ \t\n>]/ {
-  depth++; flagged[depth] = ($0 ~ /^(div|article|section)([ \t\n]+[a-zA-Z-]+="[^"]*")*[ \t\n]+class="[^"]*\[&_pre\]:overflow-x-auto/)
-  open += flagged[depth]; wrapped = direct; next }
-/^\/(div|article|section)[ \t\n>]/ { if (depth > 0) { open -= flagged[depth]; depth-- }; wrapped = 0; next }
-/^pre[ \t\n>]/ { pre++; if (open > 0 || wrapped || $0 ~ /^pre[^>]*whitespace-pre-wrap/) covered++; wrapped = 0; next }
-{ wrapped = ($0 ~ /^[a-zA-Z]/) ? direct : 0 }
-END { print pre + 0, covered + 0 }'
 bad=0
 for f in $pages; do
   rel="${f#"$out"/}"
@@ -57,8 +44,9 @@ for f in $pages; do
   #    This used to be decided per page: one "format" container anywhere exempted every <pre>
   #    on it, including those outside the container, while the same variant on a block without
   #    the "format" class was not recognised at all.
-  pre_coverage="$(awk "$PRE_COVERAGE" "$f")"
-  n_pre="${pre_coverage% *}"; n_covered="${pre_coverage#* }"
+  # scripts/lib/pre-coverage.awk is the rule, shared with site-check: "<file> <pre> <covered>"
+  pre_coverage="$(awk -f "$ROOT/scripts/lib/pre-coverage.awk" "$f")"
+  n_pre="$(printf '%s' "$pre_coverage" | cut -f2)"; n_covered="$(printf '%s' "$pre_coverage" | cut -f3)"
   [ "$n_pre" = "$n_covered" ] || { echo "    $rel: $((n_pre - n_covered)) of $n_pre <pre> block(s) neither scroll nor wrap"; bad=1; }
   # the checks below compare on the whole file with newlines removed: a wrapper and the element
   # it wraps may sit on different lines
