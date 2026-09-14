@@ -268,13 +268,16 @@ rows mermaid | cut -f1 > "$PAGEROWS.10"
 while IFS= read -r p; do bad mermaid "$p: has diagrams but no mermaid runtime"; done < "$PAGEROWS.10"; rm -f "$PAGEROWS.10"
 ok mermaid "every page with <pre class=\"mermaid\"> loads the runtime"
 # 11. responsive lint (structural causes of horizontal overflow)
-# pres inside a Typography container scroll by the plugin's own rule; others need the wrapper
-{ rows pre        | cut -f1 | sed 's/$/: <pre> without overflow container/'
+# every <pre> is judged by scripts/lib/pre-coverage.awk, the rule case 09 applies: one pass over
+# every page, and a page is named when any <pre> on it neither scrolls nor wraps
+# shellcheck disable=SC2086
+{ LC_ALL=C awk -f "$ROOT/scripts/lib/pre-coverage.awk" $pages \
+    | awk -F'\t' -v pub="$PUB/" '$2 != $3 { sub("^" pub, "", $1); print $1 ": " ($2 - $3) " of " $2 " <pre> block(s) neither scroll nor wrap" }'
   rows gridcols   | cut -f1 | sed 's/$/: grid-cols-3+ without a breakpoint prefix/'
   rows fixedwidth | cut -f1 | sed 's/$/: fixed width over 360px/'
 } > "$PAGEROWS.11"
 while IFS= read -r m; do bad mobile "$m"; done < "$PAGEROWS.11"; rm -f "$PAGEROWS.11"
-ok mobile "no unwrapped <pre>, no unprefixed grid-cols-3+, no fixed width over 360px"
+ok mobile "every <pre> scrolls or wraps, no unprefixed grid-cols-3+, no fixed width over 360px"
 # 12. secrets and private paths in output
 grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
 grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
@@ -286,13 +289,62 @@ done; ok docs "every document in docs.json has the route it records"
 # 13h. the HTTP API reference: the page renders every operation, tag and schema the data holds,
 # the raw document is served byte for byte as the committed one, and the URL the executable
 # prints as externalDocs lands on the page that was built
-OAD="$SITE/data/generated/openapi.json"; OAP="$PUB/docs/api/index.html"; apibad=0
+OAD="$SITE/data/generated/openapi.json"; OAP="$PUB/docs/api/index.html"; APIDIR="$PUB/docs/api"; apibad=0
 if [ -f "$OAP" ]; then
-  for id in $(jq -r '.tags[].operations[].id' "$OAD"); do grep -qF "id=\"op-$(printf '%s' "$id" | tr '.' '-')\"" "$OAP" || { bad api "operation $id is not on /docs/api/"; apibad=1; }; done
-  for t in $(jq -r '.tags[].name' "$OAD"); do grep -qF "id=\"tag-$t\"" "$OAP" || { bad api "tag $t is not on /docs/api/"; apibad=1; }; done
-  for n in $(jq -r '.schemas[].name' "$OAD"); do grep -qF "id=\"schema-$n\"" "$OAP" || { bad api "schema $n is not on /docs/api/"; apibad=1; }; done
+  # The reference is an index, a page per tag and a page of shared types, because as one page it
+  # was 38,000 elements the browser audit could not read inside its deadline. So: the index holds
+  # no operation and no schema, and every operation, tag and schema id the data holds is on
+  # exactly one page, the one scripts/lib/openapi-site.jq homed it on.
+  grep -qE 'id="(op|schema)-' "$OAP" && { bad api "/docs/api/ carries an operation or schema; the index must not hold the reference"; apibad=1; }
+  find "$APIDIR" -mindepth 2 -name index.html | while read -r f; do
+    page="${f#"$APIDIR"/}"; page="${page%/index.html}"
+    grep -oE 'id="(op|tag|schema)-[^"]*"' "$f" | sed 's/^id="//; s/"$//' | while read -r id; do printf '%s\t%s\n' "$id" "$page"; done
+  done | LC_ALL=C sort > "$PAGEROWS.apiids"
+  jq -r '(.tags[].operations[] | select(.primary) | "op-\(.id | gsub("\\."; "-"))\t\(.home)"), (.tags[] | "tag-\(.name)\t\(.slug)"), (.schemas[] | "schema-\(.name)\t\(.home)")' "$OAD" | LC_ALL=C sort > "$PAGEROWS.apiwant"
+  awk -F'\t' 'NR == FNR { on[$1] = on[$1] (on[$1] == "" ? "" : " ") $2; n[$1]++; next }
+    { if (!($1 in n)) print $1 " is on no page of /docs/api/ (its home is " $2 ")";
+      else if (n[$1] > 1) print $1 " is on " n[$1] " pages: " on[$1];
+      else if (on[$1] != $2) print $1 " is on /docs/api/" on[$1] "/, not its home /docs/api/" $2 "/" }' \
+    "$PAGEROWS.apiids" "$PAGEROWS.apiwant" > "$PAGEROWS.apifound"
+  while read -r l; do bad api "$l"; apibad=1; done < "$PAGEROWS.apifound"
+  [ -s "$PAGEROWS.apiwant" ] || { bad api "openapi.json gave no operation, tag or schema to find"; apibad=1; }
   grep -qF '/openapi.json' "$OAP" || { bad api "/docs/api/ does not link the raw document"; apibad=1; }
-  jq -r '.tags[].operations[].curl' "$OAD" | while read -r c; do grep -qF "$(printf '%s' "$c" | sed 's/&/\&amp;/g; s/"/\&quot;/g' | cut -c1-40)" "$OAP" || echo "$c"; done | head -1 | grep -q . && { bad api "an operation's curl example is not on /docs/api/"; apibad=1; }
+  # An address from when the reference was one page lands on the index, which sends it on. Every
+  # id the data holds must be in the map the index publishes, and resolve, through the script the
+  # site ships, to its home; so must every heading id a doc comment put under a schema, which is
+  # the other kind of address a reader copied. Run over the built map and the shipped script.
+  if command -v node >/dev/null 2>&1 && [ -f "$PUB/js/api-anchors.js" ]; then
+    node - "$OAP" "$PUB/js/api-anchors.js" "$PAGEROWS.apiwant" "$PAGEROWS.apiids" > "$PAGEROWS.apifound" <<'NODE'
+const fs = require('fs');
+const [index, script, want, ids] = process.argv.slice(2);
+const island = fs.readFileSync(index, 'utf8').match(/<script type="application\/json" id="api-anchors"[^>]*>([\s\S]*?)<\/script>/);
+if (!island) { console.log('/docs/api/ publishes no anchor map'); process.exit(0); }
+const map = JSON.parse(island[1]);
+const window = { location: { hash: '' } };
+const document = { getElementById: () => null };
+new Function('window', 'document', fs.readFileSync(script, 'utf8'))(window, document);
+const resolve = window.mjApiAnchorTarget;
+if (typeof resolve !== 'function') { console.log('api-anchors.js does not define mjApiAnchorTarget'); process.exit(0); }
+const rows = (f) => fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t'));
+let checked = 0;
+for (const [id, home] of rows(want)) {
+  checked++;
+  const got = resolve(map, id);
+  if (got !== `docs/api/${home}/`) console.log(`the old anchor #${id} resolves to ${got}, not docs/api/${home}/`);
+}
+const wanted = new Set(rows(want).map(([id]) => id));
+for (const [id, page] of rows(ids)) {
+  if (wanted.has(id) || !id.startsWith('schema-')) continue;
+  checked++;
+  const got = resolve(map, id);
+  if (got !== `docs/api/${page}/`) console.log(`the heading anchor #${id} on /docs/api/${page}/ resolves to ${got}`);
+}
+if (checked === 0) console.log('no anchor was checked');
+NODE
+    while read -r l; do bad api "$l"; apibad=1; done < "$PAGEROWS.apifound"
+  else bad api "node or the built api-anchors.js is missing; the old anchors cannot be checked"; apibad=1; fi
+  cat "$APIDIR"/*/index.html > "$PAGEROWS.apipages"; jq -r '.tags[].operations[].curl' "$OAD" | while read -r c; do grep -qF "$(printf '%s' "$c" | sed 's/&/\&amp;/g; s/"/\&quot;/g' | cut -c1-40)" "$PAGEROWS.apipages" || echo "$c"; done | head -1 | grep -q . && { bad api "an operation's curl example is not on /docs/api/"; apibad=1; }
+  rm -f "$PAGEROWS.apiids" "$PAGEROWS.apiwant" "$PAGEROWS.apipages" "$PAGEROWS.apifound"
 else bad api "no page at /docs/api/"; apibad=1; fi
 if [ -f "$PUB/openapi.json" ]; then
   cmp -s "$PUB/openapi.json" "$ROOT/docs/generated/openapi.json" || { bad api "site/public/openapi.json differs from docs/generated/openapi.json"; apibad=1; }
@@ -300,7 +352,7 @@ if [ -f "$PUB/openapi.json" ]; then
   ext="$(jq -r '.externalDocs.url // ""' "$PUB/openapi.json")"; extrel="${ext#"$BASE_URL"}"
   [ -n "$ext" ] && [ "$extrel" != "$ext" ] && [ -f "$PUB${extrel%/}/index.html" ] || { bad api "externalDocs.url '$ext' does not land on a built route"; apibad=1; }
 else bad api "site/public/openapi.json missing"; apibad=1; fi
-[ "$apibad" = 0 ] && ok api "/docs/api/ renders every operation, tag and schema; /openapi.json is the committed document; externalDocs lands on the page"
+[ "$apibad" = 0 ] && ok api "every operation, tag and schema is on exactly one page of /docs/api/, its home; the index holds none and sends every old anchor on; /openapi.json is the committed document; externalDocs lands on the index"
 # 13i. the Rust executable's reference: every module and every capability of the registry
 # dataset (site/data/registry/registry.json, written by the executable) has its page, no page
 # exists without its entry (an orphan route is a capability that was removed and whose page
@@ -326,7 +378,7 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
     grep -q "$PREFIX$mroute\"" "$pg" || echo "capability page $id does not link its module $mroute"
     if [ -n "$anchor" ]; then
       grep -qF "$PREFIX$anchor\"" "$pg" || echo "capability page $id does not link its operation $anchor"
-      grep -qF "id=\"${anchor#/docs/api/#}\"" "$PUB/docs/api/index.html" || echo "operation anchor ${anchor#/docs/api/#} of $id is not on /docs/api/"
+      grep -qF "id=\"${anchor#*#}\"" "$PUB${anchor%%#*}index.html" 2>/dev/null || echo "operation anchor ${anchor#*#} of $id is not on ${anchor%%#*}"
     fi
     [ -z "$tool" ] || grep -qF ">$tool<" "$pg" || echo "capability page $id does not show its MCP tool $tool"
     grep -qF "$PREFIX/registry/benchmarks/" "$pg" || echo "capability page $id does not link the benchmarks page"

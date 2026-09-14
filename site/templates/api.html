@@ -6,18 +6,20 @@
 {% block body %}
 {%- set api = load_data(path="data/generated/openapi.json") -%}
 {%- set repo = project.repository_url -%}
+{%- set api_root = get_url(path="docs/api/", trailing_slash=true) -%}
 <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
     <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
     <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1">
       <li><a href="#about" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">About</a></li>
       <li><a href="#errors" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Errors</a></li>
+      <li><a href="#operations" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Operations</a></li>
       <li><a href="#infrastructure" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Server routes</a></li>
       {%- for t in api.tags -%}
-      <li><a href="#tag-{{ t.name }}" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ t.name }}</a>
-        <ul class="ml-3 hidden lg:block">{% for o in t.operations %}<li><a href="#op-{{ o.id | replace(from=".", to="-") }}" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">{{ o.method }} {{ o.path }}</a></li>{% endfor %}</ul></li>
+      <li><a href="{{ api_root }}{{ t.slug }}/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ t.name }}</a>
+        <ul class="ml-3 hidden lg:block">{% for o in t.operations %}{% if o.primary %}<li><a href="{{ api_root }}{{ o.home }}/#op-{{ o.id | replace(from=".", to="-") }}" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">{{ o.method }} {{ o.path }}</a></li>{% endif %}{% endfor %}</ul></li>
       {%- endfor -%}
-      <li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+      <li><a href="{{ api_root }}shared/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Shared types</a></li>
     </ul>
   </nav>
   <div class="min-w-0">
@@ -45,7 +47,7 @@
     {#- Errors: the one error body, and the statuses the router answers -#}
     <section id="errors" class="mt-12 scroll-mt-24">
       <h2 class="text-xl font-semibold tracking-tight text-heading">Errors</h2>
-      <p class="mt-2 text-sm text-body">Every failure is one JSON body, <code class="font-mono">{"error": {"code", "message"}}</code> (<a href="#schema-ErrorBody" class="font-mono text-fg-brand underline">ErrorBody</a>). The status names the class; the message is for a person.</p>
+      <p class="mt-2 text-sm text-body">Every failure is one JSON body, <code class="font-mono">{"error": {"code", "message"}}</code> (<a href="{{ api_root }}{{ api.schema_homes.ErrorBody }}/#schema-ErrorBody" class="font-mono text-fg-brand underline">ErrorBody</a>). The status names the class; the message is for a person.</p>
       <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
         <table class="w-full min-w-[28rem] text-left text-sm">
           <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">code</th><th class="px-3 py-2">when</th></tr></thead>
@@ -65,152 +67,30 @@
       </ul>
     </section>
 
-    {#- One section per tag, one card per operation -#}
-    {%- for t in api.tags -%}
-    <section id="tag-{{ t.name }}" class="mt-12 scroll-mt-24">
-      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">{{ t.name }}</h2>
-      <p class="mt-2 max-w-3xl text-sm text-body">{{ t.description }}</p>
-      {%- for o in t.operations -%}
-      {%- set anchor = "op-" ~ (o.id | replace(from=".", to="-")) -%}
-      <article id="{{ anchor }}" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold {% if o.method == "GET" %}bg-success-soft text-fg-success-strong border border-success-subtle{% else %}bg-warning-soft text-fg-warning border border-warning-subtle{% endif %}">{{ o.method }}</span>
-          <code class="break-all font-mono text-base font-semibold text-heading">{{ o.path }}</code>
-          <a href="#{{ anchor }}" class="font-mono text-xs text-body-subtle hover:underline">{{ o.id }}</a>
-        </div>
-        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">{{ o.summary }}</h3>
-        <p class="mt-1 break-words text-sm text-body">{{ o.description }}</p>
-        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
-          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">{{ o.kind }}</span></li>
-          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">{{ o.stability }}</span></li>
-          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark {{ o.benchmark }}{% if o.benchmark_reason %}: {{ o.benchmark_reason }}{% endif %}</span></li>
-          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache {{ o.cache }}{% if o.cache_detail %} ({{ o.cache_detail }}){% endif %}</span></li>
-          {%- if o.mcp_tool %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool {{ o.mcp_tool }}</span></li>{% endif -%}
-          {%- if o.mcp_resource %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {{ o.mcp_resource }}</span></li>{% endif -%}
-          {%- if o.cli %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ {{ o.cli }}</span></li>{% endif -%}
-        </ul>
-
-        {%- if o.parameters | length > 0 -%}
-        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
-          <table class="w-full min-w-[36rem] text-left text-sm">
-            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
-            <tbody>
-              {%- for p in o.parameters -%}
-              <tr class="border-t border-default align-top">
-                <td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td>
-                <td class="px-3 py-2 font-mono text-body">{{ p.type }}</td>
-                <td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td>
-                <td class="px-3 py-2 text-body">{{ p.description }}</td>
-                <td class="px-3 py-2 font-mono text-xs text-body">{% for ex in p.examples %}<span class="block break-all"><span class="text-body-subtle">{{ ex.case }}:</span> {{ ex.value }}</span>{% endfor %}</td>
-              </tr>
-              {%- endfor -%}
-            </tbody>
-          </table>
-        </div>
-        {%- elif o.method == "GET" -%}
-        <p class="mt-5 text-sm text-body-subtle">No parameters.</p>
-        {%- endif -%}
-
-        {%- if o.method == "POST" -%}
-        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Request body <span class="normal-case">— <a href="#schema-{{ o.body_schema }}" class="font-mono text-fg-brand underline">{{ o.body_schema }}</a>, JSON</span></h4>
-        {%- for ex in o.body_examples -%}
-        <p class="mt-2 font-mono text-xs text-body-subtle">example <span class="text-heading">{{ ex.case }}</span></p>
-        <div class="mt-1 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ ex.json }}</pre></div>
+    {#- Where every operation now lives. The reference was one page of every operation and every
+        schema, 38,000 elements that the browser audit could not read inside its deadline; it is
+        an index, a page per tag, and a page of shared types. This list is also the way on for an
+        old address: a link to /docs/api/#op-… lands here, and api-anchors.js sends it to the
+        operation's page when JavaScript runs, while this list is what a reader without it follows. -#}
+    <section id="operations" class="mt-12 scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Operations</h2>
+      <p class="mt-2 text-sm text-body">{{ api.counts.operations }} operations under {{ api.counts.tags }} tags, each on its tag's page with the schemas only that tag uses. The {{ api.schema_homes | length }} schemas are on those pages, and the ones several tags share are on <a href="{{ api_root }}shared/" class="text-fg-brand underline">shared types</a>.</p>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {%- for t in api.tags -%}
+        <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+          <a href="{{ api_root }}{{ t.slug }}/" class="font-mono text-base font-semibold text-fg-brand hover:underline">{{ t.name }}</a>
+          <p class="mt-1 break-words text-sm text-body">{{ t.description }}</p>
+          <ul class="mt-2 space-y-1 text-xs">{% for o in t.operations %}{% if o.primary %}<li class="flex min-w-0 flex-wrap items-baseline gap-x-2"><span class="font-mono font-bold text-body-subtle">{{ o.method }}</span><a href="{{ api_root }}{{ o.home }}/#op-{{ o.id | replace(from=".", to="-") }}" class="min-w-0 break-all font-mono text-fg-brand hover:underline">{{ o.path }}</a></li>{% endif %}{% endfor %}</ul>
+        </li>
         {%- endfor -%}
-        {%- endif -%}
-
-        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
-        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading">{{ o.curl }}</pre></div>
-
-        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
-          <table class="w-full min-w-[28rem] text-left text-sm">
-            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
-            <tbody>
-              {%- for r in o.responses -%}
-              <tr class="border-t border-default align-top">
-                <td class="px-3 py-2 font-mono font-semibold {% if r.status == "200" %}text-fg-success-strong{% else %}text-heading{% endif %}">{{ r.status }}</td>
-                <td class="px-3 py-2 font-mono">{% if r.schema %}<a href="#schema-{{ r.schema }}" class="text-fg-brand hover:underline">{{ r.schema }}</a>{% endif %}</td>
-                <td class="px-3 py-2 text-body">{{ r.description | markdown(inline=true) | safe }}</td>
-              </tr>
-              {%- endfor -%}
-            </tbody>
-          </table>
-        </div>
-      </article>
-      {%- endfor -%}
-    </section>
-    {%- endfor -%}
-
-    {#- Every schema component, as a property table -#}
-    <section id="schemas" class="mt-12 scroll-mt-24">
-      <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
-      <p class="mt-2 text-sm text-body">Every component of the document, derived from the Rust types the capabilities take and return. Each row of the API's shape is the type's own field, its doc comment the description.</p>
-      {%- for s in api.schemas -%}
-      <article id="schema-{{ s.name }}" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h3 class="font-mono text-base font-semibold text-heading">{{ s.name }}</h3>
-          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">{{ s.type }}</span>
-        </div>
-        {#- The type's doc comment, rendered as the markdown it is: paragraphs, and the code
-            fence a Rust doc comment usually ends on. That is block content — it cannot live in
-            a <p>, where the parser closes the paragraph and hands the <pre> to this article,
-            which clips nothing — so it gets a block of its own, one that lets a long listing
-            scroll inside itself and lets `module::path::Type` break inside the word.
-
-            A doc comment's own headings become ids too, and every type that documents an
-            example writes the same `#### Example`: two dozen `id="example"` on one page, which
-            leaves an in-page link nowhere definite to land. Each id a description renders is
-            therefore namespaced under the type that owns it, beside `schema-<name>` itself. -#}
-        {%- if s.description %}<div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ s.description | markdown(inline=true) | replace(from=' id="', to=' id="schema-' ~ s.name ~ '-') | safe }}</div>{% endif -%}
-        {%- if s.values | length > 0 -%}
-        {#- A variant's doc comment is the same CommonMark the type's is, and was the one slot
-            here that published it as text: the emphasis kept its asterisks and a code span its
-            brackets. Rendered, the identifier it names becomes a <code>, which no space breaks —
-            so the same word-breaking its sibling above has, or one enum value sets the width of
-            a phone's page. -#}
-        <ul class="mt-3 space-y-1 text-sm">{% for v in s.values %}<li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">{{ v.value }}</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">{{ v.description | markdown(inline=true) | safe }}</span></li>{% endfor %}</ul>
-        {%- endif -%}
-        {%- if s.properties | length > 0 -%}
-        <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
-          <table class="w-full min-w-[32rem] text-left text-sm">
-            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
-            <tbody>
-              {%- for p in s.properties -%}
-              <tr class="border-t border-default align-top">
-                <td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td>
-                <td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="#schema-{{ r }}" class="text-fg-brand underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td>
-                <td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td>
-                <td class="px-3 py-2 text-body">{{ p.description | markdown(inline=true) | safe }}</td>
-              </tr>
-              {%- endfor -%}
-            </tbody>
-          </table>
-        </div>
-        {%- endif -%}
-        {%- for v in s.variants -%}
-        <div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> {{ v.description | markdown(inline=true) | safe }}</div>
-        <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
-          <table class="w-full min-w-[32rem] text-left text-sm">
-            <tbody>
-              {%- for p in v.properties -%}
-              <tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td><td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="#schema-{{ r }}" class="text-fg-brand underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td><td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">{{ p.description | markdown(inline=true) | safe }}</td></tr>
-              {%- endfor -%}
-            </tbody>
-          </table>
-        </div>
-        {%- endfor -%}
-        {%- if s.used_by | length > 0 or s.used_by_schemas | length > 0 -%}
-        <p class="mt-3 text-xs text-body-subtle">Used by
-          {%- for id in s.used_by %} <a href="#op-{{ id | replace(from=".", to="-") }}" class="font-mono text-fg-brand hover:underline">{{ id }}</a>{% endfor -%}
-          {%- for n in s.used_by_schemas %} <a href="#schema-{{ n }}" class="font-mono text-fg-brand underline">{{ n }}</a>{% endfor -%}
-        </p>
-        {%- endif -%}
-      </article>
-      {%- endfor -%}
+      </ul>
     </section>
   </div>
 </div>
 {% endblock body %}
+{% block scripts %}
+{#- Every id the single-page reference carried, and the page it moved to, relative to the site's
+    root: api-anchors.js reads it when a reader arrives with one of those ids in the address. -#}
+<script type="application/json" id="api-anchors" data-base="{{ get_url(path="/", trailing_slash=true) }}">{{ api.anchors | json_encode() | safe }}</script>
+<script src="{{ get_url(path="js/api-anchors.js") }}"></script>
+{% endblock scripts %}

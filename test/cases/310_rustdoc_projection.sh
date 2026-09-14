@@ -56,13 +56,14 @@ done
 # value's description, interpolated the text instead of rendering it. Every description a
 # schema slot of the API reference shows goes through the renderer, or its source is published.
 schema_table="$ROOT/site/templates/partials/schema-table.html"
-api="$ROOT/site/templates/api.html"
+api_schema="$ROOT/site/templates/partials/api-schema.html"
 expect_file "$schema_table"
-expect_file "$api"
-# api.html from its schema section on, which is where a doc comment arrives; the operation,
-# tag and server descriptions above it are declared prose, not doc comments
-awk '/id="schemas"/ { s = 1 } s' "$api" > "$T/api-schemas.html"
-[ -s "$T/api-schemas.html" ] || { echo "    api.html has no id=\"schemas\" section to check"; exit 1; }
+expect_file "$api_schema"
+# the API reference's schema article, which is where a doc comment arrives: since the reference
+# became a page per tag it is one partial every page includes; the operation, tag and server
+# descriptions around it are declared prose, not doc comments
+cp "$api_schema" "$T/api-schemas.html"
+[ -s "$T/api-schemas.html" ] || { echo "    partials/api-schema.html is empty"; exit 1; }
 : > "$T/raw-slots"
 grep -nE '\{\{ *[a-z]+\.description *\}\}' "$schema_table" >> "$T/raw-slots" || true
 grep -nE '\{\{ *[a-z]+\.description *\}\}' "$T/api-schemas.html" >> "$T/raw-slots" || true
@@ -72,7 +73,7 @@ if [ -s "$T/raw-slots" ]; then
 fi
 rendered="$(grep -cE 'description \| markdown' "$T/api-schemas.html" || true)"
 [ "${rendered:-0}" -ge 4 ] || {
-  echo "    the schema section of api.html renders ${rendered:-0} description slot(s) through"
+  echo "    the API reference's schema partial renders ${rendered:-0} description slot(s) through"
   echo "    markdown; it has four (type, enum value, variant, variant property)"; exit 1; }
 
 # ---------------------------------------------------------------- the detector detects
