@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 112 | 107 | 0 | 5 |
-| http | 111 | 107 | 0 | 4 |
-| mcp | 109 | 105 | 0 | 4 |
+| direct | 113 | 108 | 0 | 5 |
+| http | 112 | 108 | 0 | 4 |
+| mcp | 110 | 106 | 0 | 4 |
 | system | 13 | 13 | 0 | 0 |
-| total | 345 | 332 | 0 | 13 |
+| total | 348 | 335 | 0 | 13 |
 
 ## Capabilities
 
@@ -105,6 +105,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
+| `recover.orphans` | recover | command | — | covered | covered | covered | `check-twelve-hours`, `check-one-second` |
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
 | `release.version` | release | query | — | covered | covered | covered | `default` |

@@ -6,27 +6,27 @@
     "version": "0.6.1"
   },
   "registry": {
-    "fingerprint": "19f41829498c4c964e873182fd55377ae4136494fb8bf46678ed4f63a5fdffcb",
+    "fingerprint": "a95f877e9d1ef4f406689ef51b600438aa8323e4709296c89f266ad6f81cc480",
     "summary": {
-      "total": 1451,
-      "builtin": 112,
-      "declarative": 1339,
+      "total": 1453,
+      "builtin": 113,
+      "declarative": 1340,
       "by_kind": {
-        "command": 6,
+        "command": 7,
         "query": 106,
-        "resource": 1339
+        "resource": 1340
       },
       "by_stability": {
-        "behaviorally_verified": 99,
+        "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1345
+        "implemented": 1346
       },
-      "mcp_tools": 109,
-      "mcp_resources": 1380,
-      "http_routes": 111,
+      "mcp_tools": 110,
+      "mcp_resources": 1381,
+      "http_routes": 112,
       "cli_commands": 52,
-      "modules": 65,
-      "benchmark_required": 107,
+      "modules": 66,
+      "benchmark_required": 108,
       "benchmark_waived": 5,
       "cached": 35
     },
@@ -839,6 +839,24 @@
                   {
                     "type": "object",
                     "properties": {
+                      "precondition": {
+                        "$ref": "#/$defs/BenchmarkPrecondition",
+                        "description": "What the repository must hold."
+                      },
+                      "policy": {
+                        "type": "string",
+                        "const": "required_when"
+                      }
+                    },
+                    "required": [
+                      "policy",
+                      "precondition"
+                    ],
+                    "description": "Required exactly like `Required` in a repository where the precondition holds, and\nreported as inapplicable — never covered, never waived — where it does not. Not a\nwaiver: with the precondition met and no case, the requirement is missing."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
                       "reason": {
                         "$ref": "#/$defs/WaiverReason",
                         "description": "Why."
@@ -856,6 +874,16 @@
                   }
                 ],
                 "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides."
+              },
+              "BenchmarkPrecondition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "plan_holds_an_issue",
+                    "description": "The plan holds at least one issue. A command whose every honest case is a refusal\nchosen from an issue's own status has no such refusal in a plan with no issue: the\nonly answer there is a lookup miss, which times an error path and is not the\noperation."
+                  }
+                ],
+                "description": "What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver's reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\"\"plan_holds_an_issue\"\"#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```"
               },
               "WaiverReason": {
                 "oneOf": [
@@ -1543,6 +1571,24 @@
                   {
                     "type": "object",
                     "properties": {
+                      "precondition": {
+                        "$ref": "#/$defs/BenchmarkPrecondition",
+                        "description": "What the repository must hold."
+                      },
+                      "policy": {
+                        "type": "string",
+                        "const": "required_when"
+                      }
+                    },
+                    "required": [
+                      "policy",
+                      "precondition"
+                    ],
+                    "description": "Required exactly like `Required` in a repository where the precondition holds, and\nreported as inapplicable — never covered, never waived — where it does not. Not a\nwaiver: with the precondition met and no case, the requirement is missing."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
                       "reason": {
                         "$ref": "#/$defs/WaiverReason",
                         "description": "Why."
@@ -1560,6 +1606,16 @@
                   }
                 ],
                 "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides."
+              },
+              "BenchmarkPrecondition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "plan_holds_an_issue",
+                    "description": "The plan holds at least one issue. A command whose every honest case is a refusal\nchosen from an issue's own status has no such refusal in a plan with no issue: the\nonly answer there is a lookup miss, which times an error path and is not the\noperation."
+                  }
+                ],
+                "description": "What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver's reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\"\"plan_holds_an_issue\"\"#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```"
               },
               "WaiverReason": {
                 "oneOf": [
@@ -26295,7 +26351,8 @@
           "lifecycle"
         ],
         "benchmark": {
-          "policy": "required"
+          "policy": "required_when",
+          "precondition": "plan_holds_an_issue"
         },
         "cache": {
           "policy": "disabled"
@@ -29262,6 +29319,231 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
+      },
+      {
+        "id": "recover.orphans",
+        "module": "recover",
+        "kind": "command",
+        "title": "Classify every stray file of the record stores, and sweep the ones that are nobody's",
+        "description": "Walk the publish temps of every record store, the rename temps under the layer's local half and the tracked sessions section, and the site generator's staging directories at the repository root; give each a verdict by reading its age and then its content; and, unless the call is a check, remove the ones the verdict says nothing is holding. Nothing is deleted for being unrecognised: a temp holding the only copy of a record is reported as `incomplete` and left for the caller to publish, content this version cannot classify is `foreign` and left exactly where it is, a candidate whose age this platform cannot read is `unmeasurable` and never a candidate, and no directory is ever removed. The threshold is required and has no default, because a sweep measuring against an absent threshold would find every file stale.",
+        "input": {
+          "name": "RecoverOrphansInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "older_than_seconds": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How long a stray file must have been untouched before it is a candidate at all, in\nseconds. Required, and refused at zero: the shell tool resolves it from\n`session.stranded_after` with `mj_pol_req`, which fails closed, and nothing here\ninvents one."
+              },
+              "check": {
+                "type": "boolean",
+                "description": "Classify and report, and write nothing. The default, because the alternative deletes\nfiles.",
+                "default": true
+              }
+            },
+            "required": [
+              "older_than_seconds"
+            ],
+            "description": "The input of `recover.orphans`: how old a stray must be, and whether to act.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansInput;\n\n// The wire form the shell tool, an MCP client or an HTTP POST sends.\nlet act: RecoverOrphansInput =\n    serde_json::from_str(r#\"{\"older_than_seconds\":43200,\"check\":false}\"#).unwrap();\nassert_eq!(act.older_than_seconds, 43_200);\nassert!(!act.check);\n\n// `check` defaults to true, and that direction is deliberate: this capability deletes\n// files, and a caller that forgets the field gets a plan rather than a sweep.\nlet forgot: RecoverOrphansInput =\n    serde_json::from_str(r#\"{\"older_than_seconds\":43200}\"#).unwrap();\nassert!(forgot.check, \"the safe value is the default one\");\n\n// The threshold has no default at all. `session.stranded_after` is a policy value, and\n// a reader that carried its own copy would be a second place the number lives.\nassert!(serde_json::from_str::<RecoverOrphansInput>(r#\"{\"check\":true}\"#).is_err());\n\n// Unknown fields are refused rather than ignored: a caller that misspells `check` is\n// told so instead of having a sweep silently run.\nassert!(serde_json::from_str::<RecoverOrphansInput>(\n    r#\"{\"older_than_seconds\":1,\"chek\":true}\"#).is_err());\n```",
+            "title": "RecoverOrphansInput"
+          }
+        },
+        "output": {
+          "name": "RecoverOrphansResult",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "older_than_seconds": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The threshold this sweep measured against, echoed back so that a refusal or a verdict\nnames the value the caller actually got rather than the one it believes it sent."
+              },
+              "check": {
+                "type": "boolean",
+                "description": "Whether this was a check. `true` means nothing was written."
+              },
+              "strays": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Stray"
+                },
+                "description": "Every stray found, in path order."
+              },
+              "removable": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many of them this call would remove, or did."
+              },
+              "removed": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many it actually removed. Always `0` on a check."
+              },
+              "unmeasurable": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many candidates could not be measured and were therefore left alone."
+              }
+            },
+            "required": [
+              "older_than_seconds",
+              "check",
+              "strays",
+              "removable",
+              "removed",
+              "unmeasurable"
+            ],
+            "description": "What one sweep found and what it did about it.\n\nThe counts are derived from `strays` rather than accumulated beside it, so a reader can\ncheck the report against itself and a surface that renders the list cannot disagree with\nthe surface that renders the total.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansResult;\n\nlet plan: RecoverOrphansResult = serde_json::from_str(r#\"{\n    \"older_than_seconds\": 43200, \"check\": true, \"strays\": [],\n    \"removable\": 0, \"removed\": 0, \"unmeasurable\": 0\n}\"#).unwrap();\n// a check never removes anything, whatever it found\nassert_eq!(plan.removed, 0);\nassert!(plan.check);\n```",
+            "title": "RecoverOrphansResult",
+            "$defs": {
+              "Stray": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path, repository-relative. Never the absolute one: a finding that names a disk is\na finding nobody else can act on (`project.no-machine-paths`)."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/StrayKind",
+                    "description": "Which of the three shapes this is."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/StrayVerdict",
+                    "description": "What reading it decided."
+                  },
+                  "age_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How old it is, in seconds. Absent when the platform could not say, which is the\n`Unmeasurable` verdict and never a zero."
+                  },
+                  "session_id": {
+                    "type": "string",
+                    "description": "The episode this publish temp carries, when it carries one."
+                  },
+                  "published_at": {
+                    "type": "string",
+                    "description": "The record that already holds that episode, when one does. Its presence is what turns\nan `Incomplete` publish temp into an `Orphan`."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "The file a rename temp was going to become. Its presence is what turns an\n`Incomplete` rename temp into an `Orphan`."
+                  },
+                  "removable": {
+                    "type": "boolean",
+                    "description": "Whether this call would remove it. Decided by the verdict and by\n`remove_stray`'s own pattern guard, never by the caller."
+                  },
+                  "removed": {
+                    "type": "boolean",
+                    "description": "Whether this call did remove it. Always `false` on a check."
+                  }
+                },
+                "required": [
+                  "path",
+                  "kind",
+                  "verdict",
+                  "removable",
+                  "removed"
+                ],
+                "description": "One stray file, its verdict, and the evidence that produced it.\n\nEvery field that decided something is carried, because the rule this command is shaped\naround requires the value that decided a verdict to be visible before the verdict acts:\na surface that printed \"orphan\" without the age, the episode and the file that already\nholds it would be asking to be trusted rather than read.\n\n```\nuse majordomus_cli::capability::builtin::recover::{Stray, StrayKind, StrayVerdict};\nuse serde_json::json;\n\nlet s: Stray = serde_json::from_value(json!({\n    \"path\": \".ai/repo/sessions/.tmp.a1b2c3\",\n    \"kind\": \"publish_temp\",\n    \"verdict\": \"orphan\",\n    \"age_seconds\": 90_000,\n    \"session_id\": \"s-0007\",\n    \"published_at\": \".ai/repo/sessions/2026-09-11--s-0007.md\",\n    \"removable\": true,\n    \"removed\": false,\n})).unwrap();\nassert_eq!(s.verdict, StrayVerdict::Orphan);\nassert_eq!(s.kind, StrayKind::PublishTemp);\n// removable and removed are different facts: a check run reports the first and never\n// the second, which is what makes `--check` readable as a plan rather than a report.\nassert!(s.removable && !s.removed);\n\n// and an unmeasurable one carries no age at all, rather than a zero that would read as\n// \"brand new\" to anything that compared it with a threshold\nlet u: Stray = serde_json::from_value(json!({\n    \"path\": \".mj-stage.xyz\", \"kind\": \"staging_dir\", \"verdict\": \"unmeasurable\",\n    \"removable\": false, \"removed\": false,\n})).unwrap();\nassert!(u.age_seconds.is_none());\n```"
+              },
+              "StrayKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "publish_temp",
+                    "description": "A `.tmp.XXXXXX` in a record store: `mj_publish_record` makes them, and only a process\nthat died between the `mktemp` and the `rm` leaves one."
+                  },
+                  {
+                    "type": "string",
+                    "const": "rename_temp",
+                    "description": "A `<target>.mj-tmp`: written and renamed in one `&&`, so one that exists means the\nwrite failed or the process died mid-write."
+                  },
+                  {
+                    "type": "string",
+                    "const": "staging_dir",
+                    "description": "A `.mj-stage.XXXXXX` at the repository root: `scripts/generate-site-data` stages into\none. Always a directory, and therefore never removed here."
+                  }
+                ],
+                "description": "What kind of stray a path is, decided by where it is and how it is named rather than by\nwhat is in it. The content decides the *verdict*; this decides which question to ask.\n\nThe word a kind is reported under is also the word it is read back from, and a word this\nversion does not know is refused rather than read as the nearest kind:\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayKind;\nfor kind in [StrayKind::PublishTemp, StrayKind::RenameTemp, StrayKind::StagingDir] {\n    let word = serde_json::to_value(kind).unwrap();\n    assert_eq!(serde_json::from_value::<StrayKind>(word).unwrap(), kind);\n}\nassert!(serde_json::from_value::<StrayKind>(serde_json::json!(\"temp\")).is_err());\n```"
+              },
+              "StrayVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "live",
+                    "description": "Younger than the threshold: a `session close` or a `scripts/derive` running right now\nowns it. Measured, reported, never touched."
+                  },
+                  {
+                    "type": "string",
+                    "const": "orphan",
+                    "description": "Its work completed, or there was never anything in it. Removable — unless it is a\ndirectory, which this runtime never removes."
+                  },
+                  {
+                    "type": "string",
+                    "const": "incomplete",
+                    "description": "It holds something no other file holds: a record nobody published, or a write whose\ntarget never arrived. Never removed here; the caller decides."
+                  },
+                  {
+                    "type": "string",
+                    "const": "foreign",
+                    "description": "Not written by this tool at all, or written by a version that shaped it differently.\nNever touched; reported with what it is."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unmeasurable",
+                    "description": "Its age could not be read on this platform, so nothing here treats it as stale. The\nguard `project.destructive-sweeps-fail-closed` asks for: a predicate that cannot\nmeasure its input is false, never the most extreme value in the set."
+                  }
+                ],
+                "description": "What this stray is, decided by reading it.\n\nThe five words are `lib/recover.sh`'s, deliberately: a person who has read the command's\noutput should not have to learn the same five facts twice because a second surface chose\nits own vocabulary.\n\nThat vocabulary is closed. Every verdict reads back as itself, and there is no sixth word:\na surface that invents one gets an error rather than a verdict nobody meant.\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayVerdict::{self, *};\nlet all = [Live, Orphan, Incomplete, Foreign, Unmeasurable];\nlet words: Vec<&str> = all.iter().map(|v| v.as_str()).collect();\nassert_eq!(words, [\"live\", \"orphan\", \"incomplete\", \"foreign\", \"unmeasurable\"]);\nfor v in all {\n    let word = serde_json::json!(v.as_str());\n    assert_eq!(serde_json::from_value::<StrayVerdict>(word).unwrap(), v);\n}\nassert!(serde_json::from_value::<StrayVerdict>(serde_json::json!(\"stale\")).is_err());\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::recover"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_recover_orphans"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/recover/orphans"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "recover",
+          "sessions",
+          "maintenance",
+          "lifecycle"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "repository_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/recover.rs"
       },
       {
         "id": "release.analysis",
@@ -40389,6 +40671,18 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
       },
       {
+        "id": "recover",
+        "title": "Recovery of the record stores",
+        "description": "The stray files a killed publish, an interrupted rename or an unfinished site build leave in the record stores, classified by reading the clock and the content, and swept exactly once. This is the capability that backs `majordomus recover` (ADR 0040): the command no longer decides what a stray is, it asks.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "recover.orphans"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/recover.rs"
+      },
+      {
         "id": "release",
         "title": "Release",
         "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become.",
@@ -40508,7 +40802,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 206,
+        "capabilities": 207,
         "capability_ids": []
       },
       {
@@ -40588,7 +40882,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2980a623e42dede7e2dcb5cbecfc1b63250a75031bdd90b11ec5d0597e2869f5",
+    "fingerprint": "f9d520b9ab608545cd27c2cd93e15068a4fc63746ff74bafaaf5e160ca57a9ea",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40637,7 +40931,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 206,
+      "test": 207,
       "use-case": 46,
       "workspace": 1
     },
@@ -43524,7 +43818,7 @@
         "description": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/archive",
@@ -43534,7 +43828,7 @@
         "description": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/bench",
@@ -43544,7 +43838,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/capture",
@@ -43554,7 +43848,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/check",
@@ -43564,7 +43858,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -43574,7 +43868,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/context",
@@ -43584,7 +43878,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/decision",
@@ -43594,7 +43888,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/doctor",
@@ -43604,7 +43898,7 @@
         "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -43614,7 +43908,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/evidence",
@@ -43624,7 +43918,7 @@
         "description": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/finish",
@@ -43634,7 +43928,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/handover",
@@ -43644,7 +43938,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/help",
@@ -43654,7 +43948,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/history",
@@ -43664,7 +43958,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/init",
@@ -43674,7 +43968,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -43684,7 +43978,7 @@
         "description": "The compiled index over what this repository states.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/migrate",
@@ -43694,7 +43988,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/plan",
@@ -43704,7 +43998,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/prompt",
@@ -43714,7 +44008,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/question",
@@ -43724,7 +44018,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/recover",
@@ -43734,7 +44028,7 @@
         "description": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/rules",
@@ -43744,7 +44038,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/search",
@@ -43754,7 +44048,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/session",
@@ -43764,7 +44058,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/skills",
@@ -43774,7 +44068,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/start",
@@ -43784,7 +44078,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/update",
@@ -43794,7 +44088,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/usecase",
@@ -43804,7 +44098,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/version",
@@ -43814,7 +44108,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://command/watch",
@@ -43824,7 +44118,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30156
+        "bytes": 30160
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -44373,7 +44667,7 @@
         "title": "Backlog",
         "path": "docs/BACKLOG.md",
         "source_class": "document",
-        "bytes": 11663
+        "bytes": 12702
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -44481,7 +44775,7 @@
         "title": "Coverage: one measurement, two questions",
         "path": "docs/COVERAGE.md",
         "source_class": "document",
-        "bytes": 5782
+        "bytes": 5809
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -44751,7 +45045,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 70016
+        "bytes": 70866
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -46819,7 +47113,7 @@
         "identity": "lib/adr.sh",
         "path": "lib/adr.sh",
         "source_class": "library",
-        "bytes": 60201
+        "bytes": 65266
       },
       {
         "uri": "majordomus://implementation/lib/archive.sh",
@@ -47091,7 +47385,7 @@
         "identity": "lib/recover.sh",
         "path": "lib/recover.sh",
         "source_class": "library",
-        "bytes": 45484
+        "bytes": 48558
       },
       {
         "uri": "majordomus://implementation/lib/rules.sh",
@@ -47123,7 +47417,7 @@
         "identity": "lib/session.sh",
         "path": "lib/session.sh",
         "source_class": "library",
-        "bytes": 56773
+        "bytes": 57923
       },
       {
         "uri": "majordomus://implementation/lib/session_context.sh",
@@ -52309,7 +52603,7 @@
         "path": ".ai/repo/rules/project/rust-benchmark-coverage.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 2554,
+        "bytes": 2912,
         "tags": [
           "rust",
           "performance",
@@ -53289,7 +53583,7 @@
         "identity": "test/cases/113_clean_owns_its_target.sh",
         "path": "test/cases/113_clean_owns_its_target.sh",
         "source_class": "case",
-        "bytes": 7265
+        "bytes": 8609
       },
       {
         "uri": "majordomus://test/test/cases/113_shared_server_survives_a_crash.sh",
@@ -53409,7 +53703,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 8255
+        "bytes": 8743
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -53497,7 +53791,7 @@
         "identity": "test/cases/132_coverage_differential.sh",
         "path": "test/cases/132_coverage_differential.sh",
         "source_class": "case",
-        "bytes": 3899
+        "bytes": 5372
       },
       {
         "uri": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
@@ -53529,7 +53823,7 @@
         "identity": "test/cases/135_session_store_recovery.sh",
         "path": "test/cases/135_session_store_recovery.sh",
         "source_class": "case",
-        "bytes": 20876
+        "bytes": 24240
       },
       {
         "uri": "majordomus://test/test/cases/136_changed_files_classifier.sh",
@@ -53964,6 +54258,14 @@
         "bytes": 6582
       },
       {
+        "uri": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
+        "kind": "test",
+        "identity": "test/cases/318_a_partial_sweep_says_so.sh",
+        "path": "test/cases/318_a_partial_sweep_says_so.sh",
+        "source_class": "case",
+        "bytes": 23341
+      },
+      {
         "uri": "majordomus://test/test/cases/31_command_coverage.sh",
         "kind": "test",
         "identity": "test/cases/31_command_coverage.sh",
@@ -54169,7 +54471,7 @@
         "identity": "test/cases/56_derived_current_gate.sh",
         "path": "test/cases/56_derived_current_gate.sh",
         "source_class": "case",
-        "bytes": 8561
+        "bytes": 9101
       },
       {
         "uri": "majordomus://test/test/cases/57_derived_merge_driver.sh",
@@ -54337,7 +54639,7 @@
         "identity": "test/cases/77_rust_evidence.sh",
         "path": "test/cases/77_rust_evidence.sh",
         "source_class": "case",
-        "bytes": 12585
+        "bytes": 12714
       },
       {
         "uri": "majordomus://test/test/cases/79_bench_command.sh",
@@ -54481,7 +54783,7 @@
         "identity": "test/cases/90_mcp_shared_server.sh",
         "path": "test/cases/90_mcp_shared_server.sh",
         "source_class": "case",
-        "bytes": 10719
+        "bytes": 11472
       },
       {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -54489,7 +54791,7 @@
         "identity": "test/cases/91_canonical_architecture.sh",
         "path": "test/cases/91_canonical_architecture.sh",
         "source_class": "case",
-        "bytes": 8869
+        "bytes": 9202
       },
       {
         "uri": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -54497,7 +54799,7 @@
         "identity": "test/cases/92_openapi_reference.sh",
         "path": "test/cases/92_openapi_reference.sh",
         "source_class": "case",
-        "bytes": 10048
+        "bytes": 11083
       },
       {
         "uri": "majordomus://test/test/cases/93_rust_provider_projections.sh",
@@ -54641,7 +54943,7 @@
         "identity": "test/cases/97_vendor_evidence.sh",
         "path": "test/cases/97_vendor_evidence.sh",
         "source_class": "case",
-        "bytes": 7466
+        "bytes": 7918
       },
       {
         "uri": "majordomus://test/test/cases/98_cli_reference.sh",
@@ -54673,7 +54975,7 @@
         "identity": "test/cases/99_adr.sh",
         "path": "test/cases/99_adr.sh",
         "source_class": "case",
-        "bytes": 15664
+        "bytes": 18707
       },
       {
         "uri": "majordomus://test/test/cases/99_canonical_order.sh",
@@ -55491,7 +55793,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 206
+      "objects": 207
     },
     {
       "name": "use-case",
@@ -74260,6 +74562,16 @@
         "output": "QualityAnswer"
       },
       {
+        "name": "majordomus_recover_orphans",
+        "id": "recover.orphans",
+        "title": "Classify every stray file of the record stores, and sweep the ones that are nobody's",
+        "description": "Walk the publish temps of every record store, the rename temps under the layer's local half and the tracked sessions section, and the site generator's staging directories at the repository root; give each a verdict by reading its age and then its content; and, unless the call is a check, remove the ones the verdict says nothing is holding. Nothing is deleted for being unrecognised: a temp holding the only copy of a record is reported as `incomplete` and left for the caller to publish, content this version cannot classify is `foreign` and left exactly where it is, a candidate whose age this platform cannot read is `unmeasurable` and never a candidate, and no directory is ever removed. The threshold is required and has no default, because a sweep measuring against an absent threshold would find every file stale.",
+        "kind": "command",
+        "read_only": false,
+        "input": "RecoverOrphansInput",
+        "output": "RecoverOrphansResult"
+      },
+      {
         "name": "majordomus_release_analysis",
         "id": "release.analysis",
         "title": "What the public contract did, and the smallest version it allows",
@@ -75322,6 +75634,12 @@
         "path": "/api/v1/quality",
         "id": "quality.report",
         "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/recover/orphans",
+        "id": "recover.orphans",
+        "kind": "command"
       },
       {
         "method": "GET",
@@ -79076,6 +79394,64 @@
         "route": "GET /api/v1/quality"
       },
       {
+        "key": "recover.orphans|direct|check-twelve-hours",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "recover.orphans",
+        "module": "recover",
+        "case": "check-twelve-hours",
+        "cached": false
+      },
+      {
+        "key": "recover.orphans|direct|check-one-second",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "recover.orphans",
+        "module": "recover",
+        "case": "check-one-second",
+        "cached": false
+      },
+      {
+        "key": "recover.orphans|mcp|check-twelve-hours",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "recover.orphans",
+        "module": "recover",
+        "case": "check-twelve-hours",
+        "cached": false,
+        "tool": "majordomus_recover_orphans"
+      },
+      {
+        "key": "recover.orphans|mcp|check-one-second",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "recover.orphans",
+        "module": "recover",
+        "case": "check-one-second",
+        "cached": false,
+        "tool": "majordomus_recover_orphans"
+      },
+      {
+        "key": "recover.orphans|http|check-twelve-hours",
+        "kind": "capability",
+        "transport": "http",
+        "id": "recover.orphans",
+        "module": "recover",
+        "case": "check-twelve-hours",
+        "cached": false,
+        "route": "POST /api/v1/recover/orphans"
+      },
+      {
+        "key": "recover.orphans|http|check-one-second",
+        "kind": "capability",
+        "transport": "http",
+        "id": "recover.orphans",
+        "module": "recover",
+        "case": "check-one-second",
+        "cached": false,
+        "route": "POST /api/v1/recover/orphans"
+      },
+      {
         "key": "release.changelog|direct|all",
         "kind": "capability",
         "transport": "direct",
@@ -82032,6 +82408,27 @@
           "cases": 1
         },
         {
+          "subject": "recover.orphans",
+          "module": "recover",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "recover.orphans",
+          "module": "recover",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "recover.orphans",
+          "module": "recover",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "release.analysis",
           "module": "release",
           "transport": "direct",
@@ -82674,34 +83071,39 @@
       ],
       "tallies": {
         "direct": {
-          "required": 112,
-          "covered": 107,
+          "required": 113,
+          "covered": 108,
           "missing": 0,
-          "waived": 5
+          "waived": 5,
+          "inapplicable": 0
         },
         "http": {
-          "required": 111,
-          "covered": 107,
+          "required": 112,
+          "covered": 108,
           "missing": 0,
-          "waived": 4
+          "waived": 4,
+          "inapplicable": 0
         },
         "mcp": {
-          "required": 109,
-          "covered": 105,
+          "required": 110,
+          "covered": 106,
           "missing": 0,
-          "waived": 4
+          "waived": 4,
+          "inapplicable": 0
         },
         "system": {
           "required": 13,
           "covered": 13,
           "missing": 0,
-          "waived": 0
+          "waived": 0,
+          "inapplicable": 0
         },
         "total": {
-          "required": 345,
-          "covered": 332,
+          "required": 348,
+          "covered": 335,
           "missing": 0,
-          "waived": 13
+          "waived": 13,
+          "inapplicable": 0
         }
       }
     },

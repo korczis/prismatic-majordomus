@@ -820,9 +820,9 @@
       "external": false
     },
     {
-      "id": ".ai/local/state/locks",
+      "id": ".ai/local/state/locks/session-pointer",
       "kind": "artifact",
-      "label": "local/state/locks",
+      "label": "local/state/locks/session-pointer",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1567,11 +1567,6 @@
       "kind": "sources"
     },
     {
-      "source": "lib/adr.sh",
-      "target": ".ai/repo/adrs/.id.lock",
-      "kind": "uses"
-    },
-    {
       "source": "lib/capture.sh",
       "target": ".ai/local/session-contexts",
       "kind": "uses"
@@ -1968,7 +1963,7 @@
     },
     {
       "source": "lib/session.sh",
-      "target": ".ai/local/state/locks",
+      "target": ".ai/local/state/locks/session-pointer",
       "kind": "uses"
     },
     {
@@ -2020,6 +2015,11 @@
       "source": "lib/watch.sh",
       "target": ".ai/local/state/ledger.jsonl",
       "kind": "uses"
+    },
+    {
+      "source": "lib/adr.sh",
+      "target": ".ai/repo/adrs/.id.lock",
+      "kind": "writes"
     },
     {
       "source": "lib/capture.sh",

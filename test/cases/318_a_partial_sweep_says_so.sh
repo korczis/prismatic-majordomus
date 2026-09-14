@@ -315,7 +315,12 @@ case "$NEW_READER" in
   *) echo "    what was cut out of the reaper is not a worktree reader:"
      printf '%s\n' "$NEW_READER" | sed 's/^/      /'; exit 1 ;;
 esac
-OLD_READER='NR == 1 && $1 == "worktree" { print substr($0, 10); exit }'
+# an awk program, not a shell word list: read from a quoted heredoc so nothing in it is
+# ever mistaken for shell quoting
+OLD_READER="$(cat <<'AWK'
+NR == 1 && $1 == "worktree" { print substr($0, 10); exit }
+AWK
+)"
 export NEW_READER OLD_READER
 
 cat > "$T/readers.sh" <<'READERS'

@@ -839,6 +839,15 @@
         "status": "query"
       },
       {
+        "id": "capability:recover.orphans",
+        "kind": "capability",
+        "label": "recover.orphans",
+        "summary": "Classify every stray file of the record stores, and sweep the ones that are nobody's",
+        "route": "/cockpit/capabilities/recover.orphans",
+        "source": "apps/majordomus-cli/src/capability/builtin/recover.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:release.analysis",
         "kind": "capability",
         "label": "release.analysis",
@@ -7419,6 +7428,7 @@
           "exit_codes": [
             "0",
             "2",
+            "10",
             "12",
             "13",
             "15"
@@ -32427,6 +32437,13 @@
         "source": "test/cases/310_rustdoc_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
+        "kind": "test",
+        "label": "test/cases/318_a_partial_sweep_says_so.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F318_a_partial_sweep_says_so.sh",
+        "source": "test/cases/318_a_partial_sweep_says_so.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/31_command_coverage.sh",
         "kind": "test",
         "label": "test/cases/31_command_coverage.sh",
@@ -35160,6 +35177,11 @@
         "label": "quality"
       },
       {
+        "id": "module:recover",
+        "kind": "module",
+        "label": "recover"
+      },
+      {
         "id": "module:release",
         "kind": "module",
         "label": "release"
@@ -36690,6 +36712,21 @@
       },
       {
         "source": "capability:quality.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:recover.orphans",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:recover.orphans",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:recover.orphans",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -50724,6 +50761,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/31_command_coverage.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -54299,6 +54341,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:recover",
+        "target": "capability:recover.orphans",
+        "kind": "composes"
+      },
+      {
         "source": "module:release",
         "target": "capability:release.analysis",
         "kind": "composes"
@@ -54430,8 +54477,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1710,
-      "edges": 3838,
+      "nodes": 1713,
+      "edges": 3843,
       "acyclic": true,
       "truncated": false
     }

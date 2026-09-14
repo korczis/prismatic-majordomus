@@ -47,13 +47,13 @@
 //! absent threshold would find every file stale, which is the one failure this command must
 //! not have (`project.destructive-sweeps-fail-closed`).
 //!
-//! **Nothing is removed that is not a temp file this tool writes.** [`removable`] is decided
-//! from the verdict, and [`remove_stray`] refuses any path that is not a regular file whose
+//! **Nothing is removed that is not a temp file this tool writes.** `removable` is decided
+//! from the verdict, and `remove_stray` refuses any path that is not a regular file whose
 //! name matches the two patterns this tool creates — `.tmp.*` inside a record store, or
 //! `<target>.mj-tmp`. A directory is never removed, whatever its verdict: `SECURITY.md`
 //! states "no recursive deletion", and a stale `.mj-stage.*` staging directory is therefore
 //! reported and left in place. `check` is a true dry run: it is consulted before the single
-//! call site of [`remove_stray`], and nothing else in this file touches the filesystem for
+//! call site of `remove_stray`, and nothing else in this file touches the filesystem for
 //! writing.
 //!
 //! [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
@@ -291,7 +291,7 @@ pub struct Stray {
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub target: String,
     /// Whether this call would remove it. Decided by the verdict and by
-    /// [`remove_stray`]'s own pattern guard, never by the caller.
+    /// `remove_stray`'s own pattern guard, never by the caller.
     pub removable: bool,
     /// Whether this call did remove it. Always `false` on a check.
     pub removed: bool,
