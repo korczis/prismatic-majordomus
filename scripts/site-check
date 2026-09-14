@@ -27,7 +27,7 @@ PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^
 pages="$(find "$PUB" -name '*.html')"
 # Every per-page assertion, measured once. The checks below read the rows rather than
 # re-reading the pages: one awk process for the site instead of eighteen per route.
-PAGEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-site-pages.XXXXXX")"; trap 'rm -f "$PAGEROWS"' EXIT
+PAGEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-site-pages.XXXXXX")"; trap 'rm -f "$PAGEROWS" "$PAGEROWS".*' EXIT
 # shellcheck disable=SC2086
 awk -v pub="$PUB" -f "$ROOT/scripts/lib/site-pages.awk" $pages > "$PAGEROWS"
 # rows <check>: the findings of one check, in page order, as "<page>\t<detail>" lines
@@ -318,7 +318,7 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   for r in "" executable/ modules/ capabilities/ cli/ mcp/ benchmarks/; do [ -f "$PUB/registry/${r}index.html" ] || { bad registry "no page at /registry/$r"; regbad=1; }; done
   jq -r '.modules[] | [.slug, .route] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r slug route; do
     [ -f "$PUB/registry/modules/$slug/index.html" ] || { echo "no page for module $slug"; continue; }
-  done | while read -r l; do bad registry "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad registry "$l"; done < "$PAGEROWS.found"
   jq -r '.capabilities[] | [.id, .slug, .module_route, .api_anchor // "", .tool // ""] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r id slug mroute anchor tool; do
     pg="$PUB/registry/capabilities/$slug/index.html"
     [ -f "$pg" ] || { echo "no page for capability $id"; continue; }
@@ -329,7 +329,7 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
     fi
     [ -z "$tool" ] || grep -qF ">$tool<" "$pg" || echo "capability page $id does not show its MCP tool $tool"
     grep -qF "$PREFIX/registry/benchmarks/" "$pg" || echo "capability page $id does not link the benchmarks page"
-  done | while read -r l; do bad registry "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad registry "$l"; done < "$PAGEROWS.found"
   # no orphan route: every page under modules/ and capabilities/ is an entry of the dataset
   for d in "$PUB"/registry/modules/*/; do slug="$(basename "$d")"; jq -e --arg s "$slug" '.modules[] | select(.slug==$s)' "$EXJ" >/dev/null || { bad registry "orphan route /registry/modules/$slug/ names no module of the registry"; regbad=1; }; done
   for d in "$PUB"/registry/capabilities/*/; do slug="$(basename "$d")"; jq -e --arg s "$slug" '.capabilities[] | select(.slug==$s)' "$EXJ" >/dev/null || { bad registry "orphan route /registry/capabilities/$slug/ names no capability of the registry"; regbad=1; }; done
@@ -338,7 +338,7 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   for u in $(jq -r '.mcp.resources[].uri' "$RDS"); do grep -qF ">$u<" "$PUB/registry/mcp/index.html" || { bad registry "MCP resource $u is not on /registry/mcp/"; regbad=1; }; done
   jq -r '[.cli | .. | objects | select(has("path")) | .path | join("-")] | .[]' "$RDS" | while read -r cmd; do
     grep -qF "id=\"cmd-$cmd\"" "$PUB/registry/cli/index.html" || echo "command $cmd is not on /registry/cli/"
-  done | while read -r l; do bad registry "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad registry "$l"; done < "$PAGEROWS.found"
   nt="$(jq '.benchmarks.targets | length' "$RDS")"; np="$(grep -o 'id="target-' "$PUB/registry/benchmarks/index.html" | wc -l | tr -d ' ')"
   [ "$nt" = "$np" ] || { bad registry "/registry/benchmarks/ renders $np targets, the dataset holds $nt"; regbad=1; }
   for k in $(jq -r '.benchmarks.coverage.lines[].subject' "$RDS" | LC_ALL=C sort -u); do grep -qF ">$k<" "$PUB/registry/benchmarks/index.html" || { bad registry "coverage subject $k is not on /registry/benchmarks/"; regbad=1; }; done
@@ -385,7 +385,7 @@ if [ -f "$CLIJ" ]; then
     jq -r '.commands[] | select(.depth > 0) | [.command, .route] | @tsv' "$CLIJ" | while IFS="$MJ_TAB" read -r command route; do
       grep -qF ">$command<" "$idx" || echo "the index does not name $command"
       grep -qF "$PREFIX$route\"" "$idx" || echo "the index does not link $route"
-    done | while read -r l; do bad cli "$l"; done
+    done > "$PAGEROWS.found"; while read -r l; do bad cli "$l"; done < "$PAGEROWS.found"
   else bad cli "no page at /docs/cli/"; clibad=1; fi
   # each command's page: its own path, its usage, every argument it documents, every example
   # it shows (by the anchor the data gives it and by the command line the tests ran), the
@@ -405,7 +405,7 @@ if [ -f "$CLIJ" ]; then
     [ "$parent" = - ] || grep -qF "$PREFIX$parent\"" "$pg" || echo "$command does not link up to $parent"
     [ "$children" = - ] || for ch in $children; do grep -qF "$PREFIX$ch\"" "$pg" || echo "$command does not link down to $ch"; done
     grep -qF "$(jq -r '.declaration' "$CLIJ")" "$pg" || echo "$command does not name the file it is declared in"
-  done | while read -r l; do bad cli "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad cli "$l"; done < "$PAGEROWS.found"
   # every example command line a page shows is one the crate's tests execute: the argument
   # vectors are the same document, so a page cannot show a session nobody ran
   # The page carries the command HTML-escaped — an example with quotes in its argument
@@ -414,7 +414,7 @@ if [ -f "$CLIJ" ]; then
   jq -r '.commands[].examples[].command' "$CLIJ" | while read -r c; do
     e="$(printf '%s' "$c" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g' -e "s/'/\&#39;/g")"
     grep -rqF "$e" "$PUB"/docs/cli/ || echo "the example \`$c\` is in the data and on no page"
-  done | while read -r l; do bad cli "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad cli "$l"; done < "$PAGEROWS.found"
   # nothing enumerates the command line by hand: a command's route typed into a template,
   # the site generator, its jq programs or the navigation would be a second list. The index
   # route itself is a section that things legitimately link to; the commands under it are not.
@@ -457,32 +457,32 @@ for id in $(jq -r '.doctrines[].slug' "$SITE/data/generated/doctrines.json"); do
 for id in $(jq -r '.use_cases[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/use-cases/$id/index.html" ] || bad tiles "no page for use case $id"; done
 for id in $(jq -r '.applications[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/applications/$id/index.html" ] || bad tiles "no page for application $id"; done
 # the catalogue's cross-references must survive into the rendered pages, both ways
-jq -r '.use_cases[] | .id as $u | .applications[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u a; do
+jq -r '.use_cases[] | .id as $u | .applications[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u a; do
   grep -q "/applications/$a/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to application $a"
   grep -q "/use-cases/$u/" "$PUB/applications/$a/index.html" || bad catalogue "application $a does not link back to use case $u"
-done
-jq -r '.use_cases[] | .id as $u | .commands[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u c; do
+done < "$PAGEROWS.found"
+jq -r '.use_cases[] | .id as $u | .commands[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u c; do
   grep -q "/commands/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to the command page for $c"
-done
+done < "$PAGEROWS.found"
 # every use case with a scenario shows the evidence of its run: the command lines the tool
 # executed, and the result; a page that shows a demonstration nobody ran is what this refuses
-jq -r '.use_cases[] | select(.scenario != null) | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" | while read -r u res n; do
+jq -r '.use_cases[] | select(.scenario != null) | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u res n; do
   [ "$res" = pass ] || bad evidence "use case $u carries evidence '$res'; a page shows only a scenario that passed"
   [ "$(grep -c '\$ majordomus ' "$PUB/use-cases/$u/index.html")" -ge "$n" ] || bad evidence "use case $u renders fewer executed commands than its evidence has ($n)"
-done
+done < "$PAGEROWS.found"
 # every category is a page, every category link resolves, related links resolve, coverage is a page
 for cid in $(jq -r '.categories[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/use-cases/$cid/index.html" ] || bad tiles "no page for use-case category $cid"; done
 [ -f "$PUB/use-cases/coverage/index.html" ] || bad tiles "no page for /use-cases/coverage/"
-jq -r '.use_cases[] | .id as $u | "\($u) \(.category)"' "$SITE/data/generated/catalogue.json" | while read -r u c; do
+jq -r '.use_cases[] | .id as $u | "\($u) \(.category)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u c; do
   grep -q "/use-cases/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to its category $c"
   grep -q "/use-cases/$u/" "$PUB/use-cases/$c/index.html" || { jq -e --arg u "$u" '.use_cases[] | select(.id==$u) | .status == "draft"' "$SITE/data/generated/catalogue.json" >/dev/null || bad catalogue "category $c does not list use case $u"; }
-done
-jq -r '.use_cases[] | .id as $u | (.related_ids // [])[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u r; do
+done < "$PAGEROWS.found"
+jq -r '.use_cases[] | .id as $u | (.related_ids // [])[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u r; do
   grep -q "/use-cases/$r/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to its related use case $r"
-done
-jq -r '.coverage.rows[] | select(.class=="command") | .id' "$SITE/data/generated/catalogue.json" | while read -r c; do
+done < "$PAGEROWS.found"
+jq -r '.coverage.rows[] | select(.class=="command") | .id' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r c; do
   grep -q "/commands/$c/" "$PUB/use-cases/coverage/index.html" || bad catalogue "the coverage page does not link command $c"
-done
+done < "$PAGEROWS.found"
 ok catalogue "$(jq -r '.counts.use_cases' "$SITE/data/generated/catalogue.json") use case(s) in $(jq -r '.counts.categories' "$SITE/data/generated/catalogue.json") categor(y/ies) and $(jq -r '.counts.applications' "$SITE/data/generated/catalogue.json") application(s): every command, rule, category, related and cross-reference is a link that resolves, and every scenario shown was executed"
 for slug in $(jq -r '.moments[] | select(.status != "deprecated") | .id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
 for slug in $(jq -r '.audiences[].id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/audiences/$slug/index.html" ] || bad tiles "no page for why/audiences/$slug"; done
@@ -495,9 +495,9 @@ for id in $(jq -r '.milestones[].id, .issues[].id' "$PJ"); do
   [ -f "$PUB/plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/index.html" ] || bad tiles "no page for plan record $id"
 done
 # the diagram is HTML, so its arrows are escaped; compare against what the browser receives
-jq -r '.edges[] | .from + " --&gt; " + .to' "$PJ" | while read -r e; do
+jq -r '.edges[] | .from + " --&gt; " + .to' "$PJ" > "$PAGEROWS.found"; while read -r e; do
   grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "edge ${e/--&gt;/-->} is in plan.json but not in the rendered graph"
-done
+done < "$PAGEROWS.found"
 for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
   grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"
 done
