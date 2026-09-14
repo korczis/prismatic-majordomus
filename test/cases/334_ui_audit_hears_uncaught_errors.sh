@@ -13,8 +13,12 @@ command -v node >/dev/null 2>&1 || { echo "    skip: no node"; exit 0; }
   echo "    skip: playwright and axe-core are not installed (npm ci)"; exit 0; }
 
 mkdir -p www/throws www/quiet
-page() { printf '<!doctype html><html lang="en"><head><title>%s</title></head><body><nav><a href="/">home</a></nav><main><h1>%s</h1></main>%s</body></html>' "$1" "$1" "$2"; }
-page throws '<script>setTimeout(function () { throw new Error("fixture colour parser gave up"); }, 0);</script>' > www/throws/index.html
+# an empty icon, so the browser asks for no /favicon.ico: that request's 404 is a console error of its own, and
+# whether it lands inside the audit's window depends on timing, not on the listener this case is about
+page() { printf '<!doctype html><html lang="en"><head><title>%s</title><link rel="icon" href="data:,"></head><body><nav><a href="/">home</a></nav><main><h1>%s</h1></main>%s</body></html>' "$1" "$1" "$2"; }
+# the throw happens while the page parses, before "load": a throw deferred with setTimeout can land after a fast
+# audit has finished collecting, and then the case measures the runner's speed rather than the listener
+page throws '<script>throw new Error("fixture colour parser gave up");</script>' > www/throws/index.html
 page quiet '<script>console.log("an ordinary log line is not an error");</script>' > www/quiet/index.html
 
 cat > audit.mjs <<JS
@@ -49,6 +53,8 @@ if grep -q '^NO-BROWSER$' audit.out; then
   [ "${CI:-}" = true ] && { echo "    no browser could be started under CI"; exit 1; }
   echo "    skip: no browser could be started (install Chrome, or: npx playwright install chromium)"; exit 0
 fi
+# on a failure the case shows what the audit saw, so a runner's answer is read rather than guessed at
+grep -q '^/throws/ runtime findings 1$' audit.out && grep -q '^/quiet/ runtime findings 0$' audit.out || { echo "    the audit reported:"; sed 's/^/      /' audit.out; }
 expect_grep '^/throws/ runtime.console-error uncaught: fixture colour parser gave up$' audit.out
 expect_grep '^/throws/ runtime findings 1$' audit.out
 expect_grep '^/quiet/ runtime findings 0$' audit.out

@@ -101,7 +101,7 @@ async function visit(route) {
   // specs that reload or leave state behind (order > 0) run last. The controls are marked again before every
   // spec, so a spec that reloads the page cannot leave the next one pointing at nothing.
   const group = [...wanted.keys()].map((id) => specs.find((s) => s.id === id))
-    .sort((a, b) => (b.width || 1280) - (a.width || 1280) || (a.order || 0) - (b.order || 0) || a.id.localeCompare(b.id));
+    .sort((a, b) => (b.width || 1280) - (a.width || 1280) || (a.order || 0) - (b.order || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   let v;
   try { v = await openPage(route, group[0].width || 1280); } catch (e) { fail(route, null, `the page did not load: ${String(e.message).split('\n')[0]}`); return; }
   const { context, page, errors, foreign, status } = v;

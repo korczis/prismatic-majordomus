@@ -107,7 +107,7 @@ export function pages(pub) {
     }
   };
   walk(pub);
-  return out.sort((x, y) => x.route.localeCompare(y.route));
+  return out.sort((x, y) => (x.route < y.route ? -1 : x.route > y.route ? 1 : 0));
 }
 
 // The claim of every control on every page: { route, el, specs: [ids] }.

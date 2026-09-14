@@ -567,7 +567,9 @@ i=0
 while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
   rid="$(yv "$Rf" "responsibilities.$i.id")"
   rk="$(yv "$Rf" "responsibilities.$i.readme_key")"
-  printf '%s\n' "$README_TITLES" | grep -qxF "$rk" \
+  # a here-string, not a pipe: grep -q exits at its first match, and on a runner that ignores SIGPIPE the printf
+  # feeding it then fails with a broken pipe, which pipefail turns into this generator failing
+  grep -qxF "$rk" <<<"$README_TITLES" \
     || { echo "generate-site-data: responsibility $rid names README row '$rk', which the 'What it does' table does not have" >&2; exit 10; }
   # Paths under the AI layer are runtime state that `init` creates in a consuming repository, not
   # source files: a source-only checkout legitimately has none, and requiring them would make
