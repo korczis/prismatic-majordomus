@@ -6,23 +6,23 @@
     "version": "0.6.1"
   },
   "registry": {
-    "fingerprint": "29ae0374ff2817999ad41b429abe46cfffc57590036b641201696348bc3237f2",
+    "fingerprint": "d9170233384ebcba647689f33da2c8531278dfa029ca982cf269dd03c74748e5",
     "summary": {
-      "total": 1450,
+      "total": 1453,
       "builtin": 112,
-      "declarative": 1338,
+      "declarative": 1341,
       "by_kind": {
         "command": 6,
         "query": 106,
-        "resource": 1338
+        "resource": 1341
       },
       "by_stability": {
         "behaviorally_verified": 99,
         "experimental": 7,
-        "implemented": 1344
+        "implemented": 1347
       },
       "mcp_tools": 109,
-      "mcp_resources": 1379,
+      "mcp_resources": 1382,
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
@@ -40429,7 +40429,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 135,
+        "capabilities": 136,
         "capability_ids": []
       },
       {
@@ -40508,7 +40508,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 205,
+        "capabilities": 207,
         "capability_ids": []
       },
       {
@@ -40588,7 +40588,7 @@
     ]
   },
   "index": {
-    "fingerprint": "926caf0f11e713d2a92c2c923fad500562062e59a6f8b3cc781203ea8b3ec502",
+    "fingerprint": "87f5d6037f06b8d758f919d41da00f6bf43d84970fe4087818a2d13039022077",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40632,12 +40632,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 3,
-      "rule": 135,
+      "rule": 136,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 205,
+      "test": 207,
       "use-case": 46,
       "workspace": 1
     },
@@ -44706,7 +44706,7 @@
         "title": "Product — the features, and the landing page as a projection of them",
         "path": "docs/PRODUCT.md",
         "source_class": "document",
-        "bytes": 10754
+        "bytes": 13367
       },
       {
         "uri": "majordomus://document/docs/QUALITY.md",
@@ -44796,7 +44796,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 16188
+        "bytes": 16447
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -51891,6 +51891,24 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "rule",
+        "identity": "project.homepage-tells-a-declared-story@1",
+        "title": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
+        "description": "site/data/homepage.toml declares the homepage's sections as an ordered list of ids; the rendered homepage carries exactly those sections, in that order, each with a link or a derived figure, links no feature the product model does not call stable, and carries every command the distribution model gives a newcomer. site/data/nav.toml declares which sections are receipts under [indexing]; the pages below them are noindex and out of the sitemap, and every other page is indexable and in it.",
+        "path": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3906,
+        "tags": [
+          "web",
+          "homepage",
+          "navigation",
+          "projections",
+          "documentation"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.hot-path-reads-once@1",
         "kind": "rule",
         "identity": "project.hot-path-reads-once@1",
@@ -52519,7 +52537,7 @@
         "path": ".ai/repo/rules/project/ui-conformance.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5105,
+        "bytes": 5275,
         "tags": [
           "ui",
           "accessibility",
@@ -53980,6 +53998,22 @@
         "bytes": 6231
       },
       {
+        "uri": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "kind": "test",
+        "identity": "test/cases/333_homepage_narrative.sh",
+        "path": "test/cases/333_homepage_narrative.sh",
+        "source_class": "case",
+        "bytes": 5624
+      },
+      {
+        "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "kind": "test",
+        "identity": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "path": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "source_class": "case",
+        "bytes": 3054
+      },
+      {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
         "kind": "test",
         "identity": "test/cases/33_event_registry.sh",
@@ -55428,7 +55462,7 @@
         "id",
         "version"
       ],
-      "objects": 135
+      "objects": 136
     },
     {
       "name": "scope",
@@ -55483,7 +55517,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 205
+      "objects": 207
     },
     {
       "name": "use-case",

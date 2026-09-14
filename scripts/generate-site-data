@@ -286,14 +286,17 @@ COMMAND_NAMES="$(printf '%s' "$COMMANDS" | jq -r '[.[].name] | join("|")')"
 [ -n "$COMMAND_NAMES" ] || { echo "generate-site-data: the dispatch table in bin/majordomus yielded no commands" >&2; exit 10; }
 COMMAND_RE="^lib/($COMMAND_NAMES)\\.sh$"
 {
-  i=0; first=1; printf '{"schema":1,"statuses":{'; k=0; sfirst=1
+  # statuses is a map for lookup; status_order keeps CLAIMS.yaml's own order, because a template
+  # engine iterates a map sorted by key and would put "advisory" before "guaranteed"
+  i=0; first=1; printf '{"schema":1,"statuses":{'; k=0; sfirst=1; order=''
   while [ -n "$(yv "$Cf" "statuses.$k.id")" ]; do
-    [ "$sfirst" = 1 ] || printf ','; sfirst=0
+    [ "$sfirst" = 1 ] || { printf ','; order="$order,"; }; sfirst=0
     printf '%s:%s' "$(jstr "$(yv "$Cf" "statuses.$k.id")")" "$(jstr "$(yv "$Cf" "statuses.$k.meaning")")"
+    order="$order$(jstr "$(yv "$Cf" "statuses.$k.id")")"
     k=$((k+1))
   done
   [ "$k" -gt 0 ] || { echo "generate-site-data: docs/CLAIMS.yaml declares no statuses" >&2; exit 10; }
-  printf '},"claims":['
+  printf '},"status_order":[%s],"claims":[' "$order"
   while [ -n "$(yv "$Cf" "claims.$i.id")" ]; do
     [ "$first" = 1 ] || printf ','; first=0
     jq -cn --arg id "$(yv "$Cf" "claims.$i.id")" --arg claim "$(yv "$Cf" "claims.$i.claim")" --arg source "$(yv "$Cf" "claims.$i.source")" \

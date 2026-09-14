@@ -13,13 +13,35 @@
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   }
 
-  // The named tokens that actually resolve, plus whatever is passed through verbatim.
+  // A colour token as #rrggbb. The stylesheet declares its palette in oklch(), which Mermaid's
+  // colour parser rejects with an uncaught "Unsupported color format" while rendering, so a
+  // token is resolved by the browser (var() chains included) and read back from one painted
+  // pixel, which is sRGB whatever notation the stylesheet used.
+  var probe = document.createElement('span');
+  var canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 1;
+  var paint = canvas.getContext('2d', { willReadFrequently: true });
+  function colour(name) {
+    if (!tok(name) || !paint) return '';
+    probe.style.color = 'var(' + name + ')';
+    document.body.appendChild(probe);
+    var resolved = getComputedStyle(probe).color;
+    probe.remove();
+    paint.clearRect(0, 0, 1, 1);
+    paint.fillStyle = '#000';
+    paint.fillStyle = resolved;
+    paint.fillRect(0, 0, 1, 1);
+    var px = paint.getImageData(0, 0, 1, 1).data;
+    return '#' + [px[0], px[1], px[2]].map(function (c) { return (c < 16 ? '0' : '') + c.toString(16); }).join('');
+  }
+
+  // The named colour tokens that actually resolve, plus whatever is passed through verbatim.
   function vars(names, extra) {
     var out = {}, key;
     for (key in extra) { if (Object.prototype.hasOwnProperty.call(extra, key)) out[key] = extra[key]; }
     for (key in names) {
       if (!Object.prototype.hasOwnProperty.call(names, key)) continue;
-      var value = tok(names[key]);
+      var value = colour(names[key]);
       if (value) out[key] = value;
     }
     return out;
@@ -41,6 +63,10 @@
       themeVariables: vars({
         primaryColor: '--mj-raised',
         primaryTextColor: '--mj-fg',
+        // edge labels: without these Mermaid's dark theme sets #ccc on #585858, which is 4.43:1
+        // and fails WCAG AA; the page's own text on its own raised surface already passes
+        textColor: '--mj-fg',
+        edgeLabelBackground: '--mj-raised',
         primaryBorderColor: '--mj-line',
         lineColor: '--mj-muted',
         secondaryColor: '--mj-sunken',
