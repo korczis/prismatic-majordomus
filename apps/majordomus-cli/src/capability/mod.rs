@@ -41,6 +41,7 @@ pub mod handler;
 pub mod model;
 pub(crate) mod module;
 pub mod registry;
+pub mod rustdoc;
 pub mod schema;
 
 pub use benchmark::{BenchmarkCases, CaseContext, CaseProvider, NamedCase};
@@ -48,9 +49,10 @@ pub use closure::{Finding, Matrix as ProjectionMatrix, Projection, Row as Projec
 pub use executor::CapabilityExecutor;
 pub use handler::{CapabilityError, Context, Executable, Handler};
 pub use model::{
-    Availability, BenchmarkPolicy, CachePolicy, Capability, CapabilityId, CapabilityKind,
-    CliExposure, Concurrency, Effect, ExecutionPolicy, Exposure, HttpExposure, HttpMethod,
-    McpExposure, McpResource, ModuleId, Provenance, Stability, Visibility, WaiverReason,
+    Availability, BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, Capability, CapabilityId,
+    CapabilityKind, CliExposure, Concurrency, Effect, ExecutionPolicy, Exposure, HttpExposure,
+    HttpMethod, McpExposure, McpResource, ModuleId, Provenance, Stability, Visibility,
+    WaiverReason,
 };
 pub use module::ModuleDescriptor;
 pub use registry::{CapabilityRegistry, Entry, RegistryError};

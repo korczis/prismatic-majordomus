@@ -46,9 +46,32 @@ def is_enum: has("oneOf") and all(.oneOf[]; has("const"));
 
 def url_encode: @uri;
 
+# The route segment of a tag. Zola slugifies a page's path, so an underscore is served as a
+# dash; the projection says the route Zola will actually build rather than hoping they agree.
+def slug: gsub("_"; "-");
+# The HTML id of an operation, as the templates form it.
+def op_anchor: "op-" + gsub("\\."; "-");
+
 . as $doc
 | ($doc.info) as $info
 | ($doc["x-majordomus"]) as $x
+# Every operation and every schema has exactly one page. The reference was one route of 38,000
+# elements, which the browser audit could not read inside its deadline; it is now an index, a
+# page per tag, and one page of shared types. An operation lives on its tag's page, or on the
+# shared page when it carries more than one tag. A schema lives on the page of the one tag whose
+# operations reach it — directly, or through the schemas that refer to it — and on the shared
+# page when two tags reach it or none does. Nothing else decides where a thing is published.
+| ([ $doc.paths | to_entries[] | .value | to_entries[] | .value ]) as $ops
+| ($ops | map({ key: .operationId, value: (if ((.tags // []) | length) == 1 then .tags[0] else "shared" end) }) | from_entries) as $op_home
+| ($doc.components.schemas | to_entries | map({ key: .key, value: (.value | [.. | objects | select(has("$ref")) | refname] | unique) }) | from_entries) as $refs_of
+| ($doc.components.schemas | keys | map(. as $n | { key: $n, value: [ $refs_of | to_entries[] | select(.value | index($n)) | .key ] }) | from_entries) as $referrers
+| ($doc.components.schemas | keys | map(. as $n | { key: $n, value: [ $ops[] | select(([.. | objects | select(has("$ref")) | refname] | index($n)) != null) | $op_home[.operationId] ] | unique }) | from_entries) as $direct_tags
+| def reach($n; $seen):
+    if ($seen | index($n)) then [] else
+      ($direct_tags[$n] // []) + ([ ($referrers[$n] // [])[] | reach(.; $seen + [$n]) ] | add // [])
+    end;
+  ($doc.components.schemas | keys | map(. as $n | (reach($n; []) | unique) as $t
+    | { key: $n, value: (if ($t | length) == 1 and $t[0] != "shared" then $t[0] else "shared" end) }) | from_entries) as $schema_home
 | {
     schema: 1,
     source: "docs/generated/openapi.json",
@@ -70,14 +93,14 @@ def url_encode: @uri;
     infrastructure: [ ($x.infrastructure // [])[]
       | { id: .id, path: .path, what: .what, availability: .availability } ],
     tags: [ ($doc.tags // [])[] | . as $t
-      | { name: $t.name, description: (($t.description // "") | demoted),
+      | { name: $t.name, slug: ($t.name | slug), description: (($t.description // "") | demoted),
           operations: [ $doc.paths | to_entries[] | .key as $path | .value | to_entries[]
             | .key as $method | .value as $op
             | select(($op.tags // []) | index($t.name) != null)
             | ($op.parameters // []) as $params
             | ($op.requestBody.content["application/json"] // {}) as $body
             | {
-                id: $op.operationId, method: ($method | ascii_upcase), path: $path,
+                id: $op.operationId, home: ($op_home[$op.operationId] | slug), primary: ((($op.tags // [])[0]) == $t.name), method: ($method | ascii_upcase), path: $path,
                 summary: ($op.summary // ""), description: (($op.description // "") | demoted),
                 kind: ($op["x-majordomus-kind"] // ""), stability: ($op["x-majordomus-stability"] // ""),
                 benchmark: ($op["x-majordomus-benchmark"].policy // ""),
@@ -107,13 +130,22 @@ def url_encode: @uri;
                   end)
               } ] } ],
     schemas: [ $doc.components.schemas | to_entries[] | .key as $name | .value as $s
-      | { name: $name, description: (($s.description // "") | demoted), type: ($s | typename),
+      | { name: $name, home: ($schema_home[$name] | slug), description: (($s.description // "") | demoted), type: ($s | typename),
           is_enum: ($s | is_enum),
           values: (if ($s | is_enum) then [ $s.oneOf[] | { value: (.const | tostring), description: ((.description // "") | demoted) } ] else [] end),
           properties: ($s | properties),
           variants: (if ($s | has("oneOf")) and (($s | is_enum) | not) then ($s | variants) else [] end),
           used_by: [ $doc.paths | to_entries[] | .value | to_entries[] | .value | select(([.. | objects | select(has("$ref")) | refname] | index($name)) != null) | .operationId ],
           used_by_schemas: [ $doc.components.schemas | to_entries[] | select(.key != $name) | select((.value | refs | index($name)) != null) | .key ] } ],
+    # where each thing lives, for a link from any page, and the map an old single-page anchor
+    # (#op-…, #tag-…, #schema-…) is sent on with: every key is an id the reference used to carry
+    schema_homes: ($schema_home | map_values(slug)),
+    op_homes: ($op_home | map_values(slug)),
+    shared_operations: [ $ops[] | select($op_home[.operationId] == "shared") | .operationId ],
+    anchors: ( ($op_home | to_entries | map({ key: (.key | op_anchor), value: ("docs/api/" + (.value | slug) + "/") }))
+             + (($doc.tags // []) | map({ key: ("tag-" + .name), value: ("docs/api/" + (.name | slug) + "/") }))
+             + ($schema_home | to_entries | map({ key: ("schema-" + .key), value: ("docs/api/" + (.value | slug) + "/") }))
+             | from_entries ),
     counts: { operations: ([ $doc.paths | to_entries[] | .value | to_entries[] ] | length),
               tags: (($doc.tags // []) | length), schemas: ($doc.components.schemas | length) }
   }

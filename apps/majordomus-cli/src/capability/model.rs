@@ -206,6 +206,69 @@ pub enum WaiverReason {
     PublishedHistory,
 }
 
+/// What a repository must hold before a conditional benchmark requirement applies to it.
+/// Typed, like a waiver's reason, so that the condition is a reviewable statement on the
+/// descriptor and never a provider quietly returning nothing.
+///
+/// ```
+/// use majordomus_cli::capability::BenchmarkPrecondition;
+/// let p: BenchmarkPrecondition = serde_json::from_str(r#""plan_holds_an_issue""#).unwrap();
+/// assert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum BenchmarkPrecondition {
+    /// The plan holds at least one issue. A command whose every honest case is a refusal
+    /// chosen from an issue's own status has no such refusal in a plan with no issue: the
+    /// only answer there is a lookup miss, which times an error path and is not the
+    /// operation.
+    PlanHoldsAnIssue,
+}
+
+impl BenchmarkPrecondition {
+    /// Does the repository this index describes hold what the precondition names?
+    ///
+    /// It is answered from the index, so the same capability can be a requirement in one
+    /// repository and inapplicable in another without any provider returning nothing.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::BenchmarkPrecondition;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let p = BenchmarkPrecondition::PlanHoldsAnIssue;
+    ///
+    /// // a repository whose plan holds nothing: the requirement does not apply here
+    /// assert!(!p.holds(&repo.index().unwrap()));
+    ///
+    /// // declare where issues live, as `majordomus init` does, and put one issue in the plan
+    /// let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+    /// let mut text = std::fs::read_to_string(&sources).unwrap();
+    /// text.push_str("  - id: issue\n    kind: issue\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/project/issues/*.yaml'\n    required: false\n");
+    /// std::fs::write(&sources, text).unwrap();
+    /// let issues = repo.root().join(".ai/repo/project/issues");
+    /// std::fs::create_dir_all(&issues).unwrap();
+    /// std::fs::write(
+    ///     issues.join("I0001.yaml"),
+    ///     "id: I0001\nmilestone: M000\ntitle: A first issue\nslug: a-first-issue\n\
+    ///      priority: p1\nprofile: implementation\nobjective: \"Do the first thing.\"\n\
+    ///      scope:\n  - lib\nacceptance_criteria:\n  - It is done\nvalidation:\n  - \"true\"\n\
+    ///      evidence_required:\n  - proof\n",
+    /// )
+    /// .unwrap();
+    ///
+    /// // the same precondition now holds, answered from the index alone
+    /// assert!(p.holds(&repo.index().unwrap()));
+    /// ```
+    pub fn holds(self, index: &crate::index::Index) -> bool {
+        match self {
+            Self::PlanHoldsAnIssue => index.objects.iter().any(|o| o.kind == crate::plan::ISSUE),
+        }
+    }
+}
+
 /// Whether the capability is a benchmark target. `Required` is the default and the norm:
 /// every executable capability is timed directly and through every transport it is
 /// exposed on, with the cases its input type provides.
@@ -214,11 +277,46 @@ pub enum WaiverReason {
 pub enum BenchmarkPolicy {
     /// Timed directly and through every exposure; coverage fails without a case.
     Required,
+    /// Required exactly like `Required` in a repository where the precondition holds, and
+    /// reported as inapplicable — never covered, never waived — where it does not. Not a
+    /// waiver: with the precondition met and no case, the requirement is missing.
+    RequiredWhen {
+        /// What the repository must hold.
+        precondition: BenchmarkPrecondition,
+    },
     /// Not timed, for the typed reason; coverage reports it as waived, never as covered.
     Waived {
         /// Why.
         reason: WaiverReason,
     },
+}
+
+impl BenchmarkPolicy {
+    /// Is the capability a benchmark target at all — required, unconditionally or on a
+    /// precondition? Only a waiver says no.
+    ///
+    /// A conditional requirement is a target even where its precondition does not hold:
+    /// being inapplicable to one repository is not the same as being waived, and coverage
+    /// only decides applicability after this has said the capability is timed at all.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{BenchmarkPolicy, BenchmarkPrecondition, WaiverReason};
+    ///
+    /// assert!(BenchmarkPolicy::Required.is_target());
+    ///
+    /// // conditional, and still a target: the precondition decides applicability, not this
+    /// let conditional = BenchmarkPolicy::RequiredWhen {
+    ///     precondition: BenchmarkPrecondition::PlanHoldsAnIssue,
+    /// };
+    /// assert!(conditional.is_target());
+    ///
+    /// // only a waiver takes a capability out of the benchmark set
+    /// let waived = BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory };
+    /// assert!(!waived.is_target());
+    /// ```
+    pub fn is_target(self) -> bool {
+        !matches!(self, Self::Waived { .. })
+    }
 }
 
 /// Whether, and how, the executor keeps results of this capability. Cache lives in the
