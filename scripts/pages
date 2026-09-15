@@ -26,6 +26,9 @@
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
 #                                         or GitHub has not built it yet)
+#   scripts/pages checkout [--verify]     the fetch-depth deploy.checkout implies; --verify
+#                                         measures this clone instead and exits 10 when it
+#                                         cannot decide a ref (shallow, or no tags)
 #   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
@@ -167,6 +170,48 @@ cmd_check() {
 # escalation is about how much validation a change to the pipeline deserves, not about what the
 # published bytes are derived from: changing scripts/ci-plan or the justfile makes every gate
 # run and cannot move a pixel. Publication follows the inputs, and the inputs are named.
+cmd_checkout() {
+  # The publishing clone's requirement, from deploy.checkout and nowhere else. Without
+  # --verify it renders the requirement as the `fetch-depth` actions/checkout must be given,
+  # which is what test/cases/97_pages_fast_path.sh holds the workflow to. With --verify it
+  # measures the clone this process is running in and refuses one that cannot decide a ref —
+  # the declaration proved on every run, rather than trusted because it is written down.
+  local history tags
+  history="$(m deploy.checkout.history)"
+  tags="$(m deploy.checkout.tags)"
+  case "$history" in
+    full) ;;
+    "") echo "pages: ${MODEL#"$ROOT"/} declares no deploy.checkout.history" >&2; return 10 ;;
+    *)  echo "pages: deploy.checkout.history: '$history' is not a depth this can render;" \
+             "link-check resolves commit links, for which a truncated history is never" \
+             "partially sufficient. The only meaningful value is 'full'." >&2; return 10 ;;
+  esac
+  case "$tags" in
+    required|optional) ;;
+    *) echo "pages: deploy.checkout.tags: '$tags' is neither required nor optional" >&2; return 10 ;;
+  esac
+
+  if [ "${1:-}" != --verify ]; then
+    printf '%s\n' 0            # fetch-depth for a full history
+    return 0
+  fi
+
+  local shallow count bad=0
+  shallow="$(git -C "$ROOT" rev-parse --is-shallow-repository 2>/dev/null || echo unknown)"
+  count="$(git -C "$ROOT" tag 2>/dev/null | wc -l | tr -d " ")"
+  [ "$shallow" = false ] || { echo "pages: the checkout is shallow (is-shallow-repository=$shallow), and deploy.checkout.history is '$history'" >&2; bad=1; }
+  if [ "$tags" = required ] && [ "${count:-0}" -eq 0 ]; then
+    echo "pages: the checkout carries no tags, and deploy.checkout.tags is 'required'" >&2; bad=1
+  fi
+  if [ "$bad" = 1 ]; then
+    echo "pages: this clone cannot decide a ref, so scripts/site-check must refuse the links" \
+         "that resolve against git, and the publication stops. Check out with fetch-depth:" \
+         "$(cmd_checkout)." >&2
+    return 10
+  fi
+  echo "pages: checkout ok — full history, $count tag(s); every link that resolves against git is decidable"
+}
+
 cmd_paths() {
   [ -f "$GATES" ] || { echo "pages: no gate model at ${GATES#"$ROOT"/}" >&2; return 12; }
   GFLAT="$(mktemp "${TMPDIR:-/tmp}/mj-pages-gates.XXXXXX")"
@@ -500,12 +545,84 @@ cmd_built() {
     errored)
       [ "$porcelain" = 1 ] || {
         printf "pages built: GitHub's own build of %s ERRORED: %s\n" "${commit:0:12}" "$berror" >&2
-        printf "             the branch is right and the site is not. Re-run the build by dispatching the\n             pages workflow, or push %s again.\n" "$branch" >&2; }
+        printf "             the branch is right and the site is not: this is GitHub's builder, not\n             this repository. Ask for the build again with: scripts/pages rebuild\n"; }
       return 10 ;;
     *)
       [ "$porcelain" = 1 ] || printf "pages built: GitHub's build of %s is %s; not a verdict\n" "${commit:0:12}" "$status" >&2
       return 12 ;;
   esac
+}
+
+# ---------------------------------------------------------------- rebuild
+# Ask GitHub to build the branch again — and only when that is the thing that helps.
+#
+# An owed publication has two causes and two different remedies, and tonight both happened.
+# If gh-pages does not carry the trunk's site, deploying is the fix. If gh-pages is right and
+# GitHub's own builder errored, deploying again changes nothing: the tree it would push is the
+# one already there. On 2026-09-14 three consecutive builds of a correct tree errored with
+# "Page build failed." and no message; a direct request built the identical commit and it went
+# through. So a rebuild is a different action from a redeploy, not a dressed-up retry of one.
+#
+# TWO HAZARDS, BOTH MEASURED RATHER THAN IMAGINED.
+#
+#   A request PREEMPTS a build in flight. Asking while GitHub is building kills that build, so
+#   one slow build becomes two failed ones. The predicate is therefore "the build of this
+#   commit errored AND nothing is building", never "the build errored".
+#
+#   The state is not stable under one reading: `building` at 01:03 had become `errored` by the
+#   next look, and the repository-level status disagreed with the per-build list at the same
+#   moment. So this reads through `pages built --porcelain` — the one place this repository
+#   reads that state — twice: once about the commit in question, once about the newest build,
+#   which is how "nothing is building" is asked. It does not add a third reader.
+#
+# Exit: 0 a build was requested, or none was needed; 12 the state could not be read, or a build
+# is in flight and asking would preempt it. Never 0 for a request that was not made.
+cmd_rebuild() {
+  local branch="gh-pages" commit="" slug row status newest nstatus
+  while [ $# -gt 0 ]; do case "$1" in
+    --branch) branch="$2"; shift 2 ;;
+    --commit) commit="$2"; shift 2 ;;
+    *) echo "pages rebuild: unknown option $1" >&2; exit 2 ;;
+  esac; done
+
+  row="$(cmd_built --branch "$branch" ${commit:+--commit "$commit"} --porcelain 2>/dev/null)" || true
+  status="$(printf '%s' "$row" | cut -f1)"
+  [ -n "$status" ] && [ "$status" != unreadable ] || {
+    echo "pages rebuild: the build state could not be read; not asking blindly (no gh, no token, or no pages:read)" >&2
+    return 12; }
+  [ -z "$commit" ] && commit="$(printf '%s' "$row" | cut -f2)"
+
+  case "$status" in
+    built)
+      printf 'pages rebuild: the build of %s succeeded; nothing to ask for\n' "${commit:0:12}"
+      return 0 ;;
+    building|queued)
+      printf 'pages rebuild: a build of %s is %s; a request would preempt it\n' "${commit:0:12}" "$status" >&2
+      return 12 ;;
+  esac
+
+  # errored, and nothing of this commit is in flight — but a build of something else may be
+  newest="$(cmd_built --branch "$branch" --porcelain 2>/dev/null)" || true
+  nstatus="$(printf '%s' "$newest" | cut -f1)"
+  case "$nstatus" in
+    building|queued)
+      printf 'pages rebuild: GitHub is %s another commit; a request would preempt it\n' "$nstatus" >&2
+      return 12 ;;
+  esac
+
+  slug="${GITHUB_REPOSITORY:-}"
+  [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+  [ -n "$slug" ] || { echo "pages rebuild: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
+
+  printf 'pages rebuild: the build of %s errored; asking GitHub to build it again\n' "${commit:0:12}"
+  gh api -X POST "repos/$slug/pages/builds" >/dev/null 2>&1 || {
+    echo "pages rebuild: the request was refused (no token, or no pages:write)" >&2; return 12; }
+
+  # the request was accepted; what came of it is read, not assumed — a queued build errors too
+  row="$(cmd_built --branch "$branch" --porcelain 2>/dev/null)" || true
+  status="$(printf '%s' "$row" | cut -f1)"
+  printf 'pages rebuild: requested; GitHub now reports %s\n' "${status:-nothing}"
+  return 0
 }
 
 case "${1:-}" in
@@ -515,10 +632,12 @@ case "${1:-}" in
   current)     shift; cmd_current "$@" && cmd_derived "$@" ;;
   derived)     shift; cmd_derived "$@" ;;
   paths)       shift; cmd_paths "$@" ;;
+  checkout)    shift; cmd_checkout "$@" ;;
   budget)      shift; cmd_budget "$@" ;;
   benchmark)   shift; cmd_benchmark "$@" ;;
   report)      shift; cmd_report "$@" ;;
   built)       shift; cmd_built "$@" ;;
+  rebuild)     shift; cmd_rebuild "$@" ;;
   verify)      shift; cmd_verify "$@" ;;
   -h|--help|"") sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) echo "pages: unknown command $1 (scripts/pages --help)" >&2; exit 2 ;;

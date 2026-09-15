@@ -89,4 +89,14 @@ S="$PWD/shallow"; rm -rf "$S"; git clone -q --depth 1 "file://$F" "$S"
 cp -R "$F/site/public" "$S/site/"; cp "$F/site/data/generated/project.json" "$S/site/data/generated/"
 rc=0; MJ_ROOT="$S" "$CHECK" > out.txt 2>&1 || rc=$?
 [ "$rc" = 12 ] || { echo "    a shallow clone reported exit $rc instead of refusing (12)"; cat out.txt; exit 1; }
-expect_grep 'cannot be decided in a shallow clone' out.txt
+# The refusal must say it could not decide and name the remedy. Asserted on those two rather
+# than on the whole sentence: the message now names which half the clone lacks (history, tags,
+# or both), because a `--depth 1` clone is missing both and only the depth used to be reported.
+expect_grep 'cannot be decided' out.txt
+expect_grep 'fetch-depth: 0' out.txt
+# and it must not deny what it could not see: tags are absent from this clone, not from the repo
+# `if`, not `grep ... && { ... }`: the good case is grep finding nothing, and under `set -e` that
+# compound returns non-zero and takes the case down exactly when it is passing.
+if grep -q 'does not exist' out.txt; then
+  echo "    the refusal also denied a tag it was never given"; cat out.txt; exit 1
+fi
