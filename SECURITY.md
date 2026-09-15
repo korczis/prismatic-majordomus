@@ -19,6 +19,19 @@ it is described as real.
   and it sends nothing but the request. `test/cases/08_no_forbidden_constructs.sh` refuses
   every other network client in `bin/`, `lib/` and `share/`, and refuses this one if it
   stops being that single bounded call.
+- **The mesh is off until a person turns it on.** The Rust executable's mesh (ADR 0050,
+  ADR 0067) is the one declared exception on the executable's side: no discovery socket and
+  no link opens until the repository commits a `mesh` declaration with `enabled: true`.
+  Enabled, a server announces a signed advertisement (its key, runtime, endpoints, version
+  and repository identity digest — no path, secret or content) and links only to runtimes of
+  the same repository whose keys the declaration trusts; over those links it shares session
+  metadata (client, intent, issue, branch, head), claim scopes, review subjects and handover
+  bodies a person explicitly published. Every message is Ed25519-signed; nothing is
+  encrypted, so a mesh belongs on a private network or an overlay. Nothing a peer sends
+  executes anything, and the only file a peer's event can cause to be written is a handover,
+  into this checkout's handovers directory, by an explicit `mesh handover consume`.
+  `scripts/ci/mesh-check`, `apps/majordomus-cli/tests/mesh_cooperation.rs` and
+  `test/mesh-lab/run` hold it; `docs/MESH.md` has the threat model.
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.

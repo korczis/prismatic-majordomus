@@ -180,6 +180,257 @@ pub enum MeshCommand {
     Identity(MeshQueryArgs),
     /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
     Doctor(MeshQueryArgs),
+    /// Every machine, runtime and session this checkout's server cooperates with, with each link's state
+    Peers(MeshQueryArgs),
+    /// One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here
+    Peer(MeshPeerArgs),
+    /// The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest
+    State(MeshQueryArgs),
+    /// The cooperation journal's events after a Lamport stamp, in Lamport order
+    Events(MeshEventsArgs),
+    /// Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails
+    Verify(MeshQueryArgs),
+    /// Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them
+    Claim(MeshClaimArgs),
+    /// Release a claim this server's current run holds
+    Release(MeshReleaseArgs),
+    /// Open, update or close a session on the mesh
+    Session(MeshSessionArgs),
+    /// Publish a handover of this checkout to the mesh, or consume one another runtime published
+    Handover(MeshHandoverArgs),
+    /// Ask the mesh for a review, or answer a request
+    Review(MeshReviewArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh peer`.
+pub struct MeshPeerArgs {
+    /// The runtime key `<node>-<runtime>`, or a node id for its first runtime
+    pub runtime: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh events`.
+pub struct MeshEventsArgs {
+    /// Only events whose Lamport stamp is above this
+    #[arg(long)]
+    pub after: Option<u64>,
+    /// At most this many (default 100, at most 1000)
+    #[arg(long)]
+    pub limit: Option<u64>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh claim`.
+pub struct MeshClaimArgs {
+    /// Repository-relative paths to claim
+    #[arg(required = true)]
+    pub scope: Vec<String>,
+    /// The claiming session's id within this runtime (opened when new)
+    #[arg(long)]
+    pub session: String,
+    /// What the claim is for
+    #[arg(long)]
+    pub intent: Option<String>,
+    /// An advisory claim: overlaps are reported, never refused
+    #[arg(long)]
+    pub advisory: bool,
+    /// The issue the claim is for
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// The task the session works under
+    #[arg(long)]
+    pub task: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh release`.
+pub struct MeshReleaseArgs {
+    /// The claim's key, `<stream>/<claim>`, as `mesh claim` printed it
+    pub claim: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh session`.
+pub struct MeshSessionArgs {
+    #[command(subcommand)]
+    /// `open` or `close`.
+    pub command: MeshSessionCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh session` subcommands.
+pub enum MeshSessionCommand {
+    /// Open or update a session: what it is, what it does, where
+    Open(MeshSessionOpenArgs),
+    /// Close a session; its claims end with it on every linked runtime
+    Close(MeshSessionCloseArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh session open`.
+pub struct MeshSessionOpenArgs {
+    /// The session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    /// The client (`claude-code`, `codex`, `cli`)
+    #[arg(long)]
+    pub client: Option<String>,
+    /// The worker's name for itself
+    #[arg(long)]
+    pub worker: Option<String>,
+    /// What the session is doing
+    #[arg(long)]
+    pub intent: Option<String>,
+    /// The task id
+    #[arg(long)]
+    pub task: Option<String>,
+    /// The issue
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// The milestone
+    #[arg(long)]
+    pub milestone: Option<String>,
+    /// The branch
+    #[arg(long)]
+    pub branch: Option<String>,
+    /// The head commit
+    #[arg(long)]
+    pub head: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh session close`.
+pub struct MeshSessionCloseArgs {
+    /// The session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh handover`.
+pub struct MeshHandoverArgs {
+    #[command(subcommand)]
+    /// `publish` or `consume`.
+    pub command: MeshHandoverCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh handover` subcommands.
+pub enum MeshHandoverCommand {
+    /// Publish this checkout's newest handover record (or the one named) to every linked runtime
+    Publish(MeshHandoverPublishArgs),
+    /// Consume a handover another runtime published, writing it as a local record `handover --resolve` finds
+    Consume(MeshHandoverConsumeArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh handover publish`.
+pub struct MeshHandoverPublishArgs {
+    /// The record, relative to the repository root, under .ai/local/state/handovers/
+    #[arg(long)]
+    pub path: Option<String>,
+    /// The issue the handover belongs to
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// The milestone it belongs to
+    #[arg(long)]
+    pub milestone: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh handover consume`.
+pub struct MeshHandoverConsumeArgs {
+    /// The handover's id, as `mesh state` lists it
+    pub handover: String,
+    /// The consuming session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    /// Record the consumption without writing a local handover record
+    #[arg(long)]
+    pub no_materialize: bool,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh review`.
+pub struct MeshReviewArgs {
+    #[command(subcommand)]
+    /// `request` or `answer`.
+    pub command: MeshReviewCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh review` subcommands.
+pub enum MeshReviewCommand {
+    /// Ask for a review of a branch, commit or pull request
+    Request(MeshReviewRequestArgs),
+    /// Answer a review request
+    Answer(MeshReviewAnswerArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh review request`.
+pub struct MeshReviewRequestArgs {
+    /// What to review: a branch, a commit, a pull request
+    pub subject: String,
+    /// The requesting session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    /// A path the review covers (repeatable)
+    #[arg(long)]
+    pub scope: Vec<String>,
+    /// The issue
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// The runtime asked, `<node>-<runtime>`
+    #[arg(long)]
+    pub reviewer: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh review answer`.
+pub struct MeshReviewAnswerArgs {
+    /// The request's key, `<stream>/<review>`
+    pub request: String,
+    /// The answering session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    /// `approved`, `changes_requested` or `commented`
+    #[arg(long, value_parser = ["approved", "changes_requested", "commented"])]
+    pub verdict: String,
+    /// The note
+    #[arg(long)]
+    pub note: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -3443,6 +3694,149 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "doctor"],
             setup: &[],
             expect: Expect::StdoutContains(&["protocol"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh peers",
+        examples: &[ExampleDoc {
+            id: "mesh-peers",
+            title: "Who cooperates, machine by machine",
+            description: "Machines, runtimes, sessions and claims, from this checkout's running server. With no server, or with cooperation off, the answer says so and why — the mesh lives in the server's memory.",
+            argv: &["mesh", "peers"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh peer",
+        examples: &[ExampleDoc {
+            id: "mesh-peer",
+            title: "One runtime, by its key",
+            description: "A runtime's machine, liveness, link, sessions and claims. A runtime the server does not know is `not found` with the reason; here no server runs, and the reason says that.",
+            argv: &["mesh", "peer", "00000000000000000000000000000000-0000000000000000"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["not found"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh state",
+        examples: &[ExampleDoc {
+            id: "mesh-state",
+            title: "The state every linked runtime converges on",
+            description: "Sessions, claims with their standing, handovers, reviews and the digest two runtimes compare — or, with no running server, why there is none.",
+            argv: &["mesh", "state"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh events",
+        examples: &[ExampleDoc {
+            id: "mesh-events",
+            title: "One page of the cooperation journal",
+            description: "The journal's signed events above a Lamport stamp; `--after` is the previous page's `lamport`. With no running server the answer is the reason.",
+            argv: &["mesh", "events", "--after", "0", "--limit", "50"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh verify",
+        examples: &[ExampleDoc {
+            id: "mesh-verify",
+            title: "Prove cooperation now, or say why it cannot",
+            description: "A live round with every peer the server dials and the local checks, each failure with its impact and remedy. It exits 10 when anything fails — here, because no server runs to verify.",
+            argv: &["mesh", "verify"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh claim",
+        examples: &[ExampleDoc {
+            id: "mesh-claim",
+            title: "Claim paths for a session across the mesh",
+            description: "An exclusive claim that meets a live exclusive claim on any linked runtime exits 10 with claim_conflict naming it. A claim needs the running server that replicates it; without one the command exits 10 and says so.",
+            argv: &["mesh", "claim", "docs", "--session", "s1", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh release",
+        examples: &[ExampleDoc {
+            id: "mesh-release",
+            title: "Release a claim this server holds",
+            description: "Only the holder's current run releases a claim; a dead holder's claim expires instead. Without a running server there is nothing to release, and the command exits 10.",
+            argv: &["mesh", "release", "stream/c-000000000000"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh session open",
+        examples: &[ExampleDoc {
+            id: "mesh-session-open",
+            title: "Say what a session is doing, to every linked runtime",
+            description: "Client, intent, issue and branch of a session, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "session", "open", "--session", "s1", "--client", "codex", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh session close",
+        examples: &[ExampleDoc {
+            id: "mesh-session-close",
+            title: "Close a session and end its claims",
+            description: "Every claim the session holds ends with it, on every linked runtime. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "session", "close", "--session", "s1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh handover publish",
+        examples: &[ExampleDoc {
+            id: "mesh-handover-publish",
+            title: "Publish this checkout's newest handover",
+            description: "The newest record under .ai/local/state/handovers/ travels to every linked runtime, bounded and identified by its body's digest. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "handover", "publish", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh handover consume",
+        examples: &[ExampleDoc {
+            id: "mesh-handover-consume",
+            title: "Consume a handover another runtime published",
+            description: "Records the consumption and writes the handover where `majordomus handover --resolve` finds it on the same branch. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "handover", "consume", "00000000000000000000000000000000", "--session", "s1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh review request",
+        examples: &[ExampleDoc {
+            id: "mesh-review-request",
+            title: "Ask the mesh for a review",
+            description: "A named reviewer must be a linked runtime carrying the reviews feature, or the request exits 10 with feature_unsupported. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "review", "request", "feature/x", "--session", "s1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh review answer",
+        examples: &[ExampleDoc {
+            id: "mesh-review-answer",
+            title: "Answer a review request from any runtime",
+            description: "approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "review", "answer", "stream/r-000000000000", "--session", "s1", "--verdict", "approved"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

@@ -227,6 +227,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         broadcast: Default::default(),
         rendezvous: Default::default(),
         trust: Default::default(),
+        cooperation: Default::default(),
     };
     let a_id = NodeIdentity::load_or_create(&dir.path().join("a.json")).unwrap();
     let b_id = NodeIdentity::load_or_create(&dir.path().join("b.json")).unwrap();

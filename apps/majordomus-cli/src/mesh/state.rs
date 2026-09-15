@@ -19,7 +19,7 @@
 //!   semantics for a claim on this machine and on another.
 //!
 //! ```
-//! use majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, Liveness};
+//! use majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};
 //! use majordomus_cli::mesh::identity::NodeIdentity;
 //! use majordomus_cli::mesh::state::{fold, ClaimState};
 //! use std::sync::Arc;
@@ -28,7 +28,7 @@
 //!     "repo".into(), None).unwrap();
 //! j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
 //!     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None }).unwrap();
-//! let state = fold(&j.events(), &|_| Liveness::Own);
+//! let state = fold(&j.events(), &|_| StreamLiveness::Own);
 //! assert_eq!(state.claims[0].state, ClaimState::Held);
 //! ```
 
@@ -38,7 +38,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::journal::{
-    canonical_json, ClaimMode, EventBody, HandoverBody, Liveness, MeshEvent, SessionInfo, StreamId,
+    canonical_json, ClaimMode, EventBody, HandoverBody, MeshEvent, SessionInfo, StreamId,
+    StreamLiveness,
 };
 
 /// A session's standing.
@@ -225,7 +226,10 @@ pub struct CooperationState {
 
 /// Fold events into state. `liveness` answers for each stream; the caller supplies the
 /// journal's verdicts, a test supplies whatever it is testing.
-pub fn fold(events: &[MeshEvent], liveness: &dyn Fn(&StreamId) -> Liveness) -> CooperationState {
+pub fn fold(
+    events: &[MeshEvent],
+    liveness: &dyn Fn(&StreamId) -> StreamLiveness,
+) -> CooperationState {
     let mut ordered: Vec<&MeshEvent> = events.iter().collect();
     ordered.sort_by(|a, b| (a.lamport, &a.stream, a.seq).cmp(&(b.lamport, &b.stream, b.seq)));
     ordered.dedup_by(|a, b| a.stream == b.stream && a.seq == b.seq);
@@ -235,6 +239,7 @@ pub fn fold(events: &[MeshEvent], liveness: &dyn Fn(&StreamId) -> Liveness) -> C
     let mut handovers: BTreeMap<String, HandoverView> = BTreeMap::new();
     let mut reviews: BTreeMap<String, ReviewView> = BTreeMap::new();
     let mut opaque = 0usize;
+    let mut closed_at: BTreeMap<String, u64> = BTreeMap::new();
 
     for event in ordered {
         let Some(body) = event.body() else {
@@ -260,7 +265,12 @@ pub fn fold(events: &[MeshEvent], liveness: &dyn Fn(&StreamId) -> Liveness) -> C
                 );
             }
             EventBody::SessionClosed { session } => {
-                if let Some(view) = sessions.get_mut(&key(&session)) {
+                let k = key(&session);
+                // A close ends every claim acquired before it, even if the same session id
+                // opens again later (a board position is reused): those claims stay ended.
+                let closed = closed_at.entry(k.clone()).or_insert(0);
+                *closed = (*closed).max(event.lamport);
+                if let Some(view) = sessions.get_mut(&k) {
                     view.state = SessionState::Closed;
                     view.updated_lamport = event.lamport;
                 }
@@ -342,7 +352,12 @@ pub fn fold(events: &[MeshEvent], liveness: &dyn Fn(&StreamId) -> Liveness) -> C
                 verdict,
                 note,
             } => {
-                if let Some(view) = reviews.get_mut(&request) {
+                // A review is an independent verdict: the session that asked for it cannot
+                // answer it. Admission refuses that; a peer that writes one anyway is ignored.
+                if let Some(view) = reviews
+                    .get_mut(&request)
+                    .filter(|view| view.session != key(&session))
+                {
                     view.state = ReviewState::Answered;
                     view.answers.push(ReviewAnswer {
                         session: key(&session),
@@ -354,7 +369,7 @@ pub fn fold(events: &[MeshEvent], liveness: &dyn Fn(&StreamId) -> Liveness) -> C
         }
     }
 
-    // Liveness: a session or claim of a dead stream has ended, whatever it last said.
+    // StreamLiveness: a session or claim of a dead stream has ended, whatever it last said.
     for view in sessions.values_mut() {
         if view.state == SessionState::Active && !liveness(&view.stream).is_alive() {
             view.state = SessionState::Expired;
@@ -366,6 +381,11 @@ pub fn fold(events: &[MeshEvent], liveness: &dyn Fn(&StreamId) -> Liveness) -> C
         }
         if !liveness(&view.stream).is_alive() {
             view.state = ClaimState::Expired("its runtime stopped beating".into());
+        } else if closed_at
+            .get(&view.session)
+            .is_some_and(|closed| view.acquired_lamport < *closed)
+        {
+            view.state = ClaimState::Expired("its session closed".into());
         } else if let Some(session) = sessions.get(&view.session) {
             if session.state != SessionState::Active {
                 view.state = ClaimState::Expired("its session closed".into());
@@ -388,7 +408,11 @@ pub fn fold(events: &[MeshEvent], liveness: &dyn Fn(&StreamId) -> Liveness) -> C
             Some((winner, _, _)) => claim.state = ClaimState::Conflicted(winner.clone()),
             None => {
                 claim.state = ClaimState::Held;
-                winners.push((claim.key.clone(), claim.session.clone(), claim.scope.clone()));
+                winners.push((
+                    claim.key.clone(),
+                    claim.session.clone(),
+                    claim.scope.clone(),
+                ));
             }
         }
     }
@@ -506,20 +530,27 @@ mod tests {
     }
 
     fn sync(from: &Journal, to: &Journal) {
-        to.ingest(&from.missing_for(&to.marks(), usize::MAX), &|_: &MeshEvent| {
-            Ok::<(), Rejection>(())
-        });
+        to.ingest(
+            &from.missing_for(&to.marks(), usize::MAX),
+            &|_: &MeshEvent| Ok::<(), Rejection>(()),
+        );
     }
 
-    fn all_live(_: &StreamId) -> Liveness {
-        Liveness::Live
+    fn all_live(_: &StreamId) -> StreamLiveness {
+        StreamLiveness::Live
     }
 
     #[test]
     fn a_remote_claim_is_seen_and_refuses_a_conflicting_admission() {
         let a = journal("0000000000000001");
         let b = journal("0000000000000002");
-        claim(&a, "c1", "s1", &["apps/majordomus-cli"], ClaimMode::Exclusive);
+        claim(
+            &a,
+            "c1",
+            "s1",
+            &["apps/majordomus-cli"],
+            ClaimMode::Exclusive,
+        );
         sync(&a, &b);
         let state = fold(&b.events(), &all_live);
         assert_eq!(state.claims.len(), 1);
@@ -530,7 +561,11 @@ mod tests {
             &["apps".into()],
             ClaimMode::Exclusive,
         );
-        assert_eq!(conflicts.len(), 1, "B's exclusive claim over apps meets A's");
+        assert_eq!(
+            conflicts.len(),
+            1,
+            "B's exclusive claim over apps meets A's"
+        );
         assert!(
             admission_conflicts(&state, "x", &["docs".into()], ClaimMode::Exclusive).is_empty()
         );
@@ -546,7 +581,7 @@ mod tests {
         let b = journal("0000000000000002");
         claim(&a, "c1", "s1", &["apps"], ClaimMode::Exclusive);
         sync(&a, &b);
-        let dead = fold(&b.events(), &|_| Liveness::Expired);
+        let dead = fold(&b.events(), &|_| StreamLiveness::Expired);
         assert!(matches!(dead.claims[0].state, ClaimState::Expired(_)));
         assert!(
             admission_conflicts(&dead, "other", &["apps".into()], ClaimMode::Exclusive).is_empty(),
@@ -561,13 +596,23 @@ mod tests {
         let a = journal("0000000000000001");
         let b = journal("0000000000000002");
         claim(&a, "c1", "s1", &["apps"], ClaimMode::Exclusive);
-        claim(&b, "c1", "s1", &["apps/majordomus-cli"], ClaimMode::Exclusive);
+        claim(
+            &b,
+            "c1",
+            "s1",
+            &["apps/majordomus-cli"],
+            ClaimMode::Exclusive,
+        );
         sync(&a, &b);
         sync(&b, &a);
         let at_a = fold(&a.events(), &all_live);
         let at_b = fold(&b.events(), &all_live);
         assert_eq!(at_a.digest, at_b.digest, "both runtimes converge");
-        let held: Vec<_> = at_a.claims.iter().filter(|c| c.state == ClaimState::Held).collect();
+        let held: Vec<_> = at_a
+            .claims
+            .iter()
+            .filter(|c| c.state == ClaimState::Held)
+            .collect();
         let conflicted: Vec<_> = at_a
             .claims
             .iter()
@@ -595,10 +640,38 @@ mod tests {
             session: "s2".into(),
         })
         .unwrap();
-        let state = fold(&a.events(), &|_| Liveness::Own);
+        let state = fold(&a.events(), &|_| StreamLiveness::Own);
         assert_eq!(state.claims[0].state, ClaimState::Released);
         assert!(matches!(state.claims[1].state, ClaimState::Expired(_)));
         assert_eq!(state.sessions[0].state, SessionState::Closed);
+    }
+
+    #[test]
+    fn a_reopened_session_id_does_not_bring_back_the_claims_its_close_ended() {
+        let a = journal("0000000000000001");
+        claim(&a, "c1", "p1", &["apps"], ClaimMode::Exclusive);
+        a.append_own(EventBody::SessionClosed {
+            session: "p1".into(),
+        })
+        .unwrap();
+        a.append_own(EventBody::SessionOpened {
+            info: SessionInfo::named("p1", "test"),
+        })
+        .unwrap();
+        let state = fold(&a.events(), &|_| StreamLiveness::Own);
+        assert!(matches!(state.claims[0].state, ClaimState::Expired(_)));
+        claim(&a, "c2", "p1", &["apps"], ClaimMode::Exclusive);
+        let state = fold(&a.events(), &|_| StreamLiveness::Own);
+        let second = state
+            .claims
+            .iter()
+            .find(|c| c.key.ends_with("/c2"))
+            .unwrap();
+        assert_eq!(
+            second.state,
+            ClaimState::Held,
+            "a claim made after the reopen holds"
+        );
     }
 
     #[test]
@@ -606,10 +679,13 @@ mod tests {
         let a = journal("0000000000000001");
         claim(&a, "c1", "s1", &["apps"], ClaimMode::Advisory);
         claim(&a, "c2", "s2", &["apps/x"], ClaimMode::Exclusive);
-        let state = fold(&a.events(), &|_| Liveness::Own);
+        let state = fold(&a.events(), &|_| StreamLiveness::Own);
         assert!(state.claims.iter().all(|c| c.state == ClaimState::Held));
         assert_eq!(state.overlaps.len(), 1);
-        assert_eq!(state.overlaps[0].paths, vec![("apps".into(), "apps/x".into())]);
+        assert_eq!(
+            state.overlaps[0].paths,
+            vec![("apps".into(), "apps/x".into())]
+        );
     }
 
     #[test]
@@ -665,6 +741,30 @@ mod tests {
         assert_eq!(at_a.digest, fold(&b.events(), &all_live).digest);
     }
 
+    #[test]
+    fn the_session_that_asked_for_a_review_cannot_answer_it() {
+        let a = journal("0000000000000001");
+        a.append_own(EventBody::ReviewRequested {
+            review: "r1".into(),
+            session: "s1".into(),
+            subject: "feature/x".into(),
+            scope: vec![],
+            issue: None,
+            reviewer: None,
+        })
+        .unwrap();
+        a.append_own(EventBody::ReviewAnswered {
+            request: format!("{}/r1", a.own_stream()),
+            session: "s1".into(),
+            verdict: "approved".into(),
+            note: None,
+        })
+        .unwrap();
+        let state = fold(&a.events(), &|_| StreamLiveness::Own);
+        assert_eq!(state.reviews[0].state, ReviewState::Open);
+        assert!(state.reviews[0].answers.is_empty());
+    }
+
     proptest::proptest! {
         /// Folding any permutation of the same events, with any duplicates, yields the same
         /// state: arrival order can never change canonical state.
@@ -686,7 +786,7 @@ mod tests {
             let mut events = a.events();
             events.extend(b.events());
             let dead_stream = a.own_stream().clone();
-            let live = move |s: &StreamId| if dead && *s == dead_stream { Liveness::Expired } else { Liveness::Live };
+            let live = move |s: &StreamId| if dead && *s == dead_stream { StreamLiveness::Expired } else { StreamLiveness::Live };
             let reference = fold(&events, &live);
             let shuffled: Vec<MeshEvent> = order.iter().map(|i| events[*i].clone()).chain(events.iter().cloned()).collect();
             proptest::prop_assert_eq!(fold(&shuffled, &live), reference);

@@ -314,22 +314,29 @@ accepted state in a tracked baseline; how that works, and the rules behind it, i
 
 ## Mesh and models
 
-Two machines running Majordomus on the same network can find each other. Each machine
-holds one Ed25519 node identity (the node id is a digest of the key — never an address),
-announces itself in one signed, bounded envelope over UDP multicast, an optional
-broadcast fallback and any rendezvous endpoints the repository declares, and every
-observation converges into one bounded registry — deduplicated by identity, replay-
-protected, expired when silent. Trust is an explicit policy that defaults to trusting
-nobody, and discovery grants nothing: a listed node can execute nothing here. The whole
-subsystem is **off until the repository commits an enabled `mesh` declaration**, so the
-default posture — nothing leaves the machine — holds until a person decides otherwise.
+Sessions on several machines can work one repository without colliding. Each machine holds
+one Ed25519 node identity; each checkout's server is a runtime of the mesh. Runtimes find
+each other over UDP multicast, a broadcast fallback, rendezvous endpoints or declared
+seeds, and discovery grants nothing: a **link** is admitted only by a signed handshake
+that checks the peer's key is trusted, its repository is the same one (by root commits or
+a declared identity — never a path) and its protocol is compatible. Linked runtimes
+replicate one journal of signed events — sessions, claims, handovers, reviews — every
+heartbeat and fold it into the same state, so an exclusive claim on one machine refuses an
+overlapping claim on another, a handover published on one is consumed on another, and a
+runtime that crashes expires everywhere on its own. The whole subsystem is **off until the
+repository commits an enabled `mesh` declaration** with the keys to trust, so the default
+posture — nothing leaves the machine — holds until a person decides otherwise.
 
 ```sh
-majordomus mesh doctor      # every prerequisite, proved on this machine alone
+majordomus mesh doctor      # every prerequisite on this machine, with impact and remedy
 majordomus mesh identity    # this machine's node id and public key (for allowlists)
-majordomus mesh status      # the running server's mesh: providers, tallies, refusals
-majordomus mesh nodes       # the observed nodes, trust and provenance per row
+majordomus mesh peers       # machines → runtimes → sessions → claims, and each link's state
+majordomus mesh claim apps --session s1 --issue '#184'   # exits 10 when a claim elsewhere holds it
+majordomus mesh verify      # a live round with every peer, and whether the state converged
 ```
+
+The guarantees and their tests — separate processes over TCP, and a container lab that
+partitions and kills nodes on a real network — are in `docs/MESH.md`.
 
 Beside it, `share/models.yaml` declares the AI models this tool's world can name —
 vendors, canonical ids, capabilities, context windows, provenance stated and pricing
@@ -338,7 +345,7 @@ selects, with the reason, the fallback chain and the first failing check for eve
 excluded candidate. Both are ordinary capability modules: the CLI, `/api/v1/mesh*` and
 `/api/v1/models*`, the MCP tools and the Cockpit's Mesh and Models pages render the
 same state. `docs/MESH.md` (threat model included) and `docs/MODELS.md` are the deep
-ends; ADR 0050 and ADR 0049 are the decisions.
+ends; ADR 0050, ADR 0067 and ADR 0049 are the decisions.
 
 ## Worktrees
 

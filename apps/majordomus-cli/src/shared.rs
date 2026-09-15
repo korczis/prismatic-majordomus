@@ -61,25 +61,78 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
             return;
         }
     };
-    let endpoints = vec![url
-        .trim_start_matches("http://")
-        .trim_end_matches('/')
-        .to_string()];
+    // Where peers can reach this server: the bound address, or every interface's address
+    // when it is bound to all of them. A loopback bind is reachable from this machine
+    // only, and `mesh doctor` says so.
+    let bound = url.trim_start_matches("http://").trim_end_matches('/');
+    let endpoints = crate::mesh::address::advertised_endpoints(bound);
     let root = std::path::Path::new(&ctx.index.repository.root);
-    let repos = crate::repository::git_identity(root)
-        .map(|g| vec![g.id])
+    // One runtime per checkout, and one repository identity per repository on every
+    // machine — derived from content or declared, never from a path.
+    let runtime = crate::mesh::repository::runtime_id(&crate::repository::identity(root));
+    let repository =
+        crate::mesh::repository::resolve(root, config.cooperation.repository.as_deref());
+    let repos = repository
+        .as_ref()
+        .map(|r| vec![r.id.clone()])
         .unwrap_or_default();
     let node = identity.public.node_id.clone();
-    match ctx
-        .mesh
-        .activate(&config, identity, endpoints, repos, version)
-    {
+    let identity = Arc::new(identity);
+    match ctx.mesh.activate_as(
+        &config,
+        Arc::clone(&identity),
+        &runtime,
+        endpoints.clone(),
+        repos,
+        version,
+    ) {
         Ok(()) => {
-            tracing::info!(node = %node, "mesh active: this node announces and listens per the declaration")
+            tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration")
         }
         Err(e) => {
             tracing::warn!(error = %e, "the mesh did not activate");
             ctx.mesh.decline(&e.to_string());
+            return;
+        }
+    }
+    if !config.cooperation.enabled {
+        ctx.mesh
+            .decline_cooperation("cooperation is disabled in the mesh declaration");
+        return;
+    }
+    let repository = match repository {
+        Ok(repository) => repository,
+        Err(e) => {
+            tracing::warn!(error = %e, "the repository has no mesh identity; cooperation stays off");
+            ctx.mesh.decline_cooperation(&e.to_string());
+            return;
+        }
+    };
+    let setup = crate::mesh::cooperation::CooperationSetup {
+        identity,
+        runtime,
+        repository,
+        endpoints,
+        version: version.into(),
+        config: config.cooperation.clone(),
+        trust: config.trust.clone(),
+        journal_path: Some(root.join(".ai/local/state/mesh/journal.jsonl")),
+        registry: Arc::clone(ctx.mesh.registry()),
+        transport: Arc::new(crate::mesh::link::HttpTransport),
+        board: Some(Arc::clone(&ctx.peers)),
+        checkout: crate::mesh::cooperation::CheckoutFacts {
+            id: Some(crate::repository::identity(root)),
+            root: Some(root.to_path_buf()),
+        },
+    };
+    match crate::mesh::cooperation::Cooperation::new(setup) {
+        Ok(cooperation) => {
+            cooperation.start();
+            ctx.mesh.attach_cooperation(cooperation);
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "cooperation did not start");
+            ctx.mesh.decline_cooperation(&e.to_string());
         }
     }
 }

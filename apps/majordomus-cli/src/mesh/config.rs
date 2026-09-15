@@ -66,6 +66,64 @@ pub struct MeshConfig {
     /// Who to trust.
     #[serde(default)]
     pub trust: TrustConfig,
+    /// Cooperation: the authenticated links to trusted runtimes of the same repository,
+    /// and the journal they replicate (ADR 0067).
+    #[serde(default)]
+    pub cooperation: CooperationConfig,
+}
+
+/// Cooperation settings: whether this runtime links to the trusted runtimes of its
+/// repository, how often it proves it is alive, when a silent runtime counts as gone, and
+/// which endpoints to dial when discovery cannot find them.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CooperationConfig {
+    /// Whether links open at all. On by default once the mesh is enabled: a link needs a
+    /// trusted peer of the same repository, so under the default `deny_unknown` policy
+    /// with an empty allowlist nothing links until a person lists a key.
+    #[serde(default = "yes")]
+    pub enabled: bool,
+    /// Seconds between heartbeats: one beat and one sync per link per interval.
+    #[serde(default = "default_heartbeat")]
+    pub heartbeat_seconds: u64,
+    /// Seconds of silence after which a runtime is expired: its sessions end and its
+    /// claims stop excluding. At least three heartbeats, so one lost round never expires
+    /// anyone.
+    #[serde(default = "default_expiry")]
+    pub expiry_seconds: u64,
+    /// Endpoints (`http://host:port`) to dial whether or not discovery heard them: a
+    /// static fleet, or a segment neither multicast nor a rendezvous reaches.
+    #[serde(default)]
+    pub seeds: Vec<String>,
+    /// The repository's mesh identity, declared rather than derived from its root commits:
+    /// what a shallow clone needs, and what separates two repositories sharing a history.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repository: Option<String>,
+}
+
+impl Default for CooperationConfig {
+    fn default() -> Self {
+        CooperationConfig {
+            enabled: true,
+            heartbeat_seconds: DEFAULT_HEARTBEAT,
+            expiry_seconds: DEFAULT_EXPIRY,
+            seeds: Vec::new(),
+            repository: None,
+        }
+    }
+}
+
+/// The default seconds between cooperation heartbeats.
+pub const DEFAULT_HEARTBEAT: u64 = 5;
+
+/// The default seconds of silence before a runtime expires.
+pub const DEFAULT_EXPIRY: u64 = 30;
+
+fn default_heartbeat() -> u64 {
+    DEFAULT_HEARTBEAT
+}
+fn default_expiry() -> u64 {
+    DEFAULT_EXPIRY
 }
 
 /// Multicast settings: the group, the port, how far a datagram travels and how often
@@ -203,6 +261,43 @@ fn rendezvous_interval() -> u64 {
     60
 }
 
+impl CooperationConfig {
+    /// Refuse the settings that cannot work: a zero heartbeat, an expiry under three
+    /// heartbeats (one lost round would expire a live runtime), a seed that is not
+    /// `http://host:port`, an empty or oversized declared repository.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::CooperationConfig;
+    /// assert!(CooperationConfig::default().validate().is_ok());
+    /// let flapping = CooperationConfig { heartbeat_seconds: 10, expiry_seconds: 15, ..Default::default() };
+    /// assert!(flapping.validate().is_err());
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        if self.heartbeat_seconds == 0 {
+            return Err("cooperation.heartbeat_seconds of 0 would be a busy loop".into());
+        }
+        if self.expiry_seconds < 3 * self.heartbeat_seconds {
+            return Err(format!(
+                "cooperation.expiry_seconds {} is under three heartbeats ({}): one lost round would expire a live runtime",
+                self.expiry_seconds,
+                3 * self.heartbeat_seconds
+            ));
+        }
+        for seed in &self.seeds {
+            let authority = seed.strip_prefix("http://").unwrap_or_default();
+            if authority.is_empty() || !authority.contains(':') || authority.contains('/') {
+                return Err(format!("cooperation seed '{seed}' is not http://host:port"));
+            }
+        }
+        if let Some(repository) = &self.repository {
+            if repository.trim().is_empty() || repository.len() > 128 {
+                return Err("cooperation.repository is empty or over 128 characters".into());
+            }
+        }
+        Ok(())
+    }
+}
+
 impl MeshConfig {
     /// Parse one indexed object into a mesh declaration, or say why it is not one:
     /// the wrong schema version, an unknown key, and a zero interval are each refused
@@ -231,6 +326,10 @@ impl MeshConfig {
                 object.uri
             )));
         }
+        parsed
+            .cooperation
+            .validate()
+            .map_err(|e| MeshError::Config(format!("{}: {e}", object.uri)))?;
         Ok(parsed)
     }
 }

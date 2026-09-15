@@ -150,10 +150,10 @@
     {
       "id": "mesh",
       "title": "Mesh",
-      "description": "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here.",
+      "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
       "stability": "experimental",
       "source": "builtin",
-      "capabilities": 5
+      "capabilities": 21
     },
     {
       "id": "models",
@@ -20772,11 +20772,963 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
     },
     {
+      "id": "mesh.claim",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Claim a scope across the mesh",
+      "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+      "input": {
+        "name": "ClaimInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The claiming session; the calling MCP session's own when omitted. Opened when new."
+            },
+            "client": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The client, for a session this opens; `cli` when omitted."
+            },
+            "scope": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Repository-relative paths."
+            },
+            "intent": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "What the claim is for."
+            },
+            "mode": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimMode"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`exclusive` (the default) or `advisory`."
+            },
+            "issue": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The issue the claim is for."
+            },
+            "task": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The task, for a session this opens."
+            }
+          },
+          "required": [
+            "scope"
+          ],
+          "description": "The input of `mesh.claim`.",
+          "title": "ClaimInput",
+          "$defs": {
+            "ClaimMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "exclusive",
+                  "description": "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+                },
+                {
+                  "type": "string",
+                  "const": "advisory",
+                  "description": "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+                }
+              ],
+              "description": "Whether a claim excludes others or only tells them."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "A written event, as an operation answers it.",
+          "title": "Written"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_claim"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/claims"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.cooperation",
+      "module": "mesh",
+      "kind": "query",
+      "title": "Cooperation, at a glance",
+      "description": "Whether this runtime cooperates and why not when it does not: its runtime and stream, the repository identity links are matched on, the link protocol and features, the heartbeat and expiry, every linked peer with its link state, last exchange, round trip and failures, every refused candidate with the rule that refused it, and the counters of handshakes, syncs, reconnects, expiries, replicated and refused events.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "CooperationStatus",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "active": {
+              "type": "boolean",
+              "description": "Whether cooperation runs in this process."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not, when it does not."
+            },
+            "runtime": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "This runtime, `<node>-<runtime>`."
+            },
+            "stream": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/StreamId"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "This runtime's current stream."
+            },
+            "repository": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/MeshRepositoryIdentity"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The repository identity links are matched on."
+            },
+            "protocol": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0
+                },
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "The link protocol range spoken."
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The link features carried."
+            },
+            "heartbeat_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "Seconds between heartbeats."
+            },
+            "expiry_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "Seconds of silence before expiry."
+            },
+            "endpoints": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Where this runtime answers."
+            },
+            "seeds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The declared seeds."
+            },
+            "peers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PeerView"
+              },
+              "description": "Every linked peer, by runtime key."
+            },
+            "refused": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RefusedView"
+              },
+              "description": "Candidates refused, by endpoint."
+            },
+            "counters": {
+              "$ref": "#/$defs/CooperationCounters",
+              "description": "Counters."
+            },
+            "journal": {
+              "$ref": "#/$defs/JournalTallies",
+              "description": "The journal's tallies."
+            },
+            "started_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "When cooperation started, RFC 3339."
+            }
+          },
+          "required": [
+            "active",
+            "protocol",
+            "features",
+            "heartbeat_seconds",
+            "expiry_seconds",
+            "endpoints",
+            "seeds",
+            "peers",
+            "refused",
+            "counters",
+            "journal"
+          ],
+          "description": "The whole cooperation runtime, as every surface reports it.",
+          "title": "CooperationStatus",
+          "$defs": {
+            "StreamId": {
+              "type": "string",
+              "description": "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            },
+            "MeshRepositoryIdentity": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "32 hex: what advertisements, links and events carry."
+                },
+                "basis": {
+                  "$ref": "#/$defs/MeshRepositoryBasis",
+                  "description": "What it was derived from."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "The evidence, human-readable: the declared value, or the root commits."
+                }
+              },
+              "required": [
+                "id",
+                "basis",
+                "detail"
+              ],
+              "description": "A repository's mesh identity and where it came from."
+            },
+            "MeshRepositoryBasis": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "declared",
+                  "description": "`cooperation.repository` in the mesh declaration."
+                },
+                {
+                  "type": "string",
+                  "const": "root_commits",
+                  "description": "The repository's root commits."
+                }
+              ],
+              "description": "What the repository identity was derived from."
+            },
+            "PeerView": {
+              "type": "object",
+              "properties": {
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`: the peer's durable identity."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "The node (machine key digest)."
+                },
+                "instance": {
+                  "type": "string",
+                  "description": "The current instance."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The node's display name."
+                },
+                "version": {
+                  "type": "string",
+                  "description": "The executable version."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "Whether the peer runs on this machine (the same node key)."
+                },
+                "trust": {
+                  "$ref": "#/$defs/TrustState",
+                  "description": "The trust verdict the link was admitted under."
+                },
+                "protocol": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The negotiated link protocol."
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The link features the peer carries."
+                },
+                "endpoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Where the peer answers."
+                },
+                "state": {
+                  "$ref": "#/$defs/LinkState",
+                  "description": "The link's standing."
+                },
+                "outbound": {
+                  "type": "boolean",
+                  "description": "Whether this runtime dials the peer."
+                },
+                "inbound": {
+                  "type": "boolean",
+                  "description": "Whether the peer dials this runtime."
+                },
+                "endpoint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The endpoint this runtime dials, when it does."
+                },
+                "last_exchange_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Milliseconds since the last successful exchange in either direction."
+                },
+                "rtt_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The last round trip, milliseconds."
+                },
+                "failures": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Consecutive failed rounds."
+                },
+                "last_error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The last failure, in words."
+                },
+                "handshakes": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Handshakes completed with this peer."
+                },
+                "reconnects": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Handshakes after an expiry or a dropped link."
+                },
+                "restarts": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "New instances of the peer seen (its process restarted)."
+                },
+                "linked_at": {
+                  "type": "string",
+                  "description": "When the current link was established, RFC 3339."
+                }
+              },
+              "required": [
+                "runtime",
+                "node",
+                "instance",
+                "name",
+                "version",
+                "local",
+                "trust",
+                "protocol",
+                "features",
+                "endpoints",
+                "state",
+                "outbound",
+                "inbound",
+                "failures",
+                "handshakes",
+                "reconnects",
+                "restarts",
+                "linked_at"
+              ],
+              "description": "One peer as every surface shows it."
+            },
+            "TrustState": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "observed"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Valid, recorded, trusted for nothing. The resting state of an unknown node."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "trusted"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`)."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "rejected"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+                }
+              ],
+              "description": "What the policy decided about one node."
+            },
+            "LinkState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "connecting",
+                  "description": "Handshaking, or never yet exchanged."
+                },
+                {
+                  "type": "string",
+                  "const": "connected",
+                  "description": "An exchange within two heartbeats."
+                },
+                {
+                  "type": "string",
+                  "const": "degraded",
+                  "description": "Rounds are failing; the last exchange is under half the expiry old."
+                },
+                {
+                  "type": "string",
+                  "const": "unreachable",
+                  "description": "The last exchange is over half the expiry old; the link is about to expire."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "No exchange within the expiry: the link is dropped and will be re-dialed."
+                }
+              ],
+              "description": "A link's standing, from this runtime's side."
+            },
+            "RefusedView": {
+              "type": "object",
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint dialed, or `inbound:<runtime>` for a refused hello."
+                },
+                "direction": {
+                  "type": "string",
+                  "description": "`outbound` (this runtime refused the peer's welcome, or the peer refused this\nhello) or `inbound` (this runtime refused the peer's hello)."
+                },
+                "runtime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The peer's runtime key, when its card said."
+                },
+                "refusal": {
+                  "$ref": "#/$defs/LinkRefusal",
+                  "description": "The refusal."
+                },
+                "at": {
+                  "type": "string",
+                  "description": "When, RFC 3339."
+                }
+              },
+              "required": [
+                "endpoint",
+                "direction",
+                "refusal",
+                "at"
+              ],
+              "description": "A candidate that was refused, with the rule that refused it."
+            },
+            "LinkRefusal": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "$ref": "#/$defs/RefusalCode",
+                  "description": "The rule that refused."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "Why, in words."
+                },
+                "proto_min": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's oldest protocol."
+                },
+                "proto_max": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's newest protocol."
+                }
+              },
+              "required": [
+                "code",
+                "detail",
+                "proto_min",
+                "proto_max"
+              ],
+              "description": "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            },
+            "RefusalCode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "Not the shape of the message."
+                },
+                {
+                  "type": "string",
+                  "const": "oversized",
+                  "description": "Over `MAX_LINK_MESSAGE`."
+                },
+                {
+                  "type": "string",
+                  "const": "protocol_unsupported",
+                  "description": "The protocol ranges do not meet."
+                },
+                {
+                  "type": "string",
+                  "const": "signature",
+                  "description": "The signature does not verify."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "The timestamp is outside the skew window."
+                },
+                {
+                  "type": "string",
+                  "const": "replay",
+                  "description": "A nonce or a counter already seen."
+                },
+                {
+                  "type": "string",
+                  "const": "repository_mismatch",
+                  "description": "The peer serves another repository: the isolation rule."
+                },
+                {
+                  "type": "string",
+                  "const": "untrusted",
+                  "description": "The peer's key is not trusted by this runtime's policy: discovery is not trust."
+                },
+                {
+                  "type": "string",
+                  "const": "self_link",
+                  "description": "The peer is this very runtime."
+                },
+                {
+                  "type": "string",
+                  "const": "not_active",
+                  "description": "This runtime's cooperation is not active."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown_link",
+                  "description": "The link id is unknown here: the answerer restarted or expired the link; say hello."
+                },
+                {
+                  "type": "string",
+                  "const": "capacity",
+                  "description": "A bound of this runtime is full."
+                },
+                {
+                  "type": "string",
+                  "const": "feature_unsupported",
+                  "description": "The peer lacks a feature the operation needs."
+                }
+              ],
+              "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            },
+            "CooperationCounters": {
+              "type": "object",
+              "properties": {
+                "handshakes_out": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Handshakes this runtime completed as the dialer."
+                },
+                "handshakes_in": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Handshakes this runtime accepted."
+                },
+                "dial_failures": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Dials that reached no endpoint."
+                },
+                "syncs_out": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Sync rounds this runtime completed as the dialer."
+                },
+                "syncs_failed": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Sync rounds that failed in transport."
+                },
+                "syncs_in": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Sync rounds this runtime answered."
+                },
+                "events_sent": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Events pushed in sync requests."
+                },
+                "events_served": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Events served in sync answers."
+                },
+                "reconnects": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Re-handshakes after an expiry or a dropped link."
+                },
+                "restarts": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Peer restarts observed."
+                },
+                "peers_expired": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Links expired."
+                },
+                "claims_refused": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Claims refused for a conflict."
+                },
+                "threads": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Cooperation threads alive now."
+                },
+                "refused_in": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0
+                  },
+                  "description": "Hellos and syncs this runtime refused, by code."
+                },
+                "refused_out": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0
+                  },
+                  "description": "Refusals this runtime received or applied to a welcome, by code."
+                }
+              },
+              "required": [
+                "handshakes_out",
+                "handshakes_in",
+                "dial_failures",
+                "syncs_out",
+                "syncs_failed",
+                "syncs_in",
+                "events_sent",
+                "events_served",
+                "reconnects",
+                "restarts",
+                "peers_expired",
+                "claims_refused",
+                "threads",
+                "refused_in",
+                "refused_out"
+              ],
+              "description": "The link and replication counters since start."
+            },
+            "JournalTallies": {
+              "type": "object",
+              "properties": {
+                "streams": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Streams tracked."
+                },
+                "events": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Events held."
+                },
+                "written": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Events written by this runtime since start."
+                },
+                "received": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Events received and stored."
+                },
+                "duplicates": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Duplicate deliveries absorbed."
+                },
+                "rejected": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Events refused."
+                },
+                "pending": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Events held for a gap right now."
+                },
+                "compacted": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Events dropped by compaction since start."
+                },
+                "opaque": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Events of a kind this executable does not interpret, held and relayed."
+                },
+                "lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The highest Lamport stamp seen."
+                }
+              },
+              "required": [
+                "streams",
+                "events",
+                "written",
+                "received",
+                "duplicates",
+                "rejected",
+                "pending",
+                "compacted",
+                "opaque",
+                "lamport"
+              ],
+              "description": "The journal's counters since start."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_cooperation"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/mesh/cooperation"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
       "id": "mesh.doctor",
       "module": "mesh",
       "kind": "query",
       "title": "The mesh self-check",
-      "description": "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory. Deterministic, no second node required.",
+      "description": "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, the repository has a mesh identity, the advertised endpoints are reachable from beyond this machine, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory. Each failed check names its impact and its remedy. Deterministic, no second node required.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -20824,6 +21776,20 @@
                 "detail": {
                   "type": "string",
                   "description": "The evidence: a path, an address, an error."
+                },
+                "impact": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What a failure or a limitation means for the mesh."
+                },
+                "remediation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What to do about it."
                 }
               },
               "required": [
@@ -20872,6 +21838,525 @@
         "effect": "read",
         "cancellable": false,
         "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.events",
+      "module": "mesh",
+      "kind": "query",
+      "title": "The cooperation journal",
+      "description": "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.",
+      "input": {
+        "name": "MeshEventsInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "after": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "Only events whose Lamport stamp is above this."
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "At most this many (default 100, at most 1000)."
+            }
+          },
+          "description": "The input of `mesh.events`.",
+          "title": "MeshEventsInput"
+        }
+      },
+      "output": {
+        "name": "EventList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "active": {
+              "type": "boolean",
+              "description": "Whether cooperation runs."
+            },
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many events this answer carries."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The highest Lamport stamp the journal has seen: the `after` of the next page."
+            },
+            "events": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MeshEvent"
+              },
+              "description": "The events, in Lamport order."
+            }
+          },
+          "required": [
+            "active",
+            "count",
+            "lamport",
+            "events"
+          ],
+          "description": "The answer of `mesh.events`.",
+          "title": "EventList",
+          "$defs": {
+            "MeshEvent": {
+              "type": "object",
+              "properties": {
+                "v": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The event format version."
+                },
+                "stream": {
+                  "$ref": "#/$defs/StreamId",
+                  "description": "The stream that wrote it."
+                },
+                "seq": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Dense from 1 within the stream."
+                },
+                "lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The Lamport stamp: above every stamp its writer had seen."
+                },
+                "at": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The writer's wall clock, seconds since the Unix epoch. Informational only: nothing\nis decided by comparing it with another machine's clock."
+                },
+                "repo": {
+                  "type": "string",
+                  "description": "The mesh repository id the event belongs to."
+                },
+                "pk": {
+                  "type": "string",
+                  "description": "The writer's Ed25519 public key, hex; its digest is the stream's node."
+                },
+                "body": {
+                  "description": "The body, `kind` tagged."
+                },
+                "sig": {
+                  "type": "string",
+                  "description": "Ed25519 over the canonical bytes of everything above, hex."
+                }
+              },
+              "required": [
+                "v",
+                "stream",
+                "seq",
+                "lamport",
+                "at",
+                "repo",
+                "pk",
+                "body",
+                "sig"
+              ],
+              "description": "One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it."
+            },
+            "StreamId": {
+              "type": "string",
+              "description": "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_events"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/mesh/events"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.handover.consume",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Consume a handover from the mesh",
+      "description": "Take a handover another runtime published: record the consumption on the mesh, and write it into this checkout's handovers directory as a record `majordomus handover --resolve` finds on the same branch — once, however often it is consumed.",
+      "input": {
+        "name": "HandoverConsumeInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "handover": {
+              "type": "string",
+              "description": "The handover's id (its content digest)."
+            },
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The consuming session; the calling MCP session's own when omitted."
+            },
+            "materialize": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Whether to write it as a local handover record `majordomus handover --resolve`\nfinds (default true)."
+            }
+          },
+          "required": [
+            "handover"
+          ],
+          "description": "The input of `mesh.handover.consume`.",
+          "title": "HandoverConsumeInput"
+        }
+      },
+      "output": {
+        "name": "ConsumeAnswer",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "handover": {
+              "$ref": "#/$defs/HandoverView",
+              "description": "The handover, as the journal holds it."
+            },
+            "written": {
+              "$ref": "#/$defs/Written",
+              "description": "The consumption event."
+            },
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The local record written, relative to the repository root, when materialized."
+            }
+          },
+          "required": [
+            "handover",
+            "written"
+          ],
+          "description": "The answer of `mesh.handover.consume`.",
+          "title": "ConsumeAnswer",
+          "$defs": {
+            "HandoverView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The content digest."
+                },
+                "stream": {
+                  "$ref": "#/$defs/StreamId",
+                  "description": "The stream that first published it."
+                },
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>` of the publisher."
+                },
+                "published_lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The Lamport stamp of the first publication."
+                },
+                "handover": {
+                  "$ref": "#/$defs/HandoverBody",
+                  "description": "The record's facts and body."
+                },
+                "consumed_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Every session that consumed it, by key, in Lamport order."
+                }
+              },
+              "required": [
+                "id",
+                "stream",
+                "runtime",
+                "published_lamport",
+                "handover",
+                "consumed_by"
+              ],
+              "description": "A handover anywhere in the mesh."
+            },
+            "StreamId": {
+              "type": "string",
+              "description": "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            },
+            "HandoverBody": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The content digest (32 hex): the same handover published twice is one handover."
+                },
+                "task": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The task the handover closes or continues."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue it belongs to."
+                },
+                "milestone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The milestone it belongs to."
+                },
+                "branch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The branch it was written on."
+                },
+                "head": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit it was written at."
+                },
+                "created_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "When it was written, RFC 3339, as its author's clock said."
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The record's file name at its origin, informational."
+                },
+                "body": {
+                  "type": "string",
+                  "description": "The Markdown body (`# Objective`, `# Current State`, `# Next Action`, ...)."
+                }
+              },
+              "required": [
+                "id",
+                "body"
+              ],
+              "description": "A handover as the mesh carries it: the record's facts and its body, bounded."
+            },
+            "Written": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "`<stream>/<local id>` of what was created or changed."
+                },
+                "event": {
+                  "type": "string",
+                  "description": "`<stream>/<seq>` of the event that says so."
+                },
+                "lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The event's Lamport stamp."
+                }
+              },
+              "required": [
+                "key",
+                "event",
+                "lamport"
+              ],
+              "description": "A written event, as an operation answers it."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_handover_consume"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/handovers/consume"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "continuity",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.handover.publish",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Publish a handover to the mesh",
+      "description": "Publish a handover record of this checkout — the newest, or the one named under .ai/local/state/handovers/ — to every linked runtime: its task, branch, head and time from its front matter, the issue and milestone given, and its Markdown body, bounded and identified by the body's digest. No path of this machine travels, and no file outside the handovers directory is ever read.",
+      "input": {
+        "name": "HandoverPublishInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The record, relative to the repository root and inside\n`.ai/local/state/handovers/`; the newest record when omitted. Nothing outside that\ndirectory is ever read by this command."
+            },
+            "issue": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The issue the handover belongs to."
+            },
+            "milestone": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The milestone it belongs to."
+            }
+          },
+          "description": "The input of `mesh.handover.publish`.",
+          "title": "HandoverPublishInput"
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "A written event, as an operation answers it.",
+          "title": "Written"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_handover_publish"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/handovers"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "continuity",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },
@@ -21010,11 +22495,433 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },
     {
+      "id": "mesh.link.hello",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Open a link (the handshake)",
+      "description": "The link handshake another runtime posts: a signed hello carrying its runtime card, a fresh nonce and its protocol range. Refused, typed, when malformed, oversized, mis-signed, stale, replayed, of an unsupported protocol, of another repository, untrusted, or this runtime itself; otherwise answered with a signed welcome: this runtime's card, a link id, its marks and the echoed nonce. Changes this process's link table only.",
+      "input": {
+        "name": "Signed",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "body": {
+              "description": "The message."
+            },
+            "sig": {
+              "type": "string",
+              "description": "Hex Ed25519 over the domain and the canonical JSON of `body`."
+            }
+          },
+          "required": [
+            "body",
+            "sig"
+          ],
+          "description": "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged.",
+          "title": "Signed"
+        }
+      },
+      "output": {
+        "name": "LinkReply",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "signed": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Signed"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The signed welcome or sync answer, when accepted."
+            },
+            "refusal": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LinkRefusal"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The refusal, when not."
+            }
+          },
+          "description": "What a hello or a sync answers over the wire: a signed message or a refusal.",
+          "title": "LinkReply",
+          "$defs": {
+            "Signed": {
+              "type": "object",
+              "properties": {
+                "body": {
+                  "description": "The message."
+                },
+                "sig": {
+                  "type": "string",
+                  "description": "Hex Ed25519 over the domain and the canonical JSON of `body`."
+                }
+              },
+              "required": [
+                "body",
+                "sig"
+              ],
+              "description": "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged."
+            },
+            "LinkRefusal": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "$ref": "#/$defs/RefusalCode",
+                  "description": "The rule that refused."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "Why, in words."
+                },
+                "proto_min": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's oldest protocol."
+                },
+                "proto_max": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's newest protocol."
+                }
+              },
+              "required": [
+                "code",
+                "detail",
+                "proto_min",
+                "proto_max"
+              ],
+              "description": "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            },
+            "RefusalCode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "Not the shape of the message."
+                },
+                {
+                  "type": "string",
+                  "const": "oversized",
+                  "description": "Over `MAX_LINK_MESSAGE`."
+                },
+                {
+                  "type": "string",
+                  "const": "protocol_unsupported",
+                  "description": "The protocol ranges do not meet."
+                },
+                {
+                  "type": "string",
+                  "const": "signature",
+                  "description": "The signature does not verify."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "The timestamp is outside the skew window."
+                },
+                {
+                  "type": "string",
+                  "const": "replay",
+                  "description": "A nonce or a counter already seen."
+                },
+                {
+                  "type": "string",
+                  "const": "repository_mismatch",
+                  "description": "The peer serves another repository: the isolation rule."
+                },
+                {
+                  "type": "string",
+                  "const": "untrusted",
+                  "description": "The peer's key is not trusted by this runtime's policy: discovery is not trust."
+                },
+                {
+                  "type": "string",
+                  "const": "self_link",
+                  "description": "The peer is this very runtime."
+                },
+                {
+                  "type": "string",
+                  "const": "not_active",
+                  "description": "This runtime's cooperation is not active."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown_link",
+                  "description": "The link id is unknown here: the answerer restarted or expired the link; say hello."
+                },
+                {
+                  "type": "string",
+                  "const": "capacity",
+                  "description": "A bound of this runtime is full."
+                },
+                {
+                  "type": "string",
+                  "const": "feature_unsupported",
+                  "description": "The peer lacks a feature the operation needs."
+                }
+              ],
+              "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/link/hello"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "cooperation",
+        "link"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.link.sync",
+      "module": "mesh",
+      "kind": "command",
+      "title": "One sync round of a link",
+      "description": "The replication round a linked runtime posts every heartbeat, signed under its link id with a rising counter: its marks and the events this runtime lacks. Ingested — verified end to end, deduplicated, applied in stream order — and answered, signed, with this runtime's marks and the events the peer lacks. An unknown link or a restarted peer is told to say hello again.",
+      "input": {
+        "name": "Signed",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "body": {
+              "description": "The message."
+            },
+            "sig": {
+              "type": "string",
+              "description": "Hex Ed25519 over the domain and the canonical JSON of `body`."
+            }
+          },
+          "required": [
+            "body",
+            "sig"
+          ],
+          "description": "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged.",
+          "title": "Signed"
+        }
+      },
+      "output": {
+        "name": "LinkReply",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "signed": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Signed"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The signed welcome or sync answer, when accepted."
+            },
+            "refusal": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LinkRefusal"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The refusal, when not."
+            }
+          },
+          "description": "What a hello or a sync answers over the wire: a signed message or a refusal.",
+          "title": "LinkReply",
+          "$defs": {
+            "Signed": {
+              "type": "object",
+              "properties": {
+                "body": {
+                  "description": "The message."
+                },
+                "sig": {
+                  "type": "string",
+                  "description": "Hex Ed25519 over the domain and the canonical JSON of `body`."
+                }
+              },
+              "required": [
+                "body",
+                "sig"
+              ],
+              "description": "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged."
+            },
+            "LinkRefusal": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "$ref": "#/$defs/RefusalCode",
+                  "description": "The rule that refused."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "Why, in words."
+                },
+                "proto_min": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's oldest protocol."
+                },
+                "proto_max": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's newest protocol."
+                }
+              },
+              "required": [
+                "code",
+                "detail",
+                "proto_min",
+                "proto_max"
+              ],
+              "description": "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            },
+            "RefusalCode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "Not the shape of the message."
+                },
+                {
+                  "type": "string",
+                  "const": "oversized",
+                  "description": "Over `MAX_LINK_MESSAGE`."
+                },
+                {
+                  "type": "string",
+                  "const": "protocol_unsupported",
+                  "description": "The protocol ranges do not meet."
+                },
+                {
+                  "type": "string",
+                  "const": "signature",
+                  "description": "The signature does not verify."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "The timestamp is outside the skew window."
+                },
+                {
+                  "type": "string",
+                  "const": "replay",
+                  "description": "A nonce or a counter already seen."
+                },
+                {
+                  "type": "string",
+                  "const": "repository_mismatch",
+                  "description": "The peer serves another repository: the isolation rule."
+                },
+                {
+                  "type": "string",
+                  "const": "untrusted",
+                  "description": "The peer's key is not trusted by this runtime's policy: discovery is not trust."
+                },
+                {
+                  "type": "string",
+                  "const": "self_link",
+                  "description": "The peer is this very runtime."
+                },
+                {
+                  "type": "string",
+                  "const": "not_active",
+                  "description": "This runtime's cooperation is not active."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown_link",
+                  "description": "The link id is unknown here: the answerer restarted or expired the link; say hello."
+                },
+                {
+                  "type": "string",
+                  "const": "capacity",
+                  "description": "A bound of this runtime is full."
+                },
+                {
+                  "type": "string",
+                  "const": "feature_unsupported",
+                  "description": "The peer lacks a feature the operation needs."
+                }
+              ],
+              "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/link/sync"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "cooperation",
+        "link"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
       "id": "mesh.nodes",
       "module": "mesh",
       "kind": "query",
       "title": "The discovered nodes",
-      "description": "Every node this process has observed, deduplicated by node identity across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process.",
+      "description": "Every runtime this process has observed, one record per node and runtime slot, deduplicated across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -21056,6 +22963,11 @@
                 "node_id": {
                   "$ref": "#/$defs/NodeId",
                   "description": "The node id: the digest of the key below."
+                },
+                "runtime": {
+                  "type": "string",
+                  "description": "The runtime slot: which server of the node (one per checkout), 16 hex; empty for a\nversion-1 advertisement. A record is one runtime: two worktrees of one machine are\ntwo records under one node id and one key.",
+                  "default": ""
                 },
                 "public_key": {
                   "type": "string",
@@ -21310,6 +23222,1741 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },
     {
+      "id": "mesh.peer",
+      "module": "mesh",
+      "kind": "query",
+      "title": "One runtime",
+      "description": "One runtime by its key (`<node>-<runtime>`, or a node id for its first runtime): the machine it runs on, its liveness, its link from here, its sessions and claims, and any refusal recorded against it. Not found is an answer with the reason.",
+      "input": {
+        "name": "PeerInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "runtime": {
+              "type": "string",
+              "description": "The runtime, `<node>-<runtime>` (a node id alone matches its first runtime)."
+            }
+          },
+          "required": [
+            "runtime"
+          ],
+          "description": "The input of `mesh.peer`.",
+          "title": "PeerInput"
+        }
+      },
+      "output": {
+        "name": "PeerDetail",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "found": {
+              "type": "boolean",
+              "description": "Whether the runtime is known here."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not, when it is not."
+            },
+            "machine": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The machine it runs on."
+            },
+            "runtime": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/RuntimeNode"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The runtime, its link and its sessions."
+            },
+            "refused": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RefusedView"
+              },
+              "description": "Refusals recorded against it."
+            }
+          },
+          "required": [
+            "found",
+            "refused"
+          ],
+          "description": "The answer of `mesh.peer`.",
+          "title": "PeerDetail",
+          "$defs": {
+            "RuntimeNode": {
+              "type": "object",
+              "properties": {
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`."
+                },
+                "this_runtime": {
+                  "type": "boolean",
+                  "description": "Whether this is the runtime answering."
+                },
+                "liveness": {
+                  "$ref": "#/$defs/StreamLiveness",
+                  "description": "Whether its stream beats: own, live, or expired."
+                },
+                "last_beat_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Milliseconds since its beat last rose, on this runtime's clock."
+                },
+                "link": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/PeerView"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "This runtime's link to it, when there is one."
+                },
+                "sessions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/SessionNode"
+                  },
+                  "description": "Its sessions."
+                }
+              },
+              "required": [
+                "runtime",
+                "this_runtime",
+                "liveness",
+                "sessions"
+              ],
+              "description": "One runtime in the peer tree."
+            },
+            "StreamLiveness": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "own",
+                  "description": "This runtime's own current stream."
+                },
+                {
+                  "type": "string",
+                  "const": "live",
+                  "description": "Its beat rose within the expiry."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "Its beat has not risen within the expiry, or was never heard."
+                }
+              ],
+              "description": "Whether a stream is speaking now, on this runtime's clock."
+            },
+            "PeerView": {
+              "type": "object",
+              "properties": {
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`: the peer's durable identity."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "The node (machine key digest)."
+                },
+                "instance": {
+                  "type": "string",
+                  "description": "The current instance."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The node's display name."
+                },
+                "version": {
+                  "type": "string",
+                  "description": "The executable version."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "Whether the peer runs on this machine (the same node key)."
+                },
+                "trust": {
+                  "$ref": "#/$defs/TrustState",
+                  "description": "The trust verdict the link was admitted under."
+                },
+                "protocol": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The negotiated link protocol."
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The link features the peer carries."
+                },
+                "endpoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Where the peer answers."
+                },
+                "state": {
+                  "$ref": "#/$defs/LinkState",
+                  "description": "The link's standing."
+                },
+                "outbound": {
+                  "type": "boolean",
+                  "description": "Whether this runtime dials the peer."
+                },
+                "inbound": {
+                  "type": "boolean",
+                  "description": "Whether the peer dials this runtime."
+                },
+                "endpoint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The endpoint this runtime dials, when it does."
+                },
+                "last_exchange_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Milliseconds since the last successful exchange in either direction."
+                },
+                "rtt_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The last round trip, milliseconds."
+                },
+                "failures": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Consecutive failed rounds."
+                },
+                "last_error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The last failure, in words."
+                },
+                "handshakes": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Handshakes completed with this peer."
+                },
+                "reconnects": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Handshakes after an expiry or a dropped link."
+                },
+                "restarts": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "New instances of the peer seen (its process restarted)."
+                },
+                "linked_at": {
+                  "type": "string",
+                  "description": "When the current link was established, RFC 3339."
+                }
+              },
+              "required": [
+                "runtime",
+                "node",
+                "instance",
+                "name",
+                "version",
+                "local",
+                "trust",
+                "protocol",
+                "features",
+                "endpoints",
+                "state",
+                "outbound",
+                "inbound",
+                "failures",
+                "handshakes",
+                "reconnects",
+                "restarts",
+                "linked_at"
+              ],
+              "description": "One peer as every surface shows it."
+            },
+            "TrustState": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "observed"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Valid, recorded, trusted for nothing. The resting state of an unknown node."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "trusted"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`)."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "rejected"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+                }
+              ],
+              "description": "What the policy decided about one node."
+            },
+            "LinkState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "connecting",
+                  "description": "Handshaking, or never yet exchanged."
+                },
+                {
+                  "type": "string",
+                  "const": "connected",
+                  "description": "An exchange within two heartbeats."
+                },
+                {
+                  "type": "string",
+                  "const": "degraded",
+                  "description": "Rounds are failing; the last exchange is under half the expiry old."
+                },
+                {
+                  "type": "string",
+                  "const": "unreachable",
+                  "description": "The last exchange is over half the expiry old; the link is about to expire."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "No exchange within the expiry: the link is dropped and will be re-dialed."
+                }
+              ],
+              "description": "A link's standing, from this runtime's side."
+            },
+            "SessionNode": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "`<stream>/<session>`."
+                },
+                "info": {
+                  "$ref": "#/$defs/SessionInfo",
+                  "description": "What the session last said about itself."
+                },
+                "state": {
+                  "$ref": "#/$defs/SessionState",
+                  "description": "Its standing."
+                },
+                "claims": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ClaimView"
+                  },
+                  "description": "The claims it holds or held."
+                },
+                "reviews": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The review requests it opened, by key."
+                }
+              },
+              "required": [
+                "key",
+                "info",
+                "state",
+                "claims",
+                "reviews"
+              ],
+              "description": "One session in the peer tree."
+            },
+            "SessionInfo": {
+              "type": "object",
+              "properties": {
+                "session": {
+                  "type": "string",
+                  "description": "The session's id within its stream."
+                },
+                "client": {
+                  "type": "string",
+                  "description": "The client: `claude-code`, `codex`, `cli`, ..."
+                },
+                "worker": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The worker's own name for itself, when it gave one."
+                },
+                "intent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What the session says it is doing."
+                },
+                "task": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The task id (`t-...`) the session works under."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue (`I0001`, `#184`) the work belongs to."
+                },
+                "milestone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The milestone the work belongs to."
+                },
+                "checkout": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The checkout id (a digest, never a path)."
+                },
+                "branch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The branch checked out."
+                },
+                "head": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit checked out."
+                },
+                "dirty": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether the working tree had uncommitted changes when this was said."
+                },
+                "context": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The context revision the session works from (a digest the context compiler names)."
+                }
+              },
+              "required": [
+                "session",
+                "client"
+              ],
+              "description": "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential."
+            },
+            "SessionState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "active",
+                  "description": "Open, and its runtime is alive."
+                },
+                {
+                  "type": "string",
+                  "const": "closed",
+                  "description": "Closed by its own runtime."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "Never closed, but its runtime stopped beating: gone, as far as anyone can tell."
+                }
+              ],
+              "description": "A session's standing."
+            },
+            "ClaimView": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "`<stream>/<claim>`."
+                },
+                "stream": {
+                  "$ref": "#/$defs/StreamId",
+                  "description": "The writing stream."
+                },
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`."
+                },
+                "session": {
+                  "type": "string",
+                  "description": "The holding session's key."
+                },
+                "scope": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The claimed paths."
+                },
+                "intent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What it is for."
+                },
+                "mode": {
+                  "$ref": "#/$defs/ClaimMode",
+                  "description": "Exclusive or advisory."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue it is for."
+                },
+                "acquired_lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The Lamport stamp of the acquisition."
+                },
+                "acquired_seq": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The sequence of the acquisition within its stream: with the stamp and the stream,\nthe total order in which exclusivity is decided."
+                },
+                "state": {
+                  "$ref": "#/$defs/ClaimState",
+                  "description": "Its standing."
+                }
+              },
+              "required": [
+                "key",
+                "stream",
+                "runtime",
+                "session",
+                "scope",
+                "mode",
+                "acquired_lamport",
+                "acquired_seq",
+                "state"
+              ],
+              "description": "One claim anywhere in the mesh."
+            },
+            "StreamId": {
+              "type": "string",
+              "description": "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            },
+            "ClaimMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "exclusive",
+                  "description": "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+                },
+                {
+                  "type": "string",
+                  "const": "advisory",
+                  "description": "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+                }
+              ],
+              "description": "Whether a claim excludes others or only tells them."
+            },
+            "ClaimState": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "held"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Live; for an exclusive claim, the winner of its scope."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "released"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Released by its holder."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "expired"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Ended without a release: the holder's session closed or its runtime expired."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "conflicted"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Live, exclusive, and beaten to its scope by the claim whose key this names."
+                }
+              ],
+              "description": "A claim's standing."
+            },
+            "RefusedView": {
+              "type": "object",
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint dialed, or `inbound:<runtime>` for a refused hello."
+                },
+                "direction": {
+                  "type": "string",
+                  "description": "`outbound` (this runtime refused the peer's welcome, or the peer refused this\nhello) or `inbound` (this runtime refused the peer's hello)."
+                },
+                "runtime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The peer's runtime key, when its card said."
+                },
+                "refusal": {
+                  "$ref": "#/$defs/LinkRefusal",
+                  "description": "The refusal."
+                },
+                "at": {
+                  "type": "string",
+                  "description": "When, RFC 3339."
+                }
+              },
+              "required": [
+                "endpoint",
+                "direction",
+                "refusal",
+                "at"
+              ],
+              "description": "A candidate that was refused, with the rule that refused it."
+            },
+            "LinkRefusal": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "$ref": "#/$defs/RefusalCode",
+                  "description": "The rule that refused."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "Why, in words."
+                },
+                "proto_min": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's oldest protocol."
+                },
+                "proto_max": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's newest protocol."
+                }
+              },
+              "required": [
+                "code",
+                "detail",
+                "proto_min",
+                "proto_max"
+              ],
+              "description": "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            },
+            "RefusalCode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "Not the shape of the message."
+                },
+                {
+                  "type": "string",
+                  "const": "oversized",
+                  "description": "Over `MAX_LINK_MESSAGE`."
+                },
+                {
+                  "type": "string",
+                  "const": "protocol_unsupported",
+                  "description": "The protocol ranges do not meet."
+                },
+                {
+                  "type": "string",
+                  "const": "signature",
+                  "description": "The signature does not verify."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "The timestamp is outside the skew window."
+                },
+                {
+                  "type": "string",
+                  "const": "replay",
+                  "description": "A nonce or a counter already seen."
+                },
+                {
+                  "type": "string",
+                  "const": "repository_mismatch",
+                  "description": "The peer serves another repository: the isolation rule."
+                },
+                {
+                  "type": "string",
+                  "const": "untrusted",
+                  "description": "The peer's key is not trusted by this runtime's policy: discovery is not trust."
+                },
+                {
+                  "type": "string",
+                  "const": "self_link",
+                  "description": "The peer is this very runtime."
+                },
+                {
+                  "type": "string",
+                  "const": "not_active",
+                  "description": "This runtime's cooperation is not active."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown_link",
+                  "description": "The link id is unknown here: the answerer restarted or expired the link; say hello."
+                },
+                {
+                  "type": "string",
+                  "const": "capacity",
+                  "description": "A bound of this runtime is full."
+                },
+                {
+                  "type": "string",
+                  "const": "feature_unsupported",
+                  "description": "The peer lacks a feature the operation needs."
+                }
+              ],
+              "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_peer"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/mesh/peer"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.peers",
+      "module": "mesh",
+      "kind": "query",
+      "title": "Who cooperates, machine by machine",
+      "description": "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "PeerTree",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "active": {
+              "type": "boolean",
+              "description": "Whether cooperation runs."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not."
+            },
+            "runtime": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "This runtime."
+            },
+            "repository": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The mesh repository id."
+            },
+            "machines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MachineNode"
+              },
+              "description": "The machines, local first."
+            },
+            "refused": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RefusedView"
+              },
+              "description": "Candidates refused, with the rule."
+            },
+            "digest": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The digest of the cooperation state: equal digests, equal state."
+            }
+          },
+          "required": [
+            "active",
+            "machines",
+            "refused"
+          ],
+          "description": "The answer of `mesh.peers`: machine → runtime → session → claim, every level from the\none journal and the one link table.",
+          "title": "PeerTree",
+          "$defs": {
+            "MachineNode": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string",
+                  "description": "The node id."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Its display name, when a card or this node said."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "Whether it is this machine."
+                },
+                "runtimes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/RuntimeNode"
+                  },
+                  "description": "Its runtimes."
+                }
+              },
+              "required": [
+                "node",
+                "name",
+                "local",
+                "runtimes"
+              ],
+              "description": "One machine in the peer tree."
+            },
+            "RuntimeNode": {
+              "type": "object",
+              "properties": {
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`."
+                },
+                "this_runtime": {
+                  "type": "boolean",
+                  "description": "Whether this is the runtime answering."
+                },
+                "liveness": {
+                  "$ref": "#/$defs/StreamLiveness",
+                  "description": "Whether its stream beats: own, live, or expired."
+                },
+                "last_beat_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Milliseconds since its beat last rose, on this runtime's clock."
+                },
+                "link": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/PeerView"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "This runtime's link to it, when there is one."
+                },
+                "sessions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/SessionNode"
+                  },
+                  "description": "Its sessions."
+                }
+              },
+              "required": [
+                "runtime",
+                "this_runtime",
+                "liveness",
+                "sessions"
+              ],
+              "description": "One runtime in the peer tree."
+            },
+            "StreamLiveness": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "own",
+                  "description": "This runtime's own current stream."
+                },
+                {
+                  "type": "string",
+                  "const": "live",
+                  "description": "Its beat rose within the expiry."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "Its beat has not risen within the expiry, or was never heard."
+                }
+              ],
+              "description": "Whether a stream is speaking now, on this runtime's clock."
+            },
+            "PeerView": {
+              "type": "object",
+              "properties": {
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`: the peer's durable identity."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "The node (machine key digest)."
+                },
+                "instance": {
+                  "type": "string",
+                  "description": "The current instance."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The node's display name."
+                },
+                "version": {
+                  "type": "string",
+                  "description": "The executable version."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "Whether the peer runs on this machine (the same node key)."
+                },
+                "trust": {
+                  "$ref": "#/$defs/TrustState",
+                  "description": "The trust verdict the link was admitted under."
+                },
+                "protocol": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The negotiated link protocol."
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The link features the peer carries."
+                },
+                "endpoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Where the peer answers."
+                },
+                "state": {
+                  "$ref": "#/$defs/LinkState",
+                  "description": "The link's standing."
+                },
+                "outbound": {
+                  "type": "boolean",
+                  "description": "Whether this runtime dials the peer."
+                },
+                "inbound": {
+                  "type": "boolean",
+                  "description": "Whether the peer dials this runtime."
+                },
+                "endpoint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The endpoint this runtime dials, when it does."
+                },
+                "last_exchange_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Milliseconds since the last successful exchange in either direction."
+                },
+                "rtt_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The last round trip, milliseconds."
+                },
+                "failures": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Consecutive failed rounds."
+                },
+                "last_error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The last failure, in words."
+                },
+                "handshakes": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Handshakes completed with this peer."
+                },
+                "reconnects": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Handshakes after an expiry or a dropped link."
+                },
+                "restarts": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "New instances of the peer seen (its process restarted)."
+                },
+                "linked_at": {
+                  "type": "string",
+                  "description": "When the current link was established, RFC 3339."
+                }
+              },
+              "required": [
+                "runtime",
+                "node",
+                "instance",
+                "name",
+                "version",
+                "local",
+                "trust",
+                "protocol",
+                "features",
+                "endpoints",
+                "state",
+                "outbound",
+                "inbound",
+                "failures",
+                "handshakes",
+                "reconnects",
+                "restarts",
+                "linked_at"
+              ],
+              "description": "One peer as every surface shows it."
+            },
+            "TrustState": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "observed"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Valid, recorded, trusted for nothing. The resting state of an unknown node."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "trusted"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`)."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "rejected"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+                }
+              ],
+              "description": "What the policy decided about one node."
+            },
+            "LinkState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "connecting",
+                  "description": "Handshaking, or never yet exchanged."
+                },
+                {
+                  "type": "string",
+                  "const": "connected",
+                  "description": "An exchange within two heartbeats."
+                },
+                {
+                  "type": "string",
+                  "const": "degraded",
+                  "description": "Rounds are failing; the last exchange is under half the expiry old."
+                },
+                {
+                  "type": "string",
+                  "const": "unreachable",
+                  "description": "The last exchange is over half the expiry old; the link is about to expire."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "No exchange within the expiry: the link is dropped and will be re-dialed."
+                }
+              ],
+              "description": "A link's standing, from this runtime's side."
+            },
+            "SessionNode": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "`<stream>/<session>`."
+                },
+                "info": {
+                  "$ref": "#/$defs/SessionInfo",
+                  "description": "What the session last said about itself."
+                },
+                "state": {
+                  "$ref": "#/$defs/SessionState",
+                  "description": "Its standing."
+                },
+                "claims": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ClaimView"
+                  },
+                  "description": "The claims it holds or held."
+                },
+                "reviews": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The review requests it opened, by key."
+                }
+              },
+              "required": [
+                "key",
+                "info",
+                "state",
+                "claims",
+                "reviews"
+              ],
+              "description": "One session in the peer tree."
+            },
+            "SessionInfo": {
+              "type": "object",
+              "properties": {
+                "session": {
+                  "type": "string",
+                  "description": "The session's id within its stream."
+                },
+                "client": {
+                  "type": "string",
+                  "description": "The client: `claude-code`, `codex`, `cli`, ..."
+                },
+                "worker": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The worker's own name for itself, when it gave one."
+                },
+                "intent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What the session says it is doing."
+                },
+                "task": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The task id (`t-...`) the session works under."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue (`I0001`, `#184`) the work belongs to."
+                },
+                "milestone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The milestone the work belongs to."
+                },
+                "checkout": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The checkout id (a digest, never a path)."
+                },
+                "branch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The branch checked out."
+                },
+                "head": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit checked out."
+                },
+                "dirty": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether the working tree had uncommitted changes when this was said."
+                },
+                "context": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The context revision the session works from (a digest the context compiler names)."
+                }
+              },
+              "required": [
+                "session",
+                "client"
+              ],
+              "description": "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential."
+            },
+            "SessionState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "active",
+                  "description": "Open, and its runtime is alive."
+                },
+                {
+                  "type": "string",
+                  "const": "closed",
+                  "description": "Closed by its own runtime."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "Never closed, but its runtime stopped beating: gone, as far as anyone can tell."
+                }
+              ],
+              "description": "A session's standing."
+            },
+            "ClaimView": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "`<stream>/<claim>`."
+                },
+                "stream": {
+                  "$ref": "#/$defs/StreamId",
+                  "description": "The writing stream."
+                },
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`."
+                },
+                "session": {
+                  "type": "string",
+                  "description": "The holding session's key."
+                },
+                "scope": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The claimed paths."
+                },
+                "intent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What it is for."
+                },
+                "mode": {
+                  "$ref": "#/$defs/ClaimMode",
+                  "description": "Exclusive or advisory."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue it is for."
+                },
+                "acquired_lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The Lamport stamp of the acquisition."
+                },
+                "acquired_seq": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The sequence of the acquisition within its stream: with the stamp and the stream,\nthe total order in which exclusivity is decided."
+                },
+                "state": {
+                  "$ref": "#/$defs/ClaimState",
+                  "description": "Its standing."
+                }
+              },
+              "required": [
+                "key",
+                "stream",
+                "runtime",
+                "session",
+                "scope",
+                "mode",
+                "acquired_lamport",
+                "acquired_seq",
+                "state"
+              ],
+              "description": "One claim anywhere in the mesh."
+            },
+            "StreamId": {
+              "type": "string",
+              "description": "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            },
+            "ClaimMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "exclusive",
+                  "description": "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+                },
+                {
+                  "type": "string",
+                  "const": "advisory",
+                  "description": "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+                }
+              ],
+              "description": "Whether a claim excludes others or only tells them."
+            },
+            "ClaimState": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "held"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Live; for an exclusive claim, the winner of its scope."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "released"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Released by its holder."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "expired"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Ended without a release: the holder's session closed or its runtime expired."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "conflicted"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Live, exclusive, and beaten to its scope by the claim whose key this names."
+                }
+              ],
+              "description": "A claim's standing."
+            },
+            "RefusedView": {
+              "type": "object",
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint dialed, or `inbound:<runtime>` for a refused hello."
+                },
+                "direction": {
+                  "type": "string",
+                  "description": "`outbound` (this runtime refused the peer's welcome, or the peer refused this\nhello) or `inbound` (this runtime refused the peer's hello)."
+                },
+                "runtime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The peer's runtime key, when its card said."
+                },
+                "refusal": {
+                  "$ref": "#/$defs/LinkRefusal",
+                  "description": "The refusal."
+                },
+                "at": {
+                  "type": "string",
+                  "description": "When, RFC 3339."
+                }
+              },
+              "required": [
+                "endpoint",
+                "direction",
+                "refusal",
+                "at"
+              ],
+              "description": "A candidate that was refused, with the rule that refused it."
+            },
+            "LinkRefusal": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "$ref": "#/$defs/RefusalCode",
+                  "description": "The rule that refused."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "Why, in words."
+                },
+                "proto_min": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's oldest protocol."
+                },
+                "proto_max": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The refuser's newest protocol."
+                }
+              },
+              "required": [
+                "code",
+                "detail",
+                "proto_min",
+                "proto_max"
+              ],
+              "description": "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            },
+            "RefusalCode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "Not the shape of the message."
+                },
+                {
+                  "type": "string",
+                  "const": "oversized",
+                  "description": "Over `MAX_LINK_MESSAGE`."
+                },
+                {
+                  "type": "string",
+                  "const": "protocol_unsupported",
+                  "description": "The protocol ranges do not meet."
+                },
+                {
+                  "type": "string",
+                  "const": "signature",
+                  "description": "The signature does not verify."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "The timestamp is outside the skew window."
+                },
+                {
+                  "type": "string",
+                  "const": "replay",
+                  "description": "A nonce or a counter already seen."
+                },
+                {
+                  "type": "string",
+                  "const": "repository_mismatch",
+                  "description": "The peer serves another repository: the isolation rule."
+                },
+                {
+                  "type": "string",
+                  "const": "untrusted",
+                  "description": "The peer's key is not trusted by this runtime's policy: discovery is not trust."
+                },
+                {
+                  "type": "string",
+                  "const": "self_link",
+                  "description": "The peer is this very runtime."
+                },
+                {
+                  "type": "string",
+                  "const": "not_active",
+                  "description": "This runtime's cooperation is not active."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown_link",
+                  "description": "The link id is unknown here: the answerer restarted or expired the link; say hello."
+                },
+                {
+                  "type": "string",
+                  "const": "capacity",
+                  "description": "A bound of this runtime is full."
+                },
+                {
+                  "type": "string",
+                  "const": "feature_unsupported",
+                  "description": "The peer lacks a feature the operation needs."
+                }
+              ],
+              "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_peers"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/mesh/peers"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
       "id": "mesh.register",
       "module": "mesh",
       "kind": "command",
@@ -21418,13 +25065,17 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "The repositories this node serves, as the same 32-hex git-repository digests\n`server.status` reports. A digest discloses nothing about a path; a reader that\nserves the same repository recognises it, anyone else learns only \"some repo\".",
+                  "description": "The repositories this node serves, as mesh repository ids (32 hex, see\n`super::repository`): derived from the repository's root commits or its declared\nidentity, never from a path, so that one repository cloned on two machines is\nrecognised as one. A digest discloses nothing; a reader that serves the same\nrepository recognises it, anyone else learns only \"some repo\".",
                   "default": []
                 },
                 "ver": {
                   "type": "string",
                   "description": "The executable version, informational.",
                   "default": ""
+                },
+                "rt": {
+                  "type": "string",
+                  "description": "The runtime slot (16 hex): which server of this node — one per checkout. Empty in\nversion 1. Omitted from the signed bytes when empty, so a version-1 signature\nverifies unchanged."
                 },
                 "sig": {
                   "type": "string",
@@ -21479,6 +25130,1320 @@
         "effect": "process_state",
         "cancellable": false,
         "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.release",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Release a claim",
+      "description": "Release a claim this runtime's current run holds, by its key. A claim written elsewhere is refused as `not_own`: only its holder releases it, and a dead holder's claim expires instead. Writes this runtime's journal only.",
+      "input": {
+        "name": "ReleaseInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "claim": {
+              "type": "string",
+              "description": "The claim's key, `<stream>/<claim>`, as `mesh.claim` answered it."
+            }
+          },
+          "required": [
+            "claim"
+          ],
+          "description": "The input of `mesh.release`.",
+          "title": "ReleaseInput"
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "A written event, as an operation answers it.",
+          "title": "Written"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_release"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/claims/release"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.review.answer",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Answer a review request",
+      "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+      "input": {
+        "name": "ReviewAnswerInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "The request's key, `<stream>/<review>`."
+            },
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The answering session; the calling MCP session's own when omitted."
+            },
+            "verdict": {
+              "type": "string",
+              "description": "`approved`, `changes_requested` or `commented`."
+            },
+            "note": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The note."
+            }
+          },
+          "required": [
+            "request",
+            "verdict"
+          ],
+          "description": "The input of `mesh.review.answer`.",
+          "title": "ReviewAnswerInput"
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "A written event, as an operation answers it.",
+          "title": "Written"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_review_answer"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/reviews/answer"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.review.request",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Ask the mesh for a review",
+      "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+      "input": {
+        "name": "ReviewRequestInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The requesting session; the calling MCP session's own when omitted."
+            },
+            "subject": {
+              "type": "string",
+              "description": "What to review: a branch, a commit, a pull request."
+            },
+            "scope": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The paths it covers.",
+              "default": []
+            },
+            "issue": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The issue."
+            },
+            "reviewer": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The runtime asked (`<node>-<runtime>`); anyone when omitted."
+            }
+          },
+          "required": [
+            "subject"
+          ],
+          "description": "The input of `mesh.review.request`.",
+          "title": "ReviewRequestInput"
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "A written event, as an operation answers it.",
+          "title": "Written"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_review_request"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/reviews"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.session.close",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Close a session on the mesh",
+      "description": "End a session of this runtime; every claim it holds ends with it, on every linked runtime. Writes this runtime's journal only.",
+      "input": {
+        "name": "SessionCloseInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The session; the calling MCP session's own when omitted."
+            }
+          },
+          "description": "The input of `mesh.session.close`.",
+          "title": "SessionCloseInput"
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "A written event, as an operation answers it.",
+          "title": "Written"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_session_close"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/sessions/close"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.session.open",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Open or update a session on the mesh",
+      "description": "Say what a session of this runtime is: its client, worker, intent, task, issue, milestone, branch, head, dirtiness and context revision. Replicated to every linked runtime; a later word replaces an earlier one. Writes this runtime's journal only.",
+      "input": {
+        "name": "SessionInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The session id within this runtime; the calling MCP session's own when omitted."
+            },
+            "client": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The client (`claude-code`, `codex`, `cli`); `cli` when omitted."
+            },
+            "worker": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The worker's name for itself."
+            },
+            "intent": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "What it is doing."
+            },
+            "task": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The task id."
+            },
+            "issue": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The issue."
+            },
+            "milestone": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The milestone."
+            },
+            "branch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The branch."
+            },
+            "head": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The head."
+            },
+            "dirty": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Whether the working tree is dirty."
+            },
+            "context": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The context revision it works from."
+            }
+          },
+          "description": "The input of `mesh.session.open`: what a session says about itself.",
+          "title": "SessionInput"
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "A written event, as an operation answers it.",
+          "title": "Written"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_session_open"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/sessions"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.state",
+      "module": "mesh",
+      "kind": "query",
+      "title": "The state every linked runtime converges on",
+      "description": "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "MeshStateAnswer",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "active": {
+              "type": "boolean",
+              "description": "Whether cooperation runs."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why not."
+            },
+            "state": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CooperationState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The folded state, when cooperation runs."
+            },
+            "streams": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/StreamView"
+              },
+              "description": "Every stream's liveness."
+            }
+          },
+          "required": [
+            "active",
+            "streams"
+          ],
+          "description": "The answer of `mesh.state`.",
+          "title": "MeshStateAnswer",
+          "$defs": {
+            "CooperationState": {
+              "type": "object",
+              "properties": {
+                "sessions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/SessionView"
+                  },
+                  "description": "Every session."
+                },
+                "claims": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ClaimView"
+                  },
+                  "description": "Every claim."
+                },
+                "overlaps": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ClaimOverlap"
+                  },
+                  "description": "Advisory overlaps between live claims."
+                },
+                "handovers": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/HandoverView"
+                  },
+                  "description": "Every handover."
+                },
+                "reviews": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReviewView"
+                  },
+                  "description": "Every review request."
+                },
+                "opaque_events": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Events of kinds this executable does not interpret."
+                },
+                "digest": {
+                  "type": "string",
+                  "description": "32 hex of the SHA-256 of the canonical JSON of everything above."
+                }
+              },
+              "required": [
+                "sessions",
+                "claims",
+                "overlaps",
+                "handovers",
+                "reviews",
+                "opaque_events",
+                "digest"
+              ],
+              "description": "The whole folded state, every collection in key order, and its digest: two runtimes\nthat agree print the same digest."
+            },
+            "SessionView": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "`<stream>/<session>`: unique across the mesh."
+                },
+                "stream": {
+                  "$ref": "#/$defs/StreamId",
+                  "description": "The writing stream."
+                },
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "The node (machine)."
+                },
+                "info": {
+                  "$ref": "#/$defs/SessionInfo",
+                  "description": "What the session last said about itself."
+                },
+                "state": {
+                  "$ref": "#/$defs/SessionState",
+                  "description": "Its standing."
+                },
+                "updated_lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The Lamport stamp of its latest word."
+                }
+              },
+              "required": [
+                "key",
+                "stream",
+                "runtime",
+                "node",
+                "info",
+                "state",
+                "updated_lamport"
+              ],
+              "description": "One session anywhere in the mesh."
+            },
+            "StreamId": {
+              "type": "string",
+              "description": "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            },
+            "SessionInfo": {
+              "type": "object",
+              "properties": {
+                "session": {
+                  "type": "string",
+                  "description": "The session's id within its stream."
+                },
+                "client": {
+                  "type": "string",
+                  "description": "The client: `claude-code`, `codex`, `cli`, ..."
+                },
+                "worker": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The worker's own name for itself, when it gave one."
+                },
+                "intent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What the session says it is doing."
+                },
+                "task": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The task id (`t-...`) the session works under."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue (`I0001`, `#184`) the work belongs to."
+                },
+                "milestone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The milestone the work belongs to."
+                },
+                "checkout": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The checkout id (a digest, never a path)."
+                },
+                "branch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The branch checked out."
+                },
+                "head": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit checked out."
+                },
+                "dirty": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether the working tree had uncommitted changes when this was said."
+                },
+                "context": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The context revision the session works from (a digest the context compiler names)."
+                }
+              },
+              "required": [
+                "session",
+                "client"
+              ],
+              "description": "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential."
+            },
+            "SessionState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "active",
+                  "description": "Open, and its runtime is alive."
+                },
+                {
+                  "type": "string",
+                  "const": "closed",
+                  "description": "Closed by its own runtime."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "Never closed, but its runtime stopped beating: gone, as far as anyone can tell."
+                }
+              ],
+              "description": "A session's standing."
+            },
+            "ClaimView": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "`<stream>/<claim>`."
+                },
+                "stream": {
+                  "$ref": "#/$defs/StreamId",
+                  "description": "The writing stream."
+                },
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>`."
+                },
+                "session": {
+                  "type": "string",
+                  "description": "The holding session's key."
+                },
+                "scope": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The claimed paths."
+                },
+                "intent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What it is for."
+                },
+                "mode": {
+                  "$ref": "#/$defs/ClaimMode",
+                  "description": "Exclusive or advisory."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue it is for."
+                },
+                "acquired_lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The Lamport stamp of the acquisition."
+                },
+                "acquired_seq": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The sequence of the acquisition within its stream: with the stamp and the stream,\nthe total order in which exclusivity is decided."
+                },
+                "state": {
+                  "$ref": "#/$defs/ClaimState",
+                  "description": "Its standing."
+                }
+              },
+              "required": [
+                "key",
+                "stream",
+                "runtime",
+                "session",
+                "scope",
+                "mode",
+                "acquired_lamport",
+                "acquired_seq",
+                "state"
+              ],
+              "description": "One claim anywhere in the mesh."
+            },
+            "ClaimMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "exclusive",
+                  "description": "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+                },
+                {
+                  "type": "string",
+                  "const": "advisory",
+                  "description": "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+                }
+              ],
+              "description": "Whether a claim excludes others or only tells them."
+            },
+            "ClaimState": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "held"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Live; for an exclusive claim, the winner of its scope."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "released"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "description": "Released by its holder."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "expired"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Ended without a release: the holder's session closed or its runtime expired."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "conflicted"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Live, exclusive, and beaten to its scope by the claim whose key this names."
+                }
+              ],
+              "description": "A claim's standing."
+            },
+            "ClaimOverlap": {
+              "type": "object",
+              "properties": {
+                "first": {
+                  "type": "string",
+                  "description": "The earlier claim's key."
+                },
+                "second": {
+                  "type": "string",
+                  "description": "The later claim's key."
+                },
+                "paths": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "description": "The paths that meet, as `first ↔ second` pairs."
+                }
+              },
+              "required": [
+                "first",
+                "second",
+                "paths"
+              ],
+              "description": "Two live claims of different sessions whose scopes meet, at least one advisory:\nreported, never refused."
+            },
+            "HandoverView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The content digest."
+                },
+                "stream": {
+                  "$ref": "#/$defs/StreamId",
+                  "description": "The stream that first published it."
+                },
+                "runtime": {
+                  "type": "string",
+                  "description": "`<node>-<runtime>` of the publisher."
+                },
+                "published_lamport": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The Lamport stamp of the first publication."
+                },
+                "handover": {
+                  "$ref": "#/$defs/HandoverBody",
+                  "description": "The record's facts and body."
+                },
+                "consumed_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Every session that consumed it, by key, in Lamport order."
+                }
+              },
+              "required": [
+                "id",
+                "stream",
+                "runtime",
+                "published_lamport",
+                "handover",
+                "consumed_by"
+              ],
+              "description": "A handover anywhere in the mesh."
+            },
+            "HandoverBody": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The content digest (32 hex): the same handover published twice is one handover."
+                },
+                "task": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The task the handover closes or continues."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue it belongs to."
+                },
+                "milestone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The milestone it belongs to."
+                },
+                "branch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The branch it was written on."
+                },
+                "head": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit it was written at."
+                },
+                "created_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "When it was written, RFC 3339, as its author's clock said."
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The record's file name at its origin, informational."
+                },
+                "body": {
+                  "type": "string",
+                  "description": "The Markdown body (`# Objective`, `# Current State`, `# Next Action`, ...)."
+                }
+              },
+              "required": [
+                "id",
+                "body"
+              ],
+              "description": "A handover as the mesh carries it: the record's facts and its body, bounded."
+            },
+            "ReviewView": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "`<stream>/<review>`."
+                },
+                "session": {
+                  "type": "string",
+                  "description": "The requesting session's key."
+                },
+                "subject": {
+                  "type": "string",
+                  "description": "What is to be reviewed."
+                },
+                "scope": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Paths it covers."
+                },
+                "issue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The issue."
+                },
+                "reviewer": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The runtime asked, when one was."
+                },
+                "state": {
+                  "$ref": "#/$defs/ReviewState",
+                  "description": "Its standing."
+                },
+                "answers": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReviewAnswer"
+                  },
+                  "description": "The answers, in Lamport order."
+                }
+              },
+              "required": [
+                "key",
+                "session",
+                "subject",
+                "scope",
+                "state",
+                "answers"
+              ],
+              "description": "One review request anywhere in the mesh."
+            },
+            "ReviewState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "open",
+                  "description": "Nobody has answered."
+                },
+                {
+                  "type": "string",
+                  "const": "answered",
+                  "description": "At least one answer."
+                }
+              ],
+              "description": "A review request's standing."
+            },
+            "ReviewAnswer": {
+              "type": "object",
+              "properties": {
+                "session": {
+                  "type": "string",
+                  "description": "The answering session's key."
+                },
+                "verdict": {
+                  "type": "string",
+                  "description": "The verdict."
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The note."
+                }
+              },
+              "required": [
+                "session",
+                "verdict"
+              ],
+              "description": "One answer to a review request."
+            },
+            "StreamView": {
+              "type": "object",
+              "properties": {
+                "stream": {
+                  "$ref": "#/$defs/StreamId",
+                  "description": "The stream."
+                },
+                "liveness": {
+                  "$ref": "#/$defs/StreamLiveness",
+                  "description": "Own, live or expired."
+                },
+                "last_beat_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Milliseconds since its beat rose."
+                }
+              },
+              "required": [
+                "stream",
+                "liveness"
+              ],
+              "description": "One stream's liveness."
+            },
+            "StreamLiveness": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "own",
+                  "description": "This runtime's own current stream."
+                },
+                {
+                  "type": "string",
+                  "const": "live",
+                  "description": "Its beat rose within the expiry."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "Its beat has not risen within the expiry, or was never heard."
+                }
+              ],
+              "description": "Whether a stream is speaking now, on this runtime's clock."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_state"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/mesh/state"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },
@@ -21810,6 +26775,223 @@
         "effect": "read",
         "cancellable": false,
         "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
+      "id": "mesh.verify",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Prove cooperation now",
+      "description": "Run a live verification: cooperation is active, the repository identity resolves, the endpoints are reachable beyond loopback, the heartbeat beats, the journal holds no stuck gap; then one sync round with every peer this runtime dials, timed, and whether both sides now hold the same high-water marks. Each failed check names its impact and remedy. Changes nothing but the journal's replication.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "MeshVerifyReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "description": "Whether every check holds and every round succeeded."
+            },
+            "runtime": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "This runtime."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MeshVerifyCheck"
+              },
+              "description": "The checks, in the order they ran."
+            },
+            "peers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PeerVerdict"
+              },
+              "description": "Every linked peer's verdict."
+            },
+            "digest": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The state digest after the rounds."
+            }
+          },
+          "required": [
+            "ok",
+            "checks",
+            "peers"
+          ],
+          "description": "The answer of `mesh.verify`.",
+          "title": "MeshVerifyReport",
+          "$defs": {
+            "MeshVerifyCheck": {
+              "type": "object",
+              "properties": {
+                "check": {
+                  "type": "string",
+                  "description": "What was checked."
+                },
+                "ok": {
+                  "type": "boolean",
+                  "description": "Whether it holds."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "The evidence."
+                },
+                "impact": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What the failure or limitation means for cooperation."
+                },
+                "remediation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What to do."
+                }
+              },
+              "required": [
+                "check",
+                "ok",
+                "detail"
+              ],
+              "description": "One verification check: what was checked, whether it holds, the evidence, and — when\nsomething is wrong or limited — the impact and what to do about it."
+            },
+            "PeerVerdict": {
+              "type": "object",
+              "properties": {
+                "runtime": {
+                  "type": "string",
+                  "description": "The peer's runtime key."
+                },
+                "state": {
+                  "$ref": "#/$defs/LinkState",
+                  "description": "The link's standing after the round."
+                },
+                "dialed": {
+                  "type": "boolean",
+                  "description": "Whether this runtime dials the peer (and so ran a round with it now)."
+                },
+                "round_trip": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether the round succeeded; `None` when the peer dials this runtime instead."
+                },
+                "rtt_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The round trip, milliseconds."
+                },
+                "converged": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether both sides hold the same high-water mark of every stream after the round."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "What happened."
+                }
+              },
+              "required": [
+                "runtime",
+                "state",
+                "dialed",
+                "detail"
+              ],
+              "description": "One peer's verification."
+            },
+            "LinkState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "connecting",
+                  "description": "Handshaking, or never yet exchanged."
+                },
+                {
+                  "type": "string",
+                  "const": "connected",
+                  "description": "An exchange within two heartbeats."
+                },
+                {
+                  "type": "string",
+                  "const": "degraded",
+                  "description": "Rounds are failing; the last exchange is under half the expiry old."
+                },
+                {
+                  "type": "string",
+                  "const": "unreachable",
+                  "description": "The last exchange is over half the expiry old; the link is about to expire."
+                },
+                {
+                  "type": "string",
+                  "const": "expired",
+                  "description": "No exchange within the expiry: the link is dropped and will be re-dialed."
+                }
+              ],
+              "description": "A link's standing, from this runtime's side."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_verify"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/verify"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "diagnostics",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "external_dependency"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },

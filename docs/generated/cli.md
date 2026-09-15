@@ -129,6 +129,22 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh nodes`](#majordomus-mesh-nodes) | `/docs/cli/mesh/nodes/` | Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance |
 | [`majordomus mesh identity`](#majordomus-mesh-identity) | `/docs/cli/mesh/identity/` | This machine's node identity, public half only; absent is an answer, not an error |
 | [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end |
+| [`majordomus mesh peers`](#majordomus-mesh-peers) | `/docs/cli/mesh/peers/` | Every machine, runtime and session this checkout's server cooperates with, with each link's state |
+| [`majordomus mesh peer`](#majordomus-mesh-peer) | `/docs/cli/mesh/peer/` | One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here |
+| [`majordomus mesh state`](#majordomus-mesh-state) | `/docs/cli/mesh/state/` | The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest |
+| [`majordomus mesh events`](#majordomus-mesh-events) | `/docs/cli/mesh/events/` | The cooperation journal's events after a Lamport stamp, in Lamport order |
+| [`majordomus mesh verify`](#majordomus-mesh-verify) | `/docs/cli/mesh/verify/` | Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails |
+| [`majordomus mesh claim`](#majordomus-mesh-claim) | `/docs/cli/mesh/claim/` | Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them |
+| [`majordomus mesh release`](#majordomus-mesh-release) | `/docs/cli/mesh/release/` | Release a claim this server's current run holds |
+| [`majordomus mesh session`](#majordomus-mesh-session) | `/docs/cli/mesh/session/` | Open, update or close a session on the mesh |
+| [`majordomus mesh session open`](#majordomus-mesh-session-open) | `/docs/cli/mesh/session/open/` | Open or update a session: what it is, what it does, where |
+| [`majordomus mesh session close`](#majordomus-mesh-session-close) | `/docs/cli/mesh/session/close/` | Close a session; its claims end with it on every linked runtime |
+| [`majordomus mesh handover`](#majordomus-mesh-handover) | `/docs/cli/mesh/handover/` | Publish a handover of this checkout to the mesh, or consume one another runtime published |
+| [`majordomus mesh handover publish`](#majordomus-mesh-handover-publish) | `/docs/cli/mesh/handover/publish/` | Publish this checkout's newest handover record (or the one named) to every linked runtime |
+| [`majordomus mesh handover consume`](#majordomus-mesh-handover-consume) | `/docs/cli/mesh/handover/consume/` | Consume a handover another runtime published, writing it as a local record `handover --resolve` finds |
+| [`majordomus mesh review`](#majordomus-mesh-review) | `/docs/cli/mesh/review/` | Ask the mesh for a review, or answer a request |
+| [`majordomus mesh review request`](#majordomus-mesh-review-request) | `/docs/cli/mesh/review/request/` | Ask for a review of a branch, commit or pull request |
+| [`majordomus mesh review answer`](#majordomus-mesh-review-answer) | `/docs/cli/mesh/review/answer/` | Answer a review request |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
 | [`majordomus models route`](#majordomus-models-route) | `/docs/cli/models/route/` | Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out |
@@ -3490,7 +3506,7 @@ Examples:
 
 The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
 
-Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor).
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
 
 ```text
 majordomus mesh <COMMAND>
@@ -3605,6 +3621,431 @@ Examples:
   ```
 
   Verified: exits 0; prints protocol.
+
+<a id="majordomus-mesh-peers"></a>
+## `majordomus mesh peers`
+
+Every machine, runtime and session this checkout's server cooperates with, with each link's state
+
+```text
+majordomus mesh peers [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Who cooperates, machine by machine** — Machines, runtimes, sessions and claims, from this checkout's running server. With no server, or with cooperation off, the answer says so and why — the mesh lives in the server's memory.
+
+  ```console
+  $ majordomus mesh peers
+  ```
+
+  Verified: exits 0; prints cooperation inactive.
+
+<a id="majordomus-mesh-peer"></a>
+## `majordomus mesh peer`
+
+One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here
+
+```text
+majordomus mesh peer [OPTIONS] <RUNTIME>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<RUNTIME>` | `<RUNTIME>` | required | The runtime key `<node>-<runtime>`, or a node id for its first runtime |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One runtime, by its key** — A runtime's machine, liveness, link, sessions and claims. A runtime the server does not know is `not found` with the reason; here no server runs, and the reason says that.
+
+  ```console
+  $ majordomus mesh peer 00000000000000000000000000000000-0000000000000000
+  ```
+
+  Verified: exits 0; prints not found.
+
+<a id="majordomus-mesh-state"></a>
+## `majordomus mesh state`
+
+The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest
+
+```text
+majordomus mesh state [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The state every linked runtime converges on** — Sessions, claims with their standing, handovers, reviews and the digest two runtimes compare — or, with no running server, why there is none.
+
+  ```console
+  $ majordomus mesh state
+  ```
+
+  Verified: exits 0; prints cooperation inactive.
+
+<a id="majordomus-mesh-events"></a>
+## `majordomus mesh events`
+
+The cooperation journal's events after a Lamport stamp, in Lamport order
+
+```text
+majordomus mesh events [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--after` | `<AFTER>` | — | Only events whose Lamport stamp is above this |
+| `--limit` | `<LIMIT>` | — | At most this many (default 100, at most 1000) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One page of the cooperation journal** — The journal's signed events above a Lamport stamp; `--after` is the previous page's `lamport`. With no running server the answer is the reason.
+
+  ```console
+  $ majordomus mesh events --after 0 --limit 50
+  ```
+
+  Verified: exits 0; prints cooperation inactive.
+
+<a id="majordomus-mesh-verify"></a>
+## `majordomus mesh verify`
+
+Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails
+
+```text
+majordomus mesh verify [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Prove cooperation now, or say why it cannot** — A live round with every peer the server dials and the local checks, each failure with its impact and remedy. It exits 10 when anything fails — here, because no server runs to verify.
+
+  ```console
+  $ majordomus mesh verify
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-claim"></a>
+## `majordomus mesh claim`
+
+Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them
+
+```text
+majordomus mesh claim [OPTIONS] <SCOPE>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<SCOPE>` | `<SCOPE>` | required | Repository-relative paths to claim |
+| `--session` | `<SESSION>` | required | The claiming session's id within this runtime (opened when new) |
+| `--intent` | `<INTENT>` | — | What the claim is for |
+| `--advisory` | flag | — | An advisory claim: overlaps are reported, never refused |
+| `--issue` | `<ISSUE>` | — | The issue the claim is for |
+| `--task` | `<TASK>` | — | The task the session works under |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Claim paths for a session across the mesh** — An exclusive claim that meets a live exclusive claim on any linked runtime exits 10 with claim_conflict naming it. A claim needs the running server that replicates it; without one the command exits 10 and says so.
+
+  ```console
+  $ majordomus mesh claim docs --session s1 --issue '#184'
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-release"></a>
+## `majordomus mesh release`
+
+Release a claim this server's current run holds
+
+```text
+majordomus mesh release [OPTIONS] <CLAIM>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<CLAIM>` | `<CLAIM>` | required | The claim's key, `<stream>/<claim>`, as `mesh claim` printed it |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Release a claim this server holds** — Only the holder's current run releases a claim; a dead holder's claim expires instead. Without a running server there is nothing to release, and the command exits 10.
+
+  ```console
+  $ majordomus mesh release stream/c-000000000000
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-session"></a>
+## `majordomus mesh session`
+
+Open, update or close a session on the mesh
+
+Subcommands: [`majordomus mesh session open`](#majordomus-mesh-session-open), [`majordomus mesh session close`](#majordomus-mesh-session-close).
+
+```text
+majordomus mesh session <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-mesh-session-open"></a>
+## `majordomus mesh session open`
+
+Open or update a session: what it is, what it does, where
+
+```text
+majordomus mesh session open [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--session` | `<SESSION>` | required | The session's id within this runtime |
+| `--client` | `<CLIENT>` | — | The client (`claude-code`, `codex`, `cli`) |
+| `--worker` | `<WORKER>` | — | The worker's name for itself |
+| `--intent` | `<INTENT>` | — | What the session is doing |
+| `--task` | `<TASK>` | — | The task id |
+| `--issue` | `<ISSUE>` | — | The issue |
+| `--milestone` | `<MILESTONE>` | — | The milestone |
+| `--branch` | `<BRANCH>` | — | The branch |
+| `--head` | `<HEAD>` | — | The head commit |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Say what a session is doing, to every linked runtime** — Client, intent, issue and branch of a session, replicated to every linked runtime. It needs the running server; without one it exits 10.
+
+  ```console
+  $ majordomus mesh session open --session s1 --client codex --issue '#184'
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-session-close"></a>
+## `majordomus mesh session close`
+
+Close a session; its claims end with it on every linked runtime
+
+```text
+majordomus mesh session close [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--session` | `<SESSION>` | required | The session's id within this runtime |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Close a session and end its claims** — Every claim the session holds ends with it, on every linked runtime. It needs the running server; without one it exits 10.
+
+  ```console
+  $ majordomus mesh session close --session s1
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-handover"></a>
+## `majordomus mesh handover`
+
+Publish a handover of this checkout to the mesh, or consume one another runtime published
+
+Subcommands: [`majordomus mesh handover publish`](#majordomus-mesh-handover-publish), [`majordomus mesh handover consume`](#majordomus-mesh-handover-consume).
+
+```text
+majordomus mesh handover <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-mesh-handover-publish"></a>
+## `majordomus mesh handover publish`
+
+Publish this checkout's newest handover record (or the one named) to every linked runtime
+
+```text
+majordomus mesh handover publish [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--path` | `<PATH>` | — | The record, relative to the repository root, under .ai/local/state/handovers/ |
+| `--issue` | `<ISSUE>` | — | The issue the handover belongs to |
+| `--milestone` | `<MILESTONE>` | — | The milestone it belongs to |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Publish this checkout's newest handover** — The newest record under .ai/local/state/handovers/ travels to every linked runtime, bounded and identified by its body's digest. It needs the running server; without one it exits 10.
+
+  ```console
+  $ majordomus mesh handover publish --issue '#184'
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-handover-consume"></a>
+## `majordomus mesh handover consume`
+
+Consume a handover another runtime published, writing it as a local record `handover --resolve` finds
+
+```text
+majordomus mesh handover consume [OPTIONS] <HANDOVER>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<HANDOVER>` | `<HANDOVER>` | required | The handover's id, as `mesh state` lists it |
+| `--session` | `<SESSION>` | required | The consuming session's id within this runtime |
+| `--no-materialize` | flag | — | Record the consumption without writing a local handover record |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Consume a handover another runtime published** — Records the consumption and writes the handover where `majordomus handover --resolve` finds it on the same branch. It needs the running server; without one it exits 10.
+
+  ```console
+  $ majordomus mesh handover consume 00000000000000000000000000000000 --session s1
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-review"></a>
+## `majordomus mesh review`
+
+Ask the mesh for a review, or answer a request
+
+Subcommands: [`majordomus mesh review request`](#majordomus-mesh-review-request), [`majordomus mesh review answer`](#majordomus-mesh-review-answer).
+
+```text
+majordomus mesh review <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-mesh-review-request"></a>
+## `majordomus mesh review request`
+
+Ask for a review of a branch, commit or pull request
+
+```text
+majordomus mesh review request [OPTIONS] <SUBJECT>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<SUBJECT>` | `<SUBJECT>` | required | What to review: a branch, a commit, a pull request |
+| `--session` | `<SESSION>` | required | The requesting session's id within this runtime |
+| `--scope` | `<SCOPE>` | — | A path the review covers (repeatable) |
+| `--issue` | `<ISSUE>` | — | The issue |
+| `--reviewer` | `<REVIEWER>` | — | The runtime asked, `<node>-<runtime>` |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Ask the mesh for a review** — A named reviewer must be a linked runtime carrying the reviews feature, or the request exits 10 with feature_unsupported. It needs the running server; without one it exits 10.
+
+  ```console
+  $ majordomus mesh review request feature/x --session s1
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-review-answer"></a>
+## `majordomus mesh review answer`
+
+Answer a review request
+
+```text
+majordomus mesh review answer [OPTIONS] <REQUEST>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<REQUEST>` | `<REQUEST>` | required | The request's key, `<stream>/<review>` |
+| `--session` | `<SESSION>` | required | The answering session's id within this runtime |
+| `--verdict` | `approved` \| `changes_requested` \| `commented` | required | `approved`, `changes_requested` or `commented` |
+| `--note` | `<NOTE>` | — | The note |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Answer a review request from any runtime** — approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.
+
+  ```console
+  $ majordomus mesh review answer stream/r-000000000000 --session s1 --verdict approved
+  ```
+
+  Verified: exits 10.
 
 <a id="majordomus-models"></a>
 ## `majordomus models`

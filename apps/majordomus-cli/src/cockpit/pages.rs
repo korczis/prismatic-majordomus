@@ -2722,12 +2722,372 @@ pub fn mesh(ctx: &Context) -> Page {
         })
         .collect();
 
+    let cooperation: crate::mesh::cooperation::CooperationStatus =
+        match ask(ctx, "mesh.cooperation", json!({})) {
+            Ok(c) => c,
+            Err(e) => return failed(Area::Mesh, "Mesh", e),
+        };
+    let tree: crate::capability::builtin::mesh::PeerTree = match ask(ctx, "mesh.peers", json!({})) {
+        Ok(t) => t,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+    let folded: crate::capability::builtin::mesh::MeshStateAnswer =
+        match ask(ctx, "mesh.state", json!({})) {
+            Ok(s) => s,
+            Err(e) => return failed(Area::Mesh, "Mesh", e),
+        };
+
+    // Cooperation: this runtime, its repository identity, its link protocol and counters.
+    let mut coop = el("div").child(facts(vec![(
+        "Cooperation",
+        Node::Element(word_badge(if cooperation.active {
+            "active"
+        } else {
+            "inactive"
+        })),
+    )]));
+    if let Some(reason) = &cooperation.reason {
+        coop = coop.child(el("p").class("mj-prose").text(reason));
+    }
+    if let Some(runtime) = &cooperation.runtime {
+        let repository = cooperation
+            .repository
+            .as_ref()
+            .map(|r| format!("{} ({})", r.id, r.detail))
+            .unwrap_or_default();
+        coop = coop.child(facts(vec![
+            ("Runtime", Node::Element(mono(runtime.clone()))),
+            ("Repository", Node::Element(mono(repository))),
+            (
+                "Endpoints",
+                Node::Element(el("span").text(cooperation.endpoints.join(", "))),
+            ),
+            (
+                "Heartbeat / expiry",
+                Node::Element(el("span").text(format!(
+                    "{}s / {}s",
+                    cooperation.heartbeat_seconds, cooperation.expiry_seconds
+                ))),
+            ),
+            (
+                "Link protocol",
+                Node::Element(el("span").text(format!(
+                    "{}..{} — {}",
+                    cooperation.protocol.0,
+                    cooperation.protocol.1,
+                    cooperation.features.join(", ")
+                ))),
+            ),
+        ]));
+        let k = &cooperation.counters;
+        let j = &cooperation.journal;
+        coop = coop.child(facts(vec![
+            (
+                "Handshakes",
+                Node::Element(el("span").text(format!(
+                    "{} out, {} in; {} reconnects, {} restarts seen, {} links expired",
+                    k.handshakes_out, k.handshakes_in, k.reconnects, k.restarts, k.peers_expired
+                ))),
+            ),
+            (
+                "Syncs",
+                Node::Element(el("span").text(format!(
+                    "{} out ({} failed), {} in; {} events sent, {} served",
+                    k.syncs_out, k.syncs_failed, k.syncs_in, k.events_sent, k.events_served
+                ))),
+            ),
+            (
+                "Journal",
+                Node::Element(el("span").text(format!(
+                    "{} events in {} streams; {} received, {} duplicates absorbed, {} rejected, {} pending",
+                    j.events, j.streams, j.received, j.duplicates, j.rejected, j.pending
+                ))),
+            ),
+            (
+                "Claims refused",
+                Node::Element(el("span").text(k.claims_refused.to_string())),
+            ),
+        ]));
+    }
+    if let Some(digest) = &tree.digest {
+        coop = coop.child(facts(vec![(
+            "State digest",
+            Node::Element(mono(digest.clone())),
+        )]));
+    }
+    coop = coop.child(el("p").class("mj-prose").text(
+        "Actions run the same capabilities every surface runs: mesh.verify, mesh.claim, mesh.release, mesh.handover.publish, mesh.handover.consume, mesh.review.request — each on its page under Capabilities.",
+    ));
+
+    // Machine → runtime → session → claim, local first; a runtime that stopped beating
+    // says so and says when it last did, instead of keeping a green dot.
+    let machine_cards: Vec<El> = tree
+        .machines
+        .iter()
+        .map(|m| {
+            let runtimes: Vec<El> = m
+                .runtimes
+                .iter()
+                .map(|r| {
+                    let liveness = match r.liveness {
+                        crate::mesh::journal::StreamLiveness::Own => "this runtime",
+                        crate::mesh::journal::StreamLiveness::Live => "live",
+                        crate::mesh::journal::StreamLiveness::Expired => "expired",
+                    };
+                    let badge = r
+                        .link
+                        .as_ref()
+                        .map(|l| match l.state {
+                            crate::mesh::cooperation::LinkState::Connecting => "connecting",
+                            crate::mesh::cooperation::LinkState::Connected => "connected",
+                            crate::mesh::cooperation::LinkState::Degraded => "degraded",
+                            crate::mesh::cooperation::LinkState::Unreachable => "unreachable",
+                            crate::mesh::cooperation::LinkState::Expired => "expired",
+                        })
+                        .unwrap_or(liveness);
+                    let beat = r
+                        .last_beat_ms
+                        .map(|ms| format!("last heartbeat {}s ago", ms / 1000))
+                        .unwrap_or_else(|| "no heartbeat heard".into());
+                    let active_sessions = r
+                        .sessions
+                        .iter()
+                        .filter(|s| s.state == crate::mesh::state::SessionState::Active)
+                        .count();
+                    let live_claims = r
+                        .sessions
+                        .iter()
+                        .flat_map(|s| s.claims.iter())
+                        .filter(|c| c.state.is_live())
+                        .count();
+                    let link = r
+                        .link
+                        .as_ref()
+                        .map(|l| {
+                            format!(
+                                "{}{}, {} handshake(s), {} reconnect(s), {} restart(s){}{}",
+                                if l.outbound { "dialed" } else { "dials this runtime" },
+                                l.endpoint.as_ref().map(|e| format!(" at {e}")).unwrap_or_default(),
+                                l.handshakes,
+                                l.reconnects,
+                                l.restarts,
+                                l.rtt_ms.map(|ms| format!(", rtt {ms}ms")).unwrap_or_default(),
+                                l.last_error.as_ref().map(|e| format!(", last error: {e}")).unwrap_or_default(),
+                            )
+                        })
+                        .unwrap_or_else(|| "no link from this runtime".into());
+                    let sessions: Vec<El> = r
+                        .sessions
+                        .iter()
+                        .map(|s| {
+                            let state = match s.state {
+                                crate::mesh::state::SessionState::Active => "active",
+                                crate::mesh::state::SessionState::Closed => "closed",
+                                crate::mesh::state::SessionState::Expired => "expired",
+                            };
+                            let who = format!(
+                                "{}{}",
+                                s.info.client,
+                                s.info.worker.as_ref().map(|w| format!(" ({w})")).unwrap_or_default()
+                            );
+                            let claims = s
+                                .claims
+                                .iter()
+                                .map(|c| {
+                                    let st = match &c.state {
+                                        crate::mesh::state::ClaimState::Held => "held".to_string(),
+                                        crate::mesh::state::ClaimState::Released => "released".to_string(),
+                                        crate::mesh::state::ClaimState::Expired(why) => format!("expired: {why}"),
+                                        crate::mesh::state::ClaimState::Conflicted(w) => format!("conflicted with {w}"),
+                                    };
+                                    format!("{} [{:?}, {st}]", c.scope.join(", "), c.mode).to_lowercase()
+                                })
+                                .collect::<Vec<_>>()
+                                .join("; ");
+                            card_with(
+                                who,
+                                word_badge(state),
+                                el("div").child(facts(vec![
+                                    (
+                                        "Intent",
+                                        Node::Element(el("span").text(s.info.intent.clone().unwrap_or_else(|| "—".into()))),
+                                    ),
+                                    (
+                                        "Issue / task",
+                                        Node::Element(el("span").text(format!(
+                                            "{} / {}",
+                                            s.info.issue.as_deref().unwrap_or("—"),
+                                            s.info.task.as_deref().unwrap_or("—")
+                                        ))),
+                                    ),
+                                    (
+                                        "Branch",
+                                        Node::Element(mono(format!(
+                                            "{}{}",
+                                            s.info.branch.as_deref().unwrap_or("—"),
+                                            s.info.head.as_ref().map(|h| format!(" @ {}", &h[..h.len().min(8)])).unwrap_or_default()
+                                        ))),
+                                    ),
+                                    (
+                                        "Claims",
+                                        Node::Element(el("span").text(if claims.is_empty() { "none".to_string() } else { claims })),
+                                    ),
+                                ])),
+                            )
+                        })
+                        .collect();
+                    card_with(
+                        format!("Runtime {}", r.runtime),
+                        word_badge(badge),
+                        el("div")
+                            .child(facts(vec![
+                                ("Liveness", Node::Element(el("span").text(format!("{liveness}, {beat}")))),
+                                ("Link", Node::Element(el("span").text(link))),
+                                (
+                                    "Work",
+                                    Node::Element(el("span").text(format!(
+                                        "{active_sessions} active session(s), {live_claims} live claim(s)"
+                                    ))),
+                                ),
+                            ]))
+                            .when(!sessions.is_empty(), |d| {
+                                d.child(el("div").class("mj-grid").children(sessions))
+                            }),
+                    )
+                })
+                .collect();
+            card_with(
+                format!("{} — {}", m.name, m.node),
+                word_badge(if m.local { "local" } else { "remote" }),
+                el("div").class("mj-grid").children(runtimes),
+            )
+        })
+        .collect();
+
+    // Claims in conflict, handovers and reviews, from the one folded state.
+    let state = folded.state.clone().unwrap_or_default();
+    let conflicts: Vec<El> = state
+        .claims
+        .iter()
+        .filter_map(|c| match &c.state {
+            crate::mesh::state::ClaimState::Conflicted(winner) => {
+                Some(el("p").class("mj-prose").text(format!(
+                    "{} ({}) lost to {winner}",
+                    c.key,
+                    c.scope.join(", ")
+                )))
+            }
+            _ => None,
+        })
+        .collect();
+    let handovers: Vec<El> = state
+        .handovers
+        .iter()
+        .map(|h| {
+            card_with(
+                format!("Handover {}", h.id),
+                word_badge(if h.consumed_by.is_empty() {
+                    "published"
+                } else {
+                    "consumed"
+                }),
+                el("div").child(facts(vec![
+                    ("From", Node::Element(mono(h.runtime.clone()))),
+                    (
+                        "Task / issue",
+                        Node::Element(el("span").text(format!(
+                            "{} / {}",
+                            h.handover.task.as_deref().unwrap_or("—"),
+                            h.handover.issue.as_deref().unwrap_or("—")
+                        ))),
+                    ),
+                    (
+                        "Branch",
+                        Node::Element(mono(
+                            h.handover.branch.clone().unwrap_or_else(|| "—".into()),
+                        )),
+                    ),
+                    (
+                        "Consumed by",
+                        Node::Element(el("span").text(if h.consumed_by.is_empty() {
+                            "nobody yet".to_string()
+                        } else {
+                            h.consumed_by.join(", ")
+                        })),
+                    ),
+                ])),
+            )
+        })
+        .collect();
+    let reviews: Vec<El> = state
+        .reviews
+        .iter()
+        .map(|r| {
+            let answers = r
+                .answers
+                .iter()
+                .map(|a| format!("{}: {}", a.session, a.verdict))
+                .collect::<Vec<_>>()
+                .join("; ");
+            card_with(
+                format!("Review of {}", r.subject),
+                word_badge(match r.state {
+                    crate::mesh::state::ReviewState::Open => "open",
+                    crate::mesh::state::ReviewState::Answered => "answered",
+                }),
+                el("div").child(facts(vec![
+                    ("Requested by", Node::Element(mono(r.session.clone()))),
+                    (
+                        "Issue",
+                        Node::Element(
+                            el("span").text(r.issue.clone().unwrap_or_else(|| "—".into())),
+                        ),
+                    ),
+                    (
+                        "Answers",
+                        Node::Element(el("span").text(if answers.is_empty() {
+                            "none".to_string()
+                        } else {
+                            answers
+                        })),
+                    ),
+                ])),
+            )
+        })
+        .collect();
+    let refused: Vec<El> = tree
+        .refused
+        .iter()
+        .map(|r| {
+            el("p").class("mj-prose").text(format!(
+                "{} ({}): {} — {}",
+                r.endpoint,
+                r.direction,
+                r.refusal.code.as_str(),
+                r.refusal.detail
+            ))
+        })
+        .collect();
+
     Page::new(
         Area::Mesh,
         "Mesh",
         el("div")
             .class("mj-grid")
             .child(card("This node", overview))
+            .child(card("Cooperation", coop))
+            .child(card(
+                format!("Machines ({})", tree.machines.len()),
+                if machine_cards.is_empty() {
+                    el("p").class("mj-prose").text("No runtime cooperates here yet. A runtime links to trusted runtimes of the same repository as discovery or a declared seed finds them; `majordomus mesh verify` says what is missing.")
+                } else {
+                    el("div").class("mj-grid").children(machine_cards)
+                },
+            ))
+            .when(!conflicts.is_empty(), |d| d.child(card("Claim conflicts", el("div").children(conflicts))))
+            .when(!handovers.is_empty(), |d| d.child(card("Handovers", el("div").class("mj-grid").children(handovers))))
+            .when(!reviews.is_empty(), |d| d.child(card("Reviews", el("div").class("mj-grid").children(reviews))))
+            .when(!refused.is_empty(), |d| d.child(card("Refused candidates", el("div").children(refused))))
             .when(!providers.is_empty(), |d| {
                 d.child(card(
                     "Discovery providers",

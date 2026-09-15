@@ -18,14 +18,14 @@
 //! - **No loops.** Replication is a comparison of high-water marks, not a flood: a
 //!   runtime sends a peer only what the peer's marks say it lacks, so an event reaches
 //!   every runtime once per link and stops.
-//! - **Liveness without shared clocks.** Each stream carries a beat its origin raises on
+//! - **StreamLiveness without shared clocks.** Each stream carries a beat its origin raises on
 //!   every heartbeat; a mark relays the beat with how long ago the sender saw it rise.
 //!   A runtime computes freshness on its own monotonic clock — no two machines' wall
 //!   clocks are ever compared.
 //!
 //! What it does not promise: exactly-once delivery, a global order across streams beyond
 //! the Lamport stamp, or consistency under partition. Two sides of a partition may both
-//! act; the fold makes the result deterministic and names the conflict (ADR 0065).
+//! act; the fold makes the result deterministic and names the conflict (ADR 0067).
 //!
 //! ```
 //! use majordomus_cli::mesh::identity::NodeIdentity;
@@ -81,6 +81,16 @@ pub const MAX_PENDING: usize = 256;
 /// The most paths one claim or review names.
 pub const MAX_SCOPE_PATHS: usize = 64;
 
+/// The most streams one node may occupy: runtime and instance ids are free to invent, so a
+/// single trusted key must not be able to fill the stream table.
+pub const MAX_STREAMS_PER_NODE: usize = 64;
+
+/// The most events (held and pending) one node may occupy.
+pub const MAX_EVENTS_PER_NODE: usize = 20_000;
+
+/// The most out-of-order events the whole journal holds at once.
+pub const MAX_PENDING_TOTAL: usize = 4096;
+
 /// The domain separator of an event signature: a signature over an event can never be
 /// replayed as a signature over an advertisement or a link message.
 const SIGNING_DOMAIN: &[u8] = b"majordomus-mesh-event/v1\n";
@@ -92,8 +102,23 @@ const SIGNING_DOMAIN: &[u8] = b"majordomus-mesh-event/v1\n";
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
-#[serde(transparent)]
+#[serde(try_from = "String", into = "String")]
 pub struct StreamId(String);
+
+/// A stream id off the wire is parsed, never trusted: every accessor slices at fixed
+/// widths, so an unparsed id would be a panic waiting in a peer's marks.
+impl TryFrom<String> for StreamId {
+    type Error = String;
+    fn try_from(text: String) -> Result<Self, Self::Error> {
+        StreamId::parse(&text).ok_or_else(|| format!("'{text}' is not a stream id"))
+    }
+}
+
+impl From<StreamId> for String {
+    fn from(id: StreamId) -> String {
+        id.0
+    }
+}
 
 impl StreamId {
     /// A stream id from its three parts; `None` unless each is lowercase hex of its width.
@@ -115,9 +140,10 @@ impl StreamId {
             && parts[0].len() == 32
             && parts[1].len() == 16
             && parts[2].len() == 16
-            && parts
-                .iter()
-                .all(|p| p.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)));
+            && parts.iter().all(|p| {
+                p.bytes()
+                    .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+            });
         ok.then(|| StreamId(text.to_string()))
     }
 
@@ -388,7 +414,7 @@ impl EventBody {
                     ("context", &info.context, 128),
                 ] {
                     if let Some(v) = value {
-                        text(name, v, max)?;
+                        line(name, v, max)?;
                     }
                 }
                 Ok(())
@@ -433,8 +459,10 @@ impl EventBody {
                     ("created_at", &handover.created_at, 64),
                     ("name", &handover.name, 256),
                 ] {
+                    // These become front matter and a file name wherever the handover is
+                    // consumed: one line each, never a place to smuggle a key or a path.
                     if let Some(v) = value {
-                        text(name, v, max)?;
+                        line(name, v, max)?;
                     }
                 }
                 Ok(())
@@ -472,7 +500,9 @@ impl EventBody {
                 text("request", request, 128)?;
                 ident("session", session)?;
                 if !["approved", "changes_requested", "commented"].contains(&verdict.as_str()) {
-                    return Err(format!("verdict '{verdict}' is not approved, changes_requested or commented"));
+                    return Err(format!(
+                        "verdict '{verdict}' is not approved, changes_requested or commented"
+                    ));
                 }
                 if let Some(v) = note {
                     text("note", v, 2048)?;
@@ -492,13 +522,26 @@ fn ident(name: &str, value: &str) -> Result<(), String> {
     if ok {
         Ok(())
     } else {
-        Err(format!("{name} '{value}' is not an identifier (1-64 of [A-Za-z0-9._:#-])"))
+        Err(format!(
+            "{name} '{value}' is not an identifier (1-64 of [A-Za-z0-9._:#-])"
+        ))
     }
 }
 
 fn text(name: &str, value: &str, max: usize) -> Result<(), String> {
     if value.len() > max || value.chars().any(|c| c.is_control() && c != '\n') {
-        return Err(format!("{name} is over {max} bytes or carries control characters"));
+        return Err(format!(
+            "{name} is over {max} bytes or carries control characters"
+        ));
+    }
+    Ok(())
+}
+
+fn line(name: &str, value: &str, max: usize) -> Result<(), String> {
+    if value.len() > max || value.chars().any(char::is_control) {
+        return Err(format!(
+            "{name} is over {max} bytes or is not a single line"
+        ));
     }
     Ok(())
 }
@@ -630,7 +673,9 @@ impl MeshEvent {
 }
 
 /// Why an event was not stored.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum Rejection {
     /// Over [`MAX_EVENT_BYTES`].
@@ -676,16 +721,30 @@ impl IngestReport {
 }
 
 /// What a runtime knows of one stream: the contiguous high-water sequence, the highest
-/// beat, and how long ago that beat was seen to rise (`None` when never).
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// beat with its origin's signature, and how long ago that beat was seen to rise (`None`
+/// when never).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct StreamMark {
     /// Every event up to and including this sequence is held.
     pub seq: u64,
     /// The highest beat heard.
     pub beat: u64,
-    /// Milliseconds since that beat rose, on the sender's monotonic clock.
+    /// Milliseconds since that beat rose, on the sender's monotonic clock. Clamped by the
+    /// reader to its expiry: a relay can report a beat stale, never older than dead.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub age_ms: Option<u64>,
+    /// The origin's public key, hex: the beat is its statement.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pk: Option<String>,
+    /// The origin's signature over the stream and the beat, hex. A relay forwards it
+    /// verbatim; only the origin can raise its own beat.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sig: Option<String>,
+}
+
+/// The bytes a beat signature covers.
+fn beat_bytes(stream: &StreamId, beat: u64) -> Vec<u8> {
+    format!("majordomus-mesh-beat/v1\n{stream}\n{beat}").into_bytes()
 }
 
 /// Every stream's mark: what a sync request and answer carry.
@@ -694,7 +753,7 @@ pub type Marks = BTreeMap<StreamId, StreamMark>;
 /// Whether a stream is speaking now, on this runtime's clock.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Liveness {
+pub enum StreamLiveness {
     /// This runtime's own current stream.
     Own,
     /// Its beat rose within the expiry.
@@ -703,10 +762,10 @@ pub enum Liveness {
     Expired,
 }
 
-impl Liveness {
+impl StreamLiveness {
     /// Whether the stream counts as alive: its claims hold, its sessions are present.
     pub fn is_alive(self) -> bool {
-        !matches!(self, Liveness::Expired)
+        !matches!(self, StreamLiveness::Expired)
     }
 }
 
@@ -740,6 +799,8 @@ struct StreamLog {
     events: BTreeMap<u64, MeshEvent>,
     pending: BTreeMap<u64, MeshEvent>,
     beat: u64,
+    beat_pk: Option<String>,
+    beat_sig: Option<String>,
     fresh_at: Option<Instant>,
 }
 
@@ -750,6 +811,9 @@ impl StreamLog {
 }
 
 struct Inner {
+    /// Streams compacted away, with the high-water sequence they had: their marks keep
+    /// being advertised, so a peer that still holds the stream does not send it again.
+    tombstones: BTreeMap<StreamId, u64>,
     streams: BTreeMap<StreamId, StreamLog>,
     lamport: u64,
     tallies: JournalTallies,
@@ -763,6 +827,7 @@ pub struct Journal {
     repo: String,
     path: Option<PathBuf>,
     inner: Mutex<Inner>,
+    rotation: std::sync::atomic::AtomicUsize,
 }
 
 impl Journal {
@@ -781,7 +846,9 @@ impl Journal {
             runtime,
             identity.public.instance_id.as_str(),
         )
-        .ok_or_else(|| MeshError::Protocol(format!("runtime '{runtime}' is not 16 hex characters")))?;
+        .ok_or_else(|| {
+            MeshError::Protocol(format!("runtime '{runtime}' is not 16 hex characters"))
+        })?;
         let mut streams = BTreeMap::new();
         streams.insert(own.clone(), StreamLog::default());
         let journal = Journal {
@@ -790,10 +857,12 @@ impl Journal {
             repo,
             path,
             inner: Mutex::new(Inner {
+                tombstones: BTreeMap::new(),
                 streams,
                 lamport: 0,
                 tallies: JournalTallies::default(),
             }),
+            rotation: std::sync::atomic::AtomicUsize::new(0),
         };
         if let Some(path) = journal.path.clone() {
             journal.reload(&path);
@@ -836,8 +905,8 @@ impl Journal {
         let body = serde_json::to_value(&body).map_err(|e| MeshError::Protocol(e.to_string()))?;
         let mut inner = self.inner.lock().expect("journal lock");
         let log = inner.streams.entry(self.own.clone()).or_default();
-        let seq = log.high_water() + 1;
-        let lamport = inner.lamport + 1;
+        let seq = log.high_water().saturating_add(1);
+        let lamport = inner.lamport.saturating_add(1);
         let mut event = MeshEvent {
             v: EVENT_VERSION,
             stream: self.own.clone(),
@@ -850,7 +919,9 @@ impl Journal {
             sig: String::new(),
         };
         event.sig = self.identity.sign(&event.signing_bytes());
-        let size = serde_json::to_vec(&event).map(|b| b.len()).unwrap_or(usize::MAX);
+        let size = serde_json::to_vec(&event)
+            .map(|b| b.len())
+            .unwrap_or(usize::MAX);
         if size > MAX_EVENT_BYTES {
             return Err(MeshError::Protocol(format!(
                 "an event of {size} bytes exceeds the {MAX_EVENT_BYTES}-byte bound"
@@ -868,11 +939,13 @@ impl Journal {
         Ok(event)
     }
 
-    /// Raise this runtime's own beat: one heartbeat.
+    /// Raise this runtime's own beat: one heartbeat, signed, so that no relay can raise it.
     pub fn beat_own(&self) {
         let mut inner = self.inner.lock().expect("journal lock");
         let log = inner.streams.entry(self.own.clone()).or_default();
         log.beat += 1;
+        log.beat_sig = Some(self.identity.sign(&beat_bytes(&self.own, log.beat)));
+        log.beat_pk = Some(self.identity.public.public_key.clone());
         log.fresh_at = Some(Instant::now());
     }
 
@@ -892,37 +965,65 @@ impl Journal {
                         age_ms: log
                             .fresh_at
                             .map(|t| now.saturating_duration_since(t).as_millis() as u64),
+                        pk: log.beat_pk.clone(),
+                        sig: log.beat_sig.clone(),
                     },
                 )
             })
+            .chain(inner.tombstones.iter().map(|(id, seq)| {
+                (
+                    id.clone(),
+                    StreamMark {
+                        seq: *seq,
+                        ..StreamMark::default()
+                    },
+                )
+            }))
             .collect()
     }
 
-    /// Merge a peer's marks: a higher beat, or the same beat seen more recently, makes the
-    /// stream fresher here. Sequences are not merged — only events move high-water marks.
-    pub fn merge_marks(&self, marks: &Marks) {
+    /// Merge a peer's marks. Only a higher beat carrying its origin's valid signature, from
+    /// an origin `trusted` accepts, makes a stream fresher here — a relay forwards beats and
+    /// cannot mint one — and the relayed age is clamped to the expiry, so a stale report can
+    /// age a stream but never hold a dead one alive past one expiry after its last real beat.
+    /// Sequences are not merged: only events move high-water marks. A stream is created from
+    /// a mark only when the mark verifies, and only within the stream quotas.
+    pub fn merge_marks(&self, marks: &Marks, trusted: &dyn Fn(&str) -> bool, expiry: Duration) {
         let now = Instant::now();
+        let ceiling = (expiry + Duration::from_secs(1)).as_millis() as u64;
         let mut inner = self.inner.lock().expect("journal lock");
         for (id, mark) in marks {
-            if *id == self.own {
+            if *id == self.own || mark.beat == 0 {
                 continue;
             }
-            if !inner.streams.contains_key(id) && inner.streams.len() >= MAX_STREAMS {
+            let (Some(pk), Some(sig)) = (&mark.pk, &mark.sig) else {
                 continue;
+            };
+            if node_id_of_key(pk).map(|n| n.as_str().to_string()) != Some(id.node().to_string())
+                || !verify(pk, &beat_bytes(id, mark.beat), sig)
+                || !trusted(pk)
+            {
+                continue;
+            }
+            if !inner.streams.contains_key(id) {
+                let of_node = inner
+                    .streams
+                    .keys()
+                    .filter(|s| s.node() == id.node())
+                    .count();
+                if inner.streams.len() >= MAX_STREAMS || of_node >= MAX_STREAMS_PER_NODE {
+                    continue;
+                }
             }
             let log = inner.streams.entry(id.clone()).or_default();
-            let seen_at = mark
-                .age_ms
-                .and_then(|age| now.checked_sub(Duration::from_millis(age)));
             if mark.beat > log.beat {
                 log.beat = mark.beat;
-                log.fresh_at = seen_at;
-            } else if mark.beat == log.beat && mark.beat > 0 {
-                if let Some(seen) = seen_at {
-                    if log.fresh_at.is_none_or(|t| seen > t) {
-                        log.fresh_at = Some(seen);
-                    }
-                }
+                log.beat_pk = Some(pk.clone());
+                log.beat_sig = Some(sig.clone());
+                log.fresh_at = mark
+                    .age_ms
+                    .map(|age| age.min(ceiling))
+                    .and_then(|age| now.checked_sub(Duration::from_millis(age)));
             }
         }
     }
@@ -933,9 +1034,25 @@ impl Journal {
         let inner = self.inner.lock().expect("journal lock");
         let mut out = Vec::new();
         let mut spent = 0usize;
-        for (id, log) in &inner.streams {
+        // Start at a different stream each round, so that one stream a peer refuses — and
+        // keeps lacking — cannot spend the whole budget round after round and starve the
+        // streams behind it.
+        let count = inner.streams.len().max(1);
+        let start = self
+            .rotation
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+            % count;
+        let order = inner
+            .streams
+            .iter()
+            .skip(start)
+            .chain(inner.streams.iter().take(start));
+        for (id, log) in order {
             let have = peer.get(id).map(|m| m.seq).unwrap_or(0);
-            for (_, event) in log.events.range(have + 1..) {
+            let Some(from) = have.checked_add(1) else {
+                continue;
+            };
+            for (_, event) in log.events.range(from..) {
                 let size = serde_json::to_vec(event).map(|b| b.len()).unwrap_or(0);
                 if !out.is_empty() && spent + size > budget {
                     return out;
@@ -991,7 +1108,11 @@ impl Journal {
             }
             None
         };
-        if serde_json::to_vec(&event).map(|b| b.len()).unwrap_or(usize::MAX) > MAX_EVENT_BYTES {
+        if serde_json::to_vec(&event)
+            .map(|b| b.len())
+            .unwrap_or(usize::MAX)
+            > MAX_EVENT_BYTES
+        {
             return refuse(inner, report, Rejection::Oversized);
         }
         if event.v != EVENT_VERSION {
@@ -1030,9 +1151,39 @@ impl Journal {
             }
             return None;
         }
+        if inner
+            .tombstones
+            .get(&event.stream)
+            .is_some_and(|high| event.seq <= *high)
+        {
+            // Already held once and compacted away as dead: a late copy changes nothing.
+            report.duplicate += 1;
+            if count {
+                inner.tallies.duplicates += 1;
+            }
+            return None;
+        }
         if !inner.streams.contains_key(&event.stream) && inner.streams.len() >= MAX_STREAMS {
             return refuse(inner, report, Rejection::Capacity);
         }
+        // Quotas per node: stream, runtime and instance ids cost nothing to invent, so one
+        // key — even a trusted one — gets a bounded share of the journal.
+        let node = event.stream.node().to_string();
+        if !inner.streams.contains_key(&event.stream)
+            && inner.streams.keys().filter(|s| s.node() == node).count() >= MAX_STREAMS_PER_NODE
+        {
+            return refuse(inner, report, Rejection::Capacity);
+        }
+        let held_by_node: usize = inner
+            .streams
+            .iter()
+            .filter(|(s, _)| s.node() == node)
+            .map(|(_, l)| l.events.len() + l.pending.len())
+            .sum();
+        if held_by_node >= MAX_EVENTS_PER_NODE {
+            return refuse(inner, report, Rejection::Capacity);
+        }
+        let pending_total: usize = inner.streams.values().map(|l| l.pending.len()).sum();
         let lamport = event.lamport;
         let log = inner.streams.entry(event.stream.clone()).or_default();
         let high = log.high_water();
@@ -1044,7 +1195,7 @@ impl Journal {
             return None;
         }
         if event.seq > high + 1 {
-            if log.pending.len() >= MAX_PENDING {
+            if log.pending.len() >= MAX_PENDING || pending_total >= MAX_PENDING_TOTAL {
                 return refuse(inner, report, Rejection::Capacity);
             }
             log.pending.insert(event.seq, event);
@@ -1076,7 +1227,11 @@ impl Journal {
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
-        let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) else {
+        let Ok(mut file) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+        else {
             tracing::warn!(path = %path.display(), "mesh journal: cannot open for append");
             return;
         };
@@ -1091,20 +1246,23 @@ impl Journal {
     }
 
     /// A stream's liveness on this runtime's clock, against `expiry`.
-    pub fn liveness(&self, stream: &StreamId, expiry: Duration) -> Liveness {
+    pub fn liveness(&self, stream: &StreamId, expiry: Duration) -> StreamLiveness {
         if *stream == self.own {
-            return Liveness::Own;
+            return StreamLiveness::Own;
         }
         let now = Instant::now();
         let inner = self.inner.lock().expect("journal lock");
         match inner.streams.get(stream).and_then(|l| l.fresh_at) {
-            Some(t) if now.saturating_duration_since(t) <= expiry => Liveness::Live,
-            _ => Liveness::Expired,
+            Some(t) if now.saturating_duration_since(t) <= expiry => StreamLiveness::Live,
+            _ => StreamLiveness::Expired,
         }
     }
 
     /// Every stream's liveness and time since its beat rose, in stream order.
-    pub fn stream_liveness(&self, expiry: Duration) -> BTreeMap<StreamId, (Liveness, Option<Duration>)> {
+    pub fn stream_liveness(
+        &self,
+        expiry: Duration,
+    ) -> BTreeMap<StreamId, (StreamLiveness, Option<Duration>)> {
         let now = Instant::now();
         let inner = self.inner.lock().expect("journal lock");
         inner
@@ -1113,11 +1271,11 @@ impl Journal {
             .map(|(id, log)| {
                 let age = log.fresh_at.map(|t| now.saturating_duration_since(t));
                 let liveness = if *id == self.own {
-                    Liveness::Own
+                    StreamLiveness::Own
                 } else if age.is_some_and(|a| a <= expiry) {
-                    Liveness::Live
+                    StreamLiveness::Live
                 } else {
-                    Liveness::Expired
+                    StreamLiveness::Expired
                 };
                 (id.clone(), (liveness, age))
             })
@@ -1154,7 +1312,7 @@ impl Journal {
         let now = Instant::now();
         let mut inner = self.inner.lock().expect("journal lock");
         let total: usize = inner.streams.values().map(|l| l.events.len()).sum();
-        if !force && total <= MAX_EVENTS {
+        if !force && total <= MAX_EVENTS && inner.streams.len() <= MAX_STREAMS * 3 / 4 {
             return 0;
         }
         let dead: Vec<StreamId> = inner
@@ -1165,7 +1323,10 @@ impl Journal {
                     && log
                         .fresh_at
                         .is_none_or(|t| now.saturating_duration_since(t) > expiry + retention)
-                    && !log.events.values().any(|e| e.kind() == "handover_published")
+                    && !log
+                        .events
+                        .values()
+                        .any(|e| e.kind() == "handover_published")
             })
             .map(|(id, _)| id.clone())
             .collect();
@@ -1173,6 +1334,12 @@ impl Journal {
         for id in dead {
             if let Some(log) = inner.streams.remove(&id) {
                 dropped += log.events.len() as u64;
+                if inner.tombstones.len() >= MAX_STREAMS * 4 {
+                    if let Some(first) = inner.tombstones.keys().next().cloned() {
+                        inner.tombstones.remove(&first);
+                    }
+                }
+                inner.tombstones.insert(id.clone(), log.high_water());
             }
         }
         inner.tallies.compacted += dropped;
@@ -1294,7 +1461,10 @@ mod tests {
         assert_eq!((report.accepted, report.pending), (0, 2));
         assert_eq!(b.marks()[a.own_stream()].seq, 0, "a gap holds the mark");
         let report = b.ingest(&[e1], &accept_all);
-        assert_eq!(report.accepted, 3, "the gap closes and its successors apply");
+        assert_eq!(
+            report.accepted, 3,
+            "the gap closes and its successors apply"
+        );
         assert_eq!(b.marks()[a.own_stream()].seq, 3);
     }
 
@@ -1307,13 +1477,19 @@ mod tests {
         let mut other_repo = good.clone();
         other_repo.repo = "elsewhere".into();
         other_repo.sig = String::new();
-        let wrong_version = MeshEvent { v: 2, ..good.clone() };
+        let wrong_version = MeshEvent {
+            v: 2,
+            ..good.clone()
+        };
         let mut stolen_stream = good.clone();
         stolen_stream.stream = b.own_stream().clone();
         let mut huge = good.clone();
         huge.body = serde_json::json!({"kind": "future", "blob": "x".repeat(MAX_EVENT_BYTES)});
 
-        let r = b.ingest(&[other_repo, wrong_version, stolen_stream, huge], &accept_all);
+        let r = b.ingest(
+            &[other_repo, wrong_version, stolen_stream, huge],
+            &accept_all,
+        );
         assert_eq!(r.rejected.get(&Rejection::Signature), Some(&1));
         assert_eq!(r.rejected.get(&Rejection::Version), Some(&1));
         assert_eq!(r.rejected.get(&Rejection::Identity), Some(&1));
@@ -1378,20 +1554,105 @@ mod tests {
         let b = journal("0000000000000002");
         let c = journal("0000000000000003");
         let expiry = Duration::from_secs(30);
-        assert_eq!(b.liveness(a.own_stream(), expiry), Liveness::Expired, "never heard");
+        assert_eq!(
+            b.liveness(a.own_stream(), expiry),
+            StreamLiveness::Expired,
+            "never heard"
+        );
         a.beat_own();
-        b.merge_marks(&a.marks());
-        assert_eq!(b.liveness(a.own_stream(), expiry), Liveness::Live);
+        b.merge_marks(&a.marks(), &|_| true, expiry);
+        assert_eq!(b.liveness(a.own_stream(), expiry), StreamLiveness::Live);
         // C hears A only through B.
-        c.merge_marks(&b.marks());
-        assert_eq!(c.liveness(a.own_stream(), expiry), Liveness::Live);
-        // An old beat relayed with its age does not make a dead stream fresh.
+        c.merge_marks(&b.marks(), &|_| true, expiry);
+        assert_eq!(c.liveness(a.own_stream(), expiry), StreamLiveness::Live);
+        // An old beat relayed with a huge age is clamped to the expiry, never fresh.
         let d = journal("0000000000000004");
         let mut stale = b.marks();
-        stale.get_mut(a.own_stream()).unwrap().age_ms = Some(60_000);
-        d.merge_marks(&stale);
-        assert_eq!(d.liveness(a.own_stream(), expiry), Liveness::Expired);
-        assert_eq!(d.liveness(d.own_stream(), expiry), Liveness::Own);
+        stale.get_mut(a.own_stream()).unwrap().age_ms = Some(u64::MAX);
+        d.merge_marks(&stale, &|_| true, expiry);
+        assert_eq!(d.liveness(a.own_stream(), expiry), StreamLiveness::Expired);
+        assert_eq!(d.liveness(d.own_stream(), expiry), StreamLiveness::Own);
+    }
+
+    #[test]
+    fn a_relay_cannot_mint_a_beat_and_an_untrusted_origin_is_not_heard() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        let expiry = Duration::from_secs(30);
+        a.beat_own();
+        let genuine = a.marks();
+        // A relay raises A's beat to the ceiling: the signature no longer covers it.
+        let mut forged = genuine.clone();
+        forged.get_mut(a.own_stream()).unwrap().beat = u64::MAX;
+        b.merge_marks(&forged, &|_| true, expiry);
+        assert_eq!(b.liveness(a.own_stream(), expiry), StreamLiveness::Expired);
+        // An unsigned mark is ignored, and creates no stream.
+        let mut unsigned = genuine.clone();
+        unsigned.get_mut(a.own_stream()).unwrap().sig = None;
+        b.merge_marks(&unsigned, &|_| true, expiry);
+        assert_eq!(b.tallies().streams, 1, "only B's own stream exists");
+        // A genuine beat from an origin the policy does not trust is not heard.
+        b.merge_marks(&genuine, &|_| false, expiry);
+        assert_eq!(b.liveness(a.own_stream(), expiry), StreamLiveness::Expired);
+        // And the genuine, trusted beat is.
+        b.merge_marks(&genuine, &|_| true, expiry);
+        assert_eq!(b.liveness(a.own_stream(), expiry), StreamLiveness::Live);
+        // A later beat after the original one cannot be replayed backwards.
+        a.beat_own();
+        b.merge_marks(&a.marks(), &|_| true, expiry);
+        b.merge_marks(&genuine, &|_| true, expiry);
+        assert_eq!(b.marks()[a.own_stream()].beat, 2);
+    }
+
+    #[test]
+    fn a_stream_id_off_the_wire_is_parsed_or_refused() {
+        let bad: Result<StreamId, _> = serde_json::from_value(serde_json::json!("x"));
+        assert!(
+            bad.is_err(),
+            "an unparsed stream id would panic a later slice"
+        );
+        let marks: Result<Marks, _> =
+            serde_json::from_value(serde_json::json!({"x": {"seq": 1, "beat": 1}}));
+        assert!(marks.is_err());
+    }
+
+    #[test]
+    fn one_node_gets_a_bounded_share_of_the_journal() {
+        let own = journal("0000000000000002");
+        let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+        let mut refused = 0;
+        for slot in 0..(MAX_STREAMS_PER_NODE + 4) {
+            let j = Journal::open(
+                Arc::clone(&identity),
+                &format!("{slot:016x}"),
+                "repo".into(),
+                None,
+            )
+            .unwrap();
+            let event = opened(&j, "s1");
+            refused += own.ingest(&[event], &accept_all).rejected_total();
+        }
+        assert_eq!(
+            refused, 4,
+            "the streams past the per-node quota are refused"
+        );
+    }
+
+    #[test]
+    fn a_compacted_stream_is_not_sent_again() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        opened(&a, "s1");
+        b.ingest(&a.missing_for(&b.marks(), usize::MAX), &accept_all);
+        assert_eq!(b.compact(Duration::ZERO, Duration::ZERO, true), 1);
+        assert_eq!(
+            b.marks()[a.own_stream()].seq,
+            1,
+            "the tombstone keeps the mark"
+        );
+        assert!(a.missing_for(&b.marks(), usize::MAX).is_empty());
+        let again = b.ingest(&a.events(), &accept_all);
+        assert_eq!((again.accepted, again.duplicate), (0, 1));
     }
 
     #[test]
@@ -1409,11 +1670,13 @@ mod tests {
             Some(path.clone()),
         )
         .unwrap();
-        b.merge_marks(&a.marks());
+        b.merge_marks(&a.marks(), &|_| true, Duration::from_secs(30));
         b.ingest(&a.missing_for(&b.marks(), usize::MAX), &accept_all);
         let own_before = b.own_stream().clone();
-        b.append_own(EventBody::SessionOpened { info: SessionInfo::named("mine", "test") })
-            .unwrap();
+        b.append_own(EventBody::SessionOpened {
+            info: SessionInfo::named("mine", "test"),
+        })
+        .unwrap();
         drop(b);
 
         // The same node restarts: a new instance, so a new stream; the old events reload.
@@ -1427,10 +1690,13 @@ mod tests {
         assert_ne!(restarted.own_stream(), &own_before);
         assert_eq!(restarted.events().len(), 2);
         let expiry = Duration::from_secs(30);
-        assert_eq!(restarted.liveness(a.own_stream(), expiry), Liveness::Expired);
+        assert_eq!(
+            restarted.liveness(a.own_stream(), expiry),
+            StreamLiveness::Expired
+        );
         assert_eq!(
             restarted.liveness(&own_before, expiry),
-            Liveness::Expired,
+            StreamLiveness::Expired,
             "the previous run of this very runtime is dead, not resurrected"
         );
     }

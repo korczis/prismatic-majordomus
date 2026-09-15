@@ -66,11 +66,8 @@ impl MulticastProvider {
                 "{group} is not a multicast address"
             )));
         }
-        let socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, self.config.port)).map_err(|e| {
-            MeshError::Provider(format!(
-                "cannot bind udp port {}: {e} (another local server may already listen for the mesh)",
-                self.config.port
-            ))
+        let socket = bind_shared(self.config.port).map_err(|e| {
+            MeshError::Provider(format!("cannot bind udp port {}: {e}", self.config.port))
         })?;
         socket
             .join_multicast_v4(&group, &Ipv4Addr::UNSPECIFIED)
@@ -83,6 +80,67 @@ impl MulticastProvider {
             .map_err(|e| MeshError::Provider(format!("cannot bound the socket read: {e}")))?;
         Ok((socket, group))
     }
+}
+
+/// Bind the multicast port so that every Majordomus runtime of this machine can bind it
+/// too: `SO_REUSEADDR` and `SO_REUSEPORT` before the bind. The kernel then delivers each
+/// group datagram to every socket joined to the group, so two worktrees' servers hear the
+/// group — and each other — instead of the second one failing to bind.
+#[cfg(unix)]
+fn bind_shared(port: u16) -> std::io::Result<UdpSocket> {
+    use std::os::fd::FromRawFd;
+    // SAFETY: one socket descriptor, owned here until it is handed to UdpSocket (which
+    // closes it); every early return closes it first. The sockaddr_in is zeroed and then
+    // filled field by field, with the BSD length byte set where the platform has one.
+    unsafe {
+        let fd = libc::socket(libc::AF_INET, libc::SOCK_DGRAM, 0);
+        if fd < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        let fail = |fd| {
+            let error = std::io::Error::last_os_error();
+            libc::close(fd);
+            Err(error)
+        };
+        let one: libc::c_int = 1;
+        for option in [libc::SO_REUSEADDR, libc::SO_REUSEPORT] {
+            if libc::setsockopt(
+                fd,
+                libc::SOL_SOCKET,
+                option,
+                &one as *const libc::c_int as *const libc::c_void,
+                std::mem::size_of::<libc::c_int>() as libc::socklen_t,
+            ) != 0
+            {
+                return fail(fd);
+            }
+        }
+        let mut address: libc::sockaddr_in = std::mem::zeroed();
+        address.sin_family = libc::AF_INET as libc::sa_family_t;
+        address.sin_port = port.to_be();
+        address.sin_addr = libc::in_addr {
+            s_addr: u32::from(Ipv4Addr::UNSPECIFIED).to_be(),
+        };
+        #[cfg(any(target_os = "macos", target_os = "ios", target_os = "freebsd"))]
+        {
+            address.sin_len = std::mem::size_of::<libc::sockaddr_in>() as u8;
+        }
+        if libc::bind(
+            fd,
+            &address as *const libc::sockaddr_in as *const libc::sockaddr,
+            std::mem::size_of::<libc::sockaddr_in>() as libc::socklen_t,
+        ) != 0
+        {
+            return fail(fd);
+        }
+        Ok(UdpSocket::from_raw_fd(fd))
+    }
+}
+
+/// Off Unix, a plain bind: one runtime per machine hears the group.
+#[cfg(not(unix))]
+fn bind_shared(port: u16) -> std::io::Result<UdpSocket> {
+    UdpSocket::bind((Ipv4Addr::UNSPECIFIED, port))
 }
 
 impl MeshProvider for MulticastProvider {

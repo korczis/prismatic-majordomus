@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 
 use super::broadcast::BroadcastProvider;
 use super::config::{BroadcastMode, MeshConfig, TrustConfig};
+use super::cooperation::{Cooperation, CooperationStatus};
 use super::identity::{NodeIdentity, PublicIdentity};
 use super::multicast::MulticastProvider;
 use super::protocol::{self, Refusal};
@@ -134,6 +135,10 @@ pub struct MeshRuntime {
     state: Mutex<Option<Active>>,
     /// Why the mesh is not active, when it is not.
     reason: Mutex<String>,
+    /// The cooperation runtime, once a server attached one.
+    cooperation: Mutex<Option<Arc<Cooperation>>>,
+    /// Why cooperation is not running, when the mesh is but cooperation is not.
+    cooperation_reason: Mutex<Option<String>>,
 }
 
 impl Default for MeshRuntime {
@@ -152,7 +157,51 @@ impl MeshRuntime {
             reason: Mutex::new(
                 "not active: no shared server activated the mesh in this process".into(),
             ),
+            cooperation: Mutex::new(None),
+            cooperation_reason: Mutex::new(None),
         }
+    }
+
+    /// Attach the cooperation runtime a server built for this mesh. The runtime is
+    /// already started; a second attachment replaces nothing.
+    pub fn attach_cooperation(&self, cooperation: Arc<Cooperation>) {
+        let mut slot = self.cooperation.lock().expect("mesh cooperation");
+        if slot.is_none() {
+            *slot = Some(cooperation);
+        }
+    }
+
+    /// Record why cooperation is not running while the mesh is.
+    pub fn decline_cooperation(&self, reason: &str) {
+        *self
+            .cooperation_reason
+            .lock()
+            .expect("mesh cooperation reason") = Some(reason.into());
+    }
+
+    /// The cooperation runtime, when one runs.
+    pub fn cooperation(&self) -> Option<Arc<Cooperation>> {
+        self.cooperation
+            .lock()
+            .expect("mesh cooperation")
+            .as_ref()
+            .filter(|c| !c.stopped())
+            .cloned()
+    }
+
+    /// Cooperation's status, or why there is none: the mesh's own reason when the mesh is
+    /// off, cooperation's reason when only cooperation is.
+    pub fn cooperation_status(&self) -> CooperationStatus {
+        if let Some(c) = self.cooperation() {
+            return c.status();
+        }
+        let reason = self
+            .cooperation_reason
+            .lock()
+            .expect("mesh cooperation reason")
+            .clone()
+            .unwrap_or_else(|| self.reason.lock().expect("mesh reason").clone());
+        CooperationStatus::inactive(&reason)
     }
 
     /// The registry behind this runtime, for surfaces that project it directly.
@@ -180,6 +229,21 @@ impl MeshRuntime {
         repos: Vec<String>,
         version: &str,
     ) -> Result<(), MeshError> {
+        self.activate_as(config, Arc::new(identity), "", endpoints, repos, version)
+    }
+
+    /// [`MeshRuntime::activate`] for one runtime slot of the node: what a shared server
+    /// does, naming its checkout's runtime so that two servers of one machine announce,
+    /// hear and link to each other as the two runtimes they are.
+    pub fn activate_as(
+        &self,
+        config: &MeshConfig,
+        identity: Arc<NodeIdentity>,
+        runtime: &str,
+        endpoints: Vec<String>,
+        repos: Vec<String>,
+        version: &str,
+    ) -> Result<(), MeshError> {
         let mut state = self.state.lock().expect("mesh state");
         if state.is_some() {
             return Ok(());
@@ -189,13 +253,16 @@ impl MeshRuntime {
                 "not active: the mesh declaration is disabled".into();
             return Ok(());
         }
-        let beacon = Arc::new(Beacon::new(
-            Arc::new(identity),
-            endpoints,
-            vec!["http".into(), "mcp".into(), "ws".into()],
-            repos,
-            version,
-        ));
+        let beacon = Arc::new(
+            Beacon::new(
+                identity,
+                endpoints,
+                vec!["http".into(), "mcp".into(), "ws".into()],
+                repos,
+                version,
+            )
+            .with_runtime(runtime),
+        );
         let (tx, rx) = channel::<Observation>();
         let stop = Arc::new(AtomicBool::new(false));
         let ctx = ProviderContext {
@@ -233,7 +300,10 @@ impl MeshRuntime {
             let registry = Arc::clone(&self.registry);
             let refusals = Arc::clone(&self.refusals);
             let stop = Arc::clone(&stop);
-            let own = beacon.identity().public.node_id.clone();
+            let own = (
+                beacon.identity().public.node_id.clone(),
+                beacon.runtime().to_string(),
+            );
             let trust = config.trust.clone();
             let _ = std::thread::Builder::new()
                 .name("majordomus-mesh".into())
@@ -280,6 +350,9 @@ impl MeshRuntime {
     /// Stop the mesh. Every provider thread and the manager end at their next bounded
     /// wait; the registry keeps what it saw for whoever still asks.
     pub fn stop(&self) {
+        if let Some(cooperation) = self.cooperation.lock().expect("mesh cooperation").as_ref() {
+            cooperation.stop();
+        }
         let mut state = self.state.lock().expect("mesh state");
         if let Some(active) = state.take() {
             active.stop.store(true, Ordering::SeqCst);
@@ -340,7 +413,10 @@ impl MeshRuntime {
                 candidates: Vec::new(),
             };
         };
-        let own = active.beacon.identity().public.node_id.clone();
+        let own = (
+            active.beacon.identity().public.node_id.clone(),
+            active.beacon.runtime().to_string(),
+        );
         let trust = active.trust.clone();
         let own_envelope = active.beacon.next_envelope();
         drop(state);
@@ -392,7 +468,7 @@ fn ingest(
     registry: &MeshRegistry,
     refusals: &RefusalCounters,
     trust: &TrustConfig,
-    own: &super::identity::NodeId,
+    own: &(super::identity::NodeId, String),
     observation: &Observation,
 ) -> Ingest {
     let envelope = match protocol::parse(&observation.bytes) {
@@ -407,7 +483,9 @@ fn ingest(
         refusals.count(&Refusal::Signature);
         return Ingest::Refused(Refusal::Signature);
     };
-    if node_id == *own {
+    // Only this very runtime is "own": another server of the same machine carries the
+    // same key under another runtime slot, and is a runtime to hear, not an echo.
+    if node_id == own.0 && envelope.adv.rt == own.1 {
         refusals.self_heard.fetch_add(1, Ordering::Relaxed);
         return Ingest::Own;
     }
@@ -460,6 +538,7 @@ mod tests {
             broadcast: Default::default(),
             rendezvous: Default::default(),
             trust: Default::default(),
+            cooperation: Default::default(),
         }
     }
 

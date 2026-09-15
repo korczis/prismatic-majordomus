@@ -28,7 +28,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::identity::NodeIdentity;
-use super::protocol::{advertise, Envelope};
+use super::protocol::{advertise_as, Envelope};
 use super::registry::MeshSource;
 use super::MeshError;
 
@@ -48,6 +48,7 @@ pub struct Observation {
 /// deduplicates by (instance, seq) regardless of which transport delivered first.
 pub struct Beacon {
     identity: Arc<NodeIdentity>,
+    runtime: String,
     seq: AtomicU64,
     endpoints: Vec<String>,
     caps: Vec<String>,
@@ -56,7 +57,8 @@ pub struct Beacon {
 }
 
 impl Beacon {
-    /// A beacon over this node's identity and advertised facts.
+    /// A beacon over this node's identity and advertised facts, for the node's unnamed
+    /// runtime; [`Beacon::with_runtime`] names one.
     pub fn new(
         identity: Arc<NodeIdentity>,
         endpoints: Vec<String>,
@@ -66,6 +68,7 @@ impl Beacon {
     ) -> Self {
         Beacon {
             identity,
+            runtime: String::new(),
             seq: AtomicU64::new(0),
             endpoints,
             caps,
@@ -74,11 +77,18 @@ impl Beacon {
         }
     }
 
+    /// The same beacon, announcing one runtime slot of the node (16 hex).
+    pub fn with_runtime(mut self, runtime: &str) -> Self {
+        self.runtime = runtime.into();
+        self
+    }
+
     /// The next signed envelope, sequence advanced.
     pub fn next_envelope(&self) -> Envelope {
         let seq = self.seq.fetch_add(1, Ordering::SeqCst) + 1;
-        advertise(
+        advertise_as(
             &self.identity,
+            &self.runtime,
             seq,
             &self.endpoints,
             &self.caps,
@@ -90,6 +100,16 @@ impl Beacon {
     /// The public identity behind the beacon.
     pub fn identity(&self) -> &NodeIdentity {
         &self.identity
+    }
+
+    /// The runtime slot this beacon announces; empty for the unnamed runtime.
+    pub fn runtime(&self) -> &str {
+        &self.runtime
+    }
+
+    /// The endpoints this beacon announces.
+    pub fn endpoints(&self) -> &[String] {
+        &self.endpoints
     }
 }
 

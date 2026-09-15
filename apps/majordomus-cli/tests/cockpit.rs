@@ -589,6 +589,24 @@ fn a_state_changing_request_from_another_origin_is_refused_and_a_read_is_not() {
         "a same-origin call is not a cross-origin one: {body}"
     );
 
+    // a DNS-rebinding page names its own domain in both Origin and Host, so the two match;
+    // a domain is not this server's own origin, and the write is still refused
+    let rebound = {
+        use std::io::{Read, Write};
+        let mut stream = std::net::TcpStream::connect(&s.address).expect("connect");
+        let body = "{\"intent\":\"from a rebound page\"}";
+        write!(
+            stream,
+            "POST /api/v1/peers/announce HTTP/1.1\r\nHost: rebound.example:8742\r\nOrigin: http://rebound.example:8742\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
+            body.len()
+        )
+        .unwrap();
+        let mut raw = String::new();
+        stream.read_to_string(&mut raw).unwrap();
+        raw
+    };
+    assert!(rebound.starts_with("HTTP/1.1 403"), "{rebound}");
+
     // and a read from anywhere is untouched: a browser cannot see the answer anyway
     let (status, _, _) = s.request_with(
         "GET",

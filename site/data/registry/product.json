@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.7.0"
   },
-  "fingerprint": "96e9edc066af40ebb8418ba53ffaec647a0022f399806e2b4e29789af2c1b5f0",
+  "fingerprint": "8d79fc8a75f1c684a2898785ed813e59a088c49df50701852b05657ee8b52383",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 173
+          "objects": 179
         }
       ],
       "rule_refs": [
@@ -538,11 +538,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 233,
+        "mcp_resources": 239,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 229,
+        "objects": 235,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -1804,10 +1804,10 @@
     },
     {
       "id": "mesh",
-      "title": "Running instances find each other, and prove who they are",
+      "title": "Sessions on several machines work one repository without colliding",
       "short_title": "Mesh",
-      "headline": "A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.",
-      "summary": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
+      "headline": "Majordomus runtimes of one repository — on one machine or several — discover each other, link through a signed handshake, and share sessions, claims, handovers and reviews through one replicated journal that survives disconnects, crashes and partitions.",
+      "summary": "Each runtime is a key-authenticated participant; discovery (multicast, broadcast, rendezvous, seeds) only finds candidates, and a signed handshake admits a link only for the same repository, a compatible protocol and a trusted key. Linked runtimes replicate one signed event journal every heartbeat and fold it into the same state everywhere, so an exclusive claim on one machine refuses an overlapping claim on another, a handover published on one is consumed on another, and a runtime that crashes expires everywhere on its own. The CLI, HTTP, OpenAPI, MCP and the Cockpit render the same state, and every guarantee is held by tests over real processes and a container lab on a real network.",
       "status": "stable",
       "weight": 45,
       "featured": true,
@@ -1821,15 +1821,23 @@
       "commands": [],
       "kinds": [],
       "rules": [
-        "project.mesh-is-observation-not-authority"
+        "project.mesh-is-observation-not-authority",
+        "project.mesh-cooperation-is-authenticated"
       ],
       "docs": [
         "docs/MESH.md"
       ],
       "adrs": [
-        "adr-0050"
+        "adr-0050",
+        "adr-0067"
       ],
       "claims": [
+        "mesh-cooperation-links",
+        "mesh-claims-cross-runtime",
+        "mesh-repository-isolation",
+        "mesh-liveness-expiry",
+        "mesh-three-runtime-convergence",
+        "mesh-network-acceptance",
         "mesh-observation-not-authority",
         "mesh-one-registry",
         "mesh-off-by-default"
@@ -1845,8 +1853,10 @@
       "tags": [
         "mesh",
         "discovery",
+        "cooperation",
         "network",
-        "security"
+        "security",
+        "distributed"
       ],
       "route": "/features/mesh/",
       "source": ".ai/repo/features/mesh.md",
@@ -1861,10 +1871,26 @@
         {
           "id": "mesh",
           "title": "Mesh",
-          "description": "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here.",
+          "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
+            {
+              "id": "mesh.claim",
+              "title": "Claim a scope across the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_claim",
+              "route": "POST /api/v1/mesh/claims"
+            },
+            {
+              "id": "mesh.cooperation",
+              "title": "Cooperation, at a glance",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_cooperation",
+              "route": "GET /api/v1/mesh/cooperation"
+            },
             {
               "id": "mesh.doctor",
               "title": "The mesh self-check",
@@ -1873,6 +1899,30 @@
               "tool": "majordomus_mesh_doctor",
               "route": "GET /api/v1/mesh/doctor",
               "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.events",
+              "title": "The cooperation journal",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_events",
+              "route": "GET /api/v1/mesh/events"
+            },
+            {
+              "id": "mesh.handover.consume",
+              "title": "Consume a handover from the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_handover_consume",
+              "route": "POST /api/v1/mesh/handovers/consume"
+            },
+            {
+              "id": "mesh.handover.publish",
+              "title": "Publish a handover to the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_handover_publish",
+              "route": "POST /api/v1/mesh/handovers"
             },
             {
               "id": "mesh.identity",
@@ -1884,12 +1934,42 @@
               "cli": "majordomus mesh identity"
             },
             {
+              "id": "mesh.link.hello",
+              "title": "Open a link (the handshake)",
+              "kind": "command",
+              "stability": "experimental",
+              "route": "POST /api/v1/mesh/link/hello"
+            },
+            {
+              "id": "mesh.link.sync",
+              "title": "One sync round of a link",
+              "kind": "command",
+              "stability": "experimental",
+              "route": "POST /api/v1/mesh/link/sync"
+            },
+            {
               "id": "mesh.nodes",
               "title": "The discovered nodes",
               "kind": "query",
               "stability": "experimental",
               "tool": "majordomus_mesh_nodes",
               "route": "GET /api/v1/mesh/nodes"
+            },
+            {
+              "id": "mesh.peer",
+              "title": "One runtime",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_peer",
+              "route": "GET /api/v1/mesh/peer"
+            },
+            {
+              "id": "mesh.peers",
+              "title": "Who cooperates, machine by machine",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_peers",
+              "route": "GET /api/v1/mesh/peers"
             },
             {
               "id": "mesh.register",
@@ -1900,6 +1980,54 @@
               "route": "POST /api/v1/mesh/register"
             },
             {
+              "id": "mesh.release",
+              "title": "Release a claim",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_release",
+              "route": "POST /api/v1/mesh/claims/release"
+            },
+            {
+              "id": "mesh.review.answer",
+              "title": "Answer a review request",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_review_answer",
+              "route": "POST /api/v1/mesh/reviews/answer"
+            },
+            {
+              "id": "mesh.review.request",
+              "title": "Ask the mesh for a review",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_review_request",
+              "route": "POST /api/v1/mesh/reviews"
+            },
+            {
+              "id": "mesh.session.close",
+              "title": "Close a session on the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_session_close",
+              "route": "POST /api/v1/mesh/sessions/close"
+            },
+            {
+              "id": "mesh.session.open",
+              "title": "Open or update a session on the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_session_open",
+              "route": "POST /api/v1/mesh/sessions"
+            },
+            {
+              "id": "mesh.state",
+              "title": "The state every linked runtime converges on",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_state",
+              "route": "GET /api/v1/mesh/state"
+            },
+            {
               "id": "mesh.status",
               "title": "The mesh, at a glance",
               "kind": "query",
@@ -1907,6 +2035,14 @@
               "tool": "majordomus_mesh",
               "resource": "majordomus://mesh",
               "route": "GET /api/v1/mesh"
+            },
+            {
+              "id": "mesh.verify",
+              "title": "Prove cooperation now",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_verify",
+              "route": "POST /api/v1/mesh/verify"
             }
           ]
         }
@@ -1921,12 +2057,20 @@
           "class": "blocking",
           "enforced": true,
           "path": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+        },
+        {
+          "id": "project.mesh-cooperation-is-authenticated",
+          "identity": "project.mesh-cooperation-is-authenticated@1",
+          "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
         }
       ],
       "doc_refs": [
         {
           "path": "docs/MESH.md",
-          "title": "The mesh: discovery of running Majordomus instances"
+          "title": "Majordomus Mesh"
         }
       ],
       "adr_refs": [
@@ -1935,9 +2079,45 @@
           "title": "Mesh peer discovery is provider-based observation with authenticated node identity",
           "status": "proposed",
           "path": ".ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md"
+        },
+        {
+          "id": "adr-0067",
+          "title": "Mesh cooperation is authenticated links between runtimes and one replicated journal folded the same way everywhere",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md"
         }
       ],
       "claim_refs": [
+        {
+          "id": "mesh-cooperation-links",
+          "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-claims-cross-runtime",
+          "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-repository-isolation",
+          "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-liveness-expiry",
+          "claim": "A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-three-runtime-convergence",
+          "claim": "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-network-acceptance",
+          "claim": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
+          "status": "guaranteed"
+        },
         {
           "id": "mesh-observation-not-authority",
           "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
@@ -1945,7 +2125,7 @@
         },
         {
           "id": "mesh-one-registry",
-          "claim": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+          "claim": "Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
           "status": "guaranteed"
         },
         {
@@ -1968,24 +2148,24 @@
         "models"
       ],
       "counts": {
-        "capabilities": 5,
-        "mcp_tools": 5,
+        "capabilities": 21,
+        "mcp_tools": 19,
         "mcp_resources": 1,
-        "http_routes": 5,
+        "http_routes": 21,
         "cli_paths": 2,
         "commands": 0,
         "objects": 0,
-        "rules": 1,
-        "enforced_rules": 1,
+        "rules": 2,
+        "enforced_rules": 2,
         "docs": 1,
-        "adrs": 1,
-        "claims": 3,
+        "adrs": 2,
+        "claims": 9,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 3
+          "guaranteed": 9
         },
         "modules": {
           "experimental": 1
@@ -2804,7 +2984,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 51
+          "objects": 52
         },
         {
           "name": "knowledge",
@@ -2812,7 +2992,7 @@
         },
         {
           "name": "document",
-          "objects": 247
+          "objects": 253
         }
       ],
       "rule_refs": [
@@ -3061,11 +3241,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 300,
+        "mcp_resources": 307,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 299,
+        "objects": 306,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3275,7 +3455,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 137
+          "objects": 138
         }
       ],
       "rule_refs": [
@@ -3639,11 +3819,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 139,
+        "mcp_resources": 140,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 137,
+        "objects": 138,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -8880,7 +9060,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (51)",
+        "title": "adr (52)",
         "features": [
           "knowledge"
         ]
@@ -8908,7 +9088,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (173)",
+        "title": "claim (179)",
         "features": [
           "declare-once"
         ]
@@ -9007,7 +9187,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (137)",
+        "title": "rule (138)",
         "features": [
           "doctrine"
         ]
@@ -9553,6 +9733,14 @@
       "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
     },
     {
+      "id": "project.mesh-cooperation-is-authenticated",
+      "identity": "project.mesh-cooperation-is-authenticated@1",
+      "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+    },
+    {
       "id": "project.mesh-is-observation-not-authority",
       "identity": "project.mesh-is-observation-not-authority@1",
       "title": "The mesh observes nodes; it authorizes nothing and holds one registry",
@@ -9831,28 +10019,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1464,
-    "builtin": 113,
-    "declarative": 1351,
+    "capabilities": 1495,
+    "builtin": 129,
+    "declarative": 1366,
     "modules": 37,
-    "mcp_tools": 110,
-    "mcp_resources": 1392,
-    "http_routes": 112,
-    "cli_commands": 116,
+    "mcp_tools": 124,
+    "mcp_resources": 1407,
+    "http_routes": 128,
+    "cli_commands": 129,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1351,
+    "objects": 1366,
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 173,
+      "claim": 179,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 247,
+      "document": 253,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -9864,12 +10052,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 3,
-      "rule": 137,
+      "rule": 138,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 215,
+      "test": 216,
       "use-case": 46,
       "workspace": 1
     },
