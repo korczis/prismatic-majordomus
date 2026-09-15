@@ -87,12 +87,20 @@ files="$( { git ls-files -- \
   | LC_ALL=C sort -u || true)"
 [ -n "$files" ] || { echo "english-only-check: no authored files here; nothing to measure"; exit 12; }
 
-# The letters, as UTF-8 byte sequences, so the scan is a byte scan and never depends on the
-# machine's locale. Czech and Slovak: č ď ě ň ř š ť ů ž and their capitals; Polish: ą ć ę ł
-# ń ó ś ź ż. Whole scripts by their leading bytes: Cyrillic, Greek, CJK, Hangul, Hiragana,
-# Katakana. The list is written once, here, and the message names what was found.
-LETTERS='č|Č|ď|Ď|ě|Ě|ň|Ň|ř|Ř|š|Š|ť|Ť|ů|Ů|ž|Ž|ą|Ą|ć|Ć|ę|Ę|ł|Ł|ń|Ń|ś|Ś|ź|Ź|ż|Ż'
-SCRIPTS='[Ѐ-ӿ]|[Ͱ-Ͽ]|[぀-ヿ]|[一-鿿]|[가-힣]'
+# The alphabet, by code point. This was written as `grep -E` over a pattern holding literal
+# ranges and the comment above it claimed that made the scan a byte scan independent of the
+# machine's locale. It did not, and the claim was the defect: a bracket range is interpreted
+# by the locale's collation, and GNU grep in a UTF-8 locale refuses a range whose endpoints
+# are multibyte. On the Linux runner every scan died with `grep: Invalid collation character`
+# on stderr, found nothing, and the gate reported that every authored file is spelled in
+# English. It had never once looked. macOS answered differently, so the two platforms
+# disagreed about what the gate means, and the platform that runs it in CI was the one
+# finding nothing.
+#
+# So the scan is done by code point, in one pass, where a range is a range on every machine:
+# Czech and Slovak with their capitals, Polish, and the whole scripts (Cyrillic, Greek,
+# Hiragana, Katakana, CJK, Hangul) that are unambiguous on sight. Typographic punctuation is
+# in none of these ranges and never reaches the test.
 
 ALLOW="$(dirname "$0")/english-only-allow.txt"
 names=""; fixtures=""
@@ -109,26 +117,16 @@ if [ -f "$ALLOW" ]; then
   fi
 fi
 
-findings=""
-for f in $files; do
-  case "
-$fixtures
-" in *"
-$f
-"*) continue ;; esac
-  # strip the allowed names before looking, so a line that is English but for a proper noun
-  # is English
-  hits="$(
-    if [ -n "$names" ]; then sed -E "s/($names)//g" "$f"; else cat "$f"; fi \
-    | grep -nE "$LETTERS|$SCRIPTS" | head -3 || true
-  )"
-  [ -n "$hits" ] || continue
-  first="$(printf '%s' "$hits" | head -1)"
-  line="${first%%:*}"
-  word="$(printf '%s' "$first" | grep -oE "$LETTERS|$SCRIPTS" | head -1)"
-  findings="$findings$f	$line	$word
+# The file list and the fixture list go through files rather than a pipe: `python3 -` takes
+# its program on stdin, so a heredoc and a pipe cannot both be stdin, and the pipe loses.
+SCAN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/mj-english.XXXXXX")"
+trap 'rm -rf "$SCAN_TMP"' EXIT
+printf '%s\n' $files > "$SCAN_TMP/files.txt"
+printf '%s\n' "$fixtures" > "$SCAN_TMP/fixtures.txt"
+findings="$(python3 "$(dirname "$0")/english-only-scan.py" \
+  "$SCAN_TMP/files.txt" "$SCAN_TMP/fixtures.txt" "$names")"
+[ -z "$findings" ] || findings="$findings
 "
-done
 
 subjects="$(printf '%s' "$findings" | grep -v '^$' | awk -F'\t' '{print $1}' | LC_ALL=C sort -u || true)"
 

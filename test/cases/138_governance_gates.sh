@@ -64,6 +64,23 @@ expect_exit 10 "$EN" --strict
 expect_grep 'FAIL english-only docs/ALPHA\.md:3'
 expect_grep 'which does not occur in English'
 
+# ...and it finds it wherever the check is run. This is the assertion that was missing, and
+# its absence cost the gate its whole subject: the alphabet was written as bracket ranges in
+# a `grep -E` pattern, a bracket range is read through the locale's collation, and GNU grep
+# in a UTF-8 locale refuses one whose endpoints are multibyte. On the Linux runner every
+# scan printed `grep: Invalid collation character`, matched nothing, and the gate announced
+# that every authored file is spelled in English. This case passed on macOS the whole time
+# and could not see it, because it never asked the same question twice. A check whose verdict
+# depends on the machine has no verdict, so the two locales must agree.
+for loc in C en_US.UTF-8; do
+  out="$(LC_ALL="$loc" "$EN" --strict 2>&1)" && rc=0 || rc=$?
+  [ "$rc" = 10 ] || { echo "    under LC_ALL=$loc the check exited $rc, not 10: the foreign letter it just found under another locale is invisible under this one"; exit 1; }
+  printf '%s\n' "$out" | grep -q 'docs/ALPHA\.md' \
+    || { echo "    under LC_ALL=$loc the check exited 10 without naming docs/ALPHA.md"; exit 1; }
+  printf '%s\n' "$out" | grep -qi 'collation\|invalid range\|unterminated' \
+    && { echo "    under LC_ALL=$loc the check complained about its own pattern: $(printf '%s' "$out" | grep -i 'collation\|invalid range\|unterminated' | head -1)"; exit 1; }
+done
+
 # 2. and it is not a list of one language: a whole script is unambiguous on sight
 printf '# Alpha\n\nЭто не по-английски.\n' > docs/ALPHA.md
 git add -A >/dev/null && git commit -qm cyrillic
