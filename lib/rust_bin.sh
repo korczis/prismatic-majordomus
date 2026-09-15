@@ -36,33 +36,60 @@
 # One `target_directory` exists in that JSON, so the greedy match finds it without jq, which
 # this file may not assume: it is sourced on the shell-prompt path.
 mj_cargo_target_dir() {
-  mj_ctd_crate="$1"
-  if [ -n "${CARGO_TARGET_DIR:-}" ]; then printf '%s\n' "$CARGO_TARGET_DIR"; return 0; fi
-  if [ -n "${CARGO_BUILD_TARGET_DIR:-}" ]; then printf '%s\n' "$CARGO_BUILD_TARGET_DIR"; return 0; fi
-  if [ "${2:-}" = ask-cargo ] && command -v cargo >/dev/null 2>&1; then
+  mj_cargo_target_dir_into mj_ctd_out "$@"
+  printf '%s\n' "$mj_ctd_out"
+}
+
+# mj_cargo_target_dir_into <variable> <crate-directory> [ask-cargo]
+#
+# The same answer, assigned to a variable instead of printed. The printing functions of this
+# file that the entry path calls each have such a twin for one reason: `x="$(f)"` forks a
+# subshell, and on bin/majordomus-env — every `cd` — the forks were most of the adapter's
+# cost. Measured 2026-09-15: twelve process creations before the executable ran. The
+# decision lives in the `_into` form, once; the printing form is a wrapper over it.
+mj_cargo_target_dir_into() {
+  mj_ctd_var="$1"
+  mj_ctd_crate="$2"
+  if [ -n "${CARGO_TARGET_DIR:-}" ]; then
+    eval "$mj_ctd_var=\$CARGO_TARGET_DIR"; return 0
+  fi
+  if [ -n "${CARGO_BUILD_TARGET_DIR:-}" ]; then
+    eval "$mj_ctd_var=\$CARGO_BUILD_TARGET_DIR"; return 0
+  fi
+  if [ "${3:-}" = ask-cargo ] && command -v cargo >/dev/null 2>&1; then
     mj_ctd_dir="$(cargo metadata --format-version 1 --no-deps \
       --manifest-path "$mj_ctd_crate/Cargo.toml" 2>/dev/null \
       | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')"
-    if [ -n "$mj_ctd_dir" ]; then printf '%s\n' "$mj_ctd_dir"; return 0; fi
+    if [ -n "$mj_ctd_dir" ]; then eval "$mj_ctd_var=\$mj_ctd_dir"; return 0; fi
   fi
-  printf '%s\n' "$mj_ctd_crate/target"
+  eval "$mj_ctd_var=\$mj_ctd_crate/target"
 }
 
 # mj_rust_bin <repository-root>
 mj_rust_bin() {
-  mj_rb_root="$1"
+  mj_rust_bin_into mj_rb_out "$1"
+  printf '%s\n' "$mj_rb_out"
+}
+
+# mj_rust_bin_into <variable> <repository-root>
+#
+# mj_rust_bin, assigned rather than printed. The resolution is this function's.
+mj_rust_bin_into() {
+  mj_rb_var="$1"
+  mj_rb_root="$2"
   if [ -n "${MAJORDOMUS_BIN:-}" ]; then
-    printf '%s\n' "$MAJORDOMUS_BIN"
+    eval "$mj_rb_var=\$MAJORDOMUS_BIN"
     return 0
   fi
   mj_rb_shipped="$mj_rb_root/libexec/majordomus-cli"
   if [ -x "$mj_rb_shipped" ]; then
-    printf '%s\n' "$mj_rb_shipped"
+    eval "$mj_rb_var=\$mj_rb_shipped"
     return 0
   fi
   # no `ask-cargo`: this runs on every `cd` through bin/majordomus-env
-  mj_rb_target="$(mj_cargo_target_dir "$mj_rb_root/apps/majordomus-cli")"
-  printf '%s\n' "$mj_rb_target/${MAJORDOMUS_BUILD_PROFILE:-debug}/majordomus"
+  mj_cargo_target_dir_into mj_rb_target "$mj_rb_root/apps/majordomus-cli"
+  mj_rb_target="$mj_rb_target/${MAJORDOMUS_BUILD_PROFILE:-debug}/majordomus"
+  eval "$mj_rb_var=\$mj_rb_target"
 }
 
 # mj_rust_stale <repository-root> <executable>
@@ -98,9 +125,14 @@ mj_rust_stale() {
   [ -z "${MAJORDOMUS_BIN:-}" ] || return 1
   mj_st_crate="$mj_st_root/apps/majordomus-cli"
   [ -d "$mj_st_crate/src" ] || return 1
+  # The first newer file is the whole answer, so find stops there (`-quit`, which BSD and GNU
+  # find both have) instead of a `| head -n 1` process reading it — one process fewer on
+  # every `cd`, the same verdict: the question is still every file, compared by find itself.
+  # A cheaper proxy was measured and rejected: directory mtimes do not move when a file is
+  # edited in place, so no stamp short of the files themselves detects every newer source.
   mj_st_newer="$(
     find "$mj_st_crate/src" "$mj_st_crate/Cargo.toml" "$mj_st_crate/Cargo.lock" \
-      -type f -newer "$mj_st_bin" 2>/dev/null | head -n 1
+      -type f -newer "$mj_st_bin" -print -quit 2>/dev/null
   )"
   [ -n "$mj_st_newer" ]
 }
@@ -109,11 +141,22 @@ mj_rust_stale() {
 # tree ships one. Empty when it does not, so a caller can leave MAJORDOMUS_SHARE unset and
 # let the executable find its own.
 mj_rust_share() {
-  mj_rs_root="$1"
+  mj_rust_share_into mj_rs_out "$1"
+  [ -z "$mj_rs_out" ] || printf '%s\n' "$mj_rs_out"
+}
+
+# mj_rust_share_into <variable> <repository-root>
+#
+# mj_rust_share, assigned rather than printed: empty when this tree ships no share.
+mj_rust_share_into() {
+  mj_rs_var="$1"
+  mj_rs_root="$2"
   if [ -n "${MAJORDOMUS_SHARE:-}" ]; then
-    printf '%s\n' "$MAJORDOMUS_SHARE"
+    eval "$mj_rs_var=\$MAJORDOMUS_SHARE"
   elif [ -f "$mj_rs_root/share/kinds.yaml" ]; then
-    printf '%s\n' "$mj_rs_root/share"
+    eval "$mj_rs_var=\$mj_rs_root/share"
+  else
+    eval "$mj_rs_var="
   fi
 }
 

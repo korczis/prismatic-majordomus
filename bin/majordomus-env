@@ -17,14 +17,23 @@
 # every `cd`, and a non-zero exit there makes direnv report the whole environment failed.
 set -eu
 
-here="$(unset CDPATH; cd -- "$(dirname -- "$0")" && pwd)"
+# Every `$(...)` here is a process, and this runs on every `cd`: measured on 2026-09-15 the
+# adapter created twelve processes before the executable ran, and they cost more than the
+# executable did. So the directory this file is in comes from parameter expansion rather
+# than dirname(1), the root is one subshell rather than three, and the executable and the
+# share are assigned by lib/rust_bin.sh's `_into` forms rather than captured from a
+# subshell. What is decided is unchanged; only how many processes it takes to decide it.
+case "$0" in
+  */*) here="${0%/*}"; [ -n "$here" ] || here=/ ;;
+  *) here=. ;;
+esac
 root="$(unset CDPATH; cd -- "$here/.." && pwd)"
 
 # shellcheck source=../lib/rust_bin.sh
 . "$root/lib/rust_bin.sh"
 
-bin="$(mj_rust_bin "$root")"
-share="$(mj_rust_share "$root")"
+mj_rust_bin_into bin "$root"
+mj_rust_share_into share "$root"
 if [ -n "$share" ]; then
   export MAJORDOMUS_SHARE="$share"
 fi
