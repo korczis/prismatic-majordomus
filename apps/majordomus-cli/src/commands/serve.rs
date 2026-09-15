@@ -344,10 +344,22 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
     let mut started = false;
     loop {
         let file = LeaseFile::read(&path);
+        // Patient only while this call has started nothing. A slow but live owner must not
+        // be judged gone, or a second server is spawned beside it and takes its lease over.
+        // Once a server was started here, the lease being waited on is the old one or the
+        // new one, and one probe per round is enough: waiting out the patience again would
+        // spend ensure's `--wait` twice on a wedged owner.
+        let owner = file.document().map_or(0, |d| d.pid);
         let (standing, reason) = standing_of(
             &file,
             lease::file_age(&path),
-            |url| lease::probe(url, repo.root()),
+            |url| {
+                if started {
+                    lease::probe(url, repo.root())
+                } else {
+                    lease::probe_patiently(url, repo.root(), owner)
+                }
+            },
             crate::VERSION,
         );
         let doc = file.document().cloned();
@@ -366,7 +378,13 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
             ServerStanding::Ready => return Ok(settle(started, false)),
             ServerStanding::Starting => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
-                spawn_server(repo, port, idle, &log)?;
+                // A stale verdict here was reached after this call's patience: the child is
+                // told which lease, so that its election does not wait on it a second time.
+                let judged = match standing {
+                    ServerStanding::Stale => doc.as_ref().map(|d| d.token.as_str()),
+                    _ => None,
+                };
+                spawn_server(repo, port, idle, &log, judged)?;
                 started = true;
             }
             ServerStanding::Absent | ServerStanding::Stale => {}
@@ -379,7 +397,7 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
                             && std::env::current_exe().ok().as_deref() == Some(e.path.as_path())
                     });
                 if takes_over && !started {
-                    spawn_server(repo, port, idle, &log)?;
+                    spawn_server(repo, port, idle, &log, None)?;
                     started = true;
                 } else if !started || Instant::now() >= deadline {
                     return Ok(settle(started, false));
@@ -509,7 +527,19 @@ fn report(
 /// async-signal-safe calls are allowed and `close(2)` is one while `sysconf(3)` is not
 /// promised to be. `test/cases/190` holds it: an entry made with a descriptor open on a pipe
 /// must leave that pipe closed when it returns.
-fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<()> {
+/// Start a server for `repo` as a process of its own.
+///
+/// `judged` is the token of a lease this caller has already waited on and found not
+/// answering: the child is told, so that its election takes that one lease over at once
+/// instead of spending the same patience on it a second time. Every other lease — a new
+/// owner, a lease that changed since — still gets the full patience.
+fn spawn_server(
+    repo: &Repository,
+    port: u16,
+    idle: u64,
+    log: &Path,
+    judged: Option<&str>,
+) -> Result<()> {
     let exe = std::env::current_exe().map_err(|e| Error::io("the executable", e))?;
     if let Some(dir) = log.parent() {
         fs::create_dir_all(dir).map_err(|e| Error::io(dir, e))?;
@@ -533,6 +563,9 @@ fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<(
         .stderr(Stdio::from(file));
     if std::env::var_os("MAJORDOMUS_LOG").is_none() {
         cmd.env("MAJORDOMUS_LOG", "info");
+    }
+    if let Some(token) = judged {
+        cmd.env(crate::lease::JUDGED_STALE_ENV, token);
     }
     #[cfg(unix)]
     {

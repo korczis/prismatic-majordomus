@@ -46,6 +46,101 @@ pub const PROBE_TIMEOUT: Duration = Duration::from_secs(2);
 /// client alone.
 pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 
+/// The timings above are the defaults. What a process actually judges a lease contest by is
+/// declared in `.ai/repo/policy.yaml`'s `server:` block and read once, here.
+///
+/// They were compiled constants until 2026-09-15: unchangeable without a rebuild, stated
+/// nowhere a reader would look, and invisible to every projection — while `probe_timeout` is
+/// the number that decides whether a live but slow owner keeps its lease or is taken over
+/// while it is still serving. That is a decision about how this repository is supervised, not
+/// an implementation detail, so it belongs in the model.
+///
+/// A `OnceLock`, because a process reads one policy: the repository is opened once and the
+/// answer must not change underneath a contest that is already being judged. Absent keys keep
+/// the constants, so a policy that cannot be read does not silently change behaviour.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Timings {
+    /// `server.bind_grace_seconds:`
+    pub bind_grace: Duration,
+    /// `server.probe_timeout_seconds:`
+    pub probe_timeout: Duration,
+    /// `server.join_timeout_seconds:`
+    pub join_timeout: Duration,
+}
+
+impl Default for Timings {
+    fn default() -> Self {
+        Self { bind_grace: BIND_GRACE, probe_timeout: PROBE_TIMEOUT, join_timeout: JOIN_TIMEOUT }
+    }
+}
+
+static TIMINGS: OnceLock<Timings> = OnceLock::new();
+
+/// What this process judges a lease contest by. The declaration when one was read, the
+/// constants otherwise.
+pub fn timings() -> Timings {
+    *TIMINGS.get_or_init(Timings::default)
+}
+
+impl Timings {
+    /// What a declaration means, as a value rather than as a side effect.
+    ///
+    /// The mapping is the part that can be wrong; the `OnceLock` below is plumbing. Kept
+    /// separate so it can be tested directly — a test that went through the lock would
+    /// depend on which test ran first, since a process reads one policy by construction.
+    ///
+    /// ```
+    /// use majordomus_cli::lease::Timings;
+    /// use majordomus_cli::policy::ServerPolicy;
+    /// use std::time::Duration;
+    ///
+    /// // an empty declaration keeps every default
+    /// assert_eq!(Timings::from_policy(&ServerPolicy::default()), Timings::default());
+    ///
+    /// // and a declared value is the one used, rather than the constant
+    /// let declared = ServerPolicy {
+    ///     probe_timeout_seconds: Some(9),
+    ///     ..ServerPolicy::default()
+    /// };
+    /// let t = Timings::from_policy(&declared);
+    /// assert_eq!(t.probe_timeout, Duration::from_secs(9));
+    /// assert_ne!(t.probe_timeout, Timings::default().probe_timeout);
+    /// // the keys it says nothing about are untouched
+    /// assert_eq!(t.bind_grace, Timings::default().bind_grace);
+    /// ```
+    pub fn from_policy(policy: &crate::policy::ServerPolicy) -> Self {
+        let d = Self::default();
+        Self {
+            bind_grace: policy
+                .bind_grace_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.bind_grace),
+            probe_timeout: policy
+                .probe_timeout_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.probe_timeout),
+            join_timeout: policy
+                .join_timeout_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.join_timeout),
+        }
+    }
+}
+
+/// Declare the timings for this process from a repository's policy. The first call decides;
+/// later ones are ignored, which is what makes [`timings`] answer the same thing all the way
+/// through one contest.
+pub fn declare_timings(policy: &crate::policy::ServerPolicy) {
+    let _ = TIMINGS.set(Timings::from_policy(policy));
+}
+
+/// The environment variable a server is started with when the process that started it had
+/// already waited on the lease it found and judged it stale; its value is that lease's
+/// token. The new server's election then takes exactly that lease over without spending the
+/// same patience on it again. Any other lease, including one that changed in between, still
+/// gets [`probe_patiently`]'s wait.
+pub const JUDGED_STALE_ENV: &str = "MAJORDOMUS_LEASE_JUDGED_STALE";
+
 /// The identity of the file an executable was started from: where it is, and the mtime
 /// and size of the file at that path. A server outlives its own binary — a rebuild replaces
 /// the file under a process that keeps serving the code it loaded hours ago — and nothing
@@ -123,8 +218,10 @@ impl ExecutableIdentity {
 pub struct LeaseDocument {
     /// [`SCHEMA`].
     pub schema: String,
-    /// The process id of the server. Informational: a live pid is not a live server, and
-    /// nothing decides liveness from it.
+    /// The process id of the server. A live pid is not a live server: only an answering
+    /// probe says that. What a live pid does decide is patience — a probe that fails
+    /// against a live owner is repeated within [`BIND_GRACE`] before the lease counts as
+    /// stale ([`probe_patiently`]); a dead or zero pid gets no patience at all.
     #[serde(default)]
     pub pid: u32,
     /// What makes the file this process's: only the process holding this token removes it.
@@ -378,12 +475,12 @@ pub fn elect(repo: &Repository) -> Result<Role> {
             }
             Err(e) => return Err(Error::io(&path, e)),
         }
-        if waited_since.elapsed() > JOIN_TIMEOUT {
+        if waited_since.elapsed() > timings().join_timeout {
             return Err(Error::Lease {
                 reason: format!(
                     "could not acquire or join the lease at {} within {} seconds",
                     path.display(),
-                    JOIN_TIMEOUT.as_secs()
+                    timings().join_timeout.as_secs()
                 ),
             });
         }
@@ -463,7 +560,7 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
     let doc = match &seen {
         // gone between the failed create and this read: the next attempt creates it
         LeaseFile::Absent => return (Found::Binding, seen),
-        LeaseFile::Empty if age > BIND_GRACE => {
+        LeaseFile::Empty if age > timings().bind_grace => {
             return (
                 Found::Stale("empty lease: its owner never wrote it".into()),
                 seen,
@@ -481,11 +578,11 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
         return (Found::Stale(reason), seen);
     }
     let found = match doc.url.as_deref() {
-        Some(url) if probe(url, root) => Found::Live(url.to_string()),
+        Some(url) if election_answers(url, root, &doc) => Found::Live(url.to_string()),
         Some(url) => Found::Stale(format!(
             "stale lease: the server it names at {url} does not answer for this repository"
         )),
-        None if age > BIND_GRACE => {
+        None if age > timings().bind_grace => {
             Found::Stale("abandoned lease: its owner never published a URL".into())
         }
         None => Found::Binding,
@@ -599,7 +696,7 @@ pub fn was_lost() -> bool {
 /// one here, and refusing it would be the worse failure: a live server taken for dead is
 /// taken over, which is how one checkout comes to have two.
 pub fn probe(url: &str, root: &Path) -> bool {
-    match bridge::request(url, "GET", "/", &[], None, PROBE_TIMEOUT) {
+    match bridge::request(url, "GET", "/", &[], None, timings().probe_timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
@@ -610,6 +707,83 @@ pub fn probe(url: &str, root: &Path) -> bool {
         }
         _ => false,
     }
+}
+
+/// [`probe`], with patience for an owner that is alive but slow.
+///
+/// A probe that times out says nothing about whether the server is gone: a server loading
+/// a large layer, or one on a machine under load (an instrumented test run, a loaded CI
+/// runner), answers late. Taking its lease over then leaves two servers, and the lease names
+/// the one still binding. So when the probe fails and the lease's `pid` is a live process on
+/// this machine, the probe is repeated every second for up to [`BIND_GRACE`], the same grace
+/// a binding owner already gets. The answer is `false` only when every attempt fails.
+///
+/// The patience is bounded on purpose. A live pid can be a wedged server that never answers
+/// again, and a probe that waited on it forever would make every client hang on a ghost. A
+/// dead pid, or pid 0, gets no patience at all, so a killed server is recovered at once.
+///
+/// ```
+/// use majordomus_cli::lease::probe_patiently;
+/// use std::path::Path;
+/// use std::time::{Duration, Instant};
+/// // nothing listens on port 1 and pid 0 names no process: one refused probe, no patience
+/// let t0 = Instant::now();
+/// assert!(!probe_patiently("http://127.0.0.1:1", Path::new("/nowhere"), 0));
+/// assert!(t0.elapsed() < Duration::from_secs(5));
+/// ```
+pub fn probe_patiently(url: &str, root: &Path, pid: u32) -> bool {
+    if probe(url, root) {
+        return true;
+    }
+    if !pid_alive(pid) {
+        return false;
+    }
+    let deadline = Instant::now() + timings().bind_grace;
+    while Instant::now() < deadline {
+        std::thread::sleep(Duration::from_secs(1));
+        if probe(url, root) {
+            return true;
+        }
+        if !pid_alive(pid) {
+            return false;
+        }
+    }
+    false
+}
+
+/// Does the server a lease names answer, as an election judges it?
+///
+/// Patiently ([`probe_patiently`]): a server that judged a slow but live owner gone would
+/// take its lease over and leave two servers, with the lease naming the one still binding.
+/// The one exception is the lease the process that started this one already waited on and
+/// found not answering ([`JUDGED_STALE_ENV`]): waiting on it a second time would only double
+/// the delay before a wedged owner is replaced.
+fn election_answers(url: &str, root: &Path, doc: &LeaseDocument) -> bool {
+    let judged = std::env::var(JUDGED_STALE_ENV).ok();
+    if judged.as_deref() == Some(doc.token.as_str()) {
+        probe(url, root)
+    } else {
+        probe_patiently(url, root, doc.pid)
+    }
+}
+
+/// Is `pid` a live process on this machine? `EPERM` means it exists and belongs to someone
+/// else, which is alive. Pid 0 is never a server.
+#[cfg(unix)]
+fn pid_alive(pid: u32) -> bool {
+    if pid == 0 {
+        return false;
+    }
+    // SAFETY: kill(2) with signal 0 performs the permission and existence checks only; no
+    // signal is delivered and no memory is touched.
+    let rc = unsafe { libc::kill(pid as libc::pid_t, 0) };
+    rc == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
+}
+
+/// Without a portable liveness check, no owner earns patience: the behaviour is [`probe`]'s.
+#[cfg(not(unix))]
+fn pid_alive(_: u32) -> bool {
+    false
 }
 
 impl Lease {
@@ -666,7 +840,7 @@ impl Lease {
         let token = self.token.clone();
         let binding = Arc::clone(&self.binding);
         let document = serde_json::to_string(&self.document(None)).unwrap_or_default();
-        let tick = BIND_GRACE / 3;
+        let tick = timings().bind_grace / 3;
         let _ = std::thread::Builder::new()
             .name("majordomus-lease-keep-alive".into())
             .spawn(move || loop {

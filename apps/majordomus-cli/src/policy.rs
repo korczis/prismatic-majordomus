@@ -123,6 +123,11 @@ pub struct Policy {
     /// `projections:`.
     #[serde(default)]
     pub projections: Vec<Projection>,
+    /// `server:` — the timings a lease contest between two processes is judged by. Absent
+    /// keeps the constants `lease.rs` declares, so a policy that predates the block, or one
+    /// that could not be read, does not silently change how a server is taken over.
+    #[serde(default)]
+    pub server: ServerPolicy,
     /// `commit:` — what this repository holds a commit message to. Absent is the default,
     /// which is what this repository's own history already satisfies.
     #[serde(default)]
@@ -205,6 +210,10 @@ impl LoadedPolicy {
             path: path.clone(),
             reason,
         })?;
+        // The one point a repository's policy is read, and therefore the one place the lease
+        // timings can be declared for this process. `declare_timings` is a OnceLock set, so
+        // reading the policy twice does not move a judgement already in flight.
+        crate::lease::declare_timings(&policy.server);
         let mut hasher = Sha256::new();
         hasher.update(text.as_bytes());
         for profile in profile_files(repository)? {
@@ -317,4 +326,34 @@ mod tests {
         assert!(!is_safe_relative("../x"));
         assert!(!is_safe_relative("a/../../x"));
     }
+}
+
+/// `server:` — what a lease contest is judged by.
+///
+/// Every field is optional and absent means "keep the compiled default", which is why there
+/// is no reader-side default *value* here: the defaults live in one place, `lease::Timings`,
+/// and this block only says which of them this repository overrides.
+///
+/// ```
+/// use majordomus_cli::policy::ServerPolicy;
+/// // a policy that predates the block: absent, not defaulted to zero
+/// assert_eq!(ServerPolicy::default().probe_timeout_seconds, None);
+/// let p: ServerPolicy =
+///     serde_json::from_str(r#"{"probe_timeout_seconds": 5}"#).expect("a server block");
+/// assert_eq!(p.probe_timeout_seconds, Some(5));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct ServerPolicy {
+    /// `server.probe_timeout_seconds:` — how long a probe waits for the current owner before
+    /// that silence counts as evidence that it is gone.
+    #[serde(default)]
+    pub probe_timeout_seconds: Option<u64>,
+    /// `server.bind_grace_seconds:` — how long a lease naming no URL yet is left alone,
+    /// because a server writes its lease before it can serve.
+    #[serde(default)]
+    pub bind_grace_seconds: Option<u64>,
+    /// `server.join_timeout_seconds:` — how long a process waits to join or create the lease
+    /// file before refusing rather than waiting forever.
+    #[serde(default)]
+    pub join_timeout_seconds: Option<u64>,
 }

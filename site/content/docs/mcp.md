@@ -56,7 +56,7 @@ registry entry, none declared in the MCP code. The decision is
 | election | the first process to create `.ai/local/state/mcp/server.json` (atomically) is the server; it binds, writes its URL into the file, and logs it |
 | port | `--http-port` (default `8741`) on `--http-host` (default `127.0.0.1`); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
 | attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
-| stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within fifteen seconds is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
+| stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within the **bind grace** is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
 | freshness | the server follows the repository it serves: before a request is answered it compares a fingerprint of the git control files (`HEAD`, the staging index, `packed-refs`, the reflog, the merge and rebase markers — one `stat` each) with the one its current reading was built at, and the request that finds them different rebuilds the layer. A commit made while the server runs is visible through the API, through MCP and in the Cockpit with no restart; a client attached before the commit keeps its session and its place on the peer board. No poll, no thread, no watcher. `project.the-server-sees-the-current-tree` |
 | signals | `SIGTERM`, `SIGINT` or `SIGHUP` (a client killing its server, Ctrl-C in a terminal) removes the lease inside the handler before the process dies of the signal; `kill -9` cannot be caught, and the next process takes the stale lease over |
@@ -238,6 +238,36 @@ somebody else's — serves the peers it has, and ends with them. The server's ow
 forgets the HTTP sessions that stopped pinging on every path, not only while the owner
 waits for peers to leave, so a dead peer never stays `attached` on the board.
 
+
+### What a contest is judged by
+
+Three numbers decide which process owns the lease. They are **declared**, in
+`.ai/repo/policy.yaml`'s `server:` block, and read once when the repository is opened:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| key | what it decides |
+|---|---|
+| `probe_timeout_seconds` | how long a probe waits for the current owner to answer before that silence counts as evidence. Too low and a live but slow owner is judged stale and taken over **while it is still serving**; too high and a wedged one holds the checkout's server for that long |
+| `bind_grace_seconds` | how long a lease naming no URL yet is left alone — a server writes its lease before it can serve, so a fresh lease without a URL is a *starting* owner, not a dead one |
+| `join_timeout_seconds` | how long a process waits to join or create the lease file before refusing rather than waiting forever |
+
+</div>
+
+
+Until 2026-09-15 all three were compiled constants in `apps/majordomus-cli/src/lease.rs`:
+unchangeable without a rebuild, stated nowhere a reader would look, and invisible to every
+projection — while `probe_timeout` is precisely the number that decides whether a live owner
+keeps what it owns. That is a decision about how a repository is supervised, not an
+implementation detail.
+
+The schema (`share/schemas/majordomus/policy/policy.v1.schema.json`) owns the block with
+`additionalProperties: false`, so a misspelt timing is **refused** rather than read as absent;
+`test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh` holds that, and
+`lease::Timings::from_policy` carries the doc test proving a declared value is the one used
+and that a key the policy omits keeps its constant. The values shipped are the constants they
+replaced, so declaring them changed no behaviour — deliberately: a change to how a contest is
+judged should be visible as a change, not arrive inside a refactor.
 
 ## Starting it from a client
 

@@ -160,8 +160,9 @@ fn three_ensures_at_once_share_one_server() {
     let (_, s) = get(urls.iter().next().unwrap(), "/api/v1/server").unwrap();
     let s: Value = serde_json::from_str(&s).unwrap();
     assert_eq!(s["servers"].as_array().unwrap().len(), 1);
-    let (code, _, _) = mj(&root, &["serve", "stop"]);
-    assert_eq!(code, 0);
+    // what stop said is the diagnosis: "still binding" means a second server took the lease
+    let (code, out, err) = mj(&root, &["serve", "stop"]);
+    assert_eq!(code, 0, "serve stop: {out}{err}");
 }
 
 #[test]
@@ -213,6 +214,112 @@ fn a_stale_lease_and_a_killed_server_are_both_recovered() {
     assert_ne!(b["pid"].as_u64().unwrap(), pid);
     let (code, _, _) = mj(&f.root(), &["serve", "stop"]);
     assert_eq!(code, 0);
+}
+
+#[test]
+fn a_live_owner_that_answers_late_keeps_its_lease() {
+    // The race that failed CI: a probe timing out against a live but slow owner must not
+    // hand its lease to a second server. This owner is slow for its first two requests —
+    // past one probe's timeout — and answers at once after that, the way a server under
+    // load catches up; the patience a live owner gets must outlast that.
+    let f = Fixture::new();
+    let slow = TcpListener::bind("127.0.0.1:0").unwrap();
+    let slow_url = format!("http://{}", slow.local_addr().unwrap());
+    let body = serde_json::json!({
+        "name": "majordomus",
+        "repository_id": majordomus_cli::repository::identity(&f.root()),
+    })
+    .to_string();
+    let served = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    std::thread::spawn(move || {
+        for stream in slow.incoming() {
+            let Ok(mut s) = stream else { continue };
+            let body = body.clone();
+            let nth = served.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            std::thread::spawn(move || {
+                let mut request = [0u8; 4096];
+                let _ = s.read(&mut request);
+                if nth < 2 {
+                    std::thread::sleep(Duration::from_secs(3));
+                }
+                let _ = write!(
+                    s,
+                    "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                    body.len(),
+                    body
+                );
+            });
+        }
+    });
+    let lease = lease_path(&f);
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    std::fs::write(
+        &lease,
+        format!(
+            r#"{{"schema":"majordomus-mcp-lease/v1","pid":{},"token":"late","root":"{}","url":"{}","started_at":"2026-09-10T00:00:00Z","version":"{}"}}"#,
+            std::process::id(),
+            f.root().display(),
+            slow_url,
+            majordomus_cli::VERSION
+        ),
+    )
+    .unwrap();
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(
+        a["started"], false,
+        "a live owner that answers late is not replaced: {a}"
+    );
+    assert_eq!(a["url"].as_str().unwrap(), slow_url, "{a}");
+    assert!(
+        matches!(LeaseFile::read(&lease), LeaseFile::Document(d) if d.url.as_deref() == Some(slow_url.as_str())),
+        "the lease still names the slow owner: nothing took it over"
+    );
+    // never `serve stop` here: the lease names this test process, and stop signals its pid
+    std::fs::remove_file(&lease).unwrap();
+}
+
+#[test]
+fn a_live_owner_that_never_answers_is_still_taken_over() {
+    // The patience a slow owner gets is bounded: a lease naming a live process whose address
+    // accepts a connection and never answers is a ghost, and the next ensure must replace it
+    // rather than wait on it forever.
+    let f = Fixture::new();
+    let wedged = TcpListener::bind("127.0.0.1:0").unwrap();
+    let wedged_url = format!("http://{}", wedged.local_addr().unwrap());
+    let lease = lease_path(&f);
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    std::fs::write(
+        &lease,
+        format!(
+            r#"{{"schema":"majordomus-mcp-lease/v1","pid":{},"token":"wedged","root":"{}","url":"{}","started_at":"2026-09-10T00:00:00Z","version":"{}"}}"#,
+            std::process::id(),
+            f.root().display(),
+            wedged_url,
+            majordomus_cli::VERSION
+        ),
+    )
+    .unwrap();
+    let t0 = Instant::now();
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    let took = t0.elapsed();
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(a["started"], true, "the wedged owner was taken over: {a}");
+    assert_ne!(a["url"].as_str().unwrap(), wedged_url, "{a}");
+    assert_ne!(
+        a["pid"].as_u64().unwrap(),
+        u64::from(std::process::id()),
+        "{a}"
+    );
+    assert!(
+        took < Duration::from_secs(40),
+        "taken over within ensure's wait, not after it: {took:?}"
+    );
+    let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "serve stop: {out}{err}");
+    drop(wedged);
 }
 
 #[test]
