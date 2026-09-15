@@ -10,27 +10,19 @@ mod common;
 
 use common::{Fixture, Served};
 
-/// Every page of the Cockpit that needs no identifier, with the area each belongs to.
-const PAGES: &[&str] = &[
-    "/cockpit",
-    "/cockpit/capabilities",
-    "/cockpit/objects",
-    "/cockpit/directories",
+/// The pages that need a query string or an identifier: one entity in detail, and the
+/// filters and paging the listings offer. A page that renders only when a query string
+/// selects something is a page whose failure nobody sees, and each of these is one arm of
+/// the same match.
+///
+/// The plain routes are not listed here. They come from `cockpit::STATIC_ROUTES`, the list
+/// the dispatcher is written beside, so a route added there is swept the moment it exists
+/// and a sweep cannot quietly fall behind the Cockpit. This list used to name thirteen of
+/// the twenty-one plain routes; `/cockpit/commands`, `/cockpit/executions`, `/cockpit/mesh`,
+/// `/cockpit/models`, `/cockpit/quality`, `/cockpit/release`, `/cockpit/design` and
+/// `/cockpit/object` were served and swept by nothing.
+const QUERY_PAGES: &[&str] = &[
     "/cockpit/directories?path=.ai/repo/rules",
-    "/cockpit/graphs",
-    "/cockpit/graphs/topology",
-    "/cockpit/continuity",
-    "/cockpit/health",
-    "/cockpit/artifacts",
-    "/cockpit/api",
-    "/cockpit/search",
-    "/cockpit/activity",
-    // The routes the dispatcher answers that this sweep did not name. `worktrees` is a
-    // whole page no test rendered; the rest are the branches a reader actually reaches —
-    // one entity in detail, and the filters and paging the listings offer. A page that
-    // renders only when a query string selects something is a page whose failure nobody
-    // sees, and each of these is one arm of the same match.
-    "/cockpit/worktrees",
     "/cockpit/capabilities/repository.info",
     "/cockpit/capabilities?module=repository",
     "/cockpit/capabilities?kind=query",
@@ -43,6 +35,16 @@ const PAGES: &[&str] = &[
     "/cockpit/graphs/registry",
     "/cockpit/search?q=scope",
 ];
+
+/// Every page this file sweeps: each plain route the dispatcher answers, from the list it is
+/// written beside, then the query-string arms above.
+fn pages() -> Vec<String> {
+    majordomus_cli::cockpit::STATIC_ROUTES
+        .iter()
+        .map(|(path, _)| (*path).to_string())
+        .chain(QUERY_PAGES.iter().map(|p| (*p).to_string()))
+        .collect()
+}
 
 fn html(s: &Served, target: &str) -> (u16, String) {
     let (status, headers, body) = s.request("GET", target, None);
@@ -60,8 +62,8 @@ fn every_page_renders_complete_html_with_the_shell_and_the_security_headers() {
     let f = Fixture::new();
     let s = Served::start(&f.root(), &[]);
 
-    for page in PAGES {
-        let (status, headers, body) = s.request("GET", page, None);
+    for page in pages() {
+        let (status, headers, body) = s.request("GET", &page, None);
         assert_eq!(status, 200, "{page}");
         assert!(body.starts_with("<!doctype html>"), "{page}");
         assert!(body.trim_end().ends_with("</html>"), "{page}");
@@ -716,8 +718,8 @@ fn a_page_costs_no_rebuild_of_anything_canonical() {
     // Page by page, so that a failure names the page that paid. Compared against the one
     // reading taken before the sweep, so a counter that moves stays failed for every page
     // after it rather than being forgiven by the next comparison.
-    for page in PAGES {
-        let (status, _, _) = s.request("GET", page, None);
+    for page in pages() {
+        let (status, _, _) = s.request("GET", &page, None);
         assert_eq!(status, 200, "{page}");
         let after = s.get("/api/v1/perf").1;
         for counter in CANONICAL {
