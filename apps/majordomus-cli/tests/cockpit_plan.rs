@@ -237,6 +237,49 @@ fn a_move_changes_the_record_and_the_page_reads_it_back() {
 }
 
 #[test]
+fn a_move_made_as_an_execution_is_read_back_by_the_next_page_too() {
+    let f = Fixture::new();
+    let served = Served::start(&f.root(), &[]);
+    assert_eq!(status_of(&served, "I0001"), "READY");
+
+    // the Run-as-an-execution path: a worker thread runs the capability, not the route
+    let own = format!("http://{}", served.address);
+    let (status, _, answer) = served.request_with(
+        "POST",
+        "/api/v1/executions/start",
+        Some(r#"{"capability":"plan.transition","input":{"issue":"I0001","transition":"start"}}"#),
+        &[("Origin", &own)],
+    );
+    assert!(status == 200 || status == 202, "{status}: {answer}");
+    let started: Value = serde_json::from_str(&answer).expect("a JSON answer");
+    let id = started["id"].as_str().expect("an execution id").to_string();
+
+    let mut state = String::new();
+    for _ in 0..100 {
+        let (_, execution) = served.get(&format!("/api/v1/executions/get?id={id}"));
+        state = execution["state"].as_str().unwrap_or_default().to_string();
+        if ["succeeded", "failed", "cancelled"].contains(&state.as_str()) {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    assert_eq!(state, "succeeded", "the execution did not succeed");
+
+    // the write moved no git control file, and the page is still not the one from before it
+    let after = status_of(&served, "I0001");
+    assert_ne!(
+        after, "READY",
+        "plan.record still reads the status from before the move"
+    );
+    let (status, body) = page(&served, "/cockpit/plan/issues/I0001");
+    assert_eq!(status, 200, "{body}");
+    assert!(
+        body.contains(&format!(">{after}<")),
+        "the issue page does not show {after} after a move made as an execution: {body}"
+    );
+}
+
+#[test]
 fn the_sessions_page_renders_the_episode_store() {
     let f = Fixture::new();
     let served = Served::start(&f.root(), &[]);
