@@ -25,9 +25,18 @@ for id in $(jq -r '.capabilities[].id' "$REG"); do
   [ -f "$C/capabilities/$slug.md" ] || { echo "    no stub for $id"; exit 1; }
   grep -q "^id = \"$id\"" "$C/capabilities/$slug.md" || { echo "    stub of $id does not carry its id"; exit 1; }
   m="$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module' "$REG")"
-  [ "$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module_route' "$G/executable.json")" = "/registry/modules/$m/" ] || { echo "    $id does not link module $m"; exit 1; }
+  # The module's route is slugified the same way the capability's is, and for the same reason:
+  # Zola turns `_` into `-`. Built from the raw name this passed for as long as no module
+  # carried an underscore, and `session_domain` is the first that does — an expectation that
+  # outlived the thing it described, rather than a projection that went wrong.
+  mslug="$(printf '%s' "$m" | tr '_' '-')"
+  [ "$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module_route' "$G/executable.json")" = "/registry/modules/$mslug/" ] || { echo "    $id does not link module $m"; exit 1; }
 done
-for m in $(jq -r '.modules[] | select(.source=="builtin") | .id' "$REG"); do [ -f "$C/modules/$m.md" ] || { echo "    no stub for module $m"; exit 1; }; done
+for m in $(jq -r '.modules[] | select(.source=="builtin") | .id' "$REG"); do
+  # the same slugification as above: the page a reader reaches is modules/<slug>.md
+  ms="$(printf '%s' "$m" | tr '_' '-')"
+  [ -f "$C/modules/$ms.md" ] || { echo "    no stub for module $m (expected $ms.md)"; exit 1; }
+done
 for pg in _index executable cli mcp benchmarks; do [ -f "$C/$pg.md" ] || { echo "    no $pg page"; exit 1; }; done
 # a claim implemented in a module's file is attached to that module and its capabilities
 [ "$(jq -r '.modules[] | select(.id=="objects") | .claims | length' "$G/executable.json")" -gt 0 ] || { echo "    no claim attached to the objects module (mcp-uri-resolution is implemented there)"; exit 1; }
