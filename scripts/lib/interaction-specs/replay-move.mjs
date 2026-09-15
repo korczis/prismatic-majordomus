@@ -29,15 +29,19 @@ export default {
       await page.locator(`#${id} [role="tab"]`).first().click();
       let s = await settleTo(id, 0);
       if (s.at !== 0) { fail(`selecting the first step leaves step ${s.at + 1} selected`); continue; }
-      await next.click(); s = await settleTo(id, 1); n++;
+      await next.click(); s = await settleTo(id, 1);
       if (s.at !== 1 || s.count !== 1) fail(`Next from the first step selects step ${s.at + 1} (${s.count} selected), not step 2`);
-      await back.click(); s = await settleTo(id, 0); n++;
+      await back.click(); s = await settleTo(id, 0);
       if (s.at !== 0 || s.count !== 1) fail(`Back from step 2 selects step ${s.at + 1} (${s.count} selected), not step 1`);
       if ((await back.getAttribute('aria-disabled')) !== 'true') fail('Back is not marked aria-disabled on the first step');
       await page.locator(`#${id} [role="tab"]`).last().click(); s = await settleTo(id, total - 1);
-      await next.click(); s = await settleTo(id, total - 1); n++;
+      // Playwright waits for an aria-disabled control to become enabled before clicking it, which it never
+      // will; the question is what the handler does when a reader presses it anyway, so the click is forced
+      await next.click({ force: true }); s = await settleTo(id, total - 1);
       if (s.at !== total - 1) fail(`Next on the last step moves the replay to step ${s.at + 1}`);
       if ((await next.getAttribute('aria-disabled')) !== 'true') fail('Next is not marked aria-disabled on the last step');
+      // the controls driven are the two movement buttons of this replay, each pressed at least once
+      n += 2;
     }
     return n;
   },
