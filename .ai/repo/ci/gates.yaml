@@ -134,6 +134,25 @@ gates:
     runs: scripts/ci/command-furnished
     summary: every public command carries its reference section, its fixture, its demo and its behavioural and negative cases, reported in one pass rather than one refusal per derivation
 
+  # `scripts/ci/surface-coverage` proves that each public surface — MCP, the CLI,
+  # Swagger/OpenAPI, the library boundary, the Cockpit, the static site and the published one —
+  # is exercised by something mandatory, and that the gate model still makes that something
+  # mandatory. It has existed since 2026-09-10 and, until this entry, **nothing ran it**: the
+  # only reference to it anywhere in the repository was one historical session record. A check
+  # whose own header calls it "one mandatory gate" and which no caller invokes is the shape this
+  # repository keeps rediscovering — declared, never enforced — and the reason it matters here is
+  # that it is the check which would notice a future change quietly dropping one surface from the
+  # tests or from this file.
+  #
+  # Unconditional for the same reason command-furnished is: it reads the gate model and the test
+  # corpus, takes well under a second, and the drift it catches is introduced by edits that plan
+  # no other gate.
+  - id: surface-coverage
+    job: structure
+    always: true
+    runs: scripts/ci/surface-coverage
+    summary: every public surface — MCP, CLI, Swagger/OpenAPI, the library, the Cockpit, the static and published sites — is covered by a mandatory test, and the gate model still requires that test
+
   - id: rust-command
     job: structure
     runs: scripts/ci/rust-command-check --strict
