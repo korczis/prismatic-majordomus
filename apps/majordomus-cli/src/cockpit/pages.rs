@@ -24,6 +24,8 @@ use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
 use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
+use crate::capability::builtin::peers::PeerList;
+use crate::peers::OverlapPath;
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,
@@ -3870,6 +3872,237 @@ pub fn worktrees(ctx: &Context) -> Page {
     .subtitle("Where every branch's worktree belongs and where each one is: <repo>-wt/<branch>, derived from git and registered nowhere.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Worktrees", None)])
     .script("worktrees.js")
+}
+
+// ------------------------------------------------------------------ peers
+
+/// Who else is working in this repository, and where two of them are about to collide.
+///
+/// The board is the repository's, not this process's: `peers.list` gathers every checkout's
+/// board and returns them together (ADR 0044). That answer has been reachable over MCP and
+/// over HTTP since it was written, and by no person looking at the Cockpit — which is where
+/// somebody looks *before* starting, and is why "is anyone else on this" kept being answered
+/// by messaging other sessions, twice too late.
+///
+/// The distinction this page exists to keep is **absent against empty**. A board that could
+/// not be asked is not a board with nobody on it, so `complete: false` is rendered as loudly
+/// as the peers themselves, with the checkout that could not be reached and the reason it
+/// gave. Rendering silence for an unreachable server is the failure the capability was
+/// written to avoid, and a page is the easiest place to reintroduce it.
+pub fn peers(ctx: &Context) -> Page {
+    let b: PeerList = match ask(ctx, "peers.list", json!({})) {
+        Ok(b) => b,
+        Err(e) => return failed(Area::Peers, "Peers", e),
+    };
+
+    let attached = b.peers.iter().filter(|p| p.attached).count();
+    let unread = b.boards.iter().filter(|v| v.reason.is_some()).count();
+
+    let statistics = el("div")
+        .class("mj-stats")
+        .child(statistic(b.count.to_string(), "peers", "peers.list"))
+        .child(statistic(attached.to_string(), "attached now", "peers.list"))
+        .child(statistic(b.boards.len().to_string(), "checkouts", "peers.list"))
+        .child(statistic(unread.to_string(), "boards unread", "peers.list"))
+        .child(statistic(
+            b.overlaps.len().to_string(),
+            "overlapping claims",
+            "peers.list",
+        ));
+
+    let identity = card(
+        "This board",
+        facts(vec![
+            (
+                "Coverage",
+                Node::Element(if b.complete {
+                    badge("ok", "every checkout answered")
+                } else {
+                    badge("fail", format!("{unread} checkout(s) could not be asked"))
+                }),
+            ),
+            (
+                "You are",
+                Node::Element(match &b.caller {
+                    Some(id) => el("span")
+                        .child(mono(id.as_str()))
+                        .text(" — a position on this checkout's board, handed out again after a reconnect"),
+                    None => el("span").text("not on the board: this page was not opened through an MCP session"),
+                }),
+            ),
+        ]),
+    );
+
+    // The unread boards first when there are any: a reader who stops after the peer table
+    // must not stop having read "nobody else is here" when the truth is "I could not ask".
+    let unreachable = if unread == 0 {
+        None
+    } else {
+        Some(card(
+            "Boards that could not be asked",
+            el("div")
+                .child(el("p").class("mj-note").text(
+                    "These checkouts are part of this repository and their boards were not read. \
+                     Whoever is working in them is not listed below.",
+                ))
+                .child(table(
+                    &["Checkout", "Branch", "Standing", "Why not"],
+                    b.boards
+                        .iter()
+                        .filter(|v| v.reason.is_some())
+                        .map(|v| {
+                            row(vec![
+                                cell(mono(v.checkout.worktree.display().to_string())),
+                                cell(mono(v.checkout.branch.clone().unwrap_or_else(|| "(detached)".into()))),
+                                cell(badge("warn", v.standing.as_str())),
+                                cell(el("span").text(v.reason.clone().unwrap_or_default())),
+                            ])
+                        })
+                        .collect(),
+                )),
+        ))
+    };
+
+    let peers_card = card(
+        "Workers",
+        if b.peers.is_empty() {
+            el("p").class("mj-note").text(if b.complete {
+                "Every board of this repository answered, and none of them holds a worker."
+            } else {
+                "No worker on the boards that answered. The boards above were not read, so this is not the whole repository."
+            })
+        } else {
+            table(
+                &["Peer", "Checkout", "Client", "Standing", "Intent", "Scope"],
+                b.peers
+                    .iter()
+                    .map(|p| {
+                        let checkout = match &p.checkout {
+                            Some(c) => el("span")
+                                .child(mono(c.branch.clone().unwrap_or_else(|| "(detached)".into())))
+                                .when(c.this_checkout, |e| e.text(" ").child(tag("here"))),
+                            None => el("span").text("(unknown)"),
+                        };
+                        let a = p.announcement.as_ref();
+                        row(vec![
+                            cell(mono(p.id.as_str())),
+                            cell(checkout),
+                            cell(el("span").text(p.client.name.clone())),
+                            cell(if p.attached {
+                                badge("ok", "attached")
+                            } else {
+                                badge("warn", "gone")
+                            }),
+                            cell(match a {
+                                Some(x) => el("span").text(x.intent.clone()),
+                                None => el("span").class("mj-note").text("announced nothing"),
+                            }),
+                            cell(match a {
+                                Some(x) if !x.scope.is_empty() => {
+                                    let mut e = el("span");
+                                    for path in &x.scope {
+                                        e = e.child(mono(path)).text(" ");
+                                    }
+                                    e
+                                }
+                                _ => el("span").class("mj-note").text("—"),
+                            }),
+                        ])
+                    })
+                    .collect(),
+            )
+        },
+    );
+
+    let overlaps = if b.overlaps.is_empty() {
+        None
+    } else {
+        Some(card(
+            "Two workers, one scope",
+            el("div")
+                .child(el("p").class("mj-note").text(
+                    "Each row is a pair whose claimed scope meets. A claim is not a lock: the task's own \
+                     scope and `check --overlap` are what refuse a commit. This is the warning that comes first.",
+                ))
+                .child(table(
+                    &["Peer", "Standing", "Intent", "Where it meets"],
+                    b.overlaps
+                        .iter()
+                        .map(|o| {
+                            let mut paths = el("span");
+                            for path in &o.paths {
+                                paths = paths.child(mono(&o_path(path))).text(" ");
+                            }
+                            row(vec![
+                                cell(mono(o.peer.as_str())),
+                                cell(if o.attached {
+                                    badge("fail", "attached")
+                                } else {
+                                    badge("warn", "gone")
+                                }),
+                                cell(el("span").text(o.intent.clone())),
+                                cell(paths),
+                            ])
+                        })
+                        .collect(),
+                )),
+        ))
+    };
+
+    let boards = card(
+        "Checkouts",
+        table(
+            &["Checkout", "Branch", "Standing", "Server", "Attached"],
+            b.boards
+                .iter()
+                .map(|v| {
+                    row(vec![
+                        cell(mono(v.checkout.worktree.display().to_string())),
+                        cell(mono(v.checkout.branch.clone().unwrap_or_else(|| "(detached)".into()))),
+                        cell(badge(
+                            if v.reason.is_some() { "warn" } else { "ok" },
+                            v.standing.as_str(),
+                        )),
+                        cell(match &v.url {
+                            Some(u) => mono(u),
+                            None => el("span").class("mj-note").text("—"),
+                        }),
+                        cell(el("span").text(v.attached.to_string())),
+                    ])
+                })
+                .collect(),
+        ),
+    );
+
+    Page::new(
+        Area::Peers,
+        "Peers",
+        {
+            // The unread boards come before the workers, and the overlaps before both: a reader
+            // who stops early must not stop having read "nobody else is here".
+            let mut grid = el("div").class("mj-grid").child(statistics).child(identity);
+            if let Some(c) = unreachable {
+                grid = grid.child(c);
+            }
+            if let Some(c) = overlaps {
+                grid = grid.child(c);
+            }
+            grid.child(peers_card).child(boards)
+        },
+    )
+    .subtitle(
+        "Every worker of this repository, gathered from every checkout's board — and the checkouts whose board could not be read, because a board nobody could ask is not a board with nobody on it.",
+    )
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Peers", None)])
+}
+
+/// One side of an overlap, as a path a reader can compare with their own.
+fn o_path(p: &OverlapPath) -> String {
+    if p.yours == p.theirs {
+        p.yours.clone()
+    } else {
+        format!("{} / {}", p.yours, p.theirs)
+    }
 }
 
 // ------------------------------------------------------------------ not found

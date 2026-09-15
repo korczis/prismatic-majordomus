@@ -49,6 +49,8 @@ pub enum Area {
     Continuity,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
+    /// Who else is working in this repository, gathered from every checkout's board.
+    Peers,
     /// The discovered nodes of the mesh, and the machinery that observes them.
     Mesh,
     /// The declared model catalogue and its routing.
@@ -139,6 +141,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Worktrees",
             href: "/cockpit/worktrees",
             area: Area::Worktrees,
+        },
+        AreaInfo {
+            id: "peers",
+            label: "Peers",
+            href: "/cockpit/peers",
+            area: Area::Peers,
         },
         AreaInfo {
             id: "mesh",
