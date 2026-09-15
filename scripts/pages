@@ -26,6 +26,9 @@
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
 #                                         or GitHub has not built it yet)
+#   scripts/pages checkout [--verify]     the fetch-depth deploy.checkout implies; --verify
+#                                         measures this clone instead and exits 10 when it
+#                                         cannot decide a ref (shallow, or no tags)
 #   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
@@ -167,6 +170,48 @@ cmd_check() {
 # escalation is about how much validation a change to the pipeline deserves, not about what the
 # published bytes are derived from: changing scripts/ci-plan or the justfile makes every gate
 # run and cannot move a pixel. Publication follows the inputs, and the inputs are named.
+cmd_checkout() {
+  # The publishing clone's requirement, from deploy.checkout and nowhere else. Without
+  # --verify it renders the requirement as the `fetch-depth` actions/checkout must be given,
+  # which is what test/cases/97_pages_fast_path.sh holds the workflow to. With --verify it
+  # measures the clone this process is running in and refuses one that cannot decide a ref —
+  # the declaration proved on every run, rather than trusted because it is written down.
+  local history tags
+  history="$(m deploy.checkout.history)"
+  tags="$(m deploy.checkout.tags)"
+  case "$history" in
+    full) ;;
+    "") echo "pages: ${MODEL#"$ROOT"/} declares no deploy.checkout.history" >&2; return 10 ;;
+    *)  echo "pages: deploy.checkout.history: '$history' is not a depth this can render;" \
+             "link-check resolves commit links, for which a truncated history is never" \
+             "partially sufficient. The only meaningful value is 'full'." >&2; return 10 ;;
+  esac
+  case "$tags" in
+    required|optional) ;;
+    *) echo "pages: deploy.checkout.tags: '$tags' is neither required nor optional" >&2; return 10 ;;
+  esac
+
+  if [ "${1:-}" != --verify ]; then
+    printf '%s\n' 0            # fetch-depth for a full history
+    return 0
+  fi
+
+  local shallow count bad=0
+  shallow="$(git -C "$ROOT" rev-parse --is-shallow-repository 2>/dev/null || echo unknown)"
+  count="$(git -C "$ROOT" tag 2>/dev/null | wc -l | tr -d " ")"
+  [ "$shallow" = false ] || { echo "pages: the checkout is shallow (is-shallow-repository=$shallow), and deploy.checkout.history is '$history'" >&2; bad=1; }
+  if [ "$tags" = required ] && [ "${count:-0}" -eq 0 ]; then
+    echo "pages: the checkout carries no tags, and deploy.checkout.tags is 'required'" >&2; bad=1
+  fi
+  if [ "$bad" = 1 ]; then
+    echo "pages: this clone cannot decide a ref, so scripts/site-check must refuse the links" \
+         "that resolve against git, and the publication stops. Check out with fetch-depth:" \
+         "$(cmd_checkout)." >&2
+    return 10
+  fi
+  echo "pages: checkout ok — full history, $count tag(s); every link that resolves against git is decidable"
+}
+
 cmd_paths() {
   [ -f "$GATES" ] || { echo "pages: no gate model at ${GATES#"$ROOT"/}" >&2; return 12; }
   GFLAT="$(mktemp "${TMPDIR:-/tmp}/mj-pages-gates.XXXXXX")"
@@ -366,6 +411,7 @@ cmd_report() {
 # default of waiting for a connection that will never open.
 cmd_verify() {
   local url="" commit="" timeout=180 quiet=0 t0 waited served body reached=0
+  local built_status="" branch_tip=""
   while [ $# -gt 0 ]; do case "$1" in
     --url) url="$2"; shift 2 ;;
     --commit) commit="$2"; shift 2 ;;
@@ -386,6 +432,7 @@ cmd_verify() {
     echo "pages verify: --commit $commit is too short to name a commit; use seven characters or more" >&2
     exit 2; }
   command -v curl >/dev/null || { echo "pages verify: curl is required" >&2; return 12; }
+  branch_tip="$(git -C "$ROOT" rev-parse --short origin/gh-pages 2>/dev/null || echo gh-pages)"
   t0="$(now)"
   while :; do
     body="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}/$IDENTITY?t=$(now)" 2>/dev/null || true)"
@@ -412,6 +459,26 @@ cmd_verify() {
         printf 'pages verify: %s could not be reached within %s s; publication was not measured\n' "${url%/}/$IDENTITY" "$timeout" >&2
         return 12
       fi
+      # A timeout is not yet a verdict about the deploy. Publishing is two steps owned by two
+      # parties, and this probe watches only the second one's output: the site still serving an
+      # older commit means "GitHub has not finished" and "the publication failed" equally well,
+      # and until 2026-09-15 this said the second in both cases. A reader then had to leave the
+      # tool and ask the API to tell a slow success from a failure — which is what happened at
+      # 01:05 that morning, with the build in progress and this reporting exit 10.
+      #
+      # So the state that is unknown is read rather than assumed, from the one place that knows:
+      # `pages built`, which reads GitHub's own build of the branch this deploy pushed.
+      built_status="$(cmd_built --porcelain 2>/dev/null | head -1 | cut -f1)"
+      case "$built_status" in
+        building|queued)
+          printf 'pages verify: after %s s %s still serves %s, and GitHub is %s its build of %s: the publication is in flight, not failed. This is not a verdict — ask again, or raise --timeout\n' \
+            "$timeout" "${url%/}/$IDENTITY" "${served:-no commit}" "$built_status" "$branch_tip" >&2
+          return 12 ;;
+        errored)
+          printf 'pages verify: after %s s %s still serves %s, and GitHub\x27s own build of %s errored: the branch was pushed and the bytes were never served\n' \
+            "$timeout" "${url%/}/$IDENTITY" "${served:-no commit}" "$branch_tip" >&2
+          return 10 ;;
+      esac
       printf 'pages verify: after %s s %s still serves %s, not %s\n' "$timeout" "${url%/}/$IDENTITY" "${served:-no commit}" "${commit:0:12}" >&2
       return 10; }
     sleep 2
@@ -515,6 +582,7 @@ case "${1:-}" in
   current)     shift; cmd_current "$@" && cmd_derived "$@" ;;
   derived)     shift; cmd_derived "$@" ;;
   paths)       shift; cmd_paths "$@" ;;
+  checkout)    shift; cmd_checkout "$@" ;;
   budget)      shift; cmd_budget "$@" ;;
   benchmark)   shift; cmd_benchmark "$@" ;;
   report)      shift; cmd_report "$@" ;;
