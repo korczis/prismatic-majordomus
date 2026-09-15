@@ -1,0 +1,33 @@
+id: I1513
+milestone: development-runtime
+title: A gate's verdict survives the shell it is computed in
+slug: a-verdict-survives-its-shell
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make it impossible for a gate to report a failure and exit zero. Every finding a gate prints must reach the count the gate exits on, whatever shell construct it was computed in, and the repository must refuse the constructs that lose it."
+why: "This is not hypothetical: scripts/site-check raised sixteen findings inside `... | while read` loops, which bash runs in a subshell, so the increments were lost and the gate exited 0 while printing FAIL. The registry, CLI, catalogue, evidence and plan checks could each print a failure and pass. They were unenforced for as long as they existed, and every run was green. The same shape has two other faces: a reporter that sets a flag rather than a counter, and a check assembled from a program's output, where a program that dies before printing leaves nothing for the loop to read and silence is taken for success."
+current_state: "site-check's sixteen calls are fixed and shell-lint refuses a counting call inside a pipeline loop (scripts/lib/pipeline-counts.awk, with a known-answer fixture the gate checks before trusting it). The discovery half, scripts/lib/counting-functions.awk, only finds functions that increment a counter, so a reporter that sets a flag — scripts/ci/pages-check's `bad() { ...; fail=1; }` — is invisible to the guard. A check that reads a program's output is covered by nothing."
+desired_state: "The guard finds every reporter a gate exits on, whether it counts or sets a flag, and refuses a call to one inside a construct that discards it. A gate assembled from another program's output fails when that program produced no output and did not exit zero."
+scope:
+  - scripts/lib
+  - scripts/ci
+  - test/cases
+non_scope:
+  - Rewriting gates that are already correct. The guard names what is lost, not what offends taste.
+  - The silence half, which test/cases/341 covers on its own branch.
+depends_on: []
+acceptance_criteria:
+  - A function that sets a flag rather than incrementing is discovered as a reporter
+  - A call to any discovered reporter inside a pipeline-fed loop is refused, with the file and line
+  - The guard is checked against a fixture whose answer is known before it is trusted with the tree
+validation:
+  - bash scripts/ci/shell-lint
+  - bash test/run.sh
+evidence_required:
+  - a_flag_setting_reporter_is_discovered
+  - a_lost_verdict_is_refused_with_its_line
+risk: "Low. The guard can only refuse shapes that are already defects; the risk it carries is a false alarm on a gate whose flag is never read, which is answered by naming the reporter it found."
+created_at: 2026-09-15
+updated_at: 2026-09-15
+started_at: 2026-09-15

@@ -22801,6 +22801,140 @@
         }
       },
       {
+        "id": "majordomus://issue/I1513",
+        "kind": "issue",
+        "label": "I1513",
+        "summary": "A gate's verdict survives the shell it is computed in",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1513",
+        "source": ".ai/repo/project/issues/I1513.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A function that sets a flag rather than incrementing is discovered as a reporter",
+            "A call to any discovered reporter inside a pipeline-fed loop is refused, with the file and line",
+            "The guard is checked against a fixture whose answer is known before it is trusted with the tree"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "a_flag_setting_reporter_is_discovered",
+            "a_lost_verdict_is_refused_with_its_line"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Rewriting gates that are already correct. The guard names what is lost, not what offends taste.",
+            "The silence half, which test/cases/341 covers on its own branch."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "Low. The guard can only refuse shapes that are already defects; the risk it carries is a false alarm on a gate whose flag is never read, which is answered by naming the reporter it found.",
+          "scope": [
+            "scripts/lib",
+            "scripts/ci",
+            "test/cases"
+          ],
+          "slug": "a-verdict-survives-its-shell",
+          "started_at": "2026-09-15",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash scripts/ci/shell-lint",
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1514",
+        "kind": "issue",
+        "label": "I1514",
+        "summary": "The API reference is pages a browser audit can read",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1514",
+        "source": ".ai/repo/project/issues/I1514.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No route of the reference carries every operation and schema",
+            "Every operation, tag and schema is on exactly one page, and site-check refuses otherwise",
+            "An old anchor lands on the page its subject moved to, and without JavaScript the index still lists everything",
+            "Every route finishes the audit's accessibility pass inside the deadline"
+          ],
+          "completed_at": "2026-09-15",
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "desired_state": "The reference is published as pages, each of which the audit finishes well inside its deadline, and an address from the single-page era still lands where the thing moved to.",
+          "evidence_required": [
+            "every_route_finishes_the_audit",
+            "an_old_anchor_lands_on_its_page"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Changing the audit's deadline or how it samples routes. The page is the subject, not the gate."
+          ],
+          "objective": "Publish the HTTP API reference as an index, a page per tag and a page of shared types, so that no route carries the whole document and the accessibility audit can finish on every one of them.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low. The risk is a reader who bookmarked an anchor; that is what the anchor map and the index's list answer.",
+          "scope": [
+            "site/templates",
+            "scripts/lib/openapi-site.jq",
+            "scripts/generate-site-data",
+            "scripts/site-check",
+            "test/cases"
+          ],
+          "slug": "the-api-reference-is-pages",
+          "started_at": "2026-09-14",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash scripts/site-check --no-sync",
+            "bash test/run.sh 09_site_mobile_first",
+            "bash test/run.sh 310_rustdoc_projection"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1515",
+        "kind": "issue",
+        "label": "I1515",
+        "summary": "A deploy that did not happen is loud within the window it is judged by",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1515",
+        "source": ".ai/repo/project/issues/I1515.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The gate is asked on a schedule no slower than the window it judges by",
+            "An owed publication is deployed and the run still ends non-zero",
+            "The step that reports is named, and its verdict is not swallowed",
+            "The publishing job checks out enough history for the gate and the link checker to decide"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "desired_state": "A publication owed past the window is repaired within half an hour and the run that repaired it is red, naming the age and the commit it published.",
+          "evidence_required": [
+            "an_owed_publication_is_repaired_and_reported",
+            "the_deploy_checks_out_its_history"
+          ],
+          "milestone": "fly-deployment",
+          "non_scope": [
+            "Changing what pages-check decides. The question is right; only its timing was wrong.",
+            "The link checker's own reasoning, which PR"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "Low. The failure mode to avoid is a scheduled run that deploys and reports success, which is why the reporting step is asserted rather than assumed.",
+          "scope": [
+            ".github/workflows/pages.yml",
+            ".ai/repo/ci/pages.yaml",
+            "test/cases"
+          ],
+          "slug": "publication-is-watched",
+          "started_at": "2026-09-15",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh 339_publication_is_watched",
+            "bash scripts/ci/pages-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -48146,6 +48280,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1513",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1513",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1514",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1514",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1515",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1515",
+        "target": "majordomus://milestone/fly-deployment",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -54572,8 +54736,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1717,
-      "edges": 3850,
+      "nodes": 1720,
+      "edges": 3856,
       "acyclic": true,
       "truncated": false
     }
