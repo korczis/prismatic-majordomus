@@ -98,7 +98,11 @@ mj_validate_command_surface() {
 # Every public command is exercised and refuted by a test that declares it. This is a rule
 # about Majordomus's own suite, so it applies only in the repository that carries one.
 mj_validate_command_coverage() {
-  local cases="$MJ_BIN_DIR/../test/cases"
+  # The installation's own suite and the installation's own models: `MJ_ROOT` is the
+  # repository under supervision, which is not necessarily this one, and a coverage check that
+  # read its gates from there would be measuring a different tree than the cases it read.
+  local root="$MJ_BIN_DIR/.."
+  local cases="$root/test/cases"
   if ! mj_cmdreg_load || [ ! -d "$cases" ]; then
     MJ_DOCTRINE_SKIPPED=1
     mj_doctrine_skip command "coverage" "this installation carries no test suite to measure" "ls test/cases"
@@ -124,9 +128,45 @@ mj_validate_command_coverage() {
       *) mj_doctrine_fail command "$c" "no test case declares a failure mode of it" "grep -rn 'majordomus-negative' test/cases/"; bad=1 ;;
     esac
   done
-  # a header naming a command that does not exist is a broken reference, not documentation
+  # A header naming something that does not exist is a broken reference, not documentation.
+  #
+  # Two vocabularies, because this header had one and it could name exactly one kind of thing:
+  # a public command of the shell tool. Every case about a gate, a script, a workflow or a
+  # capability of the Rust executable therefore declared `none` — not out of neglect, but
+  # because there was no word for its subject. On 2026-09-15 that was 74 of 215 cases, and the
+  # doctrine line read "command coverage", which a reader takes for "test coverage". The check
+  # was right about the world it could see and the world had grown past it.
+  #
+  #   a bare name        a public command, as before
+  #   gate:<id>          an entry of .ai/repo/ci/gates.yaml
+  #   script:<path>      an executable under scripts/, named as the repository names it
+  #   workflow:<name>    a workflow file under .github/workflows/
+  #
+  # A prefixed name is not a command and is deliberately not counted as command coverage: the
+  # loop above still requires every public command to be named by a bare one, so widening the
+  # vocabulary cannot be used to satisfy the narrower obligation.
   for c in $(printf '%s\n' $behaviour $negative | LC_ALL=C sort -u); do
     [ "$c" = none ] && continue
+    case "$c" in
+      gate:*)
+        gid="${c#gate:}"
+        grep -qE "^  - id: ${gid}\$" "$root/.ai/repo/ci/gates.yaml" 2>/dev/null || {
+          mj_doctrine_fail command "$c" "a test case declares coverage of a gate the model does not declare" "grep -n 'id: ${gid}' .ai/repo/ci/gates.yaml"; bad=1; }
+        continue ;;
+      workflow:*)
+        wn="${c#workflow:}"
+        [ -f "$root/.github/workflows/$wn" ] || {
+          mj_doctrine_fail command "$c" "a test case declares coverage of a workflow that is not here" "ls -l .github/workflows/${wn}"; bad=1; }
+        continue ;;
+      script:*)
+        sp="${c#script:}"
+        [ -x "$root/$sp" ] || {
+          mj_doctrine_fail command "$c" "a test case declares coverage of a script that is not an executable file here" "ls -l ${sp}"; bad=1; }
+        continue ;;
+      *:*)
+        mj_doctrine_fail command "$c" "a test case declares coverage under an unknown vocabulary; the kinds are gate:, script: and workflow:, or a bare public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1
+        continue ;;
+    esac
     grep -Fxq "$c" <<<"$public" || {
       mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1; }
   done
