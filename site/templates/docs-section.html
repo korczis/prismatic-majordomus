@@ -24,10 +24,14 @@
   {%- endif -%}
   <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {%- for p in section.pages -%}
+    {#- the HTTP API reference's tag pages are pages of this section so that their routes sit under
+        /docs/api/, and they are one document, listed once as HTTP API -#}
+    {%- if p.extra.api_tag is not defined -%}
     <li><a href="{{ p.permalink }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
       <span class="font-mono text-xs text-body-subtle">{{ p.extra.source or "" }}</span>
       <h2 class="mt-1 text-lg font-semibold tracking-tight text-heading">{{ p.title }}</h2>
       <p class="mt-2 text-sm text-body">{{ p.description or "" }}</p></a></li>
+    {%- endif -%}
     {%- endfor -%}
   </ul>
 </div>
