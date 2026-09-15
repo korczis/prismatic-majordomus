@@ -356,9 +356,8 @@ jobs:
           {
             printf '## The publisher needed help\n\n'
             printf 'A publication was owed when the schedule fired; this run republished it.\n\n'
-            printf 'What `scripts/ci/pages-check` said before the deploy:\n\n```\n'
+            printf 'What the gate said before the deploy:\n\n'
             cat "$RUNNER_TEMP/owed.txt"
-            printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"
           echo "publication was owed (pages-check exit ${{ steps.publication-owed.outputs.gate_rc }}); republished, reporting the intervention" >&2
           exit 1
