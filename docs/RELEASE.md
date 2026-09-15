@@ -416,6 +416,32 @@ changelog it produces. The first step of that procedure is now `majordomus relea
 rather than an editor over two files, and `scripts/release-version --check` still runs
 after it: the check proves the work of one writer instead of the memory of one person.
 
+### Who runs the writer
+
+Until 2026-09-15, nobody. The measurement worked, the gate worked, the writer worked and
+`test/cases/112` drove all of it against a real fixture — and a search of the repository found
+`release bump` **only inside error messages advising a person**. So a surface could move, the
+gate would correctly refuse the next pull request that happened to notice, and in between the
+tree carried a version its own contract called too low, for as long as nobody looked.
+
+`test/cases/112`'s own header names the older form of that defect: *"the writer runs when a
+person raises the version and the gate ran afterwards, if at all."* ADR 0051 made the gate
+agree with the writer. Nobody then arranged for the writer to run — a complete, tested,
+working mechanism with no starter, which in CI is **indistinguishable from a wired one**,
+because a green tick on 112 says *it can bump*, never *somebody will*.
+
+[`.github/workflows/version.yml`](../.github/workflows/version.yml) is that starter. It asks on
+every push that can move the surface **and on a clock** — a run cancelled or failed for an
+unrelated reason must not skip the question silently — runs `release analyze`, and when the
+required version differs from the declared one runs `release bump`, derives, and opens a pull
+request. It does not raise a second proposal for a version already proposed.
+
+**It does not tag and does not release.** `release.yml` triggers on a `v*` tag, and creating
+that tag is a decision; an automation that made it would turn a decision into a side effect, on
+a schedule, without anybody choosing it. `test/cases/353` asserts exactly that, and the
+assertion is a mutation rather than a description: a variant of the workflow with `git tag`
+appended is refused, naming the tag.
+
 ## What proves it
 
 | | |
