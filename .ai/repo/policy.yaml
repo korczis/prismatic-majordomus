@@ -265,6 +265,25 @@ commit:
   reference_unresolved: error
   breaking_unexplained: error
 
+# ---------------------------------------------------------------- the shared server's lease
+# One server serves a checkout, and a lease file decides which process owns it. These three
+# numbers are what a contest between two processes is judged by, and until 2026-09-15 all
+# three were compiled constants in apps/majordomus-cli/src/lease.rs — unchangeable without a
+# rebuild, stated nowhere a reader would look, and invisible to every projection.
+#
+# They are declared here because they are decisions, not implementation: `probe_timeout` is
+# the number that says whether a live-but-slow owner keeps its lease or is taken over while
+# it is still serving. That is the race `three_ensures_at_once_share_one_server` kept losing,
+# across unrelated branches, blocking merges that had nothing to do with it.
+#
+# The values below are the constants they replace, so declaring them changed no behaviour.
+# Changing them here changes behaviour, and test/cases holds that it does — otherwise this
+# would be a constant moved to another file rather than a value the model owns.
+server:
+  probe_timeout_seconds: 2
+  bind_grace_seconds: 15
+  join_timeout_seconds: 20
+
 projections:
   - provider: agents
     target: AGENTS.md

@@ -46,6 +46,94 @@ pub const PROBE_TIMEOUT: Duration = Duration::from_secs(2);
 /// client alone.
 pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 
+/// The timings above are the defaults. What a process actually judges a lease contest by is
+/// declared in `.ai/repo/policy.yaml`'s `server:` block and read once, here.
+///
+/// They were compiled constants until 2026-09-15: unchangeable without a rebuild, stated
+/// nowhere a reader would look, and invisible to every projection — while `probe_timeout` is
+/// the number that decides whether a live but slow owner keeps its lease or is taken over
+/// while it is still serving. That is a decision about how this repository is supervised, not
+/// an implementation detail, so it belongs in the model.
+///
+/// A `OnceLock`, because a process reads one policy: the repository is opened once and the
+/// answer must not change underneath a contest that is already being judged. Absent keys keep
+/// the constants, so a policy that cannot be read does not silently change behaviour.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Timings {
+    /// `server.bind_grace_seconds:`
+    pub bind_grace: Duration,
+    /// `server.probe_timeout_seconds:`
+    pub probe_timeout: Duration,
+    /// `server.join_timeout_seconds:`
+    pub join_timeout: Duration,
+}
+
+impl Default for Timings {
+    fn default() -> Self {
+        Self { bind_grace: BIND_GRACE, probe_timeout: PROBE_TIMEOUT, join_timeout: JOIN_TIMEOUT }
+    }
+}
+
+static TIMINGS: OnceLock<Timings> = OnceLock::new();
+
+/// What this process judges a lease contest by. The declaration when one was read, the
+/// constants otherwise.
+pub fn timings() -> Timings {
+    *TIMINGS.get_or_init(Timings::default)
+}
+
+impl Timings {
+    /// What a declaration means, as a value rather than as a side effect.
+    ///
+    /// The mapping is the part that can be wrong; the `OnceLock` below is plumbing. Kept
+    /// separate so it can be tested directly — a test that went through the lock would
+    /// depend on which test ran first, since a process reads one policy by construction.
+    ///
+    /// ```
+    /// use majordomus_cli::lease::Timings;
+    /// use majordomus_cli::policy::ServerPolicy;
+    /// use std::time::Duration;
+    ///
+    /// // an empty declaration keeps every default
+    /// assert_eq!(Timings::from_policy(&ServerPolicy::default()), Timings::default());
+    ///
+    /// // and a declared value is the one used, rather than the constant
+    /// let declared = ServerPolicy {
+    ///     probe_timeout_seconds: Some(9),
+    ///     ..ServerPolicy::default()
+    /// };
+    /// let t = Timings::from_policy(&declared);
+    /// assert_eq!(t.probe_timeout, Duration::from_secs(9));
+    /// assert_ne!(t.probe_timeout, Timings::default().probe_timeout);
+    /// // the keys it says nothing about are untouched
+    /// assert_eq!(t.bind_grace, Timings::default().bind_grace);
+    /// ```
+    pub fn from_policy(policy: &crate::policy::ServerPolicy) -> Self {
+        let d = Self::default();
+        Self {
+            bind_grace: policy
+                .bind_grace_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.bind_grace),
+            probe_timeout: policy
+                .probe_timeout_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.probe_timeout),
+            join_timeout: policy
+                .join_timeout_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.join_timeout),
+        }
+    }
+}
+
+/// Declare the timings for this process from a repository's policy. The first call decides;
+/// later ones are ignored, which is what makes [`timings`] answer the same thing all the way
+/// through one contest.
+pub fn declare_timings(policy: &crate::policy::ServerPolicy) {
+    let _ = TIMINGS.set(Timings::from_policy(policy));
+}
+
 /// The environment variable a server is started with when the process that started it had
 /// already waited on the lease it found and judged it stale; its value is that lease's
 /// token. The new server's election then takes exactly that lease over without spending the
@@ -387,12 +475,12 @@ pub fn elect(repo: &Repository) -> Result<Role> {
             }
             Err(e) => return Err(Error::io(&path, e)),
         }
-        if waited_since.elapsed() > JOIN_TIMEOUT {
+        if waited_since.elapsed() > timings().join_timeout {
             return Err(Error::Lease {
                 reason: format!(
                     "could not acquire or join the lease at {} within {} seconds",
                     path.display(),
-                    JOIN_TIMEOUT.as_secs()
+                    timings().join_timeout.as_secs()
                 ),
             });
         }
@@ -472,7 +560,7 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
     let doc = match &seen {
         // gone between the failed create and this read: the next attempt creates it
         LeaseFile::Absent => return (Found::Binding, seen),
-        LeaseFile::Empty if age > BIND_GRACE => {
+        LeaseFile::Empty if age > timings().bind_grace => {
             return (
                 Found::Stale("empty lease: its owner never wrote it".into()),
                 seen,
@@ -494,7 +582,7 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
         Some(url) => Found::Stale(format!(
             "stale lease: the server it names at {url} does not answer for this repository"
         )),
-        None if age > BIND_GRACE => {
+        None if age > timings().bind_grace => {
             Found::Stale("abandoned lease: its owner never published a URL".into())
         }
         None => Found::Binding,
@@ -608,7 +696,7 @@ pub fn was_lost() -> bool {
 /// one here, and refusing it would be the worse failure: a live server taken for dead is
 /// taken over, which is how one checkout comes to have two.
 pub fn probe(url: &str, root: &Path) -> bool {
-    match bridge::request(url, "GET", "/", &[], None, PROBE_TIMEOUT) {
+    match bridge::request(url, "GET", "/", &[], None, timings().probe_timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
@@ -650,7 +738,7 @@ pub fn probe_patiently(url: &str, root: &Path, pid: u32) -> bool {
     if !pid_alive(pid) {
         return false;
     }
-    let deadline = Instant::now() + BIND_GRACE;
+    let deadline = Instant::now() + timings().bind_grace;
     while Instant::now() < deadline {
         std::thread::sleep(Duration::from_secs(1));
         if probe(url, root) {
@@ -752,7 +840,7 @@ impl Lease {
         let token = self.token.clone();
         let binding = Arc::clone(&self.binding);
         let document = serde_json::to_string(&self.document(None)).unwrap_or_default();
-        let tick = BIND_GRACE / 3;
+        let tick = timings().bind_grace / 3;
         let _ = std::thread::Builder::new()
             .name("majordomus-lease-keep-alive".into())
             .spawn(move || loop {

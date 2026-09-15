@@ -374,6 +374,28 @@
           }
         }
       }
+    },
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The shared server of a checkout, and the lease that decides which process owns it. These are the timings a lease contest is judged by; they were compiled constants until they were declared here.",
+      "properties": {
+        "probe_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a probe waits for the current owner to answer before that silence counts as evidence. Too low and a live but slow owner is judged stale and taken over while it is still serving; too high and a wedged one holds the checkout's server for that long."
+        },
+        "bind_grace_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a lease that names no URL yet is left alone. A server writes its lease before it can serve, so a fresh lease without a URL is a starting owner rather than a dead one."
+        },
+        "join_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a process waits to join or create the lease file before it refuses rather than waiting forever."
+        }
+      }
     }
   }
 }
