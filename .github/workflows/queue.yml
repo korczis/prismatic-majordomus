@@ -1,0 +1,51 @@
+# The queue's state, measured on a clock rather than when somebody remembers to ask.
+# The model is .ai/repo/ci/queue.yaml; test/cases/350_the_queue_measures_itself.sh holds the
+# two to each other and holds this job to reporting rather than merging.
+name: queue
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: queue
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # the whole history and every branch: scripts/land fetches each pull request's head and
+      # merges it locally, which a shallow clone cannot do
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # the driver GitHub cannot run is the entire reason this measurement exists
+      - name: the derived merge driver
+        run: |
+          git config merge.derived.name 'derived artifacts, regenerated after the merge'
+          git config merge.derived.driver 'scripts/merge-derived %O %A %B %L %P'
+
+      - id: land
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rc=0
+          scripts/land > "$RUNNER_TEMP/queue.txt" 2>&1 || rc=$?
+          sed 's/^/    /' "$RUNNER_TEMP/queue.txt"
+          {
+            printf '## The queue, measured here\n\n```\n'
+            cat "$RUNNER_TEMP/queue.txt"
+            printf '```\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          # 10 is a fact about the queue — something was left behind — and not a fault of this
+          # measurement. 12 is the measurement failing, and a report nobody can trust is worse
+          # than none, so that is the one that fails the job.
+          [ "$rc" != 12 ] || { echo "queue: the measurement could not be made" >&2; exit 12; }

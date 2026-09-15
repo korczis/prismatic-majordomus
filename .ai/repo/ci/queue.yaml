@@ -1,0 +1,30 @@
+version: 1
+
+# ---------------------------------------------------------------- what this workflow is for
+# `scripts/land` answers the question this repository cannot ask GitHub: which open pull
+# requests merge cleanly *here*, on a machine that has the derived merge driver. GitHub cannot
+# run a per-clone driver, so it marks every pull request CONFLICTING and its own answer is
+# worthless — which is how sixteen pull requests, fifteen of them cleanly mergeable, once sat
+# open at once (rule project.accumulation-is-measured).
+#
+# The command existed and nothing ran it, so the answer existed only when somebody thought to
+# ask. On 2026-09-15 five sessions spent a night relaying that state to each other by hand.
+# This runs it on a clock and publishes the verdict, so the queue's state is a measurement
+# rather than a conversation.
+#
+# WHAT IT DELIBERATELY DOES NOT DO. It never passes `--run`. `scripts/land --run` merges onto
+# an integration branch, and its own header says it stops before pushing, always: "landing is
+# reversible until then, and deploying is a decision, not a side effect." An automation that
+# quietly took that power would delete a decision somebody made on purpose. So the queue's
+# state becomes automatic; the merge stays a decision with an approval behind it.
+trigger:
+  branch: master
+  schedule: '*/30 * * * *'
+
+report:
+  command: scripts/land
+  # exit 10 is "a pull request was left behind" — a fact about the queue, not a fault of this
+  # run, so it does not fail the job. Exit 12 is "the measurement could not be made" and does:
+  # a report nobody can trust is worse than no report, and a green job that measured nothing is
+  # the shape this repository has paid for repeatedly.
+  fails_on: unusable
