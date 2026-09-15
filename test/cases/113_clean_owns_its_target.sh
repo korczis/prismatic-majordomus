@@ -45,8 +45,24 @@ mkchk() {
   # looks like a build directory is not one it will touch. A real build writes this file;
   # the fixture did not, and the half of this case that proves cleaning *works* failed for
   # a reason that had nothing to do with which directory the deletion lands in.
+  cachetag "$1/apps/majordomus-cli/target"
+  # The fixture sits under $TMPDIR, outside this repository's rust-toolchain.toml, so without
+  # a pin of its own it runs whatever toolchain the machine defaults to. On CI that is the
+  # pinned 1.98.1, which refuses to clean a target/ with no tag; on a developer's machine it
+  # was 1.90.0, which does not check. The case passed locally and failed in CI for days, and
+  # four measurements on Linux could not reproduce it because none replayed the steps in
+  # order. Carrying the repository's pin makes the case judge the toolchain CI judges.
+  # rustup resolves the pin from the working directory and its parents, not from
+  # --manifest-path, and the clean runs from the checkout root: so the pin goes where the
+  # repository keeps its own, at the root. Copied beside the manifest it was never read.
+  [ -f "$ROOT/rust-toolchain.toml" ] && cp "$ROOT/rust-toolchain.toml" "$1/rust-toolchain.toml"
+}
+
+# A real build writes this file, and cargo refuses to clean a target/ without it. Written in
+# one place so that every step that recreates a target/ also recreates what makes it one.
+cachetag() {
   printf 'Signature: 8a477f597d28d172789f06886806bc55\n# This file is a cache directory tag created by cargo.\n# For information about cache directory tags see https://bford.info/cachedir/\n' \
-    > "$1/apps/majordomus-cli/target/CACHEDIR.TAG"
+    > "$1/CACHEDIR.TAG"
 }
 MINE="$T/mine"; THEIRS="$T/theirs"
 mkchk "$MINE"; mkchk "$THEIRS"
@@ -82,6 +98,9 @@ if command -v cargo >/dev/null 2>&1; then
   [ -f "$T/shared/MARKER" ] || { echo "    it followed the symlink and removed the shared directory"; exit 1; }
   rm -f "$MINE/apps/majordomus-cli/target"
   mkdir -p "$MINE/apps/majordomus-cli/target"; echo marker > "$MINE/apps/majordomus-cli/target/MARKER"
+  # the directory mkchk tagged was replaced by the symlink above; a recreated one is not a
+  # build directory until it carries the tag again, and cargo 1.98.1 refuses to clean it
+  cachetag "$MINE/apps/majordomus-cli/target"
 
   # --- and it still cleans its own -------------------------------------------------------
   # A guard that refuses everything is not a guard; the recipe has a job.

@@ -299,8 +299,12 @@ mj_session_start() {
       "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
   } > "$tmp"
   chmod 600 "$tmp" 2>/dev/null || true
+  # Inside the pointer's lock, with every close's teardown: a close that had decided to remove
+  # the pointer would otherwise remove the one this open has just aimed at its own episode.
+  mj_lock_take "$MJ_STATE_DIR/locks/session-pointer" || true
   mv "$tmp" "$f"
   mj_session_point_at "$f"
+  mj_lock_release
   mj_ledger_append session.started "\"owner\":\"$(mj_json_esc "$owner")\"${worker:+,\"worker\":\"$(mj_json_esc "$worker")\"}"
 
   # The working context is written after the episode exists, and its failure never costs
@@ -521,7 +525,20 @@ mj_session_close() {
   # episode: closing one window must leave the other window's episode exactly where it was.
   # The two paths can be the same file — a record written before this store existed, or one
   # a person put at the pointer by hand — so both are removed and neither is required.
+  #
+  # One lock over the whole teardown, per checkout and not per episode, because the pointer is
+  # the checkout's and every close aims it. Without it, ten different episodes closing together
+  # left a pointer aiming at nothing (1 in 3 runs of 221, measured on 2026-09-13):
+  #
+  #   close A   list open -> only B is left                           ln -s -> B
+  #   close B               rm B's file   pointer names nothing: fine
+  #
+  # A's listing and A's aim are two operations, and B's removal fell between them, after B had
+  # already looked at the pointer. Inside the lock a close sees the store either before another
+  # close's removal or after it, never in between. `mj_lock_take` never refuses: a bounded wait
+  # that expires proceeds without the guarantee, which is where this was before.
   local here ptr repoint=0 line
+  mj_lock_take "$MJ_STATE_DIR/locks/session-pointer" || true
   here="$(mj_session_file)"; ptr="$(mj_session_pointer)"
   if [ -f "$ptr" ] && [ "$(sed -n 's/^session_id: //p' "$ptr" | head -n 1)" = "$sid" ]; then repoint=1; fi
   # By identity and not by the path this process resolved through: a keyless close resolves
@@ -548,6 +565,7 @@ EOF
     n="$(printf '%s' "$rest" | grep -c . 2>/dev/null || true)"
     [ "$n" = 1 ] && mj_session_point_at "${rest#*|}"
   fi
+  mj_lock_release
   # The working context of the episode learns how it ended. It is appended to, never
   # rewritten, so nothing the worker typed into it between the two events is lost.
   mj_session_context_close "$sid" "$outcome" "${final#"$MJ_ROOT/"}" >/dev/null
