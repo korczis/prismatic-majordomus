@@ -84,6 +84,52 @@ git -C "$W" add README.md >/dev/null
 expect_exit 0 cov "$BASE"
 expect_grep "no changed crate source lines"
 
+# ------------------------------- 7. a failing test under coverage is named in the gate's output
+# The harness's verdicts go to stdout, and the gate used to discard stdout: a red coverage job
+# said only `to rerun pass --test <binary>`, never which test or why. A cargo on PATH that
+# fails one test proves the plumbing without an instrumented build: the failing test's name and
+# its panic reach the output, the passing test's `ok` line does not, and the exit is still one
+# of the gate's own rather than cargo's 101.
+mkdir -p "$T/shim"
+cat > "$T/shim/cargo" <<'SHIM'
+#!/bin/sh
+[ "$*" = "llvm-cov --version" ] && { echo "cargo-llvm-cov 0.0.0-shim"; exit 0; }
+out=""; prev=""
+for a in "$@"; do [ "$prev" = "--output-path" ] && out="$a"; prev="$a"; done
+[ -n "$out" ] && cp "$MJ_SHIM_EXPORT" "$out"
+cat <<'HARNESS'
+running 2 tests
+test lease::a_fast_owner_answers ... ok
+test lease::a_slow_owner_keeps_its_lease ... FAILED
+
+failures:
+
+---- lease::a_slow_owner_keeps_its_lease stdout ----
+thread 'lease::a_slow_owner_keeps_its_lease' panicked at tests/serve_lifecycle.rs:164:5:
+assertion `left == right` failed
+  left: 10
+ right: 0
+
+failures:
+    lease::a_slow_owner_keeps_its_lease
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out
+HARNESS
+echo "error: test failed, to rerun pass --test serve_lifecycle" >&2
+exit 101
+SHIM
+chmod +x "$T/shim/cargo"
+rc=0
+out="$(cd "$W" && PATH="$T/shim:$PATH" MJ_SHIM_EXPORT="$FX" scripts/rust-coverage --report 2>&1)" || rc=$?
+[ "$rc" != 101 ] || { echo "    a failing suite under coverage exited with cargo's 101 again"; exit 1; }
+case "$out" in
+  *"---- lease::a_slow_owner_keeps_its_lease stdout ----"*"left: 10"*) ;;
+  *) echo "    the gate's output does not name the failing test and its panic:"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1 ;;
+esac
+case "$out" in
+  *"a_fast_owner_answers ... ok"*) echo "    the gate printed the passing tests too, burying the failure"; exit 1 ;;
+esac
+
 # ------------------------------- 6. the script's own exit vocabulary is 0/10/12/13, never cargo's
 #
 # scripts/rust-coverage declares four exits, and scripts/ci/coverage-differential delegates
