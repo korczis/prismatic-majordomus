@@ -12,8 +12,8 @@
 #
 #   <page relative to pub>  <check>  <detail>
 #
-# checks: viewport description main h1 placeholder inlinestyle initflowbite mermaid
-#         pre gridcols fixedwidth nojs duplicateid
+# checks: viewport description main h1 placeholder rustdoc inlinestyle initflowbite mermaid
+#         gridcols fixedwidth nojs duplicateid
 #
 # A page with nothing wrong produces no row. The detail is what site-check prints after the
 # route; a check whose message needs no detail leaves it empty. Rows come in the order the
@@ -30,10 +30,10 @@ function flush() {
   if (!has_main)        print rel "\tmain\t"
   if (n_h1 != 1)        print rel "\th1\t" n_h1
   if (placeholder)      print rel "\tplaceholder\t"
+  if (rustdoc != "")    print rel "\trustdoc\t" rustdoc
   if (inline_style)     print rel "\tinlinestyle\t"
   if (n_initflowbite != 1) print rel "\tinitflowbite\t" n_initflowbite
   if (has_mermaid && !has_mermaid_js) print rel "\tmermaid\t"
-  if (n_pre > 0 && !wrapped) print rel "\tpre\t"
   if (gridcols)   print rel "\tgridcols\t"
   if (fixedwidth) print rel "\tfixedwidth\t"
   if (nojs > 0)   print rel "\tnojs\t" nojs
@@ -52,10 +52,11 @@ FNR == 1 {
   file = FILENAME; rel = file
   sub("^" pub "/", "", rel)
   has_viewport = has_description = has_main = 0
-  n_h1 = n_initflowbite = n_pre = nojs = 0
+  n_h1 = n_initflowbite = nojs = 0
   placeholder = inline_style = gridcols = fixedwidth = 0
+  rustdoc = ""
   has_mermaid = has_mermaid_js = 0
-  in_pre = 0; wrapped = 0; seen_format = 0; prev = ""
+  in_pre = 0
   redirect = 0
   split("", ids); split("", dupseen); dupids = ""
 }
@@ -72,7 +73,6 @@ FNR == 1 {
   if (index(line, " style=\""))                  inline_style = 1
   n_h1 += count(line, "<h1")
   n_initflowbite += count(line, "initFlowbite()")
-  n_pre += count(line, "<pre")
 
   # An unrendered template delimiter, outside <pre> blocks and outside code spans: what Zola
   # produced inside a <pre> or a <code> is rendered output, not a template it failed to expand.
@@ -82,19 +82,17 @@ FNR == 1 {
     gsub(/<code[^>]*>[^<]*<\/code>/, "", stripped)
     if (stripped ~ /\{\{|\{%|\[\[[A-Z_]+\]\]/) placeholder = 1
   }
+  # A rustdoc intra-doc link that reached the reader. A description on this site is a Rust doc
+  # comment carried through the registry, and [`Type::Variant`] is a shortcut reference no
+  # CommonMark renderer can resolve: rendered, it becomes a bracket, a <code>, a bracket, and
+  # published it was a 37-character unbreakable token that made /docs/api/ scroll sideways on a
+  # phone. Inside a <pre> it is a listing, not prose. Only this form is checked: a raw backtick
+  # or emphasis is also unrendered markup, but the site publishes both today through templates
+  # this check did not come with (page and capability descriptions), and a check that is red on
+  # its first day for someone else's pages is a check that gets turned into a warning.
+  if (!in_pre && line ~ /\[<code[^>]*>[^<]*<\/code>\]/) rustdoc = rustdoc "[`x`]"
   if (index(line, "</pre>")) in_pre = 0
 
-  # A <pre> needs an overflow container. The original test ran over the page with its newlines
-  # removed, so a wrapper and the <pre> it wraps count as adjacent across a line break: hence
-  # the same-line match, the previous-line match, and the Typography container, which the
-  # plugin's own rule makes scroll wherever the <pre> falls after it.
-  if (index(line, "<pre")) {
-    if (line ~ /overflow-x-auto[^>]*>[ \t\r]*<pre/) wrapped = 1
-    if (prev ~ /overflow-x-auto[^>]*>[ \t\r]*$/ && line ~ /^[ \t\r]*<pre/) wrapped = 1
-    if (line ~ /class="format[^"]*"[^>]*>.*<pre/) wrapped = 1
-    if (seen_format) wrapped = 1
-  }
-  if (line ~ /class="format[^"]*"[^>]*>/) seen_format = 1
 
   # A grid of three or more columns with no breakpoint prefix, over the class attributes only.
   rest = line
@@ -134,7 +132,6 @@ FNR == 1 {
     rest = substr(rest, RSTART + RLENGTH)
   }
 
-  prev = line
 }
 
 END { flush() }

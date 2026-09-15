@@ -70,6 +70,13 @@
   .mj-card-title {
     @apply text-label font-semibold uppercase tracking-caps;
     color: var(--mj-muted);
+    /* A title can carry an identifier with nowhere to break: a discovered node's card is
+       titled with its 32-hex node id, uppercased and letter-spaced. In a card head it is a
+       flex item, whose min-width defaults to its content, so it could neither shrink nor
+       wrap and pushed /cockpit/mesh 25px past a 320px viewport. It may shrink, and a long
+       word breaks where it has to. */
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .mj-card > .mj-card-title {
     @apply mb-3;
@@ -252,14 +259,14 @@
     color: var(--mj-muted);
   }
   .mj-field-type {
-    @apply font-mono text-meta normal-case tracking-normal opacity-70;
+    @apply font-mono text-meta normal-case tracking-normal;
   }
   .mj-required {
     @apply text-meta normal-case tracking-normal;
     color: var(--mj-bad);
   }
   .mj-optional {
-    @apply text-meta normal-case tracking-normal opacity-60;
+    @apply text-meta normal-case tracking-normal;
   }
   .mj-field-help {
     @apply text-label;
