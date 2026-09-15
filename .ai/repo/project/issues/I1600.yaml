@@ -42,5 +42,18 @@ evidence_required:
   - public_site_serves_it
 risk: "The derivation now runs one more scenario and the homepage replaces its hero console; the console moves under how it works rather than leaving, so the gate that holds every recorded lifecycle panel to the homepage is unchanged."
 created_at: 2026-09-15
-updated_at: 2026-09-15T15:56:07Z
+updated_at: 2026-09-15T16:58:43Z
 started_at: 2026-09-15T15:56:07Z
+evidence:
+  - covers: challenge_recorded
+    type: test
+    command: "bash test/run.sh 356_a_scenario_shows_the_worker_it_judges"
+    result: "passes: worker steps recorded with actor, commands quoted, live and mixed steps refused, finish lists one doctrine per line, and the challenge use case passes, refuses, and ends accepted against this tree"
+    commit: ca51c2390b8590a6da4ccd282c117c2a6f541c18
+    recorded_at: 2026-09-15T16:58:42Z
+  - covers: site_holds_the_run
+    type: test
+    command: "scripts/site-check; scripts/interaction-probe --only \"/ /challenge/ /use-cases/catch-an-agent-that-says-it-is-done/\"; SITE_PROBE_ONLY=... scripts/site-probe"
+    result: "site-check OK challenge: 10 recorded steps and 3 refusals on /challenge/ and the homepage, 82 lines matched; interaction-probe 0 findings; site-probe 0 failures at every declared width"
+    commit: ca51c2390b8590a6da4ccd282c117c2a6f541c18
+    recorded_at: 2026-09-15T16:58:43Z
