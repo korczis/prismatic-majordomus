@@ -200,7 +200,7 @@ pub enum HandoverStanding {
 }
 
 /// Everything the invariant is answered from. Every field is a judgement somebody else
-/// already made; nothing is measured by [`answer`], which composes. The capability, a
+/// already made; nothing is measured by `answer`, which composes. The capability, a
 /// test and a benchmark all build one of these, so the same questions get the same
 /// answers whichever surface asked.
 ///
