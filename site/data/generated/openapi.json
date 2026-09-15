@@ -15648,6 +15648,20 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "The commit this executable was built from, in full, or `unknown` when the build could\nnot name one. A version is what a build calls itself and two revisions share it; this\nis what a deployment is checked against. Never omitted: an absent field would read as\na server too old to say, and `unknown` is a different, truthful answer.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether that commit's tree carried uncommitted changes when this executable was built;\n`null` when the build did not know.",
+          "name": "dirty",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
         }
       ],
       "type": "object",
@@ -21717,6 +21731,20 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "The commit this executable was built from, or `unknown`; the same value `health.live`\nanswers.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the build's tree was dirty; `null` when the build did not know.",
+          "name": "dirty",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
         },
         {
           "description": "How many capabilities the registry holds; zero would mean nothing to serve.",
