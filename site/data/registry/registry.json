@@ -6,7 +6,7 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "c72a1a1a5a26e1c9d604c010daf8821c4ff316b95d0e06279a60d7caec4e966c",
+    "fingerprint": "7219715dd61fe789a7a16dae9016c6db833d7f373fea74ed9777cc2e7d318e9c",
     "summary": {
       "total": 1463,
       "builtin": 113,
@@ -13014,6 +13014,11 @@
                     "type": "string",
                     "const": "unknown",
                     "description": "Nobody asked: this resolution may not run a subprocess for it, and no cache held it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mismatch",
+                    "description": "Installed and answering, and its version does not satisfy the one the repository\ndeclares. Reported as itself rather than as installed, because a binary that is on\nthe path and answers the wrong version is the case a person otherwise debugs for an\nhour (ADR 0064). Decided only when both versions are plain dotted numbers."
                   }
                 ],
                 "description": "Whether a declared toolchain is usable here."
@@ -40882,7 +40887,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c58058677014e8a346dfc339573e4dd5fd94463fdc26273ee57708066110e6eb",
+    "fingerprint": "c32dab0a7f9b7086a6437dcba670a2c2ab49945861992171a7b78747a77a9173",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
