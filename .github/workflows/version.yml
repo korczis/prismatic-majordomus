@@ -1,0 +1,133 @@
+# The version acts on what the surface says, without waiting for a person to notice.
+#
+# This repository measures the version from its public contract, not from commit subjects
+# (ADR 0051): `release analyze` compares every capability, route, MCP tool, command and both
+# schemas of each against the last release, and says what is owed. `scripts/ci/version-matches-surface`
+# gates it, and test/cases/112 covers the seam. All of that is a **judge**.
+#
+# What was missing until this file is the **actor**. Case 112's own header says why it matters,
+# about the defect ADR 0051 fixed:
+#
+#     "the writer runs when a person raises the version and the gate ran afterwards, if at all"
+#
+# The gate was fixed to agree with the writer. Nobody then arranged for the writer to run. So a
+# surface could move, the gate would correctly refuse the *next* pull request that noticed, and
+# in between the repository carried a version its own contract said was too low — for as long
+# as nobody looked. On 2026-09-15 the operator asked why a day's work had bumped nothing; the
+# honest answer was that nothing was owed, and that if something had been, nothing would have
+# done it either.
+#
+# What this does NOT do, deliberately: tag, release, or push to master. `.github/workflows/release.yml`
+# triggers on a `v*` tag, and creating that tag is a decision. This performs the bump the
+# surface already requires and opens a pull request with it, which is the same shape #305
+# settled for the release record — "the record reaches master through review, not through a
+# protected push". Automatic up to the point where a person is the point.
+name: version
+
+on:
+  # Every push to master: the surface can only move when something it is measured from moves,
+  # and the paths below are that set. A schedule as well, because a push whose run was
+  # cancelled or which failed for an unrelated reason must not silently skip the question.
+  push:
+    branches: [master]
+    paths:
+      - apps/majordomus-cli/src/**
+      - share/commands.yaml
+      - share/kinds.yaml
+      - share/schemas/**
+      - bin/majordomus
+      - lib/**
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: version
+  cancel-in-progress: false
+
+jobs:
+  owed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # fetch-depth: 0 for the same reason the deploy needs it — the analysis resolves the
+      # last release and the commits since it against this clone, and a shallow one cannot.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-rust
+
+      - id: ask
+        name: what does the surface owe
+        run: |
+          set -euo pipefail
+          cargo build --quiet --manifest-path apps/majordomus-cli/Cargo.toml
+          BIN=apps/majordomus-cli/target/debug/majordomus
+          "$BIN" release analyze --format json > analysis.json
+          declared="$(jq -r '.declared_version' analysis.json)"
+          required="$(jq -r '.required_version' analysis.json)"
+          echo "declared=$declared" >> "$GITHUB_OUTPUT"
+          echo "required=$required" >> "$GITHUB_OUTPUT"
+          if [ "$declared" = "$required" ]; then
+            echo "owed=no" >> "$GITHUB_OUTPUT"
+            echo "::notice::the surface owes nothing: declared $declared, required $required"
+          else
+            echo "owed=yes" >> "$GITHUB_OUTPUT"
+            echo "::notice::the surface requires $required and this tree declares $declared"
+          fi
+
+      # The bump is written by the tool, never by this file: `release bump` raises every site
+      # that states a version at once, which is the whole reason it exists — two writers
+      # disagreeing is the defect ADR 0051 removed, and a workflow editing Cargo.toml with sed
+      # would put it back.
+      - name: raise it
+        if: steps.ask.outputs.owed == 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUIRED: ${{ steps.ask.outputs.required }}
+          DECLARED: ${{ steps.ask.outputs.declared }}
+        run: |
+          set -euo pipefail
+          BIN=apps/majordomus-cli/target/debug/majordomus
+          branch="release/bump-$REQUIRED"
+          git config user.name "majordomus"
+          git config user.email "noreply@anthropic.com"
+          # An open proposal for this exact version is not replaced: reopening it on every
+          # push would bury the review it is waiting for.
+          open="$(gh pr list --head "$branch" --state open --json number --jq 'length')"
+          if [ "$open" != 0 ]; then
+            echo "::notice::a proposal for $REQUIRED is already open"
+            exit 0
+          fi
+          git checkout -b "$branch"
+          "$BIN" release bump
+          scripts/derive
+          scripts/derive-check
+          {
+            echo "chore(release): the version rises to $REQUIRED, which the surface requires"
+            echo
+            echo "\`release analyze\` measures the public contract against the last release and"
+            echo "requires $REQUIRED; this tree declared $DECLARED. Raised by \`majordomus release"
+            echo "bump\`, which writes every site that states a version, and the projections follow."
+            echo
+            echo "Opened by .github/workflows/version.yml. Nothing here tags or releases: that is a"
+            echo "decision, and it is made by merging this and cutting the tag."
+          } > /tmp/bump-message
+          git add -A
+          git commit -q -F /tmp/bump-message
+          git push -u origin "$branch"
+          {
+            echo "The public contract requires **$REQUIRED** and this tree declares **$DECLARED**."
+            echo
+            echo "Raised by \`majordomus release bump\` and derived, from \`.github/workflows/version.yml\`."
+            echo "Nothing was tagged or released: \`release.yml\` triggers on a \`v*\` tag, and creating"
+            echo "it is a decision this workflow does not make."
+          } > /tmp/bump-body
+          gh pr create --base master --head "$branch" \
+            --title "chore(release): the version rises to $REQUIRED" \
+            --body-file /tmp/bump-body
