@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_quality</span><br>resource <span class="break-all">majordomus://quality</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-quality-report" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/quality</a> <span class="text-xs text-body-subtle">operationId quality.report</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/quality/#op-quality-report" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/quality</a> <span class="text-xs text-body-subtle">operationId quality.report</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus quality report</td></tr>
         </tbody>
       </table>
@@ -196,37 +196,36 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · QualityInput</h3><p class="mt-1 break-words text-sm text-body">The input of `quality.report`: which findings to answer with.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · QualityInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>quality.report</code>: which findings to answer with.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">code</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only findings carrying this code (`RUST_PUBLIC_MISSING_EXAMPLE`). All of them when
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only findings carrying this code (<code>RUST_PUBLIC_MISSING_EXAMPLE</code>). All of them when
 absent. A code nothing recognises is refused rather than answered with an empty
 list, so a typo cannot read as a clean report.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">include_baselined</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Include the findings the ratchet already accepts, which are left out by default.
-
-The default is what a gate wants: only what is new. This is what a person paying the
-debt down wants, and it is what `--write-baseline` must ask for — a baseline written
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Include the findings the ratchet already accepts, which are left out by default.</p>
+<p>The default is what a gate wants: only what is new. This is what a person paying the
+debt down wants, and it is what <code>--write-baseline</code> must ask for — a baseline written
 from a report that had the baseline applied to it would empty the file, accepting
 nothing and failing on everything the next time it ran. <span class="font-mono text-xs text-body-subtle">default false</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">path</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only findings whose file path starts with this, repository-relative
-(`apps/majordomus-cli/src/web`). All of them when absent.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only findings whose file path starts with this, repository-relative
+(<code>apps/majordomus-cli/src/web</code>). All of them when absent.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">summary_only</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Answer with the counts and leave the findings out. For a caller that wants the
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Answer with the counts and leave the findings out. For a caller that wants the
 state of the crate and not the list of what to do about it. <span class="font-mono text-xs text-body-subtle">default false</span></td>
       </tr></tbody>
     </table>
@@ -266,40 +265,40 @@ state of the crate and not the list of what to do about it. <span class="font-mo
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · QualityAnswer</h3><p class="mt-1 break-words text-sm text-body">The answer: the measurement, or the reason there was not one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · QualityAnswer</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer: the measurement, or the reason there was not one.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">baselined</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The findings the ratchet accepts because they stood when the rule landed. A finding
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The findings the ratchet accepts because they stood when the rule landed. A finding
 outside this count is what fails the gate.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">measured</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether a crate was found and measured. `false` is a complete answer, not a failure:
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether a crate was found and measured. <code>false</code> is a complete answer, not a failure:
 the layer installs into repositories that carry no Rust crate, and a doctrine that
 cannot apply is not a violation.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">passes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the report as filtered leaves nothing blocking. Answered here so that a
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the report as filtered leaves nothing blocking. Answered here so that a
 caller over any transport reads the verdict rather than deriving it, and so that the
-command line&#39;s exit code and this field can never disagree.</td>
+command line's exit code and this field can never disagree.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">reason</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Why nothing was measured, when nothing was.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why nothing was measured, when nothing was.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">report</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The measurement. Present and empty-of-findings when `measured` is false, so that a
-consumer reads one shape either way and `measured` is the only question it must ask.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The measurement. Present and empty-of-findings when <code>measured</code> is false, so that a
+consumer reads one shape either way and <code>measured</code> is the only question it must ask.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -487,7 +486,7 @@ consumer reads one shape either way and `measured` is the only question it must 
         },
         &quot;schema&quot;: {
           &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;[`SCHEMA`].&quot;,
+          &quot;description&quot;: &quot;`SCHEMA`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;target&quot;: {
@@ -730,8 +729,8 @@ consumer reads one shape either way and `measured` is the only question it must 
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::quality</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">QualityInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">QualityAnswer</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/quality.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/quality.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/quality.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/quality.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -802,7 +801,7 @@ consumer reads one shape either way and `measured` is the only question it must 
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

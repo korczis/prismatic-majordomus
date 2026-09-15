@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_command</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-commands-get" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/command</a> <span class="text-xs text-body-subtle">operationId commands.get</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/commands/#op-commands-get" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/command</a> <span class="text-xs text-body-subtle">operationId commands.get</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
         </tbody>
       </table>
@@ -196,14 +196,14 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · CommandRequest</h3><p class="mt-1 break-words text-sm text-body">One command, by its canonical identity.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · CommandRequest</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One command, by its canonical identity.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The identity, `executable.worktree.status`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity, <code>executable.worktree.status</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -226,110 +226,110 @@
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · CommandNode</h3><p class="mt-1 break-words text-sm text-body">One command, from whichever program offers it.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · CommandNode</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One command, from whichever program offers it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">aliases</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Other names that resolve to this node, declared once here and honoured by every
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Other names that resolve to this node, declared once here and honoured by every
 projection that has a use for one.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">arguments</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The arguments, in declaration order.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The arguments, in declaration order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">availability</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it means anything.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it means anything.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">deprecation</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Whether this is still the name to use.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether this is still the name to use.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">description</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The longer description, when the declaration carries one.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The longer description, when the declaration carries one.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">effect</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What it changes.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What it changes.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">entrypoint</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Is this command an entry point of its group — the one a newcomer is offered?</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Is this command an entry point of its group — the one a newcomer is offered?</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">execution</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How it is run.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How it is run.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">group</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The group a person finds it under, when the declaration has groups.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The group a person finds it under, when the declaration has groups.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The canonical identity.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The canonical identity.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">interactivity</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How it behaves towards a terminal.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How it behaves towards a terminal.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">invocation</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The command line a person types, rendered once here.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The command line a person types, rendered once here.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">origin</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Which program runs it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which program runs it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">path</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The words after the program&#39;s own name.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The words after the program's own name.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">projections</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it appears.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it appears.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">provenance</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it came from.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it came from.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">runnable</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Can it be run on its own, or does it only group the commands under it?</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Can it be run on its own, or does it only group the commands under it?</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">stability</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it stands.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it stands.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">summary</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">One line.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">One line.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tags</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Free tags.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Free tags.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -577,7 +577,7 @@ projection that has a use for one.</td>
       ]
     },
     &quot;CommandProjections&quot;: {
-      &quot;description&quot;: &quot;Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph.&quot;,
+      &quot;description&quot;: &quot;Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by `super::policy`. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph.&quot;,
       &quot;properties&quot;: {
         &quot;cli&quot;: {
           &quot;description&quot;: &quot;The command line, as typed.&quot;,
@@ -1106,8 +1106,8 @@ projection that has a use for one.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::commands</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">CommandRequest</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CommandNode</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/commands.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/commands.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/commands.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/commands.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -1178,7 +1178,7 @@ projection that has a use for one.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

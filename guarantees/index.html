@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -626,7 +626,7 @@
           <td class="px-4 py-3"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/scripts/rust-check" class="font-mono text-fg-brand hover:underline">scripts/rust-check</a></td>
           <td class="px-4 py-3"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/77_rust_evidence.sh" class="font-mono text-fg-brand hover:underline">test/cases/77_rust_evidence.sh</a></td>
         </tr><tr class="align-top">
-          <td class="px-4 py-3 text-heading"><a href="https://majordomus.dev/guarantees/rust-coverage-floor/" class="hover:underline">Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain&#39;s own floor in scripts/session-coverage-threshold</a><p class="mt-1 text-body-subtle">cargo-llvm-cov over all targets, exported as JSON and post-processed so that tests/, benches/, examples/ and every inline `#[cfg(test)]` item leave the fraction on both sides. --ignore-filename-regex cannot do the second, which is why this is a script and not a flag. Two floors, each one integer in a file of its own, each read by CI, by scripts/rust-check and by just coverage; the domain the second measures is declared in scripts/session-coverage-domain and the script refuses a domain naming a file the export does not carry, so narrowing it to raise the number is a visible edit. Branch coverage proper needs a nightly toolchain; region coverage stands in for it and is reported under that name. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does.</p></td>
+          <td class="px-4 py-3 text-heading"><a href="https://majordomus.dev/guarantees/rust-coverage-floor/" class="hover:underline">Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain&#39;s own floor in scripts/session-coverage-threshold</a><p class="mt-1 text-body-subtle">cargo-llvm-cov over all targets, exported as JSON and post-processed so that tests/, benches/, examples/ and every inline `#[cfg(test)]` item leave the fraction on both sides. --ignore-filename-regex cannot do the second, which is why this is a script and not a flag. Two floors, each one integer in a file of its own, each read by CI, by scripts/rust-check and by just coverage, and each a ratchet — the coverage measured when it was set, which may rise and never fall; the crate floor&#39;s bound is FLOOR_BOUND in scripts/ci/rust-command-check (rule project.rust-command-tested-in-file) and case 77 reads it there. The domain the second measures is declared in scripts/session-coverage-domain and the script refuses a domain naming a file the export does not carry, so narrowing it to raise the number is a visible edit. Branch coverage proper needs a nightly toolchain; region coverage stands in for it and is reported under that name. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does.</p></td>
           <td class="px-4 py-3"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/rust-cli-evidence.v1.md" class="font-mono text-fg-brand hover:underline">.ai/repo/rules/project/rust-cli-evidence.v1.md</a></td>
           <td class="px-4 py-3"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/scripts/rust-coverage" class="font-mono text-fg-brand hover:underline">scripts/rust-coverage</a></td>
           <td class="px-4 py-3"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/77_rust_evidence.sh" class="font-mono text-fg-brand hover:underline">test/cases/77_rust_evidence.sh</a></td>
@@ -1123,7 +1123,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

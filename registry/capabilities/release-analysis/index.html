@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_release_analysis</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-release-analysis" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/release/analysis</a> <span class="text-xs text-body-subtle">operationId release.analysis</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/release/#op-release-analysis" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/release/analysis</a> <span class="text-xs text-body-subtle">operationId release.analysis</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
         </tbody>
       </table>
@@ -196,23 +196,20 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · ReleaseAnalysisInput</h3><p class="mt-1 break-words text-sm text-body">Which release to measure this tree against.
-
-```
-use majordomus_cli::capability::builtin::release::AnalysisInput;
-// Absent means the last release the layer records, which is the canonical baseline.
-let input = AnalysisInput::default();
-assert!(input.since.is_none());
-let explicit = AnalysisInput { since: Some(&quot;v0.4.0&quot;.into()) };
-assert_eq!(explicit.since.as_deref(), Some(&quot;v0.4.0&quot;));
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · ReleaseAnalysisInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which release to measure this tree against.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::release::AnalysisInput;</span></span>
+<span class="giallo-l"><span>// Absent means the last release the layer records, which is the canonical baseline.</span></span>
+<span class="giallo-l"><span>let input = AnalysisInput::default();</span></span>
+<span class="giallo-l"><span>assert!(input.since.is_none());</span></span>
+<span class="giallo-l"><span>let explicit = AnalysisInput { since: Some(&quot;v0.4.0&quot;.into()) };</span></span>
+<span class="giallo-l"><span>assert_eq!(explicit.since.as_deref(), Some(&quot;v0.4.0&quot;));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">since</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">A ref to compare with instead of the last release: `v0.4.0`, or any commit that
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">A ref to compare with instead of the last release: <code>v0.4.0</code>, or any commit that
 carries a committed registry.</td>
       </tr></tbody>
     </table>
@@ -236,130 +233,126 @@ carries a committed registry.</td>
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · ReleaseVersionPlan</h3><p class="mt-1 break-words text-sm text-body">The whole answer: what moved, what that requires, and what the tree declares.
-
-One value, and every surface renders it — the command line, `/api/v1/release/analysis`,
+  <h3 class="font-mono text-sm font-semibold text-heading">output · ReleaseVersionPlan</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The whole answer: what moved, what that requires, and what the tree declares.</p>
+<p>One value, and every surface renders it — the command line, <code>/api/v1/release/analysis</code>,
 the MCP tool, the Cockpit panel, the generated document and the CI gate. There is no
-second computation anywhere, which is the property that makes the number mean something.
-
-```
-use majordomus_cli::release::compat::{Status, VersionPlan};
-# use majordomus_cli::release::compat::{Baseline, CommitEvidence, Impact, Policy};
-# use majordomus_cli::release::version::Version;
-let plan = VersionPlan {
-    policy: Policy::for_version(Version::parse(&quot;0.5.0&quot;).unwrap()),
-    baseline: Baseline {
-        version: &quot;0.5.0&quot;.into(), reference: &quot;v0.5.0&quot;.into(), read_at: &quot;3a032c1e&quot;.into(),
-        commit: &quot;3a032c1e&quot;.into(), recorded: true, atoms: 300, fingerprint: &quot;sha256:a&quot;.into(),
-    },
-    declared_version: &quot;0.5.0&quot;.into(),
-    tool_version: &quot;0.5.0&quot;.into(),
-    writers_agree: true,
-    atoms: 333,
-    fingerprint: &quot;sha256:b&quot;.into(),
-    implied: Impact::Minor,
-    required: Impact::Minor,
-    declared: Impact::None,
-    required_version: &quot;0.6.0&quot;.into(),
-    status: Status::Blocked,
-    breaking: false,
-    changes: Vec::new(),
-    commits: CommitEvidence { commits: 24, implied: Impact::Patch, breaking: Vec::new() },
-    understated: true,
-    diagnostics: Vec::new(),
-};
-// The contract requires a minor and the version declares none: this tree may not land.
-assert_eq!(plan.status, Status::Blocked);
-assert!(plan.declared &lt; plan.required);
-assert!(plan.understated, &quot;the commit subjects claim less than the contract did&quot;);
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+second computation anywhere, which is the property that makes the number mean something.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::release::compat::{Status, VersionPlan};</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::release::compat::{Baseline, CommitEvidence, Impact, Policy};</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::release::version::Version;</span></span>
+<span class="giallo-l"><span>let plan = VersionPlan {</span></span>
+<span class="giallo-l"><span>    policy: Policy::for_version(Version::parse(&quot;0.5.0&quot;).unwrap()),</span></span>
+<span class="giallo-l"><span>    baseline: Baseline {</span></span>
+<span class="giallo-l"><span>        version: &quot;0.5.0&quot;.into(), reference: &quot;v0.5.0&quot;.into(), read_at: &quot;3a032c1e&quot;.into(),</span></span>
+<span class="giallo-l"><span>        commit: &quot;3a032c1e&quot;.into(), recorded: true, atoms: 300, fingerprint: &quot;sha256:a&quot;.into(),</span></span>
+<span class="giallo-l"><span>    },</span></span>
+<span class="giallo-l"><span>    declared_version: &quot;0.5.0&quot;.into(),</span></span>
+<span class="giallo-l"><span>    tool_version: &quot;0.5.0&quot;.into(),</span></span>
+<span class="giallo-l"><span>    writers_agree: true,</span></span>
+<span class="giallo-l"><span>    atoms: 333,</span></span>
+<span class="giallo-l"><span>    fingerprint: &quot;sha256:b&quot;.into(),</span></span>
+<span class="giallo-l"><span>    implied: Impact::Minor,</span></span>
+<span class="giallo-l"><span>    required: Impact::Minor,</span></span>
+<span class="giallo-l"><span>    declared: Impact::None,</span></span>
+<span class="giallo-l"><span>    required_version: &quot;0.6.0&quot;.into(),</span></span>
+<span class="giallo-l"><span>    status: Status::Blocked,</span></span>
+<span class="giallo-l"><span>    breaking: false,</span></span>
+<span class="giallo-l"><span>    changes: Vec::new(),</span></span>
+<span class="giallo-l"><span>    commits: CommitEvidence { commits: 24, implied: Impact::Patch, breaking: Vec::new() },</span></span>
+<span class="giallo-l"><span>    understated: true,</span></span>
+<span class="giallo-l"><span>    diagnostics: Vec::new(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>// The contract requires a minor and the version declares none: this tree may not land.</span></span>
+<span class="giallo-l"><span>assert_eq!(plan.status, Status::Blocked);</span></span>
+<span class="giallo-l"><span>assert!(plan.declared &lt; plan.required);</span></span>
+<span class="giallo-l"><span>assert!(plan.understated, &quot;the commit subjects claim less than the contract did&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">atoms</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many public atoms this tree carries.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many public atoms this tree carries.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">baseline</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The release this was measured against.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The release this was measured against.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">breaking</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether anything a caller could hold is gone.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether anything a caller could hold is gone.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">changes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every movement of the contract, worst first.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every movement of the contract, worst first.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">commits</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the commits said about themselves.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the commits said about themselves.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">declared</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the two version numbers already represent.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the two version numbers already represent.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">declared_version</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The version the crate manifest declares.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version the crate manifest declares.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Anything incoherent about the release state, whatever the verdict.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Anything incoherent about the release state, whatever the verdict.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">fingerprint</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The fingerprint of this tree&#39;s surface.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The fingerprint of this tree's surface.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">implied</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the surface movement amounts to on its own.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the surface movement amounts to on its own.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">policy</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The policy the verdict was reached under.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The policy the verdict was reached under.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">required</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the policy requires of it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the policy requires of it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">required_version</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The smallest version this tree may declare.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The smallest version this tree may declare.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">status</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether it does.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether it does.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tool_version</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The version `bin/majordomus` prints, and whether the two agree.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version <code>bin/majordomus</code> prints, and whether the two agree.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">understated</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the commit subjects understate what the contract actually did.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the commit subjects understate what the contract actually did.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">writers_agree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the two writers of the version state one value.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the two writers of the version state one value.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -432,7 +425,7 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
       ]
     },
     &quot;ReleaseCommitEvidence&quot;: {
-      &quot;description&quot;: &quot;What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that [`VersionPlan::understated`] can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied &lt; Impact::Minor);\n```&quot;,
+      &quot;description&quot;: &quot;What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that `VersionPlan::understated` can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied &lt; Impact::Minor);\n```&quot;,
       &quot;properties&quot;: {
         &quot;breaking&quot;: {
           &quot;description&quot;: &quot;The subjects of the ones that claimed to be breaking.&quot;,
@@ -525,7 +518,7 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ReleasePolicyMode&quot;: {
-      &quot;description&quot;: &quot;How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \&quot;anything MAY change at any\ntime\&quot; — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: [`Mode::Semver`] is the ordinary rule, and the transition is\none line of [`Policy::required_of`].\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\&quot;0.9.0\&quot;).unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\&quot;1.0.0\&quot;).unwrap()).mode, Mode::Semver);\n```&quot;,
+      &quot;description&quot;: &quot;How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \&quot;anything MAY change at any\ntime\&quot; — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: `Mode::Semver` is the ordinary rule, and the transition is\none line of `Policy::required_of`.\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\&quot;0.9.0\&quot;).unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\&quot;1.0.0\&quot;).unwrap()).mode, Mode::Semver);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;pre1-0-strict&quot;,
@@ -782,8 +775,8 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::release</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ReleaseAnalysisInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ReleaseVersionPlan</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -854,7 +847,7 @@ assert!(plan.understated, &quot;the commit subjects claim less than the contract
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

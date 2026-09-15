@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_rule</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-rules-show" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/rules/rule</a> <span class="text-xs text-body-subtle">operationId rules.show</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/rules/#op-rules-show" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/rules/rule</a> <span class="text-xs text-body-subtle">operationId rules.show</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus rules show</td></tr>
         </tbody>
       </table>
@@ -196,24 +196,20 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · RuleInput</h3><p class="mt-1 break-words text-sm text-body">One rule of the corpus.
-# Example
-
-One rule of the corpus, named by its id or by the identity the index holds; a client
-that has either spelling should not need to know the other.
-
-```
-use majordomus_cli::capability::builtin::rules::RuleInput;
-let i = RuleInput { rule: &quot;project.scope-is-declared&quot;.into() };
-assert_eq!(i.rule, &quot;project.scope-is-declared&quot;);
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · RuleInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule of the corpus.</p>
+<h4 id="schema-input-example">Example</h4>
+<p>One rule of the corpus, named by its id or by the identity the index holds; a client
+that has either spelling should not need to know the other.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::RuleInput;</span></span>
+<span class="giallo-l"><span>let i = RuleInput { rule: &quot;project.scope-is-declared&quot;.into() };</span></span>
+<span class="giallo-l"><span>assert_eq!(i.rule, &quot;project.scope-is-declared&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">rule</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The rule id, with or without its version: `project.scope-is-declared`, or the
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The rule id, with or without its version: <code>project.scope-is-declared</code>, or the
 identity the index holds.</td>
       </tr></tbody>
     </table>
@@ -237,46 +233,42 @@ identity the index holds.</td>
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · RuleDetail</h3><p class="mt-1 break-words text-sm text-body">One rule, with everything that proves it and everything that depends on it.
-# Example
-
-What `rules show` answers: the proof, the rules either side of it in the dependency
-graph, and the one sentence saying what would make it proven.
-
-```
-use majordomus_cli::capability::builtin::rules::RuleSummary;
-use majordomus_cli::rules::{Class, RuleState};
-// a RuleDetail carries these summaries for depends_on and required_by
-let dep = RuleSummary {
-    id: &quot;project.dep&quot;.into(), title: &quot;Dep&quot;.into(),
-    class: Class::Blocking, state: RuleState::NotRun,
-};
-assert_eq!(dep.class, Class::Blocking);
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · RuleDetail</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule, with everything that proves it and everything that depends on it.</p>
+<h4 id="schema-output-example">Example</h4>
+<p>What <code>rules show</code> answers: the proof, the rules either side of it in the dependency
+graph, and the one sentence saying what would make it proven.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::RuleSummary;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleState};</span></span>
+<span class="giallo-l"><span>// a RuleDetail carries these summaries for depends_on and required_by</span></span>
+<span class="giallo-l"><span>let dep = RuleSummary {</span></span>
+<span class="giallo-l"><span>    id: &quot;project.dep&quot;.into(), title: &quot;Dep&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Blocking, state: RuleState::NotRun,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(dep.class, Class::Blocking);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">depends_on</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The rules this one depends on, with the state each is in — a rule whose dependency
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The rules this one depends on, with the state each is in — a rule whose dependency
 is unproven is proven only as far as that dependency is.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">missing</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">What would have to be true for this rule to reach `proven`, in words, or nothing
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What would have to be true for this rule to reach <code>proven</code>, in words, or nothing
 when it is there already.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">proof</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The rule, joined to the tree and the ledger.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The rule, joined to the tree and the ledger.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">required_by</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The rules that depend on this one.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The rules that depend on this one.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -325,7 +317,7 @@ when it is there already.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;test&quot;: {
-          &quot;description&quot;: &quot;The test, in [`TestId::as_string`] form.&quot;,
+          &quot;description&quot;: &quot;The test, in `TestId::as_string` form.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;working_tree&quot;: {
@@ -399,7 +391,7 @@ when it is there already.</td>
       ]
     },
     &quot;EvidenceRunner&quot;: {
-      &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \&quot;suite\&quot;);\nassert_eq!(Runner::Crate.prefix(), \&quot;crate\&quot;);\n```&quot;,
+      &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \&quot;suite\&quot;);\nassert_eq!(Runner::Crate.prefix(), \&quot;crate\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;suite&quot;,
@@ -474,7 +466,7 @@ when it is there already.</td>
       ]
     },
     &quot;RuleClass&quot;: {
-      &quot;description&quot;: &quot;What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \&quot;blocking\&quot;);\nassert_eq!(Class::parse(\&quot;advisory\&quot;), Class::Advisory);\n```&quot;,
+      &quot;description&quot;: &quot;What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as `Class::Unknown` rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \&quot;blocking\&quot;);\nassert_eq!(Class::parse(\&quot;advisory\&quot;), Class::Advisory);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;blocking&quot;,
@@ -494,7 +486,7 @@ when it is there already.</td>
       ]
     },
     &quot;RuleDefinition&quot;: {
-      &quot;description&quot;: &quot;One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \&quot;project.scope-is-declared\&quot;.into(),\n    identity: \&quot;project.scope-is-declared@1\&quot;.into(),\n    uri: \&quot;majordomus://rule/project.scope-is-declared@1\&quot;.into(),\n    version: 1,\n    title: \&quot;Scope is declared\&quot;.into(),\n    description: None,\n    statement: None,\n    status: \&quot;active\&quot;.into(),\n    class: Class::Blocking,\n    namespace: \&quot;project\&quot;.into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \&quot;.ai/repo/rules/project/scope-is-declared.v1.md\&quot;.into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```&quot;,
+      &quot;description&quot;: &quot;One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \&quot;project.scope-is-declared\&quot;.into(),\n    identity: \&quot;project.scope-is-declared@1\&quot;.into(),\n    uri: \&quot;majordomus://rule/project.scope-is-declared@1\&quot;.into(),\n    version: 1,\n    title: \&quot;Scope is declared\&quot;.into(),\n    description: None,\n    statement: None,\n    status: \&quot;active\&quot;.into(),\n    class: Class::Blocking,\n    namespace: \&quot;project\&quot;.into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \&quot;.ai/repo/rules/project/scope-is-declared.v1.md\&quot;.into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```&quot;,
       &quot;properties&quot;: {
         &quot;class&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;,
@@ -663,7 +655,7 @@ when it is there already.</td>
       ]
     },
     &quot;RuleProof&quot;: {
-      &quot;description&quot;: &quot;One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&amp;repo.index().unwrap(), &amp;ledger);\nlet first: &amp;RuleProof = &amp;r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \&quot;an advisory rule owes no executable proof\&quot;);\n```&quot;,
+      &quot;description&quot;: &quot;One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what `report` produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&amp;repo.index().unwrap(), &amp;ledger);\nlet first: &amp;RuleProof = &amp;r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \&quot;an advisory rule owes no executable proof\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;gates&quot;: {
           &quot;description&quot;: &quot;Every CI gate that runs something this rule names, deduplicated.&quot;,
@@ -966,8 +958,8 @@ when it is there already.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::rules</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">RuleInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RuleDetail</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/rules.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/rules.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/rules.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/rules.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -1038,7 +1030,7 @@ when it is there already.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>recover.orphans — Prismatic Majordomus</title>
+<meta name="description" content="Walk the publish temps of every record store, the rename temps under the layer&#39;s local half and the tracked sessions section, and the site generator&#39;s staging directories at the repository root; give each a verdict by reading its age and then its content; and, unless the call is a check, remove the ones the verdict says nothing is holding. Nothing is deleted for being unrecognised: a temp holding the only copy of a record is reported as `incomplete` and left for the caller to publish, content this version cannot classify is `foreign` and left exactly where it is, a candidate whose age this platform cannot read is `unmeasurable` and never a candidate, and no directory is ever removed. The threshold is required and has no default, because a sweep measuring against an absent threshold would find every file stale.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/recover-orphans/"><meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="recover.orphans — Prismatic Majordomus">
+<meta property="og:description" content="Walk the publish temps of every record store, the rename temps under the layer&#39;s local half and the tracked sessions section, and the site generator&#39;s staging directories at the repository root; give each a verdict by reading its age and then its content; and, unless the call is a check, remove the ones the verdict says nothing is holding. Nothing is deleted for being unrecognised: a temp holding the only copy of a record is reported as `incomplete` and left for the caller to publish, content this version cannot classify is `foreign` and left exactly where it is, a candidate whose age this platform cannot read is `unmeasurable` and never a candidate, and no directory is ever removed. The threshold is required and has no default, because a sweep measuring against an absent threshold would find every file stale.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/recover-orphans/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.7.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">recover.orphans</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">recover.orphans</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Walk the publish temps of every record store, the rename temps under the layer&#39;s local half and the tracked sessions section, and the site generator&#39;s staging directories at the repository root; give each a verdict by reading its age and then its content; and, unless the call is a check, remove the ones the verdict says nothing is holding. Nothing is deleted for being unrecognised: a temp holding the only copy of a record is reported as `incomplete` and left for the caller to publish, content this version cannot classify is `foreign` and left exactly where it is, a candidate whose age this platform cannot read is `unmeasurable` and never a candidate, and no directory is ever removed. The threshold is required and has no default, because a sweep measuring against an absent threshold would find every file stale.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">Walk the publish temps of every record store, the rename temps under the layer&#39;s local half and the tracked sessions section, and the site generator&#39;s staging directories at the repository root; give each a verdict by reading its age and then its content; and, unless the call is a check, remove the ones the verdict says nothing is holding. Nothing is deleted for being unrecognised: a temp holding the only copy of a record is reported as `incomplete` and left for the caller to publish, content this version cannot classify is `foreign` and left exactly where it is, a candidate whose age this platform cannot read is `unmeasurable` and never a candidate, and no directory is ever removed. The threshold is required and has no default, because a sweep measuring against an absent threshold would find every file stale.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">command</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">behaviorally_verified</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/recover/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module recover</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#recover</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#sessions</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#maintenance</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#lifecycle</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_recover_orphans</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/recover/#op-recover-orphans" class="break-all text-fg-brand hover:underline inline-block py-1">POST /api/v1/recover/orphans</a> <span class="text-xs text-body-subtle">operationId recover.orphans</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · RecoverOrphansInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>recover.orphans</code>: how old a stray must be, and whether to act.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::recover::RecoverOrphansInput;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// The wire form the shell tool, an MCP client or an HTTP POST sends.</span></span>
+<span class="giallo-l"><span>let act: RecoverOrphansInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_str(r#&quot;{&quot;older_than_seconds&quot;:43200,&quot;check&quot;:false}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(act.older_than_seconds, 43_200);</span></span>
+<span class="giallo-l"><span>assert!(!act.check);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// `check` defaults to true, and that direction is deliberate: this capability deletes</span></span>
+<span class="giallo-l"><span>// files, and a caller that forgets the field gets a plan rather than a sweep.</span></span>
+<span class="giallo-l"><span>let forgot: RecoverOrphansInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_str(r#&quot;{&quot;older_than_seconds&quot;:43200}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(forgot.check, &quot;the safe value is the default one&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// The threshold has no default at all. `session.stranded_after` is a policy value, and</span></span>
+<span class="giallo-l"><span>// a reader that carried its own copy would be a second place the number lives.</span></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;RecoverOrphansInput&gt;(r#&quot;{&quot;check&quot;:true}&quot;#).is_err());</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// Unknown fields are refused rather than ignored: a caller that misspells `check` is</span></span>
+<span class="giallo-l"><span>// told so instead of having a sweep silently run.</span></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;RecoverOrphansInput&gt;(</span></span>
+<span class="giallo-l"><span>    r#&quot;{&quot;older_than_seconds&quot;:1,&quot;chek&quot;:true}&quot;#).is_err());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">check</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Classify and report, and write nothing. The default, because the alternative deletes
+files. <span class="font-mono text-xs text-body-subtle">default true</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">older_than_seconds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How long a stray file must have been untouched before it is a candidate at all, in
+seconds. Required, and refused at zero: the shell tool resolves it from
+<code>session.stranded_after</code> with <code>mj_pol_req</code>, which fails closed, and nothing here
+invents one.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `recover.orphans`: how old a stray must be, and whether to act.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansInput;\n\n// The wire form the shell tool, an MCP client or an HTTP POST sends.\nlet act: RecoverOrphansInput =\n    serde_json::from_str(r#\&quot;{\&quot;older_than_seconds\&quot;:43200,\&quot;check\&quot;:false}\&quot;#).unwrap();\nassert_eq!(act.older_than_seconds, 43_200);\nassert!(!act.check);\n\n// `check` defaults to true, and that direction is deliberate: this capability deletes\n// files, and a caller that forgets the field gets a plan rather than a sweep.\nlet forgot: RecoverOrphansInput =\n    serde_json::from_str(r#\&quot;{\&quot;older_than_seconds\&quot;:43200}\&quot;#).unwrap();\nassert!(forgot.check, \&quot;the safe value is the default one\&quot;);\n\n// The threshold has no default at all. `session.stranded_after` is a policy value, and\n// a reader that carried its own copy would be a second place the number lives.\nassert!(serde_json::from_str::&lt;RecoverOrphansInput&gt;(r#\&quot;{\&quot;check\&quot;:true}\&quot;#).is_err());\n\n// Unknown fields are refused rather than ignored: a caller that misspells `check` is\n// told so instead of having a sweep silently run.\nassert!(serde_json::from_str::&lt;RecoverOrphansInput&gt;(\n    r#\&quot;{\&quot;older_than_seconds\&quot;:1,\&quot;chek\&quot;:true}\&quot;#).is_err());\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;check&quot;: {
+      &quot;default&quot;: true,
+      &quot;description&quot;: &quot;Classify and report, and write nothing. The default, because the alternative deletes\nfiles.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;older_than_seconds&quot;: {
+      &quot;description&quot;: &quot;How long a stray file must have been untouched before it is a candidate at all, in\nseconds. Required, and refused at zero: the shell tool resolves it from\n`session.stranded_after` with `mj_pol_req`, which fails closed, and nothing here\ninvents one.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;older_than_seconds&quot;
+  ],
+  &quot;title&quot;: &quot;RecoverOrphansInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · RecoverOrphansResult</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What one sweep found and what it did about it.</p>
+<p>The counts are derived from <code>strays</code> rather than accumulated beside it, so a reader can
+check the report against itself and a surface that renders the list cannot disagree with
+the surface that renders the total.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::recover::RecoverOrphansResult;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let plan: RecoverOrphansResult = serde_json::from_str(r#&quot;{</span></span>
+<span class="giallo-l"><span>    &quot;older_than_seconds&quot;: 43200, &quot;check&quot;: true, &quot;strays&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;removable&quot;: 0, &quot;removed&quot;: 0, &quot;unmeasurable&quot;: 0</span></span>
+<span class="giallo-l"><span>}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>// a check never removes anything, whatever it found</span></span>
+<span class="giallo-l"><span>assert_eq!(plan.removed, 0);</span></span>
+<span class="giallo-l"><span>assert!(plan.check);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">check</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether this was a check. <code>true</code> means nothing was written.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">older_than_seconds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The threshold this sweep measured against, echoed back so that a refusal or a verdict
+names the value the caller actually got rather than the one it believes it sent.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">removable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them this call would remove, or did.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">removed</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many it actually removed. Always <code>0</code> on a check.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">strays</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every stray found, in path order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">unmeasurable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many candidates could not be measured and were therefore left alone.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;Stray&quot;: {
+      &quot;description&quot;: &quot;One stray file, its verdict, and the evidence that produced it.\n\nEvery field that decided something is carried, because the rule this command is shaped\naround requires the value that decided a verdict to be visible before the verdict acts:\na surface that printed \&quot;orphan\&quot; without the age, the episode and the file that already\nholds it would be asking to be trusted rather than read.\n\n```\nuse majordomus_cli::capability::builtin::recover::{Stray, StrayKind, StrayVerdict};\nuse serde_json::json;\n\nlet s: Stray = serde_json::from_value(json!({\n    \&quot;path\&quot;: \&quot;.ai/repo/sessions/.tmp.a1b2c3\&quot;,\n    \&quot;kind\&quot;: \&quot;publish_temp\&quot;,\n    \&quot;verdict\&quot;: \&quot;orphan\&quot;,\n    \&quot;age_seconds\&quot;: 90_000,\n    \&quot;session_id\&quot;: \&quot;s-0007\&quot;,\n    \&quot;published_at\&quot;: \&quot;.ai/repo/sessions/2026-09-11--s-0007.md\&quot;,\n    \&quot;removable\&quot;: true,\n    \&quot;removed\&quot;: false,\n})).unwrap();\nassert_eq!(s.verdict, StrayVerdict::Orphan);\nassert_eq!(s.kind, StrayKind::PublishTemp);\n// removable and removed are different facts: a check run reports the first and never\n// the second, which is what makes `--check` readable as a plan rather than a report.\nassert!(s.removable &amp;&amp; !s.removed);\n\n// and an unmeasurable one carries no age at all, rather than a zero that would read as\n// \&quot;brand new\&quot; to anything that compared it with a threshold\nlet u: Stray = serde_json::from_value(json!({\n    \&quot;path\&quot;: \&quot;.mj-stage.xyz\&quot;, \&quot;kind\&quot;: \&quot;staging_dir\&quot;, \&quot;verdict\&quot;: \&quot;unmeasurable\&quot;,\n    \&quot;removable\&quot;: false, \&quot;removed\&quot;: false,\n})).unwrap();\nassert!(u.age_seconds.is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;age_seconds&quot;: {
+          &quot;description&quot;: &quot;How old it is, in seconds. Absent when the platform could not say, which is the\n`Unmeasurable` verdict and never a zero.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StrayKind&quot;,
+          &quot;description&quot;: &quot;Which of the three shapes this is.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The path, repository-relative. Never the absolute one: a finding that names a disk is\na finding nobody else can act on (`project.no-machine-paths`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;published_at&quot;: {
+          &quot;description&quot;: &quot;The record that already holds that episode, when one does. Its presence is what turns\nan `Incomplete` publish temp into an `Orphan`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;removable&quot;: {
+          &quot;description&quot;: &quot;Whether this call would remove it. Decided by the verdict and by\n`remove_stray`&#39;s own pattern guard, never by the caller.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;removed&quot;: {
+          &quot;description&quot;: &quot;Whether this call did remove it. Always `false` on a check.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;session_id&quot;: {
+          &quot;description&quot;: &quot;The episode this publish temp carries, when it carries one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;target&quot;: {
+          &quot;description&quot;: &quot;The file a rename temp was going to become. Its presence is what turns an\n`Incomplete` rename temp into an `Orphan`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;verdict&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StrayVerdict&quot;,
+          &quot;description&quot;: &quot;What reading it decided.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;kind&quot;,
+        &quot;verdict&quot;,
+        &quot;removable&quot;,
+        &quot;removed&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;StrayKind&quot;: {
+      &quot;description&quot;: &quot;What kind of stray a path is, decided by where it is and how it is named rather than by\nwhat is in it. The content decides the *verdict*; this decides which question to ask.\n\nThe word a kind is reported under is also the word it is read back from, and a word this\nversion does not know is refused rather than read as the nearest kind:\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayKind;\nfor kind in [StrayKind::PublishTemp, StrayKind::RenameTemp, StrayKind::StagingDir] {\n    let word = serde_json::to_value(kind).unwrap();\n    assert_eq!(serde_json::from_value::&lt;StrayKind&gt;(word).unwrap(), kind);\n}\nassert!(serde_json::from_value::&lt;StrayKind&gt;(serde_json::json!(\&quot;temp\&quot;)).is_err());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;publish_temp&quot;,
+          &quot;description&quot;: &quot;A `.tmp.XXXXXX` in a record store: `mj_publish_record` makes them, and only a process\nthat died between the `mktemp` and the `rm` leaves one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;rename_temp&quot;,
+          &quot;description&quot;: &quot;A `&lt;target&gt;.mj-tmp`: written and renamed in one `&amp;&amp;`, so one that exists means the\nwrite failed or the process died mid-write.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;staging_dir&quot;,
+          &quot;description&quot;: &quot;A `.mj-stage.XXXXXX` at the repository root: `scripts/generate-site-data` stages into\none. Always a directory, and therefore never removed here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;StrayVerdict&quot;: {
+      &quot;description&quot;: &quot;What this stray is, decided by reading it.\n\nThe five words are `lib/recover.sh`&#39;s, deliberately: a person who has read the command&#39;s\noutput should not have to learn the same five facts twice because a second surface chose\nits own vocabulary.\n\nThat vocabulary is closed. Every verdict reads back as itself, and there is no sixth word:\na surface that invents one gets an error rather than a verdict nobody meant.\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayVerdict::{self, *};\nlet all = [Live, Orphan, Incomplete, Foreign, Unmeasurable];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|v| v.as_str()).collect();\nassert_eq!(words, [\&quot;live\&quot;, \&quot;orphan\&quot;, \&quot;incomplete\&quot;, \&quot;foreign\&quot;, \&quot;unmeasurable\&quot;]);\nfor v in all {\n    let word = serde_json::json!(v.as_str());\n    assert_eq!(serde_json::from_value::&lt;StrayVerdict&gt;(word).unwrap(), v);\n}\nassert!(serde_json::from_value::&lt;StrayVerdict&gt;(serde_json::json!(\&quot;stale\&quot;)).is_err());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;live&quot;,
+          &quot;description&quot;: &quot;Younger than the threshold: a `session close` or a `scripts/derive` running right now\nowns it. Measured, reported, never touched.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;orphan&quot;,
+          &quot;description&quot;: &quot;Its work completed, or there was never anything in it. Removable — unless it is a\ndirectory, which this runtime never removes.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;incomplete&quot;,
+          &quot;description&quot;: &quot;It holds something no other file holds: a record nobody published, or a write whose\ntarget never arrived. Never removed here; the caller decides.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;foreign&quot;,
+          &quot;description&quot;: &quot;Not written by this tool at all, or written by a version that shaped it differently.\nNever touched; reported with what it is.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unmeasurable&quot;,
+          &quot;description&quot;: &quot;Its age could not be read on this platform, so nothing here treats it as stale. The\nguard `project.destructive-sweeps-fail-closed` asks for: a predicate that cannot\nmeasure its input is false, never the most extreme value in the set.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;What one sweep found and what it did about it.\n\nThe counts are derived from `strays` rather than accumulated beside it, so a reader can\ncheck the report against itself and a surface that renders the list cannot disagree with\nthe surface that renders the total.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansResult;\n\nlet plan: RecoverOrphansResult = serde_json::from_str(r#\&quot;{\n    \&quot;older_than_seconds\&quot;: 43200, \&quot;check\&quot;: true, \&quot;strays\&quot;: [],\n    \&quot;removable\&quot;: 0, \&quot;removed\&quot;: 0, \&quot;unmeasurable\&quot;: 0\n}\&quot;#).unwrap();\n// a check never removes anything, whatever it found\nassert_eq!(plan.removed, 0);\nassert!(plan.check);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;check&quot;: {
+      &quot;description&quot;: &quot;Whether this was a check. `true` means nothing was written.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;older_than_seconds&quot;: {
+      &quot;description&quot;: &quot;The threshold this sweep measured against, echoed back so that a refusal or a verdict\nnames the value the caller actually got rather than the one it believes it sent.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;removable&quot;: {
+      &quot;description&quot;: &quot;How many of them this call would remove, or did.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;removed&quot;: {
+      &quot;description&quot;: &quot;How many it actually removed. Always `0` on a check.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;strays&quot;: {
+      &quot;description&quot;: &quot;Every stray found, in path order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Stray&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;unmeasurable&quot;: {
+      &quot;description&quot;: &quot;How many candidates could not be measured and were therefore left alone.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;older_than_seconds&quot;,
+    &quot;check&quot;,
+    &quot;strays&quot;,
+    &quot;removable&quot;,
+    &quot;removed&quot;,
+    &quot;unmeasurable&quot;
+  ],
+  &quot;title&quot;: &quot;RecoverOrphansResult&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-recover-orphans-direct-check-twelve-hours" class="break-all text-fg-brand hover:underline inline-block py-1">check-twelve-hours</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-recover-orphans-direct-check-one-second" class="break-all text-fg-brand hover:underline inline-block py-1">check-one-second</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-recover-orphans-mcp-check-twelve-hours" class="break-all text-fg-brand hover:underline inline-block py-1">check-twelve-hours</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-recover-orphans-mcp-check-one-second" class="break-all text-fg-brand hover:underline inline-block py-1">check-one-second</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-recover-orphans-http-check-twelve-hours" class="break-all text-fg-brand hover:underline inline-block py-1">check-twelve-hours</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-recover-orphans-http-check-one-second" class="break-all text-fg-brand hover:underline inline-block py-1">check-one-second</a><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">recover.orphans</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/recover.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/recover.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::recover</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">RecoverOrphansInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RecoverOrphansResult</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/recover.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/recover.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

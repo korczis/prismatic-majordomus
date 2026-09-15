@@ -1,0 +1,1435 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP API: executions — Prismatic Majordomus</title>
+<meta name="description" content="Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.">
+<link rel="canonical" href="https://majordomus.dev/docs/api/executions/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="HTTP API: executions — Prismatic Majordomus">
+<meta property="og:description" content="Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.">
+<meta property="og:url" content="https://majordomus.dev/docs/api/executions/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.7.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">HTTP API: executions</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">HTTP API: executions</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
+    <p class="mb-2"><a href="https://majordomus.dev/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-executions-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">executions.list</a></li><li><a href="#op-executions-cancel" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">executions.cancel</a></li><li><a href="#op-executions-demonstrate" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">executions.demonstrate</a></li><li><a href="#op-executions-events" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">executions.events</a></li><li><a href="#op-executions-get" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">executions.get</a></li><li><a href="#op-executions-protocol" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">executions.protocol</a></li><li><a href="#op-executions-start" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">executions.start</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-executions" class="scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">executions</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.</p><article id="op-executions-list" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/executions</code>
+    <a href="#op-executions-list" class="font-mono text-xs text-body-subtle hover:underline">executions.list</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">List executions</h3>
+  <p class="mt-1 break-words text-sm text-body">Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_executions</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;executions&quot;, &quot;uri&quot;: &quot;majordomus://executions&quot;}</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ executions list</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">ExecutionState | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only executions in this state.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">capability</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only executions of this capability.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">limit</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">How many, newest first; the default and the bound are both `200`.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">recent:</span> 50</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/executions?limit=50&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionList" class="text-fg-brand hover:underline">ExecutionList</a></td>
+          <td class="px-3 py-2 text-body">List executions: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-executions-cancel" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-warning-soft text-fg-warning border border-warning-subtle">POST</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/executions/cancel</code>
+    <a href="#op-executions-cancel" class="font-mono text-xs text-body-subtle hover:underline">executions.cancel</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Ask an execution to stop</h3>
+  <p class="mt-1 break-words text-sm text-body">Set the execution&#39;s cancellation flag and say so on its stream. Cancellation is cooperative: a task looks at its flag and stops, and a capability whose policy says it is not cancellable runs to completion — which the answer says rather than pretending otherwise.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">command</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark waived: transient_state</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_execution_cancel</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ executions cancel</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Request body <span class="normal-case">— <a href="https://majordomus.dev/docs/api/executions/#schema-CancelInput" class="font-mono text-fg-brand underline">CancelInput</a>, JSON</span></h4><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s -X POST &quot;http://127.0.0.1:8741/api/v1/executions/cancel&quot; -H &quot;content-type: application/json&quot; -d &#39;{}&#39;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/executions/#schema-CancelReport" class="text-fg-brand hover:underline">CancelReport</a></td>
+          <td class="px-3 py-2 text-body">Ask an execution to stop: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">422</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>refused</code>: The command was understood and turned down for the reason the message gives.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-executions-demonstrate" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/executions/demonstrate</code>
+    <a href="#op-executions-demonstrate" class="font-mono text-xs text-body-subtle hover:underline">executions.demonstrate</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Demonstrate an execution</h3>
+  <p class="mt-1 break-words text-sm text-body">Walk a given number of steps, reporting each one, logging a line and advancing progress, then finish — or fail at a step you name. It exists so that an operator, a probe and an end-to-end test can prove the whole path works without waiting for real work: it reads nothing, writes nothing, and its only effect is the events it produces. It looks at its cancellation flag between steps and while it waits, so cancelling it stops it.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_demonstrate_execution</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">steps</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">How many steps to walk through.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">immediate:</span> 1</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">delay_ms</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">How long each step takes, in milliseconds. Bounded at ten seconds a step, so this
+cannot be used to hold a worker.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">immediate:</span> 0</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">fail_at</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Fail on this step instead of completing, to show what a failure looks like.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/executions/demonstrate?steps=1&amp;delay_ms=0&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/executions/#schema-DemonstrateReport" class="text-fg-brand hover:underline">DemonstrateReport</a></td>
+          <td class="px-3 py-2 text-body">Demonstrate an execution: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-executions-events" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/executions/events</code>
+    <a href="#op-executions-events" class="font-mono text-xs text-body-subtle hover:underline">executions.events</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">An execution&#39;s event history</h3>
+  <p class="mt-1 break-words text-sm text-body">The retained events of one execution, oldest first, after a sequence number. This is what a browser reads after a reload and what a client reads after a reconnect: the page carries the cursor to open the live channel with, so nothing is missed between the history and the stream.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark waived: transient_state</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_execution_events</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ executions events</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution&#39;s id.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">after</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only events after this sequence number: the cursor a reconnecting client holds.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">limit</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">How many, oldest first; the default and the bound are both `500`.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/executions/events&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/executions/#schema-EventHistory" class="text-fg-brand hover:underline">EventHistory</a></td>
+          <td class="px-3 py-2 text-body">An execution's event history: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-executions-get" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/executions/get</code>
+    <a href="#op-executions-get" class="font-mono text-xs text-body-subtle hover:underline">executions.get</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">One execution</h3>
+  <p class="mt-1 break-words text-sm text-body">The whole of what is known about one execution: its state, its input as it was stored, its steps, its progress, its diagnostics, and its output or its error. Taken under one lock, so a snapshot that says it succeeded carries what it produced.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark waived: transient_state</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_execution</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ executions show</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution&#39;s id.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/executions/get&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="text-fg-brand hover:underline">ExecutionView</a></td>
+          <td class="px-3 py-2 text-body">One execution: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-executions-protocol" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/executions/protocol</code>
+    <a href="#op-executions-protocol" class="font-mono text-xs text-body-subtle hover:underline">executions.protocol</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The live channel&#39;s contract</h3>
+  <p class="mt-1 break-words text-sm text-body">Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_execution_protocol</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;execution-protocol&quot;, &quot;uri&quot;: &quot;majordomus://executions/protocol&quot;}</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ executions protocol</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/executions/protocol&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/executions/#schema-ProtocolReport" class="text-fg-brand hover:underline">ProtocolReport</a></td>
+          <td class="px-3 py-2 text-body">The live channel's contract: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-executions-start" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-warning-soft text-fg-warning border border-warning-subtle">POST</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/executions/start</code>
+    <a href="#op-executions-start" class="font-mono text-xs text-body-subtle hover:underline">executions.start</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Start a capability as an execution</h3>
+  <p class="mt-1 break-words text-sm text-body">Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">command</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_execution_start</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ run</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Request body <span class="normal-case">— <a href="https://majordomus.dev/docs/api/executions/#schema-StartInput" class="font-mono text-fg-brand underline">StartInput</a>, JSON</span></h4><p class="mt-2 font-mono text-xs text-body-subtle">example <span class="text-heading">demonstrate</span></p>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0">{&quot;capability&quot;:&quot;executions.demonstrate&quot;,&quot;input&quot;:{&quot;steps&quot;:1,&quot;delay_ms&quot;:0}}</pre></div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s -X POST &quot;http://127.0.0.1:8741/api/v1/executions/start&quot; -H &quot;content-type: application/json&quot; -d &#39;{&quot;capability&quot;:&quot;executions.demonstrate&quot;,&quot;input&quot;:{&quot;steps&quot;:1,&quot;delay_ms&quot;:0}}&#39;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="text-fg-brand hover:underline">ExecutionView</a></td>
+          <td class="px-3 py-2 text-body">Start a capability as an execution: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">422</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>refused</code>: The command was understood and turned down for the reason the message gives.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+</section><section id="schemas" class="mt-12 scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-Actor" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Actor</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Who asked, and which peer they are when this process knows.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">kind</td>
+          <td class="px-3 py-2 font-mono text-body">ActorKind <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ActorKind" class="text-fg-brand underline">ActorKind</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where the request came from.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">peer</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The peer id, for a call that arrived through an MCP session.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+<article id="schema-ActorKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ActorKind</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;http&quot; | &quot;mcp&quot; | &quot;cli&quot; | &quot;internal&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Who asked for the execution. Not an authorisation decision — this server authenticates
+nobody — but a fact worth carrying into the audit line and the UI.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">http</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">An HTTP client, which includes the Cockpit.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">mcp</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">An MCP client attached to this process.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cli</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The command line of this process.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">internal</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">This executable's own tests and benchmarks.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-Actor" class="font-mono text-fg-brand underline">Actor</a></p></article>
+<article id="schema-CancelInput" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">CancelInput</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>executions.cancel</code>.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution's id.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-cancel" class="font-mono text-fg-brand hover:underline">executions.cancel</a></p></article>
+<article id="schema-CancelReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">CancelReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer of <code>executions.cancel</code>.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">outcome</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What asking achieved: <code>requested</code>, <code>already_requested</code> or <code>already_finished</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">cancellable</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the capability declares that it looks at its cancellation flag. When it
+does not, the request is recorded and the execution runs to completion.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">execution</td>
+          <td class="px-3 py-2 font-mono text-body">ExecutionView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="text-fg-brand underline">ExecutionView</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution as it stands after the request.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-cancel" class="font-mono text-fg-brand hover:underline">executions.cancel</a></p></article>
+<article id="schema-DemonstrateReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DemonstrateReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer of <code>executions.demonstrate</code>.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">steps</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many steps ran.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">elapsed_ms</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How long it took, in milliseconds.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">observed</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether anything was watching: false when it was called directly rather than as an
+execution, which is the difference this capability exists to show.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-demonstrate" class="font-mono text-fg-brand hover:underline">executions.demonstrate</a></p></article>
+<article id="schema-EventHistory" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">EventHistory</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer of <code>executions.events</code>: one page of an execution's retained history.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">execution_id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution the events belong to.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">ExecutionState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionState" class="text-fg-brand underline">ExecutionState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where the execution stands now, so a client needs one request rather than two.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">events</td>
+          <td class="px-3 py-2 font-mono text-body">array of ExecutionEvent <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionEvent" class="text-fg-brand underline">ExecutionEvent</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The events, oldest first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">last_sequence</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The sequence of the last event here: the cursor for the next page, and the one to
+open the live channel with.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">more</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether more events follow this page right now.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">truncated</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether events before this page had already been dropped by the store's bound.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-events" class="font-mono text-fg-brand hover:underline">executions.events</a></p></article>
+<article id="schema-ExecutionDiagnostic" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ExecutionDiagnostic</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A structured finding an execution reported on its way, distinct from its outcome.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">severity</td>
+          <td class="px-3 py-2 font-mono text-body">Severity <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-Severity" class="text-fg-brand underline">Severity</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How bad.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">code</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">A stable machine-readable code.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">summary</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line, for a person.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">detail</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The rest, when there is more.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">suggestion</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What to do about it, when there is something.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionEvent" class="font-mono text-fg-brand underline">ExecutionEvent</a> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+<article id="schema-ExecutionError" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ExecutionError</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Why an execution ended badly, in the repository's diagnostic vocabulary rather than in
+Rust's: a code a program branches on, a sentence a person reads, and where to look.</p>
+<p>A panic message and a backtrace are never in here. The engine catches a panicking
+handler and reports <code>internal</code> with the execution's correlation id; the panic itself is
+on the process's own error stream, where the operator running the server can read it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">code</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>, <code>not_found</code>, <code>refused</code>, <code>internal</code>, <code>cancelled</code>, <code>unavailable</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">message</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What went wrong, for a person.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">suggestion</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What to do about it, when there is something.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">correlation_id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution this failure belongs to, so a log line and a UI agree.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionEvent" class="font-mono text-fg-brand underline">ExecutionEvent</a> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+<article id="schema-ExecutionEvent" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ExecutionEvent</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">one of 12 variants</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One event about one execution.</p>
+<p><code>sequence</code> is dense and starts at 1 within an execution: a client that has seen
+sequence <code>n</code> knows it has missed something when the next event it reads is not <code>n + 1</code>,
+and asks for the gap by cursor rather than reloading the world.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">schema_version</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The protocol version, <code>PROTOCOL_VERSION</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">event_id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The identity of this event: the execution's id and the sequence, so a client that
+deduplicates needs no composite key of its own.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">execution_id</td>
+          <td class="px-3 py-2 font-mono text-body">ExecutionId <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionId" class="text-fg-brand underline">ExecutionId</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution it is about.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">sequence</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its position in that execution's stream, from 1, without gaps.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">timestamp</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When the event was produced, RFC 3339 in UTC.</td>
+        </tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The execution was accepted and exists. Carries what it will run and with what,
+redacted, so a client that joins at the first event needs nothing else to render a
+heading.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.created&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">object</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> It is waiting for a worker.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.queued&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">object</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> A worker picked it up and is about to enter the handler.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.started&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> How far along it is.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.progress&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">ProgressView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ProgressView" class="text-fg-brand underline">ProgressView</a></td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> A named phase was entered.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.step.started&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">object</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> A named phase finished.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.step.completed&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">object</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> A line of output.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.log&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">object <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-LogStream" class="text-fg-brand underline">LogStream</a></td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> A structured finding, distinct from the outcome.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.diagnostic&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">ExecutionDiagnostic <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionDiagnostic" class="text-fg-brand underline">ExecutionDiagnostic</a></td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Cancellation was asked for; the handler has not stopped yet.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.cancelling&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">object</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> It stopped because it was asked to.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.cancelled&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> It finished, and the handler returned an output.</p>
+<p>The output is on this event and not on one of its own, because a client must never
+be able to read "succeeded" and find no result: the state and the value it produced
+are one fact and travel together.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.completed&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">object</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> It finished, and it did not.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">type</td><td class="px-3 py-2 font-mono text-body">&quot;execution.failed&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">data</td><td class="px-3 py-2 font-mono text-body">object <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionError" class="text-fg-brand underline">ExecutionError</a></td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-EventHistory" class="font-mono text-fg-brand underline">EventHistory</a></p></article>
+<article id="schema-ExecutionId" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ExecutionId</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">string</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The identity of one execution: <code>x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;</code>.</p>
+<p>The shape is the layer's own — a task is <code>t-20260905034523-a9f1</code> — so that an id read
+in a log, a URL or a browser tab is recognisable as this repository's without a
+dependency on a UUID crate. The timestamp orders ids by creation for a reader; the
+suffix, not the timestamp, is what makes two ids created in the same second differ.</div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionEvent" class="font-mono text-fg-brand underline">ExecutionEvent</a> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+<article id="schema-ExecutionLinks" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ExecutionLinks</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where to read more about one execution, in this server's own terms.</p>
+<p>Every value is derived from the registry's declared routes and from the live channel's
+own constant, so a route that moves moves here too and no client holds a path this
+server does not serve.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">self</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The snapshot: <code>GET /api/v1/executions/get?id=…</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">events</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The retained history: <code>GET /api/v1/executions/events?id=…</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">cancel</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where to ask it to stop: <code>POST /api/v1/executions/cancel</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">websocket</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The live channel, from the beginning: <code>GET /events?execution=…</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">cockpit</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The page a person opens.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+<article id="schema-ExecutionList" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ExecutionList</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer of <code>executions.list</code>.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">count</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many are answered here.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">remembered</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many this process remembers in total, before the filter.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">active</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many are not finished.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">queued</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many are waiting for a worker.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">live_channels</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many live channels are following them.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">executions</td>
+          <td class="px-3 py-2 font-mono text-body">array of ExecutionView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="text-fg-brand underline">ExecutionView</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The executions, newest first.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-list" class="font-mono text-fg-brand hover:underline">executions.list</a></p></article>
+<article id="schema-ExecutionState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ExecutionState</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;queued&quot; | &quot;running&quot; | &quot;cancelling&quot; | &quot;succeeded&quot; | &quot;failed&quot; | &quot;cancelled&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where an execution is in its life.</p>
+<p>The transitions are the whole contract, and <code>ExecutionState::may_move_to</code> is the one
+place they are written down: the engine asks before every change, the store refuses a
+move it did not allow, and a client that reads a final state never sees it move again.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>  queued ──► running ──┬──► succeeded</span></span>
+<span class="giallo-l"><span>     │                 ├──► failed</span></span>
+<span class="giallo-l"><span>     │                 └──► cancelling ──┬──► cancelled</span></span>
+<span class="giallo-l"><span>     │                                   ├──► succeeded</span></span>
+<span class="giallo-l"><span>     └──► cancelled                      └──► failed</span></span></code></pre>
+<p>There is no <code>starting</code>. An in-process engine claims an execution and enters its handler
+in the same instant, so a state between the two would be one no client could ever
+observe and every client would have to handle.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">queued</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Accepted, and no worker has picked it up.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">running</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The handler is running.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cancelling</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Cancellation was asked for and the handler has not stopped yet.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">succeeded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The handler returned an output.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The handler returned an error, or the worker could not run it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cancelled</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It stopped because it was asked to.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-list" class="font-mono text-fg-brand hover:underline">executions.list</a> <a href="https://majordomus.dev/docs/api/executions/#schema-EventHistory" class="font-mono text-fg-brand underline">EventHistory</a> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+<article id="schema-ExecutionView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ExecutionView</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One execution with the links to everything else about it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">ExecutionId <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionId" class="text-fg-brand underline">ExecutionId</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The identity.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">capability</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The capability that ran, by its canonical id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">That capability's title, so a list needs no second lookup.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">ExecutionState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionState" class="text-fg-brand underline">ExecutionState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where it is.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">created_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When it was accepted, RFC 3339 in UTC.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">started_at</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">When the handler was entered.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">finished_at</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">When it reached a final state.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">duration_ms</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">How long it ran, in milliseconds, once it has finished.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">input</td>
+          <td class="px-3 py-2 font-mono text-body">any</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The input it was given, with every value the input schema marks sensitive replaced.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">output</td>
+          <td class="px-3 py-2 font-mono text-body">any</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What the handler returned, for a succeeded execution and never before.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">error</td>
+          <td class="px-3 py-2 font-mono text-body">ExecutionError | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionError" class="text-fg-brand underline">ExecutionError</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Why it failed, for a failed execution and never before.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">progress</td>
+          <td class="px-3 py-2 font-mono text-body">ProgressView | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ProgressView" class="text-fg-brand underline">ProgressView</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The last progress the handler reported.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">steps</td>
+          <td class="px-3 py-2 font-mono text-body">array of StepView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-StepView" class="text-fg-brand underline">StepView</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The steps it entered, in order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">diagnostics</td>
+          <td class="px-3 py-2 font-mono text-body">array of ExecutionDiagnostic <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionDiagnostic" class="text-fg-brand underline">ExecutionDiagnostic</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The findings it reported.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">last_sequence</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The sequence number of the last event: the cursor a client subscribes from.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">event_count</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many events it has produced, including the ones no longer retained.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">events_truncated</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the retained event history has lost its oldest entries to the bound.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">cancellable</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether asking to cancel this execution will do anything: the capability's policy.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">actor</td>
+          <td class="px-3 py-2 font-mono text-body">Actor <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-Actor" class="text-fg-brand underline">Actor</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Who asked for it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">repository</td>
+          <td class="px-3 py-2 font-mono text-body">RepositoryRef <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-RepositoryRef" class="text-fg-brand underline">RepositoryRef</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Which repository it ran against.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">correlation_id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The id used in this process's logs and tracing spans for this execution; the
+execution id itself, carried under the name a reader of a log expects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">links</td>
+          <td class="px-3 py-2 font-mono text-body">ExecutionLinks <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionLinks" class="text-fg-brand underline">ExecutionLinks</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where to read more.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-get" class="font-mono text-fg-brand hover:underline">executions.get</a> <a href="https://majordomus.dev/docs/api/executions/#op-executions-start" class="font-mono text-fg-brand hover:underline">executions.start</a> <a href="https://majordomus.dev/docs/api/executions/#schema-CancelReport" class="font-mono text-fg-brand underline">CancelReport</a> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionList" class="font-mono text-fg-brand underline">ExecutionList</a></p></article>
+<article id="schema-LimitsView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">LimitsView</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What this process's execution store keeps.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">max_executions</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many executions are remembered.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">max_events</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many events are retained per execution.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">max_log_chars</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The longest a single log line may be.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">max_running</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many executions run at once.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">max_subscriber_queue</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How far a live channel may fall behind before it is told to resynchronise.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ProtocolReport" class="font-mono text-fg-brand underline">ProtocolReport</a></p></article>
+<article id="schema-LogStream" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">LogStream</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;stdout&quot; | &quot;stderr&quot; | &quot;handler&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which stream a log line came from.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stdout</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The standard output of a child process the handler ran.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stderr</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its standard error.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">handler</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The handler itself, saying something it wants a reader to see.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionEvent" class="font-mono text-fg-brand underline">ExecutionEvent</a></p></article>
+<article id="schema-ParameterView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ParameterView</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One query parameter of the live channel.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its name.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">description</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What it does.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">required</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether it must be given.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ProtocolReport" class="font-mono text-fg-brand underline">ProtocolReport</a></p></article>
+<article id="schema-ProgressView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ProgressView</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How far along an execution is.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">current</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Units done.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">total</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Units in total, when the handler knows how many.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">message</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What is being done, for a reader.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionEvent" class="font-mono text-fg-brand underline">ExecutionEvent</a> <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+<article id="schema-ProtocolReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ProtocolReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer of <code>executions.protocol</code>: the live channel's whole contract, derived from
+the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">protocol_version</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The version of the event protocol this server speaks.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">websocket</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where the live channel is: a path on this same server, not a second daemon.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">subscription</td>
+          <td class="px-3 py-2 font-mono text-body">array of ParameterView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-ParameterView" class="text-fg-brand underline">ParameterView</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How the subscription is expressed, and what a reconnect sends.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">heartbeat_seconds</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many seconds of quiet before the server pings.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">max_connections</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many live channels this process serves at once.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">max_replay</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many retained events a scoped connection replays before going live.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">event_types</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The event types a client may receive, from the one enum that defines them.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stream_types</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The stream's own control messages.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">event_schema</td>
+          <td class="px-3 py-2 font-mono text-body">any</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The JSON Schema of an event, derived from the Rust type.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stream_schema</td>
+          <td class="px-3 py-2 font-mono text-body">any</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The JSON Schema of a control message, derived from the Rust type.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">limits</td>
+          <td class="px-3 py-2 font-mono text-body">LimitsView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-LimitsView" class="text-fg-brand underline">LimitsView</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the store keeps, so a client knows what it may ask for.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-protocol" class="font-mono text-fg-brand hover:underline">executions.protocol</a></p></article>
+<article id="schema-RepositoryRef" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RepositoryRef</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which repository, and which checkout of it, an execution ran against.</p>
+<p>An execution is never run against "wherever this process happens to be": the engine
+stamps the repository the index was read from, and a request that names a different one
+is refused. The path itself is not here — this value is served to whoever can reach the
+socket, and where the checkout sits on the host is of no use to them.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The repository's name: the last component of its root.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The stable identity two processes over one checkout both compute.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branch</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The branch checked out, when git can say.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+<article id="schema-StartInput" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">StartInput</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>executions.start</code>: which capability to run, and with what.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">capability</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The canonical id of the capability to run (<code>health.report</code>, <code>objects.verify</code>).</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">input</td>
+          <td class="px-3 py-2 font-mono text-body">any</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Its input, as its own input schema describes it; an empty object when it takes none.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#op-executions-start" class="font-mono text-fg-brand hover:underline">executions.start</a></p></article>
+<article id="schema-StepState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">StepState</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;running&quot; | &quot;completed&quot; | &quot;failed&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where a step of an execution stands.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">running</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Entered and not finished.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">completed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Finished, and what it was asked to do happened.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Finished, and it did not.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-StepView" class="font-mono text-fg-brand underline">StepView</a></p></article>
+<article id="schema-StepView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">StepView</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One named phase of an execution, as the handler reported it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">A stable name, unique within the execution.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line for a reader.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">StepState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/executions/#schema-StepState" class="text-fg-brand underline">StepState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where it stands.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">started_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When it was entered, RFC 3339 in UTC.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">finished_at</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">When it finished, when it has.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">detail</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What it said when it finished, when it said anything.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/executions/#schema-ExecutionView" class="font-mono text-fg-brand underline">ExecutionView</a></p></article>
+</section>
+  </div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

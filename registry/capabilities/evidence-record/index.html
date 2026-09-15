@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -196,44 +196,40 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · EvidenceRecordInput</h3><p class="mt-1 break-words text-sm text-body">A run to record into the ledger.
-
-Paths to what the runners already wrote, not a run to perform: the recorder reads a
+  <h3 class="font-mono text-sm font-semibold text-heading">input · EvidenceRecordInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A run to record into the ledger.</p>
+<p>Paths to what the runners already wrote, not a run to perform: the recorder reads a
 report, stamps each result with the provenance the run did not carry, and merges it.
-Both reports are optional and may be given together; an absent origin is `local`.
-
-```
-use majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;
-
-let input: EvidenceRecordInput =
-    serde_json::from_str(r#&quot;{&quot;suite&quot;: &quot;tmp/report.tsv&quot;}&quot;#).unwrap();
-assert_eq!(input.suite.as_deref(), Some(&quot;tmp/report.tsv&quot;));
-assert!(input.crate_output.is_none() &amp;&amp; input.origin.is_none());
-
-// what was not given is not written back as null: the shape a client reads is the
-// shape it sent
-assert_eq!(
-    serde_json::to_string(&amp;input).unwrap(),
-    r#&quot;{&quot;suite&quot;:&quot;tmp/report.tsv&quot;}&quot;#
-);
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+Both reports are optional and may be given together; an absent origin is <code>local</code>.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let input: EvidenceRecordInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_str(r#&quot;{&quot;suite&quot;: &quot;tmp/report.tsv&quot;}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(input.suite.as_deref(), Some(&quot;tmp/report.tsv&quot;));</span></span>
+<span class="giallo-l"><span>assert!(input.crate_output.is_none() &amp;&amp; input.origin.is_none());</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// what was not given is not written back as null: the shape a client reads is the</span></span>
+<span class="giallo-l"><span>// shape it sent</span></span>
+<span class="giallo-l"><span>assert_eq!(</span></span>
+<span class="giallo-l"><span>    serde_json::to_string(&amp;input).unwrap(),</span></span>
+<span class="giallo-l"><span>    r#&quot;{&quot;suite&quot;:&quot;tmp/report.tsv&quot;}&quot;#</span></span>
+<span class="giallo-l"><span>);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">crate_output</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">A file holding `cargo test`&#39;s output, for the crate&#39;s own integration tests.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">A file holding <code>cargo test</code>'s output, for the crate's own integration tests.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">origin</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Where the run happened: `local` (the default), `ci` or `release`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the run happened: <code>local</code> (the default), <code>ci</code> or <code>release</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">suite</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The runner&#39;s TSV report: `MJ_TEST_REPORT=&lt;file&gt; bash test/run.sh`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The runner's TSV report: <code>MJ_TEST_REPORT=&lt;file&gt; bash test/run.sh</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -270,64 +266,60 @@ assert_eq!(
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · RecordReport</h3><p class="mt-1 break-words text-sm text-body">What a recording did: how much of the run reached the ledger, and under what provenance.
-
-The recorder decides nothing, and this report says so. A result no runner in this
-repository owns is named in `unknown` rather than written under a guessed identity, and
-a failure is recorded like a pass — the ledger holds what happened, so `passed` is a
-count and never a filter.
-
-```
-use majordomus_cli::capability::builtin::evidence::RecordReport;
-
-let report = RecordReport {
-    recorded: 3,
-    passed: 2,
-    commit: &quot;06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f&quot;.to_string(),
-    working_tree: &quot;clean&quot;.to_string(),
-    unknown: vec![&quot;docs/CLAIMS.yaml&quot;.to_string()],
-    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),
-};
-// the failing test is one of the three recorded, not a fourth thing that was dropped
-assert_eq!(report.recorded - report.passed, 1);
-assert!(report.ledger.starts_with(&quot;.ai/repo/&quot;));
-
-let json = serde_json::to_value(&amp;report).unwrap();
-assert_eq!(json[&quot;unknown&quot;].as_array().unwrap().len(), 1);
-assert_eq!(json[&quot;working_tree&quot;], &quot;clean&quot;);
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · RecordReport</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a recording did: how much of the run reached the ledger, and under what provenance.</p>
+<p>The recorder decides nothing, and this report says so. A result no runner in this
+repository owns is named in <code>unknown</code> rather than written under a guessed identity, and
+a failure is recorded like a pass — the ledger holds what happened, so <code>passed</code> is a
+count and never a filter.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::evidence::RecordReport;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let report = RecordReport {</span></span>
+<span class="giallo-l"><span>    recorded: 3,</span></span>
+<span class="giallo-l"><span>    passed: 2,</span></span>
+<span class="giallo-l"><span>    commit: &quot;06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f&quot;.to_string(),</span></span>
+<span class="giallo-l"><span>    working_tree: &quot;clean&quot;.to_string(),</span></span>
+<span class="giallo-l"><span>    unknown: vec![&quot;docs/CLAIMS.yaml&quot;.to_string()],</span></span>
+<span class="giallo-l"><span>    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>// the failing test is one of the three recorded, not a fourth thing that was dropped</span></span>
+<span class="giallo-l"><span>assert_eq!(report.recorded - report.passed, 1);</span></span>
+<span class="giallo-l"><span>assert!(report.ledger.starts_with(&quot;.ai/repo/&quot;));</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let json = serde_json::to_value(&amp;report).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(json[&quot;unknown&quot;].as_array().unwrap().len(), 1);</span></span>
+<span class="giallo-l"><span>assert_eq!(json[&quot;working_tree&quot;], &quot;clean&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">commit</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The commit they were recorded against.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commit they were recorded against.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">ledger</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where the ledger was written.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the ledger was written.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">passed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many of them passed.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them passed.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">recorded</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many executions were written.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many executions were written.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">unknown</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Results the run named that no runner in this repository owns.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Results the run named that no runner in this repository owns.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">working_tree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The tree&#39;s state at the time.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The tree's state at the time.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -410,8 +402,8 @@ assert_eq!(json[&quot;working_tree&quot;], &quot;clean&quot;);
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::evidence</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EvidenceRecordInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RecordReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -482,7 +474,7 @@ assert_eq!(json[&quot;working_tree&quot;], &quot;clean&quot;);
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

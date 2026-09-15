@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP API: devtask — Prismatic Majordomus</title>
+<meta name="description" content="An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`&#39;s, the branches and commits are `trace`&#39;s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`&#39;s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.">
+<link rel="canonical" href="https://majordomus.dev/docs/api/devtask/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="HTTP API: devtask — Prismatic Majordomus">
+<meta property="og:description" content="An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`&#39;s, the branches and commits are `trace`&#39;s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`&#39;s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.">
+<meta property="og:url" content="https://majordomus.dev/docs/api/devtask/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.7.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">HTTP API: devtask</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">HTTP API: devtask</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`&#39;s, the branches and commits are `trace`&#39;s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`&#39;s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
+    <p class="mb-2"><a href="https://majordomus.dev/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-devtask-issue" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">devtask.issue</a></li><li><a href="#op-devtask-milestone" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">devtask.milestone</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-devtask" class="scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">devtask</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`&#39;s, the branches and commits are `trace`&#39;s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`&#39;s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.</p><article id="op-devtask-issue" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/devtask/issue</code>
+    <a href="#op-devtask-issue" class="font-mono text-xs text-body-subtle hover:underline">devtask.issue</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">One issue as an executable development task</h3>
+  <p class="mt-1 break-words text-sm text-body">Identity, title, intent, status, milestone, acceptance criteria, dependencies, blockers, the commits its own evidence names and the commits git found, its branches, the sessions that worked on it, its readiness and everything wrong with its records — each field carrying whether a person authored it (`explicit`), a machine worked it out by a rule that cannot be wrong (`derived`), a machine worked it out by a rule that can (`inferred`, with the rule stated), or it is not available at all (`unknown`, with the reason). A key the record does not carry is `unknown`, never an empty string: `objective: &quot;&quot;` and a record with no objective are the same string and different facts. An id the model does not declare is answered, not refused. `git: false` answers from the records alone, which is what a comparison across machines wants.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_devtask</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ devtask issue</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue id, as the canonical model spells it (`I0901`). An id the model does not
+declare is answered with `declared: false` and every canonical field `unknown`,
+never refused and never answered with empty strings that read as authored.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">records-only:</span> &quot;I0001&quot;</span><span class="block break-all"><span class="text-body-subtle">with-git:</span> &quot;I0001&quot;</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">git</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Consult git for the branches and commits that realised it. Default: yes. Set it to
+false for a deterministic answer that depends on the records alone — which is what a
+generated document or a comparison across machines wants.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">records-only:</span> false</span><span class="block break-all"><span class="text-body-subtle">with-git:</span> true</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/devtask/issue?issue=I0001&amp;git=false&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/devtask/#schema-DevTask" class="text-fg-brand hover:underline">DevTask</a></td>
+          <td class="px-3 py-2 text-body">One issue as an executable development task: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-devtask-milestone" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/devtask/milestone</code>
+    <a href="#op-devtask-milestone" class="font-mono text-xs text-body-subtle hover:underline">devtask.milestone</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">One milestone as an executable dependency graph</h3>
+  <p class="mt-1 break-words text-sm text-body">Every issue of the milestone as a node with its readiness, its wave and what waits on it; every dependency edge with at least one end inside, the crossing ones marked; the issues partitioned into ready, blocked, waiting, active, review, completion-blocked, complete and cancelled; the critical blockers ordered by how much unfinished work each holds back; the startable work partitioned into subsets that may genuinely run at the same time — same wave, each parallel-safe, no two sharing a scope path — with each serialisation naming the path that caused it; every dependency cycle as its strongly connected component; and every finding about the milestone or its issues. A pure function of the canonical records: no git, no clock, no network, every list in canonical order, so two runs on two machines produce the same bytes. A work surface reading this derives nothing itself.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_devtask_milestone</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ devtask milestone</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone id, as the canonical model spells it. An id the model does not declare
+is answered with an empty graph and every field `unknown`, not refused.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">first-milestone:</span> &quot;M000&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/devtask/milestone?milestone=M000&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="text-fg-brand hover:underline">MilestoneGraph</a></td>
+          <td class="px-3 py-2 text-body">One milestone as an executable dependency graph: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+</section><section id="schemas" class="mt-12 scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-AttestationTally" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">AttestationTally</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How much of one answer was authored, and how much a machine worked out.</p>
+<p>Not decoration: it is the measurement that makes the provenance discipline checkable
+from outside. A task whose declaration is mostly <code>unknown</code> is a placeholder however
+complete its derived half looks, and this is the number that says so.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">explicit</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Fields a person authored in the canonical record.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">derived</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Fields worked out by a rule that cannot be wrong about a readable repository.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">inferred</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Fields worked out by a rule that can be wrong.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">unknown</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Fields not available at all.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTask" class="font-mono text-fg-brand underline">DevTask</a></p></article>
+<article id="schema-AttestedCount" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">AttestedCount</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A count with its provenance. Separate from <code>AttestedText</code> because a wave, a commit
+tally and an evidence count are numbers a caller does arithmetic on, and a number
+rendered as a string is a number every client has to parse back.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">value</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The number, absent exactly when the provenance is <code>unknown</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">provenance</td>
+          <td class="px-3 py-2 font-mono text-body">FieldProvenance <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-FieldProvenance" class="text-fg-brand underline">FieldProvenance</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where it came from.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The one place a reader goes to check it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Why the provenance is what it is, when that is worth a sentence.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskExecution" class="font-mono text-fg-brand underline">DevTaskExecution</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskPosition" class="font-mono text-fg-brand underline">DevTaskPosition</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-AttestedList" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">AttestedList</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A list with its provenance. The distinction a bare <code>Vec</code> cannot make is the one that
+matters here: <code>depends_on: []</code> in the record is an authored empty list, and a record with
+no <code>depends_on</code> key is unknown. Both are empty; only one is a statement.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">values</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The items, in the order the record or the derivation produced them. Empty for an
+authored empty list and for an unknown field alike; <code>provenance</code> tells them apart.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">provenance</td>
+          <td class="px-3 py-2 font-mono text-body">FieldProvenance <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-FieldProvenance" class="text-fg-brand underline">FieldProvenance</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where they came from.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The one place a reader goes to check them.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Why the provenance is what it is, when that is worth a sentence.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskDeclaration" class="font-mono text-fg-brand underline">DevTaskDeclaration</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskExecution" class="font-mono text-fg-brand underline">DevTaskExecution</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskPosition" class="font-mono text-fg-brand underline">DevTaskPosition</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-AttestedText" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">AttestedText</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One scalar with its provenance: the unit every field of a development task is made of.</p>
+<p>The invariant the constructors enforce, and <code>AttestedText::is_consistent</code> states, is
+that a value is present exactly when the provenance is not <code>FieldProvenance::Unknown</code>.
+Without it the shape can express "unknown, and here is the value", which is the defect
+this whole module exists to prevent.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">value</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The value, absent exactly when the provenance is <code>unknown</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">provenance</td>
+          <td class="px-3 py-2 font-mono text-body">FieldProvenance <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-FieldProvenance" class="text-fg-brand underline">FieldProvenance</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where it came from.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The one place a reader goes to check it: a repository-relative path with the key it
+was read from, a capability id, or a command. Never a machine path.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Why the provenance is what it is, when that is worth a sentence: always for
+<code>unknown</code> and for <code>inferred</code>, and omitted otherwise.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskDeclaration" class="font-mono text-fg-brand underline">DevTaskDeclaration</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskExecution" class="font-mono text-fg-brand underline">DevTaskExecution</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskPosition" class="font-mono text-fg-brand underline">DevTaskPosition</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskSynchronisation" class="font-mono text-fg-brand underline">DevTaskSynchronisation</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-Blocker" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Blocker</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One thing standing between a task and being startable, with what to do about it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">kind</td>
+          <td class="px-3 py-2 font-mono text-body">BlockerKind <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-BlockerKind" class="text-fg-brand underline">BlockerKind</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What kind of thing it is.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">subject</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The thing: an issue id, a milestone id, an evidence token.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">detail</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What is wrong, in one line a person can act on.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-ReadinessVerdict" class="font-mono text-fg-brand underline">ReadinessVerdict</a></p></article>
+<article id="schema-BlockerKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">BlockerKind</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;issue&quot; | &quot;milestone&quot; | &quot;evidence&quot; | &quot;reference&quot; | &quot;cycle&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What kind of thing is holding a task back. The five are the five the canonical model can
+actually produce; there is no <code>other</code>.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">issue</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">An issue this one depends on that is not <code>DONE</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">milestone</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The milestone gate: an outcome this one's milestone requires is not <code>DONE</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">evidence</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required evidence token the record does not carry, with completion recorded.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">reference</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A dependency that resolves to nothing: the model has no such issue.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cycle</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A dependency cycle this task is in or downstream of, so it can never become ready.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-Blocker" class="font-mono text-fg-brand underline">Blocker</a></p></article>
+<article id="schema-CriticalBlocker" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">CriticalBlocker</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One unfinished issue that holds back downstream work, and how much.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">readiness</td>
+          <td class="px-3 py-2 font-mono text-body">TaskReadiness <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-TaskReadiness" class="text-fg-brand underline">TaskReadiness</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where it stands, which is what says whether unblocking it is work or a decision.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blocks</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The unfinished issues that wait on it, directly or through another, in canonical
+order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">weight</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many that is. The number the list is ordered by.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-DevTask" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DevTask</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One issue as an executable development task: what was authored, where it sits, what has
+happened to it, where its external projection stands, and whether a worker may start it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue id, as asked for.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">declared</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the canonical model declares it. False is answered rather than refused, with
+every canonical field <code>unknown</code>: a typo that read as "nothing has been authored" is
+the one answer this must never give.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">record</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Repository-relative path of the canonical record, when there is one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">declaration</td>
+          <td class="px-3 py-2 font-mono text-body">DevTaskDeclaration <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskDeclaration" class="text-fg-brand underline">DevTaskDeclaration</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What a person authored.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">position</td>
+          <td class="px-3 py-2 font-mono text-body">DevTaskPosition <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskPosition" class="text-fg-brand underline">DevTaskPosition</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where the plan graph puts it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">execution</td>
+          <td class="px-3 py-2 font-mono text-body">DevTaskExecution <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskExecution" class="text-fg-brand underline">DevTaskExecution</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What happened locally.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">synchronisation</td>
+          <td class="px-3 py-2 font-mono text-body">DevTaskSynchronisation <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskSynchronisation" class="text-fg-brand underline">DevTaskSynchronisation</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where the external projection stands.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">readiness</td>
+          <td class="px-3 py-2 font-mono text-body">ReadinessVerdict <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-ReadinessVerdict" class="text-fg-brand underline">ReadinessVerdict</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether it can be worked on, and what is in the way.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">diagnostics</td>
+          <td class="px-3 py-2 font-mono text-body">array of DevTaskDiagnostic <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskDiagnostic" class="text-fg-brand underline">DevTaskDiagnostic</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Everything wrong with its records.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">attestation</td>
+          <td class="px-3 py-2 font-mono text-body">AttestationTally <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestationTally" class="text-fg-brand underline">AttestationTally</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How much of the answer was authored and how much a machine worked out.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#op-devtask-issue" class="font-mono text-fg-brand hover:underline">devtask.issue</a></p></article>
+<article id="schema-DevTaskDeclaration" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DevTaskDeclaration</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a person authored in the canonical record. Every field is <code>FieldProvenance::Explicit</code>
+or <code>FieldProvenance::Unknown</code> and nothing else: a value here was written down, or it
+does not exist.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line naming the outcome.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">objective</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the issue is for.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">why</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Why it is worth doing.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">current_state</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where the repository stands before it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">desired_state</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where the repository stands once it is real.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">completion</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the author says about how far it got. Authored prose, never a status: the
+status is derived, and this is the one field where a person may disagree with it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone it belongs to.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">priority</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>p0</code> … <code>p3</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">profile</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution profile it is worked under.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">parallel_safe</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether it may run beside another issue of its wave.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">owner</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Who owns it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">risk</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What could go wrong.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">slug</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The slug.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">cancelled</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether it was withdrawn.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">created_at</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When the record was created.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">updated_at</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When it last moved.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">started_at</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When execution began.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">verified_at</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When implementation was declared finished.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">completed_at</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When completion was recorded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">scope</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The paths it may touch.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">non_scope</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The paths it deliberately does not touch.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">depends_on</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues it declares a dependency on, exactly as declared — including one that
+does not exist, which is a diagnostic and not a silent omission.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">acceptance_criteria</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What must be true before it is finished.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">validation</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The commands that check it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence_required</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The evidence tokens it requires before it may be complete.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence_present</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The evidence tokens it actually carries.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence_commits</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The commits the record's own evidence entries name. Authored, and therefore a
+different fact from the commits git finds on the branches — which are in
+<code>DevTaskExecution::commits</code> and are derived.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTask" class="font-mono text-fg-brand underline">DevTask</a></p></article>
+<article id="schema-DevTaskDiagnostic" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DevTaskDiagnostic</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One thing wrong with this task's records, in the shape <code>project.finding-carries-reproduce</code>
+asks for.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">level</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>FAIL</code> or <code>WARN</code>, as the plan's own finding levels.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">code</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The stable code a reader greps for.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">message</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What is wrong, in one line.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reproduce</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The one command that shows it again.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTask" class="font-mono text-fg-brand underline">DevTask</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-DevTaskExecution" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DevTaskExecution</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Local execution state: what actually happened in this checkout's git history and session
+records. Derived where the relation was declared, inferred where it was not, and the
+fields say which.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">git_consulted</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether git was consulted at all. False makes every git-derived field below
+<code>unknown</code> rather than empty, which is the difference between "nothing realised this"
+and "nobody looked".</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branches</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The branches whose name carries this issue's id, local first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">merged_branches</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Of those, the ones that reached the trunk.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">commits</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedCount <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedCount" class="text-fg-brand underline">AttestedCount</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many distinct commits those branches hold that the trunk did not.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">trunk</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The trunk every branch was measured against.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">commits_complete</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">True when every branch's commits could be derived. False when one reached the trunk
+without a merge commit of its own, so part of the work cannot be told from the
+trunk's — reported rather than counted as zero.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">sessions</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The session records whose own <code>issues</code> key names this issue. Derived: the key is
+worked out from the episode's ledger events, not authored and not guessed.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">sessions_by_branch</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The session records that reach this issue only through their branch name, and which
+therefore may be wrong. Never overlaps <code>DevTaskExecution::sessions</code>: a session that
+declared the issue is reported there and not here, so the weaker relation never
+stands in for the stronger one.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTask" class="font-mono text-fg-brand underline">DevTask</a></p></article>
+<article id="schema-DevTaskPosition" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DevTaskPosition</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the task sits in the plan graph. Every field is derived; nothing here is authored,
+and nothing here is stored anywhere.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The canonical status, from the one derivation of it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">wave</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedCount <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedCount" class="text-fg-brand underline">AttestedCount</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution wave: one past the longest path to it. Unknown when a cycle prevents
+it from ever having one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blocked_by</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The dependencies that are not <code>DONE</code>, plus the milestone gate when it applies.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">dependents</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues that wait on this one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">transitive_dependents</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedCount <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedCount" class="text-fg-brand underline">AttestedCount</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every issue that waits on it, directly or through another. The measure of what
+finishing it unblocks.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone_status</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The status of the milestone it belongs to.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone_rank</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedCount <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedCount" class="text-fg-brand underline">AttestedCount</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone's layer in the milestone graph.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone_blocked_by</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The outcomes that milestone still waits on.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence_have</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedCount <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedCount" class="text-fg-brand underline">AttestedCount</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many evidence tokens it carries.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence_need</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedCount <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedCount" class="text-fg-brand underline">AttestedCount</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many it needs.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTask" class="font-mono text-fg-brand underline">DevTask</a></p></article>
+<article id="schema-DevTaskSynchronisation" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DevTaskSynchronisation</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The external projection. Nothing here is ever written by this executable, and the fields
+that only the adapter can answer say so rather than reading as empty.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">adapter</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The adapter that owns the projection. The one thing that can answer the live state.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">repository</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The repository the projection targets, from <code>project.yaml</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The reconciliation state of the external record. Always <code>unknown</code> from here: it is a
+network fact, and this executable makes none. The reason names the command.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">external_id</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The external record's own identifier — a GitHub number — which GitHub assigns and
+nothing local records. Always <code>unknown</code>, for the same reason.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reconcile_with</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The commands that answer the external half.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">writable</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether this executable may write any of it. Always false; stated as a field so that
+a client need not know the rule to respect it.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTask" class="font-mono text-fg-brand underline">DevTask</a></p></article>
+<article id="schema-FieldProvenance" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">FieldProvenance</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;explicit&quot; | &quot;derived&quot; | &quot;inferred&quot; | &quot;unknown&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where a value came from, and therefore how much weight a reader may put on it.</p>
+<p>The four words are not degrees of confidence, they are four different relations to the
+repository, and the distinction that matters most is the first from the last two: a
+person wrote it, or a machine worked it out.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::devtask::{AttestedText, FieldProvenance};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a value the record itself carried</span></span>
+<span class="giallo-l"><span>let title = AttestedText::explicit(&quot;Ship it&quot;, &quot;.ai/repo/project/issues/I0001.yaml#title&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(title.provenance, FieldProvenance::Explicit);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a key the record does not have is unknown, and unknown carries no value</span></span>
+<span class="giallo-l"><span>let missing = AttestedText::unknown(</span></span>
+<span class="giallo-l"><span>    &quot;.ai/repo/project/issues/I0001.yaml#objective&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;the record declares no `objective`&quot;,</span></span>
+<span class="giallo-l"><span>);</span></span>
+<span class="giallo-l"><span>assert_eq!(missing.provenance, FieldProvenance::Unknown);</span></span>
+<span class="giallo-l"><span>assert!(missing.value.is_none());</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">explicit</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A person authored it, in the canonical record, under this key. The strongest thing
+that can be said about a value, and the only one that survives a rewrite of every
+derivation in this repository.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">derived</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A machine worked it out from records or from git, by a rule that cannot be wrong
+about a repository it can read: an issue's dependents are the issues that name it.
+Re-derived on every call and stored nowhere.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">inferred</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A machine worked it out by a rule that <em>can</em> be wrong, because the relation it reads
+was never declared: a session belongs to an issue because its branch name contains
+the issue's id. Useful, and never to be mistaken for a declaration.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Not available. Either the record does not carry the key, or the fact lives outside
+what this process may read — a live GitHub state, for one — and the field says which
+in its <code>reason</code>. An unknown field never carries a value.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedCount" class="font-mono text-fg-brand underline">AttestedCount</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="font-mono text-fg-brand underline">AttestedList</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="font-mono text-fg-brand underline">AttestedText</a></p></article>
+<article id="schema-MilestoneCounts" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">MilestoneCounts</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One milestone's issues counted by readiness, plus the two denominators.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">total</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every issue naming this milestone.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">required</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Total less cancelled: the denominator a progress figure uses.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">by_readiness</td>
+          <td class="px-3 py-2 font-mono text-body">map of integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One entry per readiness state that has at least one issue, keyed by its word.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-MilestoneEdge" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">MilestoneEdge</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One dependency edge of the milestone's graph, <code>from</code> before <code>to</code>.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">from</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue that must be real first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">to</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue that waits for it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">external</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">True when one end is outside this milestone. Such an edge is why a milestone can be
+entirely blocked with nothing wrong inside it, so it is marked rather than dropped.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-MilestoneGraph" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">MilestoneGraph</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One milestone as an executable dependency graph.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone id, as asked for.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">declared</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the canonical model declares it. False is answered, not refused.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">record</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Repository-relative path of the canonical record, when there is one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line naming the outcome, as authored.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">outcome</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What is true once it is real, as authored.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedText <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedText" class="text-fg-brand underline">AttestedText</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The derived milestone status.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rank</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedCount <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedCount" class="text-fg-brand underline">AttestedCount</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its layer in the milestone graph: what orders the roadmap.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">depends_on</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestones it requires, as authored.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blocked_by</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Those of them that are not <code>DONE</code>. Non-empty means every issue here is held back
+whatever its own dependencies say.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">dependents</td>
+          <td class="px-3 py-2 font-mono text-body">AttestedList <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-AttestedList" class="text-fg-brand underline">AttestedList</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestones that require it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">nodes</td>
+          <td class="px-3 py-2 font-mono text-body">array of MilestoneNode <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneNode" class="text-fg-brand underline">MilestoneNode</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every issue of the milestone, in canonical order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">edges</td>
+          <td class="px-3 py-2 font-mono text-body">array of MilestoneEdge <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneEdge" class="text-fg-brand underline">MilestoneEdge</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every dependency edge with at least one end in this milestone, sorted.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">ready</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues a worker may pick up now.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blocked</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues waiting on a peer.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">waiting</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues waiting only on the milestone gate.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">active</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues somebody has started.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">review</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues awaiting confirmation.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">completion_blocked</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues declared complete whose evidence does not back that up.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">complete</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues finished on their own terms.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">cancelled</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues withdrawn.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">critical_blockers</td>
+          <td class="px-3 py-2 font-mono text-body">array of CriticalBlocker <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-CriticalBlocker" class="text-fg-brand underline">CriticalBlocker</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What to unblock first, most downstream work first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">parallelizable</td>
+          <td class="px-3 py-2 font-mono text-body">array of ParallelSet <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-ParallelSet" class="text-fg-brand underline">ParallelSet</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The startable work partitioned into subsets that may run at the same time.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">cycles</td>
+          <td class="px-3 py-2 font-mono text-body">array of array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every dependency cycle with an issue of this milestone in it, each as its strongly
+connected component in canonical order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">diagnostics</td>
+          <td class="px-3 py-2 font-mono text-body">array of DevTaskDiagnostic <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTaskDiagnostic" class="text-fg-brand underline">DevTaskDiagnostic</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Everything wrong with the records of this milestone or of its issues.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">counts</td>
+          <td class="px-3 py-2 font-mono text-body">MilestoneCounts <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneCounts" class="text-fg-brand underline">MilestoneCounts</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues counted by readiness.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#op-devtask-milestone" class="font-mono text-fg-brand hover:underline">devtask.milestone</a></p></article>
+<article id="schema-MilestoneNode" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">MilestoneNode</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One issue of a milestone, as a node of its graph.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line naming the outcome.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">readiness</td>
+          <td class="px-3 py-2 font-mono text-body">TaskReadiness <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-TaskReadiness" class="text-fg-brand underline">TaskReadiness</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where it stands as work.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">canonical_status</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The canonical status it refines.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">wave</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The execution wave, absent when a cycle prevents it from having one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">priority</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>p0</code> … <code>p3</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">parallel_safe</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether it may run beside another issue of its wave.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blocked_by</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What is not <code>DONE</code> yet, plus the milestone gate when it applies.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">dependents</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues that wait on it directly.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">transitive_dependents</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many issues wait on it directly or through another.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">scope</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The paths it touches.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-ParallelSet" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ParallelSet</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One subset of the startable work that may genuinely run at the same time.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">wave</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The wave every issue in it belongs to.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issues</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues, in canonical order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">serialised</td>
+          <td class="px-3 py-2 font-mono text-body">array of ScopeConflict <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-ScopeConflict" class="text-fg-brand underline">ScopeConflict</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Why the set is not larger: the candidates of the same wave that had to be serialised
+against something already in it.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneGraph" class="font-mono text-fg-brand underline">MilestoneGraph</a></p></article>
+<article id="schema-ReadinessVerdict" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ReadinessVerdict</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The readiness verdict, with everything it was derived from beside it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">TaskReadiness <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-TaskReadiness" class="text-fg-brand underline">TaskReadiness</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where the task stands, as work.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">canonical_status</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The canonical status it refines, so the two can never be read apart.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Why it is in that state, in one line.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">startable</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">May a worker pick it up right now?</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">terminal</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Is there nothing further to do?</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blockers</td>
+          <td class="px-3 py-2 font-mono text-body">array of Blocker <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/devtask/#schema-Blocker" class="text-fg-brand underline">Blocker</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Everything standing in the way, each with what to do about it.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-DevTask" class="font-mono text-fg-brand underline">DevTask</a></p></article>
+<article id="schema-ScopeConflict" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ScopeConflict</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Two issues of one wave that cannot run together, and the path that stops them.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">held</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue already in the set.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">excluded</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue that could not join it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The scope path they share, as one of them declares it.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-ParallelSet" class="font-mono text-fg-brand underline">ParallelSet</a></p></article>
+<article id="schema-TaskReadiness" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">TaskReadiness</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;ready&quot; | &quot;blocked&quot; | &quot;waiting&quot; | &quot;in_progress&quot; | &quot;review&quot; | &quot;completion_blocked&quot; | &quot;complete&quot; | &quot;cancelled&quot; | &quot;undeclared&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where a development task stands, as work.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::devtask::TaskReadiness;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// every state names the canonical status it refines, and refines only one</span></span>
+<span class="giallo-l"><span>assert_eq!(TaskReadiness::Ready.canonical(), &quot;READY&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(TaskReadiness::Waiting.canonical(), &quot;BLOCKED&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(TaskReadiness::Blocked.canonical(), &quot;BLOCKED&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(TaskReadiness::Review.canonical(), &quot;VERIFY&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(TaskReadiness::CompletionBlocked.canonical(), &quot;VERIFY&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and one state is the absence of a record rather than a status of one</span></span>
+<span class="giallo-l"><span>assert!(TaskReadiness::Undeclared.canonical().is_empty());</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ready</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Nothing holds it back and nobody has started it. Canonical <code>READY</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">blocked</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">At least one issue it depends on is not <code>DONE</code>. Canonical <code>BLOCKED</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every issue dependency is satisfied; the milestone gate holds it. Canonical
+<code>BLOCKED</code>, and a distinct situation because it is resolved in another milestone.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">in_progress</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Execution began: the record carries <code>started_at</code>. Canonical <code>ACTIVE</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">review</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Implementation is declared finished and completion has not been recorded: the record
+carries <code>verified_at</code>. Canonical <code>VERIFY</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">completion_blocked</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Completion <em>was</em> recorded and the evidence the record itself requires is not all
+there, so the plan refuses to call it <code>DONE</code>. Canonical <code>VERIFY</code>, and the case the
+<code>evidence_missing</code> finding is about.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">complete</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Finished on its own terms: not cancelled, completion recorded, every required
+evidence token present. Canonical <code>DONE</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cancelled</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Withdrawn. Canonical <code>CANCELLED</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">undeclared</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The canonical model does not declare this id. Not a status: the absence of a record.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/devtask/#schema-CriticalBlocker" class="font-mono text-fg-brand underline">CriticalBlocker</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-MilestoneNode" class="font-mono text-fg-brand underline">MilestoneNode</a> <a href="https://majordomus.dev/docs/api/devtask/#schema-ReadinessVerdict" class="font-mono text-fg-brand underline">ReadinessVerdict</a></p></article>
+</section>
+  </div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_feature</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-product-feature" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/product/feature</a> <span class="text-xs text-body-subtle">operationId product.feature</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/product/#op-product-feature" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/product/feature</a> <span class="text-xs text-body-subtle">operationId product.feature</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus product show</td></tr>
         </tbody>
       </table>
@@ -196,14 +196,14 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · FeatureInput</h3><p class="mt-1 break-words text-sm text-body">Which feature to read.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · FeatureInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which feature to read.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The feature&#39;s id, as `product.features` gives it. This is also its slug and its route.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The feature's id, as <code>product.features</code> gives it. This is also its slug and its route.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -226,209 +226,209 @@
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · ResolvedRefs</h3><p class="mt-1 break-words text-sm text-body">One feature, resolved: the record as its file declares it, and everything derived.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · ResolvedRefs</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One feature, resolved: the record as its file declares it, and everything derived.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">adr_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the decisions it names, with their status.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the decisions it names, with their status.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">adrs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The decisions behind it, by declared id. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The decisions behind it, by declared id. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">areas</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The operational areas of the why catalogue it serves. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The operational areas of the why catalogue it serves. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">audiences</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The audiences of the why catalogue it is written for. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The audiences of the why catalogue it is written for. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">backlinks</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the features that name this one in their `related`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the features that name this one in their <code>related</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">body</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The Markdown body, without its front matter.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The Markdown body, without its front matter.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claim_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the claims it names, with their status.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the claims it names, with their status.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claims</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Claims that say what is guaranteed here. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Claims that say what is guaranteed here. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">cockpit</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Areas of the Cockpit that show it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Areas of the Cockpit that show it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">cockpit_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the Cockpit areas it names, with their routes.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the Cockpit areas it names, with their routes.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">command_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the shell commands it names, as the command registry declares them.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the shell commands it names, as the command registry declares them.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">commands</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Public commands of the shell tool it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Public commands of the shell tool it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">counts</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: how much stands behind it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: how much stands behind it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">doc_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the documents it names, with their titles.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the documents it names, with their titles.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">docs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The documents that explain it, by repository-relative path. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The documents that explain it, by repository-relative path. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">evidence</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: what is guaranteed.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: what is guaranteed.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">featured</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Whether the homepage shows it as a chapter. <span class="font-mono text-xs text-body-subtle">default false</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the homepage shows it as a chapter. <span class="font-mono text-xs text-body-subtle">default false</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">headline</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The promise a visitor reads first.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The promise a visitor reads first.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The identity, the slug and the file name.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity, the slug and the file name.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">kind_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the kinds it names, each with its object count.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the kinds it names, each with its object count.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">kinds</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Object kinds of the layer it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Object kinds of the layer it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">module_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the modules it names, each with its capabilities and their projections.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the modules it names, each with its capabilities and their projections.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">modules</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Capability modules of the executable it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Capability modules of the executable it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">moments</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the moments that name any command, capability, claim or rule of this feature.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the moments that name any command, capability, claim or rule of this feature.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">related</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Features explicitly related to this one. The reverse is derived. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Features explicitly related to this one. The reverse is derived. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">route</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Derived: `/features/&lt;id&gt;/`. Never authored; the schema refuses a `route` key. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: <code>/features/&lt;id&gt;/</code>. Never authored; the schema refuses a <code>route</code> key. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">rule_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the rules it names, each with its class and whether it is enforced.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the rules it names, each with its class and whether it is enforced.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">rules</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Rules of the effective set that govern it, by id without the version. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Rules of the effective set that govern it, by id without the version. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">short_title</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Two or three words for a card or a matrix row.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Two or three words for a card or a matrix row.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">source</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Derived: the repository-relative file the record came from. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the repository-relative file the record came from. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">status</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">`stable`, `draft` or `deprecated`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>stable</code>, <code>draft</code> or <code>deprecated</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">summary</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">One line: what it does.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">One line: what it does.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">surfaces</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the interfaces it is exposed through.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the interfaces it is exposed through.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tags</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Free tags. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Free tags. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">title</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The feature as a heading.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The feature as a heading.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">use_case_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the use cases it names.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the use cases it names.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">use_cases</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Use cases that show it in use. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Use cases that show it in use. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">web</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Web surfaces of the topology it is offered through. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Web surfaces of the topology it is offered through. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">web_refs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Derived: the web surfaces it names, with their mounts.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Derived: the web surfaces it names, with their mounts.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">weight</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Presentation order, lowest first. <span class="font-mono text-xs text-body-subtle">default 0</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Presentation order, lowest first. <span class="font-mono text-xs text-body-subtle">default 0</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -1283,8 +1283,8 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::product</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">FeatureInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ResolvedRefs</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -1355,7 +1355,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

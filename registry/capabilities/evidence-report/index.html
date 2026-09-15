@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_evidence</span><br>resource <span class="break-all">majordomus://evidence</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-evidence-report" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/evidence</a> <span class="text-xs text-body-subtle">operationId evidence.report</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/evidence/#op-evidence-report" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/evidence</a> <span class="text-xs text-body-subtle">operationId evidence.report</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus evidence show</td></tr>
         </tbody>
       </table>
@@ -196,46 +196,42 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · EvidenceReportInput</h3><p class="mt-1 break-words text-sm text-body">Which part of the matrix to answer for.
-
-Every field narrows, and they compose; saying nothing asks for the whole matrix. A key
+  <h3 class="font-mono text-sm font-semibold text-heading">input · EvidenceReportInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which part of the matrix to answer for.</p>
+<p>Every field narrows, and they compose; saying nothing asks for the whole matrix. A key
 nothing recognises is refused rather than dropped, because a misspelled filter that read
-as &quot;no filter&quot; would answer a question nobody asked and look like a clean one.
-
-```
-use majordomus_cli::capability::builtin::evidence::EvidenceReportInput;
-use majordomus_cli::evidence::ProofState;
-
-let all: EvidenceReportInput = serde_json::from_str(&quot;{}&quot;).unwrap();
-assert!(all.state.is_none() &amp;&amp; all.status.is_none() &amp;&amp; !all.findings_only);
-
-let narrowed: EvidenceReportInput =
-    serde_json::from_str(r#&quot;{&quot;state&quot;: &quot;stale&quot;, &quot;findings_only&quot;: true}&quot;#).unwrap();
-assert_eq!(narrowed.state, Some(ProofState::Stale));
-assert!(narrowed.findings_only);
-
-assert!(serde_json::from_str::&lt;EvidenceReportInput&gt;(r#&quot;{&quot;states&quot;: &quot;stale&quot;}&quot;#).is_err());
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+as "no filter" would answer a question nobody asked and look like a clean one.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::evidence::EvidenceReportInput;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::evidence::ProofState;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let all: EvidenceReportInput = serde_json::from_str(&quot;{}&quot;).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(all.state.is_none() &amp;&amp; all.status.is_none() &amp;&amp; !all.findings_only);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let narrowed: EvidenceReportInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_str(r#&quot;{&quot;state&quot;: &quot;stale&quot;, &quot;findings_only&quot;: true}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(narrowed.state, Some(ProofState::Stale));</span></span>
+<span class="giallo-l"><span>assert!(narrowed.findings_only);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;EvidenceReportInput&gt;(r#&quot;{&quot;states&quot;: &quot;stale&quot;}&quot;#).is_err());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings_only</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only the claims whose declared status the evidence does not support, with the
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only the claims whose declared status the evidence does not support, with the
 findings. The tallies still count the whole matrix, so a filtered answer never
 misreports how much of it was examined.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">state</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only claims in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,
-`not_run`, `unrunnable`, `no_test`). Absent: every claim.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only claims in this proof state (<code>proven</code>, <code>inputs_unchanged</code>, <code>stale</code>, <code>failing</code>,
+<code>not_run</code>, <code>unrunnable</code>, <code>no_test</code>). Absent: every claim.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">status</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Only claims declaring this status (`guaranteed`, `advisory`, `planned`, `rejected`).
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only claims declaring this status (<code>guaranteed</code>, <code>advisory</code>, <code>planned</code>, <code>rejected</code>).
 Absent: every claim.</td>
       </tr></tbody>
     </table>
@@ -316,91 +312,82 @@ Absent: every claim.</td>
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · EvidenceReport</h3><p class="mt-1 break-words text-sm text-body">The whole joined picture: every claim of the matrix against every execution recorded.
-
-What the capability answers, what the gate judges and what the site renders are this one
-value; the totals and the findings are derived from the claims, never counted twice.
-
-```
-use majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};
-
-let mut report = EvidenceReport {
-    head: None,
-    working_tree: &quot;unknown&quot;.into(),
-    ledger: Ledger::empty().summary(),
-    subject: Subject { examined: 0, complete: true, excluded: vec![] },
-    claims: vec![],
-    totals: Default::default(),
-    findings: vec![],
-};
-assert!(report.satisfied(), &quot;nothing claimed, so nothing unsupported&quot;);
-
-// and the same report over a subject it could not wholly read is not a pass
-let mut partial = report.clone();
-partial.subject.complete = false;
-assert!(!partial.satisfied(), &quot;an absent answer is not a clean one&quot;);
-
-report.findings.push(Finding {
-    claim: &quot;scope-integrity&quot;.into(),
-    status: &quot;guaranteed&quot;.into(),
-    state: ProofState::Failing,
-    reason: &quot;the claim guarantees a behaviour whose test most recently failed&quot;.into(),
-    reproduce: None,
-});
-// one unsupported guarantee is enough: the gate is not a proportion
-assert!(!report.satisfied());
-```
-# Example
-
-The whole matrix joined to the ledger. `satisfied` is true when no claim declares a
-guarantee the recorded evidence does not support.
-
-```
-use majordomus_cli::evidence::{report, EvidenceReport, Ledger};
-use majordomus_cli::synthetic::SyntheticRepository;
-let repo = SyntheticRepository::small().unwrap();
-let ledger = Ledger::load(repo.root()).unwrap();
-let r: EvidenceReport = report(&amp;repo.index().unwrap(), &amp;ledger);
-assert!(r.satisfied(), &quot;no claim, so no unsupported guarantee&quot;);
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · EvidenceReport</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The whole joined picture: every claim of the matrix against every execution recorded.</p>
+<p>What the capability answers, what the gate judges and what the site renders are this one
+value; the totals and the findings are derived from the claims, never counted twice.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let mut report = EvidenceReport {</span></span>
+<span class="giallo-l"><span>    head: None,</span></span>
+<span class="giallo-l"><span>    working_tree: &quot;unknown&quot;.into(),</span></span>
+<span class="giallo-l"><span>    ledger: Ledger::empty().summary(),</span></span>
+<span class="giallo-l"><span>    subject: Subject { examined: 0, complete: true, excluded: vec![] },</span></span>
+<span class="giallo-l"><span>    claims: vec![],</span></span>
+<span class="giallo-l"><span>    totals: Default::default(),</span></span>
+<span class="giallo-l"><span>    findings: vec![],</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert!(report.satisfied(), &quot;nothing claimed, so nothing unsupported&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and the same report over a subject it could not wholly read is not a pass</span></span>
+<span class="giallo-l"><span>let mut partial = report.clone();</span></span>
+<span class="giallo-l"><span>partial.subject.complete = false;</span></span>
+<span class="giallo-l"><span>assert!(!partial.satisfied(), &quot;an absent answer is not a clean one&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>report.findings.push(Finding {</span></span>
+<span class="giallo-l"><span>    claim: &quot;scope-integrity&quot;.into(),</span></span>
+<span class="giallo-l"><span>    status: &quot;guaranteed&quot;.into(),</span></span>
+<span class="giallo-l"><span>    state: ProofState::Failing,</span></span>
+<span class="giallo-l"><span>    reason: &quot;the claim guarantees a behaviour whose test most recently failed&quot;.into(),</span></span>
+<span class="giallo-l"><span>    reproduce: None,</span></span>
+<span class="giallo-l"><span>});</span></span>
+<span class="giallo-l"><span>// one unsupported guarantee is enough: the gate is not a proportion</span></span>
+<span class="giallo-l"><span>assert!(!report.satisfied());</span></span></code></pre><h4 id="schema-output-example">Example</h4>
+<p>The whole matrix joined to the ledger. <code>satisfied</code> is true when no claim declares a
+guarantee the recorded evidence does not support.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::{report, EvidenceReport, Ledger};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::synthetic::SyntheticRepository;</span></span>
+<span class="giallo-l"><span>let repo = SyntheticRepository::small().unwrap();</span></span>
+<span class="giallo-l"><span>let ledger = Ledger::load(repo.root()).unwrap();</span></span>
+<span class="giallo-l"><span>let r: EvidenceReport = report(&amp;repo.index().unwrap(), &amp;ledger);</span></span>
+<span class="giallo-l"><span>assert!(r.satisfied(), &quot;no claim, so no unsupported guarantee&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claims</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every claim, in the matrix&#39;s own order.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every claim, in the matrix's own order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Claims whose declared status the evidence does not support.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Claims whose declared status the evidence does not support.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">head</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The commit the report was derived against.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commit the report was derived against.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">ledger</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The ledger this was joined against.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The ledger this was joined against.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">subject</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the report could reach. Read this before reading the tallies: they are counts
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the report could reach. Read this before reading the tallies: they are counts
 over the claims the index held, and an index that dropped a file holds fewer.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">totals</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many claims are in each state.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many claims are in each state.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">working_tree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">`clean`, `dirty` or `unknown`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>clean</code>, <code>dirty</code> or <code>unknown</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -408,10 +395,10 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;EvidenceClaimProof&quot;: {
-      &quot;description&quot;: &quot;One claim, joined to whatever the repository actually recorded about it.\n\nThe claim&#39;s own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \&quot;scope-integrity\&quot;.into(),\n    claim: \&quot;a commit outside the task&#39;s scope is refused\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    source: Some(\&quot;docs/SCOPE.md\&quot;.into()),\n    implementation: Some(\&quot;apps/majordomus-cli/src/scope.rs\&quot;.into()),\n    test_path: Some(\&quot;test/cases/07_scope.sh\&quot;.into()),\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n};\n\nlet json = serde_json::to_value(&amp;proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \&quot;no file changed\&quot; from \&quot;the server did not say\&quot;\nassert_eq!(json[\&quot;changed\&quot;], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\&quot;execution\&quot;).is_none());\nassert_eq!(json[\&quot;meaning\&quot;], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&amp;repo.index().unwrap(), &amp;ledger);\nlet proofs: &amp;[ClaimProof] = &amp;r.claims;\nassert!(proofs.is_empty(), \&quot;a synthetic tree declares no claims\&quot;);\n```&quot;,
+      &quot;description&quot;: &quot;One claim, joined to whatever the repository actually recorded about it.\n\nThe claim&#39;s own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \&quot;scope-integrity\&quot;.into(),\n    claim: \&quot;a commit outside the task&#39;s scope is refused\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    source: Some(\&quot;docs/SCOPE.md\&quot;.into()),\n    implementation: Some(\&quot;apps/majordomus-cli/src/scope.rs\&quot;.into()),\n    test_path: Some(\&quot;test/cases/07_scope.sh\&quot;.into()),\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n};\n\nlet json = serde_json::to_value(&amp;proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \&quot;no file changed\&quot; from \&quot;the server did not say\&quot;\nassert_eq!(json[\&quot;changed\&quot;], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\&quot;execution\&quot;).is_none());\nassert_eq!(json[\&quot;meaning\&quot;], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by `report`; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&amp;repo.index().unwrap(), &amp;ledger);\nlet proofs: &amp;[ClaimProof] = &amp;r.claims;\nassert!(proofs.is_empty(), \&quot;a synthetic tree declares no claims\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;changed&quot;: {
-          &quot;description&quot;: &quot;The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \&quot;no files changed\&quot; from \&quot;the server did not say\&quot;\nis a client reading two different answers as one.&quot;,
+          &quot;description&quot;: &quot;The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is `ProofState::Stale`.\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \&quot;no files changed\&quot; from \&quot;the server did not say\&quot;\nis a client reading two different answers as one.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
@@ -536,7 +523,7 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;test&quot;: {
-          &quot;description&quot;: &quot;The test, in [`TestId::as_string`] form.&quot;,
+          &quot;description&quot;: &quot;The test, in `TestId::as_string` form.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;working_tree&quot;: {
@@ -598,7 +585,7 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
       &quot;description&quot;: &quot;What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \&quot;a ledger holding nothing has recorded nothing\&quot;);\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \&quot;.ai/repo/evidence/ledger.json\&quot;.into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \&quot;a repository that recorded nothing says so\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;commits&quot;: {
-          &quot;description&quot;: &quot;The distinct commits its executions were recorded against. Always emitted, empty\nincluded, for the reason [`ClaimProof::changed`] is.&quot;,
+          &quot;description&quot;: &quot;The distinct commits its executions were recorded against. Always emitted, empty\nincluded, for the reason `ClaimProof::changed` is.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
@@ -622,7 +609,7 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;present&quot;: {
-          &quot;description&quot;: &quot;Whether the ledger holds at least one execution.\n\nNot whether the file exists. A ledger file holding nothing and no ledger file at\nall are the same answer to the only question a reader is asking — has anything\nbeen recorded — and both make every claim read `not_run`. [`Ledger::present`]\nanswers the filesystem question, and nothing derives a proof state from it.&quot;,
+          &quot;description&quot;: &quot;Whether the ledger holds at least one execution.\n\nNot whether the file exists. A ledger file holding nothing and no ledger file at\nall are the same answer to the only question a reader is asking — has anything\nbeen recorded — and both make every claim read `not_run`. `Ledger::present`\nanswers the filesystem question, and nothing derives a proof state from it.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         }
       },
@@ -685,7 +672,7 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
       ]
     },
     &quot;EvidenceRunner&quot;: {
-      &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \&quot;suite\&quot;);\nassert_eq!(Runner::Crate.prefix(), \&quot;crate\&quot;);\n```&quot;,
+      &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \&quot;suite\&quot;);\nassert_eq!(Runner::Crate.prefix(), \&quot;crate\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;suite&quot;,
@@ -856,8 +843,8 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::evidence</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EvidenceReportInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EvidenceReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -928,7 +915,7 @@ over the claims the index held, and an index that dropped a file holds fewer.</t
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

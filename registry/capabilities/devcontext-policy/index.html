@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_devcontext_policy</span><br>resource <span class="break-all">majordomus://devcontext/policy</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-devcontext-policy" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/devcontext/policy</a> <span class="text-xs text-body-subtle">operationId devcontext.policy</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/devcontext/#op-devcontext-policy" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/devcontext/policy</a> <span class="text-xs text-body-subtle">operationId devcontext.policy</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus devcontext policy</td></tr>
         </tbody>
       </table>
@@ -196,7 +196,7 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
@@ -207,91 +207,86 @@
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · CompilerPolicy</h3><p class="mt-1 break-words text-sm text-body">The compiler&#39;s own rules, so that a caller reads the decision instead of inferring it
-from an answer.
-
-This is the answer to &quot;why did I get that&quot;, asked once rather than reverse-engineered
+  <h3 class="font-mono text-sm font-semibold text-heading">output · CompilerPolicy</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The compiler's own rules, so that a caller reads the decision instead of inferring it
+from an answer.</p>
+<p>This is the answer to "why did I get that", asked once rather than reverse-engineered
 from every context. It is a projection of the tables and constants this module is built
-from — [`Tier::ORDER`], [`select::EDGES`], [`Selector::ALL`] and the four defaults
+from — <code>Tier::ORDER</code>, <code>select::EDGES</code>, <code>Selector::ALL</code> and the four defaults
 — and holds no numbers of its own, so the published rules and the code that applies them
-cannot drift apart.
-
-The defaults are here because they are what a request gets when it says nothing, and a
-caller tuning a request needs to know what it is tuning away from.
-
-```
-use majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};
-use majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};
-use majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};
-use majordomus_cli::graph;
-use majordomus_cli::synthetic::SyntheticRepository;
-
-let repo = SyntheticRepository::small().unwrap();
-let ctx = repo.context().unwrap();
-let rules: CompilerPolicy = policy(&amp;ctx).unwrap();
-
-// it names the graph it reads relations from, rather than leaving it to be guessed
-assert_eq!(rules.schema, 1);
-assert_eq!(rules.graph, graph::COMPOSED);
-
-// the three tables are complete
-assert_eq!(rules.tiers.len(), Tier::ORDER.len());
-assert_eq!(rules.selectors.len(), Selector::ALL.len());
-assert!(!rules.edges.is_empty());
-
-// and the published defaults are the constants a silent request actually gets
-assert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);
-assert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);
-assert_eq!(rules.default_floor, DEFAULT_FLOOR);
-assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+cannot drift apart.</p>
+<p>The defaults are here because they are what a request gets when it says nothing, and a
+caller tuning a request needs to know what it is tuning away from.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::graph;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::synthetic::SyntheticRepository;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let repo = SyntheticRepository::small().unwrap();</span></span>
+<span class="giallo-l"><span>let ctx = repo.context().unwrap();</span></span>
+<span class="giallo-l"><span>let rules: CompilerPolicy = policy(&amp;ctx).unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// it names the graph it reads relations from, rather than leaving it to be guessed</span></span>
+<span class="giallo-l"><span>assert_eq!(rules.schema, 1);</span></span>
+<span class="giallo-l"><span>assert_eq!(rules.graph, graph::COMPOSED);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the three tables are complete</span></span>
+<span class="giallo-l"><span>assert_eq!(rules.tiers.len(), Tier::ORDER.len());</span></span>
+<span class="giallo-l"><span>assert_eq!(rules.selectors.len(), Selector::ALL.len());</span></span>
+<span class="giallo-l"><span>assert!(!rules.edges.is_empty());</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and the published defaults are the constants a silent request actually gets</span></span>
+<span class="giallo-l"><span>assert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);</span></span>
+<span class="giallo-l"><span>assert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);</span></span>
+<span class="giallo-l"><span>assert_eq!(rules.default_floor, DEFAULT_FLOOR);</span></span>
+<span class="giallo-l"><span>assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">bytes_per_token</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Bytes per estimated token.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Bytes per estimated token.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">default_budget_tokens</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The default ceiling in estimated tokens.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The default ceiling in estimated tokens.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">default_floor</td>
         <td class="px-3 py-2 font-mono text-xs text-body">number</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The default relevance floor.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The default relevance floor.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">default_max_depth</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The default depth limit.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The default depth limit.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">edges</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every edge kind the composed graph has, followed or refused.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every edge kind the composed graph has, followed or refused.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">graph</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The graph the relations are read from.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The graph the relations are read from.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The format of this answer.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The format of this answer.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">selectors</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The selectors, and which of them infer.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The selectors, and which of them infer.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tiers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The tiers, in the order the budget spends in.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The tiers, in the order the budget spends in.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -343,7 +338,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Selector&quot;: {
-      &quot;description&quot;: &quot;What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is [`Selector::declared`], and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec&lt;&amp;str&gt; = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\&quot;intent_match\&quot;]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec&lt;&amp;str&gt; = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\&quot;scope_path\&quot;),\n);\n```&quot;,
+      &quot;description&quot;: &quot;What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.\n\nThe division that matters is `Selector::declared`, and it is deliberately lopsided:\nsix of the seven selectors follow something the repository states, and exactly one\nguesses. That ratio is the design. Inference is confined to a single selector so that\nthe inferred part of any answer can be found, weighed and ignored, rather than being\nmixed through the rest at unmarked strength.\n\n```\nuse majordomus_cli::devcontext::Selector;\n\n// exactly one selector infers, and the answer can always be split on it\nlet inferred: Vec&lt;&amp;str&gt; = Selector::ALL\n    .iter()\n    .filter(|s| !s.declared())\n    .map(|s| s.as_str())\n    .collect();\nassert_eq!(inferred, [\&quot;intent_match\&quot;]);\n\n// every selector has its own word, so a reason is never ambiguous\nlet mut words: Vec&lt;&amp;str&gt; = Selector::ALL.iter().map(|s| s.as_str()).collect();\nlet before = words.len();\nwords.sort();\nwords.dedup();\nassert_eq!(words.len(), before);\n\n// and the word is the serialised form\nassert_eq!(\n    serde_json::to_value(Selector::ScopePath).unwrap(),\n    serde_json::json!(\&quot;scope_path\&quot;),\n);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;seed&quot;,
@@ -436,7 +431,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
       ]
     },
     &quot;TierRule&quot;: {
-      &quot;description&quot;: &quot;One tier, as the policy reports it: its place in the spend order, what it is for, and\nwhich kinds of object land in it.\n\n`position` is 1-based and exists because the wire form has no inherent order a consumer\ncan rely on — the [`Tier`] enum&#39;s `Ord` is a Rust fact, not a JSON one — so the rank is\nmade explicit for the readers that are not this crate. `kinds` is the inverse of\n[`tier_for_kind`], published so that a caller can see where a kind will land without\ncompiling an answer and looking.\n\n```\nuse majordomus_cli::devcontext::{policy, tier_for_kind, Tier, TierRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&amp;ctx).unwrap();\n\n// the first tier spent is the one that is never dropped, at position 1\nlet first: &amp;TierRule = &amp;rules.tiers[0];\nassert_eq!(first.tier, Tier::Task);\nassert_eq!(first.position, 1, \&quot;1-based, so the order survives serialisation\&quot;);\n\n// every tier is reported, in the order the budget spends in, and explains itself\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nfor (i, r) in rules.tiers.iter().enumerate() {\n    assert_eq!(r.position, i + 1);\n    assert_eq!(r.meaning, r.tier.meaning());\n}\n\n// and every kind is listed under the tier the classifier puts it in, exactly once —\n// so the published table and the function behind it cannot disagree\nlet mut listed = 0usize;\nfor r in &amp;rules.tiers {\n    for kind in &amp;r.kinds {\n        assert_eq!(tier_for_kind(kind), r.tier, \&quot;{kind} is listed under the wrong tier\&quot;);\n        listed += 1;\n    }\n}\nlet mut all: Vec&lt;&amp;str&gt; = rules.tiers.iter().flat_map(|r| &amp;r.kinds).map(String::as_str).collect();\nall.sort();\nall.dedup();\nassert_eq!(all.len(), listed, \&quot;a kind is listed under one tier only\&quot;);\n```&quot;,
+      &quot;description&quot;: &quot;One tier, as the policy reports it: its place in the spend order, what it is for, and\nwhich kinds of object land in it.\n\n`position` is 1-based and exists because the wire form has no inherent order a consumer\ncan rely on — the `Tier` enum&#39;s `Ord` is a Rust fact, not a JSON one — so the rank is\nmade explicit for the readers that are not this crate. `kinds` is the inverse of\n`tier_for_kind`, published so that a caller can see where a kind will land without\ncompiling an answer and looking.\n\n```\nuse majordomus_cli::devcontext::{policy, tier_for_kind, Tier, TierRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&amp;ctx).unwrap();\n\n// the first tier spent is the one that is never dropped, at position 1\nlet first: &amp;TierRule = &amp;rules.tiers[0];\nassert_eq!(first.tier, Tier::Task);\nassert_eq!(first.position, 1, \&quot;1-based, so the order survives serialisation\&quot;);\n\n// every tier is reported, in the order the budget spends in, and explains itself\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nfor (i, r) in rules.tiers.iter().enumerate() {\n    assert_eq!(r.position, i + 1);\n    assert_eq!(r.meaning, r.tier.meaning());\n}\n\n// and every kind is listed under the tier the classifier puts it in, exactly once —\n// so the published table and the function behind it cannot disagree\nlet mut listed = 0usize;\nfor r in &amp;rules.tiers {\n    for kind in &amp;r.kinds {\n        assert_eq!(tier_for_kind(kind), r.tier, \&quot;{kind} is listed under the wrong tier\&quot;);\n        listed += 1;\n    }\n}\nlet mut all: Vec&lt;&amp;str&gt; = rules.tiers.iter().flat_map(|r| &amp;r.kinds).map(String::as_str).collect();\nall.sort();\nall.dedup();\nassert_eq!(all.len(), listed, \&quot;a kind is listed under one tier only\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;kinds&quot;: {
           &quot;description&quot;: &quot;The kinds of object that land in it.&quot;,
@@ -469,7 +464,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;The compiler&#39;s own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \&quot;why did I get that\&quot;, asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`select::EDGES`], [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&amp;ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```&quot;,
+  &quot;description&quot;: &quot;The compiler&#39;s own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \&quot;why did I get that\&quot;, asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — `Tier::ORDER`, `select::EDGES`, `Selector::ALL` and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&amp;ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```&quot;,
   &quot;properties&quot;: {
     &quot;bytes_per_token&quot;: {
       &quot;description&quot;: &quot;Bytes per estimated token.&quot;,
@@ -569,8 +564,8 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devcontext</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CompilerPolicy</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -641,7 +636,7 @@ assert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

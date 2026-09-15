@@ -1,0 +1,1490 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP API: plan — Prismatic Majordomus</title>
+<meta name="description" content="The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.">
+<link rel="canonical" href="https://majordomus.dev/docs/api/plan/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="HTTP API: plan — Prismatic Majordomus">
+<meta property="og:description" content="The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.">
+<meta property="og:url" content="https://majordomus.dev/docs/api/plan/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.7.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">HTTP API: plan</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">HTTP API: plan</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
+    <p class="mb-2"><a href="https://majordomus.dev/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-plan-model" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.model</a></li><li><a href="#op-plan-issues" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.issues</a></li><li><a href="#op-plan-next" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.next</a></li><li><a href="#op-plan-record" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.record</a></li><li><a href="#op-plan-roadmap" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.roadmap</a></li><li><a href="#op-plan-status" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.status</a></li><li><a href="#op-plan-transition" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.transition</a></li><li><a href="#op-plan-validate" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.validate</a></li><li><a href="#op-plan-waves" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">plan.waves</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-plan" class="scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">plan</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.</p><article id="op-plan-model" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan</code>
+    <a href="#op-plan-model" class="font-mono text-xs text-body-subtle hover:underline">plan.model</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The whole derived plan</h3>
+  <p class="mt-1 break-words text-sm text-body">Every milestone and issue with its derived status, wave, rank, both directions of its graph and its counts; the execution waves; both dependency graphs as edges; every validation finding; and the plan&#39;s header with the active milestone derived. The one value every other capability of this module answers out of. Derived on every call: a transition writes a lifecycle marker into a record between two calls, and a plan answered from a snapshot would send two workers to one issue.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;plan&quot;, &quot;uri&quot;: &quot;majordomus://plan&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/plan&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-Plan" class="text-fg-brand hover:underline">Plan</a></td>
+          <td class="px-3 py-2 text-body">The whole derived plan: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-plan-issues" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan/issues</code>
+    <a href="#op-plan-issues" class="font-mono text-xs text-body-subtle hover:underline">plan.issues</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The issues, filtered by what the graph derived</h3>
+  <p class="mt-1 break-words text-sm text-body">One record per issue with its derived status, its wave, the dependencies it declares, the ones that are not DONE (plus `milestone:&lt;id&gt;` when the gate holds the whole outcome back), the issues that depend on it, the paths it touches and its evidence tally. Filtering by `status: READY` is the ready set and by `status: BLOCKED` the blocked set; nothing here is a separate derivation.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan_issues</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only issues of this milestone. Default: every issue of the plan.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">one-milestone:</span> &quot;M000&quot;</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only issues in this derived status — `READY` for the ready set, `BLOCKED` for the
+blocked set. The vocabulary travels with every answer, so a caller never has to know
+which statuses exist.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">ready:</span> &quot;READY&quot;</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">wave</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only issues in this execution wave.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/plan/issues?milestone=M000&amp;status=READY&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-PlanIssueList" class="text-fg-brand hover:underline">PlanIssueList</a></td>
+          <td class="px-3 py-2 text-body">The issues, filtered by what the graph derived: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-plan-next" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan/next</code>
+    <a href="#op-plan-next" class="font-mono text-xs text-body-subtle hover:underline">plan.next</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The one issue to take now</h3>
+  <p class="mt-1 break-words text-sm text-body">The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan_next</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Restrict the answer to one milestone. Default: the whole plan, and for `next` the
+active milestone with the rest of the plan as the fallback.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">one-milestone:</span> &quot;M000&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/plan/next?milestone=M000&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-PlanNextIssue" class="text-fg-brand hover:underline">PlanNextIssue</a></td>
+          <td class="px-3 py-2 text-body">The one issue to take now: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-plan-record" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan/record</code>
+    <a href="#op-plan-record" class="font-mono text-xs text-body-subtle hover:underline">plan.record</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">One milestone or issue, with everything derived about it</h3>
+  <p class="mt-1 break-words text-sm text-body">A milestone with its issues in full, or an issue with the issues it waits on in full. The record&#39;s own prose stays where it has always been — `majordomus://issue/&lt;id&gt;` returns the file — and this answers what the file cannot say about itself: what its status is, where it sits in the graph, and what is between it and being executable.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan_record</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The id of a milestone or an issue, as its file is named (`I0001`, `work-graph-github`).</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">issue:</span> &quot;I0001&quot;</span><span class="block break-all"><span class="text-body-subtle">milestone:</span> &quot;M000&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/plan/record?id=I0001&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-PlanRecord" class="text-fg-brand hover:underline">PlanRecord</a></td>
+          <td class="px-3 py-2 text-body">One milestone or issue, with everything derived about it: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-plan-roadmap" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan/roadmap</code>
+    <a href="#op-plan-roadmap" class="font-mono text-xs text-body-subtle hover:underline">plan.roadmap</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The milestones in derived order</h3>
+  <p class="mt-1 break-words text-sm text-body">The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan_roadmap</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/plan/roadmap&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-PlanRoadmap" class="text-fg-brand hover:underline">PlanRoadmap</a></td>
+          <td class="px-3 py-2 text-body">The milestones in derived order: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-plan-status" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan/status</code>
+    <a href="#op-plan-status" class="font-mono text-xs text-body-subtle hover:underline">plan.status</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Where the plan stands</h3>
+  <p class="mt-1 break-words text-sm text-body">Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan&#39;s own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan_status</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Restrict the answer to one milestone. Default: the whole plan, and for `next` the
+active milestone with the rest of the plan as the fallback.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">one-milestone:</span> &quot;M000&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/plan/status?milestone=M000&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-PlanStatusReport" class="text-fg-brand hover:underline">PlanStatusReport</a></td>
+          <td class="px-3 py-2 text-body">Where the plan stands: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-plan-transition" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-warning-soft text-fg-warning border border-warning-subtle">POST</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan/transition</code>
+    <a href="#op-plan-transition" class="font-mono text-xs text-body-subtle hover:underline">plan.transition</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Move one issue through the lifecycle</h3>
+  <p class="mt-1 break-words text-sm text-body">Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue&#39;s own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">command</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required_when</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan_transition</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Request body <span class="normal-case">— <a href="https://majordomus.dev/docs/api/plan/#schema-PlanTransitionInput" class="font-mono text-fg-brand underline">PlanTransitionInput</a>, JSON</span></h4><p class="mt-2 font-mono text-xs text-body-subtle">example <span class="text-heading">refused-by-status</span></p>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0">{&quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;start&quot;}</pre></div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s -X POST &quot;http://127.0.0.1:8741/api/v1/plan/transition&quot; -H &quot;content-type: application/json&quot; -d &#39;{&quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;start&quot;}&#39;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-PlanTransitionResult" class="text-fg-brand hover:underline">PlanTransitionResult</a></td>
+          <td class="px-3 py-2 text-body">Move one issue through the lifecycle: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">422</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>refused</code>: The command was understood and turned down for the reason the message gives.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-plan-validate" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan/validate</code>
+    <a href="#op-plan-validate" class="font-mono text-xs text-body-subtle hover:underline">plan.validate</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What the model refuses</h3>
+  <p class="mt-1 break-words text-sm text-body">Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone&#39;s gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan_validate</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/plan/validate&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-PlanValidation" class="text-fg-brand hover:underline">PlanValidation</a></td>
+          <td class="px-3 py-2 text-body">What the model refuses: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-plan-waves" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/plan/waves</code>
+    <a href="#op-plan-waves" class="font-mono text-xs text-body-subtle hover:underline">plan.waves</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What may run at the same time</h3>
+  <p class="mt-1 break-words text-sm text-body">The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_plan_waves</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Restrict the answer to one milestone. Default: the whole plan, and for `next` the
+active milestone with the rest of the plan as the fallback.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">one-milestone:</span> &quot;M000&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/plan/waves?milestone=M000&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/plan/#schema-PlanWaveReport" class="text-fg-brand hover:underline">PlanWaveReport</a></td>
+          <td class="px-3 py-2 text-body">What may run at the same time: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+</section><section id="schemas" class="mt-12 scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-Plan" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Plan</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The whole derived plan: what every plan capability answers out of.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">project</td>
+          <td class="px-3 py-2 font-mono text-body">PlanProject <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanProject" class="text-fg-brand underline">PlanProject</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The plan's header, with the active milestone derived.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">statuses</td>
+          <td class="px-3 py-2 font-mono text-body">PlanVocabulary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanVocabulary" class="text-fg-brand underline">PlanVocabulary</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The declared status vocabularies.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestones</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanMilestone <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanMilestone" class="text-fg-brand underline">PlanMilestone</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every milestone, in id order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issues</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanIssue <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanIssue" class="text-fg-brand underline">PlanIssue</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every issue, in id order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">waves</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanWave <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanWave" class="text-fg-brand underline">PlanWave</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution waves, lowest first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">edges</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanEdge <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanEdge" class="text-fg-brand underline">PlanEdge</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue dependency graph, sorted.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone_edges</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanEdge <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanEdge" class="text-fg-brand underline">PlanEdge</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone dependency graph, sorted.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanFinding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanFinding" class="text-fg-brand underline">PlanFinding</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every finding, in derivation order.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-model" class="font-mono text-fg-brand hover:underline">plan.model</a></p></article>
+<article id="schema-PlanCounts" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanCounts</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A milestone's issues counted: the two denominators, then one entry per declared status.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">total</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every issue naming this milestone.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">required</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The denominator the milestone's own status derivation uses: total less cancelled, so
+no surface prints "n of total" for a milestone the engine calls DONE.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">by_status</td>
+          <td class="px-3 py-2 font-mono text-body">map of integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One entry per declared issue status, keyed by the vocabulary.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-PlanMilestone" class="font-mono text-fg-brand underline">PlanMilestone</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanMilestoneProgress" class="font-mono text-fg-brand underline">PlanMilestoneProgress</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanStatusReport" class="font-mono text-fg-brand underline">PlanStatusReport</a></p></article>
+<article id="schema-PlanEdge" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanEdge</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One dependency edge, <code>from</code> before <code>to</code>.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">from</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The record that must be real first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">to</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The record that waits for it.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-Plan" class="font-mono text-fg-brand underline">Plan</a></p></article>
+<article id="schema-PlanFinding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanFinding</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One validation finding, in the shape <code>project.finding-carries-reproduce</code> asks for.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">level</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>FAIL</code> or <code>WARN</code>. A failure means the model is invalid.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">code</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The stable code a reader greps for (<code>unknown_dependency</code>, <code>scope_conflict</code>, …).</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">subject</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The record the finding is about, or <code>graph</code> when it is about the whole graph.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">message</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What is wrong, in one line.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-Plan" class="font-mono text-fg-brand underline">Plan</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanValidation" class="font-mono text-fg-brand underline">PlanValidation</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanWaveReport" class="font-mono text-fg-brand underline">PlanWaveReport</a></p></article>
+<article id="schema-PlanIssue" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanIssue</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One issue, as its record declares it and as the graph derives it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The identity, which is also the file name.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone it belongs to.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The derived status. Never stored: an issue records what happened to it and the
+status follows from that and from the state of its dependencies.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">wave</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution wave: one past the longest path to it through the dependency graph.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">priority</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>p0</code> … <code>p3</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">profile</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The execution profile the issue is worked under.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">parallel_safe</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether it may run beside another issue of its wave.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line naming the outcome.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">slug</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The slug, when the record carries one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">depends_on</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every issue it declares a dependency on, as declared — including one that does not
+exist, which is a finding rather than a silent omission.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blocked_by</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The dependencies that are not DONE, plus <code>milestone:&lt;id&gt;</code> when the milestone gate
+holds the whole outcome back.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">dependents</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues that depend on this one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">scope</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The paths it touches; two issues of one wave that share a path are serialised.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">objective</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line: what the issue is for.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence_have</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Evidence entries attached.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence_need</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Evidence tokens the record requires before it may be DONE.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">started_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When execution began, when it did.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">verified_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When implementation was declared complete.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">completed_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When completion was recorded.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-Plan" class="font-mono text-fg-brand underline">Plan</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanIssueList" class="font-mono text-fg-brand underline">PlanIssueList</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanNextIssue" class="font-mono text-fg-brand underline">PlanNextIssue</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanRecord" class="font-mono text-fg-brand underline">PlanRecord</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanStatusReport" class="font-mono text-fg-brand underline">PlanStatusReport</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanWaveView" class="font-mono text-fg-brand underline">PlanWaveView</a></p></article>
+<article id="schema-PlanIssueList" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanIssueList</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Issues matching a filter, with the vocabulary that names their statuses.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issues</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanIssue <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanIssue" class="text-fg-brand underline">PlanIssue</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The matching issues, in id order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">total</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many matched.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">statuses</td>
+          <td class="px-3 py-2 font-mono text-body">PlanVocabulary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanVocabulary" class="text-fg-brand underline">PlanVocabulary</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The declared status vocabularies.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-issues" class="font-mono text-fg-brand hover:underline">plan.issues</a></p></article>
+<article id="schema-PlanMilestone" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanMilestone</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One milestone, as its record declares it and as the two graphs derive it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The identity, which is also the file name; a stable slug, never a version.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The derived status.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">order</td>
+          <td class="px-3 py-2 font-mono text-body">integer (int64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Tie-break inside one rank; the roadmap is ordered by rank first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">priority</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>p0</code> … <code>p3</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line naming the outcome.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">slug</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The slug, when the record carries one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">version</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The release the milestone belongs to, when it declares one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rank</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its layer in the milestone graph: what orders the roadmap.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">depends_on</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestones it requires.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blocked_by</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Those of them that are not DONE. Non-empty means the gate holds every issue of this
+milestone back, whatever the issue graph says.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">dependents</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestones that require it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">claims</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The claims of the repository this outcome makes true.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">counts</td>
+          <td class="px-3 py-2 font-mono text-body">PlanCounts <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanCounts" class="text-fg-brand underline">PlanCounts</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its issues, counted by derived status.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issues</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its issues, in id order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">outcome</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line: what is true once the milestone is real.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-Plan" class="font-mono text-fg-brand underline">Plan</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanRecord" class="font-mono text-fg-brand underline">PlanRecord</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanRoadmap" class="font-mono text-fg-brand underline">PlanRoadmap</a></p></article>
+<article id="schema-PlanMilestoneProgress" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanMilestoneProgress</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One milestone's progress, without its prose.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The identity.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The derived status.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">One line naming the outcome.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">counts</td>
+          <td class="px-3 py-2 font-mono text-body">PlanCounts <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanCounts" class="text-fg-brand underline">PlanCounts</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its issues, counted by derived status.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-PlanStatusReport" class="font-mono text-fg-brand underline">PlanStatusReport</a></p></article>
+<article id="schema-PlanNextIssue" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanNextIssue</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The one issue a worker should take now.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">PlanIssue | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanIssue" class="text-fg-brand underline">PlanIssue</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The issue, when the plan has one that is executable.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">active_milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone the search started in.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Why there is none, when there is none: what to run to see what is in the way.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-next" class="font-mono text-fg-brand hover:underline">plan.next</a></p></article>
+<article id="schema-PlanProject" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanProject</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The plan's header: what this repository is, plus the one field nobody authors.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The project's name, from <code>project.yaml</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">repository</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The repository it belongs to, <code>owner/name</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default_branch</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The branch the plan is executed on.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">active_milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone a worker is executing now: the lowest-ranked unblocked milestone that
+is ACTIVE, else the lowest-ranked unblocked one not finished. Derived on every read,
+stored nowhere, and never authored — the plan cannot nominate a milestone whose
+prerequisites are not real.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-Plan" class="font-mono text-fg-brand underline">Plan</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanStatusReport" class="font-mono text-fg-brand underline">PlanStatusReport</a></p></article>
+<article id="schema-PlanRecord" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanRecord</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object | object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One record of the plan, milestone or issue, with everything derived about it.</div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-record" class="font-mono text-fg-brand hover:underline">plan.record</a></p></article>
+<article id="schema-PlanRoadmap" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanRoadmap</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The milestones in derived order, with the one being executed and the one after it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestones</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanMilestone <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanMilestone" class="text-fg-brand underline">PlanMilestone</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestones ordered by rank, then order, then id. The sequence is derived from
+the milestone graph; no list of versions is maintained anywhere.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">now</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The first unfinished, unblocked milestone in that sequence.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">next</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The one after it, blocked or not.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-roadmap" class="font-mono text-fg-brand hover:underline">plan.roadmap</a></p></article>
+<article id="schema-PlanStatusReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanStatusReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the plan stands: every milestone's progress, the milestone being executed, and the
+one issue to take next.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">project</td>
+          <td class="px-3 py-2 font-mono text-body">PlanProject <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanProject" class="text-fg-brand underline">PlanProject</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The plan's header, with the active milestone derived.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">statuses</td>
+          <td class="px-3 py-2 font-mono text-body">PlanVocabulary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanVocabulary" class="text-fg-brand underline">PlanVocabulary</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The declared status vocabularies.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestones</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanMilestoneProgress <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanMilestoneProgress" class="text-fg-brand underline">PlanMilestoneProgress</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every milestone, in id order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">next_ready</td>
+          <td class="px-3 py-2 font-mono text-body">PlanIssue | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanIssue" class="text-fg-brand underline">PlanIssue</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The next ready issue, when there is one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">counts</td>
+          <td class="px-3 py-2 font-mono text-body">PlanCounts <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanCounts" class="text-fg-brand underline">PlanCounts</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every issue of the plan, counted by derived status.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-status" class="font-mono text-fg-brand hover:underline">plan.status</a></p></article>
+<article id="schema-PlanTransition" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanTransition</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;start&quot; | &quot;verify&quot; | &quot;done&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One lifecycle move.</p>
+<p>Three, not four: <code>evidence</code> appends a record rather than moving an issue, and it belongs
+with the record it proves rather than with the moves it unblocks.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::plan::Transition;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// The wire spelling is the one a caller types on the command line.</span></span>
+<span class="giallo-l"><span>let t: Transition = serde_json::from_str(&quot;\&quot;done\&quot;&quot;).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(t, Transition::Done);</span></span>
+<span class="giallo-l"><span>assert_eq!(serde_json::to_string(&amp;Transition::Start).unwrap(), &quot;\&quot;start\&quot;&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// Each move owns the field it stamps and the event it records; nothing else decides</span></span>
+<span class="giallo-l"><span>// either, so a new move cannot be added without saying both.</span></span>
+<span class="giallo-l"><span>for (t, field, event) in [</span></span>
+<span class="giallo-l"><span>    (Transition::Start, &quot;started_at&quot;, &quot;plan_start&quot;),</span></span>
+<span class="giallo-l"><span>    (Transition::Verify, &quot;verified_at&quot;, &quot;plan_verify&quot;),</span></span>
+<span class="giallo-l"><span>    (Transition::Done, &quot;completed_at&quot;, &quot;plan_done&quot;),</span></span>
+<span class="giallo-l"><span>] {</span></span>
+<span class="giallo-l"><span>    assert_eq!(t.field(), field);</span></span>
+<span class="giallo-l"><span>    assert_eq!(t.event(), event);</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">start</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Execution began. Refused unless the issue is READY.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">verify</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Implementation is complete and the evidence is still outstanding.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">done</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Complete. Refused while anything it waits on is unfinished, or while any evidence
+its own record requires is absent.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-PlanTransitionInput" class="font-mono text-fg-brand underline">PlanTransitionInput</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanTransitionResult" class="font-mono text-fg-brand underline">PlanTransitionResult</a></p></article>
+<article id="schema-PlanTransitionInput" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanTransitionInput</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>plan.transition</code>: which issue to move, and which way.</p>
+<p>Two fields and no third. There is no timestamp — the move is stamped with the moment it
+happened, never with one the caller supplies, because a lifecycle a caller can backdate
+is not a record of what happened. There is no force or reason field either: a transition
+the model refuses is refused, and the way to make it legal is to satisfy the guard rather
+than to ask past it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::plan::PlanTransitionInput;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::plan::Transition;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// The wire form an MCP client or an HTTP POST sends.</span></span>
+<span class="giallo-l"><span>let input: PlanTransitionInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_str(r#&quot;{&quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(input.issue, &quot;I0001&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(input.transition, Transition::Done);</span></span>
+<span class="giallo-l"><span>assert_eq!(input.transition.field(), &quot;completed_at&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(input.transition.event(), &quot;plan_done&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// Unknown fields are refused rather than ignored: a caller that misspells `transition`</span></span>
+<span class="giallo-l"><span>// is told so instead of having its move silently dropped.</span></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;PlanTransitionInput&gt;(</span></span>
+<span class="giallo-l"><span>    r#&quot;{&quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;,&quot;force&quot;:true}&quot;#).is_err());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue to move, by its id — which is also its file name.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">transition</td>
+          <td class="px-3 py-2 font-mono text-body">PlanTransition <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanTransition" class="text-fg-brand underline">PlanTransition</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Which move: <code>start</code>, <code>verify</code> or <code>done</code>.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-transition" class="font-mono text-fg-brand hover:underline">plan.transition</a></p></article>
+<article id="schema-PlanTransitionResult" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanTransitionResult</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What one transition did.</p>
+<p><code>from</code> and <code>to</code> are both derived statuses, read before and after the write. They are
+reported rather than assumed because the move does not determine the status on its own:
+<code>done</code> on a record whose evidence is incomplete leaves it in VERIFY, and the caller is
+told that rather than told it succeeded.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::plan::PlanTransitionResult;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// What a `done` looks like when the record&#39;s required evidence is not all present: the</span></span>
+<span class="giallo-l"><span>// call succeeded, the field was written, and the issue is still in VERIFY. A caller that</span></span>
+<span class="giallo-l"><span>// read only the absence of an error would report this as finished; a caller that reads</span></span>
+<span class="giallo-l"><span>// `to` knows better, which is why the field is here.</span></span>
+<span class="giallo-l"><span>let held: PlanTransitionResult = serde_json::from_str(r#&quot;{</span></span>
+<span class="giallo-l"><span>    &quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;,&quot;from&quot;:&quot;VERIFY&quot;,&quot;to&quot;:&quot;VERIFY&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;field&quot;:&quot;completed_at&quot;,&quot;at&quot;:&quot;2026-09-11T12:00:00Z&quot;,&quot;event&quot;:&quot;plan_done&quot;</span></span>
+<span class="giallo-l"><span>}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(held.to, &quot;VERIFY&quot;, &quot;the status is derived from the record, not from the move&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// `next_ready` is absent when the plan has none left to hand out, which is ordinary</span></span>
+<span class="giallo-l"><span>// rather than an error, so it is omitted rather than spelled as an empty string.</span></span>
+<span class="giallo-l"><span>assert!(held.next_ready.is_none());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue that moved.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">transition</td>
+          <td class="px-3 py-2 font-mono text-body">PlanTransition <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanTransition" class="text-fg-brand underline">PlanTransition</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The move that was performed.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">from</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The status the issue was in before.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">to</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The status it is in now, derived from the record as written.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">field</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The field that was stamped.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The timestamp written into it, and into <code>updated_at</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">event</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The ledger event appended.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">next_ready</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The issue a worker should take next, derived after the move. Absent when the plan
+has none — which after a <code>start</code> is the ordinary case, because the issue just taken
+is no longer READY.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-transition" class="font-mono text-fg-brand hover:underline">plan.transition</a></p></article>
+<article id="schema-PlanValidation" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanValidation</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The model's own validation: what the graph refuses and what it merely warns about.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">valid</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the model is valid: no finding is a failure.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestones</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many milestones the plan holds.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issues</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many issues.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">failures</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many findings are failures.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">warnings</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many are warnings.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanFinding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanFinding" class="text-fg-brand underline">PlanFinding</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every finding, in derivation order.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-validate" class="font-mono text-fg-brand hover:underline">plan.validate</a></p></article>
+<article id="schema-PlanVocabulary" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanVocabulary</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The status vocabularies, so a reader never has to know which statuses exist.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issue statuses, in derivation order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The milestone statuses, in derivation order.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-Plan" class="font-mono text-fg-brand underline">Plan</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanIssueList" class="font-mono text-fg-brand underline">PlanIssueList</a> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanStatusReport" class="font-mono text-fg-brand underline">PlanStatusReport</a></p></article>
+<article id="schema-PlanWave" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanWave</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One execution wave: the issues the graph allows to run at the same time.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">wave</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The layer, from zero.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issues</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues in it, in id order.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-Plan" class="font-mono text-fg-brand underline">Plan</a></p></article>
+<article id="schema-PlanWaveReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanWaveReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The execution waves, with the overlaps that serialise issues the graph would let run
+together.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">waves</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanWaveView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanWaveView" class="text-fg-brand underline">PlanWaveView</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The waves, lowest first, with the issues of each.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">serialised_by_scope</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanFinding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanFinding" class="text-fg-brand underline">PlanFinding</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Scope overlaps between two issues of one wave. Two issues sharing a wave is a
+necessary condition for running them at once, not a sufficient one: overlapping
+scope serialises them, and the overlap is reported here rather than left for two
+workers to discover in a conflict.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#op-plan-waves" class="font-mono text-fg-brand hover:underline">plan.waves</a></p></article>
+<article id="schema-PlanWaveView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PlanWaveView</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One wave, with the issues in it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">wave</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The layer, from zero.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issues</td>
+          <td class="px-3 py-2 font-mono text-body">array of PlanIssue <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/plan/#schema-PlanIssue" class="text-fg-brand underline">PlanIssue</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The issues in it, in id order.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/plan/#schema-PlanWaveReport" class="font-mono text-fg-brand underline">PlanWaveReport</a></p></article>
+</section>
+  </div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

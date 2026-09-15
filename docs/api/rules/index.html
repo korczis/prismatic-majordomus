@@ -1,0 +1,1172 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP API: rules — Prismatic Majordomus</title>
+<meta name="description" content="What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces.">
+<link rel="canonical" href="https://majordomus.dev/docs/api/rules/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="HTTP API: rules — Prismatic Majordomus">
+<meta property="og:description" content="What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces.">
+<meta property="og:url" content="https://majordomus.dev/docs/api/rules/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.7.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">HTTP API: rules</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">HTTP API: rules</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
+    <p class="mb-2"><a href="https://majordomus.dev/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-rules-report" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">rules.report</a></li><li><a href="#op-rules-proves" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">rules.proves</a></li><li><a href="#op-rules-show" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">rules.show</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-rules" class="scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">rules</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces.</p><article id="op-rules-report" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/rules</code>
+    <a href="#op-rules-report" class="font-mono text-xs text-body-subtle hover:underline">rules.report</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Every rule against the proof there is for it</h3>
+  <p class="mt-1 break-words text-sm text-body">The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_rules</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;rules&quot;, &quot;uri&quot;: &quot;majordomus://rules&quot;}</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ rules report</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">RuleState | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only rules in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,
+`not_run`, `unrunnable`, `dangling`, `unproven`). Absent: every rule.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">class</td>
+          <td class="px-3 py-2 font-mono text-body">RuleClass | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only rules of this class (`blocking`, `advisory`). Absent: every rule.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">blocking:</span> &quot;blocking&quot;</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">namespace</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only rules of this namespace — `project` for this repository&#39;s own, `majordomus` for
+the vendored package. Absent: both.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings_only</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Only the rules whose declared class the proof does not support, with the findings.
+The tallies still count the whole corpus, so a filtered answer never misreports how
+much of it was examined.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">findings:</span> true</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/rules?class=blocking&amp;findings_only=true&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/rules/#schema-RulesReport" class="text-fg-brand hover:underline">RulesReport</a></td>
+          <td class="px-3 py-2 text-body">Every rule against the proof there is for it: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-rules-proves" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/rules/proves</code>
+    <a href="#op-rules-proves" class="font-mono text-xs text-body-subtle hover:underline">rules.proves</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What this test proves</h3>
+  <p class="mt-1 break-words text-sm text-body">One test — by identity or by the path a rule names it with — with every rule that names it and the rules that would be left with no proof at all if it were deleted. This is the reverse of rules.show and reads the same derivation, so the two directions cannot disagree. It is the question that could not be asked while the relation ran one way only: before deleting or renaming a case, what stops being enforced.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_rule_proves</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ rules proves</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">test</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">`test/cases/07_scope.sh`, or `suite:07_scope`, or `crate:product`.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">suite:</span> &quot;test/cases/125_rule_proof.sh&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/rules/proves?test=test%2Fcases%2F125_rule_proof.sh&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/rules/#schema-TestSubjects" class="text-fg-brand hover:underline">TestSubjects</a></td>
+          <td class="px-3 py-2 text-body">What this test proves: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-rules-show" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/rules/rule</code>
+    <a href="#op-rules-show" class="font-mono text-xs text-body-subtle hover:underline">rules.show</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What proves this rule</h3>
+  <p class="mt-1 break-words text-sm text-body">One rule with its full proof: the validator and the cases it names, the execution behind each, the gates that run them, the rules it depends on and the rules that depend on it — each with the state it is in, because a rule is proven only as far as its dependencies are — and, when it is not proven, the one sentence saying what would have to be true for it to be. A rule this repository does not declare is a not-found rather than an empty answer, because a typo that read as &#39;this rule has no proof&#39; is the one answer this capability must never give.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_rule</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ rules show</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rule</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The rule id, with or without its version: `project.scope-is-declared`, or the
+identity the index holds.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">first:</span> &quot;majordomus.adr-integrity@1&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/rules/rule?rule=majordomus.adr-integrity%401&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/rules/#schema-RuleDetail" class="text-fg-brand hover:underline">RuleDetail</a></td>
+          <td class="px-3 py-2 text-body">What proves this rule: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+</section><section id="schemas" class="mt-12 scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-RuleArtifactKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleArtifactKind</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;case&quot; | &quot;gate&quot; | &quot;unknown&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a path a rule names actually is, decided by what drives it rather than by where it
+sits.</p>
+<p>The corpus names two kinds and this distinction is the difference between a verdict and
+a mechanism. A <strong>case</strong> is driven by a runner, so an execution of it can be recorded and
+the repository can show that it passed. A <strong>gate</strong> is an executable check a CI gate runs
+as its own command: it refuses violations on every run, and this repository records no
+verdict for it, so what can be shown is the mechanism and not the result. Anything else
+a rule names is proof only in prose.</p>
+<h4 id="schema-RuleArtifactKind-example">Example</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::ArtifactKind;</span></span>
+<span class="giallo-l"><span>assert_eq!(ArtifactKind::Case.label(), &quot;case&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(ArtifactKind::Gate.label(), &quot;gate&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">case</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A behavioural case a runner drives; executions of it are recorded.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">gate</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">An executable check a CI gate runs as its own command.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Neither. Nothing can run it, so nothing can ever record it.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RuleTestProof" class="font-mono text-fg-brand underline">RuleTestProof</a></p></article>
+<article id="schema-RuleClass" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleClass</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;blocking&quot; | &quot;advisory&quot; | &quot;unknown&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a rule declares about how strongly it binds.</p>
+<p>The repository has exactly two, and they are not severities on a scale: <code>blocking</code> means
+a gate refuses the work, <code>advisory</code> means a reader is expected to have read it. A rule
+whose front matter says neither is reported as <code>Class::Unknown</code> rather than defaulted,
+because guessing here is how a blocking rule quietly becomes advice.</p>
+<h4 id="schema-RuleClass-example">Example</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Class;</span></span>
+<span class="giallo-l"><span>assert_eq!(Class::Blocking.label(), &quot;blocking&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(Class::parse(&quot;advisory&quot;), Class::Advisory);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">blocking</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A gate refuses work that violates it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">advisory</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Normative for whoever reads it; nothing refuses a violation.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The front matter declared no class, or one this repository does not know.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#op-rules-report" class="font-mono text-fg-brand hover:underline">rules.report</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleDefinition" class="font-mono text-fg-brand underline">RuleDefinition</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleFinding" class="font-mono text-fg-brand underline">RuleFinding</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleSummary" class="font-mono text-fg-brand underline">RuleSummary</a></p></article>
+<article id="schema-RuleCoverage" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleCoverage</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How much of the rule corpus carries each part of a proof.</p>
+<p>Every number here is counted from the tree. Nothing in this struct may be written down
+anywhere else: a hardcoded rule count is the defect this repository keeps rediscovering.</p>
+<h4 id="schema-RuleCoverage-example">Example</h4>
+<p>Every number is counted from the tree; an empty corpus counts zero rather than
+reading as complete, which is what <code>Coverage::default</code> is for.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Coverage;</span></span>
+<span class="giallo-l"><span>let c = Coverage::default();</span></span>
+<span class="giallo-l"><span>assert_eq!(c.rules, 0);</span></span>
+<span class="giallo-l"><span>assert_eq!(c.review_only, 0);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rules</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules discovered.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blocking</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Of those, blocking.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">advisory</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Of those, advisory.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">named_proof</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules naming a validator or at least one test.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">artifacts_present</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules every one of whose named paths is in the tree.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">runnable</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules at least one of whose tests a runner owns.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">recorded</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules every one of whose tests has a recorded run.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">passing</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules whose recorded runs all passed.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">gated</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules some CI gate runs.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">mechanism_only</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules whose only executable proof is a gate: a mechanism that refuses violations,
+with no recorded verdict behind it. Counted apart from <code>passing</code> so that the two
+are never read as one number.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">review_only</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules that declare, with a reason, that a reader enforces them. Counted apart from
+every executable mode: this number going up is governance getting weaker, and a
+summary that folded it into a total would hide exactly that.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">satisfied</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Rules whose state their class can live with.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RulesReport" class="font-mono text-fg-brand underline">RulesReport</a></p></article>
+<article id="schema-RuleDefinition" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleDefinition</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule, as the repository canonically declares it.</p>
+<h4 id="schema-RuleDefinition-example">Example</h4>
+<p>Built by <code>definitions</code> from the index rather than by hand. Its ordering is the one
+the crate has, so a report over the same tree reads the same twice.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleDefinition};</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::rules::{Enforcement, Mode};</span></span>
+<span class="giallo-l"><span>let d = RuleDefinition {</span></span>
+<span class="giallo-l"><span>    id: &quot;project.scope-is-declared&quot;.into(),</span></span>
+<span class="giallo-l"><span>    identity: &quot;project.scope-is-declared@1&quot;.into(),</span></span>
+<span class="giallo-l"><span>    uri: &quot;majordomus://rule/project.scope-is-declared@1&quot;.into(),</span></span>
+<span class="giallo-l"><span>    version: 1,</span></span>
+<span class="giallo-l"><span>    title: &quot;Scope is declared&quot;.into(),</span></span>
+<span class="giallo-l"><span>    description: None,</span></span>
+<span class="giallo-l"><span>    statement: None,</span></span>
+<span class="giallo-l"><span>    status: &quot;active&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Blocking,</span></span>
+<span class="giallo-l"><span>    namespace: &quot;project&quot;.into(),</span></span>
+<span class="giallo-l"><span>    depends_on: vec![],</span></span>
+<span class="giallo-l"><span>    tags: vec![],</span></span>
+<span class="giallo-l"><span>    path: &quot;.ai/repo/rules/project/scope-is-declared.v1.md&quot;.into(),</span></span>
+<span class="giallo-l"><span>    enforcement: Enforcement {</span></span>
+<span class="giallo-l"><span>        mode: Mode::Declarative, validator: None, category: None, exit_code: None,</span></span>
+<span class="giallo-l"><span>        enforced_by: None, tests: vec![], reviewed_because: None,</span></span>
+<span class="giallo-l"><span>    },</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(d.class, Class::Blocking);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The rule id, <code>&lt;namespace&gt;.&lt;stem&gt;</code>, without the version.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">identity</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The identity the index holds, with the version.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">uri</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>majordomus://rule/&lt;identity&gt;</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">version</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The declared version.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The title.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">description</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The one-line description.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">statement</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The normative sentence.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>active</code>, or whatever else the front matter declares.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">class</td>
+          <td class="px-3 py-2 font-mono text-body">RuleClass <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleClass" class="text-fg-brand underline">RuleClass</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How strongly it binds.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">namespace</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether it came with the vendored package or belongs to this project.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">depends_on</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The rules it depends on, by id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">tags</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The declared tags.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Repository-relative path of the rule object.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">enforcement</td>
+          <td class="px-3 py-2 font-mono text-body">RuleEnforcement <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleEnforcement" class="text-fg-brand underline">RuleEnforcement</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How it is enforced, as declared.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RuleProof" class="font-mono text-fg-brand underline">RuleProof</a></p></article>
+<article id="schema-RuleDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleDetail</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule, with everything that proves it and everything that depends on it.</p>
+<h4 id="schema-RuleDetail-example">Example</h4>
+<p>What <code>rules show</code> answers: the proof, the rules either side of it in the dependency
+graph, and the one sentence saying what would make it proven.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::RuleSummary;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleState};</span></span>
+<span class="giallo-l"><span>// a RuleDetail carries these summaries for depends_on and required_by</span></span>
+<span class="giallo-l"><span>let dep = RuleSummary {</span></span>
+<span class="giallo-l"><span>    id: &quot;project.dep&quot;.into(), title: &quot;Dep&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Blocking, state: RuleState::NotRun,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(dep.class, Class::Blocking);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">proof</td>
+          <td class="px-3 py-2 font-mono text-body">RuleProof <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleProof" class="text-fg-brand underline">RuleProof</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The rule, joined to the tree and the ledger.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">depends_on</td>
+          <td class="px-3 py-2 font-mono text-body">array of RuleSummary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleSummary" class="text-fg-brand underline">RuleSummary</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The rules this one depends on, with the state each is in — a rule whose dependency
+is unproven is proven only as far as that dependency is.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">required_by</td>
+          <td class="px-3 py-2 font-mono text-body">array of RuleSummary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleSummary" class="text-fg-brand underline">RuleSummary</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The rules that depend on this one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">missing</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What would have to be true for this rule to reach <code>proven</code>, in words, or nothing
+when it is there already.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#op-rules-show" class="font-mono text-fg-brand hover:underline">rules.show</a></p></article>
+<article id="schema-RuleEnforcement" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleEnforcement</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The enforcement block of a rule, read from <code>x-majordomus</code>.</p>
+<h4 id="schema-RuleEnforcement-example">Example</h4>
+<p>Read from front matter rather than built by hand; this is the shape a gated rule
+produces, and the mode is decided by what the block actually names.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Enforcement, Mode};</span></span>
+<span class="giallo-l"><span>let e = Enforcement {</span></span>
+<span class="giallo-l"><span>    mode: Mode::Gated,</span></span>
+<span class="giallo-l"><span>    validator: None,</span></span>
+<span class="giallo-l"><span>    category: None,</span></span>
+<span class="giallo-l"><span>    exit_code: None,</span></span>
+<span class="giallo-l"><span>    enforced_by: None,</span></span>
+<span class="giallo-l"><span>    tests: vec![&quot;test/cases/07_scope.sh&quot;.into()],</span></span>
+<span class="giallo-l"><span>    reviewed_because: None,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(e.mode, Mode::Gated);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">mode</td>
+          <td class="px-3 py-2 font-mono text-body">RuleMode <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleMode" class="text-fg-brand underline">RuleMode</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Which of the two canonical modes, or neither.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">validator</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The validator the dispatcher calls, when the mode is dispatched.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">category</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The diagnostic category the validator reports under.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">exit_code</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The exit code the validator uses to refuse.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">enforced_by</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Which boundary enforces it: the word the rule's own block uses.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">tests</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Every test the block names, in the order it names them.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reviewed_because</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Why nothing executable can express this rule, when the mode is reviewed. Required
+there: a declared exemption with no reason is the debt it exists to replace.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RuleDefinition" class="font-mono text-fg-brand underline">RuleDefinition</a></p></article>
+<article id="schema-RuleFinding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleFinding</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule whose declared class the proof does not support.</p>
+<h4 id="schema-RuleFinding-example">Example</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Class, Finding, RuleState};</span></span>
+<span class="giallo-l"><span>let f = Finding {</span></span>
+<span class="giallo-l"><span>    rule: &quot;project.x&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Blocking,</span></span>
+<span class="giallo-l"><span>    state: RuleState::Dangling,</span></span>
+<span class="giallo-l"><span>    reason: &quot;it names a path that is not in the tree&quot;.into(),</span></span>
+<span class="giallo-l"><span>    reproduce: &quot;scripts/ci/rule-proof-check&quot;.into(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(f.state, RuleState::Dangling);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rule</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The rule id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">class</td>
+          <td class="px-3 py-2 font-mono text-body">RuleClass <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleClass" class="text-fg-brand underline">RuleClass</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The class it declares.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">RuleState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleState" class="text-fg-brand underline">RuleState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The state its proof is in.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Why that combination is a finding.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reproduce</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The command that shows it again.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RulesReport" class="font-mono text-fg-brand underline">RulesReport</a></p></article>
+<article id="schema-RuleMode" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleMode</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;dispatched&quot; | &quot;gated&quot; | &quot;reviewed&quot; | &quot;declarative&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How a rule is enforced, as its own front matter declares it.</p>
+<h4 id="schema-RuleMode-example">Example</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Mode;</span></span>
+<span class="giallo-l"><span>assert_eq!(Mode::Dispatched.label(), &quot;dispatched&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(Mode::Declarative.label(), &quot;declarative&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">dispatched</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Names a validator the doctrine dispatcher calls at run time.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">gated</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Names behavioural cases and no validator; a gate runs them.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">reviewed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Carries a reason why nothing executable can express it, and so declares that a
+reader enforces it. An honest declaration, not an absence: the reason <em>is</em> the
+declaration — there is no flag beside it, because a flag can be set and a reason
+cannot be set without writing one — it is counted apart from every executable mode,
+and it separates a rule nobody could automate from a rule nobody got round to.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">declarative</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Names neither. Correct for a rule nothing executable can express; a defect for a
+blocking one.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RuleEnforcement" class="font-mono text-fg-brand underline">RuleEnforcement</a></p></article>
+<article id="schema-RuleProof" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleProof</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One rule, joined to everything the repository can show about it.</p>
+<h4 id="schema-RuleProof-example">Example</h4>
+<p>A <code>RuleProof</code> is what <code>report</code> produces per rule; <code>satisfied</code> is whether the state
+supports the class the rule declares, which is the whole question.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{report, RuleProof, RuleState};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::evidence::Ledger;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::synthetic::SyntheticRepository;</span></span>
+<span class="giallo-l"><span>let repo = SyntheticRepository::small().unwrap();</span></span>
+<span class="giallo-l"><span>let ledger = Ledger::load(repo.root()).unwrap();</span></span>
+<span class="giallo-l"><span>let r = report(&amp;repo.index().unwrap(), &amp;ledger);</span></span>
+<span class="giallo-l"><span>let first: &amp;RuleProof = &amp;r.rules[0];</span></span>
+<span class="giallo-l"><span>assert_eq!(first.state, RuleState::Unproven);</span></span>
+<span class="giallo-l"><span>assert!(first.satisfied, &quot;an advisory rule owes no executable proof&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rule</td>
+          <td class="px-3 py-2 font-mono text-body">RuleDefinition <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleDefinition" class="text-fg-brand underline">RuleDefinition</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The canonical definition.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">validator</td>
+          <td class="px-3 py-2 font-mono text-body">RuleValidator | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleValidator" class="text-fg-brand underline">RuleValidator</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The validator, when the mode is dispatched.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">tests</td>
+          <td class="px-3 py-2 font-mono text-body">array of RuleTestProof <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleTestProof" class="text-fg-brand underline">RuleTestProof</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Every test the rule names, joined to the ledger.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">gates</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Every CI gate that runs something this rule names, deduplicated.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">required_by</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The rules that depend on this one, by id — the converse of <code>depends_on</code>, which no
+rule declares and which a reader always wants.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">RuleState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleState" class="text-fg-brand underline">RuleState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the repository can say, as a whole.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">meaning</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">That state, in one sentence.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">satisfied</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the state is one this rule's class can live with.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RuleDetail" class="font-mono text-fg-brand underline">RuleDetail</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RulesReport" class="font-mono text-fg-brand underline">RulesReport</a></p></article>
+<article id="schema-RuleState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleState</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;proven&quot; | &quot;inputs_unchanged&quot; | &quot;stale&quot; | &quot;gated&quot; | &quot;failing&quot; | &quot;not_run&quot; | &quot;reviewed&quot; | &quot;unrunnable&quot; | &quot;dangling&quot; | &quot;unproven&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the repository can say about one rule's proof, as a whole.</p>
+<p>Ordered strongest to weakest so that a summary sorted by this reads as a ranking, and so
+that a rule's state is the weakest of its parts by <code>max</code>.</p>
+<h4 id="schema-RuleState-example">Example</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::RuleState;</span></span>
+<span class="giallo-l"><span>assert!(RuleState::Proven &lt; RuleState::Stale);</span></span>
+<span class="giallo-l"><span>assert!(RuleState::Stale.passing());</span></span>
+<span class="giallo-l"><span>assert!(!RuleState::Dangling.passing());</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">proven</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every artifact it names is present, and every test it names has a passing run that
+nothing has invalidated.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">inputs_unchanged</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every artifact is present and every test passed, but at least one run is only
+un-invalidated rather than measured against this tree.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A passing run exists, but something it is about has changed since.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">gated</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">An executable gate runs what this rule names, on every CI run that selects it. The
+mechanism is in the tree and wired; no verdict for it is recorded here.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The latest run of a test this rule names did not pass.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_run</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every artifact is present, and no run of at least one named test was ever recorded.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">reviewed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The rule declares, with a stated reason, that nothing executable can express it. An
+honest exemption: counted apart from every proven rule, never counted as one.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unrunnable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The rule names a path no runner in this repository drives.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">dangling</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The rule names a path that is not in the tree. A proof that does not exist is worse
+than no proof, because the rule reads as proven.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unproven</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The rule names neither a validator nor a test. Correct for a rule nothing executable
+can express; a defect for a blocking one.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#op-rules-report" class="font-mono text-fg-brand hover:underline">rules.report</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleFinding" class="font-mono text-fg-brand underline">RuleFinding</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleProof" class="font-mono text-fg-brand underline">RuleProof</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleSummary" class="font-mono text-fg-brand underline">RuleSummary</a></p></article>
+<article id="schema-RuleSummary" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleSummary</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A rule named from somewhere else, with just enough to decide whether to follow it.</p>
+<h4 id="schema-RuleSummary-example">Example</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::RuleSummary;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleState};</span></span>
+<span class="giallo-l"><span>let s = RuleSummary {</span></span>
+<span class="giallo-l"><span>    id: &quot;project.x&quot;.into(),</span></span>
+<span class="giallo-l"><span>    title: &quot;X&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Advisory,</span></span>
+<span class="giallo-l"><span>    state: RuleState::Reviewed,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(s.state, RuleState::Reviewed);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The rule id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The title.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">class</td>
+          <td class="px-3 py-2 font-mono text-body">RuleClass <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleClass" class="text-fg-brand underline">RuleClass</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How strongly it binds.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">RuleState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleState" class="text-fg-brand underline">RuleState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the repository can say about its proof.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RuleDetail" class="font-mono text-fg-brand underline">RuleDetail</a> <a href="https://majordomus.dev/docs/api/rules/#schema-TestSubjects" class="font-mono text-fg-brand underline">TestSubjects</a></p></article>
+<article id="schema-RuleTestProof" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleTestProof</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One test a rule names, joined to what was recorded against it.</p>
+<h4 id="schema-RuleTestProof-example">Example</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{ArtifactKind, TestProof};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::evidence::ProofState;</span></span>
+<span class="giallo-l"><span>let t = TestProof {</span></span>
+<span class="giallo-l"><span>    path: &quot;test/cases/07_scope.sh&quot;.into(),</span></span>
+<span class="giallo-l"><span>    kind: ArtifactKind::Case,</span></span>
+<span class="giallo-l"><span>    present: true,</span></span>
+<span class="giallo-l"><span>    test: Some(&quot;suite:07_scope&quot;.into()),</span></span>
+<span class="giallo-l"><span>    state: ProofState::NotRun,</span></span>
+<span class="giallo-l"><span>    meaning: ProofState::NotRun.meaning().into(),</span></span>
+<span class="giallo-l"><span>    execution: None,</span></span>
+<span class="giallo-l"><span>    reproduce: Some(&quot;bash test/run.sh 07_scope&quot;.into()),</span></span>
+<span class="giallo-l"><span>    gates: vec![&quot;shell-suite&quot;.into()],</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(t.kind, ArtifactKind::Case);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The path the rule names.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">kind</td>
+          <td class="px-3 py-2 font-mono text-body">RuleArtifactKind <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleArtifactKind" class="text-fg-brand underline">RuleArtifactKind</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What drives it: a runner, a CI gate, or nothing.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">present</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether that path is in the tree.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">test</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The canonical test identity (<code>suite:&lt;case&gt;</code>, <code>crate:&lt;binary&gt;</code>), when a runner owns
+the path. Absent means no runner drives it, so no run of it can ever be recorded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">ProofState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-ProofState" class="text-fg-brand underline">ProofState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the repository can say about this test's latest run.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">meaning</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">That state, in one sentence, from the one place it is worded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">execution</td>
+          <td class="px-3 py-2 font-mono text-body">EvidenceExecution | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-EvidenceExecution" class="text-fg-brand underline">EvidenceExecution</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The execution behind the state, when there is one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reproduce</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The command that runs this test again.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">gates</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The CI gates that run this test, derived from the repository's own CI model.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RuleProof" class="font-mono text-fg-brand underline">RuleProof</a></p></article>
+<article id="schema-RuleValidator" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleValidator</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The validator a dispatched rule names, and whether anything defines it.</p>
+<p>A validator is <strong>not a path</strong>. <code>validator: adr</code> names the shell function
+<code>mj_validate_adr</code>, which the doctrine dispatcher calls; the tool finds it by scanning
+<code>lib/</code>, exactly as <code>majordomus doctor</code> does. Reading it as a path is a mistake worth
+recording here, because it is the one this type was introduced to fix: it makes every
+dispatched rule in the vendored package report as naming something that is not in the
+tree, which is the opposite of true — those are the best-enforced rules there are.</p>
+<h4 id="schema-RuleValidator-example">Example</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::ValidatorRef;</span></span>
+<span class="giallo-l"><span>let v = ValidatorRef {</span></span>
+<span class="giallo-l"><span>    name: &quot;adr&quot;.into(),</span></span>
+<span class="giallo-l"><span>    function: &quot;mj_validate_adr&quot;.into(),</span></span>
+<span class="giallo-l"><span>    defined_in: Some(&quot;lib/adr.sh&quot;.into()),</span></span>
+<span class="giallo-l"><span>    present: true,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(v.function, &quot;mj_validate_adr&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The name the rule declares, without the <code>mj_validate_</code> prefix.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">function</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The function the dispatcher calls.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">defined_in</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The file that defines it, when one does.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">present</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether anything in <code>lib/</code> defines it.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#schema-RuleProof" class="font-mono text-fg-brand underline">RuleProof</a></p></article>
+<article id="schema-RulesReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RulesReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The whole rule corpus, verified.</p>
+<h4 id="schema-RulesReport-example">Example</h4>
+<p>The whole corpus joined to the tree and the ledger. <code>satisfied</code> is true when no rule
+declares a class its proof does not support.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::RulesReport;</span></span>
+<span class="giallo-l"><span>let r = RulesReport {</span></span>
+<span class="giallo-l"><span>    head: None,</span></span>
+<span class="giallo-l"><span>    working_tree: &quot;clean&quot;.into(),</span></span>
+<span class="giallo-l"><span>    rules: vec![],</span></span>
+<span class="giallo-l"><span>    states: Default::default(),</span></span>
+<span class="giallo-l"><span>    coverage: Default::default(),</span></span>
+<span class="giallo-l"><span>    findings: vec![],</span></span>
+<span class="giallo-l"><span>    satisfied: true,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert!(r.satisfied());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">head</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The commit the report was derived against, when git could say.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">working_tree</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>clean</code>, <code>dirty</code> or <code>unknown</code> at the time of derivation.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rules</td>
+          <td class="px-3 py-2 font-mono text-body">array of RuleProof <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleProof" class="text-fg-brand underline">RuleProof</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every rule, in canonical id order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">states</td>
+          <td class="px-3 py-2 font-mono text-body">map of integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many rules are in each state, by the state's printed word.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">coverage</td>
+          <td class="px-3 py-2 font-mono text-body">RuleCoverage <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleCoverage" class="text-fg-brand underline">RuleCoverage</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The parts of a proof, counted.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+          <td class="px-3 py-2 font-mono text-body">array of RuleFinding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleFinding" class="text-fg-brand underline">RuleFinding</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every rule whose declared class the proof does not support.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">satisfied</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether there are no findings.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#op-rules-report" class="font-mono text-fg-brand hover:underline">rules.report</a></p></article>
+<article id="schema-TestSubjects" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">TestSubjects</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What one test proves: the reverse of <code>RuleDetail</code>.</p>
+<h4 id="schema-TestSubjects-example">Example</h4>
+<p>The reverse of <code>rules show</code>: what a test proves, and which rules would be left with no
+proof at all if it were deleted.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::TestSubjects;</span></span>
+<span class="giallo-l"><span>let t = TestSubjects {</span></span>
+<span class="giallo-l"><span>    test: Some(&quot;suite:07_scope&quot;.into()),</span></span>
+<span class="giallo-l"><span>    path: &quot;test/cases/07_scope.sh&quot;.into(),</span></span>
+<span class="giallo-l"><span>    present: true,</span></span>
+<span class="giallo-l"><span>    reproduce: Some(&quot;bash test/run.sh 07_scope&quot;.into()),</span></span>
+<span class="giallo-l"><span>    proves: vec![],</span></span>
+<span class="giallo-l"><span>    sole_proof_of: vec![],</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert!(t.present);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">test</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The canonical test identity, when a runner owns the path.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The path as given.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">present</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether that path is in the tree.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reproduce</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The command that runs it again.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">proves</td>
+          <td class="px-3 py-2 font-mono text-body">array of RuleSummary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleSummary" class="text-fg-brand underline">RuleSummary</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every rule that names this test, with the state it is in.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">sole_proof_of</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every rule that would lose its only proof if this test were deleted. This is the
+question the one-way relation could never answer.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/rules/#op-rules-proves" class="font-mono text-fg-brand hover:underline">rules.proves</a></p></article>
+</section>
+  </div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

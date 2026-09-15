@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_announce</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-peers-announce" class="break-all text-fg-brand hover:underline inline-block py-1">POST /api/v1/peers/announce</a> <span class="text-xs text-body-subtle">operationId peers.announce</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/peers/#op-peers-announce" class="break-all text-fg-brand hover:underline inline-block py-1">POST /api/v1/peers/announce</a> <span class="text-xs text-body-subtle">operationId peers.announce</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
         </tbody>
       </table>
@@ -196,32 +196,31 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · AnnounceInput</h3><p class="mt-1 break-words text-sm text-body">The input of `peers.announce`: what the calling peer is working on.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · AnnounceInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>peers.announce</code>: what the calling peer is working on.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claim</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Which of this peer&#39;s claims this is, when the peer holds more than one.
-
-One MCP session is not always one piece of work — a client that fans work out to
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which of this peer's claims this is, when the peer holds more than one.</p>
+<p>One MCP session is not always one piece of work — a client that fans work out to
 subagents shares its session with all of them — and without a name every
 announcement replaces the last, so the board ends up describing whichever worker
 spoke most recently and the rest of the scope silently stops being claimed. Name a
 claim and it stands beside the others; announce under that name again and it is
-updated. Leave it out and this is the peer&#39;s one unnamed claim, which is what a
+updated. Leave it out and this is the peer's one unnamed claim, which is what a
 single session announcing about itself wants.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">intent</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">One line, in the peer&#39;s words: the task, the question, the intent.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">One line, in the peer's words: the task, the question, the intent.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">scope</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Repository-relative paths the peer expects to touch. Informational: other peers
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Repository-relative paths the peer expects to touch. Informational: other peers
 read it to avoid a collision; nothing here enforces it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr></tbody>
     </table>
@@ -260,41 +259,39 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · Announced</h3><p class="mt-1 break-words text-sm text-body">What `announce` answers: the peer as recorded, and who else is on that ground.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · Announced</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What <code>announce</code> answers: the peer as recorded, and who else is on that ground.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">announcement</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The most recently made of [`Peer::claims`], for a reader that wants one line rather
-than all of them. Derived from `claims` and never a second account of it: a peer
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The most recently made of <code>Peer::claims</code>, for a reader that wants one line rather
+than all of them. Derived from <code>claims</code> and never a second account of it: a peer
 holding one claim reports the same thing in both, which is what every peer that does
 not name its claims reports.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">attached</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the session is still attached. A peer that announced something and then
-went away is kept and listed with `attached: false`: what it said it was working on
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the session is still attached. A peer that announced something and then
+went away is kept and listed with <code>attached: false</code>: what it said it was working on
 outlives the connection that said it, because the work does.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">checkout</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Which checkout of the repository this peer is attached to; see [`PeerCheckout`].
-
-The board itself never sets it — a board does not know where it is — and it is
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which checkout of the repository this peer is attached to; see <code>PeerCheckout</code>.</p>
+<p>The board itself never sets it — a board does not know where it is — and it is
 stamped by the reader that gathered this peer, which is the one thing that knows
-which checkout&#39;s server it asked.</td>
+which checkout's server it asked.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claims</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Every claim this peer holds, in name order, the unnamed one first. Empty for a peer
-that has announced nothing.
-
-One connection may be doing several things at once — a session that fans work out to
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every claim this peer holds, in name order, the unnamed one first. Empty for a peer
+that has announced nothing.</p>
+<p>One connection may be doing several things at once — a session that fans work out to
 subagents shares its MCP session with all of them — and before this field the board
 could hold only the last thing said, so each announcement silently erased the one
 before it and the other peers stopped seeing the rest of the scope.</td>
@@ -302,34 +299,33 @@ before it and the other peers stopped seeing the rest of the scope.</td>
         <td class="px-3 py-2 font-mono text-heading">client</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The client behind it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The client behind it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">connected_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">When it attached, RFC 3339, UTC.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When it attached, RFC 3339, UTC.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">`p1`, `p2`, ...</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>p1</code>, <code>p2</code>, ...</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">last_seen_seconds_ago</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Seconds since its last message.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Seconds since its last message.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">overlaps</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Every other peer whose claimed scope meets this one. Empty is the ordinary case.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every other peer whose claimed scope meets this one. Empty is the ordinary case.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">released</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Paths the claim this one replaced had, and this one does not.
-
-Announcing under a name a peer already used replaces that claim, which is what an
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Paths the claim this one replaced had, and this one does not.</p>
+<p>Announcing under a name a peer already used replaces that claim, which is what an
 update is. When the replacement is narrower, the peer has just stopped claiming
 ground it held a moment ago, and the other peers stop being warned off it. That is
 occasionally what was meant and is otherwise a mistake nobody would ever see, so it
@@ -339,7 +335,7 @@ collision later. Empty is the ordinary case.</td>
         <td class="px-3 py-2 font-mono text-heading">transport</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How it is attached.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How it is attached.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -525,7 +521,7 @@ collision later. Empty is the ordinary case.</td>
           &quot;type&quot;: &quot;null&quot;
         }
       ],
-      &quot;description&quot;: &quot;The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.&quot;
+      &quot;description&quot;: &quot;The most recently made of `Peer::claims`, for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.&quot;
     },
     &quot;attached&quot;: {
       &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;,
@@ -540,7 +536,7 @@ collision later. Empty is the ordinary case.</td>
           &quot;type&quot;: &quot;null&quot;
         }
       ],
-      &quot;description&quot;: &quot;Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout&#39;s server it asked.&quot;
+      &quot;description&quot;: &quot;Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout&#39;s server it asked.&quot;
     },
     &quot;claims&quot;: {
       &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;,
@@ -626,8 +622,8 @@ collision later. Empty is the ordinary case.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::peers</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">AnnounceInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Announced</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -705,7 +701,7 @@ collision later. Empty is the ordinary case.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

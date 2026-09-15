@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_completion</span><br>resource <span class="break-all">majordomus://gates/completion</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-gates-completion" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/gates/completion</a> <span class="text-xs text-body-subtle">operationId gates.completion</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/gates/#op-gates-completion" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/gates/completion</a> <span class="text-xs text-body-subtle">operationId gates.completion</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
         </tbody>
       </table>
@@ -196,39 +196,37 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · CompletionInput</h3><p class="mt-1 break-words text-sm text-body">```
-use majordomus_cli::capability::builtin::gates::CompletionInput;
-
-// the default asks about the active task&#39;s own change set
-let mine = CompletionInput::default();
-assert!(mine.changed.is_none() &amp;&amp; mine.base.is_none());
-
-// and a caller may name the change instead, which is how a test drives it
-let named = CompletionInput {
-    changed: Some(vec![&quot;docs/CLI.md&quot;.into()]),
-    ..Default::default()
-};
-assert_eq!(named.changed.unwrap(), [&quot;docs/CLI.md&quot;]);
-```
-Which change to judge completion over.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · CompletionInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto"><pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::gates::CompletionInput;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the default asks about the active task&#39;s own change set</span></span>
+<span class="giallo-l"><span>let mine = CompletionInput::default();</span></span>
+<span class="giallo-l"><span>assert!(mine.changed.is_none() &amp;&amp; mine.base.is_none());</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and a caller may name the change instead, which is how a test drives it</span></span>
+<span class="giallo-l"><span>let named = CompletionInput {</span></span>
+<span class="giallo-l"><span>    changed: Some(vec![&quot;docs/CLI.md&quot;.into()]),</span></span>
+<span class="giallo-l"><span>    ..Default::default()</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(named.changed.unwrap(), [&quot;docs/CLI.md&quot;]);</span></span></code></pre>
+<p>Which change to judge completion over.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">base</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The commit to compare with, when the task&#39;s own starting commit is not wanted.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commit to compare with, when the task's own starting commit is not wanted.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">changed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The changed paths, repository-relative. Absent means the task&#39;s own change set:
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The changed paths, repository-relative. Absent means the task's own change set:
 everything between the commit the task started at and the working tree.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">on_demand</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Also plan the gates the model marks on-demand. Off by default, because a plan that
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Also plan the gates the model marks on-demand. Off by default, because a plan that
 selects a gate whose runner is unavailable is a plan whose verdict never arrives.</td>
       </tr></tbody>
     </table>
@@ -269,102 +267,99 @@ selects a gate whose runner is unavailable is a plan whose verdict never arrives
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · Completion</h3><p class="mt-1 break-words text-sm text-body">```
-use majordomus_cli::gates::Completion;
-
-// the document every surface reads, as `gates.completion` answers with it. The property
-// that matters is the one asserted here: a gate that never reported leaves the task
-// finishable and *unverified*, which is a different thing from a task that passed.
-let c: Completion = serde_json::from_value(serde_json::json!({
-    &quot;present&quot;: true,
-    &quot;model&quot;: &quot;.ai/repo/ci/gates.yaml&quot;,
-    &quot;plan&quot;: { &quot;mode&quot;: &quot;affected&quot;, &quot;reason&quot;: &quot;1 path in 1 class&quot;, &quot;changed&quot;: [&quot;docs/CLI.md&quot;],
-              &quot;classes&quot;: [], &quot;unclassified&quot;: [], &quot;selected&quot;: {}, &quot;excluded&quot;: {} },
-    &quot;finishable&quot;: true,
-    &quot;unverified&quot;: [&quot;reference-check&quot;],
-    &quot;tallies&quot;: { &quot;queued&quot;: 1 },
-    &quot;gates&quot;: [],
-    &quot;obligations&quot;: [],
-    &quot;questions&quot;: []
-}))
-.unwrap();
-assert!(c.finishable, &quot;absence of a verdict does not refuse&quot;);
-assert_eq!(c.unverified, [&quot;reference-check&quot;], &quot;and it is never silently accepted&quot;);
-assert!(c.blocking.is_empty());
-```
-Whether the active task may be called finished, and everything the answer rests on.
-
-`finishable` is the field a caller acts on and the one thing no surface may recompute:
-the shell tool&#39;s `check` and `finish` read it, the HTTP API serves it, the Cockpit
-renders it, and all of them are reading this one execution.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · Completion</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto"><pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::gates::Completion;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the document every surface reads, as `gates.completion` answers with it. The property</span></span>
+<span class="giallo-l"><span>// that matters is the one asserted here: a gate that never reported leaves the task</span></span>
+<span class="giallo-l"><span>// finishable and *unverified*, which is a different thing from a task that passed.</span></span>
+<span class="giallo-l"><span>let c: Completion = serde_json::from_value(serde_json::json!({</span></span>
+<span class="giallo-l"><span>    &quot;present&quot;: true,</span></span>
+<span class="giallo-l"><span>    &quot;model&quot;: &quot;.ai/repo/ci/gates.yaml&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;plan&quot;: { &quot;mode&quot;: &quot;affected&quot;, &quot;reason&quot;: &quot;1 path in 1 class&quot;, &quot;changed&quot;: [&quot;docs/CLI.md&quot;],</span></span>
+<span class="giallo-l"><span>              &quot;classes&quot;: [], &quot;unclassified&quot;: [], &quot;selected&quot;: {}, &quot;excluded&quot;: {} },</span></span>
+<span class="giallo-l"><span>    &quot;finishable&quot;: true,</span></span>
+<span class="giallo-l"><span>    &quot;unverified&quot;: [&quot;reference-check&quot;],</span></span>
+<span class="giallo-l"><span>    &quot;tallies&quot;: { &quot;queued&quot;: 1 },</span></span>
+<span class="giallo-l"><span>    &quot;gates&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;obligations&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;questions&quot;: []</span></span>
+<span class="giallo-l"><span>}))</span></span>
+<span class="giallo-l"><span>.unwrap();</span></span>
+<span class="giallo-l"><span>assert!(c.finishable, &quot;absence of a verdict does not refuse&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(c.unverified, [&quot;reference-check&quot;], &quot;and it is never silently accepted&quot;);</span></span>
+<span class="giallo-l"><span>assert!(c.blocking.is_empty());</span></span></code></pre>
+<p>Whether the active task may be called finished, and everything the answer rests on.</p>
+<p><code>finishable</code> is the field a caller acts on and the one thing no surface may recompute:
+the shell tool's <code>check</code> and <code>finish</code> read it, the HTTP API serves it, the Cockpit
+renders it, and all of them are reading this one execution.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">blocking</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The required gates whose status refuses completion.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The required gates whose status refuses completion.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">What could not be established, each as one line. Never empty when something was
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What could not be established, each as one line. Never empty when something was
 skipped: a gap is reported rather than left to be inferred.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">finishable</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">False when a required gate is known to be failing, stale, or blocked by one that is.
-Absence of a verdict does not make this false — it makes `unverified` non-empty.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">False when a required gate is known to be failing, stale, or blocked by one that is.
+Absence of a verdict does not make this false — it makes <code>unverified</code> non-empty.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">gates</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every gate of the model, what refuses first.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every gate of the model, what refuses first.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">model</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The CI model this was judged against.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The CI model this was judged against.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">obligations</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Which obligations the change set implies, and whether the task promised them. The
-judgement of a declared one is `obligations.closure`&#39;s, not this module&#39;s.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which obligations the change set implies, and whether the task promised them. The
+judgement of a declared one is <code>obligations.closure</code>'s, not this module's.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">plan</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Affected or full, and why.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Affected or full, and why.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">True when a task record was found in this checkout.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">True when a task record was found in this checkout.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">questions</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The done invariant: the questions a task must answer before anybody may call it
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The done invariant: the questions a task must answer before anybody may call it
 finished, each with the source that answered it and the evidence it read. Composed
 from the obligation closure, the gates and the change set; a question nothing here
-reaches is `unknown` and names the command that would answer it.</td>
+reaches is <code>unknown</code> and names the command that would answer it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tallies</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many gates stand in each status, by word.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many gates stand in each status, by word.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">task</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The task, as its record declares it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The task, as its record declares it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">unverified</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The required gates that have never reported, or cannot be judged here. A task
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The required gates that have never reported, or cannot be judged here. A task
 finished over these is finished unverified, and the record says so.</td>
       </tr></tbody>
     </table>
@@ -392,7 +387,7 @@ finished over these is finished unverified, and the record says so.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;requires&quot;: {
-          &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
+          &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n`super::obligations` is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
@@ -879,8 +874,8 @@ finished over these is finished unverified, and the record says so.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::gates</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">CompletionInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Completion</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/gates.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/gates.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/gates.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/gates.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -951,7 +946,7 @@ finished over these is finished unverified, and the record says so.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

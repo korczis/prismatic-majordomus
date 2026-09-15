@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_evidence_claim</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-evidence-claim" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/evidence/claim</a> <span class="text-xs text-body-subtle">operationId evidence.claim</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/evidence/#op-evidence-claim" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/evidence/claim</a> <span class="text-xs text-body-subtle">operationId evidence.claim</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus evidence claim</td></tr>
         </tbody>
       </table>
@@ -196,29 +196,25 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · EvidenceClaimInput</h3><p class="mt-1 break-words text-sm text-body">One claim of the matrix, named by the id it is declared under.
-
-The id is required, and there is no spelling of this input that means &quot;every claim&quot; —
-that question belongs to `evidence.report`. An id the matrix does not declare is a
-not-found from the handler rather than an empty proof.
-
-```
-use majordomus_cli::capability::builtin::evidence::EvidenceClaimInput;
-
-let input: EvidenceClaimInput =
-    serde_json::from_str(r#&quot;{&quot;claim&quot;: &quot;evidence-both-directions&quot;}&quot;#).unwrap();
-assert_eq!(input.claim, &quot;evidence-both-directions&quot;);
-
-// no id is a usage error, never a request for all of them
-assert!(serde_json::from_str::&lt;EvidenceClaimInput&gt;(&quot;{}&quot;).is_err());
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · EvidenceClaimInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One claim of the matrix, named by the id it is declared under.</p>
+<p>The id is required, and there is no spelling of this input that means "every claim" —
+that question belongs to <code>evidence.report</code>. An id the matrix does not declare is a
+not-found from the handler rather than an empty proof.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::evidence::EvidenceClaimInput;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let input: EvidenceClaimInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_str(r#&quot;{&quot;claim&quot;: &quot;evidence-both-directions&quot;}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(input.claim, &quot;evidence-both-directions&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// no id is a usage error, never a request for all of them</span></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;EvidenceClaimInput&gt;(&quot;{}&quot;).is_err());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claim</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The claim id, as `docs/CLAIMS.yaml` spells it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The claim id, as <code>docs/CLAIMS.yaml</code> spells it.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -241,126 +237,121 @@ assert!(serde_json::from_str::&lt;EvidenceClaimInput&gt;(&quot;{}&quot;).is_err(
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · ClaimEvidence</h3><p class="mt-1 break-words text-sm text-body">One claim with everything the repository can say about its proof, and the way back out
-to the test that carries it.
-
-The proof is flattened in, so a client reads one claim rather than an evidence wrapper
-around one; the executions and the other claims the same test proves sit beside it.
-
-```
-use majordomus_cli::capability::builtin::evidence::ClaimEvidence;
-use majordomus_cli::evidence::ClaimProof;
-
-let proof: ClaimProof = serde_json::from_value(serde_json::json!({
-    &quot;id&quot;: &quot;evidence-both-directions&quot;,
-    &quot;claim&quot;: &quot;a claim and its test answer for each other&quot;,
-    &quot;status&quot;: &quot;guaranteed&quot;,
-    &quot;source&quot;: null,
-    &quot;implementation&quot;: null,
-    &quot;test_path&quot;: &quot;test/cases/84_distribution_model.sh&quot;,
-    &quot;test&quot;: &quot;suite:84_distribution_model&quot;,
-    &quot;state&quot;: &quot;not_run&quot;,
-    &quot;meaning&quot;: &quot;no run of this test has been recorded&quot;,
-    &quot;execution&quot;: null,
-    &quot;changed&quot;: [],
-    &quot;reproduce&quot;: &quot;bash test/run.sh 84_distribution_model&quot;
-}))
-.unwrap();
-
-let answer = ClaimEvidence {
-    proof,
-    executions: Vec::new(),
-    also_proves: vec![&quot;evidence-record-is-not-networked&quot;.to_string()],
-};
-let json = serde_json::to_value(&amp;answer).unwrap();
-assert_eq!(json[&quot;id&quot;], &quot;evidence-both-directions&quot;);
-assert!(json.get(&quot;proof&quot;).is_none(), &quot;the claim is flattened in, not nested&quot;);
-assert_eq!(json[&quot;also_proves&quot;], serde_json::json!([&quot;evidence-record-is-not-networked&quot;]));
-// a list even where the ledger keeps one: retention is a decision that may change,
-// and a client that read a bare object would break when it did
-assert_eq!(json[&quot;executions&quot;], serde_json::json!([]));
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · ClaimEvidence</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One claim with everything the repository can say about its proof, and the way back out
+to the test that carries it.</p>
+<p>The proof is flattened in, so a client reads one claim rather than an evidence wrapper
+around one; the executions and the other claims the same test proves sit beside it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::evidence::ClaimEvidence;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::evidence::ClaimProof;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let proof: ClaimProof = serde_json::from_value(serde_json::json!({</span></span>
+<span class="giallo-l"><span>    &quot;id&quot;: &quot;evidence-both-directions&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;claim&quot;: &quot;a claim and its test answer for each other&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;status&quot;: &quot;guaranteed&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;source&quot;: null,</span></span>
+<span class="giallo-l"><span>    &quot;implementation&quot;: null,</span></span>
+<span class="giallo-l"><span>    &quot;test_path&quot;: &quot;test/cases/84_distribution_model.sh&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;test&quot;: &quot;suite:84_distribution_model&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;state&quot;: &quot;not_run&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;meaning&quot;: &quot;no run of this test has been recorded&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;execution&quot;: null,</span></span>
+<span class="giallo-l"><span>    &quot;changed&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;reproduce&quot;: &quot;bash test/run.sh 84_distribution_model&quot;</span></span>
+<span class="giallo-l"><span>}))</span></span>
+<span class="giallo-l"><span>.unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let answer = ClaimEvidence {</span></span>
+<span class="giallo-l"><span>    proof,</span></span>
+<span class="giallo-l"><span>    executions: Vec::new(),</span></span>
+<span class="giallo-l"><span>    also_proves: vec![&quot;evidence-record-is-not-networked&quot;.to_string()],</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>let json = serde_json::to_value(&amp;answer).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(json[&quot;id&quot;], &quot;evidence-both-directions&quot;);</span></span>
+<span class="giallo-l"><span>assert!(json.get(&quot;proof&quot;).is_none(), &quot;the claim is flattened in, not nested&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(json[&quot;also_proves&quot;], serde_json::json!([&quot;evidence-record-is-not-networked&quot;]));</span></span>
+<span class="giallo-l"><span>// a list even where the ledger keeps one: retention is a decision that may change,</span></span>
+<span class="giallo-l"><span>// and a client that read a bare object would break when it did</span></span>
+<span class="giallo-l"><span>assert_eq!(json[&quot;executions&quot;], serde_json::json!([]));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">also_proves</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The other claims the same test proves. A test shared by twelve claims is a test
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The other claims the same test proves. A test shared by twelve claims is a test
 whose failure is twelve findings, and a reader of one of them should be able to see
 the other eleven without searching.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">changed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The files this claim names that differ between the recorded commit and the working
-tree. Empty unless the state is [`ProofState::Stale`].
-
-Always emitted, empty included: the schema this capability publishes says the key is
-there, and a client that has to tell &quot;no files changed&quot; from &quot;the server did not say&quot;
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The files this claim names that differ between the recorded commit and the working
+tree. Empty unless the state is <code>ProofState::Stale</code>.</p>
+<p>Always emitted, empty included: the schema this capability publishes says the key is
+there, and a client that has to tell "no files changed" from "the server did not say"
 is a client reading two different answers as one.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claim</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The claim sentence.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The claim sentence.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">execution</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The execution the state was derived from, when there is one.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The execution the state was derived from, when there is one.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">executions</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every execution the ledger holds for this claim&#39;s test — today one, the latest, and
-a list because the ledger&#39;s retention is a decision that may change and a client
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every execution the ledger holds for this claim's test — today one, the latest, and
+a list because the ledger's retention is a decision that may change and a client
 that read a bare object would break when it did.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The claim&#39;s id, as `docs/CLAIMS.yaml` spells it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The claim's id, as <code>docs/CLAIMS.yaml</code> spells it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">implementation</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The file that implements it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The file that implements it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">meaning</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">That state, in one sentence.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">That state, in one sentence.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">reproduce</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The command that produces the proof again, when a runner owns the test.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The command that produces the proof again, when a runner owns the test.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">source</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The document that defines the behaviour.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The document that defines the behaviour.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">state</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What the repository can say about the proof.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the repository can say about the proof.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">status</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The status the claim declares: <code>guaranteed</code>, <code>advisory</code>, <code>planned</code>, <code>rejected</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">test</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The test&#39;s stable identity, when a runner owns it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The test's stable identity, when a runner owns it.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">test_path</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The path the claim names as its test, verbatim.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The path the claim names as its test, verbatim.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -409,7 +400,7 @@ that read a bare object would break when it did.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;test&quot;: {
-          &quot;description&quot;: &quot;The test, in [`TestId::as_string`] form.&quot;,
+          &quot;description&quot;: &quot;The test, in `TestId::as_string` form.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;working_tree&quot;: {
@@ -483,7 +474,7 @@ that read a bare object would break when it did.</td>
       ]
     },
     &quot;EvidenceRunner&quot;: {
-      &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \&quot;suite\&quot;);\nassert_eq!(Runner::Crate.prefix(), \&quot;crate\&quot;);\n```&quot;,
+      &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \&quot;suite\&quot;);\nassert_eq!(Runner::Crate.prefix(), \&quot;crate\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;suite&quot;,
@@ -548,7 +539,7 @@ that read a bare object would break when it did.</td>
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;changed&quot;: {
-      &quot;description&quot;: &quot;The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \&quot;no files changed\&quot; from \&quot;the server did not say\&quot;\nis a client reading two different answers as one.&quot;,
+      &quot;description&quot;: &quot;The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is `ProofState::Stale`.\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \&quot;no files changed\&quot; from \&quot;the server did not say\&quot;\nis a client reading two different answers as one.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
@@ -673,8 +664,8 @@ that read a bare object would break when it did.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::evidence</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EvidenceClaimInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ClaimEvidence</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -745,7 +736,7 @@ that read a bare object would break when it did.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

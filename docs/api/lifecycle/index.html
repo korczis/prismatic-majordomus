@@ -1,0 +1,1408 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP API: lifecycle — Prismatic Majordomus</title>
+<meta name="description" content="The episode lifecycle as an operator sees it: every open episode of this checkout&#39;s store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider&#39;s adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.">
+<link rel="canonical" href="https://majordomus.dev/docs/api/lifecycle/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="HTTP API: lifecycle — Prismatic Majordomus">
+<meta property="og:description" content="The episode lifecycle as an operator sees it: every open episode of this checkout&#39;s store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider&#39;s adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.">
+<meta property="og:url" content="https://majordomus.dev/docs/api/lifecycle/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.7.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">HTTP API: lifecycle</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">HTTP API: lifecycle</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The episode lifecycle as an operator sees it: every open episode of this checkout&#39;s store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider&#39;s adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
+    <p class="mb-2"><a href="https://majordomus.dev/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-lifecycle-closed" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">lifecycle.closed</a></li><li><a href="#op-lifecycle-episodes" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">lifecycle.episodes</a></li><li><a href="#op-lifecycle-providers" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">lifecycle.providers</a></li><li><a href="#op-lifecycle-recovery" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">lifecycle.recovery</a></li><li><a href="#op-lifecycle-runtime" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">lifecycle.runtime</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-lifecycle" class="scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">lifecycle</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">The episode lifecycle as an operator sees it: every open episode of this checkout&#39;s store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider&#39;s adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.</p><article id="op-lifecycle-closed" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/lifecycle/closed</code>
+    <a href="#op-lifecycle-closed" class="font-mono text-xs text-body-subtle hover:underline">lifecycle.closed</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The records a clone receives</h3>
+  <p class="mt-1 break-words text-sm text-body">The tracked, durable projection of closed episodes: how many there are, how many closed on this branch, and the newest twenty. This is the only half of the subsystem that survives a clone; everything under .ai/local/ names this machine and travels nowhere.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2, ttl_seconds=30)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_lifecycle_closed</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/lifecycle/closed&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/lifecycle/#schema-ClosedSessions" class="text-fg-brand hover:underline">ClosedSessions</a></td>
+          <td class="px-3 py-2 text-body">The records a clone receives: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-lifecycle-episodes" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/lifecycle/episodes</code>
+    <a href="#op-lifecycle-episodes" class="font-mono text-xs text-body-subtle hover:underline">lifecycle.episodes</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Every open episode</h3>
+  <p class="mt-1 break-words text-sm text-body">Every open episode in this checkout&#39;s store, with the provider session that owns it, the worktree and branch it opened on, where it stands, and what the ledger last saw it do. `continuity.state` reports the one episode the pointer resolves to, which is right for a briefing and blind to every other window open on the same worktree.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2, ttl_seconds=2)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_lifecycle_episodes</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;lifecycle-episodes&quot;, &quot;uri&quot;: &quot;majordomus://lifecycle/episodes&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/lifecycle/episodes&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/lifecycle/#schema-Episodes" class="text-fg-brand hover:underline">Episodes</a></td>
+          <td class="px-3 py-2 text-body">Every open episode: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-lifecycle-providers" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/lifecycle/providers</code>
+    <a href="#op-lifecycle-providers" class="font-mono text-xs text-body-subtle hover:underline">lifecycle.providers</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What each provider&#39;s adapter declares</h3>
+  <p class="mt-1 break-words text-sm text-body">Per provider: the lifecycle events its adapter declares in the provider&#39;s own vocabulary, whether it can archive prompts, and which of this repository&#39;s enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_lifecycle_providers</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/lifecycle/providers&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/lifecycle/#schema-ProviderLifecycles" class="text-fg-brand hover:underline">ProviderLifecycles</a></td>
+          <td class="px-3 py-2 text-body">What each provider's adapter declares: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-lifecycle-recovery" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/lifecycle/recovery</code>
+    <a href="#op-lifecycle-recovery" class="font-mono text-xs text-body-subtle hover:underline">lifecycle.recovery</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What the store needs somebody to do</h3>
+  <p class="mt-1 break-words text-sm text-body">Open records that can no longer close themselves, temporary files a killed close left in the tracked sessions section, whether the pointer has been migrated to the per-provider layout, and the arithmetic that says whether every episode the ledger has seen start is accounted for. Every finding carries the command that clears it.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2, ttl_seconds=2)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_lifecycle_recovery</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;lifecycle-recovery&quot;, &quot;uri&quot;: &quot;majordomus://lifecycle/recovery&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/lifecycle/recovery&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/lifecycle/#schema-Recovery" class="text-fg-brand hover:underline">Recovery</a></td>
+          <td class="px-3 py-2 text-body">What the store needs somebody to do: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-lifecycle-runtime" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/lifecycle/runtime</code>
+    <a href="#op-lifecycle-runtime" class="font-mono text-xs text-body-subtle hover:underline">lifecycle.runtime</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The commit this process is answering about</h3>
+  <p class="mt-1 break-words text-sm text-body">The commit the served index was built at, against the commit the repository is on, read on this call. A server that froze its index at start-up answers every question about a commit from hours ago with nothing in the answer saying so; this is the reading that can tell.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2, ttl_seconds=2)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_lifecycle_runtime</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/lifecycle/runtime&quot;</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/lifecycle/#schema-RuntimeView" class="text-fg-brand hover:underline">RuntimeView</a></td>
+          <td class="px-3 py-2 text-body">The commit this process is answering about: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+</section><section id="schemas" class="mt-12 scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-Balance" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Balance</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the ledger says about episode lifecycle against what the store holds.</p>
+<p>The invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode
+that started either closed or is still open. When <code>started</code> exceeds <code>closed + open</code>, the
+difference is episodes whose close was never recorded — the shape of the outage that ADR
+describes, where events kept arriving and the records they should have produced did not.</p>
+<p>The sign matters and the two directions mean opposite things. Positive <code>unaccounted</code> is
+the outage: episodes that started, are not open, and produced no closed record — work
+that happened and left nothing behind. Negative is ordinary bookkeeping: the ledger was
+rotated, or a record was committed from a checkout whose ledger lines are not in this
+one, so there are more records than started lines to account for them.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::Balance;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let of = |started, closed, open, unaccounted, agrees| -&gt; Balance {</span></span>
+<span class="giallo-l"><span>    serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>        &quot;started&quot;: started, &quot;closed&quot;: closed, &quot;open&quot;: open,</span></span>
+<span class="giallo-l"><span>        &quot;unaccounted&quot;: unaccounted, &quot;agrees&quot;: agrees, &quot;note&quot;: &quot;as measured&quot;,</span></span>
+<span class="giallo-l"><span>    })).unwrap()</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the good case: every episode that started either closed or is still open</span></span>
+<span class="giallo-l"><span>let sound = of(40, 37, 3, 0, true);</span></span>
+<span class="giallo-l"><span>assert_eq!(sound.started as i64 - sound.closed as i64 - sound.open as i64, sound.unaccounted);</span></span>
+<span class="giallo-l"><span>assert!(sound.agrees);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the outage ADR 0052 describes: four closes that were never recorded</span></span>
+<span class="giallo-l"><span>let lost = of(40, 33, 3, 4, false);</span></span>
+<span class="giallo-l"><span>assert!(lost.unaccounted &gt; 0 &amp;&amp; !lost.agrees);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and a rotated ledger, which is not a fault in either half</span></span>
+<span class="giallo-l"><span>let rotated = of(2, 37, 3, -38, false);</span></span>
+<span class="giallo-l"><span>assert!(rotated.unaccounted &lt; 0, &quot;more records than lines to account for them&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">started</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>session.started</code> lines in the ledger.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">closed</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>session.closed</code> lines.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">open</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Open records in the store.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">unaccounted</td>
+          <td class="px-3 py-2 font-mono text-body">integer (int64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>started - closed - open</code>. Zero is the good case; negative means the ledger was
+rotated under the records, which is ordinary.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">agrees</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the three agree.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">note</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the numbers mean, in words.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Recovery" class="font-mono text-fg-brand underline">Recovery</a></p></article>
+<article id="schema-ClosedSession" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ClosedSession</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One closed episode of the tracked, durable projection — the half of this subsystem that
+survives a clone.</p>
+<p>It carries both a <code>path</code> and a <code>uri</code> because they answer different questions: the path
+is where the record is in this checkout, and the <code>majordomus://session/&lt;identity&gt;</code>
+identifier is what every other surface addresses the same record by, so a reader can
+follow it to the object page without constructing one.</p>
+<p>Everything but the identity, the identifier and the path is optional, because a record
+written by an older close carries fewer fields and is still a record.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::ClosedSession;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let s: ClosedSession = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;session_id&quot;: &quot;s-0042&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;uri&quot;: &quot;majordomus://session/2026-09-12-s-0042&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;path&quot;: &quot;.ai/repo/project/sessions/2026-09-12-s-0042.md&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;created_at&quot;: &quot;2026-09-12T15:44:00Z&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;branch&quot;: &quot;master&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;head&quot;: &quot;cd04012f1&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;outcome&quot;: &quot;landed&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>assert!(s.uri.starts_with(&quot;majordomus://session/&quot;), &quot;addressable as an object&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(s.outcome, &quot;landed&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// an older record with less in it is still one, and says so by absence</span></span>
+<span class="giallo-l"><span>let sparse: ClosedSession = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;session_id&quot;: &quot;s-0001&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;uri&quot;: &quot;majordomus://session/2026-08-01-s-0001&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;path&quot;: &quot;.ai/repo/project/sessions/2026-08-01-s-0001.md&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(sparse.outcome.is_empty() &amp;&amp; sparse.title.is_empty());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">session_id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The episode id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">uri</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>majordomus://session/&lt;identity&gt;</code>, for the object page.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Repository-relative path.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">created_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">When it closed, as recorded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branch</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The branch it closed on.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">head</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The commit it closed at.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">outcome</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The typed outcome the close recorded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Its title, when the record carries one.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-ClosedSessions" class="font-mono text-fg-brand underline">ClosedSessions</a></p></article>
+<article id="schema-ClosedSessions" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ClosedSessions</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The tracked half of the subsystem: the records a clone receives.</p>
+<p><code>total</code> is exact and <code>newest</code> is a window, and keeping them as two numbers is the whole
+design of this type. The tracked directory grows without bound and a Cockpit card is not
+a listing page, so the rows are capped — but a capped list that did not carry the true
+total would quietly understate the repository, which is the shape of defect this
+repository has been bitten by often enough to name. <code>window</code> says how many rows came
+back, so a reader can see the cap rather than infer it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::ClosedSessions;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let row = |id: &amp;str| json!({</span></span>
+<span class="giallo-l"><span>    &quot;session_id&quot;: id,</span></span>
+<span class="giallo-l"><span>    &quot;uri&quot;: format!(&quot;majordomus://session/{id}&quot;),</span></span>
+<span class="giallo-l"><span>    &quot;path&quot;: format!(&quot;.ai/repo/project/sessions/{id}.md&quot;),</span></span>
+<span class="giallo-l"><span>    &quot;branch&quot;: &quot;master&quot;,</span></span>
+<span class="giallo-l"><span>});</span></span>
+<span class="giallo-l"><span>let c: ClosedSessions = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;total&quot;: 137,</span></span>
+<span class="giallo-l"><span>    &quot;on_this_branch&quot;: 41,</span></span>
+<span class="giallo-l"><span>    &quot;newest&quot;: [row(&quot;s-0137&quot;), row(&quot;s-0136&quot;)],</span></span>
+<span class="giallo-l"><span>    &quot;window&quot;: 2,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the window is what came back; the total is what exists</span></span>
+<span class="giallo-l"><span>assert_eq!(c.window, c.newest.len());</span></span>
+<span class="giallo-l"><span>assert!(c.total &gt; c.window, &quot;the rows are capped and the total is not&quot;);</span></span>
+<span class="giallo-l"><span>assert!(c.on_this_branch &lt;= c.total);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">total</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many closed records the index holds. Exact.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">on_this_branch</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many of them closed on the branch this checkout is on.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">newest</td>
+          <td class="px-3 py-2 font-mono text-body">array of ClosedSession <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-ClosedSession" class="text-fg-brand underline">ClosedSession</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The newest <code>CLOSED_WINDOW</code>, newest first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">window</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many are carried in <code>newest</code>, against the total.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#op-lifecycle-closed" class="font-mono text-fg-brand hover:underline">lifecycle.closed</a></p></article>
+<article id="schema-Episode" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Episode</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One open episode, as its file records it and as the ledger has seen it.</p>
+<p>Everything here is recorded rather than derived, and almost everything is optional,
+which is the point: an episode opened by hand has no provider, a worker that supplied no
+identity has none, and an episode that opened and did nothing has no ledger line and so
+no <code>last_activity</code>. Each of those is ordinary and none is a fault, so each is carried as
+absence — the empty fields are skipped on the wire — and a reader must handle their
+absence rather than expect a placeholder.</p>
+<p>The two fields that are always there are <code>standing</code> and <code>note</code>: where the episode stands,
+and why it stands there in words. A standing a reader cannot act on is the failure this
+subsystem was corrected for, so <code>note</code> is never empty.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::{Episode, EpisodeStanding};</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the smallest true record: an episode opened by hand that has written nothing yet</span></span>
+<span class="giallo-l"><span>let e: Episode = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;session_id&quot;: &quot;s-0001&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;path&quot;: &quot;.ai/local/state/sessions-open/by-hand.yaml&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;standing&quot;: &quot;open&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;events&quot;: 0,</span></span>
+<span class="giallo-l"><span>    &quot;note&quot;: &quot;open in this worktree; the pointer names another episode&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>assert_eq!(e.standing, EpisodeStanding::Open);</span></span>
+<span class="giallo-l"><span>assert!(e.provider.is_empty(), &quot;no provider session owns a hand-opened episode&quot;);</span></span>
+<span class="giallo-l"><span>assert!(e.last_activity.is_empty(), &quot;it has written no ledger line&quot;);</span></span>
+<span class="giallo-l"><span>assert!(e.tasks.is_empty(), &quot;work outside a task is permitted&quot;);</span></span>
+<span class="giallo-l"><span>assert!(!e.note.is_empty(), &quot;a standing always says why&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and absence stays absence: the empty fields are not serialised back as &quot;&quot;</span></span>
+<span class="giallo-l"><span>let wire = serde_json::to_value(&amp;e).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(wire.get(&quot;provider&quot;).is_none());</span></span>
+<span class="giallo-l"><span>assert_eq!(wire[&quot;events&quot;], 0, &quot;a count of zero is a measurement, so it is kept&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">session_id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The episode id the ledger stamps on every line this worker wrote.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Repository-relative path of the open record. The body is at the path.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">provider</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The provider whose event opened it, when one did. Empty for an episode opened by
+hand, which is the one episode no provider session owns.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">provider_session</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">That provider's own session identity: the file's stem, and the string the prompt
+archive stamps on the same worker's records.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">owner</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Who opened it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">worker</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The worker identity, when one was supplied. Never inferred.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">worktree</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The worktree it opened in, absolute, as recorded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branch</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The branch it opened on.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">start_head</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The commit it opened at.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">started_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">When it opened, as recorded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">standing</td>
+          <td class="px-3 py-2 font-mono text-body">EpisodeStanding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-EpisodeStanding" class="text-fg-brand underline">EpisodeStanding</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where it stands.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">events</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many ledger lines carry this episode id. Zero for an episode that opened and did
+nothing, which is ordinary and not a fault.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">last_activity</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The timestamp of the newest ledger line carrying this episode id, as recorded.
+Empty when it has written none.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">last_event</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">That line's event name.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">tasks</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The tasks this episode's ledger lines name, in the order it first touched each.</p>
+<p>A relation, not a container. An episode may touch three tasks or none, and a task may
+span three episodes; the two are joined here by what the ledger recorded rather than
+by either one owning the other. An episode with no task is ordinary — work outside a
+task is permitted — and it is emphatically not a reason for the episode's own records
+to go unwritten, which is the premise ADR 0052 removes.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">note</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Why it stands where it does, in words. Never empty: a standing a reader cannot act
+on is the failure this subsystem is being corrected for.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Episodes" class="font-mono text-fg-brand underline">Episodes</a></p></article>
+<article id="schema-EpisodeStanding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">EpisodeStanding</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;current&quot; | &quot;open&quot; | &quot;foreign&quot; | &quot;stranded&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where an open episode stands, as far as the repository can observe it.</p>
+<p>It is worth being precise about what is <em>not</em> here. Whether the provider that opened an
+episode is still attached to its conversation is not a fact of this repository: the
+episode file records no pid, the peer board records no episode id, and a client that
+exits without firing its end event leaves a file identical to one a live worker is using.
+Guessing would produce exactly the confident-and-wrong answer this subsystem exists to
+avoid, so the vocabulary below is the observable one — where the file is, whose worktree
+it names, and whether the pointer follows it — and <code>note</code> always says which.</p>
+<p>Read as a scale, the four run from "this checkout's own work" to "nobody's work any
+more", and only the last is a fault: <code>current</code> and <code>open</code> are both this worktree's live
+episodes and differ only in which one the pointer happens to aim at, <code>foreign</code> belongs to
+another worktree and is reported rather than adopted, and <code>stranded</code> is the one that
+needs a person, because nothing can close it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::EpisodeStanding;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the standings that are somebody&#39;s live work, against the one that is nobody&#39;s</span></span>
+<span class="giallo-l"><span>let live = [EpisodeStanding::Current, EpisodeStanding::Open, EpisodeStanding::Foreign];</span></span>
+<span class="giallo-l"><span>assert!(live.iter().all(|s| *s != EpisodeStanding::Stranded));</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// serialised as the word `as_str` gives, so the two renderings cannot drift apart</span></span>
+<span class="giallo-l"><span>for s in [EpisodeStanding::Current, EpisodeStanding::Foreign, EpisodeStanding::Stranded] {</span></span>
+<span class="giallo-l"><span>    assert_eq!(serde_json::to_value(s).unwrap(), serde_json::json!(s.as_str()));</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">current</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">This checkout's pointer resolves to it. <code>continuity.state</code> is about this one.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">open</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Open, and it names this worktree, but the pointer names a different episode. Two
+windows of one provider on one worktree are two workers, and only one is pointed at.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">foreign</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It names another worktree of this repository. Reported, never treated as this
+checkout's — a record about somebody else's work quietly becoming yours is the
+failure the two-tier resolution rule exists to prevent.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stranded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The worktree it names is gone from disk. Nothing can close it: the close path
+composes the record from git in the worktree the episode opened in.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Episode" class="font-mono text-fg-brand underline">Episode</a></p></article>
+<article id="schema-Episodes" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Episodes</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Every open episode of this checkout's store — the answer <code>continuity.state</code> cannot give,
+because it reads the pointer and this reads the store.</p>
+<p><code>current</code> is the one episode the pointer resolves to, and it is one row of <code>episodes</code>
+rather than a separate thing: the whole correction this type carries is that the pointed-at
+episode is <em>a</em> member of the set and not the set. On the day this was written the store
+held five open episodes in one checkout and every surface could name one of them.</p>
+<p><code>present: false</code> is a fresh clone, which is not a fault — nobody has opened an episode
+here yet — and is reported as itself rather than as an error.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::Episodes;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a clone in which no episode has ever been opened: absence, answered as absence</span></span>
+<span class="giallo-l"><span>let fresh: Episodes = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;present&quot;: false,</span></span>
+<span class="giallo-l"><span>    &quot;store&quot;: &quot;.ai/local/state/sessions-open&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;worktree&quot;: &quot;example/a-fresh-clone&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(!fresh.present);</span></span>
+<span class="giallo-l"><span>assert!(fresh.episodes.is_empty() &amp;&amp; fresh.current.is_empty());</span></span>
+<span class="giallo-l"><span>assert!(fresh.findings.is_empty(), &quot;nothing to warn about; it is simply new&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and a store with work in it: `current` names one of the rows, never a sixth thing</span></span>
+<span class="giallo-l"><span>let busy: Episodes = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;present&quot;: true,</span></span>
+<span class="giallo-l"><span>    &quot;store&quot;: &quot;.ai/local/state/sessions-open&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;worktree&quot;: &quot;example/wt&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;current&quot;: &quot;s-0002&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;episodes&quot;: [</span></span>
+<span class="giallo-l"><span>        {&quot;session_id&quot;: &quot;s-0001&quot;, &quot;path&quot;: &quot;a.yaml&quot;, &quot;standing&quot;: &quot;open&quot;,</span></span>
+<span class="giallo-l"><span>         &quot;events&quot;: 3, &quot;note&quot;: &quot;this worktree, not pointed at&quot;},</span></span>
+<span class="giallo-l"><span>        {&quot;session_id&quot;: &quot;s-0002&quot;, &quot;path&quot;: &quot;b.yaml&quot;, &quot;standing&quot;: &quot;current&quot;,</span></span>
+<span class="giallo-l"><span>         &quot;events&quot;: 9, &quot;note&quot;: &quot;the pointer resolves to it&quot;},</span></span>
+<span class="giallo-l"><span>    ],</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(busy.episodes.len(), 2, &quot;the pointer is blind to the first of these&quot;);</span></span>
+<span class="giallo-l"><span>assert!(busy.episodes.iter().any(|e| e.session_id == busy.current));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">present</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the open-episode store exists. False in a fresh clone, which is not a fault.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">store</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The store, repository-relative.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">worktree</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">This worktree, absolute. Every standing above is decided against it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">current</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The episode id the pointer resolves to, when it resolves to one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">episodes</td>
+          <td class="px-3 py-2 font-mono text-body">array of Episode <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Episode" class="text-fg-brand underline">Episode</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Every open episode, newest first by recorded start.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What a reader should know before trusting the above: a file that does not parse, a
+pointer that resolves to nothing. Empty is the good case.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#op-lifecycle-episodes" class="font-mono text-fg-brand hover:underline">lifecycle.episodes</a></p></article>
+<article id="schema-Orphan" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Orphan</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A temporary file left in a record directory by a close that did not finish.</p>
+<p>The close path writes the durable record to <code>.tmp.XXXX</code> in the destination directory and
+renames it, so that no reader ever sees half a record. A process killed between the two
+leaves the temporary file behind, where it is untracked, invisible to every reader of the
+section, and — because the directory is tracked — offered to the next <code>git add .</code>.</p>
+<p><code>bytes</code> is carried because it is the one thing that decides what to do with the file: a
+zero-length temporary file is a close that died before it wrote anything and can simply
+go, while a large one is a record that was written and never renamed, and is worth
+reading before it is deleted.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::Orphan;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::order::canonical;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let mut orphans = vec![</span></span>
+<span class="giallo-l"><span>    Orphan { path: &quot;.ai/repo/project/sessions/.tmp.b2&quot;.into(), bytes: 4_812 },</span></span>
+<span class="giallo-l"><span>    Orphan { path: &quot;.ai/repo/project/sessions/.tmp.a1&quot;.into(), bytes: 0 },</span></span>
+<span class="giallo-l"><span>];</span></span>
+<span class="giallo-l"><span>canonical(&amp;mut orphans);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// filed under the path, which names one file and so makes the list total</span></span>
+<span class="giallo-l"><span>let paths: Vec&lt;&amp;str&gt; = orphans.iter().map(|o| o.path.as_str()).collect();</span></span>
+<span class="giallo-l"><span>assert_eq!(paths, [</span></span>
+<span class="giallo-l"><span>    &quot;.ai/repo/project/sessions/.tmp.a1&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;.ai/repo/project/sessions/.tmp.b2&quot;,</span></span>
+<span class="giallo-l"><span>]);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and the size is what tells a dead stub from a record that was written</span></span>
+<span class="giallo-l"><span>assert_eq!(orphans[0].bytes, 0, &quot;nothing was written before the close died&quot;);</span></span>
+<span class="giallo-l"><span>assert!(orphans[1].bytes &gt; 0, &quot;read this one before removing it&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Repository-relative path.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">bytes</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its size in bytes, which is how a reader tells an empty stub from a lost record.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Recovery" class="font-mono text-fg-brand underline">Recovery</a></p></article>
+<article id="schema-Pointer" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Pointer</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the pointer is and whether it leads anywhere.</p>
+<p><code>layout</code> and <code>resolves</code> are independent, and the interesting case is the pair
+<code>Pointer</code> + <code>resolves: false</code>: a symlink that survived the episode it named, which is
+what a killed close or a hand-removed record leaves behind. The layout is right, the
+destination is gone, and <code>continuity.state</code> has nothing to report while the store may
+still hold open episodes — so this is a dangling pointer, not an empty store.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::{Pointer, PointerLayout};</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the healthy case: the current layout, and it leads to an episode</span></span>
+<span class="giallo-l"><span>let live: Pointer = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;layout&quot;: &quot;pointer&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;target&quot;: &quot;sessions-open/claude-abc.yaml&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;resolves&quot;: true,</span></span>
+<span class="giallo-l"><span>    &quot;session_id&quot;: &quot;s-0002&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;note&quot;: &quot;the pointer resolves to an open episode&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(live.layout, PointerLayout::Pointer);</span></span>
+<span class="giallo-l"><span>assert!(live.resolves &amp;&amp; !live.session_id.is_empty());</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and the dangling one: the right layout, aimed at a record that is no longer there</span></span>
+<span class="giallo-l"><span>let dangling: Pointer = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;layout&quot;: &quot;pointer&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;target&quot;: &quot;sessions-open/claude-gone.yaml&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;resolves&quot;: false,</span></span>
+<span class="giallo-l"><span>    &quot;note&quot;: &quot;the symlink outlived the episode it named&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(dangling.layout, PointerLayout::Pointer, &quot;the layout is not the fault&quot;);</span></span>
+<span class="giallo-l"><span>assert!(!dangling.resolves);</span></span>
+<span class="giallo-l"><span>assert!(dangling.session_id.is_empty(), &quot;there is no episode to name&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">layout</td>
+          <td class="px-3 py-2 font-mono text-body">PointerLayout <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-PointerLayout" class="text-fg-brand underline">PointerLayout</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The layout.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">target</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What the symlink names, as written, when it is one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">resolves</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether reading through it yields an episode.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">session_id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The episode it resolves to.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">note</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What that means, in words.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Recovery" class="font-mono text-fg-brand underline">Recovery</a></p></article>
+<article id="schema-PointerLayout" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PointerLayout</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;pointer&quot; | &quot;inline&quot; | &quot;absent&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The layout of the pointer, which is how far the per-provider migration has got here.</p>
+<p>Before the episode was keyed by its provider session, <code>session-current.yaml</code> <em>was</em> the
+open record: one regular file, one episode per checkout. Seven concurrent sessions on
+2026-09-09 produced one record between them under that layout. A regular file here today
+is a checkout that has not run the migration, and its episodes are being overwritten.</p>
+<p>Only one of the three is a finding, and it is the middle one. <code>Pointer</code> is the current
+layout and <code>Absent</code> means no episode is open here — a fresh clone, or a worker between
+episodes — while <code>Inline</code> is a checkout still on the pre-migration layout, where a
+second concurrent session silently overwrites the first one's record. So the question a
+reader asks of this value is not "which layout" but "is it <code>Inline</code>".</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::PointerLayout;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the two that are fine, and the one that loses records</span></span>
+<span class="giallo-l"><span>let loses_records = |l: PointerLayout| l == PointerLayout::Inline;</span></span>
+<span class="giallo-l"><span>assert!(!loses_records(PointerLayout::Pointer));</span></span>
+<span class="giallo-l"><span>assert!(!loses_records(PointerLayout::Absent), &quot;no episode open is not a fault&quot;);</span></span>
+<span class="giallo-l"><span>assert!(loses_records(PointerLayout::Inline));</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// serialised as the word `as_str` gives</span></span>
+<span class="giallo-l"><span>assert_eq!(</span></span>
+<span class="giallo-l"><span>    serde_json::to_value(PointerLayout::Absent).unwrap(),</span></span>
+<span class="giallo-l"><span>    serde_json::json!(PointerLayout::Absent.as_str()),</span></span>
+<span class="giallo-l"><span>);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">pointer</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A symlink into <code>sessions-open/</code>: the per-provider layout.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">inline</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A regular file: the pre-migration layout, one episode per checkout.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">absent</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Nothing is there. No episode is open here, which is not a fault.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Pointer" class="font-mono text-fg-brand underline">Pointer</a></p></article>
+<article id="schema-ProviderLifecycle" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ProviderLifecycle</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One provider's lifecycle surface: what its adapter declares it can do, and what this
+repository has wired to it.</p>
+<p>The two halves come from different places and must not be confused. <code>lifecycle</code> and
+<code>prompt_capture</code> are the <em>distribution's</em> declaration — what the shipped adapter can do
+for this provider at all — while <code>wired</code> is <em>this repository's</em> policy naming that
+provider's hook in <code>wired_by</code>. Either can be empty with the other full, and that pairing
+is the interesting finding: a provider this repository wires but the tool ships no
+lifecycle for is a hook that will never fire.</p>
+<p>Neither half is inferred from a file on disk. Whether a shim is actually installed is
+<code>majordomus capture status</code>'s question, and this type deliberately does not answer it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::ProviderLifecycle;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a provider the tool adapts and this repository wires: both halves present</span></span>
+<span class="giallo-l"><span>let full: ProviderLifecycle = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;id&quot;: &quot;claude&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;title&quot;: &quot;Claude Code&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;lifecycle&quot;: [&quot;SessionStart&quot;, &quot;SessionEnd&quot;, &quot;PreCompact&quot;],</span></span>
+<span class="giallo-l"><span>    &quot;prompt_capture&quot;: true,</span></span>
+<span class="giallo-l"><span>    &quot;client_config&quot;: &quot;.mcp.json&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;wired&quot;: [&quot;session.start&quot;, &quot;session.close&quot;],</span></span>
+<span class="giallo-l"><span>    &quot;note&quot;: &quot;adapted and wired&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(!full.lifecycle.is_empty() &amp;&amp; !full.wired.is_empty());</span></span>
+<span class="giallo-l"><span>assert!(full.prompt_capture);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and one the tool ships no adapter for: it loses the automation and none of the model,</span></span>
+<span class="giallo-l"><span>// because every command remains the same</span></span>
+<span class="giallo-l"><span>let unadapted: ProviderLifecycle = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;id&quot;: &quot;some-editor&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;title&quot;: &quot;Some Editor&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;prompt_capture&quot;: false,</span></span>
+<span class="giallo-l"><span>    &quot;note&quot;: &quot;no lifecycle adapter ships for it&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(unadapted.lifecycle.is_empty(), &quot;nothing will fire for it&quot;);</span></span>
+<span class="giallo-l"><span>assert!(unadapted.client_config.is_empty(), &quot;and it reads no project-scoped config&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The provider id: the bootstrap template's file stem.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The name a person knows it by.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">lifecycle</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The lifecycle events its adapter declares, in the provider's own vocabulary
+(<code>SessionStart</code>, <code>SessionEnd</code>, <code>PreCompact</code>). Empty means the tool ships no
+lifecycle adapter for it: such a provider loses the automation and none of the
+model, because every command remains the same.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">prompt_capture</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether its adapter can archive the worker's prompts.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">client_config</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The file it reads a project-scoped MCP client configuration from, when it has one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">wired</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The enforcement entries of <em>this repository's</em> policy that name this provider's hook
+in <code>wired_by</code>. Declared wiring, not a file on disk: whether a shim is installed is a
+question for <code>majordomus capture status</code>, which is the command that owns it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">note</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the two together mean.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-ProviderLifecycles" class="font-mono text-fg-brand underline">ProviderLifecycles</a></p></article>
+<article id="schema-ProviderLifecycles" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ProviderLifecycles</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Every provider the distribution ships a bootstrap for, with the lifecycle half of each.</p>
+<p><code>with_lifecycle</code> is a count over <code>providers</code> rather than a second list, so the two
+cannot disagree; it is there because "how many of the providers we support actually get
+the automation" is the question this capability exists to answer, and a reader should not
+have to fold the list to find out.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::ProviderLifecycles;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let p: ProviderLifecycles = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;providers&quot;: [</span></span>
+<span class="giallo-l"><span>        {&quot;id&quot;: &quot;claude&quot;, &quot;title&quot;: &quot;Claude Code&quot;, &quot;lifecycle&quot;: [&quot;SessionStart&quot;],</span></span>
+<span class="giallo-l"><span>         &quot;prompt_capture&quot;: true, &quot;note&quot;: &quot;adapted&quot;},</span></span>
+<span class="giallo-l"><span>        {&quot;id&quot;: &quot;plain&quot;, &quot;title&quot;: &quot;Plain&quot;, &quot;prompt_capture&quot;: false, &quot;note&quot;: &quot;not adapted&quot;},</span></span>
+<span class="giallo-l"><span>    ],</span></span>
+<span class="giallo-l"><span>    &quot;with_lifecycle&quot;: 1,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the count is over the list, so it is checkable against it</span></span>
+<span class="giallo-l"><span>let counted = p.providers.iter().filter(|x| !x.lifecycle.is_empty()).count();</span></span>
+<span class="giallo-l"><span>assert_eq!(p.with_lifecycle, counted);</span></span>
+<span class="giallo-l"><span>assert_eq!(p.providers.len(), 2, &quot;a provider with no adapter is still reported&quot;);</span></span>
+<span class="giallo-l"><span>assert!(p.findings.is_empty());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">providers</td>
+          <td class="px-3 py-2 font-mono text-body">array of ProviderLifecycle <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-ProviderLifecycle" class="text-fg-brand underline">ProviderLifecycle</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The providers, in declaration order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">with_lifecycle</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many of them declare a lifecycle adapter.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What a reader should know: a provider this repository wires but the distribution
+declares no lifecycle for, and the like.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#op-lifecycle-providers" class="font-mono text-fg-brand hover:underline">lifecycle.providers</a></p></article>
+<article id="schema-Recovery" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Recovery</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What this checkout's session store needs somebody to do.</p>
+<p><code>findings</code> is the whole report said once, and an empty <code>findings</code> is the verdict: there
+is nothing to recover. That is the field to branch on — the three detailed lists and the
+arithmetic are what a reader consults <em>after</em> deciding there is something to look at,
+and each of them can be empty for a good reason while another is not.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::Recovery;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a healthy checkout: the current layout, nothing stranded, the arithmetic agreeing</span></span>
+<span class="giallo-l"><span>let clean: Recovery = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;present&quot;: true,</span></span>
+<span class="giallo-l"><span>    &quot;pointer&quot;: {&quot;layout&quot;: &quot;pointer&quot;, &quot;target&quot;: &quot;sessions-open/c.yaml&quot;,</span></span>
+<span class="giallo-l"><span>                &quot;resolves&quot;: true, &quot;session_id&quot;: &quot;s-1&quot;, &quot;note&quot;: &quot;resolves&quot;},</span></span>
+<span class="giallo-l"><span>    &quot;balance&quot;: {&quot;started&quot;: 8, &quot;closed&quot;: 7, &quot;open&quot;: 1,</span></span>
+<span class="giallo-l"><span>                &quot;unaccounted&quot;: 0, &quot;agrees&quot;: true, &quot;note&quot;: &quot;they agree&quot;},</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>assert!(clean.findings.is_empty(), &quot;an empty findings list is the good verdict&quot;);</span></span>
+<span class="giallo-l"><span>assert!(clean.stranded.is_empty() &amp;&amp; clean.orphans.is_empty());</span></span>
+<span class="giallo-l"><span>assert!(clean.balance.agrees);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a fresh clone has no local half at all, which is also nothing to recover</span></span>
+<span class="giallo-l"><span>let fresh: Recovery = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;present&quot;: false,</span></span>
+<span class="giallo-l"><span>    &quot;pointer&quot;: {&quot;layout&quot;: &quot;absent&quot;, &quot;resolves&quot;: false, &quot;note&quot;: &quot;no episode is open here&quot;},</span></span>
+<span class="giallo-l"><span>    &quot;balance&quot;: {&quot;started&quot;: 0, &quot;closed&quot;: 0, &quot;open&quot;: 0,</span></span>
+<span class="giallo-l"><span>                &quot;unaccounted&quot;: 0, &quot;agrees&quot;: true, &quot;note&quot;: &quot;nothing has happened yet&quot;},</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(!fresh.present &amp;&amp; fresh.findings.is_empty());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">present</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the local half exists at all.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">pointer</td>
+          <td class="px-3 py-2 font-mono text-body">Pointer <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Pointer" class="text-fg-brand underline">Pointer</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The pointer and its layout.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stranded</td>
+          <td class="px-3 py-2 font-mono text-body">array of Stranded <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Stranded" class="text-fg-brand underline">Stranded</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Episodes that can no longer close themselves.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">orphans</td>
+          <td class="px-3 py-2 font-mono text-body">array of Orphan <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Orphan" class="text-fg-brand underline">Orphan</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Temporary files left in the tracked sessions section.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">balance</td>
+          <td class="px-3 py-2 font-mono text-body">Balance <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Balance" class="text-fg-brand underline">Balance</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The started/closed/open arithmetic.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Everything above, said once, for a reader that wants the summary. Empty is the good
+case and means there is nothing to recover.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#op-lifecycle-recovery" class="font-mono text-fg-brand hover:underline">lifecycle.recovery</a></p></article>
+<article id="schema-RuntimeView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuntimeView</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The commit this process answers about, against the commit the repository is on.</p>
+<p>Both halves are read here and neither is assumed. <code>served</code> is what the index this
+process is holding was built from; <code>repository</code> is what <code>git</code> says now, on this call. A
+server that follows the repository reports them equal and pays one <code>git</code> invocation for
+the proof; a server that froze its index at start-up reports them different, which is
+the only way a reader could ever have found that out.</p>
+<p><code>agree</code> is the field with the operational meaning, and what it says is <em>not</em> "the
+repository is fine" but "the answers you are reading are about the tree you are looking
+at". When it is false every other capability this process serves is answering about a
+commit that is no longer checked out, and nothing else in the API would tell you.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::RuntimeView;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let view = |served: &amp;str, repo: &amp;str, agree: bool| -&gt; RuntimeView {</span></span>
+<span class="giallo-l"><span>    serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>        &quot;root&quot;: &quot;example/repo&quot;,</span></span>
+<span class="giallo-l"><span>        &quot;served_head&quot;: served, &quot;served_branch&quot;: &quot;master&quot;, &quot;served_working_tree&quot;: &quot;clean&quot;,</span></span>
+<span class="giallo-l"><span>        &quot;repository_head&quot;: repo, &quot;repository_branch&quot;: &quot;master&quot;,</span></span>
+<span class="giallo-l"><span>        &quot;repository_working_tree&quot;: &quot;clean&quot;,</span></span>
+<span class="giallo-l"><span>        &quot;agree&quot;: agree, &quot;objects&quot;: 1319, &quot;index_state&quot;: &quot;ok&quot;,</span></span>
+<span class="giallo-l"><span>        &quot;note&quot;: &quot;as measured on this call&quot;,</span></span>
+<span class="giallo-l"><span>    })).unwrap()</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a server following the repository: one `git` invocation buys the proof</span></span>
+<span class="giallo-l"><span>let current = view(&quot;a1b2c3d&quot;, &quot;a1b2c3d&quot;, true);</span></span>
+<span class="giallo-l"><span>assert!(current.agree);</span></span>
+<span class="giallo-l"><span>assert_eq!(current.served_head, current.repository_head);</span></span>
+<span class="giallo-l"><span>assert_eq!(current.index_state, &quot;ok&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and one that froze its index at start-up: every answer it serves is about the old commit</span></span>
+<span class="giallo-l"><span>let frozen = view(&quot;a1b2c3d&quot;, &quot;9f8e7d6&quot;, false);</span></span>
+<span class="giallo-l"><span>assert!(!frozen.agree);</span></span>
+<span class="giallo-l"><span>assert_ne!(frozen.served_head, frozen.repository_head);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">root</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The repository root this process is serving.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">served_head</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The commit the served index was built at.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">served_branch</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Its branch, or <code>DETACHED</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">served_working_tree</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Whether the working tree was clean when the index was built.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">repository_head</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The commit the repository is on, read on this call.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">repository_branch</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Its branch now.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">repository_working_tree</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The working tree now.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">agree</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the two agree on the commit and the branch.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">objects</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many objects the served index holds, and whether it was degraded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">index_state</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>ok</code> or <code>degraded</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">note</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the comparison means, and what to do when it disagrees.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#op-lifecycle-runtime" class="font-mono text-fg-brand hover:underline">lifecycle.runtime</a></p></article>
+<article id="schema-Stranded" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Stranded</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">An open episode that cannot close itself, and what to do about it.</p>
+<p>The remedy here is the mechanical one — remove the file — because it is correct in every
+checkout and needs nothing that is not already installed. <code>lib/recover.sh</code> on
+<code>feature/session-store-recovery</code> is the same three degradations seen from the writing
+side: it classifies each candidate by reading it, prints the evidence before acting, and
+closes a stranded episode into a real record rather than deleting it. When that lands,
+the remedy a finding carries should become <code>majordomus recover episodes</code> and the two
+detections should become one — a reader and a writer that each decide for themselves
+what "stranded" means are two definitions, and this repository has been bitten by that
+shape often enough to name it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::Stranded;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let s: Stranded = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;session_id&quot;: &quot;s-0007&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;path&quot;: &quot;.ai/local/state/sessions-open/claude-7.yaml&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;reason&quot;: &quot;the worktree it opened in is gone from disk&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;remedy&quot;: &quot;rm .ai/local/state/sessions-open/claude-7.yaml&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the reason is about the world and the remedy is a command: a finding with no</span></span>
+<span class="giallo-l"><span>// remedy is a complaint, so both are required fields rather than optional ones</span></span>
+<span class="giallo-l"><span>assert!(!s.reason.is_empty() &amp;&amp; !s.remedy.is_empty());</span></span>
+<span class="giallo-l"><span>assert!(s.remedy.contains(&amp;s.path), &quot;the remedy acts on the file it names&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">session_id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The episode id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The open record, repository-relative.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Why it is stranded.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">remedy</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The command that clears it. A finding with no remedy is a complaint.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/lifecycle/#schema-Recovery" class="font-mono text-fg-brand underline">Recovery</a></p></article>
+</section>
+  </div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

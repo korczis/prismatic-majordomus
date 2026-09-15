@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_lifecycle_providers</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-lifecycle-providers" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/lifecycle/providers</a> <span class="text-xs text-body-subtle">operationId lifecycle.providers</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/lifecycle/#op-lifecycle-providers" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/lifecycle/providers</a> <span class="text-xs text-body-subtle">operationId lifecycle.providers</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
         </tbody>
       </table>
@@ -196,7 +196,7 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
@@ -207,50 +207,46 @@
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · ProviderLifecycles</h3><p class="mt-1 break-words text-sm text-body">Every provider the distribution ships a bootstrap for, with the lifecycle half of each.
-
-`with_lifecycle` is a count over `providers` rather than a second list, so the two
-cannot disagree; it is there because &quot;how many of the providers we support actually get
-the automation&quot; is the question this capability exists to answer, and a reader should not
-have to fold the list to find out.
-
-```
-use majordomus_cli::capability::builtin::lifecycle::ProviderLifecycles;
-use serde_json::json;
-
-let p: ProviderLifecycles = serde_json::from_value(json!({
-    &quot;providers&quot;: [
-        {&quot;id&quot;: &quot;claude&quot;, &quot;title&quot;: &quot;Claude Code&quot;, &quot;lifecycle&quot;: [&quot;SessionStart&quot;],
-         &quot;prompt_capture&quot;: true, &quot;note&quot;: &quot;adapted&quot;},
-        {&quot;id&quot;: &quot;plain&quot;, &quot;title&quot;: &quot;Plain&quot;, &quot;prompt_capture&quot;: false, &quot;note&quot;: &quot;not adapted&quot;},
-    ],
-    &quot;with_lifecycle&quot;: 1,
-})).unwrap();
-
-// the count is over the list, so it is checkable against it
-let counted = p.providers.iter().filter(|x| !x.lifecycle.is_empty()).count();
-assert_eq!(p.with_lifecycle, counted);
-assert_eq!(p.providers.len(), 2, &quot;a provider with no adapter is still reported&quot;);
-assert!(p.findings.is_empty());
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · ProviderLifecycles</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Every provider the distribution ships a bootstrap for, with the lifecycle half of each.</p>
+<p><code>with_lifecycle</code> is a count over <code>providers</code> rather than a second list, so the two
+cannot disagree; it is there because "how many of the providers we support actually get
+the automation" is the question this capability exists to answer, and a reader should not
+have to fold the list to find out.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::ProviderLifecycles;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let p: ProviderLifecycles = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;providers&quot;: [</span></span>
+<span class="giallo-l"><span>        {&quot;id&quot;: &quot;claude&quot;, &quot;title&quot;: &quot;Claude Code&quot;, &quot;lifecycle&quot;: [&quot;SessionStart&quot;],</span></span>
+<span class="giallo-l"><span>         &quot;prompt_capture&quot;: true, &quot;note&quot;: &quot;adapted&quot;},</span></span>
+<span class="giallo-l"><span>        {&quot;id&quot;: &quot;plain&quot;, &quot;title&quot;: &quot;Plain&quot;, &quot;prompt_capture&quot;: false, &quot;note&quot;: &quot;not adapted&quot;},</span></span>
+<span class="giallo-l"><span>    ],</span></span>
+<span class="giallo-l"><span>    &quot;with_lifecycle&quot;: 1,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the count is over the list, so it is checkable against it</span></span>
+<span class="giallo-l"><span>let counted = p.providers.iter().filter(|x| !x.lifecycle.is_empty()).count();</span></span>
+<span class="giallo-l"><span>assert_eq!(p.with_lifecycle, counted);</span></span>
+<span class="giallo-l"><span>assert_eq!(p.providers.len(), 2, &quot;a provider with no adapter is still reported&quot;);</span></span>
+<span class="giallo-l"><span>assert!(p.findings.is_empty());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">What a reader should know: a provider this repository wires but the distribution
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What a reader should know: a provider this repository wires but the distribution
 declares no lifecycle for, and the like.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">providers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The providers, in declaration order.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The providers, in declaration order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">with_lifecycle</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">How many of them declare a lifecycle adapter.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them declare a lifecycle adapter.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -366,8 +362,8 @@ declares no lifecycle for, and the like.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::lifecycle</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProviderLifecycles</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -438,7 +434,7 @@ declares no lifecycle for, and the like.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

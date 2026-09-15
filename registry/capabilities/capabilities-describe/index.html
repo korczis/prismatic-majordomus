@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_capability</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-capabilities-describe" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/capability</a> <span class="text-xs text-body-subtle">operationId capabilities.describe</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/capabilities/#op-capabilities-describe" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/capability</a> <span class="text-xs text-body-subtle">operationId capabilities.describe</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus capabilities describe</td></tr>
         </tbody>
       </table>
@@ -196,14 +196,14 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · DescribeInput</h3><p class="mt-1 break-words text-sm text-body">The input of `capabilities.describe`: which capability.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · DescribeInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>capabilities.describe</code>: which capability.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The canonical id, e.g. `repository.info` or `rule.majordomus.scope-integrity@1`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The canonical id, e.g. <code>repository.info</code> or <code>rule.majordomus.scope-integrity@1</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -226,92 +226,92 @@
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · Capability</h3><p class="mt-1 break-words text-sm text-body">The canonical descriptor. Everything a projection may say about a capability is here.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · Capability</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The canonical descriptor. Everything a projection may say about a capability is here.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">availability</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it means anything: classified from the kind and the transports above, so
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it means anything: classified from the kind and the transports above, so
 that a projection reads a field instead of deciding for itself.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">benchmark</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether it is a benchmark target; the cases come from the input type.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether it is a benchmark target; the cases come from the input type.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">cache</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the executor keeps its results.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the executor keeps its results.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">description</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The one-paragraph description every projection shows.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The one-paragraph description every projection shows.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">execution</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">What running it as an execution means: classified from the kind, so that a client
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What running it as an execution means: classified from the kind, so that a client
 reads a fact rather than deciding for itself.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">exposure</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it is projected; absence is explicit.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it is projected; absence is explicit.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The canonical identity.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The canonical identity.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">input</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The canonical schema of the input; an empty object for a resource.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The canonical schema of the input; an empty object for a resource.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">kind</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Query, command or resource.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Query, command or resource.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">module</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The module that composes it: the id&#39;s namespace for a builtin, the kind for a
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The module that composes it: the id's namespace for a builtin, the kind for a
 declarative object.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">output</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The canonical schema of the output; the object view for a resource.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The canonical schema of the output; the object view for a resource.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">provenance</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it came from.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it came from.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">stability</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Where it stands.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it stands.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tags</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Free tags, from the declarative object&#39;s `tags` or the descriptor.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Free tags, from the declarative object's <code>tags</code> or the descriptor.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">title</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The short name every projection shows.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The short name every projection shows.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">visibility</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Who it is for: classified from the same transports.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Who it is for: classified from the same transports.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -335,6 +335,24 @@ declarative object.</td>
           &quot;type&quot;: &quot;object&quot;
         },
         {
+          &quot;description&quot;: &quot;Required exactly like `Required` in a repository where the precondition holds, and\nreported as inapplicable — never covered, never waived — where it does not. Not a\nwaiver: with the precondition met and no case, the requirement is missing.&quot;,
+          &quot;properties&quot;: {
+            &quot;policy&quot;: {
+              &quot;const&quot;: &quot;required_when&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;precondition&quot;: {
+              &quot;$ref&quot;: &quot;#/$defs/BenchmarkPrecondition&quot;,
+              &quot;description&quot;: &quot;What the repository must hold.&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;policy&quot;,
+            &quot;precondition&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
           &quot;description&quot;: &quot;Not timed, for the typed reason; coverage reports it as waived, never as covered.&quot;,
           &quot;properties&quot;: {
             &quot;policy&quot;: {
@@ -351,6 +369,16 @@ declarative object.</td>
             &quot;reason&quot;
           ],
           &quot;type&quot;: &quot;object&quot;
+        }
+      ]
+    },
+    &quot;BenchmarkPrecondition&quot;: {
+      &quot;description&quot;: &quot;What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver&#39;s reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\&quot;\&quot;plan_holds_an_issue\&quot;\&quot;#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;plan_holds_an_issue&quot;,
+          &quot;description&quot;: &quot;The plan holds at least one issue. A command whose every honest case is a refusal\nchosen from an issue&#39;s own status has no such refusal in a plan with no issue: the\nonly answer there is a lookup miss, which times an error path and is not the\noperation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
@@ -421,7 +449,7 @@ declarative object.</td>
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;CapabilityAvailability&quot;: {
-      &quot;description&quot;: &quot;Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page&#39;s own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n[`Availability::classify`] is the one place the rule lives.&quot;,
+      &quot;description&quot;: &quot;Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page&#39;s own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n`Availability::classify` is the one place the rule lives.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;always&quot;,
@@ -450,7 +478,7 @@ declarative object.</td>
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;CapabilityKind&quot;: {
-      &quot;description&quot;: &quot;What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process&#39;s\nown memory, and something that is read. A command may also write the repository&#39;s own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].&quot;,
+      &quot;description&quot;: &quot;What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process&#39;s\nown memory, and something that is read. A command may also write the repository&#39;s own\ntracked records, which its kind does not say and its execution policy does\n(`ExecutionPolicy::writes_repository`).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n`crate::capability::Executable::cancellable` and carried on `ExecutionPolicy`.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;query&quot;,
@@ -605,13 +633,13 @@ declarative object.</td>
         },
         {
           &quot;const&quot;: &quot;repository_mutation&quot;,
-          &quot;description&quot;: &quot;The repository changes.\n\nFor most of this executable&#39;s life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue&#39;s own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n[`ExecutionPolicy::writes_repository`], the way one that stops says so with\n[`ExecutionPolicy::stoppable`].\n\n[ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md&quot;,
+          &quot;description&quot;: &quot;The repository changes.\n\nFor most of this executable&#39;s life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with ADR 0040: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue&#39;s own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;ExecutionPolicy&quot;: {
-      &quot;description&quot;: &quot;What running a capability as an execution means: what it changes, whether asking it to\nstop achieves anything, and whether two of them may overlap.\n\nThe effect and the concurrency are classified from the kind by\n[`ExecutionPolicy::classify`], for the same reason [`Availability`] is: the facts are\nalready on the declaration, and asking each `capability!` block to restate them would be\none more thing that can disagree with itself.\n\nCancellability is the one thing the kind cannot decide, because it is a fact about the\nhandler: whether it looks at its cancellation flag and stops. A handler that does says\nso with [`crate::capability::Executable::cancellable`], and a client is then told\nwhether a Cancel button will achieve anything instead of being given one that lies.&quot;,
+      &quot;description&quot;: &quot;What running a capability as an execution means: what it changes, whether asking it to\nstop achieves anything, and whether two of them may overlap.\n\nThe effect and the concurrency are classified from the kind by\n`ExecutionPolicy::classify`, for the same reason `Availability` is: the facts are\nalready on the declaration, and asking each `capability!` block to restate them would be\none more thing that can disagree with itself.\n\nCancellability is the one thing the kind cannot decide, because it is a fact about the\nhandler: whether it looks at its cancellation flag and stops. A handler that does says\nso with `crate::capability::Executable::cancellable`, and a client is then told\nwhether a Cancel button will achieve anything instead of being given one that lies.&quot;,
       &quot;properties&quot;: {
         &quot;cancellable&quot;: {
           &quot;description&quot;: &quot;Whether asking it to stop does anything. A task looks at its cancellation flag; a\nquery and a command do not, and a client is told so rather than being given a\nbutton that lies.&quot;,
@@ -673,14 +701,14 @@ declarative object.</td>
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;HttpExposure&quot;: {
-      &quot;description&quot;: &quot;How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`].&quot;,
+      &quot;description&quot;: &quot;How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under `HttpExposure::PREFIX`.&quot;,
       &quot;properties&quot;: {
         &quot;method&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/HttpMethod&quot;,
           &quot;description&quot;: &quot;The method.&quot;
         },
         &quot;path&quot;: {
-          &quot;description&quot;: &quot;The absolute path, under [`HttpExposure::PREFIX`].&quot;,
+          &quot;description&quot;: &quot;The absolute path, under `HttpExposure::PREFIX`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
@@ -806,7 +834,7 @@ declarative object.</td>
         },
         {
           &quot;const&quot;: &quot;published_history&quot;,
-          &quot;description&quot;: &quot;The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from [`WaiverReason::ExternalDependency`]: nothing outside this process is\nconsulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,\nit simply does not exist yet where the benchmark runs.&quot;,
+          &quot;description&quot;: &quot;The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
@@ -931,8 +959,8 @@ declarative object.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::capabilities</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DescribeInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Capability</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -1010,7 +1038,7 @@ declarative object.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_lifecycle_episodes</span><br>resource <span class="break-all">majordomus://lifecycle/episodes</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-lifecycle-episodes" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/lifecycle/episodes</a> <span class="text-xs text-body-subtle">operationId lifecycle.episodes</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/lifecycle/#op-lifecycle-episodes" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/lifecycle/episodes</a> <span class="text-xs text-body-subtle">operationId lifecycle.episodes</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
         </tbody>
       </table>
@@ -196,7 +196,7 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 break-words text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
@@ -207,80 +207,75 @@
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · Episodes</h3><p class="mt-1 break-words text-sm text-body">Every open episode of this checkout&#39;s store — the answer `continuity.state` cannot give,
-because it reads the pointer and this reads the store.
-
-`current` is the one episode the pointer resolves to, and it is one row of `episodes`
+  <h3 class="font-mono text-sm font-semibold text-heading">output · Episodes</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Every open episode of this checkout's store — the answer <code>continuity.state</code> cannot give,
+because it reads the pointer and this reads the store.</p>
+<p><code>current</code> is the one episode the pointer resolves to, and it is one row of <code>episodes</code>
 rather than a separate thing: the whole correction this type carries is that the pointed-at
-episode is *a* member of the set and not the set. On the day this was written the store
-held five open episodes in one checkout and every surface could name one of them.
-
-`present: false` is a fresh clone, which is not a fault — nobody has opened an episode
-here yet — and is reported as itself rather than as an error.
-
-```
-use majordomus_cli::capability::builtin::lifecycle::Episodes;
-use serde_json::json;
-
-// a clone in which no episode has ever been opened: absence, answered as absence
-let fresh: Episodes = serde_json::from_value(json!({
-    &quot;present&quot;: false,
-    &quot;store&quot;: &quot;.ai/local/state/sessions-open&quot;,
-    &quot;worktree&quot;: &quot;example/a-fresh-clone&quot;,
-})).unwrap();
-assert!(!fresh.present);
-assert!(fresh.episodes.is_empty() &amp;&amp; fresh.current.is_empty());
-assert!(fresh.findings.is_empty(), &quot;nothing to warn about; it is simply new&quot;);
-
-// and a store with work in it: `current` names one of the rows, never a sixth thing
-let busy: Episodes = serde_json::from_value(json!({
-    &quot;present&quot;: true,
-    &quot;store&quot;: &quot;.ai/local/state/sessions-open&quot;,
-    &quot;worktree&quot;: &quot;example/wt&quot;,
-    &quot;current&quot;: &quot;s-0002&quot;,
-    &quot;episodes&quot;: [
-        {&quot;session_id&quot;: &quot;s-0001&quot;, &quot;path&quot;: &quot;a.yaml&quot;, &quot;standing&quot;: &quot;open&quot;,
-         &quot;events&quot;: 3, &quot;note&quot;: &quot;this worktree, not pointed at&quot;},
-        {&quot;session_id&quot;: &quot;s-0002&quot;, &quot;path&quot;: &quot;b.yaml&quot;, &quot;standing&quot;: &quot;current&quot;,
-         &quot;events&quot;: 9, &quot;note&quot;: &quot;the pointer resolves to it&quot;},
-    ],
-})).unwrap();
-assert_eq!(busy.episodes.len(), 2, &quot;the pointer is blind to the first of these&quot;);
-assert!(busy.episodes.iter().any(|e| e.session_id == busy.current));
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+episode is <em>a</em> member of the set and not the set. On the day this was written the store
+held five open episodes in one checkout and every surface could name one of them.</p>
+<p><code>present: false</code> is a fresh clone, which is not a fault — nobody has opened an episode
+here yet — and is reported as itself rather than as an error.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::lifecycle::Episodes;</span></span>
+<span class="giallo-l"><span>use serde_json::json;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a clone in which no episode has ever been opened: absence, answered as absence</span></span>
+<span class="giallo-l"><span>let fresh: Episodes = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;present&quot;: false,</span></span>
+<span class="giallo-l"><span>    &quot;store&quot;: &quot;.ai/local/state/sessions-open&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;worktree&quot;: &quot;example/a-fresh-clone&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(!fresh.present);</span></span>
+<span class="giallo-l"><span>assert!(fresh.episodes.is_empty() &amp;&amp; fresh.current.is_empty());</span></span>
+<span class="giallo-l"><span>assert!(fresh.findings.is_empty(), &quot;nothing to warn about; it is simply new&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and a store with work in it: `current` names one of the rows, never a sixth thing</span></span>
+<span class="giallo-l"><span>let busy: Episodes = serde_json::from_value(json!({</span></span>
+<span class="giallo-l"><span>    &quot;present&quot;: true,</span></span>
+<span class="giallo-l"><span>    &quot;store&quot;: &quot;.ai/local/state/sessions-open&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;worktree&quot;: &quot;example/wt&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;current&quot;: &quot;s-0002&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;episodes&quot;: [</span></span>
+<span class="giallo-l"><span>        {&quot;session_id&quot;: &quot;s-0001&quot;, &quot;path&quot;: &quot;a.yaml&quot;, &quot;standing&quot;: &quot;open&quot;,</span></span>
+<span class="giallo-l"><span>         &quot;events&quot;: 3, &quot;note&quot;: &quot;this worktree, not pointed at&quot;},</span></span>
+<span class="giallo-l"><span>        {&quot;session_id&quot;: &quot;s-0002&quot;, &quot;path&quot;: &quot;b.yaml&quot;, &quot;standing&quot;: &quot;current&quot;,</span></span>
+<span class="giallo-l"><span>         &quot;events&quot;: 9, &quot;note&quot;: &quot;the pointer resolves to it&quot;},</span></span>
+<span class="giallo-l"><span>    ],</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(busy.episodes.len(), 2, &quot;the pointer is blind to the first of these&quot;);</span></span>
+<span class="giallo-l"><span>assert!(busy.episodes.iter().any(|e| e.session_id == busy.current));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">current</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The episode id the pointer resolves to, when it resolves to one.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The episode id the pointer resolves to, when it resolves to one.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">episodes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Every open episode, newest first by recorded start.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every open episode, newest first by recorded start.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">What a reader should know before trusting the above: a file that does not parse, a
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What a reader should know before trusting the above: a file that does not parse, a
 pointer that resolves to nothing. Empty is the good case.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether the open-episode store exists. False in a fresh clone, which is not a fault.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the open-episode store exists. False in a fresh clone, which is not a fault.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">store</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The store, repository-relative.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The store, repository-relative.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">worktree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">This worktree, absolute. Every standing above is decided against it.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">This worktree, absolute. Every standing above is decided against it.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -468,8 +463,8 @@ pointer that resolves to nothing. Empty is the good case.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::lifecycle</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Episodes</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/lifecycle.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/lifecycle.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/171_session_observability.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -540,7 +535,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

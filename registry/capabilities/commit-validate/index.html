@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_commit_validate</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-commit-validate" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/commit/validate</a> <span class="text-xs text-body-subtle">operationId commit.validate</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/commit/#op-commit-validate" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/commit/validate</a> <span class="text-xs text-body-subtle">operationId commit.validate</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus commit validate</td></tr>
         </tbody>
       </table>
@@ -196,27 +196,25 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · ValidateInput</h3><p class="mt-1 break-words text-sm text-body">A message to judge, and what is known about the commit it would make.
-```
-use majordomus_cli::capability::builtin::commit::ValidateInput;
-// paths are optional: a caller that does not know them gets the judgements that need
-// none, rather than a guess
-let v: ValidateInput = serde_json::from_str(r#&quot;{&quot;message&quot;: &quot;feat(a): a thing&quot;}&quot;#).unwrap();
-assert!(v.paths.is_none());
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · ValidateInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A message to judge, and what is known about the commit it would make.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::commit::ValidateInput;</span></span>
+<span class="giallo-l"><span>// paths are optional: a caller that does not know them gets the judgements that need</span></span>
+<span class="giallo-l"><span>// none, rather than a guess</span></span>
+<span class="giallo-l"><span>let v: ValidateInput = serde_json::from_str(r#&quot;{&quot;message&quot;: &quot;feat(a): a thing&quot;}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(v.paths.is_none());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">message</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The commit message, as it would be stored. Comment lines are ignored, as git ignores
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commit message, as it would be stored. Comment lines are ignored, as git ignores
 them, so what is judged is what would be committed.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">paths</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The paths the commit would contain. Omit them and the judgements that need them —
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The paths the commit would contain. Omit them and the judgements that need them —
 whether a fix carries a test — are not made rather than guessed. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr></tbody>
     </table>
@@ -251,40 +249,37 @@ whether a fix carries a test — are not made rather than guessed. <span class="
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · CommitVerdict</h3><p class="mt-1 break-words text-sm text-body">What the judge concluded: the message as it was parsed, whether anything of error
+  <h3 class="font-mono text-sm font-semibold text-heading">output · CommitVerdict</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the judge concluded: the message as it was parsed, whether anything of error
 severity was found, the exemption when git composed the subject rather than a person, and
-every finding in [`CommitRule::ALL`] order — which is the order the evidence for them
-appears in the message, so a person reads them in the order they would fix them.
-
-```
-use majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};
-let v: CommitVerdict = judge(&amp;CommitSubject::of(&quot;update stuff&quot;), &amp;CommitPolicy::default());
-assert!(!v.passed);
-assert_eq!(v.findings[0].code, &quot;commit.not_conventional&quot;);
-assert_eq!(v.message.header.subject, &quot;update stuff&quot;, &quot;what was judged, not what was typed&quot;);
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+every finding in <code>CommitRule::ALL</code> order — which is the order the evidence for them
+appears in the message, so a person reads them in the order they would fix them.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};</span></span>
+<span class="giallo-l"><span>let v: CommitVerdict = judge(&amp;CommitSubject::of(&quot;update stuff&quot;), &amp;CommitPolicy::default());</span></span>
+<span class="giallo-l"><span>assert!(!v.passed);</span></span>
+<span class="giallo-l"><span>assert_eq!(v.findings[0].code, &quot;commit.not_conventional&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(v.message.header.subject, &quot;update stuff&quot;, &quot;what was judged, not what was typed&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">exempt</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">Why the commit was not judged, when it was not.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why the commit was not judged, when it was not.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Every finding, in [`CommitRule::ALL`] order.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every finding, in <code>CommitRule::ALL</code> order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">message</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The message as parsed; what was judged, not what was typed.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The message as parsed; what was judged, not what was typed.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">passed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Whether nothing of error severity was found.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether nothing of error severity was found.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -305,12 +300,12 @@ assert_eq!(v.message.header.subject, &quot;update stuff&quot;, &quot;what was ju
       &quot;description&quot;: &quot;The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type.\n```\nuse majordomus_cli::commit::CommitHeader;\nuse majordomus_cli::release::ChangeKind;\nlet h = CommitHeader::parse(\&quot;fix(plan): the fingerprint names what moved\&quot;);\nassert_eq!(h.word, \&quot;fix\&quot;);\nassert_eq!(h.kind, ChangeKind::Fix);\nassert_eq!(h.scope.as_deref(), Some(\&quot;plan\&quot;));\nassert!(!h.breaking);\nassert_eq!(h.subject, \&quot;the fingerprint names what moved\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;breaking&quot;: {
-          &quot;description&quot;: &quot;Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by [`crate::commit::CommitMessage`].&quot;,
+          &quot;description&quot;: &quot;Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by `crate::commit::CommitMessage`.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;kind&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
-          &quot;description&quot;: &quot;What [`Self::word`] names; [`ChangeKind::Other`] for a word the convention does not\ndefine, and for a subject with no head.&quot;
+          &quot;description&quot;: &quot;What `Self::word` names; `ChangeKind::Other` for a word the convention does not\ndefine, and for a subject with no head.&quot;
         },
         &quot;scope&quot;: {
           &quot;description&quot;: &quot;The parenthesised scope, when there is one.&quot;,
@@ -411,7 +406,7 @@ assert_eq!(v.message.header.subject, &quot;update stuff&quot;, &quot;what was ju
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ReleaseChangeKind&quot;: {
-      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
+      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;feat&quot;,
@@ -501,7 +496,7 @@ assert_eq!(v.message.header.subject, &quot;update stuff&quot;, &quot;what was ju
       ]
     }
   },
-  &quot;description&quot;: &quot;What the judge concluded: the message as it was parsed, whether anything of error\nseverity was found, the exemption when git composed the subject rather than a person, and\nevery finding in [`CommitRule::ALL`] order — which is the order the evidence for them\nappears in the message, so a person reads them in the order they would fix them.\n\n```\nuse majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};\nlet v: CommitVerdict = judge(&amp;CommitSubject::of(\&quot;update stuff\&quot;), &amp;CommitPolicy::default());\nassert!(!v.passed);\nassert_eq!(v.findings[0].code, \&quot;commit.not_conventional\&quot;);\nassert_eq!(v.message.header.subject, \&quot;update stuff\&quot;, \&quot;what was judged, not what was typed\&quot;);\n```&quot;,
+  &quot;description&quot;: &quot;What the judge concluded: the message as it was parsed, whether anything of error\nseverity was found, the exemption when git composed the subject rather than a person, and\nevery finding in `CommitRule::ALL` order — which is the order the evidence for them\nappears in the message, so a person reads them in the order they would fix them.\n\n```\nuse majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};\nlet v: CommitVerdict = judge(&amp;CommitSubject::of(\&quot;update stuff\&quot;), &amp;CommitPolicy::default());\nassert!(!v.passed);\nassert_eq!(v.findings[0].code, \&quot;commit.not_conventional\&quot;);\nassert_eq!(v.message.header.subject, \&quot;update stuff\&quot;, \&quot;what was judged, not what was typed\&quot;);\n```&quot;,
   &quot;properties&quot;: {
     &quot;exempt&quot;: {
       &quot;anyOf&quot;: [
@@ -515,7 +510,7 @@ assert_eq!(v.message.header.subject, &quot;update stuff&quot;, &quot;what was ju
       &quot;description&quot;: &quot;Why the commit was not judged, when it was not.&quot;
     },
     &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every finding, in [`CommitRule::ALL`] order.&quot;,
+      &quot;description&quot;: &quot;Every finding, in `CommitRule::ALL` order.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
       },
@@ -567,8 +562,8 @@ assert_eq!(v.message.header.subject, &quot;update stuff&quot;, &quot;what was ju
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::commit</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ValidateInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CommitVerdict</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/commit.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/commit.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/commit.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/commit.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -639,7 +634,7 @@ assert_eq!(v.message.header.subject, &quot;update stuff&quot;, &quot;what was ju
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

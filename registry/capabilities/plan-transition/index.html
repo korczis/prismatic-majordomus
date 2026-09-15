@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=5ed2fcca34190fbe25cb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +50,7 @@
 </span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.6.1</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -187,7 +187,7 @@
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_plan_transition</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-plan-transition" class="break-all text-fg-brand hover:underline inline-block py-1">POST /api/v1/plan/transition</a> <span class="text-xs text-body-subtle">operationId plan.transition</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/plan/#op-plan-transition" class="break-all text-fg-brand hover:underline inline-block py-1">POST /api/v1/plan/transition</a> <span class="text-xs text-body-subtle">operationId plan.transition</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
         </tbody>
       </table>
@@ -196,43 +196,39 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · PlanTransitionInput</h3><p class="mt-1 break-words text-sm text-body">The input of `plan.transition`: which issue to move, and which way.
-
-Two fields and no third. There is no timestamp — the move is stamped with the moment it
+  <h3 class="font-mono text-sm font-semibold text-heading">input · PlanTransitionInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>plan.transition</code>: which issue to move, and which way.</p>
+<p>Two fields and no third. There is no timestamp — the move is stamped with the moment it
 happened, never with one the caller supplies, because a lifecycle a caller can backdate
 is not a record of what happened. There is no force or reason field either: a transition
 the model refuses is refused, and the way to make it legal is to satisfy the guard rather
-than to ask past it.
-
-```
-use majordomus_cli::capability::builtin::plan::PlanTransitionInput;
-use majordomus_cli::plan::Transition;
-
-// The wire form an MCP client or an HTTP POST sends.
-let input: PlanTransitionInput =
-    serde_json::from_str(r#&quot;{&quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;}&quot;#).unwrap();
-assert_eq!(input.issue, &quot;I0001&quot;);
-assert_eq!(input.transition, Transition::Done);
-assert_eq!(input.transition.field(), &quot;completed_at&quot;);
-assert_eq!(input.transition.event(), &quot;plan_done&quot;);
-
-// Unknown fields are refused rather than ignored: a caller that misspells `transition`
-// is told so instead of having its move silently dropped.
-assert!(serde_json::from_str::&lt;PlanTransitionInput&gt;(
-    r#&quot;{&quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;,&quot;force&quot;:true}&quot;#).is_err());
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+than to ask past it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::plan::PlanTransitionInput;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::plan::Transition;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// The wire form an MCP client or an HTTP POST sends.</span></span>
+<span class="giallo-l"><span>let input: PlanTransitionInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_str(r#&quot;{&quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(input.issue, &quot;I0001&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(input.transition, Transition::Done);</span></span>
+<span class="giallo-l"><span>assert_eq!(input.transition.field(), &quot;completed_at&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(input.transition.event(), &quot;plan_done&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// Unknown fields are refused rather than ignored: a caller that misspells `transition`</span></span>
+<span class="giallo-l"><span>// is told so instead of having its move silently dropped.</span></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;PlanTransitionInput&gt;(</span></span>
+<span class="giallo-l"><span>    r#&quot;{&quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;,&quot;force&quot;:true}&quot;#).is_err());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">issue</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The issue to move, by its id — which is also its file name.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue to move, by its id — which is also its file name.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">transition</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">Which move: `start`, `verify` or `done`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which move: <code>start</code>, <code>verify</code> or <code>done</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -282,74 +278,70 @@ assert!(serde_json::from_str::&lt;PlanTransitionInput&gt;(
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · PlanTransitionResult</h3><p class="mt-1 break-words text-sm text-body">What one transition did.
-
-`from` and `to` are both derived statuses, read before and after the write. They are
+  <h3 class="font-mono text-sm font-semibold text-heading">output · PlanTransitionResult</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What one transition did.</p>
+<p><code>from</code> and <code>to</code> are both derived statuses, read before and after the write. They are
 reported rather than assumed because the move does not determine the status on its own:
-`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is
-told that rather than told it succeeded.
-
-```
-use majordomus_cli::capability::builtin::plan::PlanTransitionResult;
-
-// What a `done` looks like when the record&#39;s required evidence is not all present: the
-// call succeeded, the field was written, and the issue is still in VERIFY. A caller that
-// read only the absence of an error would report this as finished; a caller that reads
-// `to` knows better, which is why the field is here.
-let held: PlanTransitionResult = serde_json::from_str(r#&quot;{
-    &quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;,&quot;from&quot;:&quot;VERIFY&quot;,&quot;to&quot;:&quot;VERIFY&quot;,
-    &quot;field&quot;:&quot;completed_at&quot;,&quot;at&quot;:&quot;2026-09-11T12:00:00Z&quot;,&quot;event&quot;:&quot;plan_done&quot;
-}&quot;#).unwrap();
-assert_eq!(held.to, &quot;VERIFY&quot;, &quot;the status is derived from the record, not from the move&quot;);
-
-// `next_ready` is absent when the plan has none left to hand out, which is ordinary
-// rather than an error, so it is omitted rather than spelled as an empty string.
-assert!(held.next_ready.is_none());
-```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+<code>done</code> on a record whose evidence is incomplete leaves it in VERIFY, and the caller is
+told that rather than told it succeeded.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::plan::PlanTransitionResult;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// What a `done` looks like when the record&#39;s required evidence is not all present: the</span></span>
+<span class="giallo-l"><span>// call succeeded, the field was written, and the issue is still in VERIFY. A caller that</span></span>
+<span class="giallo-l"><span>// read only the absence of an error would report this as finished; a caller that reads</span></span>
+<span class="giallo-l"><span>// `to` knows better, which is why the field is here.</span></span>
+<span class="giallo-l"><span>let held: PlanTransitionResult = serde_json::from_str(r#&quot;{</span></span>
+<span class="giallo-l"><span>    &quot;issue&quot;:&quot;I0001&quot;,&quot;transition&quot;:&quot;done&quot;,&quot;from&quot;:&quot;VERIFY&quot;,&quot;to&quot;:&quot;VERIFY&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;field&quot;:&quot;completed_at&quot;,&quot;at&quot;:&quot;2026-09-11T12:00:00Z&quot;,&quot;event&quot;:&quot;plan_done&quot;</span></span>
+<span class="giallo-l"><span>}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(held.to, &quot;VERIFY&quot;, &quot;the status is derived from the record, not from the move&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// `next_ready` is absent when the plan has none left to hand out, which is ordinary</span></span>
+<span class="giallo-l"><span>// rather than an error, so it is omitted rather than spelled as an empty string.</span></span>
+<span class="giallo-l"><span>assert!(held.next_ready.is_none());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The timestamp written into it, and into `updated_at`.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The timestamp written into it, and into <code>updated_at</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">event</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The ledger event appended.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The ledger event appended.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">field</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The field that was stamped.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The field that was stamped.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">from</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The status the issue was in before.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The status the issue was in before.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">issue</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The issue that moved.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue that moved.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">next_ready</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body">The issue a worker should take next, derived after the move. Absent when the plan
-has none — which after a `start` is the ordinary case, because the issue just taken
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue a worker should take next, derived after the move. Absent when the plan
+has none — which after a <code>start</code> is the ordinary case, because the issue just taken
 is no longer READY.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">to</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The status it is in now, derived from the record as written.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The status it is in now, derived from the record as written.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">transition</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body">The move that was performed.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The move that was performed.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -434,7 +426,7 @@ is no longer READY.</td>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
     <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required_when</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
     </dl>
 
@@ -456,8 +448,8 @@ is no longer READY.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::plan</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">PlanTransitionInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">PlanTransitionResult</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.6.1</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.7.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -528,7 +520,7 @@ is no longer READY.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6a8d47a479af0940587de7cbd34f66369e1b9bf8" class="font-mono underline">6a8d47a</a> · inputs <span class="font-mono">f44e08ac44c7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/957728c13b2751181258f14b43d19d13ac7f4b04" class="font-mono underline">957728c</a> · inputs <span class="font-mono">00b143f100fd</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
