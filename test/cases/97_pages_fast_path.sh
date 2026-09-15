@@ -235,3 +235,45 @@ rm -f "$F/site/templates/.probe.html"
 missing=0
 for f in $("$F/scripts/generate-site-data" --inputs); do [ -f "$F/$f" ] || { echo "    input $f does not exist in the fixture"; missing=1; }; done
 [ "$missing" = 0 ] || exit 1
+
+# ---------------------------------------------------------------- the deploy can decide a ref
+# The publishing job resolves the site's links to commits, compares and release tags against
+# its own clone (scripts/ci/link-check). A clone without the history or the tags cannot decide
+# any of them, and because site-check counts that refusal as a failure, `publish` is skipped —
+# which is how the site stayed at 8cf457000 for seven hours after #356 while every gate was
+# green. Two things are asserted, and they are not the same thing: the declared depth, and a
+# step that measures the checkout rather than trusting the declaration.
+python3 - "$W" <<'PY' || exit 1
+import re, sys, yaml
+wf = yaml.safe_load(open(sys.argv[1], encoding='utf-8'))
+jobs = wf.get('jobs', {})
+# the publishing job by what it does, not by its name
+pub = [n for n, j in jobs.items()
+       if any('site-deploy' in str(s.get('run', '')) or s.get('id') == 'publish'
+              for s in (j.get('steps') or []))]
+if not pub:
+    print("    no job in pages.yml publishes (none runs site-deploy or carries a publish step)")
+    sys.exit(1)
+for name in pub:
+    steps = jobs[name].get('steps') or []
+    checkouts = [s for s in steps if 'actions/checkout' in str(s.get('uses', ''))]
+    if not checkouts:
+        print(f"    the publishing job {name} never checks the repository out"); sys.exit(1)
+    for s in checkouts:
+        depth = (s.get('with') or {}).get('fetch-depth')
+        if depth != 0:
+            print(f"    the publishing job {name} checks out with fetch-depth: {depth!r}, not 0;"
+                  " link-check cannot decide a tag or commit link in such a clone, site-check"
+                  " counts the refusal as a failure, and publish is skipped")
+            sys.exit(1)
+    # and it proves it, rather than declaring it: a step that reads the clone it was given
+    proof = [s for s in steps
+             if re.search(r'is-shallow-repository', str(s.get('run', '')))
+             and re.search(r'git tag', str(s.get('run', '')))]
+    if not proof:
+        print(f"    the publishing job {name} declares fetch-depth: 0 but never measures it;"
+              " a runner that does not honour the declaration would fail three steps later,"
+              " inside link-check, looking like a link defect")
+        sys.exit(1)
+print("    the publishing job checks out deeply, with tags, and proves it on every run")
+PY
