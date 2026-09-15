@@ -8441,8 +8441,19 @@ cli:
           route: /docs/cli/worktree/cleanup/
           executable: true
           usage: "majordomus worktree cleanup [OPTIONS]"
-          about: "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing"
+          about: "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove"
           args:
+            - name: remove
+              long: remove
+              positional: false
+              help: "Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. Branches are never deleted; the listing still says how"
+              value_name: REMOVE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
             - name: repo
               long: repo
               positional: false

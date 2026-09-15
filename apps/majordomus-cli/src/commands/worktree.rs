@@ -85,7 +85,7 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
         Some(WorktreeCommand::Remove { selector, force }) => {
             remove(&svc()?, &selector, force, format, &mut out)
         }
-        Some(WorktreeCommand::Cleanup) => cleanup(&svc()?, format, &mut out),
+        Some(WorktreeCommand::Cleanup { remove }) => cleanup(&svc()?, format, remove, &mut out),
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }
@@ -523,9 +523,18 @@ fn guard(
     Ok(if v.ok { 0 } else { EXIT_REFUSED })
 }
 
-fn cleanup(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Result<u8> {
+fn cleanup(
+    svc: &WorktreeService,
+    format: OutputFormat,
+    remove: bool,
+    out: &mut Out<'_>,
+) -> Result<u8> {
     let t = svc.topology(Detail::Full).map_err(refuse)?;
     let eligible: Vec<&BranchState> = t.branches.iter().filter(|b| b.cleanup_eligible).collect();
+
+    if remove {
+        return reclaim(svc, &eligible, format, out);
+    }
     match format {
         OutputFormat::Json => json(out, &eligible)?,
         OutputFormat::Text => {
@@ -550,6 +559,134 @@ fn cleanup(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Re
                     )?;
                 }
             }
+        }
+    }
+    Ok(0)
+}
+
+/// Is anything working inside this directory right now?
+///
+/// `lsof -a -d cwd` asks the kernel which processes have their working directory there, which
+/// is the only reading that is true at the moment it is taken. The mtime of a worktree is not:
+/// two of the four swept on 2026-09-15 looked untouched since the 12th and had live processes
+/// inside them. A missing `lsof` is not "nothing is running" — it is not knowing, and the
+/// caller refuses on `None` rather than removing.
+fn occupied(path: &str) -> Option<bool> {
+    let real = std::fs::canonicalize(path).ok()?;
+    let real = real.to_string_lossy().to_string();
+    let out = std::process::Command::new("lsof")
+        .args(["-a", "-d", "cwd", "-Fn"])
+        .output()
+        .ok()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    Some(text.lines().any(|l| {
+        l.strip_prefix('n')
+            .is_some_and(|p| p == real || p.starts_with(&format!("{real}/")))
+    }))
+}
+
+/// Remove the worktrees the listing offers, each re-measured immediately before it goes.
+///
+/// The listing and the removal are two moments, and everything that makes a worktree safe to
+/// remove can change between them. So nothing here trusts the topology it was handed: the
+/// branch's standing against its remote, the working tree's cleanliness and whether anything
+/// is running inside are all read again, one worktree at a time, and a candidate that fails
+/// any of them is named and skipped rather than removed.
+///
+/// Branches are never deleted. `git branch -d` refuses an unmerged branch on its own, but a
+/// branch is the only durable name a piece of work has, and the disk is what was scarce.
+fn reclaim(
+    svc: &WorktreeService,
+    eligible: &[&BranchState],
+    format: OutputFormat,
+    out: &mut Out<'_>,
+) -> Result<u8> {
+    let mut removed: Vec<String> = Vec::new();
+    let mut refused: Vec<(String, String)> = Vec::new();
+
+    for b in eligible {
+        let Some(path) = b.worktree.clone() else {
+            continue; // no worktree to reclaim; the branch alone costs nothing
+        };
+        // Commits that exist on one disk. `merged into the trunk` is about the branch's remote
+        // history and says nothing about a local head that ran ahead of it.
+        match &b.upstream {
+            None => {
+                refused.push((b.name.clone(), "no upstream: its commits are on this disk only".into()));
+                continue;
+            }
+            Some(u) if u.gone => {
+                refused.push((b.name.clone(), format!("its upstream {} is gone", u.name)));
+                continue;
+            }
+            // `ahead` is unknown rather than zero when git could not compare the two, and an
+            // unknown count is not a reason to remove anything: it is refused with the others.
+            Some(u) if u.ahead.unwrap_or(1) > 0 => {
+                refused.push((
+                    b.name.clone(),
+                    match u.ahead {
+                        Some(n) => format!("{n} commit(s) ahead of {}: they reach no remote", u.name),
+                        None => format!("cannot tell how far it is ahead of {}", u.name),
+                    },
+                ));
+                continue;
+            }
+            Some(_) => {}
+        }
+        match occupied(&path) {
+            None => {
+                refused.push((b.name.clone(), "cannot tell whether anything is working inside it (no lsof)".into()));
+                continue;
+            }
+            Some(true) => {
+                refused.push((b.name.clone(), "a process has its working directory inside it".into()));
+                continue;
+            }
+            Some(false) => {}
+        }
+        match crate::worktree::state::dirty_state(std::path::Path::new(&path)) {
+            Ok(d) if d.clean => {}
+            Ok(d) => {
+                refused.push((b.name.clone(), format!("uncommitted work: {}", d.summary())));
+                continue;
+            }
+            Err(e) => {
+                refused.push((b.name.clone(), format!("could not read its working tree: {e}")));
+                continue;
+            }
+        }
+        match svc.remove(&b.name, false) {
+            Ok(_) => removed.push(b.name.clone()),
+            Err(e) => refused.push((b.name.clone(), format!("{e}"))),
+        }
+    }
+
+    match format {
+        OutputFormat::Json => json(
+            out,
+            &serde_json::json!({
+                "removed": removed,
+                "refused": refused
+                    .iter()
+                    .map(|(n, r)| serde_json::json!({ "branch": n, "reason": r }))
+                    .collect::<Vec<_>>(),
+            }),
+        )?,
+        OutputFormat::Text => {
+            for n in &removed {
+                w(out, format!("removed   {n}"))?;
+            }
+            for (n, r) in &refused {
+                w(out, format!("refused   {n:<44} {r}"))?;
+            }
+            w(
+                out,
+                format!(
+                    "worktree cleanup: {} removed, {} refused; no branch was deleted",
+                    removed.len(),
+                    refused.len()
+                ),
+            )?;
         }
     }
     Ok(0)
