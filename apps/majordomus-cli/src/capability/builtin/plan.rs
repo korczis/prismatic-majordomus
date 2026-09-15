@@ -786,18 +786,24 @@ impl BenchmarkCases for PlanTransitionInput {
                 Transition::Start
             }
         };
-        plan.issues
-            .first()
-            .map(|i| {
-                vec![NamedCase::new(
-                    "refused-by-status",
-                    PlanTransitionInput {
-                        issue: i.id.clone(),
-                        transition: refused_move(i),
-                    },
-                )]
-            })
-            .unwrap_or_default()
+        // A case exists whatever the plan looks like — including a freshly initialised
+        // repository with no issues yet, where the projections still owe an example of the
+        // input this operation accepts. With an issue, the case is the move that issue's own
+        // status refuses; with none, it names the id that cannot resolve, which the guard
+        // turns down before it moves anything. Both are refusals, which is what a benchmark
+        // of the one writing capability measures, and `PlanRecordInput` takes the same
+        // fallback for the same reason.
+        let case = plan.issues.first().map_or_else(
+            || PlanTransitionInput {
+                issue: "I0001".to_string(),
+                transition: Transition::Start,
+            },
+            |i| PlanTransitionInput {
+                issue: i.id.clone(),
+                transition: refused_move(i),
+            },
+        );
+        vec![NamedCase::new("refused-by-status", case)]
     }
 }
 
@@ -994,5 +1000,28 @@ mod tests {
             .expect("the module declares plan.transition");
         let http = e.capability.exposure.http.expect("it is exposed over HTTP");
         assert_eq!(http.method.as_str(), "POST");
+    }
+
+    /// A freshly initialised repository has no plan issues yet, and `plan.transition` is a
+    /// measured POST whose request-body example *is* its benchmark case. The case provider
+    /// must still yield one there, or every projection of the operation — the OpenAPI
+    /// request body, the Cockpit form, the MCP tool — ships without the example it owes, and
+    /// `92_openapi_reference` fails on a fresh repository while passing on this one. A
+    /// synthetic repository carries rules and docs but no issues, which is exactly that state.
+    #[test]
+    fn the_transition_has_a_case_even_with_no_issues() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let index = repo.index().expect("an index");
+        assert!(
+            Plan::build(&index).issues.is_empty(),
+            "the fixture must have no issues for this to test the fallback",
+        );
+        let ctx = CaseContext { index: &index };
+        let cases = PlanTransitionInput::benchmark_cases(&ctx);
+        assert_eq!(cases.len(), 1, "the fallback yields exactly one case");
+        assert!(
+            !cases[0].input.issue.is_empty(),
+            "the case names an issue so the projected example is complete",
+        );
     }
 }
