@@ -17,9 +17,12 @@
 #                cannot be decided without the network is not published: the finding says so,
 #                and the way to add one is to teach this check how to decide it
 #
-# The internal and fragment classes read site/public alone. The repository class reads git: a shallow
-# clone cannot say whether a commit is in the published history, so the check refuses to report
-# clean there (exit 12) rather than pass over what it did not see.
+# The internal and fragment classes read site/public alone. The repository class reads git, and it
+# can only conclude what the clone was given: a shallow clone cannot say whether a commit is in the
+# published history, and a clone fetched without tags cannot say whether a tag exists. In both cases
+# the check refuses to report clean (exit 12) rather than pass over what it did not see — and,
+# equally, it must not report a *finding* over what it did not see: "tag v0.6.0 does not exist" said
+# about a tag with a published release is a false verdict, not a strict one.
 #
 # Usage: scripts/ci/link-check [--list]   --list prints every link and its class
 # Exit 0 clean, 10 findings, 12 inputs missing or a clone too shallow to decide.
@@ -111,6 +114,24 @@ def is_ref(x):
     if x in tags or x in branches: return True
     return bool(re.fullmatch(r'[0-9a-f]{7,40}', x)) and any(h.startswith(x) for h in history)
 
+# What the clone was given decides what this check may conclude. `fetch-depth: 1` truncates
+# the history *and* fetches no tags, so a tag is absent here for the same reason a commit is:
+# nobody fetched it — not because it does not exist. The commit and compare paths below already
+# refuse to decide when the history is missing; the tag and ref paths asserted non-existence
+# instead, and that is how v0.3.1, v0.5.0 and v0.6.0 — three tags carrying published releases —
+# became six blocking findings that skipped `publish` on every deploy after #356.
+knows_history = not shallow      # the commits are here to be searched
+knows_tags = bool(tags)          # a clone fetched without tags can decide no tag
+def undecidable(ref):
+    """True when this clone was never given what a verdict about `ref` would need."""
+    if ref in tags or ref in branches: return False
+    return not knows_history if re.fullmatch(r'[0-9a-f]{7,40}', ref) else not knows_tags
+def ref_finding(raw, ref, absent):
+    """`absent` only when the ref is certainly not there; deferral when this clone cannot know."""
+    if is_ref(ref): return None
+    if undecidable(ref): undecided.append(raw); return None
+    return absent
+
 counts = collections.Counter(); undecided = []
 def decide(page, raw):
     if raw == '' : return ('refused', 'an empty href goes nowhere')
@@ -126,35 +147,41 @@ def decide(page, raw):
         if kind == '': return ('repository', None)
         if kind == 'blob':
             ref, _, path = tail.partition('/'); path = urllib.parse.unquote(path)
-            if not is_ref(ref): return ('repository', f'{raw}: {ref} is no ref of this repository')
+            if not is_ref(ref):
+                return ('repository', ref_finding(raw, ref, f'{raw}: {ref} is no ref of this repository'))
             if path in tracked: return ('repository', None)
             if path in dirs: return ('repository', f'{raw}: {path} is a directory; the link is tree/, not blob/')
             return ('repository', f'{raw}: {path} is not a tracked file, so the forge answers 404')
         if kind == 'tree':
             ref, _, path = tail.partition('/'); path = urllib.parse.unquote(path.rstrip('/'))
-            if not is_ref(ref): return ('repository', f'{raw}: {ref} is no ref of this repository')
+            if not is_ref(ref):
+                return ('repository', ref_finding(raw, ref, f'{raw}: {ref} is no ref of this repository'))
             if path == '' or path in dirs or path in tracked: return ('repository', None)
             return ('repository', f'{raw}: {path} is not tracked, so the forge answers 404')
         if kind in ('commit', 'commits'):
             ref = tail.strip('/')
             if kind == 'commits' and (ref in tags or ref in branches): return ('repository', None)
-            if shallow: undecided.append(raw); return ('repository', None)
+            if shallow or undecidable(ref): undecided.append(raw); return ('repository', None)
             if re.fullmatch(r'[0-9a-f]{7,40}', ref) and any(h.startswith(ref) for h in history): return ('repository', None)
             return ('repository', f'{raw}: {ref} is not in the history being published')
         if kind == 'releases':
             if tail in ('', 'latest'): return ('repository', None)
             if tail.startswith('tag/'):
                 t = urllib.parse.unquote(tail[4:])
+                if not knows_tags: undecided.append(raw); return ('repository', None)
                 return ('repository', None if t in tags else f'{raw}: tag {t} does not exist')
             if tail.startswith('download/'):
                 t = tail.split('/')[1]
+                if not knows_tags: undecided.append(raw); return ('repository', None)
                 return ('repository', None if t in tags else f'{raw}: tag {t} does not exist')
             return ('repository', f'{raw}: a releases path this check does not know')
         if kind == 'compare':
             a, sep, b = tail.partition('...')
             if not sep: return ('repository', f'{raw}: a compare without "..."')
-            if shallow: undecided.append(raw); return ('repository', None)
-            bad = [x for x in (a, b) if not is_ref(urllib.parse.unquote(x))]
+            refs = [urllib.parse.unquote(x) for x in (a, b)]
+            if shallow or any(undecidable(r) for r in refs):
+                undecided.append(raw); return ('repository', None)
+            bad = [r for r in refs if not is_ref(r)]
             return ('repository', f'{raw}: {", ".join(bad)} is no ref of this repository' if bad else None)
         if kind in ('issues', 'pull', 'actions', 'milestones', 'discussions'):
             return ('refused', f'{raw}: a {kind} link cannot be decided offline')
@@ -195,7 +222,9 @@ for (cls, problem), where in sorted(by_page.items()):
 total = sum(counts.values())
 summary = ', '.join(f'{counts[c]} {c}' for c in ('internal', 'fragment', 'repository', 'refused') if counts[c])
 if undecided:
-    print(f'link-check: {len(undecided)} commit or compare link(s) cannot be decided in a shallow clone; fetch the history (fetch-depth: 0)', file=sys.stderr)
+    missing = ' and '.join(x for x, ok in (('history', knows_history), ('tags', knows_tags)) if not ok) or 'refs'
+    print(f'link-check: {len(undecided)} link(s) to a commit, compare, tag or ref cannot be decided '
+          f'by a clone with no {missing}; check out with fetch-depth: 0', file=sys.stderr)
     sys.exit(12)
 if fails:
     print(f'link-check: {len(fails)} finding(s) over {total} link(s) on {len(pages)} page(s): {summary}')

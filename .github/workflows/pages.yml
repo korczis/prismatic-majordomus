@@ -154,11 +154,16 @@ jobs:
           echo "created=$(date -u -d "$created" +%s)" >> "$GITHUB_OUTPUT"
           echo "start=$(date -u +%s)" >> "$GITHUB_OUTPUT"
 
-      # shallow: the fast path reads the tree, never its history. scripts/site-deploy fetches
+      # The fast path read the tree and never its history, and was shallow for it. `pages check`
+      # stopped being a statement about the tree alone when link-check became blocking (#356):
+      # the site links to commits, compares and release tags, and a clone without history or
+      # tags cannot decide any of them — 2302 commit links undecided and six existing tags
+      # reported as non-existent, on every run since, with `publish` skipped behind the refusal.
+      # fetch-depth: 0 is what the checker asks for by name. scripts/site-deploy still fetches
       # the one branch it pushes for itself.
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - id: setup
         uses: ./.github/actions/setup-site
