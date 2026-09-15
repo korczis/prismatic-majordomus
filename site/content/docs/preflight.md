@@ -93,10 +93,10 @@ that needs a look, the most urgent first: failed, degraded, stale, unavailable, 
 | `integration.mcp` / `api` / `cockpit` | the surfaces `GET /` lists with `ready` | verified, degraded, failed, unavailable, unknown |
 | `integration.peers` | the peer board | active, degraded, unavailable, unknown (not asked on entry) |
 | `verification.tests` | `.ai/repo/evidence/ledger.json`, each run judged by the evidence module's own tree comparison and the test's digest | verified, stale, failed, unavailable |
-| `verification.coverage` | nothing is recorded | unavailable |
+| `verification.coverage` | the active task's `task.gate` line for `rust-coverage` in `.ai/local/state/ledger.jsonl`, judged by the gate's inputs hash; its recorded `result` is shown verbatim | verified, stale, failed, unknown, unavailable (nothing recorded) |
 | `verification.enforcement` | the rule proofs of `rules.report` | verified, degraded, stale, failed, unknown |
 | `verification.projections` | provider projections against their templates | verified, stale, unknown, not_applicable |
-| `verification.docs` | no recorded generation check | unknown |
+| `verification.docs` | the active task's `task.gate` line for `generation-converges`, judged the same way | verified, stale, failed, unknown (nothing recorded, or not hashable) |
 | `verification.deployment` | `refs/remotes/origin/gh-pages`, whose commits name `source: <sha>` | verified (source is HEAD), stale, unknown, unavailable |
 
 </div>
@@ -139,8 +139,22 @@ measured, with the ledger's own row excluded. A run at any other tree is `stale`
 costs git two processes per recorded commit, so its answers are cached in
 `.ai/local/state/environment/snapshot.json`. The cache is keyed on HEAD, every path git reports
 changed, and the ledger file, so any change recomputes it. A served request never writes the
-cache. Coverage is reported `unavailable` until a coverage measurement leaves a record in the
-repository.
+cache.
+
+Coverage and generated documentation are read from recorded gate verdicts: the `task.gate` line
+`majordomus evidence --gate <id> --exit <status>` appends to `.ai/local/state/ledger.jsonl`, read
+by the gates module's own reader for the active task. The comparison is the one `gates.completion`
+makes. The line carries the hash of the files that select the gate, derived from
+`.ai/repo/ci/gates.yaml`, and the run describes this tree only while those files still hash the
+same. A pass over the same hash on a clean tree is `verified`. The line records no tree state, so the
+same pass while the tree is dirty is `stale`: it may have measured uncommitted work. A failure
+over the same hash is `failed`, and any other hash is `stale`. A hash that cannot be taken is `unknown`. `verification.coverage` reads
+`rust-coverage` and `verification.docs` reads `generation-converges`. The coverage summary shows the
+line's `result` exactly as recorded (`--result 91.4%`), and the preflight never computes a
+percentage. With no active task, or no run of the gate recorded for it, coverage is
+`unavailable` and generated docs are `unknown`. Reading the line costs one file read. Hashing
+reads every input of the gate, so the hashes are cached under HEAD, the CI model and every path
+git reports changed, and they are only taken when a run is recorded.
 
 ## Deployment freshness
 

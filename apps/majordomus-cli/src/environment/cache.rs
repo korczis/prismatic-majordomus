@@ -100,6 +100,13 @@ pub struct CachedTier {
     /// path git reports changed and the ledger file itself, so any of those moving recomputes.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ledger_trees: Option<Entry<std::collections::BTreeMap<String, bool>>>,
+    /// For each gate whose recorded run the preflight judges, the hash of the files that
+    /// select it as the tree stands now — `None` where it could not be taken. The hash reads
+    /// every one of those files, which entry must not pay on every `cd`; the fingerprint
+    /// covers HEAD, the CI model and every path git reports changed, so any of those moving
+    /// recomputes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gate_inputs: Option<Entry<std::collections::BTreeMap<String, Option<String>>>>,
     /// The digest of the last snapshot rendered to a person, so that a banner in `auto`
     /// mode can tell a first look from a re-entry. Not a record of anything a person did:
     /// one digest, overwritten, naming nothing about the session that saw it.

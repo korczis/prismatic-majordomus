@@ -154,6 +154,7 @@ impl GateStatus {
 ///     command: "scripts/rust-check --ci".into(),
 ///     inputs_hash: "3f0a".into(),
 ///     session: "s-1".into(),
+///     result: "91.4%".into(),
 /// };
 /// // the hash is what makes a run go stale rather than merely old: the same run read
 /// // against a different tree is evidence about a tree that no longer exists
@@ -180,6 +181,11 @@ pub struct GateRun {
     /// The session that recorded it.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub session: String,
+    /// What the gate said beyond its exit status, verbatim as `--result` recorded it — a
+    /// coverage percentage, a count. Carried for a reader to show and never judged: the
+    /// exit status and the inputs hash are the verdict.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub result: String,
 }
 
 /// The newest `task.gate` line per gate for one task. A line that is not JSON is skipped
@@ -231,6 +237,7 @@ pub(crate) fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>,
                 command: s("command"),
                 inputs_hash: s("inputs_hash"),
                 session: s("session"),
+                result: s("result"),
             },
         );
     }
@@ -553,6 +560,7 @@ classes:
             command: "cargo build".into(),
             inputs_hash: hash.into(),
             session: "s-1".into(),
+            result: String::new(),
         }
     }
 
@@ -671,7 +679,7 @@ classes:
             concat!(
                 r#"{"event":"task.gate","task":"t-1","gate":"build","exit":1,"inputs_hash":"aaaa","ts":"1"}"#,
                 "\n",
-                r#"{"event":"task.gate","task":"t-1","gate":"build","exit":0,"inputs_hash":"bbbb","ts":"2"}"#,
+                r#"{"event":"task.gate","task":"t-1","gate":"build","exit":0,"inputs_hash":"bbbb","ts":"2","result":"91.4%"}"#,
                 "\n",
                 r#"{"event":"task.gate","task":"other","gate":"build","exit":1,"inputs_hash":"cccc","ts":"3"}"#,
                 "\n",
@@ -686,6 +694,10 @@ classes:
         let build = runs.get("build").expect("the task's own line");
         assert_eq!(build.exit, 0, "the newest line wins");
         assert_eq!(build.inputs_hash, "bbbb");
+        assert_eq!(
+            build.result, "91.4%",
+            "what the gate said is carried verbatim"
+        );
         assert_eq!(runs.len(), 1, "another task's run is not this task's");
     }
 
