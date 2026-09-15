@@ -7,7 +7,7 @@
 DIST="$(mktemp -d "${TMPDIR:-/tmp}/mj-dist.XXXXXX")"
 # the distribution as the design defines it: CLI, libraries, shared data, tests, docs, CI
 cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/test" "$ROOT/docs" "$ROOT/.github" "$DIST/"
-before="$(cd "$DIST" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256)"
+before="$(cd "$DIST" && find . -type f | LC_ALL=C sort | mj_sha256_xargs | mj_sha256sum)"
 
 # --- an absolute path outside the repository initialises this repository, not itself
 expect_exit 0 "$DIST/bin/majordomus" init
@@ -61,6 +61,6 @@ expect_grep 'no active task'
 git worktree remove --force "$sibling"; git branch -qD sibling; rm -rf "$T/share"
 
 # --- and the distribution is byte for byte what it was
-after="$(cd "$DIST" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256)"
+after="$(cd "$DIST" && find . -type f | LC_ALL=C sort | mj_sha256_xargs | mj_sha256sum)"
 [ "$before" = "$after" ] || { echo "    the distribution was written to; it must be usable read-only"; exit 1; }
 rm -rf "$DIST"

@@ -25,7 +25,7 @@ expect_grep '^OK   generated   AGENTS.md'
 expect_grep '^OK   generated   CLAUDE.md'
 expect_grep '^OK   generated   GEMINI.md'
 expect_grep 'generate --check: in sync'
-shell_agents="$(shasum -a 256 AGENTS.md | cut -d' ' -f1)"
+shell_agents="$(sha256_of_file AGENTS.md)"
 
 # --- a hand edit is stale to both
 printf '\nA rule of my own.\n' >> AGENTS.md
@@ -36,7 +36,7 @@ grep -q '^FAIL projection  AGENTS.md' <<<"$doctor_out" || { echo "    the shell 
 
 # --- the Rust executable repairs it to the very bytes the shell tool wrote
 expect_exit 0 "$RB" generate providers
-[ "$(shasum -a 256 AGENTS.md | cut -d' ' -f1)" = "$shell_agents" ] || { echo "    Rust rewrote AGENTS.md to different bytes than the shell tool"; exit 1; }
+[ "$(sha256_of_file AGENTS.md)" = "$shell_agents" ] || { echo "    Rust rewrote AGENTS.md to different bytes than the shell tool"; exit 1; }
 doctor_out="$("$MJ" doctor 2>&1 || true)"
 grep -q '^OK   projection  AGENTS.md' <<<"$doctor_out" || { echo "    the shell doctor does not accept the Rust-written AGENTS.md"; echo "$doctor_out"; exit 1; }
 
@@ -46,7 +46,7 @@ expect_exit 10 "$RB" generate providers --check
 expect_exit 0 "$MJ" update
 grep -q 'is `30m`' AGENTS.md || { echo "    update did not render the new interval"; exit 1; }
 expect_exit 0 "$RB" generate providers --check
-[ "$(shasum -a 256 AGENTS.md | cut -d' ' -f1)" != "$shell_agents" ] || { echo "    the policy change did not move the stamp"; exit 1; }
+[ "$(sha256_of_file AGENTS.md)" != "$shell_agents" ] || { echo "    the policy change did not move the stamp"; exit 1; }
 
 # --- and the other way round: Rust writes, the shell tool's doctor is content
 sed -i.bak 's/^  checkpoint_interval_default: .*/  checkpoint_interval_default: 45m/' .ai/repo/policy.yaml && rm -f .ai/repo/policy.yaml.bak

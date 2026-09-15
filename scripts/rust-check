@@ -28,6 +28,8 @@ CRATE="$ROOT/apps/majordomus-cli"
 # for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
 # shellcheck source=../lib/rust_bin.sh
 . "$ROOT/lib/rust_bin.sh"
+# shellcheck source=../lib/sha256.sh
+. "$ROOT/lib/sha256.sh"
 MODE=all; ARTIFACT=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -107,8 +109,8 @@ if [ -n "$ARTIFACT" ]; then
   # building can afford the process, and a shared CARGO_TARGET_DIR is not under the crate
   cp "$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus" "$ARTIFACT/majordomus"
   host="$(rustc -vV | sed -n 's/^host: //p')"
-  if command -v shasum >/dev/null 2>&1; then lock="$(shasum -a 256 "$CRATE/Cargo.lock" | cut -d' ' -f1)"
-  else lock="$(sha256sum "$CRATE/Cargo.lock" | cut -d' ' -f1)"; fi
+  mj_sha256_tool || exit 12
+  lock="$(mj_sha256_hex "$CRATE/Cargo.lock")"
   printf '{"schema":1,"name":"majordomus","profile":"debug","commit":"%s","target":"%s","rustc":"%s","cargo_lock_sha256":"%s","built_at":"%s"}\n' \
     "$(git -C "$ROOT" rev-parse HEAD)" "$host" "$(rustc -V)" "$lock" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$ARTIFACT/majordomus-cli.json"
 fi

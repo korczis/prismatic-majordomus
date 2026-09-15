@@ -30,7 +30,7 @@ grep -qE '^command = ".*bin/majordomus-mcp"$' "$ROOT/.codex/config.toml" || { ec
 # --- the launcher builds (or finds) the executable and speaks MCP; stdout is protocol only
 "$MJ" init >/dev/null
 git add -A >/dev/null && git commit -qm install
-before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+before="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 req() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"params\":$3}"; }
 init='{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case90-first","version":"0"}}'
 {
@@ -56,7 +56,7 @@ sed -n 2p "$S/out.txt" | jq -e '.result.structuredContent.count == 1 and .result
   || { echo "    majordomus_peers does not list the one client"; sed -n 2p "$S/out.txt"; exit 1; }
 grep -q 'shared server stopped' "$S/err.txt" || { echo "    the server did not report stopping"; cat "$S/err.txt"; exit 1; }
 [ ! -f .ai/local/state/mcp/server.json ] || { echo "    the lease survived the server"; exit 1; }
-after="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+after="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 [ "$before" = "$after" ] || { echo "    serving changed the repository"; git status --porcelain; exit 1; }
 
 # --- two clients, one server: the second bridges to the first and sees it as a peer

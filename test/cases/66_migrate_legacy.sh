@@ -34,8 +34,8 @@ fresh_repo() {
   cd "$d" && git init -q . && git config user.email t@example.com && git config user.name t \
     && git commit -q --allow-empty -m init
 }
-state_hashes() { (cd "$1" && find . -type f | LC_ALL=C sort | while read -r f; do printf '%s %s\n' "$(shasum -a 256 "$f" | cut -d' ' -f1)" "$f"; done); }
-tree_hash() { { git status --porcelain; find . -path ./.git -prune -o -type f -print | LC_ALL=C sort | xargs shasum -a 256; } | shasum -a 256; }
+state_hashes() { (cd "$1" && find . -type f | LC_ALL=C sort | while read -r f; do printf '%s %s\n' "$(sha256_of_file "$f")" "$f"; done); }
+tree_hash() { { git status --porcelain; find . -path ./.git -prune -o -type f -print | LC_ALL=C sort | mj_sha256_xargs; } | mj_sha256sum; }
 
 # ---------------------------------------------------------------- the pure legacy tree
 fresh_repo; make_legacy

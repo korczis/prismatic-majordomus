@@ -51,7 +51,7 @@ printf 'not a document\n' > NOTES.md
 printf '{"padding": "%s"}\n' "$(head -c 70000 /dev/zero | tr '\0' 'y')" > test/fixtures/large.json
 printf '{}\n' > test/fixtures/small.json
 hooks_off; git add -A >/dev/null && git commit -qm "outside the scope"; hooks_on
-before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+before="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 expect_exit 0 "$RB" mcp --inspect
 expect_no_grep 'majordomus://document/docs/big\.md'
 expect_no_grep 'majordomus://document/docs/blob\.md'
@@ -107,7 +107,7 @@ sed -n 4p "$S/session.out" | jq -e '(.error != null) or (.result.isError == true
   || { echo "    an object outside the scope was served: $(sed -n 4p "$S/session.out")"; exit 1; }
 sed -n 5p "$S/session.out" | jq -e '(.error != null) or (.result.isError == true)' >/dev/null \
   || { echo "    a path outside the repository was judged: $(sed -n 5p "$S/session.out")"; exit 1; }
-after="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+after="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 [ "$before" = "$after" ] || { echo "    the executable changed the tracked tree"; git status --porcelain; exit 1; }
 
 # --- a malformed declaration is refused by both tools, naming the key

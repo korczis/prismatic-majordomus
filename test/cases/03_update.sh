@@ -21,10 +21,10 @@ done
 expect_grep '`implementation`' AGENTS.md
 expect_grep '"event":"projections.updated"' .ai/local/state/ledger.jsonl
 # deterministic: second run changes nothing
-sha1=$(shasum -a 256 CLAUDE.md | cut -d' ' -f1)
+sha1=$(sha256_of_file CLAUDE.md)
 expect_exit 0 "$MJ" update
 expect_grep '^unchanged CLAUDE.md'
-[ "$(shasum -a 256 CLAUDE.md | cut -d' ' -f1)" = "$sha1" ]
+[ "$(sha256_of_file CLAUDE.md)" = "$sha1" ]
 # doctor now only fails on wiring (10), not missing (12)
 expect_exit 10 "$MJ" doctor
 expect_grep 'OK +projection +CLAUDE.md — content matches its stamp'

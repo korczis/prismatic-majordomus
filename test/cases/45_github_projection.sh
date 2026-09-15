@@ -157,8 +157,8 @@ expect_grep 'refuses a fixture remote'
 rm -f "$FX_I" "$FX_M"
 
 # --- nothing the adapter does writes to the canonical model
-before="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
+before="$(find .ai/repo/project -type f -print0 | mj_sha256_xargs -0 | LC_ALL=C sort)"
 "$SYNC" --plan >/dev/null; "$SYNC" --render M000 >/dev/null
-after="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
+after="$(find .ai/repo/project -type f -print0 | mj_sha256_xargs -0 | LC_ALL=C sort)"
 [ "$before" = "$after" ] || { echo "    the adapter wrote to the canonical model"; exit 1; }
 rm -f /tmp/rendered.$$ /tmp/cli.$$

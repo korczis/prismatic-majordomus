@@ -36,7 +36,7 @@ jq -r '.artifacts[] | [.path, (.bytes // "-"), (.sha256 // "-"), .format, .docum
   fi
   got="$(wc -c < "$f" | tr -d ' ')"
   [ "$got" = "$bytes" ] || { echo "    $path is $got bytes and the manifest records $bytes"; exit 1; }
-  gh="$(shasum -a 256 "$f" | cut -d' ' -f1)"
+  gh="$(sha256_of_file "$f")"
   [ "$gh" = "$sha" ] || { echo "    $path hashes to $gh and the manifest records $sha"; exit 1; }
   # --- and it carries a provenance header in the form its encoding allows
   case "$document" in providers/*) continue ;; esac
