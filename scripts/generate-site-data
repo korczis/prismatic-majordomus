@@ -207,6 +207,19 @@ mj_phase_end "gen:inputs" "$GEN_T0"
 # ---------------------------------------------------------------- project.json
 GEN_T0="$(mj_phase_begin "gen:project.json")"
 VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus" | head -1)"
+# The version of the tree, and the version a reader can actually obtain, are two facts and
+# the site needs both. `version` is what this checkout declares; it runs ahead of the last
+# release by design, because the release policy is surface-measured — twenty-one commits of
+# gates, tests and publisher work owe no bump, so the tree sits at 0.6.1 while 0.6.0 is the
+# newest release. Presenting the first as the product's version tells a visitor standing next
+# to the install command that they are getting something that does not exist.
+#
+# `release` is therefore read from the newest record under `.ai/repo/releases/`, which is what
+# the changelog, the baselines and `/releases/latest.json` all read. Empty when the layer
+# holds no record, and the site must then show nothing rather than fall back to the tree's
+# version — the fallback is the defect.
+RELEASE="$(ls "$ROOT/.ai/repo/releases/"v*.yaml 2>/dev/null \
+  | sed 's|.*/v||; s|\.yaml$||' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)"
 TAGLINE="$(grep -m1 -E '^\*\*A lightweight' "$ROOT/README.md" | sed 's/\*\*//g')"
 LICENSE_NAME="$(head -1 "$ROOT/LICENSE" | sed 's/ License$//')"
 COMMANDS="$(sed -n '/^usage: majordomus <command>/,/^global options:/p' "$ROOT/bin/majordomus" \
@@ -216,8 +229,9 @@ EXIT_CODES="$(sed -n 's/^exit codes: //p; s/^            //p' "$ROOT/bin/majordo
   | jq -Rn '[inputs | capture("^(?<code>[0-9]+) (?<meaning>.+)$") | .code |= tonumber]')"
 jq -n --arg name "Prismatic Majordomus" --arg short "Majordomus" --arg version "$VERSION" --arg tagline "$TAGLINE" \
   --arg license "$LICENSE_NAME" --arg repo "https://github.com/korczis/prismatic-majordomus" \
+  --arg release "$RELEASE" \
   --argjson commands "$COMMANDS" --argjson exit_codes "$EXIT_CODES" \
-  '{schema: 1, name: $name, short_name: $short, version: $version, tagline: $tagline, license: $license,
+  '{schema: 1, name: $name, short_name: $short, version: $version, release: $release, tagline: $tagline, license: $license,
     repository_url: $repo, requirements: ["bash 3.2 or newer", "git", "sha256sum or shasum"],
     commands: $commands, exit_codes: $exit_codes}' > "$OUT/project.json"
 
