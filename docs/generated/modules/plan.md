@@ -147,7 +147,7 @@ Record that execution of an issue began (`start`), that implementation is comple
 | MCP tool | `majordomus_plan_transition` |
 | HTTP | `POST /api/v1/plan/transition` |
 | cache | — |
-| benchmark | required |
+| benchmark | waived (destructive) |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, issues, lifecycle |
 

@@ -6,7 +6,7 @@
     "version": "0.6.1"
   },
   "registry": {
-    "fingerprint": "d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721",
+    "fingerprint": "968999a60ee47f4ecaaa66bcb484aec60ce38eef886a2529f963d86ac9cae475",
     "summary": {
       "total": 1458,
       "builtin": 112,
@@ -26,8 +26,8 @@
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
-      "benchmark_required": 107,
-      "benchmark_waived": 5,
+      "benchmark_required": 106,
+      "benchmark_waived": 6,
       "cached": 35
     },
     "builtin": [
@@ -26295,7 +26295,8 @@
           "lifecycle"
         ],
         "benchmark": {
-          "policy": "required"
+          "policy": "waived",
+          "reason": "destructive"
         },
         "cache": {
           "policy": "disabled"
@@ -40588,7 +40589,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4cf6fdc15943d4bb117b0c9e1bc1968b021259c5525b972ddf45b3402ccaba56",
+    "fingerprint": "5e0800727fe6c5124bcfb618db9b064c4ae2f3624d3ff9caedbb95bf3388f4f6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -78804,35 +78805,6 @@
         "route": "GET /api/v1/plan/status"
       },
       {
-        "key": "plan.transition|direct|refused-by-status",
-        "kind": "capability",
-        "transport": "direct",
-        "id": "plan.transition",
-        "module": "plan",
-        "case": "refused-by-status",
-        "cached": false
-      },
-      {
-        "key": "plan.transition|mcp|refused-by-status",
-        "kind": "capability",
-        "transport": "mcp",
-        "id": "plan.transition",
-        "module": "plan",
-        "case": "refused-by-status",
-        "cached": false,
-        "tool": "majordomus_plan_transition"
-      },
-      {
-        "key": "plan.transition|http|refused-by-status",
-        "kind": "capability",
-        "transport": "http",
-        "id": "plan.transition",
-        "module": "plan",
-        "case": "refused-by-status",
-        "cached": false,
-        "route": "POST /api/v1/plan/transition"
-      },
-      {
         "key": "plan.validate|direct|default",
         "kind": "capability",
         "transport": "direct",
@@ -81922,22 +81894,25 @@
           "subject": "plan.transition",
           "module": "plan",
           "transport": "direct",
-          "state": "covered",
-          "cases": 1
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
         },
         {
           "subject": "plan.transition",
           "module": "plan",
           "transport": "mcp",
-          "state": "covered",
-          "cases": 1
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
         },
         {
           "subject": "plan.transition",
           "module": "plan",
           "transport": "http",
-          "state": "covered",
-          "cases": 1
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
         },
         {
           "subject": "plan.validate",
@@ -82751,21 +82726,21 @@
       "tallies": {
         "direct": {
           "required": 112,
-          "covered": 107,
+          "covered": 106,
           "missing": 0,
-          "waived": 5
+          "waived": 6
         },
         "http": {
           "required": 111,
-          "covered": 107,
+          "covered": 106,
           "missing": 0,
-          "waived": 4
+          "waived": 5
         },
         "mcp": {
           "required": 109,
-          "covered": 105,
+          "covered": 104,
           "missing": 0,
-          "waived": 4
+          "waived": 5
         },
         "system": {
           "required": 13,
@@ -82775,9 +82750,9 @@
         },
         "total": {
           "required": 345,
-          "covered": 332,
+          "covered": 329,
           "missing": 0,
-          "waived": 13
+          "waived": 16
         }
       }
     },

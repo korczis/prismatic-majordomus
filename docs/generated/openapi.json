@@ -7588,14 +7588,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlanTransitionInput"
-              },
-              "examples": {
-                "refused-by-status": {
-                  "value": {
-                    "issue": "I0001",
-                    "transition": "start"
-                  }
-                }
               }
             }
           }
@@ -7670,7 +7662,8 @@
           "module": "majordomus_cli::capability::builtin::plan"
         },
         "x-majordomus-benchmark": {
-          "policy": "required"
+          "policy": "waived",
+          "reason": "destructive"
         },
         "x-majordomus-cache": {
           "policy": "disabled"

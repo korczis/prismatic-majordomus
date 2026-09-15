@@ -7,19 +7,19 @@ generator: majordomus-cli 0.6.1
 coverage:
   - scope: direct
     required: 112
-    covered: 107
+    covered: 106
     missing: 0
-    waived: 5
+    waived: 6
   - scope: http
     required: 111
-    covered: 107
+    covered: 106
     missing: 0
-    waived: 4
+    waived: 5
   - scope: mcp
     required: 109
-    covered: 105
+    covered: 104
     missing: 0
-    waived: 4
+    waived: 5
   - scope: system
     required: 13
     covered: 13
@@ -27,9 +27,9 @@ coverage:
     waived: 0
   - scope: total
     required: 345
-    covered: 332
+    covered: 329
     missing: 0
-    waived: 13
+    waived: 16
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -762,11 +762,10 @@ capabilities:
     module: plan
     kind: command
     cache: "—"
-    direct: covered
-    mcp: covered
-    http: covered
-    cases:
-      - refused-by-status
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: plan.validate
     module: plan
     kind: query

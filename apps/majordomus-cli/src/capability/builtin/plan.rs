@@ -37,7 +37,9 @@ use serde::{Deserialize, Serialize};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::CapabilityKind;
-use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, CachePolicy, Exposure, McpExposure, McpResource, Stability, WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::plan::{
     Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
@@ -651,6 +653,18 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["plan", "project", "issues", "lifecycle"],
+                // Waived, and for the reason the kind already carries: this writes a
+                // tracked record and appends to the ledger, so a benchmark — which runs an
+                // operation in a loop — cannot run it at all. What was here instead was a
+                // case that timed the *refusal*, and this repository has already written
+                // down why that is not coverage (WaiverReason::PublishedHistory on
+                // release.analysis: "the case would time an error path and call it
+                // coverage"). It also made the verdict depend on repository content: the
+                // case was built from `plan.issues.first()`, so a freshly installed
+                // repository produced none, `bench coverage` reported the requirement
+                // Missing, and `capabilities validate` failed in every new installation.
+                // Case 76 is that installation, and had been red on it.
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
                 handler: plan_transition,
             }
             // The one thing its kind cannot say: this writes a tracked record. The exposure
@@ -773,31 +787,20 @@ pub struct PlanTransitionResult {
 /// every route to answering its own cases — 200, or 422 for a command that turns a caller
 /// down. Choosing the move from the record keeps the case inside that contract.
 impl BenchmarkCases for PlanTransitionInput {
-    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        let plan = Plan::build(ctx.index);
-        // The move that this issue's own status refuses. Every issue has one: a READY issue
-        // cannot be verified, and an issue in any other status cannot be started. So the
-        // case is chosen from the record rather than from a status this repository happens
-        // to hold today, and it stays a refusal whatever the plan looks like when it runs.
-        let refused_move = |i: &PlanIssue| {
-            if i.status == "READY" {
-                Transition::Verify
-            } else {
-                Transition::Start
-            }
-        };
-        plan.issues
-            .first()
-            .map(|i| {
-                vec![NamedCase::new(
-                    "refused-by-status",
-                    PlanTransitionInput {
-                        issue: i.id.clone(),
-                        transition: refused_move(i),
-                    },
-                )]
-            })
-            .unwrap_or_default()
+    /// None. The capability is waived from the benchmark ([`WaiverReason::Destructive`]):
+    /// it stamps a field of an issue's record and appends an event to the ledger, and a
+    /// benchmark runs its subject in a loop.
+    ///
+    /// What stood here was a case named `refused-by-status`, built from the first issue the
+    /// plan happened to hold, which timed a move the model turns down — chosen precisely
+    /// because a refusal does not write. Two things were wrong with it. It measured an error
+    /// path and counted it as coverage, which [`WaiverReason::PublishedHistory`] on
+    /// `release.analysis` already says is not coverage. And it made a *requirement* depend
+    /// on repository content: in a repository with no issues it produced nothing, so
+    /// `bench coverage` called the requirement Missing and `capabilities validate` failed —
+    /// in every freshly installed repository, which is what case 76 builds and measures.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
     }
 }
 

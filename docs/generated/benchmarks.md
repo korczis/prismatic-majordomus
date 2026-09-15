@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 112 | 107 | 0 | 5 |
-| http | 111 | 107 | 0 | 4 |
-| mcp | 109 | 105 | 0 | 4 |
+| direct | 112 | 106 | 0 | 6 |
+| http | 111 | 106 | 0 | 5 |
+| mcp | 109 | 104 | 0 | 5 |
 | system | 13 | 13 | 0 | 0 |
-| total | 345 | 332 | 0 | 13 |
+| total | 345 | 329 | 0 | 16 |
 
 ## Capabilities
 
@@ -96,7 +96,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
 | `plan.roadmap` | plan | query | — | covered | covered | covered | `default` |
 | `plan.status` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
-| `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
+| `plan.transition` | plan | command | — | waived | waived | waived | — |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
