@@ -1,0 +1,32 @@
+id: I1517
+milestone: work-graph-github
+title: A milestone is found by the identity it carries, not by its title
+slug: a-milestone-carries-its-own-identity
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the adapter find a projected milestone by the record marker in its own description, as it already finds an issue, so that renaming a milestone on GitHub cannot orphan its canonical record or cause a second milestone to be created for it."
+why: "PR #121 removed identity-by-title from the issue half of scripts/github-sync, for the reason that a GitHub number is GitHub's to assign and a title is a person's to edit, so neither can be the key. The milestone half was never converted, and it is worse than the issue half was: a projected milestone carries no identity of its own at all. remote_milestone_number() is a prefix match on the remote title; the listing it reads is built from .number, .title and .state alone; and the description --apply writes ends with 'Canonical: .ai/repo/project/milestones/<id>.yaml', which names the record in plain prose and is read by nothing. So the record is named on the remote and the lookup does not consult it — a relation that exists in one direction only, which is the shape this repository keeps rediscovering. A person who renames a milestone orphans its record, and the next --apply creates a duplicate."
+current_state: "remote_milestone_number() matches on '<id> — ' against .title. The milestone listing does not fetch .description. The description carries the canonical path as prose and no marker; the issue side's <!-- majordomus:record <id> --> has no counterpart here. No case covers a renamed milestone."
+desired_state: "--apply writes a record marker into the milestone description as it does into an issue body; the listing carries the description; identity is read from that marker, with the title matching only for adoption, exactly as remote_issue_line() already does. A milestone renamed on GitHub is still found by its record, and no second milestone is created for it."
+scope:
+  - scripts/github-sync
+  - test/cases
+non_scope:
+  - Renaming any milestone. That is I1518, which depends on this.
+  - The issue half, which already carries identity correctly.
+depends_on: []
+acceptance_criteria:
+  - A milestone whose remote title no longer matches its canonical id is found by its marker
+  - A milestone carrying no marker is adopted by title once, and --apply writes one
+  - No second milestone is created for a record whose milestone was renamed
+validation:
+  - bash test/run.sh 45_github_projection
+  - bash scripts/ci/github-check
+evidence_required:
+  - a_renamed_milestone_is_found_by_its_record
+  - the_title_fallback_is_only_adoption
+risk: "Low, and bounded by the fixture. The failure mode to guard against is the fallback quietly taking every lookup — a mistyped marker or a description GitHub rewrites would then behave exactly like today's code while looking fixed, which is why the case plants a renamed milestone *with* its marker and requires the rename to be found by id."
+created_at: 2026-09-15
+updated_at: 2026-09-15
+started_at: 2026-09-15

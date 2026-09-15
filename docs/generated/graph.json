@@ -22843,6 +22843,89 @@
         }
       },
       {
+        "id": "majordomus://issue/I1517",
+        "kind": "issue",
+        "label": "I1517",
+        "summary": "A milestone is found by the identity it carries, not by its title",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1517",
+        "source": ".ai/repo/project/issues/I1517.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A milestone whose remote title no longer matches its canonical id is found by its marker",
+            "A milestone carrying no marker is adopted by title once, and --apply writes one",
+            "No second milestone is created for a record whose milestone was renamed"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "a_renamed_milestone_is_found_by_its_record",
+            "the_title_fallback_is_only_adoption"
+          ],
+          "milestone": "work-graph-github",
+          "non_scope": [
+            "Renaming any milestone. That is I1518, which depends on this.",
+            "The issue half, which already carries identity correctly."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/github-sync",
+            "test/cases"
+          ],
+          "slug": "a-milestone-carries-its-own-identity",
+          "started_at": "2026-09-15",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh 45_github_projection",
+            "bash scripts/ci/github-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1518",
+        "kind": "issue",
+        "label": "I1518",
+        "summary": "The project model names its milestones in one vocabulary",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1518",
+        "source": ".ai/repo/project/issues/I1518.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every milestone id matches one declared form, and a gate refuses one that does not",
+            "Every issue's milestone field names an existing milestone in that form",
+            "The rename reaches GitHub as a rename, not as a second milestone"
+          ],
+          "created_at": "2026-09-15",
+          "current_state": "M000..M004 and 15 slugs coexist. Nothing enforces either form.",
+          "depends_on": [
+            "I1517"
+          ],
+          "desired_state": "One vocabulary, chosen deliberately and enforced by a gate, with every issue's milestone field and every GitHub milestone title following it.",
+          "evidence_required": [
+            "one_vocabulary_is_enforced"
+          ],
+          "milestone": "work-graph-github",
+          "non_scope": [
+            "The adapter's identity handling, which is I1517 and must land first."
+          ],
+          "objective": "Give every milestone an identity of the same kind, so that a person reading the plan, an issue's milestone field and a GitHub milestone title sees one naming scheme rather than two.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/milestones",
+            ".ai/repo/project/issues",
+            "test/cases"
+          ],
+          "slug": "one-milestone-vocabulary",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash scripts/ci/github-check",
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -48198,6 +48281,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1517",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1517",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1518",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1518",
+        "target": "majordomus://issue/I1517",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1518",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -54624,8 +54732,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1718,
-      "edges": 3852,
+      "nodes": 1720,
+      "edges": 3857,
       "acyclic": true,
       "truncated": false
     }

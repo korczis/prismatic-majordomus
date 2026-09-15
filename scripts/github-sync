@@ -190,7 +190,7 @@ if [ "$FIXTURE" = 1 ]; then
   true
 else
   gh api --paginate "repos/$REPO/milestones?state=all" \
-    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+    --jq '.[] | [(.number|tostring), .title, .state, ((.description // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
   gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
     --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' \
     > "$REMOTE_IS" 2>/dev/null || true
@@ -207,7 +207,34 @@ remote_issue_line() {
     $6 == "" && index($2,p)==1 && !legacy { legacy = $0 }
     END { if (!found && legacy != "") print legacy }' "$REMOTE_IS"
 }
-remote_milestone_number() { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_MS"; }
+# What a milestone's description is: its identity on one line, then what the record says.
+# The marker comes first so that the length bound can only ever shorten the prose, and the
+# bound is applied per line for the same reason. A milestone description is wholly canonical
+# — every --apply replaces it — so it needs no region and no hand-edit protection; what it
+# needs is to carry the identity the lookup reads, which until now it did not.
+milestone_description() {
+  local id="$1"
+  { printf -- '%s\n' "$(record_marker "$id")"
+    printf '%s — %s. Canonical: .ai/repo/project/milestones/%s.yaml\n' \
+      "$(mj_pj_m_status "$id")" "$(mj_pj_get "$id" outcome)" "$id"
+  } | cut -c1-980
+}
+
+# The same resolution for a milestone, and for the same reason. A milestone projected before
+# the marker existed carries no identity, so it is adopted once by its title prefix and the
+# next --apply writes it one; a milestone that carries an identity is never matched by title,
+# so a person may rename it on GitHub and the record still finds it. Before this the title
+# was the only key: renaming a milestone orphaned its record and the next --apply created a
+# second milestone for it, while the description named the record in prose — `Canonical:
+# .ai/repo/project/milestones/<id>.yaml` — that nothing could read as a key.
+remote_milestone_line() {
+  awk -F'\t' -v id="$1" -v p="$1 — " '
+    $4 == id            { print; found = 1; exit }
+    $4 == "" && index($2,p)==1 && !legacy { legacy = $0 }
+    END { if (!found && legacy != "") print legacy }' "$REMOTE_MS"
+}
+remote_milestone_number() { remote_milestone_line "$1" | cut -f1; }
+remote_milestone_title()  { remote_milestone_line "$1" | cut -f2; }
 remote_issue_number()     { remote_issue_line "$1" | cut -f1; }
 remote_issue_state()      { remote_issue_line "$1" | cut -f3; }
 remote_issue_body()       { remote_issue_line "$1" | cut -f4 | base64 --decode 2>/dev/null || true; }
@@ -291,8 +318,7 @@ fi
 # ---------------------------------------------------------------- milestones
 for id in $(selected_milestones); do
   num="$(remote_milestone_number "$id")"
-  desc="$(printf '%s — %s. Canonical: .ai/repo/project/milestones/%s.yaml' \
-    "$(mj_pj_m_status "$id")" "$(mj_pj_get "$id" outcome)" "$id" | cut -c1-980)"
+  desc="$(milestone_description "$id")"
   if [ -z "$num" ]; then
     note DRIFT missing "milestone $id is not on GitHub"
     if [ "$MODE" = apply ]; then
@@ -317,7 +343,7 @@ done
 # cannot be assigned to a milestone the adapter does not know the title of. Re-read.
 if [ "$MODE" = apply ] && [ "$FIXTURE" = 0 ]; then
   gh api --paginate "repos/$REPO/milestones?state=all" \
-    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+    --jq '.[] | [(.number|tostring), .title, .state, ((.description // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
 fi
 
 # ---------------------------------------------------------------- issues
@@ -332,7 +358,7 @@ for id in $(selected_issues); do
       tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"; printf '%s\n' "$body" > "$tmp"
       if [ -n "$(remote_milestone_number "$ms")" ]; then
         url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
-          --label "$(labels_of "$id")" --milestone "$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")")"
+          --label "$(labels_of "$id")" --milestone "$(remote_milestone_title "$ms")")"
       else
         url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
           --label "$(labels_of "$id")")"
@@ -369,7 +395,7 @@ for id in $(selected_issues); do
               [ "$FORCE" = 1 ] || continue
               changed=1 ;;
   esac
-  want_ms="$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")"
+  want_ms="$(remote_milestone_title "$ms")"
   if [ -n "$want_ms" ] && [ "$(remote_issue_milestone "$id")" != "$want_ms" ]; then
     note DRIFT milestone "issue $id (#$num) is not on GitHub milestone $ms"
     [ "$MODE" = apply ] && gh issue edit "$num" --repo "$REPO" --milestone "$want_ms" >/dev/null && note OK updated "issue $id milestone"

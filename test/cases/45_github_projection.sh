@@ -99,6 +99,7 @@ expect_grep "no record 'I9999'"
 #     the same canonical record, which is the one mistake a projection may not make.
 FX_I=/tmp/fx_issues.$$; FX_M=/tmp/fx_ms.$$
 printf '1\tM000 — Milestone M000\topen\n' > "$FX_M"
+
 # one remote row, from a body on stdin: number, title, state, body, milestone, identity
 row() {
   b="$(cat | base64 | tr -d '\n')"
@@ -171,6 +172,65 @@ expect_no_grep 'claims to be P0:'
   | row 12 'I9999 — Gone from the model' '' > "$FX_I"
 expect_exit 11 check_fx
 expect_grep 'DRIFT +unmanaged +issue #12 claims to be I9999'
+
+# --- a milestone is found by the identity it carries, not by its title
+# The issue half stopped matching on titles when identity moved into the body. The milestone
+# half kept the title as its only key, and a milestone carried no identity at all: the
+# description named the record in prose — `Canonical: .ai/repo/project/milestones/<id>.yaml`
+# — which nothing could read as a key. So renaming a milestone on GitHub orphaned its record
+# and the next --apply created a second milestone for it.
+#
+# Both halves are asserted, because the fallback is what makes this easy to get wrong: a
+# marker that is never read behaves exactly like the old code while looking fixed. The first
+# fixture is a milestone whose title matches nothing and whose marker matches — it must be
+# found. The second is the same rename with the marker gone — it must not be.
+ms_row() { printf '%s\t%s\topen\t%s\n' "$1" "$2" "$3"; }
+"$SYNC" --render I0002 | row 7 'I0002 — Issue I0002' I0002 > "$FX_I"
+
+ms_row 1 'Somebody renamed this milestone entirely' M000 > "$FX_M"
+expect_exit 11 check_fx
+expect_no_grep 'DRIFT +missing +milestone M000'
+
+ms_row 1 'Somebody renamed this milestone entirely' '' > "$FX_M"
+expect_exit 11 check_fx
+expect_grep 'DRIFT +missing +milestone M000 is not on GitHub'
+
+# a milestone projected before the marker existed is still adopted by its title prefix
+ms_row 1 'M000 — Milestone M000' '' > "$FX_M"
+expect_exit 11 check_fx
+expect_no_grep 'DRIFT +missing +milestone M000'
+
+# ...and a title that merely looks canonical never captures a milestone carrying another
+# identity, which is the milestone twin of the issue assertion above
+ms_row 1 'M000 — Milestone M000' M001 > "$FX_M"
+expect_exit 11 check_fx
+expect_grep 'DRIFT +missing +milestone M000 is not on GitHub'
+
+printf '1\tM000 — Milestone M000\topen\n' > "$FX_M"
+
+# ...and the writer half, without which the reader above is a reader of nothing. Removing the
+# marker from what --apply posts leaves every fixture assertion above passing, because a
+# fixture is a remote this case writes by hand. There is no offline surface that prints a
+# milestone description — `--render` prints the issue-style body — so this is asserted of the
+# composition itself, as the two assertions near the top of this file are. It is worth saying
+# what that does and does not prove: that the marker is composed into the description, not
+# that GitHub received it.
+sed -n '/^milestone_description()/,/^}/p' "$SYNC" > /tmp/msdesc.$$
+[ -s /tmp/msdesc.$$ ] || { echo "    milestone_description() is gone; the description is composed somewhere unasserted"; exit 1; }
+grep -q 'record_marker' /tmp/msdesc.$$ \
+  || { echo "    the milestone description the adapter posts carries no record marker, so"; \
+       echo "    every milestone it writes could only ever be found by its title again"; exit 1; }
+rm -f /tmp/msdesc.$$
+
+# ...and the half between them: the listing the reader reads. A fixture is a TSV this case
+# writes, so it enters the adapter past the `gh api` that builds the real one — which means
+# dropping the identity from the milestone listing's jq leaves every assertion above green
+# and the live gate blind. Same shape as the two above, and the third time in this one file
+# that a seam hid a side: the fixture proves the reader, the composition proves the writer,
+# and this proves the listing they meet in.
+grep -n 'milestones?state=all' -A 1 "$SYNC" | grep -q 'majordomus:record' \
+  || { echo "    the milestone listing does not extract the record marker, so the identity"; \
+       echo "    reaches the fixture and never the remote"; exit 1; }
 
 # a fixture is a remote to read, never one to write
 MJ_GH_FIXTURE_ISSUES="$FX_I" expect_exit 15 "$SYNC" --apply
