@@ -6,23 +6,23 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "b6e5486b7f31c8f670f96f4bb44fbb1f91c6f372536dc14fae1caaace5ceace3",
+    "fingerprint": "22c14236890af54bb99581ce8977da6b193d9be7e55bc236dd3ef5dec0d32568",
     "summary": {
-      "total": 1464,
+      "total": 1471,
       "builtin": 113,
-      "declarative": 1351,
+      "declarative": 1358,
       "by_kind": {
         "command": 7,
         "query": 106,
-        "resource": 1351
+        "resource": 1358
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1357
+        "implemented": 1364
       },
       "mcp_tools": 110,
-      "mcp_resources": 1392,
+      "mcp_resources": 1399,
       "http_routes": 112,
       "cli_commands": 52,
       "modules": 66,
@@ -40132,7 +40132,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 51,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -40465,7 +40465,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 216,
+        "capabilities": 221,
         "capability_ids": []
       },
       {
@@ -40521,7 +40521,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 19,
+        "capabilities": 20,
         "capability_ids": []
       },
       {
@@ -40882,7 +40882,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c2e8a47682642f3d06dea998e2c22a00eecdfedd88a07e69422ecc3eec6c21b1",
+    "fingerprint": "abcc776e74a745a367bf2e4c715ce2423aeb39aa2974cb3e782d4309c460b979",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40905,7 +40905,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -40917,10 +40917,10 @@
       "document": 247,
       "feature": 25,
       "implementation": 49,
-      "issue": 216,
+      "issue": 221,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 19,
+      "milestone": 20,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -41769,6 +41769,24 @@
           "safety",
           "worktrees",
           "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0069",
+        "kind": "adr",
+        "identity": "adr-0069",
+        "title": "A capability may be scripted, and repository automation is scripted capabilities rather than shell",
+        "description": "A capability may be scripted, and repository automation is scripted capabilities rather than shell",
+        "path": ".ai/repo/adrs/0069-a-capability-may-be-scripted.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7815,
+        "tags": [
+          "automation",
+          "capabilities",
+          "architecture",
+          "portability",
+          "security"
         ]
       },
       {
@@ -44991,7 +45009,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 54976
+        "bytes": 60543
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -49844,6 +49862,61 @@
         "bytes": 3566
       },
       {
+        "uri": "majordomus://issue/I1800",
+        "kind": "issue",
+        "identity": "I1800",
+        "title": "The sandboxed engine a scripted capability runs in",
+        "description": "Embed Rhai in the Rust executable as one engine constructor that every scripted capability runs under: eval disabled, no clock, limits on operations, call depth, expression depth and the sizes of strings, arrays and maps, and cancellation checked on every operation.",
+        "path": ".ai/repo/project/issues/I1800.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1510
+      },
+      {
+        "uri": "majordomus://issue/I1801",
+        "kind": "issue",
+        "identity": "I1801",
+        "title": "A scripted capability is a kind, discovered and registered, runnable and projected like any capability",
+        "description": "Make a capability declared in a file of the layer, with a Rhai script as its handler, a capability of the one registry: discovered by the index as a kind, validated with errors naming file and field, runnable through majordomus run, and projected onto the command line, MCP, OpenAPI and the generated reference by the projections that already exist.",
+        "path": ".ai/repo/project/issues/I1801.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2339
+      },
+      {
+        "uri": "majordomus://issue/I1802",
+        "kind": "issue",
+        "identity": "I1802",
+        "title": "Nothing runs Perl",
+        "description": "Remove every invocation of Perl from tracked files, including indirect ones such as shasum on macOS, and hold the absence with a gate.",
+        "path": ".ai/repo/project/issues/I1802.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 988
+      },
+      {
+        "uri": "majordomus://issue/I1803",
+        "kind": "issue",
+        "identity": "I1803",
+        "title": "New shell is refused without a declared exemption, and the migration inventory is tracked",
+        "description": "Refuse a new shell file under a governed path unless a machine-readable exemption list names it, and track the inventory of existing shell with each unit's disposition.",
+        "path": ".ai/repo/project/issues/I1803.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1392
+      },
+      {
+        "uri": "majordomus://issue/I1804",
+        "kind": "issue",
+        "identity": "I1804",
+        "title": "The first shell scripts become scripted capabilities over typed Rust",
+        "description": "Migrate the baseline-ratchet logic copied into ten scripts/ci gates to one typed Rust capability, and the gates that use it to scripted capabilities that orchestrate it.",
+        "path": ".ai/repo/project/issues/I1804.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1328
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -49920,6 +49993,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4617
+      },
+      {
+        "uri": "majordomus://milestone/automation",
+        "kind": "milestone",
+        "identity": "automation",
+        "title": "Repository automation is scripted capabilities over typed Rust, not shell",
+        "description": "A capability may be scripted (ADR 0069): a Rhai script inside the Rust executable orchestrates typed capabilities through the one registry, reaches every surface by the projections that already exist, runs in a sandbox with a declared and enforced effect ceiling, and shell shrinks by migration under a gate that refuses new shell without a declared exemption.",
+        "path": ".ai/repo/project/milestones/automation.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3262
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -55639,7 +55723,7 @@
       "identity": [
         "id"
       ],
-      "objects": 51
+      "objects": 52
     },
     {
       "name": "application",
@@ -55752,7 +55836,7 @@
       "identity": [
         "id"
       ],
-      "objects": 216
+      "objects": 221
     },
     {
       "name": "knowledge",
@@ -55782,7 +55866,7 @@
       "identity": [
         "id"
       ],
-      "objects": 19
+      "objects": 20
     },
     {
       "name": "moment",

@@ -53,6 +53,15 @@ ed25519-dalek = { version = "2", default-features = false, features = ["std", "f
 # getrandom: the node's one long-lived signing key and each instance's id need OS entropy
 # once at creation; nothing else in the crate is random.
 getrandom = "0.2"
+# rhai: a capability may be scripted (ADR 0069). Repository automation that used to be shell
+# is a Rhai script calling typed capabilities, run by this executable, so a user needs no
+# Bash, no Rust toolchain and no second interpreter. `sync`: the shared server runs handlers
+# on threads. `serde`: values cross the boundary through the schemas that already describe
+# them. `metadata`: the functions a script may call are introspectable. `no_time`: time
+# reaches a script through its context, never a hidden clock. Default features are off so
+# hashing is not seeded at random per run; `unchecked` stays off, because its limits are the
+# sandbox (src/script/mod.rs).
+rhai = { version = "1.26", default-features = false, features = ["std", "sync", "serde", "metadata", "no_time"] }
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —

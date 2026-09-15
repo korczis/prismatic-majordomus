@@ -1,0 +1,43 @@
+id: automation
+title: Repository automation is scripted capabilities over typed Rust, not shell
+slug: automation
+order: 130
+priority: p1
+problem: "Repository automation lives in shell, and every recurring defect class this repository has recorded about itself has a shell instance: a BSD/GNU flag that behaves differently on the runner, a pipeline whose count is lost in a subshell, a gate that cannot read its own pattern and reports clean, a sort whose order depends on the locale. An audit of 2026-09-15 classified 223 units: scripts/ci is 44 files and 6,017 lines, the other scripts and bin 82 files and 14,860 lines, lib 45 files and 19,513 lines, and 216 shell test cases 30,872 lines. By disposition 97 are domain logic that belongs in core Rust, 32 orchestration, 34 glue, 3 dead, 14 generated and 43 platform adaptors. A user of the tool needs Bash to run any of it, and Perl reaches the tree through shasum on macOS."
+outcome: "A capability may be scripted (ADR 0069): a Rhai script inside the Rust executable orchestrates typed capabilities through the one registry, reaches every surface by the projections that already exist, runs in a sandbox with a declared and enforced effect ceiling, and shell shrinks by migration under a gate that refuses new shell without a declared exemption."
+current_state: "No interpreter is embedded. Every orchestration is a shell script, the baseline-ratchet logic is copied into ten scripts/ci gates, nothing refuses a new shell file, and Perl is reachable through shasum."
+desired_state: "The sandboxed engine is part of the executable; a scripted capability is a kind discovered by the index and registered in the one registry, runnable through majordomus run and projected like any capability; nothing runs Perl; new shell under governed paths is refused without an exemption and the migration inventory is tracked; the first shell gates are scripted capabilities over typed Rust."
+scope:
+  - apps/majordomus-cli
+  - share
+  - scripts
+  - lib
+  - bin
+  - .ai/repo
+  - docs
+  - test
+  - SECURITY.md
+non_scope:
+  - Transliterating shell scripts into Rhai. Domain logic moves to typed Rust capabilities; a script only orchestrates capabilities
+  - A generic shell or exec capability, or any function that takes a command string
+  - Perl, Python or Node as a portable layer
+acceptance_criteria:
+  - A Rhai script runs only inside the sandbox engine, with eval disabled, no clock, bounded work and cancellation
+  - A scripted capability declared in the layer appears in the registry, capabilities list, OpenAPI and MCP with no edit anywhere else
+  - A script calling a capability whose effect exceeds its own declared effect is refused at run time
+  - No tracked file invokes Perl, held by a gate
+  - A new shell file under a governed path without an exemption entry is refused, and the migration inventory is machine-readable
+validation:
+  - majordomus plan validate
+  - bin/majordomus-cli capabilities validate
+  - bin/majordomus-cli generate --check
+  - bash test/run.sh 383_a_scripted_capability_runs
+evidence_required:
+  - sandbox_engine_proved
+  - scripted_capability_projected_everywhere
+  - effect_ceiling_enforced
+  - no_perl
+  - new_shell_refused
+depends_on: []
+created_at: 2026-09-15
+updated_at: 2026-09-15

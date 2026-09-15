@@ -1,0 +1,29 @@
+id: I1800
+milestone: automation
+title: The sandboxed engine a scripted capability runs in
+slug: the-sandboxed-engine
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Embed Rhai in the Rust executable as one engine constructor that every scripted capability runs under: eval disabled, no clock, limits on operations, call depth, expression depth and the sizes of strings, arrays and maps, and cancellation checked on every operation."
+why: "ADR 0069 decides that repository automation becomes scripted capabilities rather than shell. The declared exception to project.no-network-no-eval holds only if the interpreter is a sandbox and there is exactly one place that builds it, so the engine lands first and alone."
+current_state: "No interpreter is embedded; every orchestration is shell."
+desired_state: "apps/majordomus-cli/src/script builds the one engine; each guarantee it makes is proved by a unit test."
+scope:
+  - apps/majordomus-cli
+  - .ai/repo/adrs
+non_scope:
+  - Binding the engine to a capability; that is I1801
+depends_on: []
+acceptance_criteria:
+  - eval does not compile in a script
+  - a script has no clock function
+  - an endless loop ends with the operation limit, and a string cannot grow past its limit
+  - a cancelled execution stops at its next operation
+  - the engine is Send and Sync
+validation:
+  - cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::
+evidence_required:
+  - sandbox_engine_proved
+created_at: 2026-09-15
+updated_at: 2026-09-15

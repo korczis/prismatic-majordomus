@@ -1,0 +1,27 @@
+id: I1803
+milestone: automation
+title: New shell is refused without a declared exemption, and the migration inventory is tracked
+slug: new-shell-is-refused
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Refuse a new shell file under a governed path unless a machine-readable exemption list names it, and track the inventory of existing shell with each unit's disposition."
+why: "Migration shrinks shell only if nothing grows it back. The audit of 2026-09-15 classified 223 units (scripts/ci 44 files and 6,017 lines; other scripts and bin 82 files and 14,860 lines; lib 45 files and 19,513 lines; 216 shell cases and 30,872 lines): 97 core Rust, 32 orchestration, 34 glue, 3 dead, 14 generated, 43 platform adaptor. Worked on branch feature/new-shell-is-refused."
+current_state: "Nothing refuses a new shell file; the inventory exists only as an audit report."
+desired_state: "A gate and an exemption list; the inventory is a tracked, machine-readable record each migration updates."
+scope:
+  - scripts
+  - .ai/repo
+  - test
+non_scope:
+  - Migrating any unit
+depends_on: []
+acceptance_criteria:
+  - a new shell file under a governed path without an exemption fails the gate
+  - every existing shell unit appears in the inventory with its disposition
+validation:
+  - bash test/run.sh
+evidence_required:
+  - new_shell_refused
+created_at: 2026-09-15
+updated_at: 2026-09-15

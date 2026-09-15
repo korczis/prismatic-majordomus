@@ -1,0 +1,38 @@
+id: I1801
+milestone: automation
+title: A scripted capability is a kind, discovered and registered, runnable and projected like any capability
+slug: a-scripted-capability-is-a-kind
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make a capability declared in a file of the layer, with a Rhai script as its handler, a capability of the one registry: discovered by the index as a kind, validated with errors naming file and field, runnable through majordomus run, and projected onto the command line, MCP, OpenAPI and the generated reference by the projections that already exist."
+why: "ADR 0069 refuses a second registry (project.no-new-nouns). A script reaches the repository only through capabilities, by one host function that calls Context::execute, so validation, redaction, counters and the execution plane apply to every call a script makes; and the host refuses a callee whose effect exceeds the script's declared effect."
+current_state: "Capabilities come from Rust modules and from declarative objects as resources only; nothing turns a layer file into an executable capability."
+desired_state: "A capability kind with a versioned schema and a script kind beside it; the registry builds an executable capability from each definition; one real scripted capability ships composing read-only capabilities; case 383 drives it end to end."
+scope:
+  - apps/majordomus-cli
+  - share
+  - .ai/repo
+  - docs
+  - test
+  - SECURITY.md
+non_scope:
+  - Migrating shell scripts; that is I1804
+  - A function that takes a shell command string
+depends_on:
+  - I1800
+acceptance_criteria:
+  - a definition with an unknown key or a missing script is refused naming the file and field
+  - a compile error names the script file, line and column
+  - a runtime error names the script file, line and column
+  - a call to a capability whose effect exceeds the declared effect is refused
+  - a cancelled execution of a scripted capability stops
+  - the scripted capability appears in capabilities list, OpenAPI and MCP after generate with no edit elsewhere
+validation:
+  - cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::
+  - bash test/run.sh 383_a_scripted_capability_runs
+evidence_required:
+  - scripted_capability_projected_everywhere
+  - effect_ceiling_enforced
+created_at: 2026-09-15
+updated_at: 2026-09-15

@@ -965,7 +965,9 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
         ArtifactFormat::Yaml,
         None,
         source,
-        comment_banner(source, version) + &text,
+        // `.as_str()` rather than `&text`: with rhai linked, `String + &String` has more than
+        // one `Add` implementation to choose from and no longer coerces (ADR 0069)
+        comment_banner(source, version) + text.as_str(),
     ));
 
     // the brand: one canonical file per mark under share/design/brand, and every copy a
