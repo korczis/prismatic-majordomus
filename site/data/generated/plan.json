@@ -1317,6 +1317,69 @@
       }
     },
     {
+      "id": "runtime-continuity",
+      "slug": "runtime-continuity",
+      "status": "PLANNED",
+      "order": 120,
+      "priority": "p0",
+      "title": "Every prompt is answered from a context the repository compiled, recorded and can still show",
+      "problem": "A read-only audit of 2026-09-15 (docs/RUNTIME_CONTINUITY.md) found that a worker's context, its prompts and the rules applied to its work are three disconnected things. Three independent compilers produce context — the SessionStart briefing (lib/derive.sh), the context builder (lib/context.sh) and the Rust devcontext compiler — and the one the agent receives is never stored or fingerprinted, while the one with a fingerprint has no consumer. Freshness compares git head and branch only, so a changed rule, ADR, issue or handover never invalidates anything, and nothing re-delivers context after the session starts. Prompt records are written at UserPromptSubmit with no field for the context revision, task, issue, model or result, and no hook records a terminal state. Twenty-one episodes are stranded open and attribution falls back to whichever opened last. Codex and Gemini receive no episode and no briefing. Enforcement belongs to four shell commands and to an optional task, not to execution: the Rust executor every HTTP, MCP and Cockpit call goes through has no policy stage, and rules report satisfied while 106 of them have never run. The reference repository named for comparison (prismatic-platform) was measured to be weaker on every one of these, so the fixes are this repository's own.",
+      "outcome": "One Rust-owned session domain writes the episode, immutable context revisions and prompt records; one compiler produces every context, invalidated by the dependencies it read; the provider hooks deliver the current revision on every prompt and record which revision each prompt was answered from and how it ended; writing capabilities pass a governance stage in the executor that evaluates applicable rules with reasons; and an issue's trace — sessions, revisions, prompts, commits, gates — is a query over canonical records rather than a heuristic.",
+      "current_state": "Shell writers own episodes, the working-context snapshot and prompt capture; Rust reads them and holds writers nothing calls (ADRs 0047 and 0052 proposed). No store carries a context revision or joins a prompt to one. The executor has no policy stage; applicability is the command name in enforced_by; NotRun counts as satisfied. The task record has no issue.",
+      "desired_state": "Phase 1: context revisions compiled by devcontext, persisted immutably with dependency fingerprints, ensured current and delivered by the UserPromptSubmit and SessionStart hooks and over MCP, prompt records v2 linking revision, task, issue and milestone with provenance and a terminal state from a Stop hook, stranded episodes recovered, one episode resolver and one locked ledger writer. Phase 2: a governance stage in CapabilityExecutor::execute, a typed applicability evaluator, NotRun distinct from satisfied, hook shims that fail closed where policy requires. Phase 3: issue and milestone traces, Cockpit session, context, prompt and governance inspectors, historical migration, documentation, version and deployment.",
+      "scope": [
+        "apps/majordomus-cli",
+        "lib",
+        "share",
+        ".claude",
+        ".ai/repo",
+        "docs",
+        "test",
+        "scripts"
+      ],
+      "non_scope": [
+        "Invoking a model from Majordomus. Provenance is recorded at the provider hook and MCP boundary; a client whose provider exposes no hook is reported as unobservable, never approximated",
+        "Merging the unmerged session branches of 2026-09-11; they are about five hundred commits behind and are mined for design only",
+        "Persisting every chat utterance as knowledge; execution history, context revisions, handovers and durable knowledge stay separate stores"
+      ],
+      "acceptance_criteria": [
+        "Exactly one compiler produces every context a worker receives, and the briefing and the context command are renderings of one of its revisions",
+        "A context revision referenced by a prompt is immutable, and a change to any dependency it read produces a new revision on the next prompt",
+        "Every prompt record observed through a hook names the context revision delivered with it, its episode, its task, issue and milestone with provenance, and a terminal state",
+        "A provider without hooks is reported unobservable per client, and no model is invoked anywhere in the repository, held by a gate",
+        "Writing capabilities cannot execute over any surface without passing the governance stage, and a rule that has never run is not reported satisfied",
+        "An issue's sessions, context revisions, prompts, commits and completion gates are answered by one capability over canonical records"
+      ],
+      "validation": [
+        "majordomus plan validate",
+        "bin/majordomus-cli capabilities validate",
+        "bin/majordomus-cli generate --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "one_compiler_one_revision",
+        "prompt_answered_from_recorded_revision",
+        "execution_passes_governance",
+        "issue_trace_is_a_query"
+      ],
+      "risks": [],
+      "evidence": [],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "required": 0,
+        "by_status": {
+          "READY": 0,
+          "BLOCKED": 0,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
       "id": "shared-policy",
       "slug": "shared-policy",
       "status": "BLOCKED",
@@ -14947,6 +15010,12 @@
     }
   ],
   "findings": [
+    {
+      "level": "WARN",
+      "code": "empty_milestone",
+      "subject": "runtime-continuity",
+      "message": "is reachable and has no issues; it is an outcome nobody is executing"
+    },
     {
       "level": "WARN",
       "code": "scope_conflict",

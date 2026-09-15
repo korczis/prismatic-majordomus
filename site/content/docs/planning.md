@@ -1,7 +1,7 @@
 +++
 title = "Planning"
 description = "milestones as executable outcome specifications, issues as execution contracts, the dependency graph, derived status, execution waves, evidence, and the projections"
-weight = 17
+weight = 18
 [extra]
 source = "docs/PLANNING.md"
 +++

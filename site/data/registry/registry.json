@@ -6,23 +6,23 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "b6e5486b7f31c8f670f96f4bb44fbb1f91c6f372536dc14fae1caaace5ceace3",
+    "fingerprint": "84423f3f311b708f7143516d8bc8027003d0c03c0931a3e37b192746479cfc2a",
     "summary": {
-      "total": 1464,
+      "total": 1466,
       "builtin": 113,
-      "declarative": 1351,
+      "declarative": 1353,
       "by_kind": {
         "command": 7,
         "query": 106,
-        "resource": 1351
+        "resource": 1353
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1357
+        "implemented": 1359
       },
       "mcp_tools": 110,
-      "mcp_resources": 1392,
+      "mcp_resources": 1394,
       "http_routes": 112,
       "cli_commands": 52,
       "modules": 66,
@@ -40355,7 +40355,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 247,
+        "capabilities": 248,
         "capability_ids": []
       },
       {
@@ -40521,7 +40521,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 19,
+        "capabilities": 20,
         "capability_ids": []
       },
       {
@@ -40882,7 +40882,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c2e8a47682642f3d06dea998e2c22a00eecdfedd88a07e69422ecc3eec6c21b1",
+    "fingerprint": "c8c747c59e88e916046506860f697e4cca5c654ba82835ba5e85288f23597b49",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40914,13 +40914,13 @@
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 247,
+      "document": 248,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 19,
+      "milestone": 20,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -44991,7 +44991,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 54976
+        "bytes": 55765
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -45018,7 +45018,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 18103
+        "bytes": 18424
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -45037,6 +45037,15 @@
         "path": "docs/ROADMAP.md",
         "source_class": "document",
         "bytes": 5025
+      },
+      {
+        "uri": "majordomus://document/docs/RUNTIME_CONTINUITY.md",
+        "kind": "document",
+        "identity": "docs/RUNTIME_CONTINUITY.md",
+        "title": "Runtime continuity: root causes and the reference differential",
+        "path": "docs/RUNTIME_CONTINUITY.md",
+        "source_class": "document",
+        "bytes": 12246
       },
       {
         "uri": "majordomus://document/docs/SCHEMAS.md",
@@ -50030,6 +50039,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1571
+      },
+      {
+        "uri": "majordomus://milestone/runtime-continuity",
+        "kind": "milestone",
+        "identity": "runtime-continuity",
+        "title": "Every prompt is answered from a context the repository compiled, recorded and can still show",
+        "description": "One Rust-owned session domain writes the episode, immutable context revisions and prompt records; one compiler produces every context, invalidated by the dependencies it read; the provider hooks deliver the current revision on every prompt and record which revision each prompt was answered from and how it ended; writing capabilities pass a governance stage in the executor that evaluates applicable rules with reasons; and an issue's trace — sessions, revisions, prompts, commits, gates — is a query over canonical records rather than a heuristic.",
+        "path": ".ai/repo/project/milestones/runtime-continuity.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5012
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -55725,7 +55745,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 247
+      "objects": 248
     },
     {
       "name": "feature",
@@ -55782,7 +55802,7 @@
       "identity": [
         "id"
       ],
-      "objects": 19
+      "objects": 20
     },
     {
       "name": "moment",

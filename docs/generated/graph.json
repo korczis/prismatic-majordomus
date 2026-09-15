@@ -9657,6 +9657,14 @@
         "source": "docs/ROADMAP.md"
       },
       {
+        "id": "majordomus://document/docs/RUNTIME_CONTINUITY.md",
+        "kind": "document",
+        "label": "docs/RUNTIME_CONTINUITY.md",
+        "summary": "Runtime continuity: root causes and the reference differential",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FRUNTIME_CONTINUITY.md",
+        "source": "docs/RUNTIME_CONTINUITY.md"
+      },
+      {
         "id": "majordomus://document/docs/SCHEMAS.md",
         "kind": "document",
         "label": "docs/SCHEMAS.md",
@@ -23677,6 +23685,57 @@
           "slug": "runtime-adapters",
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/runtime-continuity",
+        "kind": "milestone",
+        "label": "runtime-continuity",
+        "summary": "Every prompt is answered from a context the repository compiled, recorded and can still show",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmilestone%2Fruntime-continuity",
+        "source": ".ai/repo/project/milestones/runtime-continuity.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Exactly one compiler produces every context a worker receives, and the briefing and the context command are renderings of one of its revisions",
+            "A context revision referenced by a prompt is immutable, and a change to any dependency it read produces a new revision on the next prompt",
+            "Every prompt record observed through a hook names the context revision delivered with it, its episode, its task, issue and milestone with provenance, and a terminal state",
+            "A provider without hooks is reported unobservable per client, and no model is invoked anywhere in the repository, held by a gate",
+            "Writing capabilities cannot execute over any surface without passing the governance stage, and a rule that has never run is not reported satisfied",
+            "An issue's sessions, context revisions, prompts, commits and completion gates are answered by one capability over canonical records"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "one_compiler_one_revision",
+            "prompt_answered_from_recorded_revision",
+            "execution_passes_governance",
+            "issue_trace_is_a_query"
+          ],
+          "non_scope": [
+            "Invoking a model from Majordomus. Provenance is recorded at the provider hook and MCP boundary; a client whose provider exposes no hook is reported as unobservable, never approximated",
+            "Merging the unmerged session branches of 2026-09-11; they are about five hundred commits behind and are mined for design only",
+            "Persisting every chat utterance as knowledge; execution history, context revisions, handovers and durable knowledge stay separate stores"
+          ],
+          "order": 120,
+          "priority": "p0",
+          "scope": [
+            "apps/majordomus-cli",
+            "lib",
+            "share",
+            ".claude",
+            ".ai/repo",
+            "docs",
+            "test",
+            "scripts"
+          ],
+          "slug": "runtime-continuity",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "majordomus plan validate",
+            "bin/majordomus-cli capabilities validate",
+            "bin/majordomus-cli generate --check",
             "bash test/run.sh"
           ]
         }
@@ -43402,6 +43461,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/RUNTIME_CONTINUITY.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/SCHEMAS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -48380,6 +48444,11 @@
         "source": "majordomus://milestone/runtime-adapters",
         "target": "majordomus://milestone/foundation",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/runtime-continuity",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/shared-policy",
@@ -54708,8 +54777,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1724,
-      "edges": 3860,
+      "nodes": 1726,
+      "edges": 3862,
       "acyclic": true,
       "truncated": false
     }
