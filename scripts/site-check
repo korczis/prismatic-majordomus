@@ -27,7 +27,7 @@ PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^
 pages="$(find "$PUB" -name '*.html')"
 # Every per-page assertion, measured once. The checks below read the rows rather than
 # re-reading the pages: one awk process for the site instead of eighteen per route.
-PAGEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-site-pages.XXXXXX")"; trap 'rm -f "$PAGEROWS"' EXIT
+PAGEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-site-pages.XXXXXX")"; trap 'rm -f "$PAGEROWS" "$PAGEROWS".*' EXIT
 # shellcheck disable=SC2086
 awk -v pub="$PUB" -f "$ROOT/scripts/lib/site-pages.awk" $pages > "$PAGEROWS"
 # rows <check>: the findings of one check, in page order, as "<page>\t<detail>" lines
@@ -194,10 +194,11 @@ grep -oE 'href="#[a-z-]+"' "$PUB/index.html" | sed 's/href="#//; s/"$//' | LC_AL
   rows main        | cut -f1 | sed 's/$/: no <main> landmark/'
   rows h1          | cut -f1 | sed 's/$/: expected exactly one <h1>/'
   rows placeholder | cut -f1 | sed 's/$/: unresolved template placeholder/'
+  rows rustdoc     | cut -f1 | sed 's/$/: a rustdoc intra-doc link published as text ([<code>…<\/code>])/'
   rows inlinestyle | cut -f1 | sed 's/$/: inline style attribute (forbidden by the custom CSS policy)/'
 } > "$PAGEROWS.4"
 while IFS= read -r m; do bad route "$m"; done < "$PAGEROWS.4"; rm -f "$PAGEROWS.4"
-ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no inline styles"
+ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no unresolved intra-doc links, no inline styles"
 # 5. prefix: every root-absolute href/src carries the deployment path
 # `content` is scanned too, because a canonical or og:url is a real URL — but only when the
 # value is a path. A meta description is prose, and a page that describes the reserved names
@@ -295,13 +296,16 @@ rows mermaid | cut -f1 > "$PAGEROWS.10"
 while IFS= read -r p; do bad mermaid "$p: has diagrams but no mermaid runtime"; done < "$PAGEROWS.10"; rm -f "$PAGEROWS.10"
 ok mermaid "every page with <pre class=\"mermaid\"> loads the runtime"
 # 11. responsive lint (structural causes of horizontal overflow)
-# pres inside a Typography container scroll by the plugin's own rule; others need the wrapper
-{ rows pre        | cut -f1 | sed 's/$/: <pre> without overflow container/'
+# every <pre> is judged by scripts/lib/pre-coverage.awk, the rule case 09 applies: one pass over
+# every page, and a page is named when any <pre> on it neither scrolls nor wraps
+# shellcheck disable=SC2086
+{ LC_ALL=C awk -f "$ROOT/scripts/lib/pre-coverage.awk" $pages \
+    | awk -F'\t' -v pub="$PUB/" '$2 != $3 { sub("^" pub, "", $1); print $1 ": " ($2 - $3) " of " $2 " <pre> block(s) neither scroll nor wrap" }'
   rows gridcols   | cut -f1 | sed 's/$/: grid-cols-3+ without a breakpoint prefix/'
   rows fixedwidth | cut -f1 | sed 's/$/: fixed width over 360px/'
 } > "$PAGEROWS.11"
 while IFS= read -r m; do bad mobile "$m"; done < "$PAGEROWS.11"; rm -f "$PAGEROWS.11"
-ok mobile "no unwrapped <pre>, no unprefixed grid-cols-3+, no fixed width over 360px"
+ok mobile "every <pre> scrolls or wraps, no unprefixed grid-cols-3+, no fixed width over 360px"
 # 12. secrets and private paths in output
 grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
 grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
@@ -313,13 +317,62 @@ done; ok docs "every document in docs.json has the route it records"
 # 13h. the HTTP API reference: the page renders every operation, tag and schema the data holds,
 # the raw document is served byte for byte as the committed one, and the URL the executable
 # prints as externalDocs lands on the page that was built
-OAD="$SITE/data/generated/openapi.json"; OAP="$PUB/docs/api/index.html"; apibad=0
+OAD="$SITE/data/generated/openapi.json"; OAP="$PUB/docs/api/index.html"; APIDIR="$PUB/docs/api"; apibad=0
 if [ -f "$OAP" ]; then
-  for id in $(jq -r '.tags[].operations[].id' "$OAD"); do grep -qF "id=\"op-$(printf '%s' "$id" | tr '.' '-')\"" "$OAP" || { bad api "operation $id is not on /docs/api/"; apibad=1; }; done
-  for t in $(jq -r '.tags[].name' "$OAD"); do grep -qF "id=\"tag-$t\"" "$OAP" || { bad api "tag $t is not on /docs/api/"; apibad=1; }; done
-  for n in $(jq -r '.schemas[].name' "$OAD"); do grep -qF "id=\"schema-$n\"" "$OAP" || { bad api "schema $n is not on /docs/api/"; apibad=1; }; done
+  # The reference is an index, a page per tag and a page of shared types, because as one page it
+  # was 38,000 elements the browser audit could not read inside its deadline. So: the index holds
+  # no operation and no schema, and every operation, tag and schema id the data holds is on
+  # exactly one page, the one scripts/lib/openapi-site.jq homed it on.
+  grep -qE 'id="(op|schema)-' "$OAP" && { bad api "/docs/api/ carries an operation or schema; the index must not hold the reference"; apibad=1; }
+  find "$APIDIR" -mindepth 2 -name index.html | while read -r f; do
+    page="${f#"$APIDIR"/}"; page="${page%/index.html}"
+    grep -oE 'id="(op|tag|schema)-[^"]*"' "$f" | sed 's/^id="//; s/"$//' | while read -r id; do printf '%s\t%s\n' "$id" "$page"; done
+  done | LC_ALL=C sort > "$PAGEROWS.apiids"
+  jq -r '(.tags[].operations[] | select(.primary) | "op-\(.id | gsub("\\."; "-"))\t\(.home)"), (.tags[] | "tag-\(.name)\t\(.slug)"), (.schemas[] | "schema-\(.name)\t\(.home)")' "$OAD" | LC_ALL=C sort > "$PAGEROWS.apiwant"
+  awk -F'\t' 'NR == FNR { on[$1] = on[$1] (on[$1] == "" ? "" : " ") $2; n[$1]++; next }
+    { if (!($1 in n)) print $1 " is on no page of /docs/api/ (its home is " $2 ")";
+      else if (n[$1] > 1) print $1 " is on " n[$1] " pages: " on[$1];
+      else if (on[$1] != $2) print $1 " is on /docs/api/" on[$1] "/, not its home /docs/api/" $2 "/" }' \
+    "$PAGEROWS.apiids" "$PAGEROWS.apiwant" > "$PAGEROWS.apifound"
+  while read -r l; do bad api "$l"; apibad=1; done < "$PAGEROWS.apifound"
+  [ -s "$PAGEROWS.apiwant" ] || { bad api "openapi.json gave no operation, tag or schema to find"; apibad=1; }
   grep -qF '/openapi.json' "$OAP" || { bad api "/docs/api/ does not link the raw document"; apibad=1; }
-  jq -r '.tags[].operations[].curl' "$OAD" | while read -r c; do grep -qF "$(printf '%s' "$c" | sed 's/&/\&amp;/g; s/"/\&quot;/g' | cut -c1-40)" "$OAP" || echo "$c"; done | head -1 | grep -q . && { bad api "an operation's curl example is not on /docs/api/"; apibad=1; }
+  # An address from when the reference was one page lands on the index, which sends it on. Every
+  # id the data holds must be in the map the index publishes, and resolve, through the script the
+  # site ships, to its home; so must every heading id a doc comment put under a schema, which is
+  # the other kind of address a reader copied. Run over the built map and the shipped script.
+  if command -v node >/dev/null 2>&1 && [ -f "$PUB/js/api-anchors.js" ]; then
+    node - "$OAP" "$PUB/js/api-anchors.js" "$PAGEROWS.apiwant" "$PAGEROWS.apiids" > "$PAGEROWS.apifound" <<'NODE'
+const fs = require('fs');
+const [index, script, want, ids] = process.argv.slice(2);
+const island = fs.readFileSync(index, 'utf8').match(/<script type="application\/json" id="api-anchors"[^>]*>([\s\S]*?)<\/script>/);
+if (!island) { console.log('/docs/api/ publishes no anchor map'); process.exit(0); }
+const map = JSON.parse(island[1]);
+const window = { location: { hash: '' } };
+const document = { getElementById: () => null };
+new Function('window', 'document', fs.readFileSync(script, 'utf8'))(window, document);
+const resolve = window.mjApiAnchorTarget;
+if (typeof resolve !== 'function') { console.log('api-anchors.js does not define mjApiAnchorTarget'); process.exit(0); }
+const rows = (f) => fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t'));
+let checked = 0;
+for (const [id, home] of rows(want)) {
+  checked++;
+  const got = resolve(map, id);
+  if (got !== `docs/api/${home}/`) console.log(`the old anchor #${id} resolves to ${got}, not docs/api/${home}/`);
+}
+const wanted = new Set(rows(want).map(([id]) => id));
+for (const [id, page] of rows(ids)) {
+  if (wanted.has(id) || !id.startsWith('schema-')) continue;
+  checked++;
+  const got = resolve(map, id);
+  if (got !== `docs/api/${page}/`) console.log(`the heading anchor #${id} on /docs/api/${page}/ resolves to ${got}`);
+}
+if (checked === 0) console.log('no anchor was checked');
+NODE
+    while read -r l; do bad api "$l"; apibad=1; done < "$PAGEROWS.apifound"
+  else bad api "node or the built api-anchors.js is missing; the old anchors cannot be checked"; apibad=1; fi
+  cat "$APIDIR"/*/index.html > "$PAGEROWS.apipages"; jq -r '.tags[].operations[].curl' "$OAD" | while read -r c; do grep -qF "$(printf '%s' "$c" | sed 's/&/\&amp;/g; s/"/\&quot;/g' | cut -c1-40)" "$PAGEROWS.apipages" || echo "$c"; done | head -1 | grep -q . && { bad api "an operation's curl example is not on /docs/api/"; apibad=1; }
+  rm -f "$PAGEROWS.apiids" "$PAGEROWS.apiwant" "$PAGEROWS.apipages" "$PAGEROWS.apifound"
 else bad api "no page at /docs/api/"; apibad=1; fi
 if [ -f "$PUB/openapi.json" ]; then
   cmp -s "$PUB/openapi.json" "$ROOT/docs/generated/openapi.json" || { bad api "site/public/openapi.json differs from docs/generated/openapi.json"; apibad=1; }
@@ -327,7 +380,7 @@ if [ -f "$PUB/openapi.json" ]; then
   ext="$(jq -r '.externalDocs.url // ""' "$PUB/openapi.json")"; extrel="${ext#"$BASE_URL"}"
   [ -n "$ext" ] && [ "$extrel" != "$ext" ] && [ -f "$PUB${extrel%/}/index.html" ] || { bad api "externalDocs.url '$ext' does not land on a built route"; apibad=1; }
 else bad api "site/public/openapi.json missing"; apibad=1; fi
-[ "$apibad" = 0 ] && ok api "/docs/api/ renders every operation, tag and schema; /openapi.json is the committed document; externalDocs lands on the page"
+[ "$apibad" = 0 ] && ok api "every operation, tag and schema is on exactly one page of /docs/api/, its home; the index holds none and sends every old anchor on; /openapi.json is the committed document; externalDocs lands on the index"
 # 13i. the Rust executable's reference: every module and every capability of the registry
 # dataset (site/data/registry/registry.json, written by the executable) has its page, no page
 # exists without its entry (an orphan route is a capability that was removed and whose page
@@ -346,18 +399,18 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   for r in "" executable/ modules/ capabilities/ cli/ mcp/ benchmarks/; do [ -f "$PUB/registry/${r}index.html" ] || { bad registry "no page at /registry/$r"; regbad=1; }; done
   jq -r '.modules[] | [.slug, .route] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r slug route; do
     [ -f "$PUB/registry/modules/$slug/index.html" ] || { echo "no page for module $slug"; continue; }
-  done | while read -r l; do bad registry "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad registry "$l"; done < "$PAGEROWS.found"
   jq -r '.capabilities[] | [.id, .slug, .module_route, .api_anchor // "", .tool // ""] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r id slug mroute anchor tool; do
     pg="$PUB/registry/capabilities/$slug/index.html"
     [ -f "$pg" ] || { echo "no page for capability $id"; continue; }
     grep -q "$PREFIX$mroute\"" "$pg" || echo "capability page $id does not link its module $mroute"
     if [ -n "$anchor" ]; then
       grep -qF "$PREFIX$anchor\"" "$pg" || echo "capability page $id does not link its operation $anchor"
-      grep -qF "id=\"${anchor#/docs/api/#}\"" "$PUB/docs/api/index.html" || echo "operation anchor ${anchor#/docs/api/#} of $id is not on /docs/api/"
+      grep -qF "id=\"${anchor#*#}\"" "$PUB${anchor%%#*}index.html" 2>/dev/null || echo "operation anchor ${anchor#*#} of $id is not on ${anchor%%#*}"
     fi
     [ -z "$tool" ] || grep -qF ">$tool<" "$pg" || echo "capability page $id does not show its MCP tool $tool"
     grep -qF "$PREFIX/registry/benchmarks/" "$pg" || echo "capability page $id does not link the benchmarks page"
-  done | while read -r l; do bad registry "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad registry "$l"; done < "$PAGEROWS.found"
   # no orphan route: every page under modules/ and capabilities/ is an entry of the dataset
   for d in "$PUB"/registry/modules/*/; do slug="$(basename "$d")"; jq -e --arg s "$slug" '.modules[] | select(.slug==$s)' "$EXJ" >/dev/null || { bad registry "orphan route /registry/modules/$slug/ names no module of the registry"; regbad=1; }; done
   for d in "$PUB"/registry/capabilities/*/; do slug="$(basename "$d")"; jq -e --arg s "$slug" '.capabilities[] | select(.slug==$s)' "$EXJ" >/dev/null || { bad registry "orphan route /registry/capabilities/$slug/ names no capability of the registry"; regbad=1; }; done
@@ -366,7 +419,7 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   for u in $(jq -r '.mcp.resources[].uri' "$RDS"); do grep -qF ">$u<" "$PUB/registry/mcp/index.html" || { bad registry "MCP resource $u is not on /registry/mcp/"; regbad=1; }; done
   jq -r '[.cli | .. | objects | select(has("path")) | .path | join("-")] | .[]' "$RDS" | while read -r cmd; do
     grep -qF "id=\"cmd-$cmd\"" "$PUB/registry/cli/index.html" || echo "command $cmd is not on /registry/cli/"
-  done | while read -r l; do bad registry "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad registry "$l"; done < "$PAGEROWS.found"
   nt="$(jq '.benchmarks.targets | length' "$RDS")"; np="$(grep -o 'id="target-' "$PUB/registry/benchmarks/index.html" | wc -l | tr -d ' ')"
   [ "$nt" = "$np" ] || { bad registry "/registry/benchmarks/ renders $np targets, the dataset holds $nt"; regbad=1; }
   for k in $(jq -r '.benchmarks.coverage.lines[].subject' "$RDS" | LC_ALL=C sort -u); do grep -qF ">$k<" "$PUB/registry/benchmarks/index.html" || { bad registry "coverage subject $k is not on /registry/benchmarks/"; regbad=1; }; done
@@ -413,7 +466,7 @@ if [ -f "$CLIJ" ]; then
     jq -r '.commands[] | select(.depth > 0) | [.command, .route] | @tsv' "$CLIJ" | while IFS="$MJ_TAB" read -r command route; do
       grep -qF ">$command<" "$idx" || echo "the index does not name $command"
       grep -qF "$PREFIX$route\"" "$idx" || echo "the index does not link $route"
-    done | while read -r l; do bad cli "$l"; done
+    done > "$PAGEROWS.found"; while read -r l; do bad cli "$l"; done < "$PAGEROWS.found"
   else bad cli "no page at /docs/cli/"; clibad=1; fi
   # each command's page: its own path, its usage, every argument it documents, every example
   # it shows (by the anchor the data gives it and by the command line the tests ran), the
@@ -433,7 +486,7 @@ if [ -f "$CLIJ" ]; then
     [ "$parent" = - ] || grep -qF "$PREFIX$parent\"" "$pg" || echo "$command does not link up to $parent"
     [ "$children" = - ] || for ch in $children; do grep -qF "$PREFIX$ch\"" "$pg" || echo "$command does not link down to $ch"; done
     grep -qF "$(jq -r '.declaration' "$CLIJ")" "$pg" || echo "$command does not name the file it is declared in"
-  done | while read -r l; do bad cli "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad cli "$l"; done < "$PAGEROWS.found"
   # every example command line a page shows is one the crate's tests execute: the argument
   # vectors are the same document, so a page cannot show a session nobody ran
   # The page carries the command HTML-escaped — an example with quotes in its argument
@@ -442,7 +495,7 @@ if [ -f "$CLIJ" ]; then
   jq -r '.commands[].examples[].command' "$CLIJ" | while read -r c; do
     e="$(printf '%s' "$c" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g' -e "s/'/\&#39;/g")"
     grep -rqF "$e" "$PUB"/docs/cli/ || echo "the example \`$c\` is in the data and on no page"
-  done | while read -r l; do bad cli "$l"; done
+  done > "$PAGEROWS.found"; while read -r l; do bad cli "$l"; done < "$PAGEROWS.found"
   # nothing enumerates the command line by hand: a command's route typed into a template,
   # the site generator, its jq programs or the navigation would be a second list. The index
   # route itself is a section that things legitimately link to; the commands under it are not.
@@ -485,32 +538,32 @@ for id in $(jq -r '.doctrines[].slug' "$SITE/data/generated/doctrines.json"); do
 for id in $(jq -r '.use_cases[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/use-cases/$id/index.html" ] || bad tiles "no page for use case $id"; done
 for id in $(jq -r '.applications[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/applications/$id/index.html" ] || bad tiles "no page for application $id"; done
 # the catalogue's cross-references must survive into the rendered pages, both ways
-jq -r '.use_cases[] | .id as $u | .applications[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u a; do
+jq -r '.use_cases[] | .id as $u | .applications[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u a; do
   grep -q "/applications/$a/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to application $a"
   grep -q "/use-cases/$u/" "$PUB/applications/$a/index.html" || bad catalogue "application $a does not link back to use case $u"
-done
-jq -r '.use_cases[] | .id as $u | .commands[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u c; do
+done < "$PAGEROWS.found"
+jq -r '.use_cases[] | .id as $u | .commands[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u c; do
   grep -q "/commands/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to the command page for $c"
-done
+done < "$PAGEROWS.found"
 # every use case with a scenario shows the evidence of its run: the command lines the tool
 # executed, and the result; a page that shows a demonstration nobody ran is what this refuses
-jq -r '.use_cases[] | select(.scenario != null) | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" | while read -r u res n; do
+jq -r '.use_cases[] | select(.scenario != null) | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u res n; do
   [ "$res" = pass ] || bad evidence "use case $u carries evidence '$res'; a page shows only a scenario that passed"
   [ "$(grep -c '\$ majordomus ' "$PUB/use-cases/$u/index.html")" -ge "$n" ] || bad evidence "use case $u renders fewer executed commands than its evidence has ($n)"
-done
+done < "$PAGEROWS.found"
 # every category is a page, every category link resolves, related links resolve, coverage is a page
 for cid in $(jq -r '.categories[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/use-cases/$cid/index.html" ] || bad tiles "no page for use-case category $cid"; done
 [ -f "$PUB/use-cases/coverage/index.html" ] || bad tiles "no page for /use-cases/coverage/"
-jq -r '.use_cases[] | .id as $u | "\($u) \(.category)"' "$SITE/data/generated/catalogue.json" | while read -r u c; do
+jq -r '.use_cases[] | .id as $u | "\($u) \(.category)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u c; do
   grep -q "/use-cases/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to its category $c"
   grep -q "/use-cases/$u/" "$PUB/use-cases/$c/index.html" || { jq -e --arg u "$u" '.use_cases[] | select(.id==$u) | .status == "draft"' "$SITE/data/generated/catalogue.json" >/dev/null || bad catalogue "category $c does not list use case $u"; }
-done
-jq -r '.use_cases[] | .id as $u | (.related_ids // [])[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u r; do
+done < "$PAGEROWS.found"
+jq -r '.use_cases[] | .id as $u | (.related_ids // [])[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u r; do
   grep -q "/use-cases/$r/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to its related use case $r"
-done
-jq -r '.coverage.rows[] | select(.class=="command") | .id' "$SITE/data/generated/catalogue.json" | while read -r c; do
+done < "$PAGEROWS.found"
+jq -r '.coverage.rows[] | select(.class=="command") | .id' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r c; do
   grep -q "/commands/$c/" "$PUB/use-cases/coverage/index.html" || bad catalogue "the coverage page does not link command $c"
-done
+done < "$PAGEROWS.found"
 ok catalogue "$(jq -r '.counts.use_cases' "$SITE/data/generated/catalogue.json") use case(s) in $(jq -r '.counts.categories' "$SITE/data/generated/catalogue.json") categor(y/ies) and $(jq -r '.counts.applications' "$SITE/data/generated/catalogue.json") application(s): every command, rule, category, related and cross-reference is a link that resolves, and every scenario shown was executed"
 for slug in $(jq -r '.moments[] | select(.status != "deprecated") | .id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
 for slug in $(jq -r '.audiences[].id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/audiences/$slug/index.html" ] || bad tiles "no page for why/audiences/$slug"; done
@@ -523,9 +576,9 @@ for id in $(jq -r '.milestones[].id, .issues[].id' "$PJ"); do
   [ -f "$PUB/plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/index.html" ] || bad tiles "no page for plan record $id"
 done
 # the diagram is HTML, so its arrows are escaped; compare against what the browser receives
-jq -r '.edges[] | .from + " --&gt; " + .to' "$PJ" | while read -r e; do
+jq -r '.edges[] | .from + " --&gt; " + .to' "$PJ" > "$PAGEROWS.found"; while read -r e; do
   grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "edge ${e/--&gt;/-->} is in plan.json but not in the rendered graph"
-done
+done < "$PAGEROWS.found"
 for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
   grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"
 done

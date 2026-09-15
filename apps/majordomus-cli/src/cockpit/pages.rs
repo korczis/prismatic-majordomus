@@ -723,6 +723,9 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                 "Benchmark",
                 Node::Element(mono(match &c.benchmark {
                     crate::capability::BenchmarkPolicy::Required => "required".to_string(),
+                    crate::capability::BenchmarkPolicy::RequiredWhen { precondition } => {
+                        format!("required when: {}", word(precondition))
+                    }
                     crate::capability::BenchmarkPolicy::Waived { reason } => {
                         format!("waived: {}", word(reason))
                     }
