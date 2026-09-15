@@ -76,3 +76,37 @@ printf '%s\n' "$out" | grep -q 'match nothing' \
   || { echo "    the gate did not name the stale entry: $out"; exit 1; }
 
 echo "  liveness-check reports the three shapes, ignores prose, and its baseline cannot rot"
+
+# ------------------------------- a workflow is shell too, and the rule names it by path
+#
+# The rule's Verification section decides itself over `scripts/`, `test/` and
+# `.github/workflows/`. The first two arrive through the `*.sh` glob; the third did not,
+# so a workflow could hold exactly the waits this gate refuses and the gate reported clean.
+# Measured when the glob was widened: two unbounded `curl` calls, one in release.yml and
+# one in validate.yml, both downloading a tarball over a network that can hang.
+# The stale-baseline test above deliberately left an entry matching nothing, and the gate
+# refuses on that before it reaches anything else. Reset it so what follows measures the
+# workflow scan rather than the leftover.
+printf '# nothing here yet\n' > "$F/.ai/repo/liveness-baseline.txt"
+rm -f "$F/scripts/net" "$F/scripts/spawn" "$F/scripts/pager"
+mkdir -p "$F/.github/workflows"
+printf 'jobs:\n  a:\n    steps:\n      - run: curl -sSL "https://example.invalid/x.tgz" | tar xz\n' \
+  > "$F/.github/workflows/w.yml"
+( cd "$F" && git add -A >/dev/null 2>&1 && git commit -qm workflow >/dev/null 2>&1 ) || true
+out=""; status=0
+out="$( cd "$F" && ./scripts/liveness-check 2>&1 )" || status=$?
+[ "$status" != 0 ] \
+  || { echo "    an unbounded curl in a workflow was not refused: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q '\.github/workflows/w\.yml' \
+  || { echo "    the finding did not name the workflow: $out"; exit 1; }
+
+# ------------------------------- and a bounded one in the same place is not a finding
+printf 'jobs:\n  a:\n    steps:\n      - run: curl -sSL --max-time 120 "https://example.invalid/x.tgz" | tar xz\n' \
+  > "$F/.github/workflows/w.yml"
+( cd "$F" && git add -A >/dev/null 2>&1 && git commit -qm bounded >/dev/null 2>&1 ) || true
+bounded=0
+( cd "$F" && ./scripts/liveness-check >/dev/null 2>&1 ) || bounded=$?
+[ "$bounded" = 0 ] \
+  || { echo "    a bounded curl in a workflow was reported as a finding"; exit 1; }
+
+echo "  a workflow's run: blocks are scanned, and a bound in one is honoured"

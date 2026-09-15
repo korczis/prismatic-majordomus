@@ -340,7 +340,7 @@ jobs:
       - name: install the published release with the published installer
         run: |
           installer="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
-          curl -fsSL "$installer" | sh -s -- --version "${{ needs.plan.outputs.tag }}"
+          curl -fsSL --max-time 120 "$installer" | sh -s -- --version "${{ needs.plan.outputs.tag }}"
 
       - name: the installed tool is the release that was published
         run: |

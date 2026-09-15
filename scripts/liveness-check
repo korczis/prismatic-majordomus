@@ -41,12 +41,23 @@ FOUND="$(mktemp "${TMPDIR:-/tmp}/mj-liveness.XXXXXX")"
 trap 'rm -f "$FOUND" "$FOUND.b" "$FOUND.new" "$FOUND.stale"' EXIT
 
 # The files this gate reads: tracked shell, plus the scripts that carry no .sh suffix.
+# The rule's own Verification section names `scripts/`, `test/` and `.github/workflows/` as
+# what the scan decides this rule over. The first two arrive through the `*.sh` glob; the
+# third never did, so a workflow could hold exactly the waits this gate exists to refuse and
+# the gate would report clean. Measured when the glob was widened: three unbounded `curl`
+# calls in .github/workflows/release.yml, in a file the rule names by path.
+#
+# A workflow is YAML, not shell, and only its `run:` blocks are shell. Scanning the whole
+# file would read a `sleep` in a comment or a job name as a command, which is the
+# false-positive shape that gets a gate switched off. The `run:` bodies are extracted and
+# their line numbers kept, so a finding still names the line a person edits.
 files() {
-  git ls-files -- '*.sh' 'scripts/*' 'bin/*' 2>/dev/null \
+  git ls-files -- '*.sh' 'scripts/*' 'bin/*' '.github/workflows/*.yml' 2>/dev/null \
     | while IFS= read -r f; do
         [ -f "$f" ] || continue
         case "$f" in
           *.sh) printf '%s\n' "$f" ;;
+          .github/workflows/*.yml) printf '%s\n' "$f" ;;
           *) head -n 1 "$f" 2>/dev/null | grep -q '^#!.*sh' && printf '%s\n' "$f" ;;
         esac
       done
@@ -60,9 +71,12 @@ scan() {
   local f="$1"
   # a network call with no bound on how long it may block. curl waits forever by default,
   # so a bounded retry loop whose body calls it is not bounded at all.
+  # `run:` is command position too. A workflow writes a one-line step as `- run: curl ...`,
+  # where the character before the call is a colon and none of the shell separators, so the
+  # single-line form escaped a scan that reads the multi-line `run: |` body correctly.
   # command position only: `curl` inside a message, a usage line or a printf template is
   # text, not a call, and reporting it teaches a reader to ignore the gate.
-  grep -nE '(^|[;&(}]|&&|\|\||\$\()[[:space:]]*(![[:space:]]*)?curl[[:space:]]' "$f" 2>/dev/null \
+  grep -nE '(^|[;&(}]|&&|\|\||\$\(|run:)[[:space:]]*(![[:space:]]*)?curl[[:space:]]' "$f" 2>/dev/null \
     | grep -vE '\-\-max-time|\-m [0-9]|\-\-connect-timeout' \
     | grep -vE '^[0-9]+: *#' \
     | grep -vE 'command -v curl|mj_has curl' \
