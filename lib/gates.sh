@@ -171,15 +171,21 @@ mj_gate_record() {
 # And no outcome other than `completed` is refused, unknown included: a task reporting itself
 # blocked is being honest, and refusing that teaches a worker to claim completed instead —
 # the rule `mj_obl_verdict` already applies to obligations, applied here for the same reason.
+# "completed" is asked of the dispatcher as well as of the outcome: MJ_FINISH_OUTCOME is
+# exported, so a `check` run beneath a finish (a --verify-command that runs the suite)
+# inherits it, and check reports — it never accepts or refuses an outcome.
+mj_gate_claims_completed() {
+  [ "${MJ_DOCTRINE_CMD:-}" = finish ] && [ "${MJ_FINISH_OUTCOME:-}" = completed ]
+}
 mj_gate_verdict() {
-  if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then mj_doctrine_fail gate "$1" "$2" "$3"
+  if mj_gate_claims_completed; then mj_doctrine_fail gate "$1" "$2" "$3"
   else mj_doctrine_skip gate "$1" "$2 (not refused: the outcome is not completed)"; fi
 }
 
 # mj_gate_unknown <subject> <message> [remediation]
 # A verdict that could not be reached: refused for completed, named and skipped otherwise.
 mj_gate_unknown() {
-  if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then
+  if mj_gate_claims_completed; then
     mj_doctrine_fail gate "$1" "$2; completed needs a verdict that was read" "${3:-}"
   else
     mj_doctrine_skip gate "$1" "$2 (not refused: the outcome is not completed)" "${3:-}"
