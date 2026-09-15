@@ -12,7 +12,7 @@
 . "$MJ_LIB_DIR/handover.sh"
 
 MJ_FINISH_OUTCOME=""; MJ_FINISH_VERIFY=""; MJ_FINISH_NOTE=""
-MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""
+MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
 export MJ_FINISH_OUTCOME
 
 mj_cmd_finish() {
@@ -27,7 +27,8 @@ mj_cmd_finish() {
 usage: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [--verify-command "<cmd>"] [--note <file>]
        majordomus finish --check
   evaluates every line of the finish contract, prints pass/fail for each, refuses (10) if any fails
-  --verify-command  the project's own verification; its exit code, duration and command are recorded
+  --verify-command  the project's own verification; its command, exit code, duration and the
+                    tree it ran over are recorded, and a tree that changed under it is not a pass
   --note            a completion note (required sections as a handover); otherwise the newest handover for this task is used
   --check           evaluate the current task against scope and state without writing; exit 0 when no task is active
 H
@@ -64,7 +65,7 @@ H
     *) mj_die "$MJ_EX_USAGE" "finish: unknown outcome '$outcome'" ;; esac
 
   MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
-  MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""
+  MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
   mj_doctrine_dispatch finish
 
   # The policy may name a requirement the registry does not define. That is a
@@ -91,7 +92,7 @@ H
   local now; now="$(mj_now)"
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   [ -n "$note" ] && { mkdir -p "$MJ_STATE_DIR/completed"; cp "$note" "$MJ_STATE_DIR/completed/$id.md"; }
-  local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS}"
+  local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS${MJ_FINISH_VTREE:+,\"tree\":\"$MJ_FINISH_VTREE\"}}"
   local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
@@ -126,11 +127,24 @@ mj_validate_verification() {
     mj_doctrine_skip verification "$id" "not required by profile $(mj_cur profile)"; MJ_DOCTRINE_SKIPPED=1; return 0; fi
   if [ -z "$MJ_FINISH_VERIFY" ]; then
     mj_doctrine_fail verification "$id" "profile $(mj_cur profile) requires --verify-command" "majordomus finish --outcome completed --verify-command \"<cmd>\""; return 0; fi
-  local t0 t1 vexit; t0="$(date +%s)"
+  # The tree is read on both sides of the run. An exit code alone says that some command
+  # once exited zero; it does not say over what, and a checkout with more than one worker
+  # in it — a second agent, a person saving a file, a watcher regenerating an artefact —
+  # moves under a long verification routinely. A run whose subject changed proved nothing
+  # about the tree it started on and nothing about the tree it left, so it is not a pass,
+  # and the tree that a run did prove is recorded with it.
+  local t0 t1 vexit before after; before="$(mj_worktree_tree_id)"; t0="$(date +%s)"
   if ( cd "$MJ_ROOT" && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
-  t1="$(date +%s)"; MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0))
-  if [ "$vexit" = 0 ]; then mj_doctrine_ok verification "$id" "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s"
-  else mj_doctrine_fail verification "$id" "$MJ_FINISH_VERIFY — exit $vexit, ${MJ_FINISH_VSECS}s" "$MJ_FINISH_VERIFY"; fi
+  t1="$(date +%s)"; after="$(mj_worktree_tree_id)"
+  MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0)); MJ_FINISH_VTREE="$after"
+  if [ "$vexit" != 0 ]; then
+    mj_doctrine_fail verification "$id" "$MJ_FINISH_VERIFY — exit $vexit, ${MJ_FINISH_VSECS}s" "$MJ_FINISH_VERIFY"; return 0; fi
+  if [ -n "$before" ] && [ -n "$after" ] && [ "$before" != "$after" ]; then
+    MJ_FINISH_VTREE=""
+    mj_doctrine_fail verification "$id" \
+      "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s, but the tree changed while it ran (${before:0:12} → ${after:0:12}); the run describes neither state" \
+      "git status --porcelain; $MJ_FINISH_VERIFY"; return 0; fi
+  mj_doctrine_ok verification "$id" "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s${after:+, tree ${after:0:12}}"
   return 0
 }
 

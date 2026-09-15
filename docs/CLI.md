@@ -1548,7 +1548,11 @@ result, and a copy of `--note` under `state/completed/<id>.md` when given.
 
 **Arguments:** `--outcome completed|partial|blocked|no_match|failed` required.
 `--verify-command "<cmd>"` runs the project's own verification in the repository root
-and records its exit code, duration, and command. `--note <file>` supplies the
+and records its exit code, duration, command, and the git tree id of the working tree it
+ran over. The tree is read before and after the run: if it changed while the command was
+running — a second worker in the same checkout, a person saving a file, a command that
+rewrites tracked files — the run describes neither state and the line fails; run it again
+once the tree is settled. `--note <file>` supplies the
 completion note; otherwise the newest handover naming this task is used. `--check`
 evaluates scope and state without writing and exits `0` when no task is active or the
 task is already finished, so a pre-push hook never blocks a repository with nothing to

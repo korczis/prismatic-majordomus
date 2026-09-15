@@ -78,7 +78,7 @@ each `task.finished` ledger record would need, from the provider:
 and, from the person: whether the outcome was accepted, and whether rework followed.
 
 The ledger already records the task, profile, outcome, contract result, and
-verification command with its exit code and duration. The provider-side fields are the
+verification command with its exit code, duration and the tree it ran over. The provider-side fields are the
 missing half. v0.3 in the roadmap adds them only for providers that expose them
 honestly; any `estimated_` field stays out of enforcement and out of comparisons.
 
