@@ -306,6 +306,12 @@ pub struct ClaimRef {
     pub claim: String,
     /// `guaranteed`, `advisory`, `planned` or `rejected`.
     pub status: String,
+    /// The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a
+    /// claim checkable rather than stated. Absent where the claim declares none, and where it
+    /// declares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash
+    /// as a test would be a projection inventing evidence.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub test: Option<String>,
 }
 
 /// One use case the feature names.
@@ -1281,6 +1287,7 @@ fn resolve(
                 id: id.clone(),
                 claim: o.title.clone().unwrap_or_else(|| id.clone()),
                 status: meta_str(o, "status").unwrap_or_default(),
+                test: meta_str(o, "test").filter(|t| t != "-"),
             }),
             None => unknown(
                 "claims",

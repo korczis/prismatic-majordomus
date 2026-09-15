@@ -2991,6 +2991,13 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a\nclaim checkable rather than stated. Absent where the claim declares none, and where it\ndeclares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash\nas a test would be a projection inventing evidence.",
+          "name": "test",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -14295,6 +14302,20 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "How many of the claims this feature names are guaranteed *and* name the test that\nsettles them. A surface column says where a feature is reachable; this says what of it\nis proven, which is the question a reader of a compliance table is actually asking.",
+          "name": "proven",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many claims it names at all, so `proven` has its denominator beside it rather than\nin another table.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
         }
       ],
       "type": "object",
