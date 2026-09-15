@@ -109,7 +109,11 @@ Three things about it are contract rather than implementation:
   cost 185–217 ms and a warm one 134–218 ms: the same, because starting the runtime is a
   fork and an exec and nothing else. The budgets are `benchmark.budget.enter_ms` and
   `benchmark.budget.enter_cold_ms` in the policy, and `test/cases/190` measures both on
-  every run.
+  every run. On 2026-09-15, under a load average of 117–122, the adapter's own shell half
+  took 54 ms and 4 processes, down from 90–132 ms and 10; the executable's floor under it
+  is one `git status`, which alone costs more than the 50 ms warm target on that machine.
+  Where each millisecond goes, and what was cut, is in
+  [`PREFLIGHT.md`](@/docs/preflight.md#where-a-warm-entrys-time-goes).
 - **It never fails.** Every runtime outcome is at most one line on standard error and an
   exit of 0. A non-zero exit here makes direnv report that the whole environment failed and
   leaves a person with a broken shell in a repository that is fine.

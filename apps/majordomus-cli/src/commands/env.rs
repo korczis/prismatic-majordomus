@@ -453,7 +453,7 @@ fn export_command(
         draw(&environment, mode, &Presentation::detect());
     }
     if with_bridge {
-        refresh_bridge(repo);
+        refresh_bridge(repo, None);
     }
     Ok(0)
 }
@@ -567,7 +567,10 @@ fn enter_command(
         }
     }
     if with_bridge {
-        refresh_bridge(repo);
+        // The repository this entry already discovered: discovering it again re-reads the
+        // manifest, a second reading of a canonical file on the path every `cd` takes
+        // (`project.hot-path-reads-once`).
+        refresh_bridge(repo, Some(repository.root()));
     }
     Ok(0)
 }
@@ -778,10 +781,17 @@ pub fn resolution_of(subcommand: &str) -> Option<Resolution> {
 /// Silent, and never fatal. A repository the graph cannot be built for still has an
 /// environment, and a failure here must not make a shell report that entering the
 /// directory failed.
-fn refresh_bridge(repo: &RepoArgs) {
+///
+/// `root` is the repository a caller has already discovered, when it has; without one the
+/// repository is discovered here.
+fn refresh_bridge(repo: &RepoArgs, root: Option<&std::path::Path>) {
     use crate::command_graph::{bridge, load};
-    let Ok(root) = load::root(repo) else {
-        return;
+    let root = match root {
+        Some(root) => root.to_path_buf(),
+        None => match load::root(repo) {
+            Ok(root) => root,
+            Err(_) => return,
+        },
     };
     if bridge::is_current(&root) {
         return;

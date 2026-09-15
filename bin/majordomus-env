@@ -18,7 +18,8 @@
 set -eu
 
 # Every `$(...)` here is a process, and this runs on every `cd`: measured on 2026-09-15 the
-# adapter created twelve processes before the executable ran, and they cost more than the
+# adapter ran ten processes before the executable (counted with `bash -x`: env, the script,
+# five subshells, dirname, find and head; four now), and they cost more than the
 # executable did. So the directory this file is in comes from parameter expansion rather
 # than dirname(1), the root is one subshell rather than three, and the executable and the
 # share are assigned by lib/rust_bin.sh's `_into` forms rather than captured from a

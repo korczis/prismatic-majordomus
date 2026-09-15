@@ -45,7 +45,7 @@ mj_cargo_target_dir() {
 # The same answer, assigned to a variable instead of printed. The printing functions of this
 # file that the entry path calls each have such a twin for one reason: `x="$(f)"` forks a
 # subshell, and on bin/majordomus-env — every `cd` — the forks were most of the adapter's
-# cost. Measured 2026-09-15: twelve process creations before the executable ran. The
+# cost. Measured 2026-09-15: ten processes before the executable ran, four now. The
 # decision lives in the `_into` form, once; the printing form is a wrapper over it.
 mj_cargo_target_dir_into() {
   mj_ctd_var="$1"

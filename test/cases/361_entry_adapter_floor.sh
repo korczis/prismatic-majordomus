@@ -1,7 +1,7 @@
 # majordomus-covers: none
 # The entry adapter decides what it always decided, with fewer processes.
 #
-# On 2026-09-15 bin/majordomus-env was measured creating twelve processes before it handed
+# On 2026-09-15 bin/majordomus-env was measured running ten processes before it handed
 # over to the executable — dirname(1), a subshell per `$(...)`, a nested subshell inside
 # mj_rust_bin, find piped into head — and under a load average of 90 that shell half cost
 # more wall time than the executable's own fast resolution. The cut replaced each capture

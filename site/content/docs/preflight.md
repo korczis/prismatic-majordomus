@@ -182,6 +182,60 @@ targets of 50 ms warm, 150 ms cold and 250 ms hard are **not** met on this machi
 repository enforces are the policy's `benchmark.budget.enter_ms` (750 ms) and `enter_cold_ms`
 (1000 ms), measured by `test/cases/190` on every run.
 
+### Where a warm entry's time goes
+
+Measured later the same day, when the load average had risen to 90–160. At that load wall time is
+mostly scheduler wait, so the evidence for each cut below is the work it removes — processes and
+readings — and the wall times are medians of interleaved hyperfine runs (25–30 each), quoted with
+the load they were taken under:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| stage | work | median wall time |
+|---|---|---|
+| the adapter's shell half, before the exec | 10 processes (env, bash, five subshells, dirname, find, head) | 90–132 ms (load 117–122) |
+| the same, after the cut | 4 processes (env, bash, one subshell, find) | 54 ms (load 117–122) |
+| the executable doing nothing (`--version`) | 1 process | 13–34 ms |
+| the executable's entry called directly (bridge, runtime ensured, banner off) | 1 process, 1 `git status`, no `just` | 159–313 ms (load 108–141) |
+| the same with `git` resolving to the wrapper `~/bin/git` / to git itself | as above | 498 ms / 363 ms (load 155–164) |
+| that `git status` alone, through `~/bin/git` / git itself | a bash wrapper, then git / git | 112–357 ms / 52–130 ms |
+| the compact banner and preflight | plus 1 `git log` (the deployment check) | +50–300 ms |
+
+</div>
+
+
+What was cut, without changing what is decided:
+
+- **The adapter's forks.** `bin/majordomus-env` resolved its directory with `dirname` inside a
+  subshell, and captured `mj_rust_bin` (which captured `mj_cargo_target_dir` inside it) and
+  `mj_rust_share` from subshells. Each now has an `_into` twin in `lib/rust_bin.sh` that assigns a
+  variable; the printing forms are wrappers over the twins, so the decision is still made once.
+  `mj_rust_stale` lets `find -print -quit` stop at the first newer file instead of piping into
+  `head`. `test/cases/361` holds every new form to the old one.
+- **A second reading of the manifest.** `refresh_bridge` rediscovered the repository — reading
+  `.ai/manifest.yaml` again — after `enter` had already discovered it; it now takes the root
+  `enter` found.
+
+What was measured and not cut:
+
+- **`mj_rust_stale`'s `find`** walks about 270 files and 33 directories. A stamp the build writes
+  would be cheaper, but a stamp only proves the build ran, not that no source moved since, and
+  directory modification times do not change when a file is edited in place. The walk is the
+  cheapest test that detects every newer source; it costs one process.
+- **`mj_cargo_target_dir` never runs `cargo metadata` on this path** — the suspicion was false; it
+  asks cargo only for callers that pass `ask-cargo`, and the adapter does not.
+- **The `just --dump` cache** did not miss on warm entry: no `just` process ran in any counted
+  entry.
+- **The one `git status`** is the executable's floor, and the largest single cost. On this
+  machine `git` on `PATH` is `~/bin/git`, a bash wrapper that locates the real git before running
+  it, which roughly doubles every git process the entry runs. That is this machine's
+  configuration, not the repository's, and the executable keeps resolving `git` from `PATH`.
+- **The preflight's `git log`** for the deployment check is the preflight's (`observe`), and it is
+  what the banner adds.
+
+So the 50 ms warm target is still **not** met here, and cannot be by this path: one `git status`
+alone costs more than 50 ms on this machine at any load measured, and entry needs its answer.
+
 ## Troubleshooting
 
 <div class="overflow-x-auto" tabindex="0">
