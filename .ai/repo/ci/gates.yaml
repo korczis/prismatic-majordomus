@@ -102,6 +102,20 @@ gates:
     runs: bin/majordomus adr check
     summary: every decision valid and its references resolving, and no identity this branch adds is already carried by a different decision on another ref
 
+  # The same question for every path, not only for decision identities: does another unmerged
+  # branch already add, independently and differently, a path this pull request adds? A
+  # collision is a defect of the pair of trees, so it can only be asked across refs, and a
+  # checkout that cannot see them gets 12 rather than a pass. It must run on every plan,
+  # because the answer turns on what other branches carry, not on which class of path this
+  # change touches. Git plumbing only; the job checks out at fetch-depth 0. A related branch
+  # (one this is built on) and a same-bytes copy (a rescue branch) are listed and pass; a
+  # person accepts a real collision with the label collision:accepted.
+  - id: collision-check
+    job: structure
+    always: true
+    runs: scripts/ci/collision-gate
+    summary: no path this pull request adds is added independently, with different content, by another unmerged branch; related work and same-bytes copies are listed, and a checkout that cannot see the other branches says so instead of passing
+
   - id: shell-suite
     job: suite
     runs: MJ_TEST_JOBS=4 bash test/run.sh
@@ -522,6 +536,13 @@ classes:
   - id: decisions
     paths: [.ai/repo/adrs/**, lib/adr.sh, test/cases/271_adr_allocation.sh, test/cases/99_adr.sh]
     gates: [adr-collision, core-check, shell-suite]
+
+  # the detector the collision-check gate calls. The gate runs on every plan already; this
+  # class exists so that an edit to the detector selects its behavioural case instead of
+  # escalating the whole plan as an unmatched path.
+  - id: coordination
+    paths: [scripts/collision-check, test/cases/325_the_collision_guard_has_a_caller.sh]
+    gates: [collision-check, shell-lint, shell-suite]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
