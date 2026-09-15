@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Every campaign brief this repository keeps is the one it was handed.
+#
+# `campaigns/` holds operator-authored prompt packs verbatim: the brief behind a subsystem, the
+# date it was written, the order its phases were to be run in. Nothing reads them at run time,
+# which is exactly why they rot quietly — a pack edited to agree with what the repository later
+# did still reads like the brief that drove the work, and a half-copied pack still reads like a
+# pack. A record nobody can prove is not evidence.
+#
+# Three things are decided here, and nothing about what a pack says:
+#
+#   1. `campaigns/MANIFEST.sha256` covers exactly the files present, with their bytes — declared
+#      and present, in both directions. A checker that walks only the manifest passes a tree
+#      somebody added a file to, which is the one-sided shape this repository keeps meeting.
+#   2. Every pack directory has a row in `campaigns/README.md`.
+#   3. Every row names a directory that exists.
+#
+# Exit 0 clean (and 0 with a word where a tree keeps no campaigns — a repository that was never
+# handed a brief owes none), 10 findings, 12 when it cannot decide.
+set -eu
+
+ROOT="${MJ_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+cd "$ROOT"
+
+DIR=campaigns
+MAN="$DIR/MANIFEST.sha256"
+INDEX="$DIR/README.md"
+
+[ -d "$DIR" ] || { echo "campaigns-check: this tree keeps no $DIR/; nothing to decide"; exit 0; }
+
+# Absence of the manifest is not "everything matches": it is a set that was never read.
+[ -f "$MAN" ] || {
+  echo "campaigns-check: $DIR/ is present and $MAN is not, so nothing here can be proven" >&2
+  echo "  [reproduce: (cd $DIR && find . -type f ! -name MANIFEST.sha256 | LC_ALL=C sort | xargs shasum -a 256 | sed 's|./||' > MANIFEST.sha256)]" >&2
+  exit 12
+}
+[ -f "$INDEX" ] || {
+  echo "campaigns-check: $DIR/ is present and $INDEX is not, so no index names what it holds" >&2
+  echo "  [reproduce: ls $INDEX]" >&2
+  exit 12
+}
+
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.camp.XXXXXX")"
+trap 'rm -rf "$tmp"' EXIT
+: > "$tmp/findings"
+
+# The bytes, as two sorted `<path>\t<hash>` tables the same way round.
+( cd "$DIR" && find . -type f ! -name MANIFEST.sha256 | LC_ALL=C sort | xargs shasum -a 256 | sed 's|^\([0-9a-f]*\)  \./*|\1  |' ) \
+  | awk '{ print $2 "\t" $1 }' | LC_ALL=C sort > "$tmp/present"
+awk '{ print $2 "\t" $1 }' "$MAN" | sed 's|^\./||' | LC_ALL=C sort > "$tmp/declared"
+
+join -t"$(printf '\t')" -v1 "$tmp/declared" "$tmp/present" | cut -f1 \
+  | sed "s|^|FAIL campaigns  $DIR/|;s|$| — the manifest declares it and the tree does not hold it  [reproduce: ls &]|" >> "$tmp/findings" || true
+join -t"$(printf '\t')" -v2 "$tmp/declared" "$tmp/present" | cut -f1 \
+  | sed "s|^|FAIL campaigns  $DIR/|;s|$| — held by the tree and absent from the manifest  [reproduce: shasum -a 256 &]|" >> "$tmp/findings" || true
+join -t"$(printf '\t')" "$tmp/declared" "$tmp/present" | awk -F'\t' '$2 != $3 { print $1 }' \
+  | sed "s|^|FAIL campaigns  $DIR/|;s|$| — its bytes are not the bytes the manifest recorded  [reproduce: shasum -a 256 &]|" >> "$tmp/findings" || true
+
+# The index and the packs, as two sorted name lists.
+find "$DIR" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | LC_ALL=C sort > "$tmp/packs"
+sed -n 's/^| `\([^`]*\)` |.*/\1/p' "$INDEX" | LC_ALL=C sort -u > "$tmp/rows"
+
+comm -23 "$tmp/packs" "$tmp/rows" \
+  | sed "s|^|FAIL campaigns  $DIR/|;s|$| — a pack the index does not list  [reproduce: grep -F '\`&\`' $INDEX]|" >> "$tmp/findings" || true
+comm -13 "$tmp/packs" "$tmp/rows" \
+  | sed "s|^|FAIL campaigns  $INDEX — lists \`|;s|$|\`, which is not a pack of this tree  [reproduce: ls $DIR/&]|" >> "$tmp/findings" || true
+
+findings="$(awk 'END { print NR }' "$tmp/findings")"
+packs="$(awk 'END { print NR }' "$tmp/packs")"
+files="$(awk 'END { print NR }' "$tmp/present")"
+
+if [ "$findings" -gt 0 ]; then
+  cat "$tmp/findings"
+  printf 'campaigns-check: %s finding(s) over %s pack(s)\n' "$findings" "$packs"
+  exit 10
+fi
+printf 'campaigns-check: %s pack(s), %s file(s), every one the bytes the manifest recorded and every one in the index\n' "$packs" "$files"

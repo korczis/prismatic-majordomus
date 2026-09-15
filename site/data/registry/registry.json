@@ -6,23 +6,23 @@
     "version": "0.6.1"
   },
   "registry": {
-    "fingerprint": "d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721",
+    "fingerprint": "a6bce33826995ffe565f97f2ef65487a56ceed285ccd3b7baa32979102d298e9",
     "summary": {
-      "total": 1458,
+      "total": 1460,
       "builtin": 112,
-      "declarative": 1346,
+      "declarative": 1348,
       "by_kind": {
         "command": 6,
         "query": 106,
-        "resource": 1346
+        "resource": 1348
       },
       "by_stability": {
         "behaviorally_verified": 99,
         "experimental": 7,
-        "implemented": 1352
+        "implemented": 1354
       },
       "mcp_tools": 109,
-      "mcp_resources": 1387,
+      "mcp_resources": 1389,
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
@@ -40429,7 +40429,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 137,
+        "capabilities": 138,
         "capability_ids": []
       },
       {
@@ -40508,7 +40508,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 211,
+        "capabilities": 212,
         "capability_ids": []
       },
       {
@@ -40588,7 +40588,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4cf6fdc15943d4bb117b0c9e1bc1968b021259c5525b972ddf45b3402ccaba56",
+    "fingerprint": "8d59b839b182d36e92d1697e3afa05891a99260b8d36e17a11c6bfe19479263a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40632,12 +40632,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 3,
-      "rule": 137,
+      "rule": 138,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 211,
+      "test": 212,
       "use-case": 46,
       "workspace": 1
     },
@@ -51381,6 +51381,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "kind": "rule",
+        "identity": "project.a-brief-is-kept-as-received@1",
+        "title": "A campaign brief this repository keeps is the one it was handed",
+        "description": "The prompt packs under campaigns/ are provenance — what an operator asked for, on what date, in what order — and nothing reads them at run time. That is why they rot silently: a pack edited to agree with what the repository later did still reads like the brief that drove the work, and a half-copied pack still reads like a pack. Every file under campaigns/ is recorded in campaigns/MANIFEST.sha256 with its bytes, every pack has a row in the index, and every row names a pack the tree holds.",
+        "path": ".ai/repo/rules/project/a-brief-is-kept-as-received.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3375,
+        "tags": [
+          "provenance",
+          "campaigns",
+          "evidence",
+          "records"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
         "kind": "rule",
         "identity": "project.a-diagram-is-drawn-not-typed@1",
@@ -52683,7 +52700,7 @@
         "path": ".ai/repo/scope.yaml",
         "section": "scope",
         "source_class": "scope",
-        "bytes": 4232
+        "bytes": 4425
       },
       {
         "uri": "majordomus://session/s-20260906035523-7b6c",
@@ -54078,6 +54095,14 @@
         "path": "test/cases/33_stale_executable.sh",
         "source_class": "case",
         "bytes": 8682
+      },
+      {
+        "uri": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
+        "kind": "test",
+        "identity": "test/cases/340_a_brief_is_kept_as_received.sh",
+        "path": "test/cases/340_a_brief_is_kept_as_received.sh",
+        "source_class": "case",
+        "bytes": 7445
       },
       {
         "uri": "majordomus://test/test/cases/34_command_fixtures.sh",
@@ -55512,7 +55537,7 @@
         "id",
         "version"
       ],
-      "objects": 137
+      "objects": 138
     },
     {
       "name": "scope",
@@ -55567,7 +55592,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 211
+      "objects": 212
     },
     {
       "name": "use-case",

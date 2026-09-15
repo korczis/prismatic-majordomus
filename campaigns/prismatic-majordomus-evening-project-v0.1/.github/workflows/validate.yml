@@ -1,0 +1,15 @@
+name: validate
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax
+        run: |
+          bash -n scripts/majordomus-doctor
+          bash -n tests/test-doctor.sh
+      - name: Behavioral tests
+        run: ./tests/test-doctor.sh
+      - name: Doctor
+        run: ./scripts/majordomus-doctor .

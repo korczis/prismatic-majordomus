@@ -1,0 +1,34 @@
+version: 1
+context:
+  strategy: minimum-sufficient
+  transcript_is_durable_state: false
+  durable_state_required: true
+  avoid_reloading_completed_work: true
+execution:
+  explicit_scope_required: true
+  one_worker_one_scope: true
+  parallel_scope_isolation: true
+  checkpoint_after_meaningful_change: true
+reasoning:
+  default_profile: implementation
+  escalation_requires_reason: true
+  deescalate_when_complexity_drops: true
+output:
+  default_verbosity: concise
+  narrate_routine_tool_calls: false
+  completion_summary_required: true
+verification:
+  required_for_repository_changes: true
+  evidence_required_for_claims: true
+  regression_test_required_for_bug_fix_when_practical: true
+handover:
+  durable_state_required: true
+  transcript_dump_forbidden: true
+termination:
+  explicit_done_criteria_required: true
+  stop_when_contract_satisfied: true
+safety:
+  hidden_telemetry: false
+  implicit_network_calls: false
+  silent_destructive_actions: false
+  silent_state_overwrite: false
