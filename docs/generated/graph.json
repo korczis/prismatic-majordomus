@@ -3955,6 +3955,68 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0061",
+        "kind": "adr",
+        "label": "adr-0061",
+        "summary": "A gate's verdict is evidence, and a rule the repository enforces itself is proven by it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0061",
+        "source": ".ai/repo/adrs/0061-a-gate-s-verdict-is-evidence-and-a-rule-the-repository-enfor.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-14",
+          "tags": [
+            "governance",
+            "evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0062",
+        "kind": "adr",
+        "label": "adr-0062",
+        "summary": "A verification is proved against a commit, and two attempts that disagree are not proof",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0062",
+        "source": ".ai/repo/adrs/0062-a-verification-is-proved-against-a-commit-and-two-attempts-t.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-14",
+          "tags": [
+            "evidence",
+            "verification"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0063",
+        "kind": "adr",
+        "label": "adr-0063",
+        "summary": "A peer's uncommitted work is part of its claim, and a commit that carries it is refused",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0063",
+        "source": ".ai/repo/adrs/0063-a-peer-s-uncommitted-work-is-part-of-its-claim-and-a-commit-.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-14",
+          "tags": [
+            "coordination"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0064",
+        "kind": "adr",
+        "label": "adr-0064",
+        "summary": "A declared tool has a version, and a mismatch is a finding",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0064",
+        "source": ".ai/repo/adrs/0064-a-declared-tool-has-a-version-and-a-mismatch-is-a-finding.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-14",
+          "tags": [
+            "environment"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -38807,6 +38869,26 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0061",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0062",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0063",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0064",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -54418,8 +54500,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1709,
-      "edges": 3837,
+      "nodes": 1713,
+      "edges": 3841,
       "acyclic": true,
       "truncated": false
     }
