@@ -101,6 +101,20 @@ process is reaped only when all four hold, each re-checked immediately before th
 Dry-run by default; `--kill` acts. A server that acquires a client between the scan and the
 signal is skipped.
 
+**A consent also selects its subject.** With no `--servers`/`--targets`, `--kill` examines
+servers alone and `--reclaim` build output alone; with no flags at all both are reported and
+nothing is touched. This is not cosmetic. A `--reclaim` run once printed a table of live
+servers under the words *would reap*, which invites the reader to believe that the consent
+they gave for build output is about to end their server — or has. A consent named for one
+subject never tables the other's.
+
+**A sweep that stops before its summary says `INCOMPLETE`** and names which of the two
+subjects it examined and which it never reached. A column header with rows beneath it has the
+shape of an answer, and the exit status is the only thing that says otherwise — which nobody
+reads off a terminal. On 2026-09-13 a run printed a header, one server, and died of SIGPIPE
+at exit 141 for want of a reader that read its stream to the end; it was taken for a report
+(`project.a-verdict-states-its-subject`, `test/cases/318_a_partial_sweep_says_so.sh`).
+
 ### Build output, and the floor under a build
 
 On 2026-09-12 this machine reached **zero bytes free** on a 926GiB volume. Every session on
