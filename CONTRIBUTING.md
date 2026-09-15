@@ -132,6 +132,16 @@ arbitrary. Most of them were paid for.
    | `gate:<id>` | an entry of `.ai/repo/ci/gates.yaml` |
    | `script:<path>` | an executable under the repository root |
    | `workflow:<name>` | a file under `.github/workflows/` |
+   | `capability:<id>` | a capability of the Rust executable, in `docs/generated/registry.json` |
+
+   The last one matters more than it looks. `doctor` reports *"command coverage — every public
+   command is exercised and refuted"*, which is true **of the shell tool's 30 commands**. The
+   executable carries 127 commands in 37 modules, `rust-command-check` requires one running
+   assertion per *module*, and examples are documentation rather than tests. `usecase coverage`
+   records the gap — 90 advisory targets, **76 of them `mcp_tool:majordomus_*`** — and advisory
+   means enforced by nothing. Until `capability:` existed, a case covering
+   `majordomus_plan_transition` had no legal word for its own subject, so that coverage was not
+   merely unrecorded: it was **unrecordable**.
 
    An unrecognised prefix is refused rather than read as a command name. A prefixed name is
    **not** counted as command coverage: every public command must still be named by a bare

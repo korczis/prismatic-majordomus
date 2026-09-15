@@ -141,6 +141,7 @@ mj_validate_command_coverage() {
   #   gate:<id>          an entry of .ai/repo/ci/gates.yaml
   #   script:<path>      an executable under scripts/, named as the repository names it
   #   workflow:<name>    a workflow file under .github/workflows/
+  #   capability:<id>    a capability of the Rust executable, from docs/generated/registry.json
   #
   # A prefixed name is not a command and is deliberately not counted as command coverage: the
   # loop above still requires every public command to be named by a bare one, so widening the
@@ -153,6 +154,13 @@ mj_validate_command_coverage() {
         grep -qE "^  - id: ${gid}\$" "$root/.ai/repo/ci/gates.yaml" 2>/dev/null || {
           mj_doctrine_fail command "$c" "a test case declares coverage of a gate the model does not declare" "grep -n 'id: ${gid}' .ai/repo/ci/gates.yaml"; bad=1; }
         continue ;;
+      capability:*)
+        cid="${c#capability:}"
+        # The registry projection rather than the executable: this runs where the executable
+        # may not be built, and the projection is committed and gate-held current.
+        grep -q "\"id\": *\"${cid}\"" "$root/docs/generated/registry.json" 2>/dev/null || {
+          mj_doctrine_fail command "$c" "a test case declares coverage of a capability the registry does not carry" "grep -n '\"${cid}\"' docs/generated/registry.json"; bad=1; }
+        continue ;;
       workflow:*)
         wn="${c#workflow:}"
         [ -f "$root/.github/workflows/$wn" ] || {
@@ -164,7 +172,7 @@ mj_validate_command_coverage() {
           mj_doctrine_fail command "$c" "a test case declares coverage of a script that is not an executable file here" "ls -l ${sp}"; bad=1; }
         continue ;;
       *:*)
-        mj_doctrine_fail command "$c" "a test case declares coverage under an unknown vocabulary; the kinds are gate:, script: and workflow:, or a bare public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1
+        mj_doctrine_fail command "$c" "a test case declares coverage under an unknown vocabulary; the kinds are gate:, script:, workflow: and capability:, or a bare public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1
         continue ;;
     esac
     grep -Fxq "$c" <<<"$public" || {

@@ -67,7 +67,7 @@ cases_for() { grep -E "^$1 $2 " "$CLAIMS" | awk '{print $3}' | LC_ALL=C sort -u 
 #
 #      Two vocabularies, the same pair lib/commands.sh applies: a bare name is a public
 #      command, and `gate:`, `script:` and `workflow:` name the other kinds of thing a case can
-#      be about. Before those existed, a case covering a gate or a script had no word for its
+#      be about (gate:, script:, workflow:, capability:). Before those existed, a case covering a gate or a script had no word for its
 #      own subject and `none` was its only legal value — 74 of 215 cases on 2026-09-15.
 #
 #      A prefixed name is checked for existence and is deliberately NOT counted as command
@@ -85,6 +85,11 @@ for c in $(awk '$1 != "-" {print $1}' "$CLAIMS" | LC_ALL=C sort -u); do
         echo "    a test case declares coverage of script '${c#script:}', which is not an executable here"
         exit 1; }
       continue ;;
+    capability:*)
+      grep -q "\"id\": *\"${c#capability:}\"" "$ROOT/docs/generated/registry.json" 2>/dev/null || {
+        echo "    a test case declares coverage of capability '${c#capability:}', which the registry does not carry"
+        exit 1; }
+      continue ;;
     workflow:*)
       [ -f "$ROOT/.github/workflows/${c#workflow:}" ] || {
         echo "    a test case declares coverage of workflow '${c#workflow:}', which is not here"
@@ -92,7 +97,7 @@ for c in $(awk '$1 != "-" {print $1}' "$CLAIMS" | LC_ALL=C sort -u); do
       continue ;;
     *:*)
       echo "    a test case declares coverage under an unknown vocabulary: '$c'"
-      echo "    the kinds are gate:, script: and workflow:, or a bare public command"
+      echo "    the kinds are gate:, script:, workflow: and capability:, or a bare public command"
       exit 1 ;;
   esac
   printf '%s\n' $public | grep -qx "$c" || {
