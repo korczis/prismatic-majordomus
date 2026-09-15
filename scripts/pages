@@ -26,10 +26,13 @@
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
 #                                         or GitHub has not built it yet)
-#   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
+#   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet] [--smoke]
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
-#                                         10 it serves something else, 12 it never answered
+#                                         10 it serves something else, 12 it never answered.
+#                                         --smoke then fetches every deploy.smoke route of the
+#                                         model and exits 10 naming each one whose marker is
+#                                         missing or which does not answer
 #
 # The model is .ai/repo/ci/pages.yaml. Nothing here carries a path list, a budget or a gate
 # name of its own. Exit 0 ok, 2 usage, 10 a refusal or a budget exceeded, 12 something missing.
@@ -365,12 +368,13 @@ cmd_report() {
 # --max-time, so an unreachable host costs a known number of seconds instead of curl's
 # default of waiting for a connection that will never open.
 cmd_verify() {
-  local url="" commit="" timeout=180 quiet=0 t0 waited served body reached=0
+  local url="" commit="" timeout=180 quiet=0 smoke=0 t0 waited served body reached=0
   while [ $# -gt 0 ]; do case "$1" in
     --url) url="$2"; shift 2 ;;
     --commit) commit="$2"; shift 2 ;;
     --timeout) timeout="$2"; shift 2 ;;
     --quiet) quiet=1; shift ;;
+    --smoke) smoke=1; shift ;;
     *) echo "pages verify: unknown option $1" >&2; exit 2 ;;
   esac; done
   [ -n "$url" ] || url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
@@ -405,6 +409,24 @@ cmd_verify() {
       waited=$(( $(now) - t0 ))
       [ "$quiet" = 1 ] || printf 'pages verify: %s serves %s after %s s\n' "${url%/}/$IDENTITY" "${commit:0:12}" "$waited"
       printf '%s\n' "$waited" > "${MJ_PAGES_WAITED:-/dev/null}"
+      [ "$smoke" = 1 ] || return 0
+      # The identity says which commit is served; it does not say that the pages a visitor is
+      # sent to answer and carry what they are for. The same public bytes are asked that too,
+      # route by route, and every miss is named rather than only the first.
+      local i=0 route marker page missing=0 asked=0
+      while route="$(m "deploy.smoke.$i.route")"; [ -n "$route" ]; do
+        marker="$(m "deploy.smoke.$i.marker")"; asked=$((asked + 1))
+        page="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}$route?t=$(now)" 2>/dev/null || true)"
+        if [ -z "$page" ]; then
+          printf 'pages verify: smoke %s did not answer\n' "${url%/}$route" >&2; missing=$((missing + 1))
+        elif ! printf '%s' "$page" | grep -qF -- "$marker"; then
+          printf 'pages verify: smoke %s does not carry %s\n' "${url%/}$route" "$marker" >&2; missing=$((missing + 1))
+        fi
+        i=$((i + 1))
+      done
+      [ "$asked" -gt 0 ] || { echo "pages verify: --smoke, and ${MODEL#"$ROOT"/} declares no deploy.smoke route; nothing was asked" >&2; return 10; }
+      [ "$missing" = 0 ] || return 10
+      [ "$quiet" = 1 ] || printf 'pages verify: smoke %s route check(s) answered with their markers\n' "$asked"
       return 0
     fi
     [ $(( $(now) - t0 )) -lt "$timeout" ] || {

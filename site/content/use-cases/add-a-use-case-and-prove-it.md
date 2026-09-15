@@ -1,12 +1,12 @@
 +++
 title = "Add a use case and let the tool prove it"
 description = "Scaffold a draft for an uncovered command, validate it, run its scenario against the real tool, and see the coverage move."
-weight = 35
+weight = 36
 [extra]
 id = "add-a-use-case-and-prove-it"
 source = ".ai/repo/use-cases/add-a-use-case-and-prove-it.md"
 category = "extension"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

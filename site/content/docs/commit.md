@@ -1,7 +1,7 @@
 +++
 title = "The commit"
 description = "the commit as a value: the one grammar the changelog and the judge share, the policy declared as data with its subject width measured from this history, the scope vocabulary learned from the log rather than kept in a table, the plan fingerprinted against repository, worktree, HEAD and change set, and where each of the three moments enforces it"
-weight = 24
+weight = 25
 [extra]
 source = "docs/COMMIT.md"
 +++

@@ -149,8 +149,9 @@ enum Mode {
   MODE_LIVE = 2 [(majordomus.value) = "live"];
 }
 
-// A step is one of two things and never both: an invocation with an expectation, or —
-// in a live scenario only — an obligation asserted to have been discharged.
+// A step is exactly one of three things: an invocation of the tool with an expectation;
+// in a fixture scenario, what a worker did to the repository between two invocations; or,
+// in a live scenario only, an obligation asserted to have been discharged.
 message Step {
   option (majordomus.closed) = true;
 
@@ -172,6 +173,12 @@ message Step {
   // task's own contract cannot disagree about one tree. Live scenarios only: a disposable
   // repository owes nothing. The step resolves to pass, unmet or stale.
   string obligation = 6 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // What the worker did between two invocations of the tool: one shell line, run with `sh -c`
+  // in the scenario's disposable repository and recorded with `actor: worker`, so a scenario
+  // can show the tool answering a change it did not make. Fixture scenarios only: a live
+  // scenario asks about a repository and never changes it. Requires `expect`, like `run`.
+  string worker = 7;
 }
 
 // What the step must produce. An expectation that names only an exit code still proves

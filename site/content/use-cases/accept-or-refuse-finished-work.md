@@ -1,12 +1,12 @@
 +++
 title = "Decide whether finished work is actually finished"
 description = "Evaluate a contract line by line instead of accepting a sentence that says the work is done."
-weight = 6
+weight = 7
 [extra]
 id = "accept-or-refuse-finished-work"
 source = ".ai/repo/use-cases/accept-or-refuse-finished-work.md"
 category = "completion"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

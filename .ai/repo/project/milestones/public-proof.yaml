@@ -1,0 +1,50 @@
+id: public-proof
+title: A visitor sees the product prove itself, and can check every claim it makes
+slug: public-proof
+order: 110
+priority: p1
+problem: "A developer who has never seen Majordomus meets a homepage whose first viewport describes a supervisory control layer in its own vocabulary, beside a console that illustrates each lifecycle command separately. Nothing on it shows the tool doing the one thing that sets it apart — refusing work a worker calls finished — as one story a newcomer can follow, and no page exists that a link from outside could send somebody to. The README's first transcript is hand-written. Underneath, the use-case catalogue reached the site without any scenario since scenarios moved into the body, so every executable use case read as merely described."
+outcome: "One recorded scenario tells the whole story — a worker strays, claims it is done, hands over, and is refused until the repository's own test passes — and it drives the homepage hero, its own route, the README's first transcript and the live smoke check, each held to the recorded run by a gate rather than by care."
+current_state: "The homepage hero replays the lifecycle command by command; there is no challenge route; README.md's first block is an illustration; scenario steps can only invoke the tool, so no use case shows a file outside the claimed scope being refused; catalogue.json carries no scenario and every use case's maturity is described; scripts/pages verify asks only which commit the public site serves."
+desired_state: "A worker step lets a fixture scenario show the change it judges. The challenge use case runs in the site derivation and its run is site/data/generated/challenge.json; /challenge/ and the homepage replay render it and scripts/site-check holds both to it in both directions; README.md's first transcript is a step of it, refused otherwise; maturity is derived from scenarios again; and scripts/pages verify --smoke asks the public bytes for the challenge after every publication."
+scope:
+  - lib/usecase.sh
+  - lib/finish.sh
+  - share/schemas/majordomus/use-case
+  - .ai/repo/use-cases
+  - test/fixtures/commands
+  - test/cases
+  - scripts/generate-site-data
+  - scripts/site-check
+  - scripts/pages
+  - scripts/lib/interaction-specs
+  - site
+  - README.md
+  - docs
+  - .ai/repo/ci/pages.yaml
+  - .github/workflows/pages.yml
+non_scope:
+  - Analytics or any third-party script on the site; the offline rule refuses one, and nothing here needs one
+  - Fabricated adoption figures, testimonials, logos or benchmark comparisons
+  - A new command that audits a repository Majordomus is not installed in; doctor needs init, and that is a product decision, not a page
+  - Generated social images per page; the existing card stays until a generator exists for it
+acceptance_criteria:
+  - A fixture scenario can carry a worker step, recorded with actor worker, refused in a live scenario and beside run or obligation
+  - The challenge scenario passes against the tree's own tool, refuses at least once and ends with the work accepted, and the derivation refuses to publish it otherwise
+  - /challenge/ and the homepage carry every recorded command and decision line of the run, and nothing else stands in for them
+  - README.md's first transcript is a recorded step of the challenge, and the derivation refuses it otherwise
+  - catalogue.json carries each use case's scenario and maturity is derived from it
+  - The public site serves the merged commit and its smoke routes after the Pages workflow publishes it
+validation:
+  - bash test/run.sh 356_a_scenario_shows_the_worker_it_judges
+  - bash test/run.sh 103_obligations
+  - scripts/generate-site-data --check
+  - scripts/site-check
+  - scripts/pages verify --commit <master sha> --smoke
+evidence_required:
+  - challenge_recorded
+  - site_holds_the_run
+  - public_site_serves_it
+depends_on: []
+created_at: 2026-09-15
+updated_at: 2026-09-15

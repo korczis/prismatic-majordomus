@@ -1,12 +1,12 @@
 +++
 title = "Hand unfinished work to the next session"
 description = "Stop mid-task and leave the next worker something to act on that is not a transcript."
-weight = 2
+weight = 3
 [extra]
 id = "hand-work-between-sessions"
 source = ".ai/repo/use-cases/hand-work-between-sessions.md"
 category = "continuity"
-maturity = "described"
+maturity = "verified"
 +++
 
 ## Situation

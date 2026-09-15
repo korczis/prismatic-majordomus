@@ -1,12 +1,12 @@
 +++
 title = "Find an object of the layer without reading everything"
 description = "Search durable records literally across kinds from the shell, and ask the shared server the same question over MCP with majordomus_search and majordomus_get."
-weight = 34
+weight = 35
 [extra]
 id = "find-an-object-without-reading-everything"
 source = ".ai/repo/use-cases/find-an-object-without-reading-everything.md"
 category = "mcp"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

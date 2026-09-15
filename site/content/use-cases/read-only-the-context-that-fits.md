@@ -1,12 +1,12 @@
 +++
 title = "Read only the context that fits the budget, and know what was dropped"
 description = "Assemble the context a worker needs now in authority order, cut it to a line budget, and see every dropped section named with its reason."
-weight = 17
+weight = 18
 [extra]
 id = "read-only-the-context-that-fits"
 source = ".ai/repo/use-cases/read-only-the-context-that-fits.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation
