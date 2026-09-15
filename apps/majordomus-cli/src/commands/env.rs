@@ -630,13 +630,31 @@ fn preflight_command(
             &EnvironmentQuery::full(),
         );
         let policy = LoadedPolicy::load(&app.repository).map_err(|e| e.to_string());
-        preflight::derive(&preflight::observe(
+        let mut observations = preflight::observe(
             root,
             &environment,
             policy.as_ref().map_err(Clone::clone),
             Some(tally),
             preflight::Probe::asked(),
-        ))
+        );
+        // the index is built here, so the decisions are joined to the task here, and left for
+        // the entry path the way the rule tally is
+        let head = observations.git.as_ref().and_then(|g| g.head.clone());
+        let local = app.repository.local_path();
+        observations.adr_relevance = match preflight::join_adrs(
+            root,
+            &local,
+            app.registry(),
+            app.index(),
+            head.as_deref(),
+        ) {
+            Some(r) => {
+                preflight::store_adr_relevance(root, &local, &r);
+                preflight::AdrRelevanceObservation::Joined(r)
+            }
+            None => preflight::AdrRelevanceObservation::Absent,
+        };
+        preflight::derive(&observations)
     } else {
         let repository = discover(repo)?;
         let policy = LoadedPolicy::load(&repository).map_err(|e| e.to_string());

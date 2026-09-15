@@ -73,7 +73,7 @@ that needs a look, the most urgent first: failed, degraded, stale, unavailable, 
 | `session.handover` | continuity's record resolution and `session.freshness` | fresh, stale, unknown, not_applicable |
 | `governance.policy` | `LoadedPolicy` | active, failed |
 | `governance.rules` | `rules.report`, counted at a commit | active (at HEAD), stale, unknown |
-| `governance.adrs` | the index, kind `adr` | active (indexed; relevance not claimed), unknown |
+| `governance.adrs` | the index, kind `adr`; the `adrs` graph joined to the task's `scope`, at a commit | active (at HEAD, or no task in progress), stale, unknown |
 | `integration.server` | the lease, `standing_of` over one `GET /` | verified, degraded (outdated), failed (stale lease), unavailable, unknown |
 | `integration.mcp` / `api` / `cockpit` | the surfaces `GET /` lists with `ready` | verified, degraded, failed, unavailable, unknown |
 | `integration.peers` | the peer board | active, degraded, unavailable, unknown (not asked on entry) |
@@ -91,8 +91,24 @@ the corpus at HEAD, which means it is **loaded**. Its summary gives how many rul
 how many are the project's own and how many are vendored, and how many a CI gate runs.
 **Enforced** and **verified** belong to `verification.enforcement`. That check is `verified` only
 when every rule that owes an executable proof is `proven` against the tree. A gate that exists is
-not a verdict that passed, so a corpus that is gated and never run is `degraded`. ADRs are counted
-as indexed; nothing joins an ADR to a task, so none is claimed relevant.
+not a verdict that passed, so a corpus that is gated and never run is `degraded`.
+
+ADRs are counted as indexed. An ADR is **relevant** to the task in progress only by one declared
+relation: its `related` list names a `file:` or `test:` path that lies inside a path of the
+task's `scope`, or a directory the scope path lies inside. The relation is read from the `adrs`
+graph's `put_in_force` edges, which is how every other surface resolves those references; no
+title or tag is matched. A decision that is `superseded`, `rejected` or `deprecated`, or that
+another decision `supersedes`, is not joined. The `rule:` references do not extend the join,
+because no rule declares the paths it governs. The summary reads `N indexed · K relevant to
+task <id>`, and each relation is one piece of evidence (`adr-0066 (proposed) → test
+apps/majordomus-cli/tests/preflight.rs → scope apps/majordomus-cli`). A broad scope therefore
+reaches many decisions, and the relation says which.
+
+With no task in progress nothing is claimed relevant, and the branch is not used as a guess.
+The join needs the index, so `--full` and the served capability make it. `--full` also leaves it
+in the environment cache for entry, keyed by the task, its scope and the commit. Entry calls a
+cached join `stale` at another commit. It reports relevance as `unknown` when the task or scope
+differs, or when nothing was joined.
 
 ## Session context freshness
 

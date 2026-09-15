@@ -94,6 +94,11 @@ pub struct CachedTier {
     /// stale against any other, so it needs no fingerprint of its own.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rules: Option<Entry<super::preflight::RulesTally>>,
+    /// The decisions a full preflight joined to the task in progress, for the entry path. It
+    /// carries the task, its scope and the commit it was joined at, and the preflight trusts
+    /// it only for that task and scope and calls it stale at any other commit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub adr_relevance: Option<Entry<super::preflight::AdrRelevance>>,
     /// For each commit the evidence ledger records a run at, whether the tree in front of
     /// you is that commit's tree (the ledger's own row excluded). Each answer costs git two
     /// processes, and entry would pay them on every `cd`; the fingerprint covers HEAD, every
