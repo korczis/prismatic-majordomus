@@ -102,6 +102,33 @@ impl Mcp {
         self.seen_err.join("\n")
     }
 
+    /// Wait until stderr has carried a line containing each of `needles`, in any order, and
+    /// return everything read so far. stdout and stderr are read on separate threads, so a
+    /// reply can arrive before the line logged just ahead of it has been read: a line a test
+    /// asserts is waited for, never drained. Lines an earlier wait already read count.
+    fn wait_log_all(&mut self, needles: &[&str]) -> String {
+        let deadline = Instant::now() + WAIT;
+        let mut missing: Vec<&str> = needles
+            .iter()
+            .copied()
+            .filter(|n| !self.seen_err.iter().any(|l| l.contains(n)))
+            .collect();
+        while !missing.is_empty() {
+            let left = deadline.saturating_duration_since(Instant::now());
+            match self.err.recv_timeout(left) {
+                Ok(line) => {
+                    missing.retain(|n| !line.contains(n));
+                    self.seen_err.push(line);
+                }
+                Err(_) => panic!(
+                    "no stderr line containing {missing:?} within {WAIT:?}; stderr so far:\n{}",
+                    self.seen_err.join("\n")
+                ),
+            }
+        }
+        self.drain_log()
+    }
+
     /// The URL from a `listening on http://...` or `already running at http://...` line.
     fn url_in(line: &str) -> String {
         let start = line.find("http://").expect("a URL in the line");
@@ -666,7 +693,11 @@ fn a_bridged_peer_takes_over_when_its_server_dies() {
         "the request after the crash is answered: {repo}"
     );
     assert_eq!(repo["structuredContent"]["state"], "ok");
-    let log = b.drain_log();
+    let log = b.wait_log_all(&[
+        "electing again",
+        "took over as the shared server",
+        "listening on http://",
+    ]);
     assert!(log.contains("electing again"), "{log}");
     assert!(log.contains("took over as the shared server"), "{log}");
     let line = log
@@ -713,8 +744,10 @@ fn a_bridged_peer_re_attaches_when_another_process_took_the_lease_first() {
     c.initialize("gemini-cli");
     let repo = b.call("majordomus_repository", json!({}));
     assert_eq!(repo["isError"], false, "{repo}");
-    let log = b.drain_log();
-    assert!(log.contains("re-attached to the shared server"), "{log}");
+    // Waited for, not drained: stdout and stderr are read on separate threads, so the reply
+    // can arrive before the line logged just ahead of it has been read. Draining at that
+    // moment misses a line the process did write, which is how this failed on a loaded runner.
+    let log = b.wait_log_all(&["re-attached to the shared server"]);
     assert!(log.contains(&url_c), "{log}");
     let peers = c.call("majordomus_peers", json!({}));
     let names: Vec<&str> = peers["structuredContent"]["peers"]
@@ -759,7 +792,7 @@ fn a_peer_that_cannot_serve_the_layer_says_so_instead_of_taking_over() {
         message.contains("refusing to serve under --strict"),
         "{message}"
     );
-    let log = b.drain_log();
+    let log = b.wait_log_all(&["cannot take over as the shared server"]);
     assert!(
         log.contains("cannot take over as the shared server"),
         "{log}"
@@ -1162,7 +1195,10 @@ fn an_announcement_outlives_the_server_it_was_made_to() {
     a.child.kill().unwrap();
     let _ = a.child.wait();
     let peers = b.call("majordomus_peers", json!({}));
-    let log = b.drain_log();
+    let log = b.wait_log_all(&[
+        "took over as the shared server",
+        "announcement was carried onto this server's board",
+    ]);
     assert!(log.contains("took over as the shared server"), "{log}");
     assert!(
         log.contains("announcement was carried onto this server's board"),

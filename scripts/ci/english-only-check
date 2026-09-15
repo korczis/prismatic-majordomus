@@ -92,7 +92,25 @@ files="$( { git ls-files -- \
 # ń ó ś ź ż. Whole scripts by their leading bytes: Cyrillic, Greek, CJK, Hangul, Hiragana,
 # Katakana. The list is written once, here, and the message names what was found.
 LETTERS='č|Č|ď|Ď|ě|Ě|ň|Ň|ř|Ř|š|Š|ť|Ť|ů|Ů|ž|Ž|ą|Ą|ć|Ć|ę|Ę|ł|Ł|ń|Ń|ś|Ś|ź|Ź|ż|Ż'
-SCRIPTS='[Ѐ-ӿ]|[Ͱ-Ͽ]|[぀-ヿ]|[一-鿿]|[가-힣]'
+# Byte ranges, not character ranges, and read under LC_ALL=C below. A bracket range of
+# multibyte characters — `[Ѐ-ӿ]` — means different things in different locales, and is
+# locale-dependent. Measured on GNU grep 3.11: under C.UTF-8 — the CI runner's locale, whose
+# log matches it line for line — the range is rejected with "Invalid collation character";
+# under C, POSIX or no locale it is accepted and over-matches, flagging an em dash and a
+# curly apostrophe. Alternated with $LETTERS into one expression, the C.UTF-8 rejection
+# took the Czech and Polish letters down with it, and `| head -3 || true` turned the error
+# into exit 0: the gate reported every file English on every CI run, while passing on
+# macOS, where BSD grep accepted the range.
+# These are the UTF-8 encodings of the same blocks, so they mean one thing in any locale:
+#   Cyrillic  U+0400-04FF  D0-D3 80-BF
+#   Greek     U+0370-03FF  CD B0-BF, CE-CF 80-BF
+#   Kana      U+3040-30FF  E3 81-83 80-BF
+#   CJK       U+4E00-9FFF  E4-E9 80-BF 80-BF   (the bytes reach U+4000-9FFF)
+#   Hangul    U+AC00-D7A3  EA-ED 80-BF 80-BF   (the bytes reach U+A000-DFFF)
+# The last two byte ranges are wider than the blocks they are named for. That is harmless:
+# typographic punctuation — em dash, curly quotes, ellipsis — is U+2000-206F, lead byte E2,
+# which no range here reaches.
+SCRIPTS=$'[\xd0-\xd3][\x80-\xbf]|\xcd[\xb0-\xbf]|[\xce-\xcf][\x80-\xbf]|\xe3[\x81-\x83][\x80-\xbf]|[\xe4-\xe9][\x80-\xbf][\x80-\xbf]|[\xea-\xed][\x80-\xbf][\x80-\xbf]'
 
 ALLOW="$(dirname "$0")/english-only-allow.txt"
 names=""; fixtures=""
@@ -120,12 +138,12 @@ $f
   # is English
   hits="$(
     if [ -n "$names" ]; then sed -E "s/($names)//g" "$f"; else cat "$f"; fi \
-    | grep -nE "$LETTERS|$SCRIPTS" | head -3 || true
+    | LC_ALL=C grep -anE "$LETTERS|$SCRIPTS" | head -3 || true
   )"
   [ -n "$hits" ] || continue
   first="$(printf '%s' "$hits" | head -1)"
   line="${first%%:*}"
-  word="$(printf '%s' "$first" | grep -oE "$LETTERS|$SCRIPTS" | head -1)"
+  word="$(printf '%s' "$first" | LC_ALL=C grep -aoE "$LETTERS|$SCRIPTS" | head -1)"
   findings="$findings$f	$line	$word
 "
 done
