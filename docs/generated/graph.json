@@ -11519,7 +11519,8 @@
             "worktree-ownership"
           ],
           "cockpit": [
-            "worktrees"
+            "worktrees",
+            "peers"
           ],
           "commands": [
             "start",
@@ -32568,6 +32569,13 @@
         "source": "test/cases/33_stale_executable.sh"
       },
       {
+        "id": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "kind": "test",
+        "label": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F343_the_cockpit_shows_who_else_is_here.sh",
+        "source": "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/34_command_fixtures.sh",
         "kind": "test",
         "label": "test/cases/34_command_fixtures.sh",
@@ -50945,6 +50953,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/34_command_fixtures.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -54631,8 +54644,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1721,
-      "edges": 3856,
+      "nodes": 1722,
+      "edges": 3857,
       "acyclic": true,
       "truncated": false
     }
