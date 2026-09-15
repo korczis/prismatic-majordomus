@@ -25,6 +25,8 @@
 #
 # The model is docs/EVIDENCE.md; the decision is ADR 68.
 set -eu
+# a failure anywhere in a pipeline is the pipeline's failure, not its last command's success
+set -o pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="" SUITE="" CRATE_OUT="" COVERAGE="" REFRESH=0
 while [ $# -gt 0 ]; do
