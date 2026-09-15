@@ -25,7 +25,11 @@ data, so a threshold is a decision somebody made in a commit.
 # Required behaviour
 
 A capability's input type implements `BenchmarkCases` and produces at least one case for
-the repository at hand; `majordomus bench coverage` reports `missing 0`; `majordomus bench
+the repository at hand. A descriptor whose honest cases need a record the repository may not
+hold declares that on its policy (`required_when`, with a typed precondition); where the
+precondition is unmet and no case exists the requirement is reported `inapplicable` with the
+precondition as its reason — never counted as covered — and where it is met a missing case
+is missing. `majordomus bench coverage` reports `missing 0`; `majordomus bench
 baseline update` is the only way a baseline changes, from a clean tree unless
 `--allow-dirty` is said; `majordomus bench --check` compares a run with its platform's
 baseline under `.ai/repo/benchmarks/rust/policy.yaml` and reports every line, new targets

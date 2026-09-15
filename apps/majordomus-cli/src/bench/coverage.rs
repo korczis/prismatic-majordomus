@@ -28,6 +28,10 @@ pub enum CoverageState {
     Missing,
     /// Waived by the descriptor, for its typed reason.
     Waived,
+    /// Required on a precondition this repository does not meet, and without a case. Not
+    /// covered (nothing was timed) and not waived (it is timed wherever the precondition
+    /// holds); the precondition is the reason.
+    Inapplicable,
 }
 
 /// One requirement: a capability on a transport, or a system target.
@@ -59,6 +63,9 @@ pub struct Tally {
     pub missing: usize,
     /// Waived.
     pub waived: usize,
+    /// Inapplicable: a precondition this repository does not meet.
+    #[serde(default)]
+    pub inapplicable: usize,
 }
 
 /// The module name this projection gives the transports' own targets, and the bucket it
@@ -116,6 +123,24 @@ impl Coverage {
                     ),
                     BenchmarkPolicy::Required if cases > 0 => (CoverageState::Covered, None),
                     BenchmarkPolicy::Required => (CoverageState::Missing, None),
+                    // a case is a case: the precondition only decides what no case means
+                    BenchmarkPolicy::RequiredWhen { .. } if cases > 0 => {
+                        (CoverageState::Covered, None)
+                    }
+                    BenchmarkPolicy::RequiredWhen { precondition }
+                        if precondition.holds(&ctx.index) =>
+                    {
+                        (CoverageState::Missing, None)
+                    }
+                    BenchmarkPolicy::RequiredWhen { precondition } => (
+                        CoverageState::Inapplicable,
+                        Some(
+                            serde_json::to_value(precondition)
+                                .ok()
+                                .and_then(|v| v.as_str().map(str::to_string))
+                                .unwrap_or_default(),
+                        ),
+                    ),
                 };
                 lines.push(CoverageLine {
                     subject: c.id.to_string(),
@@ -157,6 +182,7 @@ impl Coverage {
                     CoverageState::Covered => t.covered += 1,
                     CoverageState::Missing => t.missing += 1,
                     CoverageState::Waived => t.waived += 1,
+                    CoverageState::Inapplicable => t.inapplicable += 1,
                 }
             }
         }
@@ -202,6 +228,9 @@ impl Coverage {
             "\ntotal        {:>3} / {:>3}\nmissing      {:>3}\nwaived       {:>3}\n",
             total.covered, total.required, total.missing, total.waived
         ));
+        if total.inapplicable > 0 {
+            s.push_str(&format!("inapplicable {:>3}\n", total.inapplicable));
+        }
         for line in self
             .lines
             .iter()
