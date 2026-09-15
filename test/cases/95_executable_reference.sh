@@ -48,7 +48,11 @@ jq '.capabilities += [ (.capabilities[] | select(.id=="objects.search")) | .id =
 expect_exit 0 "$T/scripts/generate-site-data"
 [ -f "$C/capabilities/objects-grep.md" ] || { echo "    the added capability got no stub"; exit 1; }
 expect_grep '^description = "ADDED CAPABILITY"' "$C/capabilities/objects-grep.md"
-[ "$(jq -r '.capabilities[] | select(.id=="objects.grep") | .api_anchor' "$G/executable.json")" = "/docs/api/#op-objects-grep" ] || { echo "    no API anchor for the added capability"; exit 1; }
+# The reference is one page per module, not one page: an operation lives on its tag's page
+# and every tag is the module of the capabilities under it (scripts/lib/executable-site.jq,
+# beside the anchor it builds). This expected the flat page the reference used to be — the
+# same shape as the module route above, an expectation that outlived what it described.
+[ "$(jq -r '.capabilities[] | select(.id=="objects.grep") | .api_anchor' "$G/executable.json")" = "/docs/api/objects/#op-objects-grep" ] || { echo "    no API anchor for the added capability: $(jq -r '.capabilities[] | select(.id=="objects.grep") | .api_anchor' "$G/executable.json")"; exit 1; }
 [ "$(jq -r '.capabilities[] | select(.id=="objects.grep") | .tool' "$G/executable.json")" = "majordomus_grep" ] || { echo "    no tool for the added capability"; exit 1; }
 jq -e '.modules[] | select(.id=="objects") | .capabilities | map(.id) | index("objects.grep")' "$G/executable.json" >/dev/null || { echo "    the module index does not list the added capability"; exit 1; }
 [ "$(jq -r .source_hash "$G/source.json")" != "$(jq -r .source_hash "$T/before/source.json")" ] || { echo "    the input hash did not move with the manifest"; exit 1; }
