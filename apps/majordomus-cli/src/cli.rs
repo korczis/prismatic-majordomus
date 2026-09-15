@@ -323,6 +323,15 @@ pub enum EnvCommand {
         #[arg(value_name = "FIELD")]
         field: Option<String>,
     },
+    /// Whether Majordomus is in force in this checkout, claim by claim, with the evidence behind each verdict: git, the episode and its briefing, the task and handover, the policy, rules and ADRs, the shared server and the surfaces it serves, the peer board, recorded test runs, rule enforcement, provider projections and the deployment. A verdict that asserts something is in force always names its evidence. Resolves fast, from the rule tally a `--full` run cached; the HTTP route `/api/v1/environment/preflight` and the MCP tool `majordomus_preflight` answer the same value
+    Preflight {
+        /// The short form entering the repository draws: one line of claims and the most urgent thing to look at
+        #[arg(long)]
+        compact: bool,
+        /// Build the index and count the rule proofs now, and leave the tally for entry to read
+        #[arg(long)]
+        full: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -2256,6 +2265,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["env", "explain", "project.version"],
             setup: &[],
             expect: Expect::StdoutContains(&["project.version", "source", "resolver"]),
+        }],
+    },
+    CommandExamples {
+        command: "env preflight",
+        examples: &[ExampleDoc {
+            id: "env-preflight-json",
+            title: "What is in force here, and what proves it",
+            description: "One verdict per claim — `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable` — and the evidence it rests on: the file, command or loopback answer that was read. A rule file on disk is not a rule anything enforces, an address that accepts a connection is not a server of this version, and a recorded test run at another commit does not verify this tree, so none of them is reported as one. `attention` lists what needs a look, most urgent first.",
+            argv: &["env", "preflight", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/sections/0/checks/0/verdict", "/attention"]),
         }],
     },
     CommandExamples {

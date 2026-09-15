@@ -6,27 +6,27 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "b6e5486b7f31c8f670f96f4bb44fbb1f91c6f372536dc14fae1caaace5ceace3",
+    "fingerprint": "85a8fa990304814b9efb17423fc74bfac4cbd433365fe3e21643b51904fdb762",
     "summary": {
-      "total": 1464,
-      "builtin": 113,
-      "declarative": 1351,
+      "total": 1469,
+      "builtin": 114,
+      "declarative": 1355,
       "by_kind": {
         "command": 7,
-        "query": 106,
-        "resource": 1351
+        "query": 107,
+        "resource": 1355
       },
       "by_stability": {
-        "behaviorally_verified": 100,
+        "behaviorally_verified": 101,
         "experimental": 7,
-        "implemented": 1357
+        "implemented": 1361
       },
-      "mcp_tools": 110,
-      "mcp_resources": 1392,
-      "http_routes": 112,
+      "mcp_tools": 111,
+      "mcp_resources": 1397,
+      "http_routes": 113,
       "cli_commands": 52,
       "modules": 66,
-      "benchmark_required": 108,
+      "benchmark_required": 109,
       "benchmark_waived": 5,
       "cached": 35
     },
@@ -12596,6 +12596,282 @@
           "environment",
           "provenance",
           "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs"
+      },
+      {
+        "id": "environment.preflight",
+        "module": "environment",
+        "kind": "query",
+        "title": "Whether Majordomus is in force here, and what proves it",
+        "description": "One verdict per claim about this checkout — git; the episode, its briefing, the task and the handover; the policy, the rule corpus and the ADRs; the shared server and the MCP, API and Cockpit surfaces it serves; the peer board; recorded test runs, rule enforcement, provider projections, generated documentation and the deployment — each `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable`, with the evidence it rests on. A verdict that asserts something is in force cannot be produced without evidence. The same value the command line prints and the entry banner summarises.",
+        "input": {
+          "name": "PreflightInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "probe": {
+                "type": "boolean",
+                "description": "Ask the loopback address a server of this checkout published, and its peer board.\nOff by default: a served request answers from what this process can see, and when\nthis process holds the checkout's lease that is itself the evidence.",
+                "default": false
+              }
+            },
+            "description": "What a served preflight may cost.\n\n```\nuse majordomus_cli::capability::builtin::environment::PreflightInput;\nlet input: PreflightInput = serde_json::from_str(\"{}\").unwrap();\nassert!(!input.probe, \"a served request asks no other process by default\");\n```",
+            "title": "PreflightInput"
+          }
+        },
+        "output": {
+          "name": "Preflight",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`majordomus/preflight/v1`."
+              },
+              "generated_at": {
+                "type": "string",
+                "description": "When the observations were taken, RFC 3339 in UTC."
+              },
+              "resolution": {
+                "$ref": "#/$defs/Resolution",
+                "description": "How the environment behind it was resolved."
+              },
+              "repository": {
+                "type": "string",
+                "description": "The repository's name."
+              },
+              "branch": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The branch, when git named one."
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit HEAD names."
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PreflightSection"
+                },
+                "description": "The groups of checks."
+              },
+              "attention": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The ids of every check that needs a look, most urgent first."
+              }
+            },
+            "required": [
+              "schema",
+              "generated_at",
+              "resolution",
+              "repository",
+              "sections",
+              "attention"
+            ],
+            "description": "Whether Majordomus is in force in this checkout, claim by claim, with the evidence.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Preflight};\nlet p = derive(&Observations::empty(\"demo\", 0));\nassert_eq!(p.schema, Preflight::schema_id());\nassert_eq!(p.verdicts().len(), p.sections.iter().map(|s| s.checks.len()).sum::<usize>());\n```",
+            "title": "Preflight",
+            "$defs": {
+              "Resolution": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "fast",
+                    "description": "Only what is cheap enough for a shell prompt; the rest from the cache."
+                  },
+                  {
+                    "type": "string",
+                    "const": "full",
+                    "description": "Everything, including the index. Writes the cache."
+                  }
+                ],
+                "description": "How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \"there is no server running\" from \"nobody looked\"."
+              },
+              "PreflightSection": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "A stable id, the prefix of every check in it."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The heading a person reads."
+                  },
+                  "checks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/PreflightCheck"
+                    },
+                    "description": "The checks, in the order they are rendered."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "checks"
+                ],
+                "description": "A group of checks: repository, session, governance, integration, verification.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Section};\nlet p = derive(&Observations::empty(\"demo\", 0));\nlet ids: Vec<&str> = p.sections.iter().map(|s| s.id.as_str()).collect();\nassert_eq!(ids, [\"repository\", \"session\", \"governance\", \"integration\", \"verification\"]);\n// every check in a section carries the section's id as its prefix\nlet session: &Section = &p.sections[1];\nassert!(session.checks.iter().all(|c| c.id.starts_with(\"session.\")));\n```"
+              },
+              "PreflightCheck": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "A stable dotted id, `<section>.<claim>`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The short name a person reads."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/PreflightVerdict",
+                    "description": "What the repository can show."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The verdict in one sentence, with the numbers that decided it."
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/PreflightEvidence"
+                    },
+                    "description": "Everything the verdict rests on. Never empty for a verdict that proves something."
+                  },
+                  "next": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The command that shows more, or that changes the verdict."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "verdict",
+                  "summary"
+                ],
+                "description": "One claim, its verdict, and what the verdict rests on.\n\n```\nuse majordomus_cli::environment::preflight::{Check, Evidence, Verdict};\n\n// a claim of something in force without evidence is not accepted as one\nlet bare = Check::new(\"integration.mcp\", \"MCP\", Verdict::Verified, \"healthy\", vec![]);\nassert_eq!(bare.verdict, Verdict::Unknown);\nassert!(bare.summary.contains(\"no evidence\"));\n\nlet backed = Check::new(\n    \"integration.mcp\", \"MCP\", Verdict::Verified, \"served\",\n    vec![Evidence::new(\"GET /\", \"surface mcp ready\")],\n);\nassert_eq!(backed.verdict, Verdict::Verified);\n```"
+              },
+              "PreflightVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "verified",
+                    "description": "Proven against this tree by a recorded result or a direct answer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "In force now, observed directly, with nothing recorded to verify."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fresh",
+                    "description": "Judged recent enough to act on, against a declared threshold or the current commit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "Evidence exists, but it is about another commit, tree or moment."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "In force, but in a form that is not the one this executable would serve."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unavailable",
+                    "description": "Nothing is there to observe."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "Observed, and it did not hold."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Nobody looked, or the looking did not finish."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_applicable",
+                    "description": "There is nothing here to judge."
+                  }
+                ],
+                "description": "What the repository can show about one claim.\n\nNine words, not a boolean, because the actions they call for differ: `stale` is re-run\nthe proof, `unavailable` is nothing is there, `unknown` is nobody looked, and\n`not_applicable` is there is nothing to look for.\n\n```\nuse majordomus_cli::environment::preflight::Verdict;\nassert!(Verdict::Verified.proves() && Verdict::Active.proves() && Verdict::Fresh.proves());\nassert!(!Verdict::Stale.proves() && !Verdict::NotApplicable.proves());\nassert_eq!(Verdict::NotApplicable.as_str(), \"not_applicable\");\n// the most urgent first: a failure outranks a stale proof, which outranks an absence\nassert!(Verdict::Failed.urgency() < Verdict::Stale.urgency());\nassert_eq!(Verdict::Verified.urgency(), None);\n```"
+              },
+              "PreflightEvidence": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "The file, command, route or capability that was read."
+                  },
+                  "observed": {
+                    "type": "string",
+                    "description": "What it said, in one phrase."
+                  }
+                },
+                "required": [
+                  "source",
+                  "observed"
+                ],
+                "description": "One thing a verdict rests on: where it was read and what was seen there.\n\n```\nuse majordomus_cli::environment::preflight::Evidence;\nlet e = Evidence::new(\".ai/repo/evidence/ledger.json\", \"6 recorded runs\");\nassert_eq!(e.source, \".ai/repo/evidence/ledger.json\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::environment"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_preflight",
+            "resource": {
+              "uri": "majordomus://environment/preflight",
+              "name": "preflight"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/environment/preflight"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "environment",
+          "governance",
+          "verification",
+          "evidence"
         ],
         "benchmark": {
           "policy": "required"
@@ -40132,7 +40408,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 51,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -40355,7 +40631,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 247,
+        "capabilities": 248,
         "capability_ids": []
       },
       {
@@ -40364,9 +40640,10 @@
         "description": "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
           "environment.explain",
+          "environment.preflight",
           "environment.status"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs"
@@ -40723,7 +41000,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 137,
+        "capabilities": 138,
         "capability_ids": []
       },
       {
@@ -40802,7 +41079,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 215,
+        "capabilities": 216,
         "capability_ids": []
       },
       {
@@ -40882,7 +41159,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c2e8a47682642f3d06dea998e2c22a00eecdfedd88a07e69422ecc3eec6c21b1",
+    "fingerprint": "0b8a294ac4218a13a58e2c5b80ad13a108cfaf8e4b433b8425b3424c2848abbb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40905,7 +41182,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -40914,7 +41191,7 @@
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 247,
+      "document": 248,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -40926,12 +41203,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 3,
-      "rule": 137,
+      "rule": 138,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 215,
+      "test": 216,
       "use-case": 46,
       "workspace": 1
     },
@@ -41769,6 +42046,23 @@
           "safety",
           "worktrees",
           "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0066",
+        "kind": "adr",
+        "identity": "adr-0066",
+        "title": "Entry reports a verdict per claim and the evidence behind it, from one preflight value",
+        "description": "Entry reports a verdict per claim and the evidence behind it, from one preflight value",
+        "path": ".ai/repo/adrs/0066-entry-reports-a-verdict-per-claim-and-the-evidence-behind-it.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4784,
+        "tags": [
+          "entry",
+          "environment",
+          "evidence",
+          "verification"
         ]
       },
       {
@@ -44748,7 +45042,7 @@
         "title": "Concepts",
         "path": "docs/CONCEPTS.md",
         "source_class": "document",
-        "bytes": 13338
+        "bytes": 14083
       },
       {
         "uri": "majordomus://document/docs/CONTEXT.md",
@@ -44856,7 +45150,7 @@
         "title": "Entering the repository",
         "path": "docs/ENTRY.md",
         "source_class": "document",
-        "bytes": 14002
+        "bytes": 14916
       },
       {
         "uri": "majordomus://document/docs/ENTRY_AUDIT.md",
@@ -44874,7 +45168,7 @@
         "title": "The repository environment — one snapshot, every surface a rendering",
         "path": "docs/ENVIRONMENT.md",
         "source_class": "document",
-        "bytes": 6151
+        "bytes": 6683
       },
       {
         "uri": "majordomus://document/docs/EVIDENCE.md",
@@ -44994,6 +45288,15 @@
         "bytes": 54976
       },
       {
+        "uri": "majordomus://document/docs/PREFLIGHT.md",
+        "kind": "document",
+        "identity": "docs/PREFLIGHT.md",
+        "title": "The preflight — what is in force here, and what proves it",
+        "path": "docs/PREFLIGHT.md",
+        "source_class": "document",
+        "bytes": 11268
+      },
+      {
         "uri": "majordomus://document/docs/PRODUCT.md",
         "kind": "document",
         "identity": "docs/PRODUCT.md",
@@ -45018,7 +45321,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 18103
+        "bytes": 18546
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -52068,6 +52371,24 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "kind": "rule",
+        "identity": "project.entry-reports-only-evidence@1",
+        "title": "Entering the repository reports only what evidence proves",
+        "description": "Repository bootstrap surfaces derive every status from the canonical preflight and never report a subsystem active, enforced or verified without the runtime or verification evidence behind it; the entry file and client bootstrap files stay thin consumers of that value.",
+        "path": ".ai/repo/rules/project/entry-reports-only-evidence.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4700,
+        "tags": [
+          "entry",
+          "environment",
+          "evidence",
+          "verification",
+          "enforcement"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.envrc-is-an-adapter@2",
         "kind": "rule",
         "identity": "project.envrc-is-an-adapter@2",
@@ -54425,6 +54746,14 @@
         "bytes": 5098
       },
       {
+        "uri": "majordomus://test/test/cases/358_entry_reports_only_evidence.sh",
+        "kind": "test",
+        "identity": "test/cases/358_entry_reports_only_evidence.sh",
+        "path": "test/cases/358_entry_reports_only_evidence.sh",
+        "source_class": "case",
+        "bytes": 7427
+      },
+      {
         "uri": "majordomus://test/test/cases/35_future_command.sh",
         "kind": "test",
         "identity": "test/cases/35_future_command.sh",
@@ -55639,7 +55968,7 @@
       "identity": [
         "id"
       ],
-      "objects": 51
+      "objects": 52
     },
     {
       "name": "application",
@@ -55725,7 +56054,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 247
+      "objects": 248
     },
     {
       "name": "feature",
@@ -55849,7 +56178,7 @@
         "id",
         "version"
       ],
-      "objects": 137
+      "objects": 138
     },
     {
       "name": "scope",
@@ -55904,7 +56233,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 215
+      "objects": 216
     },
     {
       "name": "use-case",
@@ -64060,6 +64389,148 @@
                 "command": "majordomus env explain project.version",
                 "setup": [],
                 "expectation": "exits 0; prints project.version, source, resolver"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "env",
+              "preflight"
+            ],
+            "route": "/docs/cli/env/preflight/",
+            "executable": true,
+            "usage": "majordomus env preflight [OPTIONS]",
+            "about": "Whether Majordomus is in force in this checkout, claim by claim, with the evidence behind each verdict: git, the episode and its briefing, the task and handover, the policy, rules and ADRs, the shared server and the surfaces it serves, the peer board, recorded test runs, rule enforcement, provider projections and the deployment. A verdict that asserts something is in force always names its evidence. Resolves fast, from the rule tally a `--full` run cached; the HTTP route `/api/v1/environment/preflight` and the MCP tool `majordomus_preflight` answer the same value",
+            "args": [
+              {
+                "name": "compact",
+                "long": "compact",
+                "positional": false,
+                "help": "The short form entering the repository draws: one line of claims and the most urgent thing to look at",
+                "value_name": "COMPACT",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "full",
+                "long": "full",
+                "positional": false,
+                "help": "Build the index and count the rule proofs now, and leave the tally for entry to read",
+                "value_name": "FULL",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "env-preflight-json",
+                "title": "What is in force here, and what proves it",
+                "description": "One verdict per claim — `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable` — and the evidence it rests on: the file, command or loopback answer that was read. A rule file on disk is not a rule anything enforces, an address that accepts a connection is not a server of this version, and a recorded test run at another commit does not verify this tree, so none of them is reported as one. `attention` lists what needs a look, most urgent first.",
+                "argv": [
+                  "env",
+                  "preflight",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus env preflight --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /schema, /sections/0/checks/0/verdict, /attention"
               }
             ],
             "subcommands": []
@@ -74153,6 +74624,16 @@
         "output": "EnvironmentProvenance"
       },
       {
+        "name": "majordomus_preflight",
+        "id": "environment.preflight",
+        "title": "Whether Majordomus is in force here, and what proves it",
+        "description": "One verdict per claim about this checkout — git; the episode, its briefing, the task and the handover; the policy, the rule corpus and the ADRs; the shared server and the MCP, API and Cockpit surfaces it serves; the peer board; recorded test runs, rule enforcement, provider projections, generated documentation and the deployment — each `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable`, with the evidence it rests on. A verdict that asserts something is in force cannot be produced without evidence. The same value the command line prints and the entry banner summarises.",
+        "kind": "query",
+        "read_only": true,
+        "input": "PreflightInput",
+        "output": "Preflight"
+      },
+      {
         "name": "majordomus_environment",
         "id": "environment.status",
         "title": "The repository environment",
@@ -75008,6 +75489,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://environment/preflight",
+        "name": "preflight",
+        "id": "environment.preflight",
+        "title": "Whether Majordomus is in force here, and what proves it",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://environment",
         "name": "environment",
         "id": "environment.status",
@@ -75420,6 +75908,12 @@
         "method": "GET",
         "path": "/api/v1/environment/explain",
         "id": "environment.explain",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/environment/preflight",
+        "id": "environment.preflight",
         "kind": "query"
       },
       {
@@ -77377,6 +77871,35 @@
         "case": "one-field",
         "cached": false,
         "route": "GET /api/v1/environment/explain"
+      },
+      {
+        "key": "environment.preflight|direct|sealed",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "environment.preflight",
+        "module": "environment",
+        "case": "sealed",
+        "cached": false
+      },
+      {
+        "key": "environment.preflight|mcp|sealed",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "environment.preflight",
+        "module": "environment",
+        "case": "sealed",
+        "cached": false,
+        "tool": "majordomus_preflight"
+      },
+      {
+        "key": "environment.preflight|http|sealed",
+        "kind": "capability",
+        "transport": "http",
+        "id": "environment.preflight",
+        "module": "environment",
+        "case": "sealed",
+        "cached": false,
+        "route": "GET /api/v1/environment/preflight"
       },
       {
         "key": "environment.status|direct|default",
@@ -81382,6 +81905,27 @@
           "cases": 2
         },
         {
+          "subject": "environment.preflight",
+          "module": "environment",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "environment.preflight",
+          "module": "environment",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "environment.preflight",
+          "module": "environment",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "environment.status",
           "module": "environment",
           "transport": "direct",
@@ -83182,22 +83726,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 113,
-          "covered": 108,
+          "required": 114,
+          "covered": 109,
           "missing": 0,
           "waived": 5,
           "inapplicable": 0
         },
         "http": {
-          "required": 112,
-          "covered": 108,
+          "required": 113,
+          "covered": 109,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 110,
-          "covered": 106,
+          "required": 111,
+          "covered": 107,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
@@ -83210,8 +83754,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 348,
-          "covered": 335,
+          "required": 351,
+          "covered": 338,
           "missing": 0,
           "waived": 13,
           "inapplicable": 0

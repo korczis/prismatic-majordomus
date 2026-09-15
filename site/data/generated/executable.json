@@ -528,6 +528,23 @@
       "tool": "majordomus_environment_explain"
     },
     {
+      "api_anchor": "/docs/api/environment/#op-environment-preflight",
+      "claims": [],
+      "cli": null,
+      "id": "environment.preflight",
+      "kind": "query",
+      "module": "environment",
+      "module_route": "/registry/modules/environment/",
+      "resource": "majordomus://environment/preflight",
+      "route": "/registry/capabilities/environment-preflight/",
+      "slug": "environment-preflight",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "tests": [],
+      "title": "Whether Majordomus is in force here, and what proves it",
+      "tool": "majordomus_preflight"
+    },
+    {
       "api_anchor": "/docs/api/environment/#op-environment-status",
       "claims": [],
       "cli": null,
@@ -2401,7 +2418,7 @@
     ]
   },
   "counts": {
-    "capabilities": 113,
+    "capabilities": 114,
     "claims": 51,
     "modules": 37
   },
@@ -2684,6 +2701,11 @@
           "id": "environment.explain",
           "route": "/registry/capabilities/environment-explain/",
           "slug": "environment-explain"
+        },
+        {
+          "id": "environment.preflight",
+          "route": "/registry/capabilities/environment-preflight/",
+          "slug": "environment-preflight"
         },
         {
           "id": "environment.status",

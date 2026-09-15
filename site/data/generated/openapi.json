@@ -31,6 +31,7 @@
     "op-distribution-releases": "docs/api/distribution/",
     "op-distribution-status": "docs/api/distribution/",
     "op-environment-explain": "docs/api/environment/",
+    "op-environment-preflight": "docs/api/environment/",
     "op-environment-status": "docs/api/environment/",
     "op-evidence-claim": "docs/api/evidence/",
     "op-evidence-report": "docs/api/evidence/",
@@ -451,6 +452,11 @@
     "schema-PointerLayout": "docs/api/lifecycle/",
     "schema-Port": "docs/api/deploy/",
     "schema-Positive": "docs/api/deploy/",
+    "schema-Preflight": "docs/api/environment/",
+    "schema-PreflightCheck": "docs/api/environment/",
+    "schema-PreflightEvidence": "docs/api/environment/",
+    "schema-PreflightSection": "docs/api/environment/",
+    "schema-PreflightVerdict": "docs/api/environment/",
     "schema-Presence": "docs/api/mesh/",
     "schema-ProductCounts": "docs/api/product/",
     "schema-ProductCoverage": "docs/api/product/",
@@ -679,8 +685,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 112,
-    "schemas": 527,
+    "operations": 113,
+    "schemas": 532,
     "tags": 37
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -797,6 +803,7 @@
     "distribution.releases": "distribution",
     "distribution.status": "distribution",
     "environment.explain": "environment",
+    "environment.preflight": "environment",
     "environment.status": "environment",
     "evidence.claim": "evidence",
     "evidence.report": "evidence",
@@ -1221,6 +1228,11 @@
     "PointerLayout": "lifecycle",
     "Port": "deploy",
     "Positive": "deploy",
+    "Preflight": "environment",
+    "PreflightCheck": "environment",
+    "PreflightEvidence": "environment",
+    "PreflightSection": "environment",
+    "PreflightVerdict": "environment",
     "Presence": "mesh",
     "ProductCounts": "product",
     "ProductCoverage": "product",
@@ -10615,6 +10627,7 @@
         "distribution.status",
         "environment.status",
         "environment.explain",
+        "environment.preflight",
         "evidence.report",
         "evidence.claim",
         "evidence.test",
@@ -20404,6 +20417,260 @@
       "variants": []
     },
     {
+      "description": "Whether Majordomus is in force in this checkout, claim by claim, with the evidence.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Preflight};\nlet p = derive(&Observations::empty(\"demo\", 0));\nassert_eq!(p.schema, Preflight::schema_id());\nassert_eq!(p.verdicts().len(), p.sections.iter().map(|s| s.checks.len()).sum::<usize>());\n```",
+      "home": "environment",
+      "is_enum": false,
+      "name": "Preflight",
+      "properties": [
+        {
+          "description": "`majordomus/preflight/v1`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the observations were taken, RFC 3339 in UTC.",
+          "name": "generated_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How the environment behind it was resolved.",
+          "name": "resolution",
+          "refs": [
+            "Resolution"
+          ],
+          "required": true,
+          "type": "Resolution"
+        },
+        {
+          "description": "The repository's name.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch, when git named one.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit HEAD names.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The groups of checks.",
+          "name": "sections",
+          "refs": [
+            "PreflightSection"
+          ],
+          "required": true,
+          "type": "array of PreflightSection"
+        },
+        {
+          "description": "The ids of every check that needs a look, most urgent first.",
+          "name": "attention",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "environment.preflight"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One claim, its verdict, and what the verdict rests on.\n\n```\nuse majordomus_cli::environment::preflight::{Check, Evidence, Verdict};\n\n// a claim of something in force without evidence is not accepted as one\nlet bare = Check::new(\"integration.mcp\", \"MCP\", Verdict::Verified, \"healthy\", vec![]);\nassert_eq!(bare.verdict, Verdict::Unknown);\nassert!(bare.summary.contains(\"no evidence\"));\n\nlet backed = Check::new(\n    \"integration.mcp\", \"MCP\", Verdict::Verified, \"served\",\n    vec![Evidence::new(\"GET /\", \"surface mcp ready\")],\n);\nassert_eq!(backed.verdict, Verdict::Verified);\n```",
+      "home": "environment",
+      "is_enum": false,
+      "name": "PreflightCheck",
+      "properties": [
+        {
+          "description": "A stable dotted id, `<section>.<claim>`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the repository can show.",
+          "name": "verdict",
+          "refs": [
+            "PreflightVerdict"
+          ],
+          "required": true,
+          "type": "PreflightVerdict"
+        },
+        {
+          "description": "The verdict in one sentence, with the numbers that decided it.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Everything the verdict rests on. Never empty for a verdict that proves something.",
+          "name": "evidence",
+          "refs": [
+            "PreflightEvidence"
+          ],
+          "required": false,
+          "type": "array of PreflightEvidence"
+        },
+        {
+          "description": "The command that shows more, or that changes the verdict.",
+          "name": "next",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PreflightSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing a verdict rests on: where it was read and what was seen there.\n\n```\nuse majordomus_cli::environment::preflight::Evidence;\nlet e = Evidence::new(\".ai/repo/evidence/ledger.json\", \"6 recorded runs\");\nassert_eq!(e.source, \".ai/repo/evidence/ledger.json\");\n```",
+      "home": "environment",
+      "is_enum": false,
+      "name": "PreflightEvidence",
+      "properties": [
+        {
+          "description": "The file, command, route or capability that was read.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it said, in one phrase.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PreflightCheck"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A group of checks: repository, session, governance, integration, verification.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Section};\nlet p = derive(&Observations::empty(\"demo\", 0));\nlet ids: Vec<&str> = p.sections.iter().map(|s| s.id.as_str()).collect();\nassert_eq!(ids, [\"repository\", \"session\", \"governance\", \"integration\", \"verification\"]);\n// every check in a section carries the section's id as its prefix\nlet session: &Section = &p.sections[1];\nassert!(session.checks.iter().all(|c| c.id.starts_with(\"session.\")));\n```",
+      "home": "environment",
+      "is_enum": false,
+      "name": "PreflightSection",
+      "properties": [
+        {
+          "description": "A stable id, the prefix of every check in it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The heading a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The checks, in the order they are rendered.",
+          "name": "checks",
+          "refs": [
+            "PreflightCheck"
+          ],
+          "required": true,
+          "type": "array of PreflightCheck"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Preflight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the repository can show about one claim.\n\nNine words, not a boolean, because the actions they call for differ: `stale` is re-run\nthe proof, `unavailable` is nothing is there, `unknown` is nobody looked, and\n`not_applicable` is there is nothing to look for.\n\n```\nuse majordomus_cli::environment::preflight::Verdict;\nassert!(Verdict::Verified.proves() && Verdict::Active.proves() && Verdict::Fresh.proves());\nassert!(!Verdict::Stale.proves() && !Verdict::NotApplicable.proves());\nassert_eq!(Verdict::NotApplicable.as_str(), \"not_applicable\");\n// the most urgent first: a failure outranks a stale proof, which outranks an absence\nassert!(Verdict::Failed.urgency() < Verdict::Stale.urgency());\nassert_eq!(Verdict::Verified.urgency(), None);\n```",
+      "home": "environment",
+      "is_enum": true,
+      "name": "PreflightVerdict",
+      "properties": [],
+      "type": "\"verified\" | \"active\" | \"fresh\" | \"stale\" | \"degraded\" | \"unavailable\" | \"failed\" | \"unknown\" | \"not_applicable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PreflightCheck"
+      ],
+      "values": [
+        {
+          "description": "Proven against this tree by a recorded result or a direct answer.",
+          "value": "verified"
+        },
+        {
+          "description": "In force now, observed directly, with nothing recorded to verify.",
+          "value": "active"
+        },
+        {
+          "description": "Judged recent enough to act on, against a declared threshold or the current commit.",
+          "value": "fresh"
+        },
+        {
+          "description": "Evidence exists, but it is about another commit, tree or moment.",
+          "value": "stale"
+        },
+        {
+          "description": "In force, but in a form that is not the one this executable would serve.",
+          "value": "degraded"
+        },
+        {
+          "description": "Nothing is there to observe.",
+          "value": "unavailable"
+        },
+        {
+          "description": "Observed, and it did not hold.",
+          "value": "failed"
+        },
+        {
+          "description": "Nobody looked, or the looking did not finish.",
+          "value": "unknown"
+        },
+        {
+          "description": "There is nothing here to judge.",
+          "value": "not_applicable"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Whether the node is answering now, by its own announcements.",
       "home": "mesh",
       "is_enum": true,
@@ -24224,6 +24491,7 @@
       "used_by": [],
       "used_by_schemas": [
         "EnvironmentProvenance",
+        "Preflight",
         "RepositoryEnvironment"
       ],
       "values": [
@@ -32809,6 +33077,76 @@
           "result_schema": "EnvironmentProvenance",
           "stability": "behaviorally_verified",
           "summary": "Where an environment value came from"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/environment/preflight?probe=false\"",
+          "description": "One verdict per claim about this checkout — git; the episode, its briefing, the task and the handover; the policy, the rule corpus and the ADRs; the shared server and the MCP, API and Cockpit surfaces it serves; the peer board; recorded test runs, rule enforcement, provider projections, generated documentation and the deployment — each `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable`, with the evidence it rests on. A verdict that asserts something is in force cannot be produced without evidence. The same value the command line prints and the entry banner summarises.",
+          "home": "environment",
+          "id": "environment.preflight",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "preflight",
+            "uri": "majordomus://environment/preflight"
+          },
+          "mcp_tool": "majordomus_preflight",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Ask the loopback address a server of this checkout published, and its peer board.\nOff by default: a served request answers from what this process can see, and when\nthis process holds the checkout's lease that is itself the evidence.",
+              "examples": [
+                {
+                  "case": "sealed",
+                  "value": "false"
+                }
+              ],
+              "name": "probe",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/environment/preflight",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::environment",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether Majordomus is in force here, and what proves it: the result.",
+              "schema": "Preflight",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Preflight",
+          "stability": "behaviorally_verified",
+          "summary": "Whether Majordomus is in force here, and what proves it"
         }
       ],
       "slug": "environment"
