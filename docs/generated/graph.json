@@ -28443,6 +28443,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "rule",
+        "label": "project.every-link-and-control-is-tested@1",
+        "summary": "Every link the site publishes resolves, and every control on it does what a spec says",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.every-link-and-control-is-tested%401",
+        "source": ".ai/repo/rules/project/every-link-and-control-is-tested.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.ui-conformance@1",
+            "project.derived-once@1",
+            "project.no-counts-in-prose@1"
+          ],
+          "tags": [
+            "site",
+            "ui",
+            "links",
+            "accessibility",
+            "testing"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.every-wait-is-bounded@1",
         "kind": "rule",
         "label": "project.every-wait-is-bounded@1",
@@ -28586,6 +28610,29 @@
             "github",
             "enforcement",
             "drift"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "rule",
+        "label": "project.homepage-tells-a-declared-story@1",
+        "summary": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.homepage-tells-a-declared-story%401",
+        "source": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.navigation-is-declared-once@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "web",
+            "homepage",
+            "navigation",
+            "projections",
+            "documentation"
           ]
         }
       },
@@ -32463,6 +32510,48 @@
         "label": "test/cases/32_schema_integrity.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F32_schema_integrity.sh",
         "source": "test/cases/32_schema_integrity.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/330_a_contract_is_the_kind_it_declares.sh",
+        "kind": "test",
+        "label": "test/cases/330_a_contract_is_the_kind_it_declares.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F330_a_contract_is_the_kind_it_declares.sh",
+        "source": "test/cases/330_a_contract_is_the_kind_it_declares.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "kind": "test",
+        "label": "test/cases/333_homepage_narrative.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F333_homepage_narrative.sh",
+        "source": "test/cases/333_homepage_narrative.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "kind": "test",
+        "label": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F334_ui_audit_hears_uncaught_errors.sh",
+        "source": "test/cases/334_ui_audit_hears_uncaught_errors.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "kind": "test",
+        "label": "test/cases/335_every_link_resolves.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F335_every_link_resolves.sh",
+        "source": "test/cases/335_every_link_resolves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
+        "kind": "test",
+        "label": "test/cases/336_every_control_is_claimed.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F336_every_control_is_claimed.sh",
+        "source": "test/cases/336_every_control_is_claimed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/337_every_control_does_what_it_says.sh",
+        "kind": "test",
+        "label": "test/cases/337_every_control_does_what_it_says.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F337_every_control_does_what_it_says.sh",
+        "source": "test/cases/337_every_control_does_what_it_says.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -49396,6 +49485,26 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "target": "majordomus://rule/project.no-counts-in-prose@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.every-wait-is-bounded@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -49488,6 +49597,21 @@
       {
         "source": "majordomus://rule/project.github-projection-gated@1",
         "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.navigation-is-declared-once@1",
         "kind": "depends_on"
       },
       {
@@ -50777,6 +50901,36 @@
       },
       {
         "source": "majordomus://test/test/cases/32_schema_integrity.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/330_a_contract_is_the_kind_it_declares.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/337_every_control_does_what_it_says.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54477,8 +54631,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1713,
-      "edges": 3843,
+      "nodes": 1721,
+      "edges": 3856,
       "acyclic": true,
       "truncated": false
     }

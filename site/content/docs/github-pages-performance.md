@@ -91,7 +91,7 @@ faster by having waited.
 
 Every value named below is measured, and none of them is written here. The current ones are
 in the tracked baseline of the machine that measured them,
-[`.ai/repo/benchmarks/pages/`](../.ai/repo/benchmarks/pages/), written by
+[`.ai/repo/benchmarks/pages/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/benchmarks/pages), written by
 `scripts/pages benchmark --write-baseline`; the before-and-after of each change is in the
 commit that made it, which is where `project.performance-evidence` puts them. Where the time
 goes inside one generation is `MJ_TIMING=1 scripts/generate-site-data`, ranked by phase.
@@ -171,7 +171,7 @@ left is `site-check`. That is the next thing worth attacking, and it is named as
 ## The model
 
 Everything the path is allowed to cost, and everything it triggers on, is declared once in
-[`.ai/repo/ci/pages.yaml`](../.ai/repo/ci/pages.yaml). Neither the workflow nor the script
+[`.ai/repo/ci/pages.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/pages.yaml). Neither the workflow nor the script
 carries a budget, a path list or a gate name of its own.
 
 ```bash
@@ -183,7 +183,7 @@ scripts/pages paths           # what a push must touch for the site to be able t
 ### Trigger invalidation
 
 The trigger paths are **derived**, never written twice. The model names the gate that builds
-the site (`site-build`); the classes of [`gates.yaml`](../.ai/repo/ci/gates.yaml) that name
+the site (`site-build`); the classes of [`gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/gates.yaml) that name
 that gate are the classes whose paths can change the site; their pathspecs plus the model's
 own `extra` are the workflow's `paths:` block.
 

@@ -10,7 +10,7 @@ source = "docs/USE_CASES.md"
 
 A use case is a task somebody performs with Majordomus, written once as data and proved
 against the real tool. It is not a tutorial, not a feature list and not a page: it is one
-file under [`.ai/repo/use-cases/`](../.ai/repo/use-cases/) whose front matter names the
+file under [`.ai/repo/use-cases/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/use-cases) whose front matter names the
 commands, rules, claims, responsibilities and applications it touches and carries a
 scenario, and whose body says what the situation is and what you are left holding. Every
 projection of it is derived: the page, the category it sits in, the links to and from it,
@@ -18,7 +18,7 @@ the tally that says which capabilities have a use case, and the evidence a page 
 The rules behind it are `majordomus.catalogue-integrity` and
 `majordomus.use-case-coverage` in the vendored baseline, and the claims are
 `use-case-coverage`, `use-case-evidence` and `use-case-impact` in
-[`CLAIMS.yaml`](CLAIMS.yaml).
+[`CLAIMS.yaml`](@/guarantees/_index.md).
 
 The principle, stated once: anything derivable is derived; anything not derivable has one
 canonical home; anything claimed as guaranteed is backed by executable evidence.
@@ -161,10 +161,10 @@ majordomus usecase run know-whether-this-work-is-finished   # by name, whatever 
 
 Live evidence lands under `.ai/local/evidence/live/` and is never committed: it describes
 one tree, on one machine, at one minute, and a derived file whose content depends on who
-derived it is what [ADR 5](../.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
+derived it is what [ADR 5](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
 forbids. For the same reason `usecase coverage` counts a live scenario as naming a command
 and never as covering it: a guarantee CI cannot re-run is not a guarantee. The decision is
-[ADR 38](../.ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md).
+[ADR 38](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md).
 
 ## Running and evidence
 

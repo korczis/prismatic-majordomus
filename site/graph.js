@@ -214,6 +214,10 @@
     if (toggle) { toggle.addEventListener('click', function () { setTimeout(function () { cy.style(stylesheet(palette())); }, 0); }); }
 
     canvas.setAttribute('data-graph-ready', '1');
+    // the drawing, reachable from its own figure and nowhere else: scripts/lib/interaction-specs/graph.mjs
+    // asserts that a filter hides the edges of its kind and that a name in the list focuses its node,
+    // which only the drawing itself can answer
+    el.mjGraph = cy;
     return cy;
   }
 
