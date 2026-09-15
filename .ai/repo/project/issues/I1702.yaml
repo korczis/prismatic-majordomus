@@ -1,0 +1,44 @@
+id: I1702
+milestone: runtime-continuity
+title: Every prompt is answered from a current revision, delivered by the hook that saw it
+slug: ensure-current-on-every-prompt
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Check the current revision's dependency manifest on every UserPromptSubmit and SessionStart within a measured budget, refresh into a new revision when a dependency changed, deliver the revision or a typed change notice through the provider's hook output, and record the delivery; degraded states are shown to the agent, never hidden."
+why: "Freshness today compares git head and branch only and nothing re-delivers context after the session starts, so a changed rule, ADR, issue or handover reaches no worker. Hook failures exit 0 into logs the agent never reads."
+current_state: "The prompt hook is forbidden to write stdout (ADR 0017); SessionStart prints plain text; session_context.sh freezes a snapshot keyed to head; the task record has no issue."
+desired_state: "majordomus-cli hook <provider> <event> answers without loading the application on the fresh path; ensure_current_context checks git through in-process reads and the manifest by stat, hashing only on changed or racy mtimes; invalidation reasons are typed; a slow or failing refresh keeps the last revision marked degraded with backoff; start records an issue explicitly or derives it from the branch or plan start with provenance; session_context.sh is retired."
+scope:
+  - apps/majordomus-cli/src/context
+  - apps/majordomus-cli/src/hook
+  - apps/majordomus-cli/src/commands
+  - lib/capture.sh
+  - lib/start.sh
+  - lib/session_context.sh
+  - .claude
+  - share/providers.yaml
+  - .ai/repo/adrs
+  - .ai/repo/policy.yaml
+  - apps/majordomus-cli/benches
+  - test/cases
+non_scope:
+  - Prompt record v2 and terminal state (I1703)
+depends_on: [I1701]
+acceptance_criteria:
+  - The freshness check meets p95 of 15 ms in process and 60 ms of hook wall time on this repository, recorded as benchmark evidence
+  - Adding an ADR, editing policy, moving HEAD or setting the issue produces a notice naming the typed reasons on the next prompt; an edit to a scoped source file does not; an unchanged state emits nothing
+  - A missing executable, an unwritable store or a compile timeout exits 0 with a visible notice, a non-empty failure log and a red doctor
+  - start records the task's issue with provenance explicit, derived or unknown
+  - A superseding ADR records that the prompt hook may now write hook output
+validation:
+  - bash test/run.sh 54_session_lifecycle_hooks
+  - bash test/run.sh 127_briefing_freshness
+  - bin/majordomus-cli bench --check
+evidence_required:
+  - freshness_within_budget
+  - reinjection_only_on_change
+  - degraded_is_visible
+risk: "A cold refresh needs a full index build, measured in seconds; on a large repository a fresh revision within one prompt is not guaranteed, and the design degrades visibly rather than blocking."
+created_at: 2026-09-15
+updated_at: 2026-09-15

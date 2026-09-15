@@ -1,0 +1,39 @@
+id: I1703
+milestone: runtime-continuity
+title: A prompt record names its context revision, its task and issue, and how it ended
+slug: prompt-records-carry-provenance
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Write prompt records v2 from the Rust hook with the delivered context revision, episode, task, issue and milestone with provenance, observable provider and model, derivable lineage and a terminal state recorded by a new Stop hook; migrate v1 records into a classified index without inventing a field."
+why: "The only prompt writer runs at UserPromptSubmit with a closed field set and no hook records a result, so no prompt can be joined to the context it was answered from, the work it belonged to or its outcome."
+current_state: "majordomus.capture/v1 records in .ai/local/prompts/ (1696 on this checkout) with episode links and redaction but no task, issue, context, model or terminal state; subagent hand-back text is captured as a person's prompt."
+desired_state: "majordomus.prompt/v2 records and O_EXCL terminal records; Stop marks completed, SessionEnd and PreCompact mark interrupted, providers without Stop are unobserved; redaction ported with a parity test against the shell table; prompts.list, prompts.inspect and prompts.lineage capabilities; a v2 index over v1 records classifying each field VERIFIED, DERIVED, INFERRED or UNRESOLVED; mj_capture_write deleted."
+scope:
+  - apps/majordomus-cli/src/prompt
+  - apps/majordomus-cli/src/hook
+  - apps/majordomus-cli/src/capability/builtin
+  - lib/capture.sh
+  - .claude
+  - share/schemas
+  - share/providers.yaml
+  - test/cases
+non_scope:
+  - Reading provider transcripts to recover model or response; excluded by the never-store-transcripts rule
+depends_on: [I1702]
+acceptance_criteria:
+  - Every prompt record written through a hook names its context revision or states that none was available, and a validator refuses one that does neither
+  - A Stop event marks the prompt completed; a missing Stop followed by session end marks it interrupted; a provider without Stop is unobserved
+  - Migration of v1 records produces no VERIFIED field without its evidence, and never rewrites a v1 file
+  - Redaction of the Rust writer and the retired shell writer agree byte for byte over a shared corpus
+  - Injected hand-back text is classified injected, not a person's prompt
+validation:
+  - bash test/run.sh 29_prompt_capture
+  - bash test/run.sh 140_prompt_continuity
+evidence_required:
+  - prompt_answered_from_recorded_revision
+  - terminal_state_recorded
+  - migration_never_invents
+risk: "Claude Code's hooks carry no model and do not say whether a turn failed; most records will say model unobserved, and failed is claimed only if the pinned provider version documents a failure event."
+created_at: 2026-09-15
+updated_at: 2026-09-15

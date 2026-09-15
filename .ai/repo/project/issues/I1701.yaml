@@ -1,0 +1,39 @@
+id: I1701
+milestone: runtime-continuity
+title: One compiler produces every context, and each compilation is an immutable revision
+slug: one-compiler-immutable-revisions
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make devcontext::compile the only context compiler, persist each compilation as a content-addressed object and a numbered immutable revision carrying task identity with provenance and a dependency manifest, and make the SessionStart briefing and the context command renderings of a revision."
+why: "Three compilers exist today: the briefing an agent receives (lib/derive.sh) is never stored or fingerprinted, the frozen working context (lib/session_context.sh) stores a different builder's output (lib/context.sh), and the only compiler with a fingerprint (devcontext) has no consumer. Nothing can say which context a worker actually had."
+current_state: "CompiledContext carries time-varying fields, so the same source state does not produce the same bytes; nothing persists a compilation; lib/context.sh and lib/derive.sh render independently."
+desired_state: "A deterministic compile mode (working-tree state moved to the manifest, diagnostics in canonical order); .ai/local/context/objects/<aa>/<sha256>.json and episodes/<episode>/rNNNNNN.json published with O_EXCL and a no-clobber link; context.current, context.inspect, context.explain and context.refresh capabilities; majordomus context and the briefing rendered from one object; the shell section builders deleted."
+scope:
+  - apps/majordomus-cli/src/devcontext
+  - apps/majordomus-cli/src/context
+  - apps/majordomus-cli/src/capability/builtin
+  - lib/context.sh
+  - lib/derive.sh
+  - share
+  - docs
+  - test/cases
+non_scope:
+  - Delivery through hooks and freshness on every prompt (I1702)
+depends_on: [I1700]
+acceptance_criteria:
+  - Shuffled discovery and registry enumeration produce an identical object digest and identical fingerprints
+  - A revision file is never modified after it is written, and eight concurrent writers produce exactly one revision per number
+  - The CLI, HTTP and MCP name one context_id for the current revision and render from one object
+  - Every revision carries task, issue and milestone identity each with provenance explicit, derived, inferred or unknown, and a manifest of every dependency the compiler read
+validation:
+  - bin/majordomus-cli generate --check
+  - bash test/run.sh 23_context
+  - bash test/run.sh 130_context_compiler
+evidence_required:
+  - deterministic_compilation
+  - revisions_are_immutable
+  - one_compilation_every_surface
+risk: "Retiring the shell builder changes the output of majordomus context, which scripts and cases read; case 23 is the contract and moves with it."
+created_at: 2026-09-15
+updated_at: 2026-09-15

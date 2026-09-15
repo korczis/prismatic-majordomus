@@ -6,23 +6,23 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "84423f3f311b708f7143516d8bc8027003d0c03c0931a3e37b192746479cfc2a",
+    "fingerprint": "08edc8ddc015111964095d12338c4406101a8b163569093382f6c7c0762cc038",
     "summary": {
-      "total": 1466,
+      "total": 1471,
       "builtin": 113,
-      "declarative": 1353,
+      "declarative": 1358,
       "by_kind": {
         "command": 7,
         "query": 106,
-        "resource": 1353
+        "resource": 1358
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1359
+        "implemented": 1364
       },
       "mcp_tools": 110,
-      "mcp_resources": 1394,
+      "mcp_resources": 1399,
       "http_routes": 112,
       "cli_commands": 52,
       "modules": 66,
@@ -40132,7 +40132,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 51,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -40465,7 +40465,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 216,
+        "capabilities": 220,
         "capability_ids": []
       },
       {
@@ -40882,7 +40882,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c8c747c59e88e916046506860f697e4cca5c654ba82835ba5e85288f23597b49",
+    "fingerprint": "8c4b3ad89b9bde7c0f2ef053ed5e9b70b6a08771d54d50fdf7aa5cc1ba4a401a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40905,7 +40905,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -40917,7 +40917,7 @@
       "document": 248,
       "feature": 25,
       "implementation": 49,
-      "issue": 216,
+      "issue": 220,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 20,
@@ -41769,6 +41769,24 @@
           "safety",
           "worktrees",
           "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0065",
+        "kind": "adr",
+        "identity": "adr-0065",
+        "title": "A prompt names the context revision it was answered from, and one domain writes both",
+        "description": "A prompt names the context revision it was answered from, and one domain writes both",
+        "path": ".ai/repo/adrs/0065-a-prompt-names-the-context-revision-it-was-answered-from.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5921,
+        "tags": [
+          "sessions",
+          "continuity",
+          "context",
+          "provenance",
+          "architecture"
         ]
       },
       {
@@ -44991,7 +45009,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 55765
+        "bytes": 57852
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -49851,6 +49869,50 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3566
+      },
+      {
+        "uri": "majordomus://issue/I1700",
+        "kind": "issue",
+        "identity": "I1700",
+        "title": "One locked ledger writer, one episode resolver, and stranded episodes recover themselves",
+        "description": "Make the Rust session domain the only writer of the ledger and the only resolver of the current episode, recover stranded open episodes automatically at session start, write one spelling of repository identity, and hold the product's claim that it never invokes a model with a blocking gate.",
+        "path": ".ai/repo/project/issues/I1700.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3729
+      },
+      {
+        "uri": "majordomus://issue/I1701",
+        "kind": "issue",
+        "identity": "I1701",
+        "title": "One compiler produces every context, and each compilation is an immutable revision",
+        "description": "Make devcontext::compile the only context compiler, persist each compilation as a content-addressed object and a numbered immutable revision carrying task identity with provenance and a dependency manifest, and make the SessionStart briefing and the context command renderings of a revision.",
+        "path": ".ai/repo/project/issues/I1701.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2778
+      },
+      {
+        "uri": "majordomus://issue/I1702",
+        "kind": "issue",
+        "identity": "I1702",
+        "title": "Every prompt is answered from a current revision, delivered by the hook that saw it",
+        "description": "Check the current revision's dependency manifest on every UserPromptSubmit and SessionStart within a measured budget, refresh into a new revision when a dependency changed, deliver the revision or a typed change notice through the provider's hook output, and record the delivery; degraded states are shown to the agent, never hidden.",
+        "path": ".ai/repo/project/issues/I1702.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2997
+      },
+      {
+        "uri": "majordomus://issue/I1703",
+        "kind": "issue",
+        "identity": "I1703",
+        "title": "A prompt record names its context revision, its task and issue, and how it ended",
+        "description": "Write prompt records v2 from the Rust hook with the delivered context revision, episode, task, issue and milestone with provenance, observable provider and model, derivable lineage and a terminal state recorded by a new Stop hook; migrate v1 records into a classified index without inventing a field.",
+        "path": ".ai/repo/project/issues/I1703.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2830
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -55659,7 +55721,7 @@
       "identity": [
         "id"
       ],
-      "objects": 51
+      "objects": 52
     },
     {
       "name": "application",
@@ -55772,7 +55834,7 @@
       "identity": [
         "id"
       ],
-      "objects": 216
+      "objects": 220
     },
     {
       "name": "knowledge",

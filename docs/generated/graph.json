@@ -3964,6 +3964,34 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0065",
+        "kind": "adr",
+        "label": "adr-0065",
+        "summary": "A prompt names the context revision it was answered from, and one domain writes both",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0065",
+        "source": ".ai/repo/adrs/0065-a-prompt-names-the-context-revision-it-was-answered-from.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "file:.ai/repo/adrs/0009-prompt-capture-happens-below-the-model.md",
+            "file:.ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md",
+            "file:.ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md",
+            "file:.ai/repo/adrs/0047-the-session-domain-is-typed-and-its-identities-are-not-interchangeable.md",
+            "file:.ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+            "file:docs/RUNTIME_CONTINUITY.md",
+            "file:.ai/repo/project/milestones/runtime-continuity.yaml"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "context",
+            "provenance",
+            "architecture"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -22862,6 +22890,202 @@
         }
       },
       {
+        "id": "majordomus://issue/I1700",
+        "kind": "issue",
+        "label": "I1700",
+        "summary": "One locked ledger writer, one episode resolver, and stranded episodes recover themselves",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1700",
+        "source": ".ai/repo/project/issues/I1700.yaml",
+        "facts": {
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "one_locked_writer",
+            "resolver_never_guesses",
+            "stranded_episodes_recover",
+            "no_model_invocation_gate"
+          ],
+          "milestone": "runtime-continuity",
+          "non_scope": [
+            "Context compilation and revisions (I1701)",
+            "Hook stdout contracts (I1702)"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/session",
+            "apps/majordomus-cli/src/ledger.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "lib/common.sh",
+            "lib/session.sh",
+            "lib/recover.sh",
+            "share/events.yaml",
+            "scripts/ci",
+            ".ai/repo/ci",
+            ".ai/repo/rules/project",
+            "test/cases"
+          ],
+          "slug": "one-writer-one-resolver",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bin/majordomus-cli capabilities validate",
+            "bin/majordomus-cli generate --check",
+            "bash test/run.sh 240_the_session_domain_is_typed"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1701",
+        "kind": "issue",
+        "label": "I1701",
+        "summary": "One compiler produces every context, and each compilation is an immutable revision",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1701",
+        "source": ".ai/repo/project/issues/I1701.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Shuffled discovery and registry enumeration produce an identical object digest and identical fingerprints",
+            "A revision file is never modified after it is written, and eight concurrent writers produce exactly one revision per number",
+            "The CLI, HTTP and MCP name one context_id for the current revision and render from one object",
+            "Every revision carries task, issue and milestone identity each with provenance explicit, derived, inferred or unknown, and a manifest of every dependency the compiler read"
+          ],
+          "created_at": "2026-09-15",
+          "current_state": "CompiledContext carries time-varying fields, so the same source state does not produce the same bytes; nothing persists a compilation; lib/context.sh and lib/derive.sh render independently.",
+          "depends_on": [
+            "I1700"
+          ],
+          "evidence_required": [
+            "deterministic_compilation",
+            "revisions_are_immutable",
+            "one_compilation_every_surface"
+          ],
+          "milestone": "runtime-continuity",
+          "non_scope": [
+            "Delivery through hooks and freshness on every prompt (I1702)"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "Retiring the shell builder changes the output of majordomus context, which scripts and cases read; case 23 is the contract and moves with it.",
+          "scope": [
+            "apps/majordomus-cli/src/devcontext",
+            "apps/majordomus-cli/src/context",
+            "apps/majordomus-cli/src/capability/builtin",
+            "lib/context.sh",
+            "lib/derive.sh",
+            "share",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "one-compiler-immutable-revisions",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bin/majordomus-cli generate --check",
+            "bash test/run.sh 23_context",
+            "bash test/run.sh 130_context_compiler"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1702",
+        "kind": "issue",
+        "label": "I1702",
+        "summary": "Every prompt is answered from a current revision, delivered by the hook that saw it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1702",
+        "source": ".ai/repo/project/issues/I1702.yaml",
+        "facts": {
+          "created_at": "2026-09-15",
+          "current_state": "The prompt hook is forbidden to write stdout (ADR 0017); SessionStart prints plain text; session_context.sh freezes a snapshot keyed to head; the task record has no issue.",
+          "depends_on": [
+            "I1701"
+          ],
+          "evidence_required": [
+            "freshness_within_budget",
+            "reinjection_only_on_change",
+            "degraded_is_visible"
+          ],
+          "milestone": "runtime-continuity",
+          "non_scope": [
+            "Prompt record v2 and terminal state (I1703)"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "A cold refresh needs a full index build, measured in seconds; on a large repository a fresh revision within one prompt is not guaranteed, and the design degrades visibly rather than blocking.",
+          "scope": [
+            "apps/majordomus-cli/src/context",
+            "apps/majordomus-cli/src/hook",
+            "apps/majordomus-cli/src/commands",
+            "lib/capture.sh",
+            "lib/start.sh",
+            "lib/session_context.sh",
+            ".claude",
+            "share/providers.yaml",
+            ".ai/repo/adrs",
+            ".ai/repo/policy.yaml",
+            "apps/majordomus-cli/benches",
+            "test/cases"
+          ],
+          "slug": "ensure-current-on-every-prompt",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh 54_session_lifecycle_hooks",
+            "bash test/run.sh 127_briefing_freshness",
+            "bin/majordomus-cli bench --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1703",
+        "kind": "issue",
+        "label": "I1703",
+        "summary": "A prompt record names its context revision, its task and issue, and how it ended",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1703",
+        "source": ".ai/repo/project/issues/I1703.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every prompt record written through a hook names its context revision or states that none was available, and a validator refuses one that does neither",
+            "A Stop event marks the prompt completed; a missing Stop followed by session end marks it interrupted; a provider without Stop is unobserved",
+            "Migration of v1 records produces no VERIFIED field without its evidence, and never rewrites a v1 file",
+            "Redaction of the Rust writer and the retired shell writer agree byte for byte over a shared corpus",
+            "Injected hand-back text is classified injected, not a person's prompt"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [
+            "I1702"
+          ],
+          "evidence_required": [
+            "prompt_answered_from_recorded_revision",
+            "terminal_state_recorded",
+            "migration_never_invents"
+          ],
+          "milestone": "runtime-continuity",
+          "non_scope": [
+            "Reading provider transcripts to recover model or response; excluded by the never-store-transcripts rule"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "Claude Code's hooks carry no model and do not say whether a turn failed; most records will say model unobserved, and failed is claimed only if the pinned provider version documents a failure event.",
+          "scope": [
+            "apps/majordomus-cli/src/prompt",
+            "apps/majordomus-cli/src/hook",
+            "apps/majordomus-cli/src/capability/builtin",
+            "lib/capture.sh",
+            ".claude",
+            "share/schemas",
+            "share/providers.yaml",
+            "test/cases"
+          ],
+          "slug": "prompt-records-carry-provenance",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh 29_prompt_capture",
+            "bash test/run.sh 140_prompt_continuity"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -39056,6 +39280,46 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0065",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0065",
+        "target": "majordomus://adr/adr-0009",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0065",
+        "target": "majordomus://adr/adr-0015",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0065",
+        "target": "majordomus://adr/adr-0017",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0065",
+        "target": "majordomus://adr/adr-0047",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0065",
+        "target": "majordomus://adr/adr-0052",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0065",
+        "target": "majordomus://document/docs/RUNTIME_CONTINUITY.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0065",
+        "target": "majordomus://milestone/runtime-continuity",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -48321,6 +48585,61 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1700",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1700",
+        "target": "majordomus://milestone/runtime-continuity",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1701",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1701",
+        "target": "majordomus://issue/I1700",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1701",
+        "target": "majordomus://milestone/runtime-continuity",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1702",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1702",
+        "target": "majordomus://issue/I1701",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1702",
+        "target": "majordomus://milestone/runtime-continuity",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1703",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1703",
+        "target": "majordomus://issue/I1702",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1703",
+        "target": "majordomus://milestone/runtime-continuity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -54777,8 +55096,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1726,
-      "edges": 3862,
+      "nodes": 1731,
+      "edges": 3881,
       "acyclic": true,
       "truncated": false
     }
