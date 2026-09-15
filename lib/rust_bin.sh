@@ -36,6 +36,7 @@
 # One `target_directory` exists in that JSON, so the greedy match finds it without jq, which
 # this file may not assume: it is sourced on the shell-prompt path.
 mj_cargo_target_dir() {
+  mj_ctd_out=''  # assigned by name below; declared here so shellcheck sees it assigned
   mj_cargo_target_dir_into mj_ctd_out "$@"
   printf '%s\n' "$mj_ctd_out"
 }
@@ -67,6 +68,7 @@ mj_cargo_target_dir_into() {
 
 # mj_rust_bin <repository-root>
 mj_rust_bin() {
+  mj_rb_out=''
   mj_rust_bin_into mj_rb_out "$1"
   printf '%s\n' "$mj_rb_out"
 }
@@ -141,6 +143,7 @@ mj_rust_stale() {
 # tree ships one. Empty when it does not, so a caller can leave MAJORDOMUS_SHARE unset and
 # let the executable find its own.
 mj_rust_share() {
+  mj_rs_out=''
   mj_rust_share_into mj_rs_out "$1"
   [ -z "$mj_rs_out" ] || printf '%s\n' "$mj_rs_out"
 }

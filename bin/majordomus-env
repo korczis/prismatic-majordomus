@@ -33,6 +33,7 @@ root="$(unset CDPATH; cd -- "$here/.." && pwd)"
 # shellcheck source=../lib/rust_bin.sh
 . "$root/lib/rust_bin.sh"
 
+bin=''; share=''  # assigned by name by the two calls below
 mj_rust_bin_into bin "$root"
 mj_rust_share_into share "$root"
 if [ -n "$share" ]; then
