@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "registry": {
-    "fingerprint": "40500e765dba2ccc32315782b8f775b0b9bb4edb9459c62ced7035e29db40fb1",
+    "fingerprint": "d5d53a131f3fc11fd85464f1b72ecab4cd7d69fa9df35b075d85a04ccfb90721",
     "summary": {
-      "total": 1450,
+      "total": 1458,
       "builtin": 112,
-      "declarative": 1338,
+      "declarative": 1346,
       "by_kind": {
         "command": 6,
         "query": 106,
-        "resource": 1338
+        "resource": 1346
       },
       "by_stability": {
         "behaviorally_verified": 99,
         "experimental": 7,
-        "implemented": 1344
+        "implemented": 1352
       },
       "mcp_tools": 109,
-      "mcp_resources": 1379,
+      "mcp_resources": 1387,
       "http_routes": 111,
       "cli_commands": 52,
       "modules": 65,
@@ -9516,7 +9516,7 @@
               "default_floor",
               "bytes_per_token"
             ],
-            "description": "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \"why did I get that\", asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`EDGES`](select::EDGES), [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```",
+            "description": "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.\n\nThis is the answer to \"why did I get that\", asked once rather than reverse-engineered\nfrom every context. It is a projection of the tables and constants this module is built\nfrom — [`Tier::ORDER`], [`select::EDGES`], [`Selector::ALL`] and the four defaults\n— and holds no numbers of its own, so the published rules and the code that applies them\ncannot drift apart.\n\nThe defaults are here because they are what a request gets when it says nothing, and a\ncaller tuning a request needs to know what it is tuning away from.\n\n```\nuse majordomus_cli::devcontext::{policy, CompilerPolicy, Selector, Tier};\nuse majordomus_cli::devcontext::{BYTES_PER_TOKEN, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};\nuse majordomus_cli::graph;\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules: CompilerPolicy = policy(&ctx).unwrap();\n\n// it names the graph it reads relations from, rather than leaving it to be guessed\nassert_eq!(rules.schema, 1);\nassert_eq!(rules.graph, graph::COMPOSED);\n\n// the three tables are complete\nassert_eq!(rules.tiers.len(), Tier::ORDER.len());\nassert_eq!(rules.selectors.len(), Selector::ALL.len());\nassert!(!rules.edges.is_empty());\n\n// and the published defaults are the constants a silent request actually gets\nassert_eq!(rules.default_budget_tokens, DEFAULT_BUDGET_TOKENS);\nassert_eq!(rules.default_max_depth, DEFAULT_MAX_DEPTH);\nassert_eq!(rules.default_floor, DEFAULT_FLOOR);\nassert_eq!(rules.bytes_per_token, BYTES_PER_TOKEN);\n```",
             "title": "CompilerPolicy",
             "$defs": {
               "TierRule": {
@@ -40429,7 +40429,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 135,
+        "capabilities": 137,
         "capability_ids": []
       },
       {
@@ -40508,7 +40508,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 205,
+        "capabilities": 211,
         "capability_ids": []
       },
       {
@@ -40588,7 +40588,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ab8304ae8916a61c96f028e854bd2e49cd8ab18f142c67fc41788e19299deb6b",
+    "fingerprint": "4cf6fdc15943d4bb117b0c9e1bc1968b021259c5525b972ddf45b3402ccaba56",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40632,12 +40632,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 3,
-      "rule": 135,
+      "rule": 137,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 205,
+      "test": 211,
       "use-case": 46,
       "workspace": 1
     },
@@ -44400,7 +44400,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 25922
+        "bytes": 25933
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -44481,7 +44481,7 @@
         "title": "Coverage: one measurement, two questions",
         "path": "docs/COVERAGE.md",
         "source_class": "document",
-        "bytes": 5255
+        "bytes": 5830
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -44670,7 +44670,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2872
+        "bytes": 3034
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -44706,7 +44706,7 @@
         "title": "Product — the features, and the landing page as a projection of them",
         "path": "docs/PRODUCT.md",
         "source_class": "document",
-        "bytes": 8474
+        "bytes": 13367
       },
       {
         "uri": "majordomus://document/docs/QUALITY.md",
@@ -44796,7 +44796,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 16188
+        "bytes": 19935
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -46445,7 +46445,7 @@
         "path": ".ai/repo/features/commit.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3516,
+        "bytes": 3515,
         "tags": [
           "git",
           "commit",
@@ -46504,11 +46504,11 @@
         "kind": "feature",
         "identity": "coverage",
         "title": "New code is covered, measured once and asked two questions",
-        "description": "scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, the session/continuity domain held to 100%, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.",
+        "description": "scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, a floor over the session/continuity domain, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.",
         "path": ".ai/repo/features/coverage.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2834,
+        "bytes": 2865,
         "tags": [
           "coverage",
           "testing"
@@ -46568,7 +46568,7 @@
         "path": ".ai/repo/features/evidence.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2797,
+        "bytes": 2796,
         "tags": [
           "evidence",
           "claims",
@@ -47011,7 +47011,7 @@
         "identity": "lib/knowledge.awk",
         "path": "lib/knowledge.awk",
         "source_class": "engine",
-        "bytes": 23942
+        "bytes": 24431
       },
       {
         "uri": "majordomus://implementation/lib/knowledge.sh",
@@ -47019,7 +47019,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 24071
+        "bytes": 25665
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -51779,6 +51779,24 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "rule",
+        "identity": "project.every-link-and-control-is-tested@1",
+        "title": "Every link the site publishes resolves, and every control on it does what a spec says",
+        "description": "No link on the published site is followed to a 404, and no button, field, toggle, tab, filter or scroll region is shipped without a behaviour spec that claims it and a browser run that proves it.",
+        "path": ".ai/repo/rules/project/every-link-and-control-is-tested.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5972,
+        "tags": [
+          "site",
+          "ui",
+          "links",
+          "accessibility",
+          "testing"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.every-wait-is-bounded@1",
         "kind": "rule",
         "identity": "project.every-wait-is-bounded@1",
@@ -51888,6 +51906,24 @@
           "github",
           "enforcement",
           "drift"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "rule",
+        "identity": "project.homepage-tells-a-declared-story@1",
+        "title": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
+        "description": "site/data/homepage.toml declares the homepage's sections as an ordered list of ids; the rendered homepage carries exactly those sections, in that order, each with a link or a derived figure, links no feature the product model does not call stable, and carries every command the distribution model gives a newcomer. site/data/nav.toml declares which sections are receipts under [indexing]; the pages below them are noindex and out of the sitemap, and every other page is indexable and in it.",
+        "path": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3906,
+        "tags": [
+          "web",
+          "homepage",
+          "navigation",
+          "projections",
+          "documentation"
         ]
       },
       {
@@ -52519,7 +52555,7 @@
         "path": ".ai/repo/rules/project/ui-conformance.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5105,
+        "bytes": 5275,
         "tags": [
           "ui",
           "accessibility",
@@ -53980,6 +54016,54 @@
         "bytes": 6231
       },
       {
+        "uri": "majordomus://test/test/cases/330_a_contract_is_the_kind_it_declares.sh",
+        "kind": "test",
+        "identity": "test/cases/330_a_contract_is_the_kind_it_declares.sh",
+        "path": "test/cases/330_a_contract_is_the_kind_it_declares.sh",
+        "source_class": "case",
+        "bytes": 5802
+      },
+      {
+        "uri": "majordomus://test/test/cases/333_homepage_narrative.sh",
+        "kind": "test",
+        "identity": "test/cases/333_homepage_narrative.sh",
+        "path": "test/cases/333_homepage_narrative.sh",
+        "source_class": "case",
+        "bytes": 5624
+      },
+      {
+        "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "kind": "test",
+        "identity": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "path": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
+        "source_class": "case",
+        "bytes": 4300
+      },
+      {
+        "uri": "majordomus://test/test/cases/335_every_link_resolves.sh",
+        "kind": "test",
+        "identity": "test/cases/335_every_link_resolves.sh",
+        "path": "test/cases/335_every_link_resolves.sh",
+        "source_class": "case",
+        "bytes": 6472
+      },
+      {
+        "uri": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
+        "kind": "test",
+        "identity": "test/cases/336_every_control_is_claimed.sh",
+        "path": "test/cases/336_every_control_is_claimed.sh",
+        "source_class": "case",
+        "bytes": 5438
+      },
+      {
+        "uri": "majordomus://test/test/cases/337_every_control_does_what_it_says.sh",
+        "kind": "test",
+        "identity": "test/cases/337_every_control_does_what_it_says.sh",
+        "path": "test/cases/337_every_control_does_what_it_says.sh",
+        "source_class": "case",
+        "bytes": 5132
+      },
+      {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
         "kind": "test",
         "identity": "test/cases/33_event_registry.sh",
@@ -54329,7 +54413,7 @@
         "identity": "test/cases/77_rust_evidence.sh",
         "path": "test/cases/77_rust_evidence.sh",
         "source_class": "case",
-        "bytes": 12088
+        "bytes": 12585
       },
       {
         "uri": "majordomus://test/test/cases/79_bench_command.sh",
@@ -55428,7 +55512,7 @@
         "id",
         "version"
       ],
-      "objects": 135
+      "objects": 137
     },
     {
       "name": "scope",
@@ -55483,7 +55567,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 205
+      "objects": 211
     },
     {
       "name": "use-case",

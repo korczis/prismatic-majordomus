@@ -71,11 +71,15 @@ step "web validate";                 cargo run --quiet -- web validate
 # exercises, and every command of the command line accounted for against the registry.
 # Ratcheted against .ai/repo/rust-quality-baseline.txt while the debt shrinks.
 step "quality report";               cargo run --quiet -- quality report --summary
-if [ "$MODE" = ci ]; then
-  # a conservative measurement through the real transports, compared with this platform's
-  # baseline under .ai/repo/benchmarks/rust/ when one is committed
-  step "bench --profile ci --check";   cargo run --quiet -- bench --profile ci --check --no-write
-fi
+# No benchmark comparison here. It compares a run with the baseline committed for its own
+# platform, and the only one under .ai/repo/benchmarks/rust/ is macOS's: on this job's Linux
+# runner it measured every target at the ci profile, printed "nothing compared", and could
+# not fail — then pushed the job past its thirty minutes, so the gates after it never ran.
+# The comparison is the macOS bench job's (rust-bench), where the baseline is. What this
+# gate owes about the runner is that it executes, and `cargo test` above already proves it:
+# tests/bench.rs times a target through the executor, a socket and a child process;
+# tests/properties.rs sends every deterministic capability over MCP and HTTP; and
+# tests/http_serve.rs replays every route's benchmark cases against a served process.
 if [ "$MODE" = all ]; then
   threshold="$(cat "$ROOT/scripts/rust-coverage-threshold")"
   domain="$(cat "$ROOT/scripts/session-coverage-threshold")"

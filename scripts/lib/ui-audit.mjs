@@ -50,9 +50,16 @@ export async function auditPage(page, origin, route, width) {
   const console_errors = [];
   const failed_requests = [];
   page.removeAllListeners('console');
+  page.removeAllListeners('pageerror');
   page.removeAllListeners('requestfailed');
   page.on('console', (message) => {
     if (message.type() === 'error') console_errors.push(message.text().slice(0, 300));
+  });
+  // An exception nothing catches is not a console message: the browser reports it as a page
+  // error, and a listener on `console` alone never hears it. That is how Mermaid throwing on
+  // every diagram page went unreported by a sweep that visited each of them.
+  page.on('pageerror', (error) => {
+    console_errors.push(`uncaught: ${String(error?.message ?? error).slice(0, 290)}`);
   });
   page.on('requestfailed', (request) => {
     // only the site's own assets: an outside host failing is the network's business. The

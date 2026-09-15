@@ -101,6 +101,78 @@ labels, held to a line budget, carrying no number and no capability claim. Route
 moved are declared once in `site/data/nav.toml` under `[[redirects]]` and become Zola
 aliases on the page they point at.
 
+## The terminal on the homepage
+
+The page shows the tool running, and every transcript on it is a run that happened.
+
+`scripts/generate-site-data` writes `site/data/generated/terminal.json` by joining two
+datasets it has already written: `lifecycle.json`, the ordered lifecycle the tool declares,
+and `catalogue.json`, whose `use_cases[].evidence.steps[]` carry the command line, the exit
+status and the stdout of every use-case scenario the same run executed. The output was
+redacted when it was captured — `lib/usecase.sh` replaces the repository path, the clock,
+the identifiers and the tool versions with placeholders — so a transcript names no machine
+and reproduces byte for byte on another one.
+
+Nothing in the dataset, the generator or the template names a command:
+
+| Field | How it is decided |
+|---|---|
+| the order of the tabs | the lifecycle's own order |
+| which run illustrates a step | among that command's passing scenario steps: one that succeeded before one that was refused, then the longest body, then use case and step id |
+| which panel opens first | the one with the most output |
+| what is in the refusals | every recorded step of a lifecycle command that exited non-zero, deduplicated by command, status and body, ordered by the lifecycle |
+| the sentence beside a refusal | the first `FAIL` line the run printed, else its last line, up to the reproduce command |
+
+Two refusals are built into the generation. A lifecycle step no scenario ran fails it,
+because a page that quietly drops a stage claims a lifecycle nobody walks; and a corpus with
+no recorded refusal fails it, because the section that says the tool refuses may not be
+empty. `scripts/site-check`'s `terminal` check then reads the built HTML in both directions:
+every panel the dataset holds is on the page, every panel on the page is a run, each matched
+by its command line, its exit status and its verdict line, and every panel links the scenario
+it was recorded in.
+
+The consequence worth stating: the homepage cannot show the tool doing something the tool
+does not do, and it cannot keep showing something that stopped happening. A command that
+stops refusing disappears from the page on the next generation, and a transcript edited by
+hand fails the check rather than the reader.
+
+## The homepage's story, and what search engines are shown
+
+The homepage is an argument with an order, and the order is data: `site/data/homepage.toml`
+lists the ids of the sections the page renders — hero, recognise, how, refuses, chapters, proof,
+built, install — which is what hurts, how this answers it, what it refuses, what it does for the
+part that hurts you, what proves it, what is not built, and how to try it. Nothing about the
+order is decided in `site/templates/index.html`.
+
+| Section | What it shows | Where it comes from |
+|---|---|---|
+| `hero` | the positioning, and the lifecycle replayed | `marketing.toml`, `terminal.json` |
+| `recognise` | the pain, in the first person | the Why catalogue's featured moments |
+| `how` | declare, derive, verify, each with a figure | `manifesto.toml` `[how]`, the rules, the product telemetry, the recorded refusals |
+| `refuses` | every recorded refusal of a lifecycle command | `terminal.json` |
+| `chapters` | every stable feature, grouped by the area it serves, and the composed graph | `product.json`, the Why catalogue's areas |
+| `proof` | the model's size and every claim counted by its real status | `product.json`, `docs/CLAIMS.yaml` |
+| `built` | each stage with its honest mark, the boundary, and what is not built | `manifesto.toml` |
+| `install` | the install, next-step and verification commands | `distribution.json` |
+
+The long-form argument the homepage used to carry section by section is `/method/argument/`,
+moved verbatim, so no sentence of `manifesto.toml` stopped being rendered.
+
+The site is indexed by one declared policy. `[indexing] unlisted` in `site/data/nav.toml` names
+the sections whose detail pages are receipts — the plan's issues and milestones, the registry's
+capabilities and modules, the closed sessions. Those pages stay published and linked; they carry
+a robots `noindex` (`templates/base.html`) and are left out of `sitemap.xml`
+(`templates/sitemap.xml`), while each section's own index page stays indexed.
+
+`scripts/ci/homepage-check` holds all of it, in both directions, under the blocking rule
+`project.homepage-tells-a-declared-story`, and `scripts/site-check` reports its findings, so a
+homepage or a sitemap that drifts from its declaration is refused before the Pages build
+publishes it. `test/cases/333_homepage_narrative.sh` proves each check by breaking it.
+
+To add a homepage section: write it in `index.html` with an `id`, put that id where it belongs
+in `homepage.toml`'s `order`, and give it a link or a derived figure. To unlist a section's
+detail pages: add its name to `[indexing] unlisted`.
+
 ## What is refused
 
 - A reference that resolves to nothing. The message names the file, the key and the

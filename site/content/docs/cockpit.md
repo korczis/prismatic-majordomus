@@ -16,7 +16,7 @@ document and a Swagger UI over it. The Cockpit is the same server answering a pe
 It is a **projection**, in this repository's sense of the word: one more thing derived from
 the canonical capability declarations and the index, holding no model, no catalogue and no
 verdict of its own. The decision is
-[ADR 12](../.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md); the rules
+[ADR 12](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md); the rules
 it is bound by are `project.interfaces-are-projections`,
 `project.rust-canonical-declaration`, `project.rust-benchmark-coverage` and
 `project.rust-hot-path`. Behaviour as implemented and tested; where this document and the
@@ -499,7 +499,7 @@ what would change the trade — "when something genuinely long-running arrives, 
 will be worth its own decision, and the typed event envelope belongs in that decision rather
 than ahead of it".
 
-That arrived, and that is [ADR 22](../.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md):
+That arrived, and that is [ADR 22](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md):
 a capability that reads every file of the layer takes long enough to watch rather than wait
 for, so an **execution** has an identity, typed events and a live channel at `GET /events`
 ([`EXECUTIONS.md`](@/docs/executions.md)). What did *not* change is the trade the paragraph
