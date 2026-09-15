@@ -25,7 +25,7 @@ second not at all.
 ## How it works
 
 `crate::rules` is the one typed reading of the rule corpus, and it joins the declaration to
-the tree and to the ledger of recorded executions that [`EVIDENCE.md`](../EVIDENCE.md)
+the tree and to the ledger of recorded executions that [`EVIDENCE.md`](@/docs/evidence.md)
 describes. It does not re-implement evidence: a rule's test-level proof *is* that
 vocabulary, and a second one would be a second answer to the same question.
 

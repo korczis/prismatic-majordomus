@@ -285,6 +285,12 @@ gates:
     runs: scripts/ci/entry-converges --no-suite
     summary: entry by a shell starts nothing and builds nothing, the start event ensures the server where the policy says it does, the briefing has one author and the lease one typed reader, and a server nobody owns has a bounded life
 
+  - id: step-bound
+    job: structure
+    always: true
+    runs: scripts/ci/step-bound-check
+    summary: every timed step of a workflow declares a bound, and every bound is smaller than the bound of the job that runs it, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation
+
   - id: github-projection
     job: structure
     runs: scripts/ci/github-check
@@ -310,6 +316,14 @@ gates:
     requires: [site-build]
     runs: SITE_PROBE_JOBS=4 scripts/site-probe
     summary: every route at three widths in a real browser, the menu, the dropdown, the theme toggle, the diagrams
+
+  # Every interactive control on every page of the built site, exercised in a browser by the behaviour spec
+  # that claims it (project.every-link-and-control-is-tested). A job of its own: the site job's browser
+  # steps already use its whole bound, and a gate that shares a job which never finishes enforces nothing.
+  - id: interaction-probe
+    job: interactions
+    runs: scripts/site-build --no-data && scripts/interaction-probe
+    summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
 
   - id: ui-audit
     job: site
@@ -522,8 +536,8 @@ classes:
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
-    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design, nav-check]
+    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs, scripts/interaction-probe, scripts/lib/interactions.mjs, scripts/lib/interaction-specs/**, scripts/lib/browser.mjs, scripts/lib/project-links.awk]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design, nav-check, interaction-probe]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and
@@ -563,5 +577,5 @@ classes:
   # project.accumulation-is-measured). Narrow on purpose: the rule's own file is named here
   # rather than the whole rules tree, so a change to one rule does not escalate every plan.
   - id: backlog
-    paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh]
+    paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
     gates: [backlog-hygiene, shell-lint, shell-suite]

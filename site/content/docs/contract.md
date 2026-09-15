@@ -10,11 +10,11 @@ source = "AGENTS.md"
 
 This file is a bootstrap, not the rulebook. Read `README.md` for what this
 repository is. The provider-neutral AI context and governance layer lives under
-[`.ai/`](.ai/), and everything normative is there.
+[`.ai/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai), and everything normative is there.
 
 Before substantive planning, implementation, review or repository mutation:
 
-1. read [`.ai/README.md`](.ai/README.md) and follow its discovery protocol,
+1. read [`.ai/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/README.md) and follow its discovery protocol,
 2. load the effective rules under `.ai/repo/rules/` and resolve their dependencies,
 3. load only the skills, workflows and knowledge the task is about,
 4. never load `.ai/local/` implicitly; it is this checkout's own state and not context.

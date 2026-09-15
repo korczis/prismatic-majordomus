@@ -14,7 +14,7 @@ which surface may decide what, and how far the code is from that boundary today.
 The companion documents are [`DYNAMICITY.md`](@/docs/dynamicity.md), which decides where a *fact*
 lives, and [`CAPABILITIES.md`](@/docs/capabilities.md), which decides how an *operation* is
 declared. This document is the third of that set: it decides where a *semantic* lives. The
-decision is [ADR 0040](../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md);
+decision is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md);
 the rule is `project.development-semantics-are-canonical@1`.
 
 Every count in this document was measured. The commands are in
