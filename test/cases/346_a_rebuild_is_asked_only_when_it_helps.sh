@@ -91,3 +91,22 @@ echo "    a state that cannot be read is a refusal, not a blind request"
 grep -q 'scripts/pages rebuild' "$P" \
   || { echo "    nothing points a reader at the remedy; 'dispatch the workflow' is a loop when the tree is already right"; exit 1; }
 echo "    the errored verdict names the command that repairs it"
+
+# ---------------------------------------------------------------- 7. the scheduled path chooses
+# A remedy nothing calls is a remedy nobody has. The publisher's scheduled run finds a publication
+# owed and then has to choose: deploy when gh-pages does not carry the tree, ask for a rebuild when
+# it does and GitHub's build of it errored. Without the choice the loop redeploys an identical tree
+# every thirty minutes, achieving nothing while looking like it is trying — the 2026-09-10 shape,
+# where a built-then-errored commit left the site 27 minutes stale with every repository-owned
+# signal green.
+WF="$ROOT/.github/workflows/pages.yml"
+[ -f "$WF" ] || { echo "    the pages workflow is missing"; exit 1; }
+grep -q 'id: remedy' "$WF" \
+  || { echo "    the scheduled path does not choose a remedy: one cause would be treated as both"; exit 1; }
+awk '/id: remedy/{f=1} f{print} /^      - id: ask-rebuild/{exit}' "$WF" | grep -q 'pages built' \
+  || { echo "    the remedy is chosen without reading the build state"; exit 1; }
+awk '/id: ask-rebuild/{f=1} f{print} /^      - name:/{if(f) exit}' "$WF" | grep -q 'pages rebuild' \
+  || { echo "    nothing asks for a rebuild: the errored-build cause has no remedy wired"; exit 1; }
+grep -qE "steps\.remedy\.outputs\.remedy != 'rebuild'" "$WF" \
+  || { echo "    the deploy steps are not held off when the remedy is a rebuild: it would deploy and ask"; exit 1; }
+echo "    the scheduled path reads the state and chooses deploy or rebuild"

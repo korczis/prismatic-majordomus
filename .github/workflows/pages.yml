@@ -207,21 +207,39 @@ jobs:
           [ "$rc" = 0 ] && echo "owed=false" >> "$GITHUB_OUTPUT" || echo "owed=true" >> "$GITHUB_OUTPUT"
           echo "gate_rc=$rc" >> "$GITHUB_OUTPUT"
 
+      # An owed publication has two causes and two remedies, and only the state says which. If
+      # gh-pages does not carry this tree, deploying is the fix. If gh-pages is right and
+      # GitHub's own builder errored, deploying an identical tree achieves nothing — the loop
+      # would go round every thirty minutes for ever, looking like it was trying. Asked through
+      # `pages built`, the one place this repository reads that state.
+      - id: remedy
+        if: github.event_name == 'schedule' && steps.publication-owed.outputs.owed == 'true'
+        run: |
+          state="$(scripts/pages built --porcelain 2>/dev/null | cut -f1)"
+          if [ "$state" = errored ]; then echo "remedy=rebuild" >> "$GITHUB_OUTPUT"
+          else echo "remedy=deploy" >> "$GITHUB_OUTPUT"; fi
+          echo "the publication is owed; GitHub's build of gh-pages is ${state:-unreadable}, so the remedy is $( [ "$state" = errored ] && echo rebuild || echo deploy )"
+
+      # the remedy for a build that errored on a tree that is already right
+      - id: ask-rebuild
+        if: steps.remedy.outputs.remedy == 'rebuild'
+        run: scripts/pages rebuild
+
       # the committed derived data proved current by hash, then rendered; no generation
       - name: build
-        if: github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true'
+        if: (github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true') && steps.remedy.outputs.remedy != 'rebuild'
         timeout-minutes: 3
         run: scripts/pages build
 
       # every static check over the output; the browser probe stays in validate.yml
       - name: check
-        if: github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true'
+        if: (github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true') && steps.remedy.outputs.remedy != 'rebuild'
         timeout-minutes: 3
         run: scripts/pages check
 
       # the one deploy path, the same script a person runs
       - name: publish
-        if: github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true'
+        if: (github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true') && steps.remedy.outputs.remedy != 'rebuild'
         id: publish
         timeout-minutes: 3
         env:
@@ -248,7 +266,7 @@ jobs:
       # never happened is the `pages-live` gate of .ai/repo/ci/gates.yaml, which reads the
       # live site on the next validation run and is not advisory.
       - id: public
-        if: github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true'
+        if: (github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true') && steps.remedy.outputs.remedy != 'rebuild'
         continue-on-error: true
         timeout-minutes: 11
         run: |
