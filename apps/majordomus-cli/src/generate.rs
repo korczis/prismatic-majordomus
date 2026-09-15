@@ -1399,6 +1399,7 @@ pub fn benchmark_matrix(ctx: &Context) -> String {
                 Some(CoverageState::Covered) => "covered".into(),
                 Some(CoverageState::Missing) => "**missing**".into(),
                 Some(CoverageState::Waived) => "waived".into(),
+                Some(CoverageState::Inapplicable) => "inapplicable".into(),
                 None => "—".into(),
             }
         };
@@ -1585,6 +1586,7 @@ pub fn benchmark_document(ctx: &Context) -> Value {
                 "covered": t.covered,
                 "missing": t.missing,
                 "waived": t.waived,
+                "inapplicable": t.inapplicable,
             })
         })
         .collect();
@@ -1603,6 +1605,7 @@ pub fn benchmark_document(ctx: &Context) -> Value {
                     Some(CoverageState::Covered) => "covered",
                     Some(CoverageState::Missing) => "missing",
                     Some(CoverageState::Waived) => "waived",
+                    Some(CoverageState::Inapplicable) => "inapplicable",
                     None => "none",
                 }
             };
@@ -2590,6 +2593,9 @@ fn cache_cell(policy: crate::capability::CachePolicy) -> String {
 fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
     match policy {
         crate::capability::BenchmarkPolicy::Required => "required".into(),
+        crate::capability::BenchmarkPolicy::RequiredWhen { precondition } => {
+            format!("required when {}", enum_name(precondition))
+        }
         crate::capability::BenchmarkPolicy::Waived { reason } => {
             format!("waived ({})", enum_name(reason))
         }
