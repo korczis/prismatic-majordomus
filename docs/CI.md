@@ -136,7 +136,7 @@ scripts/ci/shell-lint                  # syntax and shellcheck over the tool, th
 scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, references, site data
 scripts/ci/providers-check             # one provider declaration, every projection current, no provider list by hand
 scripts/ci/worktree-check              # one constant, the guard wired, every document naming the same container
-MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
+MJ_TEST_JOBS=4 bash test/run.sh --no-skips   # the behavioural suite, four cases at a time, as CI runs it
 scripts/rust-check --ci                # every Rust gate but coverage; the benchmark comparison is macOS's
 scripts/rust-check --integration       # the executable built and the registry checks only
 just coverage                          # coverage with test code out of the denominator, against
@@ -157,6 +157,34 @@ case's whole log before its line. Without `MJ_TEST_JOBS` it runs serially, strea
 it always has. The semantics are the serial runner's: a failing case turns the run red, a
 filter that matches nothing is a usage error, an empty case directory is a usage error, and
 `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the summary.
+
+## A skipped case is not a pass
+
+A case that cannot run where it is (a tool it needs is absent: `jq`, `zola`, `zsh`, a
+browser, the Rust executable) ends through `skip_case "<reason>"` from `test/lib.sh`. That
+prints the reason and exits 77, the automake convention for "this test did not run". Nothing
+else in a case exits 77, and no case skips with `exit 0`.
+
+`test/run.sh` reports such a case as `SKIP <name>` — never `ok` — counts it apart
+(`tests: N passed, M failed, K skipped`), names every one on a `skipped:` line, and writes
+`SKIP` as its result in `MJ_TEST_REPORT`. What a skip does to the run is a flag, not a guess
+about the environment:
+
+| invocation | a skipped case |
+|---|---|
+| `bash test/run.sh` (a person, locally) | reported loudly, the run does not fail on it |
+| `bash test/run.sh --no-skips` (CI, every invocation) | `FAIL <name> (skipped under --no-skips ...)`, and the run exits non-zero |
+
+The flag is explicit rather than inferred from `CI=true` so the invocation says what it
+proves: a person reproduces CI's verdict by typing the same command, and a runner whose
+environment lacks a variable cannot quietly relax it. `majordomus doctor` fails the doctrine
+wiring when any `bash test/run.sh` line of `.github/workflows/validate.yml` lacks
+`--no-skips`, and `test/cases/371_a_skipped_case_is_not_a_pass.sh` proves both halves of the
+contract. So the jobs that run the suite install what the cases need rather than exempting a
+case: the suite job installs `zsh` beside `zola`, the site dependencies, `just` and the
+executable. Before this, 57 cases printed "skipping" and exited 0, the runner counted them
+as passed, and a runner without `jq` would have validated them green with no assertion run
+(`project.never-reported-is-not-green`, `project.empty-is-not-failure`).
 
 The jobs that run the suite check out the whole history: a case that clones the checkout
 into a fixture and pushes cannot push a shallow clone. So does the `rust` job, for the
@@ -387,8 +415,8 @@ just ci-full                                        # every gate
 scripts/rust-check --ci                             # the Rust gate as CI runs it
 just coverage
 scripts/site-build && scripts/site-check && SITE_PROBE_JOBS=4 scripts/site-probe
-MJ_TEST_JOBS=4 bash test/run.sh                     # the suite in parallel
-bash test/run.sh                                    # serially
+MJ_TEST_JOBS=4 bash test/run.sh --no-skips          # the suite in parallel, a skip failing it as in CI
+bash test/run.sh                                    # serially; a skip is reported, not failed
 scripts/ci-baseline --runs 10                       # record what GitHub observed
 ```
 

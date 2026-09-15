@@ -31,7 +31,7 @@
 # is ended through the lease of its own checkout.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip_case "jq not installed"
 LAUNCHER="$ROOT/bin/majordomus-mcp"
 [ -x "$LAUNCHER" ] || { echo "    bin/majordomus-mcp is missing or not executable"; exit 1; }
 

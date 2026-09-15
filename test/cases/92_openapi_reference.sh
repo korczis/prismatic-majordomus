@@ -12,7 +12,7 @@
 #
 # Skips itself when cargo is absent, as the site cases do for zola.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
+command -v cargo >/dev/null 2>&1 || skip_case "cargo not installed"
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj92.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }

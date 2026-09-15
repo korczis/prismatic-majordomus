@@ -70,7 +70,7 @@ else fail "no ADR under .ai/repo/adrs names the $suffix convention"; fi
 # 4. the behavioural case, through the built executable
 if [ "$SUITE" = 1 ]; then
   if [ -f test/cases/96_worktree_topology.sh ]; then
-    if bash test/run.sh 96_worktree_topology; then ok "test/cases/96_worktree_topology.sh passes"
+    if bash test/run.sh --no-skips 96_worktree_topology; then ok "test/cases/96_worktree_topology.sh passes"
     else fail "test/cases/96_worktree_topology.sh fails"; fi
   else fail "test/cases/96_worktree_topology.sh is missing"; fi
 fi

@@ -7,7 +7,7 @@
 # This case works on a copy of the repository, because it deliberately breaks the command
 # surface and must not do that to the checkout it runs from.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip_case "jq absent"
 
 C="$T/copy"
 fixture_repo "$C" AGENTS.md docs site/data/marketing.toml site/data/nav.toml site/content-src test/cases test/lib.sh
@@ -53,7 +53,7 @@ printf '%s\n' "$out" | grep -q 'futurecmd' || {
   echo "    the registry failure does not name futurecmd"; printf '%s\n' "$out" | sed 's/^/      | /'; exit 1; }
 
 # ---- give it a registry entry, and the next surface is named ---------------------------
-python3 - "$C/share/commands.yaml" <<'PY' 2>/dev/null || { echo "    python3 absent; cannot complete the staged proof"; exit 0; }
+python3 - "$C/share/commands.yaml" <<'PY' 2>/dev/null || skip_case "python3 absent; cannot complete the staged proof"
 import sys
 p = sys.argv[1]
 s = open(p).read()

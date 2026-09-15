@@ -214,18 +214,25 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: just
+      # zsh is not on the Ubuntu image, and 102_completion_shell loads the completion into a
+      # real zsh. It used to skip here with exit 0, which the runner counted as a pass; under
+      # --no-skips a skip fails, so the tool the case needs is installed instead.
+      - name: the shells the cases drive
+        run: command -v zsh >/dev/null 2>&1 || { sudo apt-get update -q && sudo apt-get install -y -q zsh; }
       - name: the executable, built once for every case
         run: |
           RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
           echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       # The one canonical validation surface. Every behavioural, negative and integration
       # case runs here; nothing is skipped, and no failure is swallowed. test/run.sh exits
-      # non-zero when any case fails, and this step has no `|| true` to hide it.
+      # non-zero when any case fails, and this step has no `|| true` to hide it. --no-skips
+      # makes a case that skipped itself (skip_case, exit 77) a failure too: a runner without
+      # a tool a case needs is red, not green (doctor asserts the flag is here).
       - name: behavioural tests
         env:
           MJ_TEST_JOBS: 4
           MJ_TEST_REPORT: suite.tsv
-        run: bash test/run.sh
+        run: bash test/run.sh --no-skips
       - if: always()
         run: scripts/ci/summary --job suite --report suite.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
       - if: always()
@@ -518,7 +525,7 @@ jobs:
         env:
           MJ_TEST_JOBS: 3
           MJ_TEST_REPORT: suite.tsv
-        run: bash test/run.sh
+        run: bash test/run.sh --no-skips
       - name: the crate's suites
         run: RUSTFLAGS='' cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
       - if: always()

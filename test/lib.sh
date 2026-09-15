@@ -1,5 +1,20 @@
 # Sourced by every test case. Provides expect_exit / expect_grep / expect_no_grep.
 LAST_OUT=""
+# A case that cannot run here says so and ends with the skip status, never with exit 0.
+#
+#   command -v jq >/dev/null 2>&1 || skip_case "jq absent"
+#
+# 57 cases used to print "skipping" and `exit 0`, and test/run.sh counted exit 0 as a pass:
+# on a machine or a runner without jq or zola the required evidence of those cases went
+# green without a single assertion running. A skipped case is not evidence. 77 is the
+# automake convention for "this test did not run"; test/run.sh reports it as SKIP, counts
+# it apart from the passes, and with --no-skips (which CI passes) fails the run on it.
+# The status is the contract, so nothing else in a case may exit 77.
+MJ_SKIP_STATUS=77
+skip_case() {
+  printf '    SKIP: %s\n' "${1:-no reason given}"
+  exit "$MJ_SKIP_STATUS"
+}
 expect_exit() {
   local want="$1"; shift
   local got=0
@@ -93,7 +108,7 @@ rust_bin() {
 }
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
-rust_bin_exit() { [ "$1" = 3 ] && { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }; exit 1; }
+rust_bin_exit() { [ "$1" = 3 ] && skip_case "no cargo and no MAJORDOMUS_BIN"; exit 1; }
 
 # The whole workflow declaration of this repository, written to a file a case can grep.
 #

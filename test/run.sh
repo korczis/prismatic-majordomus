@@ -5,6 +5,9 @@
 #
 #   bash test/run.sh                    every case, one after the other, output streamed
 #   bash test/run.sh <name>             one case (a name that matches nothing is exit 2)
+#   bash test/run.sh --no-skips [<name>]
+#                                       a skipped case fails the run. CI passes this flag on
+#                                       every invocation of the suite (doctor asserts it)
 #   MJ_TEST_JOBS=4 bash test/run.sh     bounded parallel run: four cases at a time, each
 #                                       with its own log; then the cases that declare
 #                                       "# majordomus-exclusive: <reason>" one at a time;
@@ -28,10 +31,18 @@
 # site/public, the derived-artifacts case edits and regenerates a document) says so with the
 # exclusive header and runs alone. The parallel phase proves the invariant: when it leaves
 # `git status` of the checkout changed, the run fails naming the paths.
+#
+# A skipped case is not a pass. A case that cannot run here (a tool it needs is absent) ends
+# through `skip_case "<reason>"` in test/lib.sh, which exits 77, the automake convention.
+# The runner reports it as `SKIP`, counts it apart from the passes, names it in the summary
+# and writes `SKIP` in the report. Locally a skip is loud but does not fail the run; with
+# `--no-skips` it does, and CI passes that flag, so a runner missing a tool turns red
+# instead of green. Before this, 57 cases printed "skipping" and exited 0, and the runner
+# counted them as passed: required evidence that never ran, reported as evidence.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
-pass=0; fail=0; failed_names=""
+pass=0; fail=0; skip=0; failed_names=""; skipped_names=""
 
 # ---------------------------------------------------------------- one case
 # Runs one case in a fresh repository. The case's output streams through; the status is
@@ -56,7 +67,8 @@ case_timeout() {
 }
 
 # Runs one case in a fresh repository. The case's output streams through; the status is
-# 0 passed, 1 failed, 2 the fixture could not be set up, 3 the bound fired.
+# 0 passed, 1 failed, 2 the fixture could not be set up, 3 the bound fired, 4 the case
+# skipped itself (it exited 77 through skip_case).
 run_case() {
   local case="$1" T rc=0 limit pid waited grace
   T="$(mktemp -d "${TMPDIR:-/tmp}/mj-test.XXXXXX")"
@@ -76,7 +88,7 @@ run_case() {
   pid=$!
   set +m
   if [ "$limit" = 0 ]; then
-    wait "$pid" || rc=1
+    wait "$pid" || rc=$?
   else
     waited=0
     while kill -0 "$pid" 2>/dev/null; do
@@ -94,9 +106,12 @@ run_case() {
       fi
       sleep 1; waited=$((waited+1))
     done
-    wait "$pid" || rc=1
+    wait "$pid" || rc=$?
   fi
   rm -rf "$T"
+  # the case's own status, folded: 77 is skip_case's and nothing else's; every other
+  # non-zero exit is a failure, whatever number the case happened to die with
+  case "$rc" in 0) ;; 77) rc=4 ;; *) rc=1 ;; esac
   return "$rc"
 }
 verdict() {   # name status seconds phase -> counts it, prints its line, records it
@@ -105,9 +120,16 @@ verdict() {   # name status seconds phase -> counts it, prints its line, records
     0) pass=$((pass+1)); echo "ok   $name" ;;
     2) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name (setup)" ;;
     3) fail=$((fail+1)); failed_names="$failed_names $name"; echo "TIMEOUT $name" ;;
+    4) skip=$((skip+1)); skipped_names="$skipped_names $name"
+       if [ "$no_skips" = 1 ]; then
+         fail=$((fail+1)); failed_names="$failed_names $name"
+         echo "FAIL $name (skipped under --no-skips: a skipped case is not evidence)"
+       else
+         echo "SKIP $name"
+       fi ;;
     *) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name" ;;
   esac
-  local word; case "$rc" in 0) word=ok ;; 3) word=TIMEOUT ;; *) word=FAIL ;; esac
+  local word; case "$rc" in 0) word=ok ;; 3) word=TIMEOUT ;; 4) word=SKIP ;; *) word=FAIL ;; esac
   [ -n "${report:-}" ] && printf '%s\t%s\t%s\t%s\n' "$name" "$word" "$sec" "$phase" >> "$report"
   return 0
 }
@@ -125,12 +147,22 @@ if [ "${MJ_TEST_WORKER:-}" = 1 ]; then
   case "$rc" in
     0) printf 'ok      %s  %ss\n' "$name" "$sec" ;;
     3) printf 'TIMEOUT %s  %ss\n' "$name" "$sec" ;;
+    4) printf 'SKIP    %s  %ss\n' "$name" "$sec" ;;
     *) printf 'FAIL    %s  %ss\n' "$name" "$sec" ;;
   esac
   exit 0
 fi
 
-only="${1:-}"
+only=""; no_skips=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --no-skips) no_skips=1 ;;
+    -*) echo "run.sh: unknown option '$1' (the one option is --no-skips)" >&2; exit 2 ;;
+    *) [ -z "$only" ] || { echo "run.sh: one case name at most, got '$only' and '$1'" >&2; exit 2; }
+       only="$1" ;;
+  esac
+  shift
+done
 jobs="${MJ_TEST_JOBS:-1}"
 case "$jobs" in ''|*[!0-9]*|0) echo "run.sh: MJ_TEST_JOBS must be a positive integer, got '$jobs'" >&2; exit 2 ;; esac
 report="${MJ_TEST_REPORT:-}"
@@ -185,15 +217,23 @@ else
     echo "FAIL run.sh: the checkout changed during the parallel phase: ${dirtied}— a case that writes into the checkout declares '# majordomus-exclusive: <reason>' and runs alone (or something else edited the checkout while the suite ran)"
   fi
 fi
-echo "tests: $pass passed, $fail failed"
+echo "tests: $pass passed, $fail failed, $skip skipped"
 [ -n "$failed_names" ] && echo "failed:$failed_names"
+if [ -n "$skipped_names" ]; then
+  echo "skipped:$skipped_names"
+  if [ "$no_skips" = 1 ]; then
+    echo "run.sh: $skip case(s) skipped under --no-skips, and each is counted as a failure: a skipped case is not evidence"
+  else
+    echo "run.sh: $skip case(s) did not run and proved nothing; their reasons are in their output. CI runs with --no-skips, where each of these fails" >&2
+  fi
+fi
 # A filter that matched nothing is not a pass. `run.sh 51_something` on a repository
 # without that case printed "0 passed, 0 failed" and exited 0, and that zero was read as
 # success — the same shape as a green CI that never ran the suite. Selecting a case that
 # does not exist is a usage error, not an empty success.
-if [ -n "$only" ] && [ "$pass" = 0 ] && [ "$fail" = 0 ]; then
+if [ -n "$only" ] && [ "$pass" = 0 ] && [ "$fail" = 0 ] && [ "$skip" = 0 ]; then
   echo "run.sh: no case matches '$only' (test/cases/$only.sh does not exist)" >&2
   exit 2
 fi
-[ "$pass" = 0 ] && [ "$fail" = 0 ] && { echo "run.sh: no cases found in $ROOT/test/cases" >&2; exit 2; }
+[ "$pass" = 0 ] && [ "$fail" = 0 ] && [ "$skip" = 0 ] && { echo "run.sh: no cases found in $ROOT/test/cases" >&2; exit 2; }
 [ "$fail" = 0 ]

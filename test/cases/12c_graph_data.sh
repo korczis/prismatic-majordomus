@@ -3,7 +3,7 @@
 # a removed state reference removes one, and a claim's evidence reaches its test node. A graph
 # that survives those edits unchanged would be a hand-written picture wearing a JSON coat.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip_case "jq absent"
 fixture_repo "$T" AGENTS.md docs
 mkdir -p "$T/site/data" "$T/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$T/site/data/"; cp -R "$ROOT/site/content-src" "$T/site/"; cp -R "$ROOT/test/cases" "$T/test/"
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture

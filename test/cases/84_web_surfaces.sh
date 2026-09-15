@@ -10,7 +10,7 @@
 "$MJ" init >/dev/null
 "$MJ" update >/dev/null
 git add -A >/dev/null; git commit -qm base
-BIN="$(rust_bin)" || { echo "    no toolchain; skipping"; exit 0; }
+BIN="$(rust_bin)" || skip_case "no toolchain"
 # the executable reads its kinds and schemas from the distribution it was built beside
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 

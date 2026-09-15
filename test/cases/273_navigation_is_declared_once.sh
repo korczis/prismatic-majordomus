@@ -20,8 +20,8 @@
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/nav-check"
 [ -x "$GATE" ] || { echo "    $GATE is not executable"; exit 1; }
-command -v python3 >/dev/null 2>&1 || { echo "    python3 absent; skipping"; exit 0; }
-python3 -c 'import tomllib' 2>/dev/null || { echo "    python3 has no tomllib; skipping"; exit 0; }
+command -v python3 >/dev/null 2>&1 || skip_case "python3 absent"
+python3 -c 'import tomllib' 2>/dev/null || skip_case "python3 has no tomllib"
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj-273.XXXXXX")"
 trap 'rm -rf "$S"' EXIT

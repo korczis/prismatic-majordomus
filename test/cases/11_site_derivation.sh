@@ -1,6 +1,6 @@
 # The critical regeneration test: change one canonical value; the derived data and content change with it.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip_case "jq absent"
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 "$T/scripts/generate-site-data" >/dev/null; cp -R "$T/site/data/generated" "$T/before"

@@ -22,8 +22,7 @@ P="$ROOT/scripts/site-probe"
 # 1. the probe agrees with fixtures whose answer is known
 out=0; "$P" --self-check > self.txt 2>&1 || out=$?
 if grep -q '^SKIP site-probe' self.txt; then
-  echo "    skip: $(cat self.txt)"
-  exit 0
+  skip_case "$(cat self.txt)"
 fi
 [ "$out" = 0 ] || { echo "    site-probe --self-check exited $out:"; sed 's/^/    | /' self.txt; exit 1; }
 for f in scroller escapee positioned prescroller; do

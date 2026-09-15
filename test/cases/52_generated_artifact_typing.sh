@@ -10,7 +10,7 @@
 # is real YAML and decodes to the same document as its `.json` sibling, read by a YAML
 # parser this repository does not own.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip_case "jq absent"
 MAN="$ROOT/docs/generated/artifacts.json"
 expect_file "$MAN"
 

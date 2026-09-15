@@ -8,9 +8,9 @@
 # Needs a browser scripts/lib/browser.mjs can launch (the installed Chrome, which CI's runners carry, or
 # Playwright's Chromium). Without one it skips locally and fails under CI=true.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || { echo "    skip: no node"; exit 0; }
+command -v node >/dev/null 2>&1 || skip_case "no node"
 [ -d "$ROOT/node_modules/playwright" ] && [ -d "$ROOT/node_modules/axe-core" ] || {
-  echo "    skip: playwright and axe-core are not installed (npm ci)"; exit 0; }
+  skip_case "playwright and axe-core are not installed (npm ci)"; }
 
 mkdir -p www/throws www/quiet
 # an empty icon, so the browser asks for no /favicon.ico: that request's 404 is a console error of its own, and
@@ -51,7 +51,7 @@ node audit.mjs > audit.out 2>&1 || { cat audit.out; echo "    the audit fixture 
 if grep -q '^NO-BROWSER$' audit.out; then
   # a behaviour nobody ran is not a behaviour that holds: under CI a missing browser is a failure
   [ "${CI:-}" = true ] && { echo "    no browser could be started under CI"; exit 1; }
-  echo "    skip: no browser could be started (install Chrome, or: npx playwright install chromium)"; exit 0
+  skip_case "no browser could be started (install Chrome, or: npx playwright install chromium)"
 fi
 # on a failure the case shows what the audit saw, so a runner's answer is read rather than guessed at
 grep -q '^/throws/ runtime findings 1$' audit.out && grep -q '^/quiet/ runtime findings 0$' audit.out || { echo "    the audit reported:"; sed 's/^/      /' audit.out; }
