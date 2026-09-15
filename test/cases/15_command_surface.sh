@@ -83,9 +83,9 @@ done
 
 # the read-only commands stay read-only: nothing under state/ changes when they run
 "$MJ" update >/dev/null
-before="$(find .ai/local/state -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
+before="$(find .ai/local/state -type f -print0 | mj_sha256_xargs -0 | LC_ALL=C sort)"
 for c in doctor watch context history search; do
   "$MJ" "$c" x >/dev/null 2>&1 || true
 done
-after="$(find .ai/local/state -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
+after="$(find .ai/local/state -type f -print0 | mj_sha256_xargs -0 | LC_ALL=C sort)"
 [ "$before" = "$after" ] || { echo "    a read-only command wrote to .ai/local/state"; exit 1; }

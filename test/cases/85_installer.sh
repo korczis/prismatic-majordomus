@@ -106,11 +106,6 @@ serve_malicious() { # <archive built at $T/evil.tar.gz>
   sed -e "s/\"sha256\": \"[0-9a-f]\{64\}\"/\"sha256\": \"$sha\"/" \
       -e "s/\"size\": [0-9]*/\"size\": $size/" "$T/latest.good" > "$FIX/releases/latest.json"
 }
-sha256_of_file() {
-  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
-  elif command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | cut -d' ' -f1
-  else openssl dgst -sha256 "$1" | sed 's/.*= //'; fi
-}
 
 mkdir -p "$T/mal/elsewhere" && echo pwned > "$T/mal/elsewhere/evil"
 ( cd "$T/mal" && tar -czf "$T/evil.tar.gz" elsewhere )

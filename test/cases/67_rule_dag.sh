@@ -294,15 +294,15 @@ NEWER="$(mktemp -d "${TMPDIR:-/tmp}/mj-newer.XXXXXX")"
 cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$NEWER/"
 pkg="$NEWER/share/standard/majordomus"
 sed 's/^description: .*$/description: The next revision says this differently./' "$pkg/rules/scope-integrity.v1.md" > "$T/r.md" && mv "$T/r.md" "$pkg/rules/scope-integrity.v1.md"
-newhash="$(shasum -a 256 "$pkg/rules/scope-integrity.v1.md" | cut -d' ' -f1)"
+newhash="$(sha256_of_file "$pkg/rules/scope-integrity.v1.md")"
 awk -v h="$newhash" '
   /^    file: rules\/scope-integrity\.v1\.md$/ { print; hit=1; next }
   hit && /^    sha256: / { print "    sha256: " h; hit=0; next }
   /^version: 1$/ { print "version: 2"; next }
   /^source_revision: / { print "source_revision: next"; next }
   { print }' "$pkg/manifest.yaml" > "$T/m.yaml" && mv "$T/m.yaml" "$pkg/manifest.yaml"
-before_vendor="$(cd "$V" && find . -type f | LC_ALL=C sort | xargs shasum -a 256)"
-before_project="$(cd "$P" && find . -type f | LC_ALL=C sort | xargs shasum -a 256)"
+before_vendor="$(cd "$V" && find . -type f | LC_ALL=C sort | mj_sha256_xargs)"
+before_project="$(cd "$P" && find . -type f | LC_ALL=C sort | mj_sha256_xargs)"
 # the newer executable reports the difference
 expect_exit 11 "$NEWER/bin/majordomus" rules vendor status
 expect_grep '^vendored: +1 \([0-9.]+\)$'
@@ -314,13 +314,13 @@ expect_grep 'The next revision says this differently'
 expect_grep '^-source_revision: 0\.1\.0|^\+source_revision: next'
 # and applied nothing: the vendor copy is byte for byte what it was, and the set the newer
 # executable reads is the repository's, not its own
-[ "$before_vendor" = "$(cd "$V" && find . -type f | LC_ALL=C sort | xargs shasum -a 256)" ] || { echo "    a read-only vendor command changed the vendor directory"; exit 1; }
+[ "$before_vendor" = "$(cd "$V" && find . -type f | LC_ALL=C sort | mj_sha256_xargs)" ] || { echo "    a read-only vendor command changed the vendor directory"; exit 1; }
 expect_exit 0 "$NEWER/bin/majordomus" rules show majordomus.scope-integrity
 expect_no_grep 'The next revision says this differently' || { echo "    rules show read the distribution, not the repository"; exit 1; }
 # every other command of the newer executable also leaves the baseline alone
 expect_exit 0 "$NEWER/bin/majordomus" update
 "$NEWER/bin/majordomus" doctor >/dev/null 2>&1 || true
-[ "$before_vendor" = "$(cd "$V" && find . -type f | LC_ALL=C sort | xargs shasum -a 256)" ] || { echo "    update or doctor changed the vendored baseline"; exit 1; }
+[ "$before_vendor" = "$(cd "$V" && find . -type f | LC_ALL=C sort | mj_sha256_xargs)" ] || { echo "    update or doctor changed the vendored baseline"; exit 1; }
 # the explicit update applies it, atomically, and only under vendor/
 expect_exit 0 "$NEWER/bin/majordomus" rules vendor update
 expect_grep '^vendored 2 \(next\) into \.ai/repo/rules/vendor/majordomus$'
@@ -328,7 +328,7 @@ expect_exit 0 "$NEWER/bin/majordomus" rules vendor status
 expect_grep '^vendored: +2 \(next\)$'
 expect_grep '^state: +current$'
 diff -rq "$V" "$pkg" >/dev/null || { echo "    the vendored package is not the distribution's package after update"; exit 1; }
-[ "$before_project" = "$(cd "$P" && find . -type f | LC_ALL=C sort | xargs shasum -a 256)" ] || { echo "    vendor update touched rules/project/"; exit 1; }
+[ "$before_project" = "$(cd "$P" && find . -type f | LC_ALL=C sort | mj_sha256_xargs)" ] || { echo "    vendor update touched rules/project/"; exit 1; }
 for s in "$V"/../.vendor.*; do [ -e "$s" ] && { echo "    vendor update left its staging directory behind"; exit 1; }; done
 expect_exit 0 "$NEWER/bin/majordomus" rules show majordomus.scope-integrity
 expect_grep 'The next revision says this differently' || { echo "    the updated rule is not what show reads"; exit 1; }

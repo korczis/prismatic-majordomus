@@ -50,13 +50,15 @@ fixture() {
     excludes) cat > "$dir/scripts/generate-site-data" <<'GEN'
 #!/usr/bin/env bash
 [ "${1:-}" = --fingerprint ] || exit 2
-find . -type f -not -path './.git/*' -not -path './.ai/local/*' | LC_ALL=C sort | shasum -a 256 | cut -d' ' -f1
+find . -type f -not -path './.git/*' -not -path './.ai/local/*' | LC_ALL=C sort \
+  | if command -v sha256sum >/dev/null 2>&1; then sha256sum; else openssl dgst -sha256 -r; fi | cut -d' ' -f1
 GEN
       ;;
     includes) cat > "$dir/scripts/generate-site-data" <<'GEN'
 #!/usr/bin/env bash
 [ "${1:-}" = --fingerprint ] || exit 2
-find . -type f -not -path './.git/*' | LC_ALL=C sort | shasum -a 256 | cut -d' ' -f1
+find . -type f -not -path './.git/*' | LC_ALL=C sort \
+  | if command -v sha256sum >/dev/null 2>&1; then sha256sum; else openssl dgst -sha256 -r; fi | cut -d' ' -f1
 GEN
       ;;
   esac

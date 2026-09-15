@@ -58,12 +58,12 @@ required="$(jq '.tallies.total.required' "$S/coverage.json")"
 [ "$(jq '[.lines[] | select(.state == "waived" and ((.reason // "") | length) == 0)] | length' "$S/coverage.json")" = 0 ] || { echo "    a waived line carries no reason"; exit 1; }
 
 # --- a benchmark run is a versioned document, written under the local half, never under the tree
-before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+before="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 "$RB" bench objects.get --transport direct --profile quick --format json 2>/dev/null > "$S/run.json" || { echo "    bench failed"; exit 1; }
 jq -e '.schema == "majordomus/benchmark-result/v1" and .profile == "quick" and (.results | length) >= 1 and .results[0].key == "objects.get|direct|first-object" and all(.results[]; (.key | startswith("objects.get|direct|")) and .stats.samples > 0) and (.provenance.registry_fingerprint | length) == 64' "$S/run.json" >/dev/null \
   || { echo "    the run is not a result document"; cat "$S/run.json"; exit 1; }
 ls .ai/local/benchmarks/*-quick.json >/dev/null 2>&1 || { echo "    the run was not written under .ai/local/benchmarks/"; exit 1; }
-after="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+after="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 [ "$before" = "$after" ] || { echo "    benchmarking changed the tracked tree"; git status --porcelain; exit 1; }
 # no baseline for this platform yet: a check compares nothing and passes; a baseline is recorded explicitly
 expect_exit 0 "$RB" bench objects.get --transport direct --profile quick --check --no-write

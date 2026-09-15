@@ -46,10 +46,10 @@ expect_grep '^<!-- majordomus:begin [0-9a-f]{12} [0-9a-f]{16} -->$' CLAUDE.md
 [ ! -e .ai/repo/generated ] || { echo "    a fingerprint file was written"; exit 1; }
 
 # deterministic: a second update changes nothing
-after="$(shasum -a 256 CLAUDE.md | cut -d' ' -f1)"
+after="$(sha256_of_file CLAUDE.md)"
 expect_exit 0 "$MJ" update
 expect_grep '^unchanged CLAUDE.md$'
-[ "$(shasum -a 256 CLAUDE.md | cut -d' ' -f1)" = "$after" ] || { echo "    update was not idempotent"; exit 1; }
+[ "$(sha256_of_file CLAUDE.md)" = "$after" ] || { echo "    update was not idempotent"; exit 1; }
 expect_exit 0 "$MJ" watch
 expect_grep 'OK   projection +CLAUDE.md — region matches its stamp'
 

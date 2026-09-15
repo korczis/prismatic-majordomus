@@ -28,7 +28,7 @@ expect_grep "unrecognized subcommand 'nonsense'"
 git add -A >/dev/null && git commit -qm install
 # without a distribution nothing starts, and the search is named
 ( unset MAJORDOMUS_SHARE; expect_exit 12 "$RB" mcp --inspect; expect_grep 'no share directory holds kinds.yaml' ) || exit 1
-before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+before="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 expect_exit 0 "$RB" mcp --inspect
 expect_grep '^state       ok$'
 expect_grep '^resource    majordomus://policy/\.ai/repo/policy\.yaml$'
@@ -95,7 +95,7 @@ sed -n 6p "$S/session.out" | jq -j '.result.structuredContent.content' > "$S/get
 sed -n 7p "$S/session.out" | jq -j '.result.contents[0].text' > "$S/read2.txt"
 cmp -s "$S/get.txt" "$S/read2.txt" || { echo "    majordomus_get and resources/read disagree on majordomus://repository"; exit 1; }
 # nothing changed
-after="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+after="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 [ "$before" = "$after" ] || { echo "    serving changed the repository"; git status --porcelain; exit 1; }
 
 # --- data-driven: a rule added to the layer is served, with no change to the executable

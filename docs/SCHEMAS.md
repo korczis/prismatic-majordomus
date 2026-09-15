@@ -1422,7 +1422,7 @@ layer; never a baseline.
 
 `status` is `ok`, `setup-failed`, or `exit-<code>` when the command exited with a code its
 scenario does not accept. Percentiles are nearest-rank over the sorted samples. `clock`
-names the source of the milliseconds (`epochrealtime`, `perl` or `seconds`).
+names the source of the milliseconds (`epochrealtime` or `seconds`).
 
 ## `baseline.json` under `.ai/repo/benchmarks/` — the accepted baseline
 

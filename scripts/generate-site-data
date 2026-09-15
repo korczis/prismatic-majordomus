@@ -232,7 +232,7 @@ jq -n --arg name "Prismatic Majordomus" --arg short "Majordomus" --arg version "
   --arg release "$RELEASE" \
   --argjson commands "$COMMANDS" --argjson exit_codes "$EXIT_CODES" \
   '{schema: 1, name: $name, short_name: $short, version: $version, release: $release, tagline: $tagline, license: $license,
-    repository_url: $repo, requirements: ["bash 3.2 or newer", "git", "sha256sum or shasum"],
+    repository_url: $repo, requirements: ["bash 3.2 or newer", "git", "sha256sum or openssl"],
     commands: $commands, exit_codes: $exit_codes}' > "$OUT/project.json"
 
 mj_phase_end "gen:project.json" "$GEN_T0"

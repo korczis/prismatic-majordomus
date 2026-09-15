@@ -30,6 +30,8 @@ set -eu
 set -o pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
+# shellcheck source=../../lib/sha256.sh
+. "$ROOT/lib/sha256.sh"
 SCHEMA='majordomus.capture/v1'
 fails=0
 ok()  { printf 'OK   %-16s %s\n' "$1" "$2"; }
@@ -78,10 +80,12 @@ ARCHIVE=".ai/local/prompts"
 if [ -d "$ARCHIVE" ] && [ -n "$(find "$ARCHIVE" -maxdepth 1 -type f -name '*.json' -print -quit 2>/dev/null)" ]; then
   sums="$(mktemp "${TMPDIR:-/tmp}/mj.pp.XXXXXX")"
   trap 'rm -f "$sums"' EXIT
-  find "$ARCHIVE" -maxdepth 1 -type f -exec shasum -a 256 {} + 2>/dev/null | cut -d' ' -f1 | LC_ALL=C sort -u > "$sums" || : > "$sums"
+  # no digest tool is a refusal: an empty set of sums would read as "nothing matched"
+  mj_sha256_tool 2>/dev/null || { echo "prompt-privacy: $MJ_SHA256_MISSING" >&2; exit 12; }
+  find "$ARCHIVE" -maxdepth 1 -type f -print0 2>/dev/null | mj_sha256_xargs -0 2>/dev/null | cut -d' ' -f1 | LC_ALL=C sort -u > "$sums" || : > "$sums"
   # shellcheck disable=SC2086
-  dup="$(find $trees -type f -size -2M -exec shasum -a 256 {} + 2>/dev/null \
-         | awk -v s="$sums" 'BEGIN { while ((getline h < s) > 0) k[h] = 1 } ($1 in k) { sub(/^[^ ]*  /, ""); print }' || true)"
+  dup="$(find $trees -type f -size -2M -print0 2>/dev/null | mj_sha256_xargs -0 2>/dev/null \
+         | awk -v s="$sums" 'BEGIN { while ((getline h < s) > 0) k[h] = 1 } ($1 in k) { sub(/^[^ ]*  /, ""); if ($0 != "-") print }' || true)"
   if [ -n "$dup" ]; then
     bad bytes "a published file has the bytes of a file in $ARCHIVE: $(printf '%s' "$dup" | tr '\n' ' ')"
   else
