@@ -47,6 +47,25 @@ done
 grep -qE 'budget|controlled' "$P" && ! grep -qE '^[^#]*(checkout|controlled)[=:][[:space:]]*[0-9]+' "$P" \
   || { echo "    scripts/pages carries a budget number of its own; the model owns them"; exit 1; }
 
+# 1b. the publisher is also asked on a clock, and the two declarations of that clock agree.
+#     A run that failed left the site stale with nothing to ask again (2026-09-14: seven hours),
+#     and the gate that would have said so is at-finish. The cadence belongs to the window
+#     pages-check judges by: a schedule slower than OWED_AFTER cannot notice what that window
+#     calls owed, so the model's number and the workflow's cron are held to each other here,
+#     the way the paths block already is.
+cron="$(sed -n "s/^    - cron: '\\(.*\\)'$/\\1/p" "$W" | head -n 1)"
+[ -n "$cron" ] || { echo "    pages.yml declares no schedule: a failed publication would wait for a person"; exit 1; }
+declared="$(sed -n "s/^  schedule: '\\(.*\\)'$/\\1/p" "$ROOT/.ai/repo/ci/pages.yaml" | head -n 1)"
+[ -n "$declared" ] || { echo "    the publication model does not declare the schedule the workflow runs on"; exit 1; }
+[ "$cron" = "$declared" ] || { echo "    the model says '$declared' and the workflow says '$cron'; one clock, two answers"; exit 1; }
+# the scheduled path asks the gate before it works, and reports the intervention by ending red
+grep -q 'id: publication-owed' "$W" \
+  || { echo "    the scheduled path does not ask scripts/ci/pages-check before publishing"; exit 1; }
+grep -q 'id: report-intervention' "$W" \
+  || { echo "    a scheduled run that had to republish would end green: the fault would recur unseen"; exit 1; }
+awk '/id: report-intervention/{f=1} f && /exit 1/{found=1} END{exit !found}' "$W" \
+  || { echo "    the intervention report does not end the run non-zero"; exit 1; }
+
 # 2. the workflow triggers directly on a master push, on the derived paths, and nowhere else.
 #    A chain through another workflow would put a second scheduler in front of publication.
 awk '/^on:/{f=1} /^permissions:/{f=0} f' "$W" | grep -q 'workflow_run' \

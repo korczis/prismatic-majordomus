@@ -18,6 +18,13 @@ version: 1
 trigger:
   branch: master
   gate: site-build
+  # A publication is also asked for on a clock, because a push-triggered run that fails leaves
+  # the site where it was and nothing asks again: on 2026-09-14 the site stood seven hours while
+  # every run failed. The cadence is the window `scripts/ci/pages-check` judges by (OWED_AFTER,
+  # 1800s) — a schedule slower than the window cannot notice what the window calls owed. The
+  # scheduled run asks the gate first and builds only when a publication is owed, and reports the
+  # intervention by ending red; test/cases/97_pages_fast_path.sh holds this against the workflow.
+  schedule: '*/30 * * * *'
   # paths that no class of the gate model covers but that do change what is published
   extra:
     - .github/workflows/pages.yml

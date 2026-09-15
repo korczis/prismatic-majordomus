@@ -14,6 +14,13 @@
 # test/cases/97_pages_fast_path.sh fails when the two differ.
 name: pages
 on:
+  # Every thirty minutes, matching the window pages-check judges by (OWED_AFTER, 1800s). The
+  # publisher had no retry: a run that failed left the site where it was until a person noticed,
+  # and on 2026-09-14 that was seven hours — every push-triggered run failed at link-check's
+  # refusal while the site served 8cf4570. The gate that would have said so, `pages-live`, is
+  # at-finish, so it is asked when a session declares itself done and never on a clock.
+  schedule:
+    - cron: '*/30 * * * *'
   push:
     branches: [master]
     paths:
@@ -173,18 +180,35 @@ jobs:
           echo "MJ_PAGES_TIMINGS=$PWD/pages-timings.tsv" >> "$GITHUB_ENV"
           printf 'pages\tcheckout-setup\t%s\n' "$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" > "$PWD/pages-timings.tsv"
 
+      # On a schedule the question comes before the work: is a publication owed at all? When the
+      # site is current this run builds nothing and ends green, which is what makes 48 runs a day
+      # affordable. When one is owed the steps below republish it and the run still ends red at
+      # `report-intervention` — healing without reporting would hide a fault that recurs every
+      # thirty minutes, and the recurrence is the thing worth seeing.
+      - id: publication-owed
+        if: github.event_name == 'schedule'
+        run: |
+          rc=0
+          scripts/ci/pages-check > "$RUNNER_TEMP/owed.txt" 2>&1 || rc=$?
+          sed 's/^/    /' "$RUNNER_TEMP/owed.txt"
+          [ "$rc" = 0 ] && echo "owed=false" >> "$GITHUB_OUTPUT" || echo "owed=true" >> "$GITHUB_OUTPUT"
+          echo "gate_rc=$rc" >> "$GITHUB_OUTPUT"
+
       # the committed derived data proved current by hash, then rendered; no generation
       - name: build
+        if: github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true'
         timeout-minutes: 3
         run: scripts/pages build
 
       # every static check over the output; the browser probe stays in validate.yml
       - name: check
+        if: github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true'
         timeout-minutes: 3
         run: scripts/pages check
 
       # the one deploy path, the same script a person runs
       - name: publish
+        if: github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true'
         id: publish
         timeout-minutes: 3
         env:
@@ -211,6 +235,7 @@ jobs:
       # never happened is the `pages-live` gate of .ai/repo/ci/gates.yaml, which reads the
       # live site on the next validation run and is not advisory.
       - id: public
+        if: github.event_name != 'schedule' || steps.publication-owed.outputs.owed == 'true'
         continue-on-error: true
         timeout-minutes: 11
         run: |
@@ -309,6 +334,22 @@ jobs:
       # build of gh-pages erroring. The budget's teeth are not softened anywhere else: the
       # default contract of `scripts/pages report` is still exit 10, for a person and for any
       # gate that calls it.
+      # The publication was owed when the schedule fired, so the push-triggered deploy failed, was
+      # cancelled or never ran. The site is current again by the steps above; this step is why the
+      # run is red anyway. Anchored by id: test/cases/339 names this step rather than any exit.
+      - id: report-intervention
+        if: github.event_name == 'schedule' && steps.publication-owed.outputs.owed == 'true'
+        run: |
+          {
+            printf '## The publisher needed help\n\n'
+            printf 'A publication was owed when the schedule fired; this run republished it.\n\n'
+            printf 'What `scripts/ci/pages-check` said before the deploy:\n\n```\n'
+            cat "$RUNNER_TEMP/owed.txt"
+            printf '```\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "publication was owed (pages-check exit ${{ steps.publication-owed.outputs.gate_rc }}); republished, reporting the intervention" >&2
+          exit 1
+
       - id: slo
         if: always()
         run: |
