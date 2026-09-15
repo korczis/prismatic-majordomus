@@ -34,6 +34,11 @@ const QUERY_PAGES: &[&str] = &[
     "/cockpit/objects?page=2",
     "/cockpit/graphs/registry",
     "/cockpit/search?q=scope",
+    "/cockpit/plan?milestone=fixture-milestone",
+    "/cockpit/plan?status=READY",
+    "/cockpit/plan?wave=0",
+    "/cockpit/plan/milestones/fixture-milestone",
+    "/cockpit/plan/issues/I0001",
 ];
 
 /// Every page this file sweeps: each plain route the dispatcher answers, from the list it is

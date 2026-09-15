@@ -427,6 +427,31 @@ impl Live {
         self.reload(watch, taken)
     }
 
+    /// Forget the stamp the current generation was built at, so that the next reading
+    /// rebuilds.
+    ///
+    /// For a write this process made itself. A capability that changes a tracked file
+    /// moves no git control file, so [`Stamp`] cannot see it, and the request after the
+    /// write would be answered from the picture from before it: an issue page still
+    /// saying READY after its own `start`. The process knows it wrote and needs no `stat`
+    /// to find out, so the limit named at the top of this module does not apply to what
+    /// it did itself. A pinned view has nothing to follow and ignores the call.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::live::Live;
+    /// # fn example(ctx: Arc<majordomus_cli::capability::Context>) {
+    /// let live = Live::pinned(ctx);
+    /// live.invalidate();
+    /// assert_eq!(live.view().generation, 0, "a pinned view has one generation, forever");
+    /// # }
+    /// ```
+    pub fn invalidate(&self) {
+        if self.watch.is_some() {
+            write(&self.state).stamp.clear();
+        }
+    }
+
     fn reload(&self, watch: &Watch, taken: String) -> View {
         // A second request arriving mid-rebuild is answered from the generation that
         // exists. Queueing it behind a rebuild would turn one commit into a stall for

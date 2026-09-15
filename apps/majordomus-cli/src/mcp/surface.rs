@@ -358,7 +358,14 @@ impl Surface {
             .by_mcp_tool(name)
             .ok_or_else(|| SurfaceError::UnknownTool(name.to_string()))?;
         match ctx.execute(c.id.as_str(), args.clone()) {
-            Ok(v) => Ok(ToolOutcome::Ok(v)),
+            Ok(v) => {
+                // the same reason as the HTTP route's: a write to a tracked file moves no
+                // git control file, and this process made the write
+                if c.execution.effect == crate::capability::Effect::RepositoryMutation {
+                    self.live.invalidate();
+                }
+                Ok(ToolOutcome::Ok(v))
+            }
             Err(CapabilityError::Internal(e)) => Err(SurfaceError::Internal(e)),
             Err(e) => Ok(ToolOutcome::Refused(e.to_string())),
         }

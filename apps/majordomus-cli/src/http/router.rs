@@ -857,7 +857,15 @@ impl Router {
         // able to wedge the workers on a full pipe at the default level
         tracing::debug!(capability_id = %c.id, route = %format!("{} {}", req.method, req.path), "http");
         match ctx.execute(c.id.as_str(), input) {
-            Ok(v) => json_response(200, &v),
+            Ok(v) => {
+                // A write to a tracked file moves no git control file, so the stamp would
+                // not see it and the next request would read the picture from before it.
+                // This process made the write and knows it.
+                if c.execution.effect == crate::capability::Effect::RepositoryMutation {
+                    self.live.invalidate();
+                }
+                json_response(200, &v)
+            }
             Err(CapabilityError::InvalidInput(m)) => error_response(400, "invalid_input", &m),
             Err(CapabilityError::NotFound(m)) => error_response(404, "not_found", &m),
             Err(CapabilityError::Refused(m)) => error_response(422, "refused", &m),
