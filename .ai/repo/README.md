@@ -32,6 +32,7 @@ shared by every checkout. The sections, and what each one is for:
 | `use-cases/` | the tasks people perform with the tool, one executable object each, and the taxonomy they are filed under |
 | `applications/` | the contexts the tool suits, each composed of use cases, with when it fits and when it does not |
 | `deployments/` | one canonical object per deployment of the executable; the container definition and the provider configuration are generated from it |
+| `automation/` | the migration inventory of the repository's automation: every unit, its disposition, and the exemption that lets a shell unit remain shell |
 | `providers/` | optional: a provider adapter this repository overrides; absent means the tool's default |
 | `templates/` | optional: record templates this repository customised |
 

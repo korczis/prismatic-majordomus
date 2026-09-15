@@ -285,6 +285,17 @@ gates:
     runs: scripts/ci/entry-converges --no-suite
     summary: entry by a shell starts nothing and builds nothing, the start event ensures the server where the policy says it does, the briefing has one author and the lease one typed reader, and a server nobody owns has a bounded life
 
+  # Shell automation is migrating into typed and scripted capabilities (ADR 0069), and a
+  # migration converges only if new shell stops arriving. The judge is the executable's own
+  # `shell.check` — typed Rust, because a new shell gate is exactly what this refuses — so
+  # it needs the executable, and it reads git's index and file heads only: no site, no
+  # network. Selected by the `shell-inventory` class rather than `always`, so a plan that
+  # touches no governed directory does not build the crate in this job for it.
+  - id: shell-inventory
+    job: structure
+    runs: bin/majordomus-cli shell check
+    summary: every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ is declared in .ai/repo/automation/inventory.jsonl with an exemption that says why it is shell and when it stops being, and no record names a unit the tree no longer has
+
   - id: step-bound
     job: structure
     always: true
@@ -579,3 +590,10 @@ classes:
   - id: backlog
     paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
     gates: [backlog-hygiene, shell-lint, shell-suite]
+
+  # Shell automation against its migration inventory: a unit added, changed or deleted under
+  # a governed directory, the inventory itself, the module that judges it, and its case.
+  # Every governed directory is already in another class; the overlap only widens a plan.
+  - id: shell-inventory
+    paths: [bin/**, lib/**, scripts/**, share/**, .githooks/**, .claude/hooks/**, .ai/repo/automation/**, apps/majordomus-cli/src/automation/**, apps/majordomus-cli/src/capability/builtin/shell.rs, apps/majordomus-cli/src/commands/shell.rs, test/cases/365_new_shell_is_refused.sh, test/cases/366_automation_inventory_agrees_with_the_tree.sh]
+    gates: [shell-inventory]

@@ -203,6 +203,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
+  - id: shell
+    title: Shell automation
+    description: "The repository's shell automation measured against the tracked migration inventory: new shell is refused unless an exemption declares why it has to be shell and when it stops being, and an exemption whose file is gone is refused too, so the list only shrinks as units move into typed and scripted capabilities (ADR 0069)."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 1
   - id: trace
     title: Traceability
     description: "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name."
@@ -24900,6 +24906,151 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/session_domain.rs
+  - id: shell.check
+    module: shell
+    kind: query
+    title: Refuse undeclared shell
+    description: "Every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ShellReport
+      schema:
+        type: object
+        properties:
+          measured:
+            type: boolean
+            description: "Whether the tree could be measured at all. `false` is not a pass: the reason says\nwhat stopped the measurement, and a caller that gates on this report must refuse."
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why the tree could not be measured, when it could not."
+          inventory:
+            type: string
+            description: "The inventory read, relative to the repository root."
+          governed:
+            type: array
+            items:
+              type: string
+            description: The directories whose shell units must be declared.
+          units:
+            type: array
+            items:
+              "$ref": "#/$defs/ShellUnit"
+            description: "Every shell unit under the governed directories, in canonical order."
+          records:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many records the inventory holds, shell or not."
+          exemptions:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many exemptions the inventory declares, by disposition."
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/ShellFinding"
+            description: "Every finding, in canonical order. Empty is the passing answer."
+          passes:
+            type: boolean
+            description: "`true` when the tree was measured and nothing was found."
+        required:
+          - measured
+          - inventory
+          - governed
+          - units
+          - records
+          - exemptions
+          - findings
+          - passes
+        description: The verdict of one check of the tree.
+        title: ShellReport
+        "$defs":
+          ShellUnit:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The path, relative to the repository root."
+              dialect:
+                type: string
+                description: "The shell the unit is written for: the interpreter its first line names, or\n`sourced` for a `*.sh` file with no interpreter line."
+              disposition:
+                type:
+                  - string
+                  - "null"
+                description: "The disposition its inventory record carries, when it has one."
+            required:
+              - path
+              - dialect
+            description: One shell unit the tree carries.
+          ShellFinding:
+            type: object
+            properties:
+              code:
+                type: string
+                description: "The finding's code: `shell.undeclared`, `shell.stale`, `shell.missing_field`,\n`shell.invalid_disposition`, `shell.invalid_unit`, `shell.exemption_not_shell`,\n`shell.duplicate`, `shell.out_of_order` or `shell.malformed`."
+              path:
+                type: string
+                description: "The file the finding is about: the shell unit, or the inventory itself."
+              line:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: "The line of the inventory the finding is about, when it is about one."
+              message:
+                type: string
+                description: "What is wrong, in a sentence."
+              remedy:
+                type: string
+                description: What to do about it.
+            required:
+              - code
+              - path
+              - message
+              - remedy
+            description: "One thing the check refuses, with what to do about it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::shell
+    exposure:
+      mcp:
+        tool: majordomus_shell_check
+      http:
+        method: GET
+        path: /api/v1/shell/check
+      cli:
+        path:
+          - shell
+          - check
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - shell
+      - governance
+      - migration
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/shell.rs
   - id: trace.commit
     module: trace
     kind: query

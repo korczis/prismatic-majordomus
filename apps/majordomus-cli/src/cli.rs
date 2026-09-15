@@ -86,6 +86,43 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
+    Shell(ShellArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus shell`. The output shape is global, so it reads the way a person writes it.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ShellCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "shell", "check", "--format", "json"]).unwrap();
+/// let Command::Shell(args) = cli.command else { panic!("not the shell command") };
+/// assert!(matches!(args.command, ShellCommand::Check { canonical: false }));
+/// ```
+pub struct ShellArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `check`. Required: the group runs nothing of its own.
+    pub command: ShellCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus shell`.
+pub enum ShellCommand {
+    /// Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured
+    Check {
+        /// Rewrite .ai/repo/automation/inventory.jsonl with its records in canonical order, then check
+        #[arg(long)]
+        canonical: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -2322,6 +2359,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "report", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/rules", "/states", "/coverage/rules", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "shell check",
+        examples: &[ExampleDoc {
+            id: "shell-check-json",
+            title: "Every shell unit against the automation inventory",
+            description: "The shell units under the governed directories, how many records the inventory holds, the exemptions by disposition, and every finding with its remedy. `passes` is the verdict; a tree that could not be measured says `measured: false`, which is not a pass.",
+            argv: &["shell", "check", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/measured", "/units", "/exemptions", "/findings", "/passes"]),
         }],
     },
     CommandExamples {
