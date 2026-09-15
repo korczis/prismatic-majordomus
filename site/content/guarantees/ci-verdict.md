@@ -11,7 +11,7 @@ source = "docs/claims/ci-verdict.md"
 
 ## What it means
 
-There is one status to require, `ci`, and it cannot be green by accident. Whether anything actually requires it is a separate question, and the answer today is no: see [ci-verdict-is-required](ci-verdict-is-required.md). This claim is about what the status means, not about what it stops. It is computed from two facts: the plan (which gates this change had to run) and what the jobs reported. A gate the plan selected must have run in a job that succeeded; a job that failed or was cancelled is red whether or not its gate was planned; a plan that selected nothing is a broken plan and red; a failed planning job is red. A gate the plan left out is allowed to be skipped, and the table says why.
+There is one status to require, `ci`, and it cannot be green by accident. Whether anything actually requires it is a separate question, and the answer today is no: see [ci-verdict-is-required](@/guarantees/ci-verdict-is-required.md). This claim is about what the status means, not about what it stops. It is computed from two facts: the plan (which gates this change had to run) and what the jobs reported. A gate the plan selected must have run in a job that succeeded; a job that failed or was cancelled is red whether or not its gate was planned; a plan that selected nothing is a broken plan and red; a failed planning job is red. A gate the plan left out is allowed to be skipped, and the table says why.
 
 ## How it works
 

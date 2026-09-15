@@ -11,7 +11,7 @@ source = "docs/claims/ci-verdict-is-required.md"
 
 ## What it means
 
-The `ci` status computed by [ci-verdict](ci-verdict.md) would be a *required* status check on
+The `ci` status computed by [ci-verdict](@/guarantees/ci-verdict.md) would be a *required* status check on
 `master`, so a pull request whose gates did not pass could not be merged. That is what makes a
 gate a gate rather than a report.
 

@@ -20,7 +20,7 @@ implementation, tests, docs, generated, rules, commit, push, target, pages, depl
 the command or artifact that produced it — narrative is not evidence — and the hash of the
 tracked files the obligation names. Four tokens are never recorded: `commit`, `push`,
 `target` and `pages` name facts the tool establishes for itself, and
-[obligation-establishment](obligation-establishment.md) is that half of the story. `check` and `finish` evaluate every declared obligation
+[obligation-establishment](@/guarantees/obligation-establishment.md) is that half of the story. `check` and `finish` evaluate every declared obligation
 on every run through the doctrine `majordomus.obligation-closure`. An obligation with no
 evidence fails. An obligation whose recorded input hash no longer matches the tree fails,
 with both hashes named. An obligation whose fact is remote — a push, an integration, a

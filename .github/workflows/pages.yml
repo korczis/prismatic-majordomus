@@ -52,8 +52,13 @@ on:
       - scripts/evidence-check
       - scripts/generate-site-data
       - scripts/github-sync
+      - scripts/interaction-probe
       - scripts/lib/**
+      - scripts/lib/browser.mjs
       - scripts/lib/cockpit-probe.mjs
+      - scripts/lib/interaction-specs/**
+      - scripts/lib/interactions.mjs
+      - scripts/lib/project-links.awk
       - scripts/lib/ui-*.mjs
       - scripts/lib/ui-routes.mjs
       - scripts/pages
@@ -149,11 +154,16 @@ jobs:
           echo "created=$(date -u -d "$created" +%s)" >> "$GITHUB_OUTPUT"
           echo "start=$(date -u +%s)" >> "$GITHUB_OUTPUT"
 
-      # shallow: the fast path reads the tree, never its history. scripts/site-deploy fetches
-      # the one branch it pushes for itself.
+      # every commit and tag, and no file of the past: scripts/ci/link-check (run by the check step)
+      # decides a commit, compare or release link by whether the commit is in the published history
+      # and the tag exists, and refuses to report clean from a shallow clone that cannot say. At
+      # depth 1 it refused every deploy after #356. blob:none keeps the cost to history metadata;
+      # the tree being built is still checked out in full. scripts/site-deploy fetches the one
+      # branch it pushes for itself.
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          filter: blob:none
 
       - id: setup
         uses: ./.github/actions/setup-site

@@ -14,9 +14,9 @@ decided, how it reaches each surface, how it is extended, how drift is caught, a
 do when a page looks wrong. Behaviour as implemented and tested; where implementation and
 this document disagree, the document is wrong and changes in the same commit as the fix.
 The rule is `project.design-tokens-declared-once@2`; the decisions are
-[ADR 0031](../.ai/repo/adrs/0031-the-design-is-one-declaration-and-every-surface-is-a-project.md)
+[ADR 0031](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0031-the-design-is-one-declaration-and-every-surface-is-a-project.md)
 and
-[ADR 0036](../.ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md).
+[ADR 0036](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md).
 
 ## Why
 

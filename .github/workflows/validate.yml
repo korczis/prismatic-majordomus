@@ -81,6 +81,7 @@ jobs:
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
+      interaction_probe: ${{ steps.plan.outputs.interaction_probe }}
       macos: ${{ steps.plan.outputs.macos }}
       installer_live: ${{ steps.plan.outputs.installer_live }}
       pages_live: ${{ steps.plan.outputs.pages_live }}
@@ -357,7 +358,12 @@ jobs:
     timeout-minutes: 50
     runs-on: ubuntu-latest
     steps:
+      # The whole history, because scripts/ci/link-check decides a commit link by whether the
+      # commit is in the history being published, and refuses to report clean from a shallow
+      # clone that cannot say.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: site
         uses: ./.github/actions/setup-site
       # One generation for the whole job. This step is the gate — it stages a fresh generation
@@ -417,6 +423,35 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-site
+          path: timings.tsv
+          retention-days: 14
+
+  # ----------------------------------------------------------------- interactions
+  # Every interactive control on every page of the built site, exercised in a real browser by the behaviour spec
+  # that claims it (project.every-link-and-control-is-tested). Its own job: the site job's browser steps already
+  # run to that job's bound, and a gate in a job that never finishes enforces nothing. The installed Chrome drives
+  # it; a missing browser under CI is a failure, never a skip.
+  interactions:
+    needs: plan
+    if: needs.plan.outputs.interaction_probe == 'true'
+    # the full probe measured 599 s on a 4-job local run over every page with a control; a hosted runner is slower,
+    # and a job killed at its bound reports cancelled, which the verdict counts as red
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - name: build the site
+        run: scripts/ci/timed interaction-probe site-build timings.tsv scripts/site-build --no-data
+      - name: exercise every control
+        run: CHROME_BIN=google-chrome MJ_PROBE_JOBS=4 scripts/ci/timed interaction-probe interaction-probe timings.tsv scripts/interaction-probe
+      - if: always()
+        run: scripts/ci/summary --job interactions --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-interactions
           path: timings.tsv
           retention-days: 14
 
@@ -560,7 +595,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos, install, pages]
+    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, cockpit, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest
