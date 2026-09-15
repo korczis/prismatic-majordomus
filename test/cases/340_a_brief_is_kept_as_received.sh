@@ -123,4 +123,31 @@ mv "$F/campaigns/README.kept" "$F/campaigns/README.md"
 manifest
 echo "    a tree that cannot be measured is refused, not passed"
 
+# ---------------------------------------------------------------- 8. and it may name what this tree does not have
+# A brief describes the repository somebody asked for, which is not always the one that was
+# built: several of these name a layout that was considered and refused, or built and since
+# moved. `reference-check` exempts campaigns/ for the same reason it exempts session records
+# and decisions — editing one so its paths resolve would make the record of the request agree
+# with the outcome. The exemption has to be narrow, so the control is the same sentence
+# outside campaigns/, which must still be a finding.
+G="$T/refs"
+mkdir -p "$G/campaigns/alpha-pack" "$G/docs"
+( cd "$G" && git init -q . && git config user.email t@t && git config user.name t )
+printf '# Alpha\n\nThe plan lives in docs/NOWHERE.md and nowhere else.\n' > "$G/campaigns/alpha-pack/README.md"
+( cd "$G" && git add -A >/dev/null && git commit -qm brief >/dev/null )
+rc=0; "$ROOT/scripts/ci/reference-check" "$G" >"$T/ref1.out" 2>&1 || rc=$?
+[ "$rc" = 0 ] || {
+  echo "    a brief naming a path this tree does not have was reported as a broken reference"
+  grep -vE '^(OK|INFO)' "$T/ref1.out" | tail -3 | sed 's/^/      /'
+  exit 1
+}
+printf '# A note\n\nThe plan lives in docs/NOWHERE.md and nowhere else.\n' > "$G/docs/NOTE.md"
+( cd "$G" && git add -A >/dev/null && git commit -qm note >/dev/null )
+rc=0; "$ROOT/scripts/ci/reference-check" "$G" >"$T/ref2.out" 2>&1 || rc=$?
+[ "$rc" != 0 ] || {
+  echo "    the same sentence outside campaigns/ was not a finding; the exemption exempts everything"
+  exit 1
+}
+echo "    a brief may name a path this repository does not have, and only a brief may"
+
 echo "    a brief is kept as received: bytes, both directions of the set, and the index"
