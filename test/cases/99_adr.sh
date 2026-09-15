@@ -68,12 +68,64 @@ grep -q '^status: proposed$' "$adr2"
 # ---------------------------------------------------------------- identity under concurrency
 # eight workers proposing at once. The identity is allocated under a lock over the section
 # directory, so the answer is eight identities, not one repeated.
-for i in 1 2 3 4 5 6 7 8; do "$MJ" adr propose "Concurrent decision $i" >/dev/null 2>&1 & done
-wait
-[ "$(ls .ai/repo/adrs/[0-9]*.md | wc -l | tr -d ' ')" = 10 ]
-[ "$(ls .ai/repo/adrs/[0-9]*.md | sed 's|.*/||' | cut -c1-4 | LC_ALL=C sort -u | wc -l | tr -d ' ')" = 10 ]
+#
+# Every proposer's exit and output are kept and every one is asserted. This section used to
+# background eight proposers with their output discarded, then `wait` with no pid — which
+# returns 0 whatever the jobs did — then bare `[ ]` tests, which under `set -e` end the case
+# having said nothing. CI printed `FAIL 99_adr` and no reason, for a proposer that had died
+# on the identity lock's budget.
+pids=""
+for i in 1 2 3 4 5 6 7 8; do
+  "$MJ" adr propose "Concurrent decision $i" >"$T/propose.$i.out" 2>&1 &
+  pids="$pids $!"
+done
+i=0; failed=0
+for p in $pids; do
+  i=$((i + 1)); rc=0
+  wait "$p" || rc=$?
+  if [ "$rc" != 0 ]; then
+    failed=$((failed + 1))
+    echo "    concurrent proposer $i of 8 exited $rc; it said:"
+    sed 's/^/    | /' "$T/propose.$i.out"
+  fi
+done
+[ "$failed" = 0 ] || { echo "    $failed of 8 concurrent proposers failed"; exit 1; }
+files="$(ls .ai/repo/adrs/[0-9]*.md | wc -l | tr -d ' ')"
+ids="$(ls .ai/repo/adrs/[0-9]*.md | sed 's|.*/||' | cut -c1-4 | LC_ALL=C sort -u | wc -l | tr -d ' ')"
+[ "$files" = 10 ] || { echo "    expected 10 records after 8 concurrent proposals, found $files:"; ls .ai/repo/adrs/; exit 1; }
+[ "$ids" = 10 ] || { echo "    10 records carry only $ids distinct identities:"; ls .ai/repo/adrs/; exit 1; }
 # and no lock was left behind
-[ ! -e .ai/repo/adrs/.id.lock ]
+[ ! -e .ai/repo/adrs/.id.lock ] || { echo "    the identity lock was left behind:"; ls -la .ai/repo/adrs/.id.lock; exit 1; }
+
+# ---------------------------------------------------------------- a lock outliving its holder
+# A proposer killed while holding the lock leaves it behind. A lock whose owner is provably
+# dead is broken; any lock that cannot be proven abandoned is waited on and then refused —
+# never proceeded past, because proceeding without the lock is how two workers take one number.
+before="$(ls .ai/repo/adrs/[0-9]*.md | wc -l | tr -d ' ')"
+sleep 0 & dead=$!; wait "$dead"
+mkdir .ai/repo/adrs/.id.lock
+printf '%s %s\n' "$(uname -n)" "$dead" > .ai/repo/adrs/.id.lock/owner
+expect_exit 0 env MJ_ADR_LOCK_WAIT=20 "$MJ" adr propose "After a dead holder"
+expect_grep 'proposed: adr-0011'
+[ ! -e .ai/repo/adrs/.id.lock ] || { echo "    the dead holder's lock is still there"; exit 1; }
+# a live holder on this host: refused, and nothing written
+mkdir .ai/repo/adrs/.id.lock
+printf '%s %s\n' "$(uname -n)" "$$" > .ai/repo/adrs/.id.lock/owner
+expect_exit 13 env MJ_ADR_LOCK_WAIT=10 "$MJ" adr propose "Past a live holder"
+expect_grep "has been held for too long \(by $(uname -n) $$\)"
+# a holder on another host, whose process table this one cannot read: refused
+printf 'some-other-host 1\n' > .ai/repo/adrs/.id.lock/owner
+expect_exit 13 env MJ_ADR_LOCK_WAIT=10 "$MJ" adr propose "Past a foreign holder"
+# a lock that names no owner: refused
+rm -f .ai/repo/adrs/.id.lock/owner
+expect_exit 13 env MJ_ADR_LOCK_WAIT=10 "$MJ" adr propose "Past an unnamed holder"
+expect_grep 'by an owner it does not name'
+[ -d .ai/repo/adrs/.id.lock ] || { echo "    a refused proposer removed a lock it did not hold"; exit 1; }
+rmdir .ai/repo/adrs/.id.lock
+after="$(ls .ai/repo/adrs/[0-9]*.md | wc -l | tr -d ' ')"
+[ "$after" = "$((before + 1))" ] \
+  || { echo "    expected one record from the four proposals against held locks, found $((after - before))"; ls .ai/repo/adrs/; exit 1; }
+[ ! -e .ai/repo/adrs/.id.lock.break ] || { echo "    the break lock was left behind"; exit 1; }
 
 git add . && git commit -qm decisions
 
