@@ -95,6 +95,10 @@
       "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
     },
     {
+      "name": "intents",
+      "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
+    },
+    {
       "name": "lifecycle",
       "description": "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
     },
@@ -5072,6 +5076,375 @@
             "name": "health"
           }
         }
+      }
+    },
+    "/api/v1/intents": {
+      "get": {
+        "operationId": "intents.list",
+        "summary": "Every intent, with its derived stage",
+        "description": "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so.",
+        "tags": [
+          "intents"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Every intent, with its derived stage: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "intents.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_intents",
+          "resource": {
+            "uri": "majordomus://intents",
+            "name": "intents"
+          }
+        },
+        "x-majordomus-cli": "intent list"
+      }
+    },
+    "/api/v1/intents/preflight": {
+      "get": {
+        "operationId": "intents.preflight",
+        "summary": "Which intent a piece of work serves",
+        "description": "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names.",
+        "tags": [
+          "intents"
+        ],
+        "parameters": [
+          {
+            "name": "issue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The issue the work executes, by id. When given, the paths are not consulted.",
+            "examples": {
+              "first-issue": {
+                "value": "I0001"
+              }
+            }
+          },
+          {
+            "name": "paths",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
+            },
+            "description": "Repository-relative paths the work will touch, separated by commas.",
+            "examples": {
+              "first-issue": {
+                "value": ""
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Which intent a piece of work serves: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentPreflight"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "intents.preflight",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_intent_preflight"
+        },
+        "x-majordomus-cli": "intent preflight"
+      }
+    },
+    "/api/v1/intents/record": {
+      "get": {
+        "operationId": "intents.record",
+        "summary": "One intent, with everything derived about it",
+        "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`.",
+        "tags": [
+          "intents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The intent's id, which is also its file name under `.ai/repo/project/intents/`.",
+            "examples": {
+              "first-intent": {
+                "value": "intent-lifecycle"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One intent, with everything derived about it: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "intents.record",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_intent_record"
+        },
+        "x-majordomus-cli": "intent show"
+      }
+    },
+    "/api/v1/intents/validate": {
+      "get": {
+        "operationId": "intents.validate",
+        "summary": "What the intent model refuses",
+        "description": "Every finding over the intents: an intent naming no milestone or no criterion, a milestone that does not resolve, a criterion with no evidence reference or one that names nothing this repository holds, governance that does not resolve, a successor that is not an intent, a file name that disagrees with its id — each a failure — and a milestone no intent serves, a warning.",
+        "tags": [
+          "intents"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "What the intent model refuses: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentValidation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "intents.validate",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_intent_validate"
+        },
+        "x-majordomus-cli": "intent validate"
       }
     },
     "/api/v1/lifecycle/closed": {
@@ -21642,6 +22015,423 @@
           }
         ],
         "description": "How a branch stands to the trunk, which is what decides which commits are its own."
+      },
+      "IntentCriterion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique within the intent."
+          },
+          "criterion": {
+            "type": "string",
+            "description": "What is observably true when it is met."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "`test`, `claim`, `command` or `deployment`."
+          },
+          "ref": {
+            "type": "string",
+            "description": "What the evidence names, as authored."
+          },
+          "state": {
+            "$ref": "#/components/schemas/IntentEvidenceState",
+            "description": "Derived: what the evidence says."
+          },
+          "met": {
+            "type": "boolean",
+            "description": "Derived: the state is `current`."
+          },
+          "reproduce": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The command that produces the evidence again, when one is known."
+          }
+        },
+        "required": [
+          "id",
+          "criterion",
+          "evidence",
+          "ref",
+          "state",
+          "met"
+        ],
+        "description": "One criterion with the evidence behind it."
+      },
+      "IntentEvidenceState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "current",
+            "description": "A passing run of the test that is in the tree now, or a claim proven or with its\ninputs unchanged since its passing run. The only state that meets a criterion."
+          },
+          {
+            "type": "string",
+            "const": "stale",
+            "description": "A passing run of a test whose source has changed since, or a claim whose inputs\nhave."
+          },
+          {
+            "type": "string",
+            "const": "failing",
+            "description": "The latest recorded run did not pass."
+          },
+          {
+            "type": "string",
+            "const": "not_run",
+            "description": "The reference resolves and nothing has been recorded for it."
+          },
+          {
+            "type": "string",
+            "const": "not_derivable",
+            "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+          },
+          {
+            "type": "string",
+            "const": "unresolved",
+            "description": "The reference is empty or names nothing this repository holds."
+          }
+        ],
+        "description": "What the evidence behind one criterion says, as a word."
+      },
+      "IntentFinding": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "description": "`FAIL` or `WARN`. A failure means the intent model is invalid."
+          },
+          "code": {
+            "type": "string",
+            "description": "The stable code a reader greps for."
+          },
+          "subject": {
+            "type": "string",
+            "description": "The intent or milestone the finding is about."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong, in one line."
+          },
+          "reproduce": {
+            "type": "string",
+            "description": "The command that shows it again."
+          }
+        },
+        "required": [
+          "level",
+          "code",
+          "subject",
+          "message",
+          "reproduce"
+        ],
+        "description": "One validation finding."
+      },
+      "IntentList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many intents."
+          },
+          "stages": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many in each stage, keyed by the stage word."
+          },
+          "intents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntentView"
+            },
+            "description": "Every intent, in identity order."
+          }
+        },
+        "required": [
+          "count",
+          "stages",
+          "intents"
+        ],
+        "description": "Every intent, with its derived stage, and how many there are in each stage."
+      },
+      "IntentMilestone": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id the intent names."
+          },
+          "resolved": {
+            "type": "boolean",
+            "description": "Whether the plan holds a milestone with that id."
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The status the plan derives for it; absent when it does not resolve."
+          }
+        },
+        "required": [
+          "id",
+          "resolved"
+        ],
+        "description": "One milestone an intent names, as the plan derives it."
+      },
+      "IntentPreflight": {
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "description": "`serves` or `refused`."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The issues the work was resolved to: the one named, or the open issues whose scope\ncovers a path."
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntentPreflightMatch"
+            },
+            "description": "Every intent reached, with the link."
+          },
+          "governance": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The governance of every intent reached, each entry once, in first-seen order."
+          },
+          "refusal": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When refused: the link that is missing."
+          }
+        },
+        "required": [
+          "verdict",
+          "issues",
+          "matches",
+          "governance"
+        ],
+        "description": "Which intent a piece of work serves, or why it serves none."
+      },
+      "IntentPreflightMatch": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "The intent."
+          },
+          "title": {
+            "type": "string",
+            "description": "Its title."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/IntentStage",
+            "description": "Its derived stage."
+          },
+          "milestone": {
+            "type": "string",
+            "description": "The milestone that links the work to it."
+          },
+          "issue": {
+            "type": "string",
+            "description": "The issue that links the work to that milestone."
+          }
+        },
+        "required": [
+          "intent",
+          "title",
+          "stage",
+          "milestone",
+          "issue"
+        ],
+        "description": "One intent a piece of work serves, and the link that says so."
+      },
+      "IntentStage": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "declared",
+            "description": "A named milestone does not resolve, or none is named."
+          },
+          {
+            "type": "string",
+            "const": "planned",
+            "description": "Every milestone resolves and none has started."
+          },
+          {
+            "type": "string",
+            "const": "executing",
+            "description": "A milestone is under way."
+          },
+          {
+            "type": "string",
+            "const": "verifying",
+            "description": "Every milestone that counts is DONE; satisfaction is not yet evidenced."
+          },
+          {
+            "type": "string",
+            "const": "satisfied",
+            "description": "Verifying, and every criterion has current evidence."
+          },
+          {
+            "type": "string",
+            "const": "cancelled",
+            "description": "The record says it was abandoned."
+          },
+          {
+            "type": "string",
+            "const": "superseded",
+            "description": "The record names the intent that replaced it."
+          }
+        ],
+        "description": "Where an intent stands, derived on every read and stored nowhere."
+      },
+      "IntentValidation": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "True when no finding is a failure. Warnings do not make it false."
+          },
+          "intents": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many intents were examined."
+          },
+          "failures": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many findings are failures."
+          },
+          "warnings": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many findings are warnings."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntentFinding"
+            },
+            "description": "Every finding."
+          }
+        },
+        "required": [
+          "valid",
+          "intents",
+          "failures",
+          "warnings",
+          "findings"
+        ],
+        "description": "What the intent model refuses."
+      },
+      "IntentView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity, which is also the file name."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line."
+          },
+          "statement": {
+            "type": "string",
+            "description": "What must become true."
+          },
+          "invariants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What must stay true."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/IntentStage",
+            "description": "Derived: the stage."
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntentMilestone"
+            },
+            "description": "The milestones, each with its derived status."
+          },
+          "satisfaction": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntentCriterion"
+            },
+            "description": "The criteria, each with its evidence state."
+          },
+          "met": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Derived: how many criteria are met."
+          },
+          "governance": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The governance a worker on this intent loads."
+          },
+          "non_goals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What is deliberately not required."
+          },
+          "superseded_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The replacement, when the record names one."
+          },
+          "source": {
+            "type": "string",
+            "description": "Repository-relative path of the record."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "statement",
+          "invariants",
+          "stage",
+          "milestones",
+          "satisfaction",
+          "met",
+          "governance",
+          "non_goals",
+          "source"
+        ],
+        "description": "One intent, as its record declares it and as the plan and the ledger derive it."
       },
       "Interface": {
         "oneOf": [

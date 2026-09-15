@@ -226,6 +226,14 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- web validate
     summary: the repository's web surfaces resolve into one topology with no collision, no nested claim and no directory outside the generated root
 
+  # An intent names the milestones that realise it and the evidence that settles it; a link
+  # that resolves to nothing would read as a planned intent forever. The executable decides
+  # it (ADR 0070, project.work-serves-a-declared-intent), so it runs where the toolchain is.
+  - id: intent-check
+    job: rust
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent validate
+    summary: every intent names a milestone and a criterion, and every milestone, evidence reference and governance entry it names resolves; a milestone no intent serves is reported
+
   - id: cockpit-assets
     job: site
     runs: scripts/cockpit-assets --check
@@ -520,6 +528,13 @@ classes:
   - id: layer
     paths: [.ai/**]
     gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection, entry-converges]
+
+  # the intents, the plan they are derived against, and the engine that derives them. `layer`
+  # and `rust` already select the suites; this class adds the one gate that reads intents as
+  # links between records rather than as files.
+  - id: intent
+    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/plan.rs, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh]
+    gates: [intent-check, rust-integration, shell-suite]
 
   # the decisions and the allocator that hands out their identities. `layer` already selects
   # the suite for anything under .ai/; this class is narrower and adds the one gate that reads

@@ -26,6 +26,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `gates` | Completion gates | behaviorally_verified | 2 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
+| `intents` | Intent | behaviorally_verified | 4 | [`modules/intents.md`](modules/intents.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mesh` | Mesh | experimental | 5 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
@@ -101,6 +102,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |
 | `health.ready` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/ready` | — | — | required |
 | `health.report` | `health` | query | behaviorally_verified | `majordomus_health` | `majordomus://health` | `GET /api/v1/health` | — | process, 4 entries, 5s | required |
+| `intents.list` | `intents` | query | behaviorally_verified | `majordomus_intents` | `majordomus://intents` | `GET /api/v1/intents` | `majordomus intent list` | — | required |
+| `intents.preflight` | `intents` | query | behaviorally_verified | `majordomus_intent_preflight` | — | `GET /api/v1/intents/preflight` | `majordomus intent preflight` | — | required |
+| `intents.record` | `intents` | query | behaviorally_verified | `majordomus_intent_record` | — | `GET /api/v1/intents/record` | `majordomus intent show` | — | required |
+| `intents.validate` | `intents` | query | behaviorally_verified | `majordomus_intent_validate` | — | `GET /api/v1/intents/validate` | `majordomus intent validate` | — | required |
 | `lifecycle.closed` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_closed` | — | `GET /api/v1/lifecycle/closed` | — | process, 2 entries, 30s | required |
 | `lifecycle.episodes` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_episodes` | `majordomus://lifecycle/episodes` | `GET /api/v1/lifecycle/episodes` | — | process, 2 entries, 2s | required |
 | `lifecycle.providers` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_providers` | — | `GET /api/v1/lifecycle/providers` | — | process, 2 entries | required |
@@ -167,7 +172,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 ## Declarative resources
 
-Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `adr`, `application`, `area`, `audience`, `claim`, `command`, `context`, `deployment`, `distribution-model`, `document`, `feature`, `implementation`, `issue`, `knowledge`, `mesh-declaration`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `release-record`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`, `workspace`.
+Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `adr`, `application`, `area`, `audience`, `claim`, `command`, `context`, `deployment`, `distribution-model`, `document`, `feature`, `implementation`, `intent`, `issue`, `knowledge`, `mesh-declaration`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `release-record`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`, `workspace`.
 
 ## Infrastructure routes
 

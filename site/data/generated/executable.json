@@ -891,6 +891,74 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/intents/#op-intents-list",
+      "claims": [],
+      "cli": "majordomus intent list",
+      "id": "intents.list",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": "majordomus://intents",
+      "route": "/registry/capabilities/intents-list/",
+      "slug": "intents-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "Every intent, with its derived stage",
+      "tool": "majordomus_intents"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-preflight",
+      "claims": [],
+      "cli": "majordomus intent preflight",
+      "id": "intents.preflight",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-preflight/",
+      "slug": "intents-preflight",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "Which intent a piece of work serves",
+      "tool": "majordomus_intent_preflight"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-record",
+      "claims": [],
+      "cli": "majordomus intent show",
+      "id": "intents.record",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-record/",
+      "slug": "intents-record",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "One intent, with everything derived about it",
+      "tool": "majordomus_intent_record"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-validate",
+      "claims": [],
+      "cli": "majordomus intent validate",
+      "id": "intents.validate",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-validate/",
+      "slug": "intents-validate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "What the intent model refuses",
+      "tool": "majordomus_intent_validate"
+    },
+    {
       "api_anchor": "/docs/api/lifecycle/#op-lifecycle-closed",
       "claims": [
         {
@@ -2401,9 +2469,9 @@
     ]
   },
   "counts": {
-    "capabilities": 113,
+    "capabilities": 117,
     "claims": 51,
-    "modules": 37
+    "modules": 38
   },
   "generator": "majordomus-cli 0.7.0",
   "modules": [
@@ -2851,6 +2919,37 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
       "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "intents.list",
+          "route": "/registry/capabilities/intents-list/",
+          "slug": "intents-list"
+        },
+        {
+          "id": "intents.preflight",
+          "route": "/registry/capabilities/intents-preflight/",
+          "slug": "intents-preflight"
+        },
+        {
+          "id": "intents.record",
+          "route": "/registry/capabilities/intents-record/",
+          "slug": "intents-record"
+        },
+        {
+          "id": "intents.validate",
+          "route": "/registry/capabilities/intents-validate/",
+          "slug": "intents-validate"
+        }
+      ],
+      "claims": [],
+      "id": "intents",
+      "route": "/registry/modules/intents/",
+      "slug": "intents",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "title": "Intent"
     },
     {
       "capabilities": [

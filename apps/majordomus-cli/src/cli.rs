@@ -86,6 +86,59 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
+    Intent(IntentArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus intent`. The output shape is global, so it reads where a person writes it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, IntentCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "intent", "preflight", "--issue", "I0001"]).unwrap();
+/// let Command::Intent(args) = cli.command else { panic!("intent") };
+/// assert!(matches!(args.command, IntentCommand::Preflight { issue: Some(_), .. }));
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "intent"]).is_err());
+/// ```
+pub struct IntentArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `list`, `show`, `validate` or `preflight`.
+    pub command: IntentCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus intent`: the command line of `intents.list`,
+/// `intents.record`, `intents.validate` and `intents.preflight`.
+pub enum IntentCommand {
+    /// Every intent, with the stage derived from its milestones and its evidence
+    List,
+    /// One intent in full: each milestone's derived status and each criterion's evidence state
+    Show {
+        /// The intent's id, which is also its file name
+        id: String,
+    },
+    /// Every finding over the intents; exit 10 when any is a failure
+    Validate,
+    /// Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none
+    Preflight {
+        /// The issue the work executes
+        #[arg(long)]
+        issue: Option<String>,
+        /// A path the work will touch; repeat for each
+        #[arg(long = "path")]
+        paths: Vec<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -2998,6 +3051,60 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["why", "validate"],
             setup: &[],
             expect: Expect::StdoutContains(&["moment(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent list",
+        examples: &[
+            ExampleDoc {
+                id: "intent-list",
+                title: "Every intent, with its derived stage",
+                description: "The stage is derived on every read from the status the plan gives each milestone the intent names and from the evidence recorded for each criterion; no file stores it.",
+                argv: &["intent", "list"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["STAGE", "intent(s)"]),
+            },
+            ExampleDoc {
+                id: "intent-list-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/intents` returns and the `majordomus_intents` tool answers: the count, the tally by stage, and every intent with its milestones and criteria.",
+                argv: &["intent", "list", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/count", "/stages", "/intents/0/stage", "/intents/0/satisfaction"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "intent show",
+        examples: &[ExampleDoc {
+            id: "intent-show",
+            title: "One intent, with each milestone and criterion derived",
+            description: "The statement and invariants as authored, each milestone with its derived status, and each criterion with the state of its evidence and the command that reproduces it.",
+            argv: &["intent", "show", "fixture-intent"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-intent", "stage"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent validate",
+        examples: &[ExampleDoc {
+            id: "intent-validate",
+            title: "Check the intents before anything relies on them",
+            description: "An intent naming no milestone, a milestone or evidence reference that resolves to nothing, governance that names nothing: each a failure, and exit 10. A milestone no intent serves is a warning.",
+            argv: &["intent", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["intent(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent preflight",
+        examples: &[ExampleDoc {
+            id: "intent-preflight",
+            title: "Which intent the work on an issue serves",
+            description: "Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10.",
+            argv: &["intent", "preflight", "--issue", "I0001"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["serves", "fixture-intent"]),
         }],
     },
     CommandExamples {

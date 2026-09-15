@@ -23,6 +23,7 @@
       "feature": "an object of kind `feature`",
       "file": "a file the layer names and does not hold as an object",
       "implementation": "an object of kind `implementation`",
+      "intent": "an object of kind `intent`",
       "issue": "an object of kind `issue`",
       "kind": "one kind of object the layer indexed",
       "knowledge": "an object of kind `knowledge`",
@@ -512,6 +513,42 @@
         "summary": "Health of this process",
         "route": "/cockpit/capabilities/health.report",
         "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.list",
+        "kind": "capability",
+        "label": "intents.list",
+        "summary": "Every intent, with its derived stage",
+        "route": "/cockpit/capabilities/intents.list",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.preflight",
+        "kind": "capability",
+        "label": "intents.preflight",
+        "summary": "Which intent a piece of work serves",
+        "route": "/cockpit/capabilities/intents.preflight",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.record",
+        "kind": "capability",
+        "label": "intents.record",
+        "summary": "One intent, with everything derived about it",
+        "route": "/cockpit/capabilities/intents.record",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.validate",
+        "kind": "capability",
+        "label": "intents.validate",
+        "summary": "What the intent model refuses",
+        "route": "/cockpit/capabilities/intents.validate",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "status": "query"
       },
       {
@@ -1436,6 +1473,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "kind": "file",
+        "label": "intents.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
         "kind": "file",
         "label": "lifecycle.rs",
@@ -1737,6 +1782,14 @@
         "label": "index.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/index.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "file",
+        "label": "intent.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/intent.rs",
         "external": true
       },
       {
@@ -2300,6 +2353,14 @@
         "external": true
       },
       {
+        "id": "file:share/allow/intent.txt",
+        "kind": "file",
+        "label": "intent.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/allow/intent.txt",
+        "external": true
+      },
+      {
         "id": "file:share/allow/issue.txt",
         "kind": "file",
         "label": "issue.txt",
@@ -2425,6 +2486,14 @@
         "label": "deployment.v1.schema.json",
         "summary": "named by the layer; not an object of this index",
         "source": "share/schemas/majordomus/deployment/deployment.v1.schema.json",
+        "external": true
+      },
+      {
+        "id": "file:share/schemas/majordomus/intent/intent.v1.schema.json",
+        "kind": "file",
+        "label": "intent.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/intent/intent.v1.schema.json",
         "external": true
       },
       {
@@ -2634,6 +2703,12 @@
         "kind": "kind",
         "label": "implementation",
         "summary": "every object of kind `implementation`"
+      },
+      {
+        "id": "kind:intent",
+        "kind": "kind",
+        "label": "intent",
+        "summary": "every object of kind `intent`"
       },
       {
         "id": "kind:issue",
@@ -3960,6 +4035,35 @@
             "safety",
             "worktrees",
             "ci"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0070",
+        "kind": "adr",
+        "label": "adr-0070",
+        "summary": "An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0070",
+        "source": ".ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "rule:project.no-claim-without-test",
+            "file:share/schemas/majordomus/intent/intent.v1.schema.json",
+            "file:apps/majordomus-cli/src/intent.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "file:.ai/repo/project/intents/intent-lifecycle.yaml",
+            "file:.ai/repo/project/milestones/intent-lifecycle.yaml",
+            "test:test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+          ],
+          "tags": [
+            "intent",
+            "project",
+            "evidence",
+            "governance"
           ]
         }
       },
@@ -8811,6 +8915,31 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.project.intents",
+        "kind": "context",
+        "label": "ai.repo.project.intents",
+        "summary": "Intents",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcontext%2Fai.repo.project.intents",
+        "source": ".ai/repo/project/intents/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/allow/intent.txt",
+            "share/schemas/majordomus/intent/intent.v1.schema.json"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.project.issues",
         "kind": "context",
         "label": "ai.repo.project.issues",
@@ -12971,6 +13100,35 @@
         "label": "lib/watch.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fwatch.sh",
         "source": "lib/watch.sh"
+      },
+      {
+        "id": "majordomus://intent/intent-lifecycle",
+        "kind": "intent",
+        "label": "intent-lifecycle",
+        "summary": "Every change can be traced to the intent it serves, and an intent reads satisfied only when evidence says so",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fintent%2Fintent-lifecycle",
+        "source": ".ai/repo/project/intents/intent-lifecycle.yaml",
+        "facts": {
+          "created_at": "2026-09-15",
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "adr:adr-0070"
+          ],
+          "invariants": [
+            "No intent status is stored and nothing transitions an intent; the plan remains the only lifecycle of work",
+            "Every intent capability is read-only on every surface",
+            "An intent whose milestones or evidence do not resolve is refused by a gate, never silently read as planned"
+          ],
+          "milestones": [
+            "intent-lifecycle"
+          ],
+          "non_goals": [
+            "Choosing what to build; a person declares an intent",
+            "Replacing issues or milestones"
+          ],
+          "updated_at": "2026-09-15"
+        }
       },
       {
         "id": "majordomus://issue/I0001",
@@ -23584,6 +23742,49 @@
         }
       },
       {
+        "id": "majordomus://milestone/intent-lifecycle",
+        "kind": "milestone",
+        "label": "intent-lifecycle",
+        "summary": "Work is traceable to the intent it serves, and an intent is satisfied only by evidence",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmilestone%2Fintent-lifecycle",
+        "source": ".ai/repo/project/milestones/intent-lifecycle.yaml",
+        "facts": {
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "A second task lifecycle beside the plan; the stage is derived and nothing transitions",
+            "Storing an intent status, or stamping an intent from a merge",
+            "Deriving a plan from an intent automatically"
+          ],
+          "order": 96,
+          "priority": "p1",
+          "risks": [
+            "An intent model that grows a status or a transition becomes a second lifecycle beside the plan, and the two would disagree the first time an issue is re-planned.",
+            "Satisfaction criteria backed by commands or deployments are not derivable from the ledger yet, so an intent resting only on them can never read satisfied; that is deliberate until slice 2."
+          ],
+          "scope": [
+            ".ai/repo/project",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/rules/project",
+            ".ai/repo/adrs",
+            "apps/majordomus-cli/src",
+            "share/schemas/majordomus/intent",
+            "share/kinds.yaml",
+            "share/cockpit",
+            "site/data",
+            "test/cases"
+          ],
+          "slug": "intent-lifecycle",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent",
+            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/routing-recommendations",
         "kind": "milestone",
         "label": "routing-recommendations",
@@ -29601,6 +29802,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "rule",
+        "label": "project.work-serves-a-declared-intent@1",
+        "summary": "Work serves a declared intent, and an intent is satisfied only by evidence",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.work-serves-a-declared-intent%401",
+        "source": ".ai/repo/rules/project/work-serves-a-declared-intent.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-once@1",
+            "project.no-claim-without-test@1"
+          ],
+          "tags": [
+            "intent",
+            "project",
+            "evidence",
+            "projections"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.worktree-topology@1",
         "kind": "rule",
         "label": "project.worktree-topology@1",
@@ -32639,6 +32862,13 @@
         "source": "test/cases/35_future_command.sh"
       },
       {
+        "id": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F367_an_intent_is_satisfied_only_by_evidence.sh",
+        "source": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/36_command_doctrines.sh",
         "kind": "test",
         "label": "test/cases/36_command_doctrines.sh",
@@ -35273,6 +35503,11 @@
         "label": "health"
       },
       {
+        "id": "module:intents",
+        "kind": "module",
+        "label": "intents"
+      },
+      {
         "id": "module:lifecycle",
         "kind": "module",
         "label": "lifecycle"
@@ -36268,6 +36503,86 @@
       },
       {
         "source": "capability:health.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.list",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.list",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.list",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.list",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.preflight",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.preflight",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.preflight",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.preflight",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.record",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.record",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.record",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.record",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.validate",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.validate",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.validate",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.validate",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -38994,6 +39309,56 @@
       {
         "source": "majordomus://adr/adr-0055",
         "target": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "file:share/schemas/majordomus/intent/intent.v1.schema.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://intent/intent-lifecycle",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "kind": "put_in_force"
       },
       {
@@ -42902,6 +43267,21 @@
         "kind": "tracks"
       },
       {
+        "source": "majordomus://context/ai.repo.project.intents",
+        "target": "file:share/allow/intent.txt",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.project.intents",
+        "target": "file:share/schemas/majordomus/intent/intent.v1.schema.json",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.project.intents",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://context/ai.repo.project.issues",
         "target": "file:share/allow/issue.txt",
         "kind": "tracks"
@@ -44684,6 +45064,11 @@
       {
         "source": "majordomus://implementation/lib/watch.sh",
         "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-lifecycle",
+        "target": "kind:intent",
         "kind": "is_a"
       },
       {
@@ -48352,6 +48737,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/intent-lifecycle",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/routing-recommendations",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -50172,6 +50562,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.worktree-topology@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -51028,6 +51433,11 @@
       },
       {
         "source": "majordomus://test/test/cases/35_future_command.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54392,6 +54802,26 @@
         "kind": "composes"
       },
       {
+        "source": "module:intents",
+        "target": "capability:intents.list",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intents",
+        "target": "capability:intents.preflight",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intents",
+        "target": "capability:intents.record",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intents",
+        "target": "capability:intents.validate",
+        "kind": "composes"
+      },
+      {
         "source": "module:lifecycle",
         "target": "capability:lifecycle.closed",
         "kind": "composes"
@@ -54708,8 +55138,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1724,
-      "edges": 3860,
+      "nodes": 1740,
+      "edges": 3899,
       "acyclic": true,
       "truncated": false
     }

@@ -1202,6 +1202,67 @@
       }
     },
     {
+      "id": "intent-lifecycle",
+      "slug": "intent-lifecycle",
+      "status": "PLANNED",
+      "order": 96,
+      "priority": "p1",
+      "title": "Work is traceable to the intent it serves, and an intent is satisfied only by evidence",
+      "problem": "This repository models the work: milestones are outcomes, issues are execution contracts, commits trace to issues and claims trace to recorded runs. Nothing above the milestone records what must become true for a person, so no command can say which outcome a change serves, whether a set of finished milestones achieved what they were for, or which intents have no work and which work has no intent. The public site stated as much: 'There is no intent object, no intent registry and no intent id.' An intent lived only in a prompt, and a prompt is unversioned, unenforced and gone when the session ends.",
+      "outcome": "An intent is a typed record above the milestones that realise it: a statement, its invariants, and satisfaction criteria each naming the evidence that settles it. Its stage is derived from the plan's milestone status and its satisfaction from the evidence ledger, never stored. A gate refuses an intent that names no milestone or evidence that resolves to nothing, a session's preflight names the intent its work serves or refuses, the Cockpit shows intents with measured and enforced coverage of its scripts, and a milestone closes on GitHub only when the intents it serves are satisfied.",
+      "current_state": "Milestones and issues are validated by `majordomus plan validate`; claims are joined to recorded runs by `majordomus evidence`. There is no intent kind, no intent capability and no gate that relates work to an intent.",
+      "desired_state": "A worker asks which intent a change serves and one capability answers from the plan, or refuses naming the missing link. A reader asks whether an intent is satisfied and the answer is derived from recorded evidence, not from a merged pull request.",
+      "scope": [
+        ".ai/repo/project",
+        ".ai/repo/ci/gates.yaml",
+        ".ai/repo/rules/project",
+        ".ai/repo/adrs",
+        "apps/majordomus-cli/src",
+        "share/schemas/majordomus/intent",
+        "share/kinds.yaml",
+        "share/cockpit",
+        "site/data",
+        "test/cases"
+      ],
+      "non_scope": [
+        "A second task lifecycle beside the plan; the stage is derived and nothing transitions",
+        "Storing an intent status, or stamping an intent from a merge",
+        "Deriving a plan from an intent automatically"
+      ],
+      "acceptance_criteria": [
+        "Slice 1 — typed record and gate: the intent kind, its schema in the distribution and the skeleton, the read-only capabilities intents.list, intents.record, intents.validate and intents.preflight on every surface, and the intent-check gate refusing an invalid intent model",
+        "Slice 2 — satisfaction as a completion-policy question: once completion policy (PR 292, ADR 0057) lands, whether an intent is satisfied is answered by that policy over the evidence rather than by the intent engine alone",
+        "Slice 3 — preflight join: devcontext and the session start name the intent the task serves, from intents.preflight, and load its governance",
+        "Slice 4 — Cockpit Intent view, with the Cockpit's JavaScript coverage measured and enforced by a gate",
+        "Slice 5 — GitHub reconciliation: milestones projected with the intent they serve, and a closure gate that refuses to close a milestone whose intents are unsatisfied"
+      ],
+      "validation": [
+        "majordomus intent validate",
+        "cargo test --test intent",
+        "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+      ],
+      "evidence_required": [],
+      "risks": [
+        "An intent model that grows a status or a transition becomes a second lifecycle beside the plan, and the two would disagree the first time an issue is re-planned.",
+        "Satisfaction criteria backed by commands or deployments are not derivable from the ledger yet, so an intent resting only on them can never read satisfied; that is deliberate until slice 2."
+      ],
+      "evidence": [],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "required": 0,
+        "by_status": {
+          "READY": 0,
+          "BLOCKED": 0,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
       "id": "routing-recommendations",
       "slug": "routing-recommendations",
       "status": "BLOCKED",
@@ -14947,6 +15008,12 @@
     }
   ],
   "findings": [
+    {
+      "level": "WARN",
+      "code": "empty_milestone",
+      "subject": "intent-lifecycle",
+      "message": "is reachable and has no issues; it is an outcome nobody is executing"
+    },
     {
       "level": "WARN",
       "code": "scope_conflict",

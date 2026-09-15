@@ -41,6 +41,7 @@ pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
 pub(crate) mod generate;
+pub(crate) mod intent;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -85,6 +86,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Models(args) => models::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Rules(args) => rules::run(args),
+        Command::Intent(args) => intent::run(args),
     }
 }
 
@@ -121,6 +123,9 @@ mod tests {
             }),
             (&["majordomus", "why", "list"], |c| {
                 matches!(c, Command::Why(_))
+            }),
+            (&["majordomus", "intent", "list"], |c| {
+                matches!(c, Command::Intent(_))
             }),
             (&["majordomus", "devtask", "issue", "I0001"], |c| {
                 matches!(c, Command::Devtask(_))

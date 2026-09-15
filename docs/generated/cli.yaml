@@ -13290,3 +13290,441 @@ cli:
               setup: []
               expectation: "exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path"
           subcommands: []
+    - path:
+        - majordomus
+        - intent
+      route: /docs/cli/intent/
+      executable: false
+      usage: "majordomus intent [OPTIONS] <COMMAND>"
+      about: "What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - intent
+            - list
+          route: /docs/cli/intent/list/
+          executable: true
+          usage: "majordomus intent list [OPTIONS]"
+          about: "Every intent, with the stage derived from its milestones and its evidence"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-list
+              title: "Every intent, with its derived stage"
+              description: The stage is derived on every read from the status the plan gives each milestone the intent names and from the evidence recorded for each criterion; no file stores it.
+              argv:
+                - intent
+                - list
+              command: majordomus intent list
+              setup: []
+              expectation: "exits 0; prints STAGE, intent(s)"
+            - id: intent-list-json
+              title: "The same, as the shape the API and MCP answer with"
+              description: "What `GET /api/v1/intents` returns and the `majordomus_intents` tool answers: the count, the tally by stage, and every intent with its milestones and criteria."
+              argv:
+                - intent
+                - list
+                - "--format"
+                - json
+              command: majordomus intent list --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /count, /stages, /intents/0/stage, /intents/0/satisfaction"
+          subcommands: []
+        - path:
+            - majordomus
+            - intent
+            - show
+          route: /docs/cli/intent/show/
+          executable: true
+          usage: "majordomus intent show [OPTIONS] <ID>"
+          about: "One intent in full: each milestone's derived status and each criterion's evidence state"
+          args:
+            - name: id
+              positional: true
+              help: "The intent's id, which is also its file name"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-show
+              title: "One intent, with each milestone and criterion derived"
+              description: "The statement and invariants as authored, each milestone with its derived status, and each criterion with the state of its evidence and the command that reproduces it."
+              argv:
+                - intent
+                - show
+                - fixture-intent
+              command: majordomus intent show fixture-intent
+              setup: []
+              expectation: "exits 0; prints fixture-intent, stage"
+          subcommands: []
+        - path:
+            - majordomus
+            - intent
+            - validate
+          route: /docs/cli/intent/validate/
+          executable: true
+          usage: "majordomus intent validate [OPTIONS]"
+          about: Every finding over the intents; exit 10 when any is a failure
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-validate
+              title: Check the intents before anything relies on them
+              description: "An intent naming no milestone, a milestone or evidence reference that resolves to nothing, governance that names nothing: each a failure, and exit 10. A milestone no intent serves is a warning."
+              argv:
+                - intent
+                - validate
+              command: majordomus intent validate
+              setup: []
+              expectation: "exits 0; prints intent(s), valid"
+          subcommands: []
+        - path:
+            - majordomus
+            - intent
+            - preflight
+          route: /docs/cli/intent/preflight/
+          executable: true
+          usage: "majordomus intent preflight [OPTIONS]"
+          about: "Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none"
+          args:
+            - name: issue
+              long: issue
+              positional: false
+              help: The issue the work executes
+              value_name: ISSUE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: paths
+              long: path
+              positional: false
+              help: A path the work will touch; repeat for each
+              value_name: PATHS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-preflight
+              title: Which intent the work on an issue serves
+              description: "Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10."
+              argv:
+                - intent
+                - preflight
+                - "--issue"
+                - I0001
+              command: majordomus intent preflight --issue I0001
+              setup: []
+              expectation: "exits 0; prints serves, fixture-intent"
+          subcommands: []
