@@ -75,6 +75,7 @@
 pub mod episode;
 pub mod identity;
 pub mod ledger;
+pub mod resolver;
 pub mod state;
 pub mod store;
 

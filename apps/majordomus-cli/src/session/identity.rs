@@ -691,7 +691,10 @@ mod tests {
     fn the_store_key_is_the_shells_spelling() {
         let table = include_str!("../../../../test/fixtures/session-keys.tsv");
         let mut rows = 0;
-        for line in table.lines().filter(|l| !l.starts_with('#') && !l.is_empty()) {
+        for line in table
+            .lines()
+            .filter(|l| !l.starts_with('#') && !l.is_empty())
+        {
             let (sent, key) = line
                 .split_once('\t')
                 .unwrap_or_else(|| panic!("a row without a tab: {line:?}"));

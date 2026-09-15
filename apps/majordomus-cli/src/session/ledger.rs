@@ -651,6 +651,14 @@ impl Ledger {
         envelope: &Envelope,
     ) -> Result<(), LedgerError> {
         let line = event.render(vocabulary, envelope)?;
+        self.append_line(&line)
+    }
+
+    /// Append one line that has already been composed and validated, under the same exclusive
+    /// lock [`Ledger::append`] takes. This is the one place in the executable that opens the
+    /// ledger for writing: `crate::ledger::append` composes the shell-compatible line and hands
+    /// it here, so two writers of one file never race each other without a lock between them.
+    pub(crate) fn append_line(&self, line: &str) -> Result<(), LedgerError> {
         let io = |reason: String| LedgerError::Io {
             path: self.path.display().to_string(),
             reason,

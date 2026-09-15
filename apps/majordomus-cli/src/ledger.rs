@@ -52,8 +52,7 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -65,8 +64,6 @@ use crate::metadata::yaml;
 const STATE_DIR: &str = ".ai/local/state";
 /// The record itself.
 const LEDGER: &str = "ledger.jsonl";
-/// The pointer to this checkout's open episode.
-const SESSION_POINTER: &str = "session-current.yaml";
 
 /// Why a line was not written.
 ///
@@ -313,24 +310,16 @@ pub fn append(
     }
     line.push('}');
 
-    let dir = root.join(STATE_DIR);
-    fs::create_dir_all(&dir).map_err(|e| LedgerError::Write {
-        path: dir.clone(),
-        reason: e.to_string(),
-    })?;
-    let path = dir.join(LEDGER);
-    let mut f = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&path)
+    // Written under the session domain's exclusive lock, never with a bare O_APPEND of its own:
+    // the shell, this function and the session domain all append to one file, and this was the
+    // one writer in the executable that took no lock.
+    let path = root.join(STATE_DIR).join(LEDGER);
+    crate::session::Ledger::at(&path)
+        .append_line(&line)
         .map_err(|e| LedgerError::Write {
-            path: path.clone(),
+            path,
             reason: e.to_string(),
         })?;
-    writeln!(f, "{line}").map_err(|e| LedgerError::Write {
-        path,
-        reason: e.to_string(),
-    })?;
     Ok(line)
 }
 
@@ -379,28 +368,16 @@ fn escape_json(out: &mut String, value: &str) {
 
 /// This checkout's open episode, when it has one and it is this checkout's own.
 ///
-/// The shell resolves the worker's own episode first, from `MJ_SESSION_KEY` or the
-/// provider's own session environment, and falls back to this pointer. Here the pointer is
-/// read directly and `MJ_SESSION_KEY` is honoured when it is set, which is what a capability
-/// running inside a provider's session is given. A record that names another worktree is
-/// another checkout's episode and is not this line's session — the same refusal
-/// `mj_open_session_id` makes.
+/// Resolved by [`crate::session::resolver::resolve`], the one resolution the shell's
+/// `mj_open_session_id` also follows: the hook's key strictly, then the provider session this
+/// process runs inside, then the pointer. This function used to read `state/session-<key>.yaml`,
+/// a layout the store left behind, and never consulted the provider's session variable, so a
+/// line a capability wrote was stamped with the last-opened episode where the shell stamped the
+/// worker's own.
 fn open_session_id(root: &Path) -> Option<String> {
-    let dir = root.join(STATE_DIR);
-    let file = match std::env::var("MJ_SESSION_KEY") {
-        Ok(k) if !k.is_empty() => dir.join(format!("session-{k}.yaml")),
-        _ => dir.join(SESSION_POINTER),
-    };
-    let text = fs::read_to_string(file).ok()?;
-    let map = yaml::parse_mapping(&text).ok()?;
-    if let Some(w) = map.get("worktree").and_then(yaml::scalar_string) {
-        if !w.is_empty() && Path::new(&w) != root {
-            return None;
-        }
-    }
-    map.get("session_id")
-        .and_then(yaml::scalar_string)
-        .filter(|s| !s.is_empty())
+    let vars = crate::session::resolver::declared_session_vars(root);
+    let env = |name: &str| std::env::var(name).ok();
+    crate::session::resolver::resolve(root, &vars, &env).map(|r| r.episode.as_str().to_string())
 }
 
 /// One line of the record, as a reader sees it.
