@@ -136,7 +136,7 @@ which `test/cases/51_derived_artifacts_committed.sh` and the release criterion r
 | `catalogue.json` | `.ai/repo/use-cases/`, `.ai/repo/applications/` | the use cases and applications, cross-referenced |
 | `doctrines.json` | the rule packages | every doctrine with its enforcement chain |
 | `plan.json` | `.ai/repo/project/` | milestones, issues, the dependency graph, derived status |
-| `openapi.json` | `docs/generated/openapi.json` | the HTTP API in the shape `api.html` renders (`scripts/lib/openapi-site.jq`) |
+| `openapi.json` | `docs/generated/openapi.json` | the HTTP API in the shape `api.html` and `api-tag.html` render, with the one page every operation and schema is published on (`scripts/lib/openapi-site.jq`) |
 | `artifacts.json` | `docs/generated/artifacts.json` | the generator's own manifest — declarations only, carrying `schema: 1` like every other file of that directory with the manifest's own schema id under `manifest_schema`, moved under `site/data/` so `registry-artifacts.html` can load it; nothing is added and no file is named in the template. Sizes and hashes are dropped: two of the manifest's subjects are written by stage C, so a copy carrying them could never converge with stage B |
 | `executable.json` | `docs/generated/registry.json`, `capabilities.json` | one route per module and per capability, the executable's pages, API anchors, sources on GitHub, the claims attached to each surface by the path of their implementation (`scripts/lib/executable-site.jq`) |
 | `lifecycle.json` | `lib/finish.sh`, `share/skeleton/ai/repo/workflows/task-lifecycle.md`, `share/standard/majordomus/` | outcome vocabulary, divergence labels, lifecycle steps, the ten principles (the rules tagged `principle`) |
@@ -368,7 +368,7 @@ and Open Graph metadata. The route classes and their sources:
 | `/limitations/`, `/roadmap/` | `readme.json` sections by heading | `readme-section.html` |
 | `/architecture/` | `site/content-src/architecture.md`, `source.json`, `diagrams.json` | `architecture.html` |
 | `/docs/`, `/docs/<doc>/` | `docs/*.md` listed in `docs/README.md` | `docs-section.html`, `docs-page.html` |
-| `/docs/api/`, `/openapi.json` | `openapi.json` (from `docs/generated/openapi.json`) | `api.html` |
+| `/docs/api/`, `/docs/api/<tag>/`, `/docs/api/shared/`, `/openapi.json` | `openapi.json` (from `docs/generated/openapi.json`) | `api.html` (the index), `api-tag.html` (a page per tag, and shared types) |
 | `/docs/cli/`, `/docs/cli/<command path>/` | `cli.json` (from `docs/generated/cli.json`, itself the clap declaration and `cli::EXAMPLES`) | `docs-cli.html`, `docs-cli-group.html`, `docs-cli-command.html` |
 | `/doctrines/`, `/doctrines/<slug>/` | `doctrines.json` | `doctrines-section.html`, `doctrine.html` |
 | `/use-cases/`, `/use-cases/<id>/`, `/applications/`, `/applications/<id>/` | `catalogue.json` | `use-cases-section.html`, `use-case.html`, `applications-section.html`, `application.html` |
