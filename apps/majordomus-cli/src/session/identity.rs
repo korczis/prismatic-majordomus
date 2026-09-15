@@ -312,9 +312,10 @@ impl std::fmt::Display for EpisodeId {
 /// let p = ProviderSessionId::new("01Bv2gJsfAoYrXnpfC9uJ4uv");
 /// assert_eq!(p.store_key(), "01Bv2gJsfAoYrXnpfC9uJ4uv");
 ///
-/// // anything that could leave the store becomes an inert segment
-/// assert_eq!(ProviderSessionId::new("../../etc/passwd").store_key(), ".._.._etc_passwd");
-/// assert_eq!(ProviderSessionId::new("a/b").store_key(), "a_b");
+/// // anything that could leave the store becomes an inert segment, spelled as the shell
+/// // spells it, because the shell writes the store
+/// assert_eq!(ProviderSessionId::new("../../etc/passwd").store_key(), "..-..-etc-passwd");
+/// assert_eq!(ProviderSessionId::new("a/b").store_key(), "a-b");
 ///
 /// // and a segment made only of dots is not a directory: `.` and `..` survive an
 /// // allow-list that permits a dot, so the segment is what is checked, not the bytes
@@ -386,38 +387,48 @@ impl ProviderSessionId {
     }
 
     /// The value reduced to exactly one path segment, for the file the open record lives
-    /// in. Every byte outside `A-Za-z0-9._-` becomes `_`; the blank value becomes `hand`.
+    /// in — spelled exactly as `mj_session_key` in `lib/common.sh` spells it, because the
+    /// shell writes the store and a reader that spelled a key differently would look for a
+    /// file nobody wrote.
     ///
-    /// A value made only of dots gets a `_` in front of it. `.` and `..` survive an
-    /// allow-list that permits a dot — they are made of nothing else — and both name a
-    /// directory rather than a file in it. The test that found this is in this module: an
-    /// allow-list is a claim about bytes, and the claim that has to hold is about the
-    /// *segment*.
+    /// The rule is the shell pipeline's, step for step and byte for byte: every byte outside
+    /// `A-Za-z0-9._-` becomes `-`, runs of `-` squeeze to one, the result is cut to 64 bytes,
+    /// leading and trailing `-` are stripped, and nothing left is the hand-opened `hand`.
+    /// `tr` and `cut` see bytes, not characters, so a multibyte character is several
+    /// replaced bytes that squeeze to a single `-`.
+    ///
+    /// A value made only of dots then gets a `_` in front of it, on both sides. `.` and `..`
+    /// survive an allow-list that permits a dot — they are made of nothing else — and both
+    /// name a directory rather than a file in it: an allow-list is a claim about bytes, and
+    /// the claim that has to hold is about the *segment*.
     ///
     /// ```
     /// use majordomus_cli::session::ProviderSessionId;
     /// assert_eq!(ProviderSessionId::new("01Bv2gJsf").store_key(), "01Bv2gJsf");
     /// assert!(!ProviderSessionId::new("../etc/passwd").store_key().contains('/'));
+    /// assert_eq!(ProviderSessionId::new("x///y").store_key(), "x-y", "runs squeeze");
     /// ```
     pub fn store_key(&self) -> String {
-        if self.is_hand() {
+        let mut out: Vec<u8> = Vec::with_capacity(self.0.len().min(64));
+        for b in self.0.bytes() {
+            let kept = b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-');
+            let c = if kept { b } else { b'-' };
+            if c == b'-' && out.last() == Some(&b'-') {
+                continue;
+            }
+            out.push(c);
+        }
+        // squeeze before cut, as `tr -s` runs before `cut -c1-64`
+        out.truncate(64);
+        let kept = String::from_utf8(out).unwrap_or_default();
+        let key = kept.trim_matches('-');
+        if key.is_empty() {
             return "hand".to_string();
         }
-        let mapped: String = self
-            .0
-            .chars()
-            .map(|c| {
-                if c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-') {
-                    c
-                } else {
-                    '_'
-                }
-            })
-            .collect();
-        if mapped.chars().all(|c| c == '.') {
-            return format!("_{mapped}");
+        if key.chars().all(|c| c == '.') {
+            return format!("_{key}");
         }
-        mapped
+        key.to_string()
     }
 }
 
@@ -669,6 +680,29 @@ mod tests {
         assert_eq!(ProviderSessionId::hand().store_key(), "hand");
         assert_eq!(ProviderSessionId::new("").store_key(), "hand");
         assert_eq!(ProviderSessionId::new("\t \n").store_key(), "hand");
+    }
+
+    /// The spelling `lib/common.sh`'s `mj_session_key` produces for each input, measured by
+    /// running it. The two implementations name one file, and before this table they
+    /// disagreed on every row but the first and the empty one. The table is a file both
+    /// sides read — this test and `test/cases/357_one_spelling_for_an_open_episode.sh` — so
+    /// neither can move without failing a test, and there is no second copy to drift.
+    #[test]
+    fn the_store_key_is_the_shells_spelling() {
+        let table = include_str!("../../../../test/fixtures/session-keys.tsv");
+        let mut rows = 0;
+        for line in table.lines().filter(|l| !l.starts_with('#') && !l.is_empty()) {
+            let (sent, key) = line
+                .split_once('\t')
+                .unwrap_or_else(|| panic!("a row without a tab: {line:?}"));
+            assert_eq!(
+                ProviderSessionId::new(sent).store_key(),
+                key,
+                "provider session {sent:?}"
+            );
+            rows += 1;
+        }
+        assert!(rows >= 9, "the table was read: {rows} row(s)");
     }
 
     #[test]

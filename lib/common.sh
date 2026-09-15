@@ -827,11 +827,20 @@ mj_session_pointer()  { printf '%s' "$MJ_STATE_DIR/session-current.yaml"; }
 
 # A provider session reduced to one path segment. The value is the provider's own string,
 # so nothing here lets one name a file outside the store; an empty or unnameable one is the
-# hand-opened episode.
+# hand-opened episode. A key made only of dots gets a `_` in front: `.` and `..` survive the
+# allow-list and name a directory, not a file. ProviderSessionId::store_key in
+# apps/majordomus-cli/src/session/identity.rs spells every key exactly this way, and both are
+# held to one measured table both read: test/fixtures/session-keys.tsv (its unit test, and
+# test/cases/357_one_spelling_for_an_open_episode.sh).
 mj_session_key() {
   local v
   v="$(printf '%s' "${1:-}" | tr -c 'A-Za-z0-9._-' '-' | tr -s '-' | cut -c1-64 | sed -e 's/^-*//' -e 's/-*$//')"
-  if [ -n "$v" ]; then printf '%s' "$v"; else printf 'hand'; fi
+  case "$v" in
+    '') v=hand ;;
+    *[!.]*) ;;
+    *) v="_$v" ;;
+  esac
+  printf '%s' "$v"
 }
 mj_session_key_file() { printf '%s/%s.yaml' "$(mj_session_open_dir)" "$(mj_session_key "${1:-}")"; }
 
