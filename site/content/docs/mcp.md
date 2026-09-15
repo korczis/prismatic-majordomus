@@ -263,7 +263,7 @@ implementation detail.
 
 The schema (`share/schemas/majordomus/policy/policy.v1.schema.json`) owns the block with
 `additionalProperties: false`, so a misspelt timing is **refused** rather than read as absent;
-`test/cases/349_a_lease_contest_is_judged_by_a_declaration.sh` holds that, and
+`test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh` holds that, and
 `lease::Timings::from_policy` carries the doc test proving a declared value is the one used
 and that a key the policy omits keeps its constant. The values shipped are the constants they
 replaced, so declaring them changed no behaviour — deliberately: a change to how a contest is
