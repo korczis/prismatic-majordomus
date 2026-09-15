@@ -34,6 +34,7 @@ host=0.0.0.0
 port=8791
 profile=release
 pull=1
+verify=0
 cmd="${1:-}"; [ $# -gt 0 ] && shift
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -41,6 +42,7 @@ while [ $# -gt 0 ]; do
     --port) port="$2"; shift 2 ;;
     --profile) profile="$2"; shift 2 ;;
     --no-pull) pull=0; shift ;;
+    --verify) verify=1; shift ;;
     *) printf 'mesh-hub: unknown argument %s\n' "$1" >&2; exit 2 ;;
   esac
 done
@@ -111,6 +113,36 @@ build() {
   esac
 }
 
+# The Cockpit's graph pages are drawn by four files that are NOT committed:
+# share/cockpit/vendor/{cytoscape.min.js,three.module.min.js,three.core.min.js,p5.min.js} are
+# copied from pinned npm packages by scripts/cockpit-assets, which says so in its own header.
+# So a hub installed from a clean checkout builds an executable, starts, answers, reports
+# itself healthy — and serves /cockpit/graphs/* as 404. That is what lundra was doing on
+# 2026-09-14: 44 browser findings, repaired by hand-copying four files into the checkout,
+# where they are untracked and the next reinstall loses them again. A hub that cannot draw a
+# graph is not installed, so install and deploy build these and refuse without them.
+VENDOR="share/cockpit/vendor/cytoscape.min.js share/cockpit/vendor/three.module.min.js share/cockpit/vendor/three.core.min.js share/cockpit/vendor/p5.min.js"
+
+assets_verify() { # names every file a graph page needs and does not have
+  local missing="" f
+  for f in $VENDOR; do [ -s "$root/$f" ] || missing="$missing $f"; done
+  [ -z "$missing" ] || {
+    printf 'mesh-hub: the Cockpit cannot draw a graph; these are absent:\n' >&2
+    for f in $missing; do printf '  %s\n' "$f" >&2; done
+    printf 'mesh-hub: run: scripts/mesh-hub assets (npm ci, then scripts/cockpit-assets)\n' >&2
+    return 10
+  }
+  printf 'mesh-hub: the Cockpit has every file its graph pages need\n'
+}
+
+assets_build() {
+  command -v npm >/dev/null 2>&1 || die "npm is not installed here, and the Cockpit's graph assets are built from pinned npm packages"
+  [ -d "$root/node_modules" ] || { printf 'mesh-hub: installing the pinned npm packages\n'; ( cd "$root" && npm ci --silent ); }
+  printf 'mesh-hub: building the Cockpit assets\n'
+  ( cd "$root" && scripts/cockpit-assets >/dev/null )
+  assets_verify
+}
+
 wait_active() {
   local url="http://127.0.0.1:$port" tries=0 body
   [ "$host" = 0.0.0.0 ] || [ "$host" = 127.0.0.1 ] || url="http://$host:$port"
@@ -134,6 +166,7 @@ case "$cmd" in
   install)
     require_systemd
     [ -x "$(binary)" ] || build
+    assets_verify >/dev/null 2>&1 || assets_build
     write_unit
     loginctl enable-linger "$USER" 2>/dev/null && printf 'mesh-hub: lingering enabled for %s (the unit outlives the login session)\n' "$USER" \
       || printf 'mesh-hub: could not enable lingering for %s; run: sudo loginctl enable-linger %s\n' "$USER" "$USER" >&2
@@ -149,10 +182,14 @@ case "$cmd" in
       git -C "$root" pull --ff-only -q || die "the checkout did not fast-forward; resolve it by hand and run with --no-pull"
     fi
     build
+    assets_build
     [ -f "$unit" ] || write_unit
     systemctl --user daemon-reload
     systemctl --user restart majordomus.service
     wait_active
+    ;;
+  assets)
+    if [ "$verify" = 1 ]; then assets_verify; else assets_build; fi
     ;;
   restart) require_systemd; systemctl --user restart majordomus.service; wait_active ;;
   stop) require_systemd; systemctl --user stop majordomus.service; printf 'mesh-hub: stopped\n' ;;
