@@ -629,6 +629,21 @@ pub(crate) fn divergence(root: &Path, theirs: &str, ours: Option<&str>) -> Diver
 ///
 /// Returns the record and the number of files that were skipped because they could not be
 /// read as records.
+///
+/// Shared with the preflight (`environment::preflight`), which reports the same record's
+/// freshness at entry: one resolution rule, so the briefing and the entry banner cannot
+/// name two different handovers.
+pub(crate) fn resolve_record(
+    root: &Path,
+    dir: &Path,
+    branch: &str,
+    head: Option<&str>,
+    thresholds: Thresholds,
+    now: i64,
+) -> (Option<Record>, usize) {
+    resolve(root, dir, branch, head, thresholds, now)
+}
+
 fn resolve(
     root: &Path,
     dir: &Path,

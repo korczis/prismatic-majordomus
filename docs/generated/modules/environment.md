@@ -5,7 +5,7 @@
 
 What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value.
 
-Stability: behaviorally_verified. Capabilities: 2.
+Stability: behaviorally_verified. Capabilities: 3.
 
 ## `environment.explain` — Where an environment value came from
 
@@ -28,6 +28,30 @@ The provenance of the snapshot: for each field, what decided it — a compile-ti
 absent. |
 
 Output: `EnvironmentProvenance`.
+
+## `environment.preflight` — Whether Majordomus is in force here, and what proves it
+
+One verdict per claim about this checkout — git; the episode, its briefing, the task and the handover; the policy, the rule corpus and the ADRs; the shared server and the MCP, API and Cockpit surfaces it serves; the peer board; recorded test runs, rule enforcement, provider projections, generated documentation and the deployment — each `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable`, with the evidence it rests on. A verdict that asserts something is in force cannot be produced without evidence. The same value the command line prints and the entry banner summarises.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_preflight` |
+| MCP resource | `majordomus://environment/preflight` |
+| HTTP | `GET /api/v1/environment/preflight` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::environment |
+| tags | environment, governance, verification, evidence |
+
+| input | type | required | description |
+|---|---|---|---|
+| `probe` | boolean | no | Ask the loopback address a server of this checkout published, and its peer board.
+Off by default: a served request answers from what this process can see, and when
+this process holds the checkout's lease that is itself the evidence. |
+
+Output: `Preflight`.
 
 ## `environment.status` — The repository environment
 

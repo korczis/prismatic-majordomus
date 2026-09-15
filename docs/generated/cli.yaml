@@ -6067,6 +6067,111 @@ cli:
               setup: []
               expectation: "exits 0; prints project.version, source, resolver"
           subcommands: []
+        - path:
+            - majordomus
+            - env
+            - preflight
+          route: /docs/cli/env/preflight/
+          executable: true
+          usage: "majordomus env preflight [OPTIONS]"
+          about: "Whether Majordomus is in force in this checkout, claim by claim, with the evidence behind each verdict: git, the episode and its briefing, the task and handover, the policy, rules and ADRs, the shared server and the surfaces it serves, the peer board, recorded test runs, rule enforcement, provider projections and the deployment. A verdict that asserts something is in force always names its evidence. Resolves fast, from the rule tally a `--full` run cached; the HTTP route `/api/v1/environment/preflight` and the MCP tool `majordomus_preflight` answer the same value"
+          args:
+            - name: compact
+              long: compact
+              positional: false
+              help: "The short form entering the repository draws: one line of claims and the most urgent thing to look at"
+              value_name: COMPACT
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: full
+              long: full
+              positional: false
+              help: "Build the index and count the rule proofs now, and leave the tally for entry to read"
+              value_name: FULL
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: env-preflight-json
+              title: "What is in force here, and what proves it"
+              description: "One verdict per claim — `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable` — and the evidence it rests on: the file, command or loopback answer that was read. A rule file on disk is not a rule anything enforces, an address that accepts a connection is not a server of this version, and a recorded test run at another commit does not verify this tree, so none of them is reported as one. `attention` lists what needs a look, most urgent first."
+              argv:
+                - env
+                - preflight
+                - "--format"
+                - json
+              command: majordomus env preflight --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /schema, /sections/0/checks/0/verdict, /attention"
+          subcommands: []
     - path:
         - majordomus
         - commands

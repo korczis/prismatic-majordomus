@@ -17,6 +17,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
+use crate::environment::preflight::{self, Preflight, Probe, RulesTally};
 use crate::environment::{
     resolve, EnvironmentQuery, FieldSource, Inputs, RepositoryEnvironment, Resolution,
 };
@@ -27,6 +28,84 @@ use super::{get, mcp};
 
 /// The URI under which the environment is read as an MCP resource.
 pub const ENVIRONMENT_URI: &str = "majordomus://environment";
+
+/// The URI under which the preflight is read as an MCP resource.
+pub const PREFLIGHT_URI: &str = "majordomus://environment/preflight";
+
+/// What a served preflight may cost.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::environment::PreflightInput;
+/// let input: PreflightInput = serde_json::from_str("{}").unwrap();
+/// assert!(!input.probe, "a served request asks no other process by default");
+/// ```
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PreflightInput {
+    /// Ask the loopback address a server of this checkout published, and its peer board.
+    /// Off by default: a served request answers from what this process can see, and when
+    /// this process holds the checkout's lease that is itself the evidence.
+    #[serde(default)]
+    pub probe: bool,
+}
+
+impl BenchmarkCases for PreflightInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new("sealed", PreflightInput { probe: false })]
+    }
+}
+
+fn preflight(ctx: &Context, input: PreflightInput) -> Result<Preflight, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let repository = Repository::open(root).map_err(|e| {
+        CapabilityError::Internal(format!("the repository could not be re-read: {e}"))
+    })?;
+    // Located here rather than carried on the context, so that the provider projections are
+    // compared against their templates exactly as the command line compares them; without
+    // it they would read `unknown` on this surface and `verified` on that one.
+    let share = crate::share::Share::locate(None, root).ok();
+    let environment = resolve(
+        &Inputs {
+            repository: &repository,
+            share: share.as_ref(),
+            index: Some(&ctx.index),
+            registry: Some(&ctx.registry),
+            policy: None,
+        },
+        &EnvironmentQuery {
+            resolution: Resolution::Full,
+            probe_services: false,
+            use_cache: false,
+            write_cache: false,
+        },
+    );
+    let ledger =
+        crate::evidence::Ledger::load(root).unwrap_or_else(|_| crate::evidence::Ledger::empty());
+    let tally = RulesTally::of(&crate::rules::report(&ctx.index, &ledger));
+    let policy = crate::policy::LoadedPolicy::load(&repository).map_err(|e| e.to_string());
+    let mut observations = preflight::observe(
+        root,
+        &environment,
+        policy.as_ref().map_err(Clone::clone),
+        Some(tally),
+        // never the cache: a served request writes nothing to the checkout it serves
+        Probe {
+            cache: false,
+            ..if input.probe {
+                Probe::asked()
+            } else {
+                Probe::sealed()
+            }
+        },
+    );
+    // The process that holds the lease holds the board: read it here rather than asking
+    // this process over its own socket, and the command line — which asks over the socket —
+    // reads the same peers.
+    if observations.server.this_process {
+        observations.peers = Ok(preflight::PeersObservation::of(&ctx.peers.list()));
+    }
+    Ok(preflight::derive(&observations))
+}
 
 /// What to include in the snapshot.
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
@@ -200,6 +279,27 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["environment", "provenance", "introspection"],
                 handler: explain,
             },
+            capability! {
+                id: "environment.preflight",
+                title: "Whether Majordomus is in force here, and what proves it",
+                description: "One verdict per claim about this checkout — git; the episode, its briefing, the task and the handover; the policy, the rule corpus and the ADRs; the shared server and the MCP, API and Cockpit surfaces it serves; the peer board; recorded test runs, rule enforcement, provider projections, generated documentation and the deployment — each `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable`, with the evidence it rests on. A verdict that asserts something is in force cannot be produced without evidence. The same value the command line prints and the entry banner summarises.",
+                input: PreflightInput,
+                output: Preflight,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_preflight".into()),
+                        resource: Some(McpResource { uri: PREFLIGHT_URI.into(), name: "preflight".into() }),
+                    }),
+                    http: get("/api/v1/environment/preflight"),
+                    cli: None,
+                },
+                tags: ["environment", "governance", "verification", "evidence"],
+                // A judgement of *now*, stamped with when it was taken: the same reason
+                // `environment.status` is not cached.
+                cache: CachePolicy::Disabled,
+                handler: preflight,
+            },
         ],
     }
 }
@@ -225,6 +325,11 @@ mod tests {
                 "environment.explain",
                 "majordomus_environment_explain",
                 "/api/v1/environment/explain",
+            ),
+            (
+                "environment.preflight",
+                "majordomus_preflight",
+                "/api/v1/environment/preflight",
             ),
         ];
         let ids: Vec<&str> = m
