@@ -18,7 +18,13 @@ it is described as real.
   answer, or a lease naming anything but loopback, and the section is simply not written —
   and it sends nothing but the request. `test/cases/08_no_forbidden_constructs.sh` refuses
   every other network client in `bin/`, `lib/` and `share/`, and refuses this one if it
-  stops being that single bounded call.
+  stops being that single bounded call. The executable has one declared exception of its
+  own: when a repository commits an enabled mesh declaration, its shared server sends
+  signed advertisements — public key, instance, endpoints, repository digests, version;
+  never a secret, a path, an environment value or repository content — to the multicast
+  group and the rendezvous endpoints that declaration names, and to nothing else. This
+  repository commits one (ADR 0059, `docs/MESH.md`); the skeleton a fresh repository
+  starts from does not.
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.

@@ -9,9 +9,9 @@
 //! two runtimes exchange envelopes through `register` exactly as two servers would,
 //! and each converges on one record of the other.
 //!
-//! docs/CLAIMS.yaml marks `mesh-off-by-default` and `mesh-observation-not-authority` as
-//! guaranteed and names this file as the test that proves them; the ids are written here
-//! so the link reads from both ends. `a_disabled_declaration_opens_nothing_and_says_why`
+//! docs/CLAIMS.yaml marks `mesh-off-by-default`, `mesh-observation-not-authority` and
+//! `mesh-declared-is-held` as guaranteed and names this file as a test that proves
+//! them; the ids are written here so the link reads from both ends. `a_disabled_declaration_opens_nothing_and_says_why`
 //! is the first: no socket opens until an enabled declaration is committed, and the
 //! disabled declaration is reported as the reason rather than as an error. The trust
 //! assertions of `a_server_activates_the_mesh_and_registration_converges_to_one_record`
@@ -57,6 +57,25 @@ fn a_server_activates_the_mesh_and_registration_converges_to_one_record() {
     let (status, mesh) = s.get("/api/v1/mesh");
     assert_eq!(status, 200);
     assert_eq!(mesh["active"], json!(true), "{mesh}");
+    // The doctor of a server that activated its mesh says so on the `runtime` check —
+    // the server's own verdict, which is what `majordomus mesh doctor` asks it for.
+    let (status, report) = s.get("/api/v1/mesh/doctor");
+    assert_eq!(status, 200);
+    assert_eq!(report["ok"], json!(true), "{report}");
+    let runtime = report["checks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["check"] == json!("runtime"))
+        .expect("a runtime check");
+    assert_eq!(runtime["ok"], json!(true), "{runtime}");
+    assert!(
+        runtime["detail"]
+            .as_str()
+            .unwrap()
+            .starts_with("active as "),
+        "{runtime}"
+    );
     let own = mesh["identity"]["node_id"]
         .as_str()
         .expect("a node id")
@@ -275,4 +294,51 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
 
     a.stop();
     b.stop();
+}
+
+/// `mesh-declared-is-held`: an enabled declaration the server could not activate is a
+/// failed `runtime` check carrying the server's reason — never a quiet off. The identity
+/// cannot be created when a directory sits where `node.json` must be written, which is
+/// one of the ways activation fails; the server serves regardless, and the doctor says
+/// why the mesh does not.
+#[test]
+fn an_enabled_declaration_the_server_could_not_activate_fails_the_doctor_and_names_why() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/majordomus.yaml", ENABLED_QUIET);
+    let state = f.root().join("xdg-state");
+    std::fs::create_dir_all(state.join("majordomus").join("node.json")).unwrap();
+    let mut s = Served::start_with_env(
+        &f.root(),
+        &["--discovery", "filesystem"],
+        &[("XDG_STATE_HOME", state.to_str().unwrap())],
+    );
+    let (status, mesh) = s.get("/api/v1/mesh");
+    assert_eq!(
+        status, 200,
+        "a mesh that cannot start is a reason, not a failed server"
+    );
+    assert_eq!(mesh["active"], json!(false), "{mesh}");
+    let (status, report) = s.get("/api/v1/mesh/doctor");
+    assert_eq!(status, 200);
+    assert_eq!(report["ok"], json!(false), "{report}");
+    let runtime = report["checks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["check"] == json!("runtime"))
+        .expect("a runtime check");
+    assert_eq!(runtime["ok"], json!(false), "{runtime}");
+    let detail = runtime["detail"].as_str().unwrap();
+    assert!(
+        detail.contains("the declaration is enabled and this server's mesh is not active"),
+        "{detail}"
+    );
+    assert!(detail.contains("serve ensure"), "{detail}");
+    // Every other check still holds: the failure is the runtime's alone.
+    for c in report["checks"].as_array().unwrap() {
+        if c["check"] != json!("runtime") && c["check"] != json!("identity") {
+            assert_eq!(c["ok"], json!(true), "{c}");
+        }
+    }
+    assert_eq!(s.stop(), 0);
 }

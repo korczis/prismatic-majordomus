@@ -258,10 +258,20 @@ mod tests {
         // up. On a host that delivers it, assert it is well-formed; on one that does not,
         // observe the silence and move on — the socket bound, which is what was under test.
         let sender = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        // Best-effort in two ways at once. A host that does not deliver the datagram is
+        // observed in silence rather than failing the test (f5800b3a7, host-independence),
+        // and where it is delivered the announcer shares this socket's port, so this node's
+        // own startup envelope can arrive first: the datagram under test is the one that
+        // must match, not the first one that comes (11e68da97).
         let _ = sender.send_to(b"a datagram for the listener", (Ipv4Addr::LOCALHOST, port));
-        if let Ok(heard) = rx.recv_timeout(Duration::from_secs(2)) {
+        let deadline = std::time::Instant::now() + Duration::from_secs(2);
+        while let Ok(heard) =
+            rx.recv_timeout(deadline.saturating_duration_since(std::time::Instant::now()))
+        {
             assert_eq!(heard.source, MeshSource::UdpMulticast);
-            assert_eq!(heard.bytes, b"a datagram for the listener");
+            if heard.bytes == b"a datagram for the listener" {
+                break;
+            }
         }
 
         // Best-effort: the announcer transmits on a host with a multicast route. Where
