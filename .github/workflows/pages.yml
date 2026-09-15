@@ -165,24 +165,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      # The depth above is a declaration; this is the measurement. `fetch-depth: 0` is one edit
-      # away from being tuned back to 1 for speed, and the failure that follows is not a missing
-      # checkout — it is six links to tags that exist being called non-existent, three steps
-      # later, in a checker that looks like the thing at fault. This fails here instead, naming
-      # the depth, so that what the deploy needs from its checkout is proved on every run rather
-      # than inferred from one green one.
+      # The depth above is a declaration; this is the measurement, and both come from
+      # deploy.checkout in .ai/repo/ci/pages.yaml rather than from this file. `fetch-depth` is
+      # one edit away from being tuned back for speed, and the failure that follows is not a
+      # missing checkout — it is six links to tags that exist being called non-existent, three
+      # steps later, inside a checker that looks like the thing at fault.
       - name: the checkout can decide a ref
-        run: |
-          shallow="$(git rev-parse --is-shallow-repository)"
-          tags="$(git tag | wc -l | tr -d ' ')"
-          if [ "$shallow" != false ] || [ "$tags" -eq 0 ]; then
-            echo "::error::the deploy checkout cannot decide a ref: shallow=$shallow tags=$tags." \
-                 "scripts/ci/link-check resolves commit, compare, tag and tree links against this" \
-                 "clone; without the history and the tags it must refuse, site-check counts the" \
-                 "refusal as a failure, and publish is skipped. Check out with fetch-depth: 0."
-            exit 1
-          fi
-          echo "checkout: not shallow, $tags tag(s) — link-check can decide"
+        run: scripts/pages checkout --verify
 
       - id: setup
         uses: ./.github/actions/setup-site
