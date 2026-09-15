@@ -1,13 +1,22 @@
-# The gates. `just test` is the whole of what CI runs for a change to this repository;
-# the rest narrow it to one suite while you are working on that suite.
+# The gates. `just test` is what CI runs for a change to this repository: the plan
+# scripts/ci-plan selects for this working tree, dispatched by scripts/ci/run-plan, the same
+# dispatcher every CI job runs. The rest narrow it to one suite while you are working on
+# that suite.
+#
+# It used to be `test-shell rust-check derive-check`, a list written here beside the model,
+# and it said it was the whole of CI while the structure gates — rule-proof, claim-proof,
+# evidence-check, core-check, shell-lint, commit-policy — ran in CI and nowhere in it. A
+# local gate that is a second declaration of the plan is green on exactly the changes CI
+# refuses. Test case 77 holds the recipe to the dispatcher.
 #
 # `test` is the entry point of this group, which is what puts `just test` on the banner:
 # the environment snapshot offers the public recipe whose name is its group's name, and
 # offers nothing when there is none.
 
-# Every gate: the shell suite, the Rust gate, the site data check.
+# Every gate CI would run for this working tree, with CI's commands, in the plan's order (`just ci-full` runs every gate).
 [group('test')]
-test: test-shell rust-check derive-check
+test *args:
+    scripts/ci/run-plan {{args}}
 
 # The behavioural suite of the shell tool and the cross-checks of the Rust executable (test/cases/*.sh), MJ_TEST_JOBS cases at a time (default 4 here; `MJ_TEST_JOBS=1 just test-shell` streams serially). `just test-shell 72_rust_mcp` runs one.
 [group('test')]

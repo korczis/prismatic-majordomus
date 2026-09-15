@@ -57,8 +57,8 @@ arbitrary. Most of them were paid for.
 2. Branch from `master`. Keep the branch to one concern.
 3. Add or change the test in `test/cases/` first. Tests run in a disposable temporary
    repository, never against this checkout.
-4. Run `test/run.sh` and `shellcheck` if available (`just test` runs the suite, the Rust
-   gate and the site data check; `just lint-shell` runs shellcheck; `MJ_TEST_JOBS=4 bash
+4. Run `test/run.sh` and `shellcheck` if available (`just test` runs the gates CI would run
+   for this working tree, through the same `scripts/ci/run-plan`; `just lint-shell` runs shellcheck; `MJ_TEST_JOBS=4 bash
    test/run.sh` runs the cases four at a time, which is how CI runs them). `just ci-plan`
    says which gates CI would run for your working tree and why, `just ci-fast` runs them
    with CI's own commands, `just ci-full` runs every gate; [`docs/CI.md`](docs/CI.md) is
