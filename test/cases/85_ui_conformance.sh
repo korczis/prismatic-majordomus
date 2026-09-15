@@ -6,7 +6,7 @@
 # anywhere. Everything else here is the machinery that makes that claim checkable without a
 # browser, so this case never needs one.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || { echo "    skip: no node"; exit 0; }
+command -v node >/dev/null 2>&1 || skip_case "no node"
 
 # The modules under test come from the checkout; the fixtures are built here. Nothing in this
 # case writes into the checkout, so it runs in the parallel phase.
@@ -231,7 +231,7 @@ expect_grep 'color: #111111' palette.out           # a colour that already passe
 # ---------------------------------------------------------------- the report
 # The rendering is a section of the test surface, declares no surface of its own, and a run
 # narrowed for iteration says so on its own page rather than reading as a clean audit.
-BIN="$(rust_bin)" || { echo "    no toolchain; the rest of this case needs one"; exit 0; }
+BIN="$(rust_bin)" || skip_case "no toolchain; the rest of this case needs one"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 "$MJ" init >/dev/null                              # the executable resolves a repository, not a directory
 cat > run-ui.json <<'JSON'

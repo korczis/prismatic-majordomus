@@ -24,7 +24,7 @@
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/diagram-check"
 [ -x "$GATE" ] || { echo "    $GATE is not executable"; exit 1; }
-command -v python3 >/dev/null 2>&1 || { echo "    python3 absent; skipping"; exit 0; }
+command -v python3 >/dev/null 2>&1 || skip_case "python3 absent"
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj-272.XXXXXX")"
 trap 'rm -rf "$S"' EXIT

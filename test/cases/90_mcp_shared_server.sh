@@ -11,8 +11,8 @@
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
-[ -n "${MAJORDOMUS_BIN:-}" ] || command -v cargo >/dev/null 2>&1 || { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+[ -n "${MAJORDOMUS_BIN:-}" ] || command -v cargo >/dev/null 2>&1 || skip_case "no cargo and no MAJORDOMUS_BIN"
+command -v jq >/dev/null 2>&1 || skip_case "jq not installed"
 LAUNCHER="$ROOT/bin/majordomus-mcp"
 [ -x "$LAUNCHER" ] || { echo "    bin/majordomus-mcp is missing or not executable"; exit 1; }
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj90.XXXXXX")"; trap 'rm -rf "$S"; exec 3>&- 2>/dev/null' EXIT

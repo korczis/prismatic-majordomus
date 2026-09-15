@@ -34,8 +34,10 @@ out="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
     printf '\n'
   fi
   if [ -n "$REPORT" ] && [ -s "$REPORT" ]; then
-    printf 'Suite: %s cases, %s failed, %s case-seconds; the slowest:\n\n' \
-      "$(wc -l < "$REPORT" | tr -d ' ')" "$(awk -F'\t' '$2 != "ok"' "$REPORT" | wc -l | tr -d ' ')" "$(awk -F'\t' '{ s += $3 } END { print s + 0 }' "$REPORT")"
+    # a SKIP row is not a pass and not a failure of the case's assertions: it is named apart
+    printf 'Suite: %s cases, %s failed, %s skipped, %s case-seconds; the slowest:\n\n' \
+      "$(wc -l < "$REPORT" | tr -d ' ')" "$(awk -F'\t' '$2 != "ok" && $2 != "SKIP"' "$REPORT" | wc -l | tr -d ' ')" \
+      "$(awk -F'\t' '$2 == "SKIP"' "$REPORT" | wc -l | tr -d ' ')" "$(awk -F'\t' '{ s += $3 } END { print s + 0 }' "$REPORT")"
     printf '| case | result | seconds | phase |\n|---|---|---|---|\n'
     LC_ALL=C sort -t "$(printf '\t')" -k3,3nr "$REPORT" | head -8 | awk -F'\t' '{ printf "| %s | %s | %s | %s |\n", $1, $2, $3, $4 }'
     printf '\n'

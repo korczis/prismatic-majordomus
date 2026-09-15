@@ -10,8 +10,8 @@
 #
 # Skips itself when cargo is absent, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+command -v cargo >/dev/null 2>&1 || skip_case "cargo not installed"
+command -v jq >/dev/null 2>&1 || skip_case "jq not installed"
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj93.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }

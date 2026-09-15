@@ -10,7 +10,7 @@
 # was generated at, so committing it made it name a commit that did not contain it, and
 # --check reported drift on every commit for ever.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip_case "jq absent"
 
 # --- the committed generation is in sync with the canonical sources
 expect_exit 0 "$ROOT/scripts/generate-site-data" --check

@@ -25,7 +25,7 @@ printf '%s\n' "$LAST_OUT" | jq -e '.targets | map(.command) | index("doctor")' >
 #     gains a public command, and the copy's bench lists it
 C="$(mktemp -d "${TMPDIR:-/tmp}/mj-bench-copy.XXXXXX")"; trap 'rm -rf "$C"' EXIT
 fixture_repo "$C" test/fixtures/commands
-python3 - "$C/share/commands.yaml" <<'PY' 2>/dev/null || { echo "    python3 absent; skipping the registry mutation"; exit 0; }
+python3 - "$C/share/commands.yaml" <<'PY' 2>/dev/null || skip_case "python3 absent"
 import sys
 p = sys.argv[1]; s = open(p).read()
 i = s.index('  - id: help\n')

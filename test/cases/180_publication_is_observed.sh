@@ -25,7 +25,7 @@
 
 GATE="$ROOT/scripts/ci/pages-check"
 [ -x "$GATE" ] || { echo "    scripts/ci/pages-check is missing or not executable"; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq is required"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip_case "jq is required"
 
 # A repository whose gh-pages names a published commit, whose site/config.toml points at a
 # directory this case serves, and which carries the publication model the gate reads the
@@ -96,7 +96,7 @@ STUB
 
 WWW="$T/www"
 serve "$WWW" 0000000000000000000000000000000000000000 0000000000000000000000000000000000000000
-start_http "$WWW" || { echo "    skip: no python3 and no node to serve a fixture site"; exit 0; }
+start_http "$WWW" || skip_case "no python3 and no node to serve a fixture site"
 trap 'stop_http' EXIT
 
 fixture "$T/repo" "$HTTP_BASE"

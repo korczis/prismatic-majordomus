@@ -263,7 +263,7 @@ fi
 if [ "$SUITE" = 1 ]; then
   CASE='test/cases/108_entry_converges_on_a_server.sh'
   if [ -f "$CASE" ]; then
-    if bash test/run.sh 108_entry_converges_on_a_server; then ok "$CASE passes"
+    if bash test/run.sh --no-skips 108_entry_converges_on_a_server; then ok "$CASE passes"
     else fail "$CASE fails"; fi
   else fail "$CASE is missing; the convergence itself is proved there and nowhere else"; fi
 fi

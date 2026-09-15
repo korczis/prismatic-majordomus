@@ -24,7 +24,7 @@
 # case's own temporary directory, which no other process on the machine can carry.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v python3 >/dev/null 2>&1 || { echo "    skip: python3 not installed"; exit 0; }
+command -v python3 >/dev/null 2>&1 || skip_case "python3 not installed"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
