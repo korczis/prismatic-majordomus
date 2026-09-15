@@ -28749,7 +28749,7 @@
       "is_enum": true,
       "name": "ToolchainAvailability",
       "properties": [],
-      "type": "\"installed\" | \"missing\" | \"unknown\"",
+      "type": "\"installed\" | \"missing\" | \"unknown\" | \"mismatch\"",
       "used_by": [],
       "used_by_schemas": [
         "ToolchainState"
@@ -28766,6 +28766,10 @@
         {
           "description": "Nobody asked: this resolution may not run a subprocess for it, and no cache held it.",
           "value": "unknown"
+        },
+        {
+          "description": "Installed and answering, and its version does not satisfy the one the repository\ndeclares. Reported as itself rather than as installed, because a binary that is on\nthe path and answers the wrong version is the case a person otherwise debugs for an\nhour (ADR 0064). Decided only when both versions are plain dotted numbers.",
+          "value": "mismatch"
         }
       ],
       "variants": []

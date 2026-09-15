@@ -36,6 +36,17 @@ pub enum Declares {
     Nothing,
 }
 
+/// What a declared version asks of the installed one. A `.nvmrc` that says `22` pins a
+/// release line; a `rust-version` of `1.85` is a floor that 1.90 satisfies. Reading the
+/// second as the first reports every up-to-date machine as wrong.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Pin {
+    /// The installed version starts with the declared one, component by component.
+    Exact,
+    /// The installed version is at least the declared one.
+    Minimum,
+}
+
 /// One place a toolchain may be declared.
 #[derive(Debug, Clone, Copy)]
 pub struct Marker {
@@ -44,6 +55,8 @@ pub struct Marker {
     pub path: &'static str,
     /// How to read the version out of it.
     pub declares: Declares,
+    /// What the version read out of it asks of the installed one.
+    pub pins: Pin,
 }
 
 /// One toolchain this executable knows how to recognise.
@@ -76,18 +89,22 @@ pub const DETECTORS: &[Detector] = &[
             Marker {
                 path: "rust-toolchain.toml",
                 declares: Declares::KeyValue("channel"),
+                pins: Pin::Exact,
             },
             Marker {
                 path: "rust-toolchain",
                 declares: Declares::WholeFile,
+                pins: Pin::Exact,
             },
             Marker {
                 path: "apps/*/Cargo.toml",
                 declares: Declares::KeyValue("rust-version"),
+                pins: Pin::Minimum,
             },
             Marker {
                 path: "Cargo.toml",
                 declares: Declares::KeyValue("rust-version"),
+                pins: Pin::Minimum,
             },
         ],
     },
@@ -100,14 +117,17 @@ pub const DETECTORS: &[Detector] = &[
             Marker {
                 path: ".nvmrc",
                 declares: Declares::WholeFile,
+                pins: Pin::Exact,
             },
             Marker {
                 path: ".node-version",
                 declares: Declares::WholeFile,
+                pins: Pin::Exact,
             },
             Marker {
                 path: "package.json",
                 declares: Declares::JsonMember("engines", "node"),
+                pins: Pin::Exact,
             },
         ],
     },
@@ -120,10 +140,12 @@ pub const DETECTORS: &[Detector] = &[
             Marker {
                 path: "justfile",
                 declares: Declares::Nothing,
+                pins: Pin::Exact,
             },
             Marker {
                 path: ".justfile",
                 declares: Declares::Nothing,
+                pins: Pin::Exact,
             },
         ],
     },
@@ -136,10 +158,12 @@ pub const DETECTORS: &[Detector] = &[
             Marker {
                 path: ".python-version",
                 declares: Declares::WholeFile,
+                pins: Pin::Exact,
             },
             Marker {
                 path: "pyproject.toml",
                 declares: Declares::KeyValue("requires-python"),
+                pins: Pin::Minimum,
             },
         ],
     },
@@ -151,6 +175,7 @@ pub const DETECTORS: &[Detector] = &[
         markers: &[Marker {
             path: "go.mod",
             declares: Declares::Directive("go"),
+            pins: Pin::Minimum,
         }],
     },
     Detector {
@@ -161,6 +186,7 @@ pub const DETECTORS: &[Detector] = &[
         markers: &[Marker {
             path: "mix.exs",
             declares: Declares::Nothing,
+            pins: Pin::Exact,
         }],
     },
     Detector {
@@ -171,6 +197,7 @@ pub const DETECTORS: &[Detector] = &[
         markers: &[Marker {
             path: "deno.json",
             declares: Declares::Nothing,
+            pins: Pin::Exact,
         }],
     },
 ];
@@ -212,8 +239,18 @@ pub fn with_installed(mut toolchains: Vec<ToolchainState>) -> Vec<ToolchainState
         };
         match installed_version(detector) {
             Some(version) => {
+                let unsatisfied = state
+                    .declared
+                    .as_deref()
+                    .zip(pin_for(detector, &state.declared_by))
+                    .and_then(|(declared, pin)| satisfies(declared, &version, pin))
+                    == Some(false);
+                state.availability = if unsatisfied {
+                    ToolchainAvailability::Mismatch
+                } else {
+                    ToolchainAvailability::Installed
+                };
                 state.installed = Some(version);
-                state.availability = ToolchainAvailability::Installed;
             }
             None => {
                 state.availability = ToolchainAvailability::Missing;
@@ -221,6 +258,73 @@ pub fn with_installed(mut toolchains: Vec<ToolchainState>) -> Vec<ToolchainState
         }
     }
     toolchains
+}
+
+/// The pin of the marker that declared a toolchain, found from the path it resolved to; a
+/// marker with a `*` matches exactly one directory name in that position.
+fn pin_for(detector: &Detector, declared_by: &str) -> Option<Pin> {
+    detector
+        .markers
+        .iter()
+        .find(|marker| match marker.path.split_once('*') {
+            None => marker.path == declared_by,
+            Some((before, after)) => {
+                declared_by.len() > before.len() + after.len()
+                    && declared_by.starts_with(before)
+                    && declared_by.ends_with(after)
+                    && !declared_by[before.len()..declared_by.len() - after.len()].contains('/')
+            }
+        })
+        .map(|marker| marker.pins)
+}
+
+/// Whether an installed version satisfies a declared one, or `None` when that cannot be
+/// decided. Only plain dotted numbers are compared: a range (`>=22`), a channel name
+/// (`stable`) or an answer that is not a version stays undecided, because a finding that
+/// guesses fires on machines that are fine, and is then ignored when it is right.
+///
+/// ```
+/// use majordomus_cli::environment::toolchain::{satisfies, Pin};
+/// assert_eq!(satisfies("22", "22.20.0", Pin::Exact), Some(true));
+/// assert_eq!(satisfies("0.23.6", "0.23.4", Pin::Exact), Some(false));
+/// assert_eq!(satisfies("1.85", "1.90.0", Pin::Minimum), Some(true));
+/// assert_eq!(satisfies("1.22", "1.21.9", Pin::Minimum), Some(false));
+/// assert_eq!(satisfies(">=22", "22.20.0", Pin::Exact), None);
+/// assert_eq!(satisfies("stable", "1.90.0", Pin::Exact), None);
+/// ```
+pub fn satisfies(declared: &str, installed: &str, pin: Pin) -> Option<bool> {
+    let want = plain_version(declared)?;
+    let have = plain_version(installed)?;
+    Some(match pin {
+        Pin::Exact => have.len() >= want.len() && have[..want.len()] == want[..],
+        Pin::Minimum => {
+            // equal-length comparison, so `1.85` and `1.85.0` are the same floor
+            let width = want.len().max(have.len());
+            let pad = |v: &[u64]| {
+                let mut v = v.to_vec();
+                v.resize(width, 0);
+                v
+            };
+            pad(&have) >= pad(&want)
+        }
+    })
+}
+
+/// `v1.90.0` -> `[1, 90, 0]`; anything that is not dot-separated digits -> `None`.
+fn plain_version(text: &str) -> Option<Vec<u64>> {
+    let text = text.trim().trim_start_matches('v');
+    if text.is_empty() {
+        return None;
+    }
+    text.split('.')
+        .map(|part| {
+            if !part.is_empty() && part.chars().all(|c| c.is_ascii_digit()) {
+                part.parse().ok()
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 /// The version one toolchain reports, or `None` when it is not there or did not answer.
@@ -400,6 +504,47 @@ mod tests {
         // Whether Go is installed on this machine is not the assertion; that the answer is
         // decided either way, and never left as `unknown` after a full resolution, is.
         assert_ne!(found[0].availability, ToolchainAvailability::Unknown);
+    }
+
+    /// ADR 0064: a pinned release line the machine does not have is a mismatch, and a floor
+    /// the machine is above is not.
+    #[test]
+    fn an_exact_pin_and_a_floor_are_judged_differently() {
+        assert_eq!(satisfies("0.23.6", "0.23.4", Pin::Exact), Some(false));
+        assert_eq!(satisfies("0.23.6", "0.23.6", Pin::Exact), Some(true));
+        assert_eq!(satisfies("22", "22.20.0", Pin::Exact), Some(true));
+        assert_eq!(satisfies("22", "20.11.1", Pin::Exact), Some(false));
+        assert_eq!(satisfies("1.85", "1.90.0", Pin::Minimum), Some(true));
+        assert_eq!(satisfies("1.85", "1.85.0", Pin::Minimum), Some(true));
+        assert_eq!(satisfies("1.85.1", "1.85", Pin::Minimum), Some(false));
+        assert_eq!(satisfies("3.12", "3.11.9", Pin::Minimum), Some(false));
+    }
+
+    #[test]
+    fn what_is_not_a_plain_version_is_left_undecided() {
+        assert_eq!(satisfies(">=22", "22.20.0", Pin::Exact), None);
+        assert_eq!(satisfies("stable", "1.90.0", Pin::Exact), None);
+        assert_eq!(
+            satisfies("1.22", "go version go1.22.3 darwin/arm64", Pin::Minimum),
+            None
+        );
+        assert_eq!(satisfies("", "1.0", Pin::Exact), None);
+        assert_eq!(satisfies("1..2", "1.2", Pin::Exact), None);
+    }
+
+    #[test]
+    fn the_pin_follows_the_marker_that_declared_it() {
+        let rust = DETECTORS.iter().find(|d| d.id == "rust").expect("rust");
+        assert_eq!(pin_for(rust, "rust-toolchain.toml"), Some(Pin::Exact));
+        assert_eq!(pin_for(rust, "Cargo.toml"), Some(Pin::Minimum));
+        assert_eq!(pin_for(rust, "apps/alpha/Cargo.toml"), Some(Pin::Minimum));
+        assert_eq!(
+            pin_for(rust, "apps/a/b/Cargo.toml"),
+            None,
+            "a star is one directory"
+        );
+        let go = DETECTORS.iter().find(|d| d.id == "go").expect("go");
+        assert_eq!(pin_for(go, "go.mod"), Some(Pin::Minimum));
     }
 
     #[test]

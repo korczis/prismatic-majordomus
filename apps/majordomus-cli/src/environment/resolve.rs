@@ -359,6 +359,21 @@ pub fn resolve(inputs: &Inputs<'_>, query: &EnvironmentQuery) -> RepositoryEnvir
             format!("{} is declared here and is not installed", missing.title),
         ));
     }
+    for mismatch in toolchains
+        .iter()
+        .filter(|t| t.availability == ToolchainAvailability::Mismatch)
+    {
+        diagnostics.push(Diagnostic::warning(
+            "toolchain_mismatch",
+            Some(mismatch.declared_by.clone()),
+            format!(
+                "{} {} is installed and this file declares {}",
+                mismatch.title,
+                mismatch.installed.as_deref().unwrap_or("?"),
+                mismatch.declared.as_deref().unwrap_or("?"),
+            ),
+        ));
+    }
 
     // ---------------------------------------------------------------- providers
     let (providers, provider_source) =

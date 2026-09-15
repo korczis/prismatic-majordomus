@@ -223,6 +223,11 @@ pub enum ToolchainAvailability {
     Missing,
     /// Nobody asked: this resolution may not run a subprocess for it, and no cache held it.
     Unknown,
+    /// Installed and answering, and its version does not satisfy the one the repository
+    /// declares. Reported as itself rather than as installed, because a binary that is on
+    /// the path and answers the wrong version is the case a person otherwise debugs for an
+    /// hour (ADR 0064). Decided only when both versions are plain dotted numbers.
+    Mismatch,
 }
 
 /// What the layer holds, counted per kind, plus the registry the executable composes.

@@ -461,6 +461,12 @@ fn toolchain_line(environment: &RepositoryEnvironment, g: &Glyphs) -> String {
         .iter()
         .map(|t| {
             let version = match (&t.installed, t.availability) {
+                (Some(v), ToolchainAvailability::Mismatch) => format!(
+                    "{} {} {}",
+                    sanitise(v),
+                    g.no,
+                    t.declared.as_deref().map(sanitise).unwrap_or_default()
+                ),
                 (Some(v), _) => sanitise(v),
                 (None, ToolchainAvailability::Missing) => format!("{} missing", g.no),
                 (None, _) => t
