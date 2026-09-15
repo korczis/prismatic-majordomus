@@ -26,6 +26,9 @@
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
 #                                         or GitHub has not built it yet)
+#   scripts/pages checkout [--verify]     the fetch-depth deploy.checkout implies; --verify
+#                                         measures this clone instead and exits 10 when it
+#                                         cannot decide a ref (shallow, or no tags)
 #   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
@@ -167,6 +170,48 @@ cmd_check() {
 # escalation is about how much validation a change to the pipeline deserves, not about what the
 # published bytes are derived from: changing scripts/ci-plan or the justfile makes every gate
 # run and cannot move a pixel. Publication follows the inputs, and the inputs are named.
+cmd_checkout() {
+  # The publishing clone's requirement, from deploy.checkout and nowhere else. Without
+  # --verify it renders the requirement as the `fetch-depth` actions/checkout must be given,
+  # which is what test/cases/97_pages_fast_path.sh holds the workflow to. With --verify it
+  # measures the clone this process is running in and refuses one that cannot decide a ref —
+  # the declaration proved on every run, rather than trusted because it is written down.
+  local history tags
+  history="$(m deploy.checkout.history)"
+  tags="$(m deploy.checkout.tags)"
+  case "$history" in
+    full) ;;
+    "") echo "pages: ${MODEL#"$ROOT"/} declares no deploy.checkout.history" >&2; return 10 ;;
+    *)  echo "pages: deploy.checkout.history: '$history' is not a depth this can render;" \
+             "link-check resolves commit links, for which a truncated history is never" \
+             "partially sufficient. The only meaningful value is 'full'." >&2; return 10 ;;
+  esac
+  case "$tags" in
+    required|optional) ;;
+    *) echo "pages: deploy.checkout.tags: '$tags' is neither required nor optional" >&2; return 10 ;;
+  esac
+
+  if [ "${1:-}" != --verify ]; then
+    printf '%s\n' 0            # fetch-depth for a full history
+    return 0
+  fi
+
+  local shallow count bad=0
+  shallow="$(git -C "$ROOT" rev-parse --is-shallow-repository 2>/dev/null || echo unknown)"
+  count="$(git -C "$ROOT" tag 2>/dev/null | wc -l | tr -d " ")"
+  [ "$shallow" = false ] || { echo "pages: the checkout is shallow (is-shallow-repository=$shallow), and deploy.checkout.history is '$history'" >&2; bad=1; }
+  if [ "$tags" = required ] && [ "${count:-0}" -eq 0 ]; then
+    echo "pages: the checkout carries no tags, and deploy.checkout.tags is 'required'" >&2; bad=1
+  fi
+  if [ "$bad" = 1 ]; then
+    echo "pages: this clone cannot decide a ref, so scripts/site-check must refuse the links" \
+         "that resolve against git, and the publication stops. Check out with fetch-depth:" \
+         "$(cmd_checkout)." >&2
+    return 10
+  fi
+  echo "pages: checkout ok — full history, $count tag(s); every link that resolves against git is decidable"
+}
+
 cmd_paths() {
   [ -f "$GATES" ] || { echo "pages: no gate model at ${GATES#"$ROOT"/}" >&2; return 12; }
   GFLAT="$(mktemp "${TMPDIR:-/tmp}/mj-pages-gates.XXXXXX")"
@@ -515,6 +560,7 @@ case "${1:-}" in
   current)     shift; cmd_current "$@" && cmd_derived "$@" ;;
   derived)     shift; cmd_derived "$@" ;;
   paths)       shift; cmd_paths "$@" ;;
+  checkout)    shift; cmd_checkout "$@" ;;
   budget)      shift; cmd_budget "$@" ;;
   benchmark)   shift; cmd_benchmark "$@" ;;
   report)      shift; cmd_report "$@" ;;

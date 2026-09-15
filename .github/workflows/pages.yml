@@ -172,6 +172,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The depth above is a declaration; this is the measurement, and both come from
+      # deploy.checkout in .ai/repo/ci/pages.yaml rather than from this file. `fetch-depth` is
+      # one edit away from being tuned back for speed, and the failure that follows is not a
+      # missing checkout — it is six links to tags that exist being called non-existent, three
+      # steps later, inside a checker that looks like the thing at fault.
+      - name: the checkout can decide a ref
+        run: scripts/pages checkout --verify
+
       - id: setup
         uses: ./.github/actions/setup-site
 
