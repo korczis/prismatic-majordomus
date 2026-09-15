@@ -266,6 +266,30 @@ pub fn held() -> Option<LeaseDocument> {
     published().lock().ok()?.clone()
 }
 
+/// Is `doc` the lease this very process holds, published and not lost?
+///
+/// A server asked where its own checkout stands must answer from memory. Probing the
+/// address its lease names is a request to itself, served by the same small pool of HTTP
+/// workers the question arrived on: with every worker answering such a question at once,
+/// none is left to answer the probes, each waits out [`PROBE_TIMEOUT`], the server calls
+/// itself stale — and a client electing in that window times out on the same queue and
+/// takes a live lease over. Measured on 2026-09-15: ten MCP clients calling
+/// `majordomus_peers` at once, and one of them started a second server of the checkout.
+///
+/// ```
+/// use majordomus_cli::lease::{is_own, LeaseDocument};
+/// let doc: LeaseDocument = serde_json::from_str(
+///     r#"{"schema":"lease/v1","pid":1,"token":"t","url":"http://127.0.0.1:1"}"#,
+/// )
+/// .unwrap();
+/// // a process that holds no lease owns no document
+/// assert!(!is_own(&doc));
+/// ```
+pub fn is_own(doc: &LeaseDocument) -> bool {
+    !was_lost()
+        && held().is_some_and(|h| h.token == doc.token && h.pid == doc.pid && h.url == doc.url)
+}
+
 /// The lease this process holds. Dropping it removes the file (when the file is still
 /// this process's), so a failed start never leaves a stale lease behind.
 #[derive(Debug)]
