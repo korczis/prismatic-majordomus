@@ -21,6 +21,10 @@ MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VER
 # without the file existing here
 MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
 LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
+# the relay that turns a delegated checker's output into this script's verdicts, including
+# its verdict for a checker that says nothing at all
+# shellcheck source-path=SCRIPTDIR source=lib/relay-check.sh
+. "$ROOT/scripts/lib/relay-check.sh"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
@@ -232,35 +236,11 @@ fi
 # offline against the tree being published. This check used to grep root-relative hrefs, which Zola
 # never emits (it writes https://majordomus.dev/...), so it reported "every internal link resolves"
 # over an empty set while 197 links 404ed. The finding lines are relayed as they are.
-LC_OUT="$(mktemp "${TMPDIR:-/tmp}/mj.linkcheck.XXXXXX")"; lc_rc=0
-MJ_ROOT="$ROOT" "$ROOT/scripts/ci/link-check" > "$LC_OUT" 2>&1 || lc_rc=$?
-while IFS= read -r line; do
-  case "$line" in
-    "OK   "*) ok link "${line#OK   links        }" ;;
-    "FAIL "*) bad link "${line#FAIL }" ;;
-    "") ;;
-    # the closing summary of a run that found something restates its findings; only a run that could not
-    # decide at all (exit 12) has a line of its own to count
-    "link-check: "*) [ "$lc_rc" = 12 ] && bad link "$line" || printf '     %-12s %s\n' link "$line" ;;
-    *) [ "$lc_rc" = 0 ] || bad link "$line" ;;
-  esac
-done < "$LC_OUT"
-rm -f "$LC_OUT"
+relay_check link "$ROOT/scripts/ci/link-check" "OK   links        " "FAIL "
 
 # 6b. every interactive control is claimed by exactly one behaviour spec: scripts/ci/interaction-check, from the
 # markup alone. What each spec asserts is exercised in a browser by scripts/interaction-probe.
-IC_OUT="$(mktemp "${TMPDIR:-/tmp}/mj.interactioncheck.XXXXXX")"; ic_rc=0
-MJ_ROOT="$ROOT" "$ROOT/scripts/ci/interaction-check" > "$IC_OUT" 2>&1 || ic_rc=$?
-while IFS= read -r line; do
-  case "$line" in
-    "OK   "*) ok controls "${line#OK   controls     }" ;;
-    "FAIL "*) bad controls "${line#FAIL control       }" ;;
-    "") ;;
-    "interaction-check: "*) [ "$ic_rc" = 12 ] && bad controls "$line" || printf '     %-12s %s\n' controls "$line" ;;
-    *) [ "$ic_rc" = 0 ] || bad controls "$line" ;;
-  esac
-done < "$IC_OUT"
-rm -f "$IC_OUT"
+relay_check controls "$ROOT/scripts/ci/interaction-check" "OK   controls     " "FAIL control       "
 # 7. assets present
 for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
