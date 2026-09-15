@@ -6,27 +6,27 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "b6e5486b7f31c8f670f96f4bb44fbb1f91c6f372536dc14fae1caaace5ceace3",
+    "fingerprint": "e385dbd383521df3280dbe94d701018f6f154fd6243330a3f927055e79461e52",
     "summary": {
-      "total": 1464,
-      "builtin": 113,
-      "declarative": 1351,
+      "total": 1469,
+      "builtin": 114,
+      "declarative": 1355,
       "by_kind": {
         "command": 7,
-        "query": 106,
-        "resource": 1351
+        "query": 107,
+        "resource": 1355
       },
       "by_stability": {
-        "behaviorally_verified": 100,
+        "behaviorally_verified": 101,
         "experimental": 7,
-        "implemented": 1357
+        "implemented": 1361
       },
-      "mcp_tools": 110,
-      "mcp_resources": 1392,
-      "http_routes": 112,
-      "cli_commands": 52,
-      "modules": 66,
-      "benchmark_required": 108,
+      "mcp_tools": 111,
+      "mcp_resources": 1396,
+      "http_routes": 113,
+      "cli_commands": 53,
+      "modules": 67,
+      "benchmark_required": 109,
       "benchmark_waived": 5,
       "cached": 35
     },
@@ -34450,6 +34450,200 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/session_domain.rs"
       },
       {
+        "id": "shell.check",
+        "module": "shell",
+        "kind": "query",
+        "title": "Refuse undeclared shell",
+        "description": "Every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ShellReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "measured": {
+                "type": "boolean",
+                "description": "Whether the tree could be measured at all. `false` is not a pass: the reason says\nwhat stopped the measurement, and a caller that gates on this report must refuse."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the tree could not be measured, when it could not."
+              },
+              "inventory": {
+                "type": "string",
+                "description": "The inventory read, relative to the repository root."
+              },
+              "governed": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The directories whose shell units must be declared."
+              },
+              "units": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ShellUnit"
+                },
+                "description": "Every shell unit under the governed directories, in canonical order."
+              },
+              "records": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many records the inventory holds, shell or not."
+              },
+              "exemptions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many exemptions the inventory declares, by disposition."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ShellFinding"
+                },
+                "description": "Every finding, in canonical order. Empty is the passing answer."
+              },
+              "passes": {
+                "type": "boolean",
+                "description": "`true` when the tree was measured and nothing was found."
+              }
+            },
+            "required": [
+              "measured",
+              "inventory",
+              "governed",
+              "units",
+              "records",
+              "exemptions",
+              "findings",
+              "passes"
+            ],
+            "description": "The verdict of one check of the tree.",
+            "title": "ShellReport",
+            "$defs": {
+              "ShellUnit": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path, relative to the repository root."
+                  },
+                  "dialect": {
+                    "type": "string",
+                    "description": "The shell the unit is written for: the interpreter its first line names, or\n`sourced` for a `*.sh` file with no interpreter line."
+                  },
+                  "disposition": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The disposition its inventory record carries, when it has one."
+                  }
+                },
+                "required": [
+                  "path",
+                  "dialect"
+                ],
+                "description": "One shell unit the tree carries."
+              },
+              "ShellFinding": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "The finding's code: `shell.undeclared`, `shell.stale`, `shell.missing_field`,\n`shell.invalid_disposition`, `shell.invalid_unit`, `shell.exemption_not_shell`,\n`shell.duplicate`, `shell.out_of_order` or `shell.malformed`."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The file the finding is about: the shell unit, or the inventory itself."
+                  },
+                  "line": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "The line of the inventory the finding is about, when it is about one."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in a sentence."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What to do about it."
+                  }
+                },
+                "required": [
+                  "code",
+                  "path",
+                  "message",
+                  "remedy"
+                ],
+                "description": "One thing the check refuses, with what to do about it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::shell"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_shell_check"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/shell/check"
+          },
+          "cli": {
+            "path": [
+              "shell",
+              "check"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "shell",
+          "governance",
+          "migration"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/shell.rs"
+      },
+      {
         "id": "trace.commit",
         "module": "trace",
         "kind": "query",
@@ -40235,7 +40429,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 29,
+        "capabilities": 30,
         "capability_ids": []
       },
       {
@@ -40355,7 +40549,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 247,
+        "capabilities": 248,
         "capability_ids": []
       },
       {
@@ -40782,6 +40976,18 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/session_domain.rs"
       },
       {
+        "id": "shell",
+        "title": "Shell automation",
+        "description": "The repository's shell automation measured against the tracked migration inventory: new shell is refused unless an exemption declares why it has to be shell and when it stops being, and an exemption whose file is gone is refused too, so the list only shrinks as units move into typed and scripted capabilities (ADR 0069).",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "shell.check"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/shell.rs"
+      },
+      {
         "id": "skill",
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
@@ -40802,7 +41008,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 215,
+        "capabilities": 217,
         "capability_ids": []
       },
       {
@@ -40882,7 +41088,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c2e8a47682642f3d06dea998e2c22a00eecdfedd88a07e69422ecc3eec6c21b1",
+    "fingerprint": "607588d1476b309b2043b0775c614509d53c0b5473b8a4a9c2a948200a1fecda",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40911,10 +41117,10 @@
       "audience": 8,
       "claim": 173,
       "command": 31,
-      "context": 29,
+      "context": 30,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 247,
+      "document": 248,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -40931,7 +41137,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 215,
+      "test": 217,
       "use-case": 46,
       "workspace": 1
     },
@@ -44138,7 +44344,7 @@
         "description": "The tracked half of the layer and what each section under it is for.",
         "path": ".ai/repo/README.md",
         "source_class": "context",
-        "bytes": 2254
+        "bytes": 2413
       },
       {
         "uri": "majordomus://context/ai.repo.adrs",
@@ -44161,6 +44367,16 @@
         "section": "applications",
         "source_class": "context",
         "bytes": 855
+      },
+      {
+        "uri": "majordomus://context/ai.repo.automation",
+        "kind": "context",
+        "identity": "ai.repo.automation",
+        "title": "Automation inventory",
+        "description": "Every unit of this repository's automation, its migration disposition, and the exemption that allows a shell unit to remain shell.",
+        "path": ".ai/repo/automation/README.md",
+        "source_class": "context",
+        "bytes": 1998
       },
       {
         "uri": "majordomus://context/ai.repo.benchmarks",
@@ -44595,7 +44811,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 6099
+        "bytes": 6269
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -44604,7 +44820,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 5388
+        "bytes": 5558
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -45018,7 +45234,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 18103
+        "bytes": 18410
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -45055,6 +45271,15 @@
         "path": "docs/SCOPE.md",
         "source_class": "document",
         "bytes": 7612
+      },
+      {
+        "uri": "majordomus://document/docs/SHELL.md",
+        "kind": "document",
+        "identity": "docs/SHELL.md",
+        "title": "Shell automation",
+        "path": "docs/SHELL.md",
+        "source_class": "document",
+        "bytes": 5529
       },
       {
         "uri": "majordomus://document/docs/SITE_CLAIMS.md",
@@ -54433,6 +54658,22 @@
         "bytes": 6101
       },
       {
+        "uri": "majordomus://test/test/cases/365_new_shell_is_refused.sh",
+        "kind": "test",
+        "identity": "test/cases/365_new_shell_is_refused.sh",
+        "path": "test/cases/365_new_shell_is_refused.sh",
+        "source_class": "case",
+        "bytes": 3190
+      },
+      {
+        "uri": "majordomus://test/test/cases/366_automation_inventory_agrees_with_the_tree.sh",
+        "kind": "test",
+        "identity": "test/cases/366_automation_inventory_agrees_with_the_tree.sh",
+        "path": "test/cases/366_automation_inventory_agrees_with_the_tree.sh",
+        "source_class": "case",
+        "bytes": 845
+      },
+      {
         "uri": "majordomus://test/test/cases/36_command_doctrines.sh",
         "kind": "test",
         "identity": "test/cases/36_command_doctrines.sh",
@@ -55699,7 +55940,7 @@
       "identity": [
         "id"
       ],
-      "objects": 29
+      "objects": 30
     },
     {
       "name": "deployment",
@@ -55725,7 +55966,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 247
+      "objects": 248
     },
     {
       "name": "feature",
@@ -55904,7 +56145,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 215
+      "objects": 217
     },
     {
       "name": "use-case",
@@ -73831,6 +74072,233 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "shell"
+        ],
+        "route": "/docs/cli/shell/",
+        "executable": false,
+        "usage": "majordomus shell [OPTIONS] <COMMAND>",
+        "about": "The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "shell",
+              "check"
+            ],
+            "route": "/docs/cli/shell/check/",
+            "executable": true,
+            "usage": "majordomus shell check [OPTIONS]",
+            "about": "Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured",
+            "args": [
+              {
+                "name": "canonical",
+                "long": "canonical",
+                "positional": false,
+                "help": "Rewrite .ai/repo/automation/inventory.jsonl with its records in canonical order, then check",
+                "value_name": "CANONICAL",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "shell-check-json",
+                "title": "Every shell unit against the automation inventory",
+                "description": "The shell units under the governed directories, how many records the inventory holds, the exemptions by disposition, and every finding with its remedy. `passes` is the verdict; a tree that could not be measured says `measured: false`, which is not a pass.",
+                "argv": [
+                  "shell",
+                  "check",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus shell check --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /measured, /units, /exemptions, /findings, /passes"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -74801,6 +75269,16 @@
         "read_only": true,
         "input": "Empty",
         "output": "MachineReport"
+      },
+      {
+        "name": "majordomus_shell_check",
+        "id": "shell.check",
+        "title": "Refuse undeclared shell",
+        "description": "Every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "ShellReport"
       },
       {
         "name": "majordomus_trace_commit",
@@ -75822,6 +76300,12 @@
         "method": "GET",
         "path": "/api/v1/session/machine",
         "id": "session_domain.machine",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/shell/check",
+        "id": "shell.check",
         "kind": "query"
       },
       {
@@ -80114,6 +80598,35 @@
         "route": "GET /api/v1/session/machine"
       },
       {
+        "key": "shell.check|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "shell.check",
+        "module": "shell",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "shell.check|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "shell.check",
+        "module": "shell",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_shell_check"
+      },
+      {
+        "key": "shell.check|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "shell.check",
+        "module": "shell",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/shell/check"
+      },
+      {
         "key": "trace.commit|direct|head",
         "kind": "capability",
         "transport": "direct",
@@ -82795,6 +83308,27 @@
           "cases": 1
         },
         {
+          "subject": "shell.check",
+          "module": "shell",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "shell.check",
+          "module": "shell",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "shell.check",
+          "module": "shell",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "trace.commit",
           "module": "trace",
           "transport": "direct",
@@ -83182,22 +83716,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 113,
-          "covered": 108,
+          "required": 114,
+          "covered": 109,
           "missing": 0,
           "waived": 5,
           "inapplicable": 0
         },
         "http": {
-          "required": 112,
-          "covered": 108,
+          "required": 113,
+          "covered": 109,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 110,
-          "covered": 106,
+          "required": 111,
+          "covered": 107,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
@@ -83210,8 +83744,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 348,
-          "covered": 335,
+          "required": 351,
+          "covered": 338,
           "missing": 0,
           "waived": 13,
           "inapplicable": 0

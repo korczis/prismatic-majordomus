@@ -98,6 +98,7 @@
     "op-server-status": "docs/api/server/",
     "op-session_domain-identity": "docs/api/session-domain/",
     "op-session_domain-machine": "docs/api/session-domain/",
+    "op-shell-check": "docs/api/shell/",
     "op-trace-commit": "docs/api/trace/",
     "op-trace-issue": "docs/api/trace/",
     "op-trace-report": "docs/api/trace/",
@@ -563,6 +564,9 @@
     "schema-ServiceAvailability": "docs/api/environment/",
     "schema-ServiceState": "docs/api/environment/",
     "schema-Severity": "docs/api/shared/",
+    "schema-ShellFinding": "docs/api/shell/",
+    "schema-ShellReport": "docs/api/shell/",
+    "schema-ShellUnit": "docs/api/shell/",
     "schema-Sighting": "docs/api/mesh/",
     "schema-Signal": "docs/api/why/",
     "schema-Source": "docs/api/design/",
@@ -672,6 +676,7 @@
     "tag-rules": "docs/api/rules/",
     "tag-server": "docs/api/server/",
     "tag-session_domain": "docs/api/session-domain/",
+    "tag-shell": "docs/api/shell/",
     "tag-trace": "docs/api/trace/",
     "tag-web": "docs/api/web/",
     "tag-why": "docs/api/why/",
@@ -679,9 +684,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 112,
-    "schemas": 527,
-    "tags": 37
+    "operations": 113,
+    "schemas": 530,
+    "tags": 38
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -864,6 +869,7 @@
     "server.status": "server",
     "session_domain.identity": "session-domain",
     "session_domain.machine": "session-domain",
+    "shell.check": "shell",
     "trace.commit": "trace",
     "trace.issue": "trace",
     "trace.report": "trace",
@@ -1333,6 +1339,9 @@
     "ServiceAvailability": "environment",
     "ServiceState": "environment",
     "Severity": "shared",
+    "ShellFinding": "shell",
+    "ShellReport": "shell",
+    "ShellUnit": "shell",
     "Sighting": "mesh",
     "Signal": "why",
     "Source": "design",
@@ -10680,6 +10689,7 @@
         "server.status",
         "session_domain.identity",
         "session_domain.machine",
+        "shell.check",
         "trace.report",
         "trace.commit",
         "trace.issue",
@@ -26595,6 +26605,174 @@
       "variants": []
     },
     {
+      "description": "One thing the check refuses, with what to do about it.",
+      "home": "shell",
+      "is_enum": false,
+      "name": "ShellFinding",
+      "properties": [
+        {
+          "description": "The finding's code: `shell.undeclared`, `shell.stale`, `shell.missing_field`,\n`shell.invalid_disposition`, `shell.invalid_unit`, `shell.exemption_not_shell`,\n`shell.duplicate`, `shell.out_of_order` or `shell.malformed`.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file the finding is about: the shell unit, or the inventory itself.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The line of the inventory the finding is about, when it is about one.",
+          "name": "line",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "What is wrong, in a sentence.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to do about it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ShellReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The verdict of one check of the tree.",
+      "home": "shell",
+      "is_enum": false,
+      "name": "ShellReport",
+      "properties": [
+        {
+          "description": "Whether the tree could be measured at all. `false` is not a pass: the reason says\nwhat stopped the measurement, and a caller that gates on this report must refuse.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why the tree could not be measured, when it could not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The inventory read, relative to the repository root.",
+          "name": "inventory",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directories whose shell units must be declared.",
+          "name": "governed",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Every shell unit under the governed directories, in canonical order.",
+          "name": "units",
+          "refs": [
+            "ShellUnit"
+          ],
+          "required": true,
+          "type": "array of ShellUnit"
+        },
+        {
+          "description": "How many records the inventory holds, shell or not.",
+          "name": "records",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many exemptions the inventory declares, by disposition.",
+          "name": "exemptions",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every finding, in canonical order. Empty is the passing answer.",
+          "name": "findings",
+          "refs": [
+            "ShellFinding"
+          ],
+          "required": true,
+          "type": "array of ShellFinding"
+        },
+        {
+          "description": "`true` when the tree was measured and nothing was found.",
+          "name": "passes",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "shell.check"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One shell unit the tree carries.",
+      "home": "shell",
+      "is_enum": false,
+      "name": "ShellUnit",
+      "properties": [
+        {
+          "description": "The path, relative to the repository root.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The shell the unit is written for: the interpreter its first line names, or\n`sourced` for a `*.sh` file with no interpreter line.",
+          "name": "dialect",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The disposition its inventory record carries, when it has one.",
+          "name": "disposition",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ShellReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One provenance entry: a source, and where the observation physically came from.",
       "home": "mesh",
       "is_enum": false,
@@ -37396,6 +37574,67 @@
         }
       ],
       "slug": "session-domain"
+    },
+    {
+      "description": "The repository's shell automation measured against the tracked migration inventory: new shell is refused unless an exemption declares why it has to be shell and when it stops being, and an exemption whose file is gone is refused too, so the list only shrinks as units move into typed and scripted capabilities (ADR 0069).",
+      "name": "shell",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "shell check",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/shell/check\"",
+          "description": "Every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
+          "home": "shell",
+          "id": "shell.check",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_shell_check",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/shell/check",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::shell",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Refuse undeclared shell: the result.",
+              "schema": "ShellReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ShellReport",
+          "stability": "behaviorally_verified",
+          "summary": "Refuse undeclared shell"
+        }
+      ],
+      "slug": "shell"
     },
     {
       "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name.",

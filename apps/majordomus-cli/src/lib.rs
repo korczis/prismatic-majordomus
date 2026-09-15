@@ -13,6 +13,7 @@
 
 pub mod about;
 pub mod app;
+pub(crate) mod automation;
 pub mod bench;
 pub mod capability;
 pub mod cli;
