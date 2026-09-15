@@ -102,6 +102,20 @@ gates:
     runs: bin/majordomus adr check
     summary: every decision valid and its references resolving, and no identity this branch adds is already carried by a different decision on another ref
 
+  # The knowledge graph refuses an identity two sources claim: `knowledge nodes` exits 10 and
+  # names it, rather than keeping one claimant and hiding the ambiguity. Nothing ran it. For a
+  # day it exited 10 on this repository with eleven directory contracts claimed twice (a line
+  # that forced every context document to `document`, so the two classes discovering one README
+  # emitted one identity), and every surface that reads the graph was faithful to a graph that
+  # had refused to hold them. A reporter nobody asks is a declaration, not an enforcement. File
+  # reads and the version-control index only, no build; shared scope, because operational
+  # records are one checkout's own and CI holds none.
+  - id: knowledge-nodes
+    job: structure
+    always: true
+    runs: bin/majordomus knowledge nodes --scope shared
+    summary: every canonical object is one node with one identity; an identity two source classes claim is refused by name, and the refusal fails the plan
+
   - id: shell-suite
     job: suite
     runs: MJ_TEST_JOBS=4 bash test/run.sh
