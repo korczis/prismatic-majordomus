@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# homepage-check — the homepage tells the story it declares, and the site's indexing policy is
+# the one it declares.
+#
+#   scripts/ci/homepage-check          over site/public, as scripts/site-build left it
+#   MJ_ROOT=<dir> scripts/ci/homepage-check   over another tree (test/cases/333 builds one)
+#
+# Rule: project.homepage-tells-a-declared-story. What is held, each in both directions:
+#
+#   narrative   the <section id>s the homepage renders inside <main> are exactly
+#               site/data/homepage.toml's `order`, in that order — a section rendered and not
+#               declared fails, a section declared and not rendered fails, and so does the
+#               right set in the wrong order
+#   substance   every declared section carries at least one link or one derived figure (<dd>);
+#               a heading with nothing under it is a section in name only
+#   honesty     no feature the product model does not call stable is linked from the homepage
+#   install     the install section carries every command data/registry/distribution.json
+#               gives a newcomer: the install, the next step and the verification
+#   indexing    a page below a section nav.toml lists under [indexing] unlisted carries
+#               <meta name="robots" content="noindex"> and is absent from sitemap.xml; every
+#               other page has no noindex it did not ask for in its own front matter and is
+#               present in sitemap.xml; nothing marked noindex is in the sitemap
+#
+# Output: one `OK`/`FAIL` line per check in site-check's format. Exit 0 clean, 10 findings,
+# 12 when site/public or a declaration it reads is missing.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+command -v python3 >/dev/null 2>&1 || { echo "homepage-check: python3 is not installed" >&2; exit 12; }
+[ -f "$ROOT/site/public/index.html" ] || { echo "homepage-check: $ROOT/site/public/index.html missing; run scripts/site-build" >&2; exit 12; }
+exec python3 - "$ROOT" <<'PY'
+import html, json, os, re, sys, tomllib
+
+root = sys.argv[1]
+pub = os.path.join(root, "site", "public")
+fails = 0
+
+def ok(name, msg):
+    print(f"OK   {name:<12} {msg}")
+
+def bad(name, msg):
+    global fails
+    fails += 1
+    print(f"FAIL {name:<12} {msg}")
+
+def load_toml(rel):
+    p = os.path.join(root, rel)
+    if not os.path.exists(p):
+        print(f"homepage-check: {rel} missing", file=sys.stderr)
+        sys.exit(12)
+    with open(p, "rb") as f:
+        return tomllib.load(f)
+
+def load_json(rel):
+    p = os.path.join(root, rel)
+    if not os.path.exists(p):
+        print(f"homepage-check: {rel} missing", file=sys.stderr)
+        sys.exit(12)
+    with open(p) as f:
+        return json.load(f)
+
+order = load_toml("site/data/homepage.toml").get("order") or []
+unlisted = (load_toml("site/data/nav.toml").get("indexing") or {}).get("unlisted") or []
+product = load_json("site/data/registry/product.json")
+dist = load_json("site/data/registry/distribution.json")
+home = open(os.path.join(pub, "index.html")).read()
+
+# ---------------------------------------------------------------- narrative and substance
+main_m = re.search(r"<main\b[^>]*>(.*)</main>", home, re.S)
+main = main_m.group(1) if main_m else home
+opens = [(m.start(), m.group(1)) for m in re.finditer(r'<section\b[^>]*\bid="([^"]+)"', main)]
+rendered = [sid for _, sid in opens]
+if not order:
+    bad("narrative", "site/data/homepage.toml declares no order; the homepage's story is undeclared")
+elif rendered == order:
+    ok("narrative", f"the homepage renders its {len(order)} declared sections, in the declared order: {' > '.join(order)}")
+else:
+    extra = [s for s in rendered if s not in order]
+    missing = [s for s in order if s not in rendered]
+    if extra:
+        bad("narrative", f"the homepage renders section(s) site/data/homepage.toml does not declare: {', '.join(extra)}")
+    if missing:
+        bad("narrative", f"site/data/homepage.toml declares section(s) the homepage does not render: {', '.join(missing)}")
+    if not extra and not missing:
+        bad("narrative", f"the homepage renders its sections out of the declared order: rendered {' > '.join(rendered)}, declared {' > '.join(order)}")
+
+empty = []
+for i, (start, sid) in enumerate(opens):
+    end = opens[i + 1][0] if i + 1 < len(opens) else len(main)
+    body = main[start:end]
+    if sid in order and "<a " not in body and "<dd" not in body:
+        empty.append(sid)
+if empty:
+    bad("substance", f"declared section(s) carry no link and no derived figure: {', '.join(empty)}")
+elif order:
+    ok("substance", "every declared section carries at least one link or one derived figure")
+
+# ---------------------------------------------------------------- honesty
+not_stable = {f["route"]: f.get("status") for f in product.get("features", []) if f.get("status") != "stable"}
+linked = [r for r in not_stable if f'{r}"' in home]
+if linked:
+    bad("honesty", "the homepage links feature(s) the product model does not call stable: " + ", ".join(f"{r} ({not_stable[r]})" for r in linked))
+else:
+    ok("honesty", f"no feature the product model does not call stable is linked from the homepage ({len(not_stable)} such feature(s) in the model)")
+
+# ---------------------------------------------------------------- install
+inst = ""
+for i, (start, sid) in enumerate(opens):
+    if sid == "install":
+        end = opens[i + 1][0] if i + 1 < len(opens) else len(main)
+        inst = html.unescape(re.sub(r"<[^>]+>", "", main[start:end]))
+wanted = [(k, dist.get(k)) for k in ("install_command", "next_command", "verify_command")]
+absent = [k for k, v in wanted if not v or v not in inst]
+if not inst:
+    bad("install", "the homepage renders no install section")
+elif absent:
+    bad("install", "the install section does not carry the distribution model's " + ", ".join(absent))
+else:
+    ok("install", "the install section carries the install, next-step and verification commands the distribution model gives")
+
+# ---------------------------------------------------------------- indexing
+sm_path = os.path.join(pub, "sitemap.xml")
+sitemap = open(sm_path).read() if os.path.exists(sm_path) else ""
+if not sitemap:
+    bad("indexing", "site/public/sitemap.xml is missing")
+base = (re.search(r"<loc>(https?://[^/<]+)", sitemap) or re.search(r"(https?://[^/]+)", "")) if sitemap else None
+locs = set()
+for loc in re.findall(r"<loc>([^<]+)</loc>", sitemap):
+    path = re.sub(r"^https?://[^/]+", "", html.unescape(loc)) or "/"
+    locs.add(path)
+noindex_re = re.compile(r'<meta name="robots" content="noindex">')
+problems = []
+pages = 0
+for dirpath, _, files in os.walk(pub):
+    if "index.html" not in files:
+        continue
+    rel = os.path.relpath(dirpath, pub)
+    path = "/" if rel == "." else "/" + rel.replace(os.sep, "/") + "/"
+    text = open(os.path.join(dirpath, "index.html"), errors="replace").read()
+    if "<title>Redirect</title>" in text[:2000]:
+        continue
+    pages += 1
+    parts = path.split("/")
+    by_policy = len(parts) >= 4 and parts[1] in unlisted
+    has_noindex = bool(noindex_re.search(text[:6000]))
+    in_sitemap = path in locs
+    if by_policy and not has_noindex:
+        problems.append(f"{path} is below an unlisted section and carries no noindex")
+    if by_policy and in_sitemap:
+        problems.append(f"{path} is below an unlisted section and is in sitemap.xml")
+    if has_noindex and in_sitemap:
+        problems.append(f"{path} carries noindex and is in sitemap.xml")
+    if not has_noindex and not in_sitemap:
+        problems.append(f"{path} is indexable and absent from sitemap.xml")
+if problems:
+    for p in problems[:12]:
+        bad("indexing", p)
+    if len(problems) > 12:
+        bad("indexing", f"... and {len(problems) - 12} more")
+else:
+    ok("indexing", f"{pages} page(s): everything below {', '.join('/' + u + '/' for u in unlisted) or 'no section'} is noindex and out of the sitemap, and every other page is indexable and in it")
+
+sys.exit(10 if fails else 0)
+PY
