@@ -12,7 +12,7 @@ What this checkout is right now — the project and its version, the repository 
 layer, version control, the toolchains the repository declares, what the layer holds, the
 workflows a person can run here, the provider projections and the local services — is one
 typed value, `environment::RepositoryEnvironment`, built by one resolver under
-[`apps/majordomus-cli/src/environment/`](../apps/majordomus-cli/src/environment/). Every
+[`apps/majordomus-cli/src/environment/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/environment). Every
 surface that says any of those things renders that value: `majordomus env` on the command
 line, the HTTP route `/api/v1/environment`, the MCP resource `majordomus://environment`,
 and the banner direnv draws on entering the directory. None of them discovers anything of
@@ -20,8 +20,8 @@ its own. Behaviour as implemented and tested; where this document and the execut
 disagree, the document is wrong and changes in the same commit.
 
 The commands and their executable examples are in the generated reference
-([`generated/cli.md`](generated/cli.md), under `majordomus env`); the capabilities, their
-routes and their benchmark cases in [`generated/capabilities.md`](generated/capabilities.md),
+([`generated/cli.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md), under `majordomus env`); the capabilities, their
+routes and their benchmark cases in [`generated/capabilities.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/capabilities.md),
 module `environment`. Neither is restated here.
 
 ## Two resolutions, one model
@@ -78,7 +78,7 @@ older than its sources gets that same line and no runtime — the adapter sets
 is no longer there.
 
 The rules that hold this shut are `project.envrc-is-an-adapter`
-([`.ai/repo/rules/project/envrc-is-an-adapter.v2.md`](../.ai/repo/rules/project/envrc-is-an-adapter.v2.md)) —
+([`.ai/repo/rules/project/envrc-is-an-adapter.v2.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/envrc-is-an-adapter.v2.md)) —
 a file a shell evaluates on entering the repository resolves the tool and makes exactly one
 call to it, the bootstrap command, and evaluates what that call exports; it reads nothing
 about the repository, builds nothing, reaches no network and decides nothing — and

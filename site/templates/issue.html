@@ -13,7 +13,7 @@
 
   {%- if it.status == "BLOCKED" %}
   <div class="mt-6 rounded-base border border-danger-subtle bg-danger-soft p-4">
-    <p class="text-sm text-fg-danger-strong">Blocked. This issue cannot start until {% for d in it.blocked_by %}<a href="{{ get_url(path="/plan/" ~ (d | lower) ~ "/", trailing_slash=true) }}" class="font-mono underline">{{ d }}</a>{% if not loop.last %}, {% endif %}{% endfor %} {% if it.blocked_by | length == 1 %}is{% else %}are{% endif %} done. The status is derived from that, not declared.</p>
+    <p class="text-sm text-fg-danger-strong">Blocked. This issue cannot start until {% for d in it.blocked_by %}{#- a blocker is an issue id or milestone:<id>; both pages live at /plan/<id>/ -#}{%- set target = d | replace(from="milestone:", to="") -%}<a href="{{ get_url(path="/plan/" ~ (target | lower) ~ "/", trailing_slash=true) }}" class="font-mono underline">{{ d }}</a>{% if not loop.last %}, {% endif %}{% endfor %} {% if it.blocked_by | length == 1 %}is{% else %}are{% endif %} done. The status is derived from that, not declared.</p>
   </div>
   {%- elif it.status == "READY" %}
   <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">

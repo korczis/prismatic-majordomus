@@ -515,9 +515,76 @@ EOF
 # a sparse sequence, which costs nothing, and it removes the only case where two correct
 # surveys of the same evidence can disagree.
 mj_adr_next_id() {
-  mj_adr_claims | awk -F"$MJ_TAB" '
-    { n = $1 + 0; if (n > max) max = n }
-    END { printf "%04d\n", max + 1 }'
+  printf '%04d\n' "$(( $(mj_adr_claims | mj_adr_high_water) + 1 ))"
+}
+
+# The highest identity in a stream whose first field is NNNN, as a plain decimal (0 when the
+# stream is empty). Decimal on purpose: a shell reading "0008" does arithmetic in octal.
+mj_adr_high_water() {
+  awk -F"$MJ_TAB" '{ n = $1 + 0; if (n > max) max = n } END { print max + 0 }'
+}
+
+# ---------------------------------------------------------------- the identity lock
+# A directory, because mkdir is the create-or-fail primitive every POSIX filesystem has, with
+# an `owner` file inside naming the host and process that holds it.
+#
+# It is not `mj_lock_take`, and must not become it. That helper proceeds without the lock when
+# its wait expires, which is right for a check it can repeat and wrong for an identity: a
+# proposer that proceeds unlocked can take the number the holder is writing, and this
+# repository shipped two 0005s and two 0007s before anything checked. So an expired wait here
+# is still a refusal.
+#
+# What it takes from that helper is that a lock can outlive its holder. A proposer killed
+# between mkdir and release leaves the directory behind, and every later proposer would wait
+# out its budget and refuse until a person removed it. A lock is broken only when its owner is
+# provably dead: the owner file names this host, and `ps -p` — which answers for any user's
+# process, where `kill -0` fails on a live process it may not signal — finds no such pid.
+# Anything less certain is waited on and refused: a lock with no owner file (taken by an older
+# version, or by a proposer that died in the instant between mkdir and writing it), a lock
+# whose owner is on another host, and a lock on a system where `ps -p` cannot be shown to work.
+# A pid reused by an unrelated process reads as alive, which is the safe direction.
+#
+# Breaking is itself exclusive, under `<lock>.break`: without it, two waiters that both read a
+# dead owner could each remove a lock, and the second removal would take the lock a third
+# proposer had taken in between. Under it, the owner file is read and the lock removed with no
+# other breaker running, and a dead owner cannot release, so nothing else can change the lock
+# between the reading and the removal. The known hole is a container that shares this host's
+# name and not its process table; there a live holder reads as dead.
+MJ_ADR_LOCK_WAIT="${MJ_ADR_LOCK_WAIT:-100}"   # tenths of a second before a live lock is refused
+mj_adr_host() { uname -n 2>/dev/null || printf unknown; }
+mj_adr_lock_take() {
+  local lock="$1" waited=0 owner
+  while ! mkdir "$lock" 2>/dev/null; do
+    mj_adr_lock_break_dead "$lock" && continue
+    waited=$((waited + 1))
+    if [ "$waited" -gt "$MJ_ADR_LOCK_WAIT" ]; then
+      owner="$(cat "$lock/owner" 2>/dev/null)" || owner=""
+      mj_die "$MJ_EX_INTERNAL" "adr propose: the identity lock $(mj_rel "$lock") has been held for too long ($([ -n "$owner" ] && printf 'by %s' "$owner" || printf 'by an owner it does not name')); remove it if no other worker is proposing"
+    fi
+    sleep 0.1 2>/dev/null || sleep 1
+  done
+  printf '%s %s\n' "$(mj_adr_host)" "$$" > "$lock/owner"
+}
+mj_adr_lock_release() {
+  rm -f "$1/owner" 2>/dev/null
+  rmdir "$1" 2>/dev/null || true
+}
+# 0 when a dead owner's lock was removed, 1 when the lock stands
+mj_adr_lock_break_dead() {
+  local lock="$1" host pid broke=1
+  [ -f "$lock/owner" ] || return 1
+  mkdir "$lock.break" 2>/dev/null || return 1
+  # stderr is redirected before the input: the holder may release between the test above and
+  # this read, and a redirection that fails is reported before any later redirection applies
+  if read -r host pid 2>/dev/null < "$lock/owner" \
+    && [ "$host" = "$(mj_adr_host)" ] \
+    && case "$pid" in ''|*[!0-9]*) false ;; *) true ;; esac \
+    && ps -p "$$" >/dev/null 2>&1 \
+    && ! ps -p "$pid" >/dev/null 2>&1; then
+    rm -f "$lock/owner" && rmdir "$lock" 2>/dev/null && broke=0
+  fi
+  rmdir "$lock.break" 2>/dev/null || true
+  return "$broke"
 }
 
 # The identities something claims that the base ref does not carry: allocated, and not yet
@@ -791,16 +858,31 @@ mj_adr_propose() {
     ls "$MJ_ADRS_DIR/${r#adr-}"-*.md >/dev/null 2>&1 || mj_die "$MJ_EX_USAGE" "adr propose: --supersedes '$r' matches no decision here"
   done
 
-  local lock num slug dest tmp origin=extracted waited=0
+  local lock num slug dest tmp origin=extracted surveyed here
+  # The survey runs before the lock, and only the working tree is read again inside it.
+  #
+  # The whole survey used to run inside the lock, and it is the expensive part: sibling
+  # worktrees, every ref's history and the board, a second or more per call. Proposers
+  # serialise on the lock, so each one waited for a full survey by everyone ahead of it, and
+  # eight of them outlasted the lock's budget — measured as 3 of 24 concurrent proposers
+  # dying with exit 13 on a developer machine, and as the intermittent `FAIL 99_adr` in CI.
+  #
+  # Nothing is given up by moving it out. The lock is a directory in this worktree, so it
+  # never excluded a proposer in another worktree, on another branch, or behind the board:
+  # what those sources report could already change between reading them and writing the
+  # record, and `adr next` says so — a ref scan and the board both miss two sessions
+  # allocating in the same minute. The one thing the lock does exclude is another proposer
+  # in *this* worktree, and every such proposer writes its record into this directory before
+  # releasing the lock. Re-reading the directory inside the lock therefore sees every
+  # identity a local proposer has taken, which is the whole of the guarantee the lock gives.
+  surveyed="$(mj_adr_claims | mj_adr_high_water)"
   lock="$MJ_ADRS_DIR/.id.lock"
-  while ! mkdir "$lock" 2>/dev/null; do
-    waited=$((waited + 1))
-    [ "$waited" -gt 100 ] && mj_die "$MJ_EX_INTERNAL" "adr propose: the identity lock $(mj_rel "$lock") has been held for too long; remove it if no other worker is proposing"
-    sleep 0.1 2>/dev/null || sleep 1
-  done
+  mj_adr_lock_take "$lock"
   # from here the identity is ours until the record exists; every exit releases the lock
-  trap 'rmdir "'"$lock"'" 2>/dev/null || true' EXIT
-  num="$(mj_adr_next_id)"
+  trap 'mj_adr_lock_release "'"$lock"'"' EXIT
+  here="$(mj_adr_numbers_here "$MJ_ADRS_DIR" | mj_adr_high_water)"
+  [ "$here" -gt "$surveyed" ] && surveyed="$here"
+  num="$(printf '%04d' "$((surveyed + 1))")"
   slug="$(mj_adr_slug "$title")"
   [ -n "$slug" ] || slug="decision"
   dest="$MJ_ADRS_DIR/$num-$slug.md"
@@ -822,7 +904,7 @@ mj_adr_propose() {
     printf '## Consequences\n\nWhat this costs, what it forecloses, and what now has to be true.\n'
   } > "$tmp"
   mv "$tmp" "$dest"
-  rmdir "$lock" 2>/dev/null || true
+  mj_adr_lock_release "$lock"
   trap - EXIT
 
   mj_ledger_append adr.proposed "\"adr\":\"adr-$num\",\"title\":\"$(mj_json_esc "$title")\""

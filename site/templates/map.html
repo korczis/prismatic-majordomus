@@ -1,6 +1,8 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set graph = load_data(path="data/generated/architecture.json") -%}
+{#- the data file is not published under the site; its tracked copy on the forge is what a reader can open -#}
+{%- set project = load_data(path="data/generated/project.json") -%}
 {%- set graph_id = "architecture" -%}
 {%- set graph_rings = "entry,module,artifact" -%}
 {%- set graph_label = "Modules of the CLI and the files under .ai/ they touch. Solid arrows are reads and writes the scan could place; dashed arrows are references it would not claim a direction for." -%}
@@ -17,7 +19,7 @@
 <p class="mt-6 text-sm text-body-subtle">
   Every number above is counted from the scan at build time. The scanner is
   <a class="underline" href="{{ project.repository_url }}/blob/master/scripts/lib/architecture-scan.awk">scripts/lib/architecture-scan.awk</a>;
-  the data it produced for this build is <a class="underline" href="{{ get_url(path='data/generated/architecture.json') }}">architecture.json</a>.
+  the data it produced for this build is <a class="underline" href="{{ project.repository_url }}/blob/master/site/data/generated/architecture.json">architecture.json</a>.
 </p>
 {% endblock body %}
 {% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}

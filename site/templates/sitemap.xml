@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+{#- Every indexable page, and only those. A page below a section site/data/nav.toml lists under
+    [indexing] unlisted, or whose front matter sets extra.noindex, is published and linked but
+    left out here — base.html gives the same pages <meta name="robots" content="noindex">, and
+    scripts/ci/homepage-check fails the build if the two ever disagree. -#}
+{%- set nav_declaration = load_data(path="data/nav.toml") -%}
+{%- set indexing = nav_declaration.indexing -%}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{%- for entry in entries %}
+{%- set path_parts = entry.permalink | replace(from=config.base_url, to="") | split(pat="/") -%}
+{%- set unlisted = path_parts | length >= 4 and path_parts[1] in indexing.unlisted -%}
+{%- set own = entry.extra is defined and entry.extra and entry.extra.noindex is defined and entry.extra.noindex -%}
+{%- if not unlisted and not own %}
+  <url><loc>{{ entry.permalink | escape_xml | safe }}</loc>{% if entry.updated %}<lastmod>{{ entry.updated }}</lastmod>{% endif %}</url>
+{%- endif %}
+{%- endfor %}
+</urlset>
