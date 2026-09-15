@@ -22,6 +22,8 @@
 #                                       majordomus-cli.json beside it (commit, target triple,
 #                                       rustc, Cargo.lock digest, profile) for a later job
 #   MJ_CI_TIMINGS=FILE                  append "rust-check<TAB>step<TAB>seconds" per step
+#   MJ_CARGO_TEST_OUTPUT=FILE           also keep cargo test's output (both streams) in FILE, the
+#                                       report `majordomus evidence record --crate-output` reads
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
@@ -52,7 +54,15 @@ step() {
 if [ "$MODE" != integration ]; then
   step "cargo fmt --check";            cargo fmt --check
   step "cargo clippy -D warnings";     cargo clippy --all-targets --all-features -- -D warnings
-  step "cargo test";                   cargo test --no-fail-fast
+  step "cargo test"
+  # cargo prints each binary's `Running` line on stderr and its `test result:` on stdout; the
+  # evidence recorder joins the two, so a kept copy holds both streams. pipefail in a subshell,
+  # so a failing suite is still this step's failure and not tee's success.
+  if [ -n "${MJ_CARGO_TEST_OUTPUT:-}" ]; then
+    ( set -o pipefail; cargo test --no-fail-fast 2>&1 | tee "$MJ_CARGO_TEST_OUTPUT" )
+  else
+    cargo test --no-fail-fast
+  fi
   step "cargo doc -D warnings";        RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --quiet
   step "cargo bench --no-run";         cargo bench --no-run --quiet
 fi

@@ -86,8 +86,14 @@ awk '/^permissions:/{f=1; next} /^[a-z]/{f=0} f && /^  [a-z]/' "$W" | sed 's/^  
 # (2026-09-10 17:35:10Z, gh-pages dfd9c989c, "Page build failed.", 27 minutes of a stale site
 # with nothing red anywhere). The assertion stays an exact set, because least privilege is the
 # point: a third permission here must be argued for the same way.
-[ "$(cat perms.txt)" = "contents: write
-pages: read" ] || { echo "    pages.yml asks for more than the gh-pages push and GitHub's own build of it need:"; cat perms.txt; exit 1; }
+#
+# `actions: read` is the third, argued on 2026-09-15 (ADR 68): the site publishes the evidence
+# CI recorded for the commit it shows, that evidence is an artifact of a validate.yml run, and
+# downloading another run's artifact is read access to Actions. Without it the evidence section
+# can only ever say "unavailable", which is honest and says nothing.
+[ "$(cat perms.txt)" = "actions: read
+contents: write
+pages: read" ] || { echo "    pages.yml asks for more than the gh-pages push, GitHub's own build of it and the CI evidence it publishes need:"; cat perms.txt; exit 1; }
 
 # 5. the heavy gates are not on the publication path, and are still somewhere. Only what the
 #    jobs execute counts: the trigger paths name scripts/site-probe as an input that can change
