@@ -554,6 +554,7 @@ classes:
                 command: "cargo build".into(),
                 inputs_hash: "aaaa".into(),
                 session: String::new(),
+                result: String::new(),
             },
         );
         let c = complete(
@@ -591,6 +592,7 @@ classes:
                 command: "cargo build".into(),
                 inputs_hash: "aaaa".into(),
                 session: String::new(),
+                result: String::new(),
             },
         );
         // over the tree it was taken on

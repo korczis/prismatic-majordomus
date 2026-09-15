@@ -16,9 +16,10 @@ use common::{run_in, Fixture, Served};
 use majordomus_cli::capability::builtin::continuity::Freshness;
 use majordomus_cli::capability::builtin::server::ServerStanding;
 use majordomus_cli::environment::preflight::{
-    derive, observe, Check, DeploymentObservation, EpisodeObservation, GitObservation,
-    HandoverObservation, LedgerObservation, Observations, Preflight, Probe, RulesObservation,
-    RulesTally, ServerObservation, TaskObservation, Verdict, PAGES_REF,
+    derive, observe, Check, DeploymentObservation, EpisodeObservation, GateRecordObservation,
+    GitObservation, HandoverObservation, LedgerObservation, Observations, Preflight, Probe,
+    RulesObservation, RulesTally, ServerObservation, TaskObservation, Verdict, COVERAGE_GATE,
+    GENERATION_GATE, PAGES_REF,
 };
 use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
 use majordomus_cli::Repository;
@@ -288,6 +289,73 @@ fn coverage_and_generated_docs_are_never_claimed_on_nothing() {
     );
 }
 
+fn gate_run(exit: i64, current: Option<bool>, result: &str) -> GateRecordObservation {
+    GateRecordObservation {
+        task: "t-1".into(),
+        exit,
+        head: OLD.into(),
+        recorded_at: "2026-09-15T10:00:00Z".into(),
+        result: result.into(),
+        inputs_hash: "3f0a3f0a3f0a3f0a".into(),
+        current,
+    }
+}
+
+#[test]
+fn a_recorded_gate_verdict_is_judged_against_the_tree_its_inputs_hash_to() {
+    for (id, gate) in [
+        ("verification.coverage", COVERAGE_GATE),
+        ("verification.docs", GENERATION_GATE),
+    ] {
+        let mut o = at(HEAD);
+        o.gate_runs.insert(gate.into(), gate_run(0, Some(true), ""));
+        let c = derive(&o).check(id).unwrap().clone();
+        assert_eq!(c.verdict, Verdict::Verified, "{c:?}");
+        assert!(
+            c.evidence[0].observed.contains(gate) && c.evidence[0].observed.contains("t-1"),
+            "the record is the evidence: {:?}",
+            c.evidence
+        );
+
+        // a pass over inputs that have moved proves another tree, whatever commit it names
+        o.gate_runs
+            .insert(gate.into(), gate_run(0, Some(false), ""));
+        assert_eq!(verdict(&o, id), Verdict::Stale);
+
+        // a failure over this tree
+        o.gate_runs.insert(gate.into(), gate_run(1, Some(true), ""));
+        let c = derive(&o).check(id).unwrap().clone();
+        assert_eq!(c.verdict, Verdict::Failed);
+        assert!(c.summary.contains("exit 1"), "{}", c.summary);
+
+        // a tree that could not be hashed is not a pass
+        o.gate_runs.insert(gate.into(), gate_run(0, None, ""));
+        assert_eq!(verdict(&o, id), Verdict::Unknown);
+    }
+}
+
+#[test]
+fn coverage_reports_the_recorded_percentage_and_never_one_of_its_own() {
+    let mut o = at(HEAD);
+    o.gate_runs
+        .insert(COVERAGE_GATE.into(), gate_run(0, Some(true), "91.4%"));
+    let c = derive(&o).check("verification.coverage").unwrap().clone();
+    assert!(c.summary.contains("91.4%"), "{}", c.summary);
+    o.gate_runs
+        .insert(COVERAGE_GATE.into(), gate_run(0, Some(true), ""));
+    let c = derive(&o).check("verification.coverage").unwrap().clone();
+    assert!(
+        !c.summary.contains('%'),
+        "nothing recorded, nothing shown: {}",
+        c.summary
+    );
+    // and a run of another gate says nothing about coverage
+    let mut o = at(HEAD);
+    o.gate_runs
+        .insert("rust-check".into(), gate_run(0, Some(true), ""));
+    assert_eq!(verdict(&o, "verification.coverage"), Verdict::Unavailable);
+}
+
 // ---------------------------------------------------------------- observations of a real tree
 
 /// A fixture with a deployment ref and a ledger, both about commits the fixture really has.
@@ -391,6 +459,80 @@ fn a_ledger_run_verifies_only_the_tree_it_measured() {
     f.write(".ai/repo/evidence/ledger.json", &ledger(&measured, "pass"));
     f.write("lib/a.sh", "echo changed\n");
     assert_eq!(tests(&f), Verdict::Stale);
+}
+
+const GATE_MODEL: &str = "version: 1
+gates:
+  - id: rust-coverage
+    job: coverage
+    runs: just coverage
+  - id: generation-converges
+    job: structure
+    runs: scripts/ci/generation-converges
+classes:
+  - id: rust
+    paths: [src/**]
+    gates: [rust-coverage, generation-converges]
+";
+
+#[test]
+fn a_recorded_gate_run_is_read_from_the_task_ledger_and_hashed_against_the_tree() {
+    use majordomus_cli::capability::builtin::obligations::listing_hash;
+    let (f, _) = fixture_with_evidence();
+    let source = "pub fn covered() {}\n";
+    f.write("src/lib.rs", source);
+    f.write(".ai/repo/ci/gates.yaml", GATE_MODEL);
+    f.commit("a crate and its gates");
+    f.write(
+        ".ai/local/state/current.yaml",
+        "id: t-1\ntask: work\noutcome: active\n",
+    );
+    // the hash `majordomus evidence --gate` records: one line per file the gate is taken over
+    let hash = listing_hash(&format!(
+        "src/lib.rs {}\n",
+        majordomus_cli::policy::sha256_bytes_hex(source.as_bytes())
+    ));
+    let line = |task: &str, exit: i64, inputs: &str| {
+        json!({
+            "ts": "2026-09-15T10:00:00Z", "event": "task.gate", "head": "abc", "branch": "master",
+            "task": task, "gate": COVERAGE_GATE, "exit": exit, "inputs_hash": inputs,
+            "command": "just coverage", "result": "88.2%"
+        })
+        .to_string()
+            + "\n"
+    };
+    let coverage = |f: &Fixture| observed(f).check("verification.coverage").unwrap().clone();
+
+    // nothing recorded: today's answer, today's words
+    let c = coverage(&f);
+    assert_eq!(c.verdict, Verdict::Unavailable);
+    assert!(c.summary.contains("no coverage measurement is recorded"));
+
+    // another task's run is not this task's
+    f.write(".ai/local/state/ledger.jsonl", &line("t-other", 0, &hash));
+    assert_eq!(coverage(&f).verdict, Verdict::Unavailable);
+
+    // a pass over the inputs as they stand
+    f.write(".ai/local/state/ledger.jsonl", &line("t-1", 0, &hash));
+    let c = coverage(&f);
+    assert_eq!(c.verdict, Verdict::Verified, "{c:?}");
+    assert!(c.summary.contains("88.2%"), "{}", c.summary);
+    assert_eq!(
+        observed(&f).check("verification.docs").unwrap().verdict,
+        Verdict::Unknown,
+        "a coverage run proves nothing about generation"
+    );
+
+    // the newest line wins, and it failed
+    let mut ledger = line("t-1", 0, &hash);
+    ledger.push_str(&line("t-1", 2, &hash));
+    f.write(".ai/local/state/ledger.jsonl", &ledger);
+    assert_eq!(coverage(&f).verdict, Verdict::Failed);
+
+    // a pass, and then a file the gate is taken over changes
+    f.write(".ai/local/state/ledger.jsonl", &line("t-1", 0, &hash));
+    f.write("src/lib.rs", "pub fn changed() {}\n");
+    assert_eq!(coverage(&f).verdict, Verdict::Stale);
 }
 
 // ---------------------------------------------------------------- one value, every surface

@@ -734,6 +734,64 @@ pub enum DeploymentObservation {
     },
 }
 
+/// The gate whose recorded verdict `verification.coverage` reads: `just coverage`, as
+/// `.ai/repo/ci/gates.yaml` declares it.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::COVERAGE_GATE;
+/// assert_eq!(COVERAGE_GATE, "rust-coverage");
+/// ```
+pub const COVERAGE_GATE: &str = "rust-coverage";
+
+/// The gate whose recorded verdict `verification.docs` reads: generate, then
+/// `generate --check`, which passes only on a tree whose generated files are current.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::GENERATION_GATE;
+/// assert_eq!(GENERATION_GATE, "generation-converges");
+/// ```
+pub const GENERATION_GATE: &str = "generation-converges";
+
+/// The newest run of one gate the active task recorded with `majordomus evidence --gate`,
+/// and whether the files that select that gate still hash as they did when it ran.
+///
+/// The record is the `task.gate` line of `.ai/local/state/ledger.jsonl`, read by the gates
+/// module's own reader, and "the same tree" is that module's own definition: the hash of
+/// the gate's inputs, derived from the CI model. Nothing here is a second store or a second
+/// comparison.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{
+///     derive, GateRecordObservation, Observations, Verdict, COVERAGE_GATE,
+/// };
+/// let mut o = Observations::empty("demo", 0);
+/// o.gate_runs.insert(COVERAGE_GATE.into(), GateRecordObservation {
+///     task: "t-1".into(), exit: 0, head: "a".repeat(40), recorded_at: "t".into(),
+///     result: "91.4%".into(), inputs_hash: "3f0a".into(), current: Some(true),
+/// });
+/// let c = derive(&o).check("verification.coverage").unwrap().clone();
+/// assert_eq!(c.verdict, Verdict::Verified);
+/// assert!(c.summary.contains("91.4%"), "the recorded percentage, never a computed one");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GateRecordObservation {
+    /// The task the run was recorded for: the active one, since the record is kept per task.
+    pub task: String,
+    /// The exit status the gate reported; `0` is a pass.
+    pub exit: i64,
+    /// The commit the ledger's envelope stamped on the line.
+    pub head: String,
+    /// When it was recorded.
+    pub recorded_at: String,
+    /// What the gate said beyond its exit status, verbatim; empty when nothing was recorded.
+    pub result: String,
+    /// The hash of the gate's inputs when it ran.
+    pub inputs_hash: String,
+    /// Whether those inputs hash the same now: `Some(true)` the tree the run measured,
+    /// `Some(false)` another tree, `None` the hash could not be taken here.
+    pub current: Option<bool>,
+}
+
 /// Everything [`derive`] decides from. Plain data: a test builds one by hand.
 ///
 /// ```
@@ -776,6 +834,9 @@ pub struct Observations {
     pub projections: Vec<(String, ProjectionState)>,
     /// The deployment ref.
     pub deployment: DeploymentObservation,
+    /// The recorded run of each gate a verification check reads, by gate id; a gate with no
+    /// run recorded for the active task is absent.
+    pub gate_runs: BTreeMap<String, GateRecordObservation>,
 }
 
 impl Observations {
@@ -804,6 +865,7 @@ impl Observations {
             ledger: LedgerObservation::Absent,
             projections: Vec::new(),
             deployment: DeploymentObservation::NoRef,
+            gate_runs: BTreeMap::new(),
         }
     }
 }
@@ -868,10 +930,10 @@ pub fn derive(o: &Observations) -> Preflight {
             title: "Verification".into(),
             checks: vec![
                 tests_check(o),
-                coverage_check(),
+                coverage_check(o),
                 enforcement_check(o, head.as_deref(), clean),
                 projections_check(o),
-                docs_check(),
+                docs_check(o),
                 deployment_check(o, head.as_deref()),
             ],
         },
@@ -1504,15 +1566,91 @@ fn tests_check(o: &Observations) -> Check {
     }
 }
 
-fn coverage_check() -> Check {
-    Check::new(
-        "verification.coverage",
-        "coverage",
-        Verdict::Unavailable,
-        "no coverage measurement is recorded in the repository: scripts/rust-coverage measures and gates it and leaves no record this can read",
-        vec![],
+/// Where a recorded gate run is read from, as the evidence of a check names it.
+const GATE_RECORD: &str = ".ai/local/state/ledger.jsonl";
+
+/// A check over a gate's recorded run: `verified` when it passed over the tree in front of
+/// you, `failed` when it failed there, `stale` when it measured another tree, `unknown` when
+/// the tree could not be hashed. `absent` is the check when nothing is recorded.
+fn recorded_gate_check(
+    o: &Observations,
+    (id, title, gate): (&str, &str, &str),
+    absent: Check,
+) -> Check {
+    let Some(run) = o.gate_runs.get(gate) else {
+        return absent;
+    };
+    let remediation = format!("majordomus evidence --gate {gate} --exit <status>");
+    let evidence = vec![Evidence::new(
+        GATE_RECORD,
+        format!(
+            "task.gate {gate} exit {} at {} on {} over inputs {} (task {})",
+            run.exit,
+            short(&run.head),
+            run.recorded_at,
+            short(&run.inputs_hash),
+            run.task
+        ),
+    )];
+    let said = if run.result.is_empty() {
+        String::new()
+    } else {
+        format!(" · recorded result {}", run.result)
+    };
+    match run.current {
+        None => Check::new(
+            id,
+            title,
+            Verdict::Unknown,
+            format!(
+                "{gate} recorded exit {}, and the files that select it could not be hashed here to compare{said}",
+                run.exit
+            ),
+            evidence,
+        )
+        .next("majordomus-cli run gates.completion"),
+        Some(false) => Check::new(
+            id,
+            title,
+            Verdict::Stale,
+            format!(
+                "{gate} recorded exit {} over inputs that have changed since; it proves another tree{said}",
+                run.exit
+            ),
+            evidence,
+        )
+        .next(remediation),
+        Some(true) if run.exit != 0 => Check::new(
+            id,
+            title,
+            Verdict::Failed,
+            format!("{gate} failed with exit {} over this tree{said}", run.exit),
+            evidence,
+        )
+        .next(remediation),
+        Some(true) => Check::new(
+            id,
+            title,
+            Verdict::Verified,
+            format!("{gate} passed over this tree{said}"),
+            evidence,
+        ),
+    }
+}
+
+fn coverage_check(o: &Observations) -> Check {
+    recorded_gate_check(
+        o,
+        ("verification.coverage", "coverage", COVERAGE_GATE),
+        Check::new(
+            "verification.coverage",
+            "coverage",
+            Verdict::Unavailable,
+            "no coverage measurement is recorded in the repository: scripts/rust-coverage measures and gates it and leaves no record this can read",
+            vec![],
+        )
+        .next("scripts/rust-coverage"),
     )
-    .next("scripts/rust-coverage")
 }
 
 fn enforcement_check(o: &Observations, head: Option<&str>, clean: Option<bool>) -> Check {
@@ -1641,15 +1779,19 @@ fn projections_check(o: &Observations) -> Check {
     }
 }
 
-fn docs_check() -> Check {
-    Check::new(
-        "verification.docs",
-        "generated docs",
-        Verdict::Unknown,
-        "no generation check is recorded for this tree, and entry does not run the generator",
-        vec![],
+fn docs_check(o: &Observations) -> Check {
+    recorded_gate_check(
+        o,
+        ("verification.docs", "generated docs", GENERATION_GATE),
+        Check::new(
+            "verification.docs",
+            "generated docs",
+            Verdict::Unknown,
+            "no generation check is recorded for this tree, and entry does not run the generator",
+            vec![],
+        )
+        .next("majordomus generate --check"),
     )
-    .next("majordomus generate --check")
 }
 
 fn deployment_check(o: &Observations, head: Option<&str>) -> Check {
@@ -1913,7 +2055,6 @@ pub fn observe(
         resolution: environment.resolution,
         git,
         episode,
-        task,
         handover,
         policy: policy_observation,
         rules,
@@ -1926,7 +2067,15 @@ pub fn observe(
             .iter()
             .map(|p| (p.id.clone(), p.state))
             .collect(),
+        gate_runs: observe_gate_runs(
+            root,
+            local,
+            task.as_ref().map(|t| t.id.as_str()),
+            environment.vcs.tree(),
+            probe.cache,
+        ),
         deployment: observe_deployment(root),
+        task,
     }
 }
 
@@ -2143,6 +2292,97 @@ fn observe_ledger(
         newest_commit: newest.map(|e| e.commit.clone()).unwrap_or_default(),
         newest_at: newest.map(|e| e.at.clone()).unwrap_or_default(),
     }
+}
+
+/// The recorded runs of the gates the verification checks read, each compared with the tree.
+///
+/// Reading the record is one small file read and costs nothing more when no run is recorded,
+/// which is every checkout that never ran `majordomus evidence --gate`. Comparing a run with
+/// the tree hashes every file that selects the gate — a `git ls-files` and, for the coverage
+/// gate, the whole crate — so the hashes are cached under HEAD, the CI model and every path
+/// git reports changed, the way [`observe_ledger`] caches its comparison.
+fn observe_gate_runs(
+    root: &Path,
+    local: &str,
+    task: Option<&str>,
+    tree: Option<&super::GitWorkingTree>,
+    use_cache: bool,
+) -> BTreeMap<String, GateRecordObservation> {
+    let Some(task) = task else {
+        return BTreeMap::new();
+    };
+    let ledger = root.join(local).join("state").join("ledger.jsonl");
+    let (mut runs, _) = crate::gates::judge::runs_for(&ledger, task);
+    runs.retain(|gate, _| gate == COVERAGE_GATE || gate == GENERATION_GATE);
+    if runs.is_empty() {
+        return BTreeMap::new();
+    }
+
+    let fingerprint = tree.map(|t| {
+        let mut paths = t.changed_paths.clone();
+        paths.push(crate::gates::model::MODEL_PATH.to_string());
+        super::cache::fingerprint_of(root, &paths, &[t.head.as_deref().unwrap_or("")])
+    });
+    let mut cache = use_cache.then(|| Cache::load(root, local));
+    let mut hashes: BTreeMap<String, Option<String>> = match (&cache, &fingerprint) {
+        (Some(c), Some(f)) => c
+            .tiers
+            .gate_inputs
+            .as_ref()
+            .and_then(|e| e.fresh(f, None))
+            .cloned()
+            .unwrap_or_default(),
+        _ => BTreeMap::new(),
+    };
+    let missing: Vec<String> = runs
+        .keys()
+        .filter(|g| !hashes.contains_key(*g))
+        .cloned()
+        .collect();
+    if !missing.is_empty() {
+        let model = crate::gates::GateModel::load(root).ok();
+        for gate in missing {
+            // the judgement's own definition: a gate with no inputs hashes to the empty string
+            let hash = model.as_ref().and_then(|m| {
+                let specs = m.inputs_of(&gate);
+                if specs.is_empty() {
+                    Some(String::new())
+                } else {
+                    crate::capability::builtin::obligations::inputs_hash(root, &specs)
+                        .map(|(h, _)| h)
+                }
+            });
+            hashes.insert(gate, hash);
+        }
+        if let (Some(c), Some(f)) = (cache.as_mut(), fingerprint) {
+            c.tiers.gate_inputs = Some(Cache::entry(f, hashes.clone()));
+            if let Err(e) = c.store(root, local) {
+                tracing::debug!(error = %e, "the gate input hashes could not be cached");
+            }
+        }
+    }
+
+    runs.into_iter()
+        .map(|(gate, run)| {
+            let current = hashes
+                .get(&gate)
+                .cloned()
+                .flatten()
+                .map(|now| now == run.inputs_hash);
+            (
+                gate,
+                GateRecordObservation {
+                    task: task.to_string(),
+                    exit: run.exit,
+                    head: run.head,
+                    recorded_at: run.recorded_at,
+                    result: run.result,
+                    inputs_hash: run.inputs_hash,
+                    current,
+                },
+            )
+        })
+        .collect()
 }
 
 fn observe_deployment(root: &Path) -> DeploymentObservation {
