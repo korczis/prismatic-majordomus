@@ -37,7 +37,10 @@ use serde::{Deserialize, Serialize};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::CapabilityKind;
-use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, Exposure, McpExposure, McpResource,
+    Stability,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::plan::{
     Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
@@ -651,6 +654,15 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["plan", "project", "issues", "lifecycle"],
+                // Every case is a refusal chosen from an issue's own status (see the cases
+                // below), so a plan with no issue has no case to give: there the only answer
+                // is a lookup miss, which times an error path rather than the operation. The
+                // requirement is therefore declared conditional here, where it lives, and a
+                // plan that holds an issue and yields no case is still `missing`.
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::RequiredWhen {
+                    precondition: BenchmarkPrecondition::PlanHoldsAnIssue,
+                },
                 handler: plan_transition,
             }
             // The one thing its kind cannot say: this writes a tracked record. The exposure
@@ -747,16 +759,6 @@ pub struct PlanTransitionResult {
 
 /// The benchmark cases of the one capability here that writes.
 ///
-/// Both are refusals, and that is deliberate rather than a gap. A benchmark case is
-/// executed — `executions.start`'s case really starts an execution — so a case that moved an
-/// issue would mutate this repository's plan every time the suite ran, and a suite whose
-/// cost is a changed record is not a measurement. The runner states the principle that makes
-/// this sound: *"a refusal is an answer, and answering is the work a benchmark exists to
-/// measure"*, and only `Internal` is fatal. The refusal path is also the honest thing to
-/// time: it builds the plan, resolves the issue and evaluates the guard, which is everything
-/// the write path does except the two syscalls at the end.
-/// The benchmark cases of the one capability here that writes.
-///
 /// Every case is a refusal, and that is deliberate rather than a gap. A case is *executed* —
 /// by `majordomus bench` against this repository, and by the HTTP and MCP suites against a
 /// fixture — so a case that moved an issue would change the plan every time the suite ran,
@@ -772,6 +774,13 @@ pub struct PlanTransitionResult {
 /// that could not exist, which answered 404 rather than 422, and `tests/http_serve.rs` holds
 /// every route to answering its own cases — 200, or 422 for a command that turns a caller
 /// down. Choosing the move from the record keeps the case inside that contract.
+///
+/// So a plan with no issue yields no case, and the handler is not bent to make one: naming
+/// an issue the plan does not have is `NotFound` whether or not the plan holds other issues,
+/// and a 422 that appeared only when the plan is empty would make the same request's answer
+/// depend on records it never named. The descriptor declares the requirement conditional on
+/// `BenchmarkPrecondition::PlanHoldsAnIssue` instead, and coverage reports it inapplicable in
+/// such a repository — and missing, as before, in one whose plan holds an issue.
 impl BenchmarkCases for PlanTransitionInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         let plan = Plan::build(ctx.index);
