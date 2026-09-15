@@ -11108,7 +11108,7 @@
           "route": "/docs/cli/worktree/remove/"
         },
         {
-          "about": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing",
+          "about": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove",
           "command": "majordomus worktree cleanup",
           "name": "cleanup",
           "route": "/docs/cli/worktree/cleanup/"
@@ -13193,7 +13193,7 @@
       "usage": "majordomus worktree remove [OPTIONS] <SELECTOR>"
     },
     {
-      "about": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing",
+      "about": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove",
       "ancestors": [
         {
           "command": "majordomus",
@@ -13207,6 +13207,20 @@
         }
       ],
       "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. Branches are never deleted; the listing still says how",
+          "long": "remove",
+          "name": "remove",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "REMOVE"
+        },
         {
           "defaults": [],
           "global": true,
@@ -20684,7 +20698,7 @@
     }
   ],
   "counts": {
-    "arguments": 906,
+    "arguments": 907,
     "commands": 127,
     "examples": 134,
     "runnable": 116

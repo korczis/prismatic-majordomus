@@ -178,6 +178,7 @@ majordomus worktree doctor                     # every diagnostic with its code 
 majordomus worktree migrate --plan             # what would move; changes nothing
 majordomus worktree migrate                    # move, verify, report
 majordomus worktree cleanup                    # what is merged and clean; deletes nothing
+majordomus worktree cleanup --remove           # removes those worktrees, refusing what it cannot prove
 ```
 
 <div class="overflow-x-auto" tabindex="0">
@@ -198,6 +199,7 @@ majordomus worktree cleanup                    # what is merged and clean; delet
 | `worktree repair [--dry-run]` | drop stale registrations, repair git's links; deletes no directory | |
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
 | `worktree cleanup` | branches merged into the trunk whose worktree is clean or absent, with the commands that would remove them | |
+| `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 </div>
@@ -392,4 +394,31 @@ topology changes outside the process.
 
 </div>
 
+
+## Reclaiming
+
+`majordomus worktree cleanup` lists what is spare: every branch merged into the trunk whose
+worktree is clean or absent. `--remove` removes those worktrees, and nothing else — branches
+are never deleted, because the disk is what runs out and a branch is the only durable name a
+piece of work has.
+
+The listing and the removal are two moments, and everything that makes a worktree safe to
+remove can change between them, so `--remove` re-measures each candidate immediately before it
+goes and names what it refuses:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| refusal | why it is not covered by "merged and clean" |
+|---|---|
+| ahead of its remote, no upstream, or upstream gone | the branch's merged history is on the remote; a commit on top of it is on one disk, and being merged says nothing about that |
+| a process has its working directory inside | mtime lies: two worktrees swept on 2026-09-15 looked untouched since the 12th and had live processes in them |
+| uncommitted work | read again at the moment of removal, not taken from the listing |
+| `lsof` is missing, or git could not compare with the upstream | not knowing is not the same as nothing being there |
+
+</div>
+
+
+`test/cases/351_the_reclaim_refuses_what_it_cannot_prove.sh` plants each of them in a fixture
+with its own remote, including the combination the refusals exist for: a branch merged into the
+trunk *and* carrying a commit its remote has never seen.
 {% endraw %}

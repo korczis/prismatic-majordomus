@@ -93,7 +93,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree guard`](#majordomus-worktree-guard) | `/docs/cli/worktree/guard/` | May a mutation proceed from here? Exit 0 in a canonical worktree, in the primary checkout on the trunk, or detached; exit 10 with the reason otherwise. What the pre-commit hook asks |
 | [`majordomus worktree repair`](#majordomus-worktree-repair) | `/docs/cli/worktree/repair/` | Drop git's registrations of worktrees whose directories are gone, and repair the administrative links of the ones that exist. Deletes no directory |
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
-| [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing |
+| [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
 | [`majordomus commit`](#majordomus-commit) | `/docs/cli/commit/` | The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy |
 | [`majordomus commit plan`](#majordomus-commit-plan) | `/docs/cli/commit/plan/` | What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves |
@@ -2546,7 +2546,7 @@ Examples:
 <a id="majordomus-worktree-cleanup"></a>
 ## `majordomus worktree cleanup`
 
-The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing
+The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove
 
 ```text
 majordomus worktree cleanup [OPTIONS]
@@ -2554,6 +2554,7 @@ majordomus worktree cleanup [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
+| `--remove` | flag | — | Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. Branches are never deleted; the listing still says how |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |

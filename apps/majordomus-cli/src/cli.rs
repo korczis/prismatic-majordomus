@@ -1236,8 +1236,14 @@ pub enum WorktreeCommand {
         #[arg(long)]
         force: bool,
     },
-    /// The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing
-    Cleanup,
+    /// The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove
+    Cleanup {
+        /// Remove the worktrees listed, each re-measured immediately before it goes: a branch
+        /// ahead of its remote, uncommitted work, or a process working inside is refused and
+        /// named. Branches are never deleted; the listing still says how.
+        #[arg(long)]
+        remove: bool,
+    },
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
