@@ -154,22 +154,27 @@ jobs:
           echo "created=$(date -u -d "$created" +%s)" >> "$GITHUB_OUTPUT"
           echo "start=$(date -u +%s)" >> "$GITHUB_OUTPUT"
 
-      # The fast path read the tree and never its history, and was shallow for it. `pages check`
-      # stopped being a statement about the tree alone when link-check became blocking (#356):
-      # the site links to commits, compares and release tags, and a clone without history or
-      # tags cannot decide any of them — 2302 commit links undecided and six existing tags
-      # reported as non-existent, on every run since, with `publish` skipped behind the refusal.
-      # fetch-depth: 0 is what the checker asks for by name. scripts/site-deploy still fetches
-      # the one branch it pushes for itself.
+      # What the deploy needs from its checkout is declared in `deploy.checkout` of
+      # .ai/repo/ci/pages.yaml, not decided here: `scripts/ci/link-check` (run by the check step)
+      # resolves the site's commit, compare and release-tag links against this clone, and one
+      # that cannot decide them must refuse — which site-check counts as a failure, so the
+      # publication stops. At depth 1 that refused every deploy after #356 for seven hours.
+      # `scripts/pages checkout` renders the depth the declaration implies; case 97 holds this
+      # file to it. scripts/site-deploy still fetches the one branch it pushes for itself.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # blob:none keeps the cost to history metadata: every commit and tag is present, so the
+          # link check can decide a ref, and no file of the past is fetched — the tree being built
+          # is still checked out in full. From #357, and orthogonal to the declaration: the model
+          # says what must be decidable, this is how it is paid for.
+          filter: blob:none
 
       # The depth above is a declaration; this is the measurement, and both come from
-      # deploy.checkout in .ai/repo/ci/pages.yaml rather than from this file. `fetch-depth` is
-      # one edit away from being tuned back for speed, and the failure that follows is not a
-      # missing checkout — it is six links to tags that exist being called non-existent, three
-      # steps later, inside a checker that looks like the thing at fault.
+      # deploy.checkout rather than from this file. `fetch-depth` is one edit away from being
+      # tuned back for speed, and the failure that follows is not a missing checkout — it is six
+      # links to tags that exist being called non-existent, three steps later, inside a checker
+      # that looks like the thing at fault.
       - name: the checkout can decide a ref
         run: scripts/pages checkout --verify
 
