@@ -51,13 +51,13 @@ moves. The differential gate draws the line where it can be held without rewriti
 
 <div class="overflow-x-auto" tabindex="0">
 
-| what a change introduces | what the gate requires |
+| What the change does | What the gate requires |
 |---|---|
-| a new file | every executable line, function and region covered |
-| a new function | covered |
-| a changed executable line | covered |
-| a changed branch or region | covered |
-| untouched legacy code | not this gate's business |
+| adds a file | every executable line, function and region in it covered |
+| adds a function | covered |
+| changes an executable line | covered |
+| changes a branch or region | covered |
+| leaves legacy code untouched | nothing: not this gate's business |
 
 </div>
 
