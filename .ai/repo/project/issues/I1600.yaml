@@ -1,0 +1,61 @@
+id: I1600
+milestone: public-proof
+title: The challenge is one recorded run, and every public surface replays it
+slug: the-challenge-is-one-recorded-run
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Record one scenario in which a worker strays outside its scope, claims it is done, hands over, and is refused until the repository's own test passes; render that run on the homepage and on /challenge/; make README.md's first transcript a step of it; and verify the public site serves it after publication."
+why: "The tool's differentiator is what it refuses to accept, and the site showed that only as disconnected command illustrations. A newcomer needs one story, and a link from outside needs a page. Every public sentence about it must stay a projection of a run that happened, which is why each surface is held to the recording by a gate."
+current_state: "No use case shows check refusing a file outside scope, because a scenario step could only invoke the tool. The homepage hero is the lifecycle console. There is no /challenge/ route. README.md's first block is hand-written. catalogue.json carries no scenario, so maturity reads described everywhere."
+desired_state: "Use case catch-an-agent-that-says-it-is-done runs with worker steps; site/data/generated/challenge.json is its run; /challenge/ and the homepage replay it; site-check, the derivation and scripts/pages verify --smoke hold each surface to it."
+scope:
+  - lib/usecase.sh
+  - lib/finish.sh
+  - share/schemas/majordomus/use-case
+  - .ai/repo/use-cases
+  - test
+  - scripts
+  - site
+  - README.md
+  - docs/USE_CASES.md
+  - docs/LAUNCH.md
+  - docs/README.md
+  - .ai/repo/ci/pages.yaml
+  - .github/workflows/pages.yml
+non_scope:
+  - Analytics, testimonials, adoption numbers, or any claim the repository cannot derive
+  - Per-page generated social images
+depends_on: []
+acceptance_criteria:
+  - usecase validate refuses a worker step in a live scenario, beside run, and without an exit code
+  - the challenge scenario's recorded run shows a scope refusal, a finish refusal on a failing verification, a handover resumed through context, and an accepted finish
+  - scripts/site-check fails when /challenge/ or the homepage misses a recorded line, renders a different number of steps, or does not link a guarantee a comparison row stands on
+  - scripts/generate-site-data refuses a challenge that does not pass, refuses nothing, does not end accepted, leans on a claim that is not guaranteed, or whose README transcript is not a recorded step
+  - finish prints one blocking doctrine per line
+validation:
+  - bash test/run.sh 356_a_scenario_shows_the_worker_it_judges
+  - bash test/run.sh 103_obligations
+  - scripts/generate-site-data --check
+  - scripts/site-check
+evidence_required:
+  - challenge_recorded
+  - site_holds_the_run
+  - public_site_serves_it
+risk: "The derivation now runs one more scenario and the homepage replaces its hero console; the console moves under how it works rather than leaving, so the gate that holds every recorded lifecycle panel to the homepage is unchanged."
+created_at: 2026-09-15
+updated_at: 2026-09-15T16:58:43Z
+started_at: 2026-09-15T15:56:07Z
+evidence:
+  - covers: challenge_recorded
+    type: test
+    command: "bash test/run.sh 356_a_scenario_shows_the_worker_it_judges"
+    result: "passes: worker steps recorded with actor, commands quoted, live and mixed steps refused, finish lists one doctrine per line, and the challenge use case passes, refuses, and ends accepted against this tree"
+    commit: ca51c2390b8590a6da4ccd282c117c2a6f541c18
+    recorded_at: 2026-09-15T16:58:42Z
+  - covers: site_holds_the_run
+    type: test
+    command: "scripts/site-check; scripts/interaction-probe --only \"/ /challenge/ /use-cases/catch-an-agent-that-says-it-is-done/\"; SITE_PROBE_ONLY=... scripts/site-probe"
+    result: "site-check OK challenge: 10 recorded steps and 3 refusals on /challenge/ and the homepage, 82 lines matched; interaction-probe 0 findings; site-probe 0 failures at every declared width"
+    commit: ca51c2390b8590a6da4ccd282c117c2a6f541c18
+    recorded_at: 2026-09-15T16:58:43Z

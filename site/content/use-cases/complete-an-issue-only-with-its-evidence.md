@@ -1,12 +1,12 @@
 +++
 title = "Complete an issue only when its evidence exists"
 description = "See an issue refuse completion while a required piece of evidence is missing, read the roadmap the milestone state derives, and keep the GitHub projection a projection."
-weight = 27
+weight = 28
 [extra]
 id = "complete-an-issue-only-with-its-evidence"
 source = ".ai/repo/use-cases/complete-an-issue-only-with-its-evidence.md"
 category = "completion"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

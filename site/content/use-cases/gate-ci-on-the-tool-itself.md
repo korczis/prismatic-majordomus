@@ -1,12 +1,12 @@
 +++
 title = "Gate CI on the tool itself, with an exit code that is a contract"
 description = "Run the checks CI runs, read every finding with the command that reproduces it, and rely on exit codes that mean one thing each: no code means warn and continue."
-weight = 24
+weight = 25
 [extra]
 id = "gate-ci-on-the-tool-itself"
 source = ".ai/repo/use-cases/gate-ci-on-the-tool-itself.md"
 category = "policy"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

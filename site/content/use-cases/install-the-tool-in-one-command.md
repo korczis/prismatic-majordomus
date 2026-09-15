@@ -1,12 +1,12 @@
 +++
 title = "Install the tool in one command, on a machine with no toolchain"
 description = "Paste one line, get a verified binary for this machine, and run majordomus init — no git, no Rust, no Node, no Python, no root, and no way to install an archive whose digest does not match."
-weight = 3
+weight = 4
 [extra]
 id = "install-the-tool-in-one-command"
 source = ".ai/repo/use-cases/install-the-tool-in-one-command.md"
 category = "adoption"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

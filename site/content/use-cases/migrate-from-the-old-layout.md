@@ -1,12 +1,12 @@
 +++
 title = "Move a repository from the pre-.ai layout to the layer"
 description = "See what a migration would move, move it with a backup, and prove the result is a layer the tool reads."
-weight = 41
+weight = 42
 [extra]
 id = "migrate-from-the-old-layout"
 source = ".ai/repo/use-cases/migrate-from-the-old-layout.md"
 category = "adoption"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

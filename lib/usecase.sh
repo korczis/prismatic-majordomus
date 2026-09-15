@@ -336,7 +336,7 @@ mj_uc_validate_all() {
     # the scenario: setup exists, stdin bodies exist, every step names a declared command,
     # step ids are unique, every step expects an exit code
     if mj_uc_has_scenario "$i"; then
-      local mode obl
+      local mode obl wrk
       mode="$(mj_uc_mode "$i")"
       case "$mode" in
         fixture)
@@ -355,7 +355,16 @@ mj_uc_validate_all() {
         case " $sids " in *" $sid "*) mj_uc_bad "$id" "step '$sid' is declared twice" "" ;; esac; sids="$sids $sid"
         mj_uc_get "$i" "scenario.steps.$k.run.0"; cmd="$MJ_V"
         mj_uc_get "$i" "scenario.steps.$k.obligation"; obl="$MJ_V"
-        if [ -n "$obl" ]; then
+        mj_uc_get "$i" "scenario.steps.$k.worker"; wrk="$MJ_V"
+        if [ -n "$wrk" ]; then
+          # a worker step is the change the tool is asked about, made by somebody else; it is
+          # the one step that is not the tool, so it is refused anywhere it could touch a
+          # repository that is not disposable
+          [ -z "$cmd" ] || mj_uc_bad "$id" "step '$sid' both runs '$cmd' and does worker '$wrk'; a step is one or the other" ""
+          [ -z "$obl" ] || mj_uc_bad "$id" "step '$sid' both does worker '$wrk' and asserts obligation '$obl'; a step is one or the other" ""
+          [ "$mode" = fixture ] || mj_uc_bad "$id" "step '$sid' does worker '$wrk' in a live scenario; only a disposable repository may be changed" "mode: fixture"
+          mj_uc_get "$i" "scenario.steps.$k.expect.exit"; case "$MJ_V" in ''|*[!0-9]*) mj_uc_bad "$id" "step '$sid' expects no exit code" "" ;; esac
+        elif [ -n "$obl" ]; then
           # an obligation step asserts that work was done; it runs nothing and there is
           # nothing in a fixture to owe it
           [ -z "$cmd" ] || mj_uc_bad "$id" "step '$sid' both runs '$cmd' and asserts obligation '$obl'; a step is one or the other" ""
@@ -486,7 +495,7 @@ mj_uc_normalise() { # repo-path
     -e 's/^([a-z_-]+ +(cold|warm) +[a-z]+ +[0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+/\1  <ms>  <ms>  <ms>  <ms>/' \
     -e 's/^(INFO|WARN) +budget +([a-z]+) — .*$/·    budget      \2 — <timed against the policy budget>/' \
     -e 's/^(OK|WARN|FAIL) +checkpoint +([^ ]+) — .*$/·    checkpoint  \2 — <timed against the checkpoint interval>/' \
-    -e 's/(exit [0-9]+, )[0-9]+s$/\1<s>s/' \
+    -e 's/(exit [0-9]+, )[0-9]+s(  |$)/\1<s>s\2/' \
     -e 's/[0-9]+ ms/<n> ms/g' \
     -e 's/[0-9]+ ms of/<n> ms of/g' \
     -e 's/\([0-9]+[mhd] ago/(<age> ago/g' \
@@ -498,6 +507,18 @@ mj_uc_normalise() { # repo-path
     -e 's/^( *owner=).*$/\1<owner>/' \
     -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \
     -e '/: printf: write error: Broken pipe$/d'
+}
+# an argv as a reader would type it: an argument a shell would split or expand is single-quoted,
+# so a recorded command can be pasted back into a terminal and run as it was
+mj_uc_shown() {
+  local a out="" q="'"
+  for a in "$@"; do
+    case "$a" in
+      ''|*[!A-Za-z0-9_./:=@%+,-]*) a="'${a//$q/$q\\$q$q}'" ;;
+    esac
+    out="$out${out:+ }$a"
+  done
+  printf '%s' "$out"
 }
 # a JSON string body: backslash and quote escaped, newlines and tabs as escapes, every
 # other control byte dropped; the newlines of a command's output are its structure
@@ -551,9 +572,15 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
     while a="$(mj_uc_v "$i" "scenario.steps.$k.run.$argv_n")"; [ -n "$a" ]; do set -- "$@" "$a"; argv_n=$((argv_n+1)); done
     stdin_f="$(mj_uc_v "$i" "scenario.steps.$k.stdin")"
     want="$(mj_uc_v "$i" "scenario.steps.$k.expect.exit")"
+    local wrk actor=tool shown
+    wrk="$(mj_uc_v "$i" "scenario.steps.$k.worker")"
     raw="$tmp/step-$k.out"; rc=0; t0="$(mj_ms)"
-    if [ -n "$stdin_f" ]; then ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < "$fix/stdin/$stdin_f" ) > "$raw" 2>&1 || rc=$?
-    else ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < /dev/null ) > "$raw" 2>&1 || rc=$?; fi
+    if [ -n "$wrk" ]; then
+      # what a worker did: the shell line itself is what a reader is shown, not `sh -c`
+      actor=worker; set -- sh -c "$wrk"; shown="$wrk"
+      ( cd "$W" && sh -c "$wrk" < /dev/null ) > "$raw" 2>&1 || rc=$?
+    elif [ -n "$stdin_f" ]; then shown="majordomus $(mj_uc_shown "$@")"; ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < "$fix/stdin/$stdin_f" ) > "$raw" 2>&1 || rc=$?
+    else shown="majordomus $(mj_uc_shown "$@")"; ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < /dev/null ) > "$raw" 2>&1 || rc=$?; fi
     t1="$(mj_ms)"; dur=$((t1 - t0))
     norm="$(mj_uc_normalise "$W" < "$raw")"
     ok=1; asserts=""; fail_reason=""
@@ -585,7 +612,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
       n=$((n+1))
     done
     [ "$first" = 1 ] || steps_json="$steps_json,"; first=0
-    steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"command\":\"$(mj_json_esc "majordomus $*")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"stdin\":$( [ -n "$stdin_f" ] && printf '"%s"' "$(mj_json_esc "$stdin_f")" || printf null ),\"exit\":$rc,\"expected_exit\":$want,\"output\":\"$(mj_uc_jesc "$(printf '%s' "$norm" | head -c 12000)")\",\"assertions\":[${asserts%,}],\"result\":\"$([ "$ok" = 1 ] && printf pass || printf fail)\",\"reason\":$( [ -n "$fail_reason" ] && printf '"%s"' "$(mj_json_esc "$fail_reason")" || printf null ),\"timing\":{\"duration_ms\":$dur}}"
+    steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"actor\":\"$actor\",\"command\":\"$(mj_json_esc "$shown")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"stdin\":$( [ -n "$stdin_f" ] && printf '"%s"' "$(mj_json_esc "$stdin_f")" || printf null ),\"exit\":$rc,\"expected_exit\":$want,\"output\":\"$(mj_uc_jesc "$(printf '%s' "$norm" | head -c 12000)")\",\"assertions\":[${asserts%,}],\"result\":\"$([ "$ok" = 1 ] && printf pass || printf fail)\",\"reason\":$( [ -n "$fail_reason" ] && printf '"%s"' "$(mj_json_esc "$fail_reason")" || printf null ),\"timing\":{\"duration_ms\":$dur}}"
     [ "$ok" = 1 ] || { all_ok=0; break; }
     k=$((k+1))
   done

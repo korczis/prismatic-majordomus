@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "finish_transcript": "$ majordomus finish --outcome completed --verify-command \"make test\"\nOK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope\nOK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s\nOK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)\nFAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]\nOK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md\nfinish: refused, 1 unmet",
+  "finish_transcript": "$ majordomus finish --outcome completed --verify-command 'sh test/parse.sh'\nOK   blockers    t-<id> — none open\nOK   note        t-<id> — <time>--main--<head>--<hash>.md\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nFAIL verification t-<id> — sh test/parse.sh — exit 1, <s>s  [reproduce: sh test/parse.sh]\nfinish: refused, 1 unmet",
   "finish_checks": [
     "scope",
     "verification",

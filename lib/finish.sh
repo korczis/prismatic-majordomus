@@ -83,7 +83,10 @@ H
   if [ "$unmet" -gt 0 ]; then
     if [ "$MJ_JSON" != 1 ]; then
       printf 'finish: refused, %s unmet\n' "$unmet"
-      [ -n "$refused" ] && printf 'blocking doctrines:%s\n' "$(printf '%s' "$refused" | tr ' ' '\n' | sed '/^$/d' | sed 's/^/\n- /' | tr -d '\n' | sed 's/^/\n/')"
+      # one doctrine per line: the list used to be joined with its own separators deleted.
+      # $refused is a space-separated list of doctrine ids, split here on purpose.
+      # shellcheck disable=SC2086
+      [ -n "$refused" ] && { printf 'blocking doctrines:\n'; printf '%s\n' $refused | sed 's/^/- /'; }
     fi
     exit "$MJ_EX_CONTRACT"
   fi

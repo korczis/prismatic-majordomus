@@ -18,6 +18,7 @@
 {%- set dist = load_data(path="data/registry/distribution.json") -%}
 {%- set x = load_data(path="data/manifesto.toml") -%}
 {%- set term = load_data(path="data/generated/terminal.json") -%}
+{%- set ch = load_data(path="data/generated/challenge.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set why = load_data(path="data/registry/why.json") -%}
 {%- set stable = [f for f in model.features if f.status == "stable"] -%}
@@ -33,32 +34,25 @@
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fg-brand">{{ m.hero.eyebrow }}</p>
       <h1 class="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ m.hero.title }}<span class="mt-2 block text-fg-brand"> {{ m.hero.subtitle }}</span></h1>
       <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body">{{ m.hero.lead }}</p>
-      <p class="mt-7 flex flex-col gap-1 font-mono text-sm uppercase tracking-widest text-body-subtle">
-        {%- for line in m.hero.mantra %}<span>{{ line }}</span>{% endfor -%}
-        <span class="mt-2 text-2xl font-bold normal-case tracking-tight text-fg-brand-strong sm:text-3xl">{{ m.hero.verdict }}</span>
-      </p>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-        <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
-        <a href="#refuses" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_refuses }}</a>
+        <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-cta="challenge" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+        <a href="#install" data-cta="install" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_install }}</a>
       </div>
+      {% <code label="install" wrap={true}> %}{{ dist.install_command }}{% </code> %}
     </div>
 
-    {#- the console: the lifecycle, replayed. The matrix that stood here is a compliance
-        table — it answers "which interface is this feature on", which is a question a reader
-        has only after they know what the thing does. `/features/matrix/` is where it belongs
-        and where it still is; the link below leads there. What a first reader needs is the
-        tool doing something, so this is the tool doing something: six recorded runs, in the
-        order the lifecycle declares, each one's real stdout. -#}
+    {#- the replay: one task from start to finish, recorded. The lifecycle console that stood
+        here illustrated each command on its own; a first reader learns more from one story
+        in which the tool refuses something, so the story is here and the console is under
+        "how it works". Which scenario is site/data/challenge.toml's one declaration; every
+        step is its recorded run (site/data/generated/challenge.json). -#}
     <div class="min-w-0">
-      {%- set tx = term.walkthrough -%}
-      {%- set tx_id = "hero-term" -%}
-      {%- set tx_label = m.hero.console_caption -%}
-      {%- set tx_default = term.default -%}
-      {% include "partials/terminal.html" %}
-      <p class="mt-3 text-sm text-body-subtle">{{ m.hero.console_caption }}</p>
+      {%- set rp_id = "hero-replay" -%}
+      {% include "partials/challenge-replay.html" %}
+      <p class="mt-3 text-sm text-body-subtle">{{ m.hero.replay_caption }}</p>
       <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+        <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The whole challenge, and how to run it yourself &rarr;</a>
         <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ m.hero.cta_secondary }} &rarr;</a>
-        <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry itself &rarr;</a>
       </p>
     </div>
   </div>
@@ -100,6 +94,16 @@
       </li>
       {%- endfor %}
     </ol>
+    {#- the lifecycle, replayed: each command the lifecycle declares, in its order, illustrated
+        by the recorded run that shows the most of it (site/data/generated/terminal.json). -#}
+    <div class="mt-10 min-w-0">
+      {%- set tx = term.walkthrough -%}
+      {%- set tx_id = "how-term" -%}
+      {%- set tx_label = m.hero.console_caption -%}
+      {%- set tx_default = term.default -%}
+      {% include "partials/terminal.html" %}
+      <p class="mt-3 text-sm text-body-subtle">{{ m.hero.console_caption }}</p>
+    </div>
   </div>
 </section>
 

@@ -1,7 +1,7 @@
 +++
 title = "Archiving the repository"
 description = "snapshots of the tracked tree that can leave the machine: what travels and what cannot, why the generated projections are dropped by reading `.gitattributes` rather than a second list, how the file modes and a git index survive to the far end, the profiles, and how to add one"
-weight = 21
+weight = 22
 [extra]
 source = "docs/ARCHIVE.md"
 +++

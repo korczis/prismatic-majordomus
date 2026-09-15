@@ -80,6 +80,7 @@ docs/generated/changelog.json
 apps/majordomus-cli/README.md
 site/config.toml
 site/data/nav.toml
+site/data/challenge.toml
 README.md
 LICENSE"
 # LC_ALL=C so the globs below expand in byte order rather than in the collation order of
@@ -379,7 +380,9 @@ for srcp in $(cd "$ROOT/site/content-src" && find . -name '*.md' | sed 's#^\./##
   mkdir -p "$(dirname "$dst")"
   awk 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} n==2 && !b{print "{% raw %}"; b=1} {print}' "$srcp" \
     | awk -v lib="$ROOT/scripts/lib/project-markdown.awk" 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} {print | ("awk -f " lib)}' > "$dst"
-  printf '{%% endraw %%}\n' >> "$dst"
+  # close only what was opened: a page whose template renders everything (front matter and no
+  # body) gets no raw block, and a lone endraw is a template error Zola refuses to render
+  if grep -qx '{% raw %}' "$dst"; then printf '{%% endraw %%}\n' >> "$dst"; fi
 done
 
 mj_phase_end "gen:lifecycle.json" "$GEN_T0"
@@ -395,6 +398,15 @@ FINISH_BLOCK="$(awk '/^```/{c++; if(c==1){f=1;next} if(c==2){exit}} f' "$ROOT/RE
 # again here: the hero animation and the transcript below it are then the same five checks
 FINISH_CHECKS="$(printf '%s\n' "$FINISH_BLOCK" | awk '/^(OK|FAIL)[[:space:]]/{print $2}' | awk '!seen[$0]++' | jarr)"
 [ "$(printf '%s' "$FINISH_CHECKS" | jq length)" -ge 4 ] || { echo "generate-site-data: the README finish transcript no longer lists its checks" >&2; exit 10; }
+# The transcript is a recorded run, so its lines are in the order the tool printed them, which
+# is not the order the policy declares the contract in. The contract page pairs each policy key
+# with a check name, so the names are put in the policy's order here — each key takes the check
+# it names (scope_respected -> scope) — and any name no key claims stays after them, where
+# scripts/site-check still refuses the mismatch. The transcript itself is never reordered.
+FINISH_CHECKS="$(printf '%s' "$FINISH_CHECKS" | jq -c --slurpfile pol "$OUT/policy.json" '
+  . as $c
+  | ([ $pol[0].verification.finish_requires[] as $k | ([ $c[] | select(. as $n | $k | contains($n)) ] | first) // empty ]) as $o
+  | $o + ($c - $o)')"
 DOES_ROWS="$(section_of "$ROOT/README.md" "What it does" "Quick start" | grep -E '^\| \*\*' | sed -E 's/^\| \*\*([^*]+)\*\* \| (.*) \|$/\1|\2/' | jq -Rn '[inputs | split("|") | {title: .[0], text: .[1]}]')"
 PROBLEM_MD="$(section_of "$ROOT/README.md" "The problem" "What it does")"
 NOT_MD="$(section_of "$ROOT/README.md" "What this is not" "Limitations")"
@@ -940,9 +952,21 @@ UC_DIR="$ROOT/$(mj_rel "$MJ_AI_DIR")/$(mj_man sections.use-cases)"; AP_DIR="$ROO
   exit 10; }
 # a flattened front matter as nested JSON: numeric segments become arrays, scalars stay
 # strings except the integers a template compares (exit codes, weights, order, limits)
-front_json() { # markdown file -> JSON object of its front matter
-  local fm; fm="$(mktemp "${TMPDIR:-/tmp}/mj.fm.XXXXXX")"
+#
+# A use case's scenario is not front matter any more (ADR 0016): it is the fenced block under
+# `# Scenario` in the body. It is folded in under `scenario` here with the extractor the runner
+# itself uses, so the catalogue carries what was executed. Without it every use case reached
+# the site with no scenario, and the maturity derived from that read "described" for scenarios
+# that had just run and passed.
+. "$ROOT/lib/usecase.sh"
+front_json() { # markdown file -> JSON object of its front matter, and its scenario when it has one
+  local fm sc; fm="$(mktemp "${TMPDIR:-/tmp}/mj.fm.XXXXXX")"
   mj_record_front "$1" > "$fm.yaml"; mj_yaml_flatten "$fm.yaml" > "$fm" || { echo "generate-site-data: $1: front matter does not parse" >&2; exit 10; }
+  sc="$(mj_uc_scenario_yaml "$1")"
+  if [ -n "$sc" ]; then
+    printf '%s\n' "$sc" > "$fm.yaml"
+    mj_yaml_flatten "$fm.yaml" | sed 's/^/scenario./' >> "$fm" || { echo "generate-site-data: $1: the scenario block does not parse" >&2; exit 10; }
+  fi
   jq -R -n '
     def seg: if test("^[0-9]+$") then tonumber else . end;
     reduce inputs as $l ({};
@@ -1155,6 +1179,95 @@ if [ "$SCENARIOS" = 1 ]; then
     echo "generate-site-data: no recorded refusal; the page may not claim the tool refuses" >&2; exit 10; }
 fi
 mj_phase_end "gen:terminal.json" "$GEN_T0"
+# ---------------------------------------------------------------- challenge.json (one story, replayed from one recorded run)
+# /challenge/ and the homepage replay tell one scenario from start to finish, where the
+# terminal above illustrates each lifecycle command separately. Which scenario is the one
+# declaration site/data/challenge.toml makes; everything shown happening is that use case's
+# recorded run in catalogue.json — the commands, exit codes and output as the tool produced
+# them, the note on each step as the use case states it. The decision lines are the run's
+# own OK/FAIL lines, selected by their prefix, never rewritten; the full output stays beside
+# them. Each comparison row in the TOML names a claim, resolved here against
+# capabilities.json, so the page can link the guarantee and the test behind every sentence.
+#
+# Five refusals, because a challenge that stopped holding would still render: the named
+# use case does not exist; its run did not pass; the tool refused nothing in it; it does not
+# end with the work accepted; or a claim the page leans on is not guaranteed.
+GEN_T0="$(mj_phase_begin "gen:challenge.json")"
+CH_TOML="$ROOT/site/data/challenge.toml"
+if [ -f "$CH_TOML" ]; then
+  CH_ID="$(sed -n 's/^use_case = "\(.*\)"$/\1/p' "$CH_TOML")"
+  CH_ROWS="$(sed -n 's/^claim = "\(.*\)"$/\1/p' "$CH_TOML" | jarr)"
+  jq -S --arg id "$CH_ID" --argjson rows "$CH_ROWS" \
+    --slurpfile caps "$OUT/capabilities.json" --slurpfile dist "$ROOT/site/data/registry/distribution.json" '
+    ($caps[0].claims | map({key: .id, value: .}) | from_entries) as $c
+    | def claimref($k): ($c[$k] // {id: $k, status: "missing"})
+        | {id, claim: (.claim // null), status, implementation: (.implementation // null),
+           test: (.test // null), test_case: (.test_case // null)};
+    [ .use_cases[] | select(.id == $id) ] | first as $u
+    | if $u == null then empty else
+      ($u.evidence.steps // []) as $steps
+      | { schema: 1,
+          source: "site/data/challenge.toml names the use case; every step is its recorded run in catalogue.json",
+          use_case: { id: $u.id, title: $u.title, summary: $u.summary, maturity: $u.maturity,
+                      route: ("/use-cases/" + $u.id + "/"), source: (".ai/repo/use-cases/" + $u.id + ".md"),
+                      setup: ($u.evidence.setup // $u.scenario.setup // null),
+                      setup_source: ("test/fixtures/commands/setup/" + ($u.evidence.setup // $u.scenario.setup // "") + ".sh"),
+                      result: ($u.evidence.result // null) },
+          reproduce: ("majordomus usecase run " + $u.id),
+          install_command: $dist[0].install_command,
+          steps: [ $steps | to_entries[] | .key as $i | .value as $s
+            | ($u.scenario.steps[$i] // {}) as $d
+            | { n: ($i + 1), id: $s.id, actor: ($s.actor // "tool"), command: $s.command, argv: $s.argv,
+                exit: $s.exit, stdin: $s.stdin,
+                stdin_source: (if $s.stdin then "test/fixtures/commands/stdin/" + $s.stdin else null end),
+                note: ($d.note // null),
+                outcome: (if ($s.actor // "tool") == "worker" then "change" elif $s.exit == 0 then "accepted" else "refused" end),
+                # the lines that decide: a check or a contract line, an overlap, the verdict. The
+                # scenario repository declares no use cases of its own, so its coverage line is
+                # a fact about the fixture, not about the work, and is left to the whole output.
+                # A step that prints no such line (a handover, a context) is shown whole.
+                decision: ([ $s.output | split("\n")[]
+                             | select(test("^(OK|FAIL) |^INFO +overlap|^(check|finish): |^started t-"))
+                             | select(test("^(OK|FAIL) +use-case ") | not) ]
+                           | if length > 0 then . else [ $s.output | split("\n")[] | select(length > 0) ] end),
+                output: $s.output } ],
+          claims: [ $rows[] | claimref(.) ],
+          exercised: [ ($u.claims // [])[] | claimref(.) ],
+          counts: { steps: ($steps | length),
+                    refusals: ([ $steps[] | select((.actor // "tool") == "tool" and .exit != 0) ] | length),
+                    worker: ([ $steps[] | select(.actor == "worker") ] | length) } }
+      end' "$OUT/catalogue.json" > "$OUT/challenge.json"
+  [ -s "$OUT/challenge.json" ] || {
+    echo "generate-site-data: site/data/challenge.toml names use case '$CH_ID', which the catalogue does not have" >&2; exit 10; }
+  if [ "$SCENARIOS" = 1 ]; then
+    [ "$(jq -r '.use_case.result' "$OUT/challenge.json")" = pass ] || {
+      echo "generate-site-data: the challenge scenario '$CH_ID' did not pass; the page would replay a run that does not hold" >&2; exit 10; }
+    [ "$(jq -r '.counts.refusals' "$OUT/challenge.json")" -gt 0 ] || {
+      echo "generate-site-data: the challenge scenario '$CH_ID' records no refusal; there is nothing to challenge" >&2; exit 10; }
+    [ "$(jq -r '.steps | last | .outcome' "$OUT/challenge.json")" = accepted ] || {
+      echo "generate-site-data: the challenge scenario '$CH_ID' does not end with the work accepted" >&2; exit 10; }
+    CH_WEAK="$(jq -r '[.claims[], .exercised[] | select(.status != "guaranteed") | "\(.id) (\(.status))"] | unique | join(", ")' "$OUT/challenge.json")"
+    [ -z "$CH_WEAK" ] || {
+      echo "generate-site-data: the challenge leans on claim(s) that are not guaranteed: $CH_WEAK" >&2; exit 10; }
+    # The README says the same thing the site does, about the same run. Its first transcript is
+    # presented as a recorded run from the challenge, so it must be one: the command is a step's
+    # command and every line under it is a decision line that step printed. It also leads a
+    # GitHub reader to the challenge and gives the install command the distribution model gives.
+    CH_RCMD="$(printf '%s\n' "$FINISH_BLOCK" | sed -n 's/^\$ //p' | head -n 1)"
+    CH_RMISS="$(printf '%s\n' "$FINISH_BLOCK" | grep -v '^\$ ' | sed '/^$/d' | jarr | jq -r --arg cmd "$CH_RCMD" --slurpfile ch "$OUT/challenge.json" '
+      ([ $ch[0].steps[] | select(.command == $cmd) | .decision[] ]) as $lines
+      | if ($lines | length) == 0 then "no step of the challenge runs: \($cmd)"
+        else [ .[] | select(. as $l | $lines | index($l) == null) ] | map("not printed by that step: \(.)") | join("\n") end')"
+    [ -z "$CH_RMISS" ] || {
+      echo "generate-site-data: README.md's first transcript is not the challenge's recorded run:" >&2
+      printf '%s\n' "$CH_RMISS" | sed 's/^/  /' >&2; exit 10; }
+    grep -qF "$SITE_BASE/challenge/" "$ROOT/README.md" || {
+      echo "generate-site-data: README.md does not link the challenge at $SITE_BASE/challenge/" >&2; exit 10; }
+    grep -qF "$(jq -r '.install_command' "$OUT/challenge.json")" "$ROOT/README.md" || {
+      echo "generate-site-data: README.md does not carry the install command the distribution model gives" >&2; exit 10; }
+  fi
+fi
+mj_phase_end "gen:challenge.json" "$GEN_T0"
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
 GEN_T0="$(mj_phase_begin "gen:diagrams.json_Mermaid_source")"
 LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"

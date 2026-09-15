@@ -1,7 +1,7 @@
 +++
 title = "Executable use cases"
 description = "executable use cases: one file each under `.ai/repo/use-cases/`, the scenario that proves it against the tool, evidence, observed maturity, coverage gated by policy, impact analysis, scaffolding, and what the site derives from it"
-weight = 38
+weight = 39
 [extra]
 source = "docs/USE_CASES.md"
 +++
@@ -114,6 +114,25 @@ repository: `run` is argv, never a shell string; `stdin` names a body file; `exp
 carries the exit code and, optionally, `stdout_contains`, `stdout_not_contains`,
 `files_exist` and `files_contain` (extended regular expressions over the combined
 output or a file). `then` says in words what the assertions proved.
+
+A fixture scenario may also show the change the tool is judging. A **worker step** is one
+shell line, run with `sh -c` in the disposable repository, between two invocations:
+
+```yaml
+  - id: the-worker-strays
+    worker: 'echo "parser notes" >> docs/d'
+    expect:
+      exit: 0
+```
+
+Its evidence carries `actor: worker` (every other step's is `actor: tool`) and the line
+itself as the command, so a page can show who did what. It exists so that one scenario can
+tell a whole story — a worker strays, the tool refuses, the worker takes it back, the tool
+accepts — instead of each state being a separate setup script. `usecase validate` refuses
+a worker step in a live scenario, which may never change the repository it asks about, and
+beside `run` or `obligation`, since a step is exactly one of the three. The challenge on the
+website is such a scenario: `site/data/challenge.toml` names it and
+`site/data/generated/challenge.json` is its recorded run.
 
 ## Where a scenario runs
 

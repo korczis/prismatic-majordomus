@@ -1,0 +1,68 @@
+{#- The challenge, replayed one step at a time.
+
+    Given `ch` (site/data/generated/challenge.json) and `rp_id` (a unique element id root), this
+    renders the recorded run of the scenario challenge.toml names: every step's command, exit
+    code and note, the decision lines the run printed (its own OK/FAIL lines, selected by prefix,
+    never rewritten) and, behind a disclosure, the whole output. Nothing here names a step, a
+    command or a count.
+
+    It is a tab strip with two movement buttons. Without JavaScript every panel renders in order
+    (`x-show` alone hides nothing, and no panel carries `x-cloak` or `hidden`), so the replay reads
+    straight down as a transcript; the movement buttons are `x-cloak`ed because without a script
+    they would do nothing. Selecting a step changes no layout above it: the decision box is one
+    height for every step. -#}
+{%- set last = ch.steps | length - 1 -%}
+<div class="min-w-0" x-data="{ s: 0 }" data-challenge-replay="{{ ch.use_case.id }}">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div role="tablist" aria-label="Steps of the recorded run" class="flex min-w-0 flex-wrap gap-1.5">
+      {%- for st in ch.steps -%}
+      <button type="button" role="tab" id="{{ rp_id }}-tab-{{ loop.index0 }}" aria-controls="{{ rp_id }}-panel-{{ loop.index0 }}"
+        x-on:click="s = {{ loop.index0 }}" :aria-selected="s === {{ loop.index0 }} ? 'true' : 'false'"
+        class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+        :class="s === {{ loop.index0 }} ? 'ring-2 ring-brand text-heading' : ''">
+        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full {% if st.outcome == 'refused' %}bg-danger{% elif st.outcome == 'accepted' %}bg-success{% else %}bg-neutral-tertiary{% endif %}"></span>
+        {%- if st.actor == "worker" %}worker{% else %}{{ st.argv[0] }}{% endif -%}
+      </button>
+      {%- endfor -%}
+    </div>
+    <div class="flex shrink-0 gap-1.5" x-cloak>
+      {#- aria-disabled, not disabled: a disabled button leaves the keyboard's reach and the page's
+          control count, and the handlers already stop at either end -#}
+      <button type="button" data-replay-move="-1" x-on:click="s = Math.max(0, s - 1)" :aria-disabled="s === 0 ? 'true' : 'false'"
+        class="rounded-base border border-default bg-neutral-primary-soft px-2.5 py-1 text-xs font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary aria-disabled:opacity-50">&larr; Back</button>
+      <button type="button" data-replay-move="1" x-on:click="s = Math.min({{ last }}, s + 1)" :aria-disabled="s === {{ last }} ? 'true' : 'false'"
+        class="rounded-base bg-brand px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-2 focus:ring-brand-medium aria-disabled:opacity-50">Next &rarr;</button>
+    </div>
+  </div>
+  <p class="sr-only" aria-live="polite" x-text="'Step ' + (s + 1) + ' of {{ ch.steps | length }}'"></p>
+
+  {%- for st in ch.steps -%}
+  <figure x-show="s === {{ loop.index0 }}" id="{{ rp_id }}-panel-{{ loop.index0 }}" role="tabpanel" aria-labelledby="{{ rp_id }}-tab-{{ loop.index0 }}"
+    data-step="{{ st.id }}" data-outcome="{{ st.outcome }}"
+    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
+    <figcaption class="border-b border-default px-4 py-3">
+      <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <span class="font-mono text-xs text-body-subtle">step {{ st.n }} of {{ ch.steps | length }} &middot; {% if st.actor == "worker" %}the worker{% else %}Majordomus{% endif %}</span>
+        {%- if st.outcome == "refused" %}
+        <span class="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-danger-strong">refused &middot; exit {{ st.exit }}</span>
+        {%- elif st.outcome == "accepted" %}
+        <span class="rounded bg-success-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-success-strong">ok &middot; exit {{ st.exit }}</span>
+        {%- else %}
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">change &middot; exit {{ st.exit }}</span>
+        {%- endif %}
+      </div>
+      {%- if st.note %}<p class="mt-2 text-sm leading-relaxed text-heading">{{ st.note }}</p>{% endif %}
+    </figcaption>
+    {#- the decision lines wrap rather than scroll sideways: a verdict is read whole, on a phone too -#}
+    <div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
+      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body"><span class="text-heading">$ {{ st.command }}</span>{% if st.stdin %}<span class="text-body-subtle"> &lt; {{ st.stdin }}</span>{% endif %}
+{% for line in st.decision %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-fg-danger-strong">{{ line }}</span>{% elif line is starting_with(pat="OK") %}<span class="text-fg-success-strong">{{ line }}</span>{% else %}{{ line }}{% endif %}
+{% endfor %}</pre>
+    </div>
+    {#- the whole output, with every assertion the run made, is on the use case's own page, at this step -#}
+    <p class="border-t border-default px-4 py-2 text-xs">
+      <a href="{{ config.base_url | trim_end(pat="/") }}{{ ch.use_case.route }}#step-{{ st.id }}" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+    </p>
+  </figure>
+  {%- endfor -%}
+</div>

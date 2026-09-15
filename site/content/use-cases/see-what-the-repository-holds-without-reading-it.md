@@ -1,12 +1,12 @@
 +++
 title = "See what the repository holds, and run one of its capabilities, without reading a file"
 description = "Open the shared server in a browser and get the whole layer as pages: what exists, where each thing came from, what depends on what, what is failing, and a form that runs any capability."
-weight = 9
+weight = 10
 [extra]
 id = "see-what-the-repository-holds-without-reading-it"
 source = ".ai/repo/use-cases/see-what-the-repository-holds-without-reading-it.md"
 category = "mcp"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation
