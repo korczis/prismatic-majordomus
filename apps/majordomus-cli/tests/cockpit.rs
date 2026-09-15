@@ -215,14 +215,6 @@ fn a_graph_page_lists_every_node_and_edge_before_any_library_loads() {
         page.contains("data-mj-graph=\"registry\""),
         "a frame for the drawing"
     );
-    assert!(
-        page.contains("capability:repository.info"),
-        "a node, as text"
-    );
-    assert!(
-        page.contains("projection:http"),
-        "a projection node, as text"
-    );
     assert!(page.contains("composes"), "an edge kind, with its meaning");
     assert!(
         page.contains("Nodes") && page.contains("Edges"),
@@ -235,6 +227,72 @@ fn a_graph_page_lists_every_node_and_edge_before_any_library_loads() {
     assert_eq!(data["id"], "registry");
     assert!(data["nodes"].as_array().unwrap().len() > 5);
     assert!(data["metadata"]["acyclic"].is_boolean());
+
+    // Every node and every edge is reachable as text, a window at a time: the tables are
+    // paged like every other listing, and paging must never lose a row. Walked by the query
+    // parameter each table owns, over as many pages as the graph's own data needs.
+    let nodes = data["nodes"].as_array().unwrap();
+    let edges = data["edges"].as_array().unwrap();
+    let walk = |key: &str, total: usize| -> String {
+        let mut seen = String::new();
+        for n in 1..=total.div_ceil(50).max(1) {
+            let (status, body) = html(&s, &format!("/cockpit/graphs/registry?{key}={n}"));
+            assert_eq!(status, 200);
+            seen.push_str(&body);
+        }
+        seen
+    };
+    // only identifiers HTML leaves as they are, so the check is not about escaping
+    let plain = |v: &str| {
+        v.chars()
+            .all(|c| c.is_ascii_alphanumeric() || ":._-/@".contains(c))
+    };
+    let every_node_page = walk("nodes", nodes.len());
+    for label in nodes
+        .iter()
+        .filter_map(|n| n["label"].as_str())
+        .filter(|l| plain(l))
+    {
+        assert!(
+            every_node_page.contains(label),
+            "node {label} is on no page of the node table"
+        );
+    }
+    let every_edge_page = walk("edges", edges.len());
+    for source in edges
+        .iter()
+        .filter_map(|e| e["source"].as_str())
+        .filter(|l| plain(l))
+    {
+        assert!(
+            every_edge_page.contains(source),
+            "an edge from {source} is on no page of the edge table"
+        );
+    }
+    // and the two identities this test always named are there, as text: the edge table
+    // names nodes by identity, the node table by label
+    assert!(
+        every_edge_page.contains("capability:repository.info"),
+        "a node, as text"
+    );
+    assert!(
+        every_edge_page.contains("projection:http"),
+        "a projection node, as text"
+    );
+    // one page is a window, not the whole graph: each table renders at most fifty rows
+    let body_rows = page.matches("<tr").count();
+    assert!(
+        body_rows <= 2 * (50 + 1),
+        "one page renders {body_rows} table rows; each table is a window of fifty"
+    );
+    assert!(
+        page.contains("mj-pagination-summary"),
+        "each table says which of its rows it shows"
+    );
+    // a page past the end is the last page, not an empty table
+    let (status, far) = html(&s, "/cockpit/graphs/registry?nodes=100000&edges=100000");
+    assert_eq!(status, 200);
+    assert!(far.contains("mj-pagination-summary"));
 
     let (status, missing) = s.get("/api/v1/graph?id=nope");
     assert_eq!(status, 404);
