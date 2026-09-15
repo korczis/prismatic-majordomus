@@ -30,6 +30,39 @@ anywhere). "Prompt persistence at the provider invocation boundary" therefore ca
 wrapper around an SDK call; the boundary Majordomus owns is the provider's hook and the MCP
 session. That is the central adaptation.
 
+## Progress
+
+**2026-09-15, branch `feature/the-context-a-prompt-used-is-recorded` (I1700).**
+
+Landed:
+
+- One spelling of an open episode's file key in both programs, held to one table
+  (`test/fixtures/session-keys.tsv`, case 380).
+- `session_env` declared per provider in `share/providers.yaml`; `session::resolver` resolves
+  the episode strictly from the hook's key, then the provider session, then the pointer.
+- One locked ledger writer. `mj_ledger_append` no longer appends: it keeps its three refusals
+  and hands the event to `majordomus ledger append` (capability `ledger.append`, command line
+  only), which validates it against `share/events.yaml`, composes the envelope with the
+  resolver's episode and appends under `session::Ledger`'s exclusive lock. A missing executable
+  is exit 12 with a remedy; a stale one still appends, for the reason written beside the
+  function. Case 381 proves concurrent shell and Rust appends land whole (the old `>>` writer
+  tore 2 of 80 lines under the same load), attribution, and the refusals; case 133 still holds
+  the envelope byte for byte.
+- Stranded episodes recover at the provider's start event (`mj_capture_recover_stranded`):
+  `recover episodes` itself, bounded (10 closes, 5 s), fail-open, logged to
+  `state/recover.log`, skipped while a publish temp could hold a record. Case 382.
+- "Majordomus never invokes a model" is a crate test, `tests/no_model_invocation.rs`: no HTTP
+  client in `Cargo.lock`, no provider CLI spawn and no model host in `src/`.
+
+Still open:
+
+- An append costs one executable spawn plus two `git` calls. Measured under a load average near
+  80 on the development machine: about 210 ms per append through the shell against about 280 ms
+  for the writer it replaced. The ~20 ms target was not measurable there and is unproven.
+- `repository_id` still has two spellings in new records.
+- The `context.*`, `prompt.recorded` and `invocation.*` events are not yet declared.
+- The exposure policy for repository-writing capabilities is I1704, a decision for the owner.
+
 ## 1. Root causes (not symptoms)
 
 <div class="overflow-x-auto" tabindex="0">

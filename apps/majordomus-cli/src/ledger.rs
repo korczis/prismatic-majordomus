@@ -91,6 +91,21 @@ pub enum LedgerError {
         /// The key that is required and absent.
         field: String,
     },
+    /// The payload carries a key the envelope owns. Every line would carry it twice, and
+    /// readers disagree about which of the two a duplicated key means.
+    EnvelopeKey {
+        /// The event.
+        event: String,
+        /// The envelope key the payload repeated.
+        field: String,
+    },
+    /// The payload handed over as JSON is not one JSON object on one line.
+    Payload {
+        /// The event.
+        event: String,
+        /// What is wrong with it.
+        reason: String,
+    },
     /// `share/events.yaml` could not be read or does not parse.
     Vocabulary {
         /// The file.
@@ -118,6 +133,16 @@ impl fmt::Display for LedgerError {
             Self::MissingField { event, field } => {
                 write!(f, "event '{event}' is missing the required field '{field}'")
             }
+            // The shell's sentence, word for word: `mj_ledger_append` says it first, and a
+            // person reading either program's refusal must meet the same remedy.
+            Self::EnvelopeKey { event, field } => write!(
+                f,
+                "event '{event}' carries the payload field '{field}', which is a ledger envelope key; every line would carry it twice and readers would disagree about which one it means — rename the field (the provider receipt's own '{field}' became 'provider_{field}')"
+            ),
+            Self::Payload { event, reason } => write!(
+                f,
+                "event '{event}' has a payload that is not one JSON object on one line: {reason}"
+            ),
             Self::Vocabulary { path, reason } => write!(f, "{}: {reason}", path.display()),
             Self::Write { path, reason } => write!(f, "{}: {reason}", path.display()),
         }
@@ -161,6 +186,9 @@ struct EventsFile {
 pub struct Vocabulary {
     events: BTreeMap<String, Vec<String>>,
     order: Vec<String>,
+    /// The directory the declaration was read from: the distribution whose providers the
+    /// envelope resolves an episode against. `None` for a vocabulary built in memory.
+    dir: Option<PathBuf>,
 }
 
 impl Vocabulary {
@@ -197,7 +225,20 @@ impl Vocabulary {
             order.push(e.id.clone());
             events.insert(e.id, e.requires);
         }
-        Ok(Self { events, order })
+        Ok(Self {
+            events,
+            order,
+            dir: events_yaml.parent().map(Path::to_path_buf),
+        })
+    }
+
+    /// The distribution this vocabulary was read from, when it was read from one: a directory
+    /// holding `kinds.yaml` beside `events.yaml`. `None` for a declaration read from anywhere
+    /// else, and then the envelope locates the distribution the usual way.
+    fn distribution(&self) -> Option<&Path> {
+        self.dir
+            .as_deref()
+            .filter(|d| d.join(crate::share::KINDS_FILE).is_file())
     }
 
     /// Every declared name, in declaration order. What a refusal lists.
@@ -280,6 +321,111 @@ pub fn append(
         }
     }
 
+    let mut line = envelope(root, vocabulary, git, now, event);
+    for (k, v) in payload {
+        line.push(',');
+        push_pair(&mut line, k, v);
+    }
+    line.push('}');
+    write_line(root, line)
+}
+
+/// The keys the envelope owns, in the order it writes them. A payload may carry none of them:
+/// `MJ_LEDGER_ENVELOPE_KEYS` in `lib/common.sh` is the same list.
+pub const ENVELOPE_KEYS: [&str; 6] = ["ts", "event", "head", "branch", "by", "session"];
+
+/// Append one line whose payload arrives as a JSON object, written into the line verbatim.
+///
+/// This is the shell's writer. `mj_ledger_append` has always composed its payload as JSON
+/// object members — strings, and also numbers, booleans and nested objects (`task.finished`
+/// carries its contract as an object) — and [`append`]'s string pairs cannot say that. So the
+/// object is validated here and its members are copied into the line byte for byte: the key
+/// order and the spelling of every value are the caller's, which is what keeps a line this
+/// writes for the shell identical to the line the shell wrote before it had to ask.
+///
+/// Refused, and nothing written, when the object does not parse, spans more than one line,
+/// repeats an envelope key, or omits a key the vocabulary requires.
+///
+/// ```
+/// use majordomus_cli::git::GitState;
+/// use majordomus_cli::ledger::{self, Vocabulary};
+/// # let dir = tempfile::tempdir().unwrap();
+/// # std::fs::write(dir.path().join("events.yaml"),
+/// #   "version: 1\nevents:\n  - id: task.finished\n    requires: [task_id]\n").unwrap();
+/// let vocabulary = Vocabulary::load(&dir.path().join("events.yaml")).unwrap();
+/// let git = GitState::Unavailable { reason: "not a work tree".into() };
+///
+/// let line = ledger::append_object(dir.path(), &vocabulary, &git, "2026-09-15T12:00:00Z",
+///     "task.finished", r#"{"task_id":"t-1","checkpoints":3,"contract":{"ok":true}}"#).unwrap();
+/// assert!(line.ends_with(r#""task_id":"t-1","checkpoints":3,"contract":{"ok":true}}"#), "{line}");
+///
+/// // a payload that names an envelope key never reaches the file
+/// let err = ledger::append_object(dir.path(), &vocabulary, &git, "2026-09-15T12:00:00Z",
+///     "task.finished", r#"{"task_id":"t-1","event":"start"}"#).unwrap_err();
+/// assert!(err.to_string().contains("which is a ledger envelope key"), "{err}");
+/// assert_eq!(ledger::read(dir.path()).0.len(), 1);
+/// ```
+pub fn append_object(
+    root: &Path,
+    vocabulary: &Vocabulary,
+    git: &GitState,
+    now: &str,
+    event: &str,
+    payload: &str,
+) -> Result<String, LedgerError> {
+    let requires = vocabulary
+        .requires(event)
+        .ok_or_else(|| LedgerError::UnknownEvent {
+            event: event.to_string(),
+            known: vocabulary.ids().to_vec(),
+        })?;
+    let refuse = |reason: String| LedgerError::Payload {
+        event: event.to_string(),
+        reason,
+    };
+    let text = payload.trim();
+    // A raw line break is legal whitespace between JSON tokens and fatal in a JSON-lines
+    // record: the member would be copied across two lines of the file.
+    if text.contains(['\n', '\r']) {
+        return Err(refuse("it spans more than one line".into()));
+    }
+    let members: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(text).map_err(|e| refuse(e.to_string()))?;
+    if let Some(field) = ENVELOPE_KEYS.iter().find(|k| members.contains_key(**k)) {
+        return Err(LedgerError::EnvelopeKey {
+            event: event.to_string(),
+            field: (*field).to_string(),
+        });
+    }
+    for key in requires {
+        if !members.contains_key(key) {
+            return Err(LedgerError::MissingField {
+                event: event.to_string(),
+                field: key.clone(),
+            });
+        }
+    }
+    // The members between the object's own braces, exactly as they were written. The parse
+    // above proved `text` is one object, so its first and last bytes are those braces.
+    let inner = text[1..text.len() - 1].trim();
+    let mut line = envelope(root, vocabulary, git, now, event);
+    if !inner.is_empty() {
+        line.push(',');
+        line.push_str(inner);
+    }
+    line.push('}');
+    write_line(root, line)
+}
+
+/// The envelope, open: `{"ts":…,"event":…,"head":…,"branch":…,"by":…[,"session":…]`, with
+/// no closing brace, for the payload to follow.
+fn envelope(
+    root: &Path,
+    vocabulary: &Vocabulary,
+    git: &GitState,
+    now: &str,
+    event: &str,
+) -> String {
     let (head, branch) = match git {
         GitState::Available(GitInfo { head, branch, .. }) => (
             head.clone().unwrap_or_else(|| "NONE".into()),
@@ -300,19 +446,17 @@ pub fn append(
     push_pair(&mut line, "branch", &branch);
     line.push(',');
     push_pair(&mut line, "by", &format!("majordomus/{}", crate::VERSION));
-    if let Some(session) = open_session_id(root) {
+    if let Some(session) = open_session_id(root, vocabulary.distribution()) {
         line.push(',');
         push_pair(&mut line, "session", &session);
     }
-    for (k, v) in payload {
-        line.push(',');
-        push_pair(&mut line, k, v);
-    }
-    line.push('}');
+    line
+}
 
-    // Written under the session domain's exclusive lock, never with a bare O_APPEND of its own:
-    // the shell, this function and the session domain all append to one file, and this was the
-    // one writer in the executable that took no lock.
+/// Written under the session domain's exclusive lock, never with a bare O_APPEND of its own:
+/// the shell, this module and the session domain all append to one file, and this was the one
+/// writer in the executable that took no lock.
+fn write_line(root: &Path, line: String) -> Result<String, LedgerError> {
     let path = root.join(STATE_DIR).join(LEDGER);
     crate::session::Ledger::at(&path)
         .append_line(&line)
@@ -321,6 +465,43 @@ pub fn append(
             reason: e.to_string(),
         })?;
     Ok(line)
+}
+
+/// The two git facts the envelope carries, and nothing else git could be asked.
+///
+/// [`crate::git::inspect`] also runs `git status`, which costs a walk of the working tree and
+/// can rewrite the index — neither of which a ledger append may do, since the shell calls it
+/// on every recorded event. Where git cannot answer, the result is what [`append`] spells
+/// `NONE` and `DETACHED`.
+///
+/// ```
+/// use majordomus_cli::git::GitState;
+/// let nowhere = tempfile::tempdir().unwrap();
+/// let git = majordomus_cli::ledger::head_and_branch(nowhere.path());
+/// if let GitState::Available(info) = git {
+///     // not a repository: git answers nothing about either
+///     assert!(info.head.is_none() && info.branch.is_none());
+/// }
+/// ```
+pub fn head_and_branch(root: &Path) -> GitState {
+    let ask = |args: &[&str]| {
+        crate::git::read_only(root)
+            .args(args)
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .and_then(|o| String::from_utf8(o.stdout).ok())
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+    };
+    GitState::Available(GitInfo {
+        toplevel: root.to_path_buf(),
+        head: ask(&["rev-parse", "--verify", "-q", "HEAD"]),
+        branch: ask(&["symbolic-ref", "-q", "--short", "HEAD"]),
+        working_tree: "unread".into(),
+    })
 }
 
 /// The envelope's timestamp, in the one spelling both writers use: `date -u
@@ -374,8 +555,13 @@ fn escape_json(out: &mut String, value: &str) {
 /// a layout the store left behind, and never consulted the provider's session variable, so a
 /// line a capability wrote was stamped with the last-opened episode where the shell stamped the
 /// worker's own.
-fn open_session_id(root: &Path) -> Option<String> {
-    let vars = crate::session::resolver::declared_session_vars(root);
+///
+/// The providers are the ones the vocabulary's own distribution declares: the directory
+/// `share/events.yaml` was read from is the directory `share/providers.yaml` is read from, so
+/// the shell's appends resolve against the shell's distribution and not against whatever the
+/// environment would locate.
+fn open_session_id(root: &Path, share: Option<&Path>) -> Option<String> {
+    let vars = crate::session::resolver::declared_session_vars(root, share);
     let env = |name: &str| std::env::var(name).ok();
     crate::session::resolver::resolve(root, &vars, &env).map(|r| r.episode.as_str().to_string())
 }
@@ -461,6 +647,7 @@ mod tests {
         Vocabulary {
             events,
             order: vec!["plan_start".into(), "plan_evidence".into()],
+            dir: None,
         }
     }
 
@@ -617,6 +804,115 @@ mod tests {
         assert_eq!(skipped, 1);
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].event, "plan_start");
+    }
+
+    /// The shell's writer and the capability's writer produce one line for one event: the
+    /// object form is the pair form with the caller's own spelling of the members.
+    #[test]
+    fn an_object_payload_writes_the_line_the_pairs_write() {
+        let dir = tempdir();
+        let pairs = append(
+            dir.path(),
+            &vocabulary(),
+            &git(),
+            "2026-09-11T12:00:00Z",
+            "plan_evidence",
+            &[("issue", "i-1".into()), ("covers", "a\"b".into())],
+        )
+        .unwrap();
+        let object = append_object(
+            dir.path(),
+            &vocabulary(),
+            &git(),
+            "2026-09-11T12:00:00Z",
+            "plan_evidence",
+            " {\"issue\":\"i-1\",\"covers\":\"a\\\"b\"}\n",
+        )
+        .unwrap();
+        assert_eq!(pairs, object);
+        assert_eq!(read(dir.path()).0.len(), 2);
+    }
+
+    /// Numbers, booleans and nested objects are the shell's payloads too, and are copied as
+    /// they were written, in the order they were written.
+    #[test]
+    fn an_object_payload_keeps_its_members_verbatim() {
+        let dir = tempdir();
+        let line = append_object(
+            dir.path(),
+            &vocabulary(),
+            &git(),
+            "2026-09-11T12:00:00Z",
+            "plan_start",
+            r#"{"zeta":1.50,"issue":"i-1","ok":true,"nested":{"b":2,"a":[1]}}"#,
+        )
+        .unwrap();
+        assert!(
+            line.ends_with(r#","zeta":1.50,"issue":"i-1","ok":true,"nested":{"b":2,"a":[1]}}"#),
+            "{line}"
+        );
+        serde_json::from_str::<serde_json::Value>(&line).expect("the line is one JSON value");
+    }
+
+    /// Every refusal of the object form writes nothing, and each says which contract failed.
+    #[test]
+    fn an_object_payload_is_refused_whole() {
+        let dir = tempdir();
+        let refuse = |event: &str, payload: &str| {
+            append_object(
+                dir.path(),
+                &vocabulary(),
+                &git(),
+                "2026-09-11T12:00:00Z",
+                event,
+                payload,
+            )
+            .unwrap_err()
+        };
+        assert!(matches!(
+            refuse("plan_strat", r#"{"issue":"i"}"#),
+            LedgerError::UnknownEvent { .. }
+        ));
+        assert!(matches!(
+            refuse("plan_start", r#"{"issue":"i","session":"s"}"#),
+            LedgerError::EnvelopeKey { ref field, .. } if field == "session"
+        ));
+        assert_eq!(
+            refuse("plan_evidence", r#"{"issue":"i"}"#),
+            LedgerError::MissingField {
+                event: "plan_evidence".into(),
+                field: "covers".into()
+            }
+        );
+        assert!(matches!(
+            refuse("plan_start", "{\"issue\":\n\"i\"}"),
+            LedgerError::Payload { .. }
+        ));
+        assert!(matches!(
+            refuse("plan_start", r#""issue":"i""#),
+            LedgerError::Payload { .. }
+        ));
+        assert!(matches!(
+            refuse("plan_start", r#"["issue"]"#),
+            LedgerError::Payload { .. }
+        ));
+        assert!(
+            !dir.path().join(STATE_DIR).join(LEDGER).exists(),
+            "a refused payload created the ledger"
+        );
+    }
+
+    /// The refusal a person reads is the shell's sentence, so either program's remedy is one.
+    #[test]
+    fn the_envelope_refusal_is_the_shells_sentence() {
+        let e = LedgerError::EnvelopeKey {
+            event: "provider.event.received".into(),
+            field: "event".into(),
+        };
+        assert!(e.to_string().ends_with(
+            "rename the field (the provider receipt's own 'event' became 'provider_event')"
+        ));
+        assert_eq!(ENVELOPE_KEYS.join(" "), "ts event head branch by session");
     }
 
     fn tempdir() -> TempDir {

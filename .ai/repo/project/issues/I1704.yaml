@@ -1,0 +1,35 @@
+id: I1704
+milestone: runtime-continuity
+title: A repository-writing capability is marked destructive on every surface, and the exposure policy for writes is one decision
+slug: repository-writes-have-one-exposure-policy
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make every capability whose effect is a repository mutation carry that effect identically on each surface it is projected to — the MCP destructive and read-only annotations, the OpenAPI operation, the command line's reference — and record, as one decision the owner accepts, whether a capability that writes the repository may be exposed over MCP and HTTP at all."
+why: "Capabilities that write the repository now exist on more than one surface (plan.transition and recover.orphans are served over MCP and HTTP; evidence.record and ledger.append are command-line only), and the two choices were made capability by capability with no rule deciding between them. A mutation served past the ceiling its effect implies, or annotated as read-only to a client that asks before running a destructive tool, is the difference between a client that confirms and one that does not."
+current_state: "ExecutionPolicy carries Effect::RepositoryMutation and a capability declares it with .writes_repository(); the MCP annotations are being corrected on branch fix/a-mutation-is-never-served-past-its-ceiling; no ADR or policy key states whether repository writes belong on network surfaces, and evidence.record's module docs and plan.transition's module docs argue opposite positions."
+desired_state: "One derivation from Effect to every surface's annotation, held by a test that fails when any surface disagrees; one accepted decision naming which surfaces a repository-writing capability may be projected to, enforced by the registry's own validation rather than by each module's prose."
+scope:
+  - apps/majordomus-cli/src/capability
+  - apps/majordomus-cli/src/mcp
+  - apps/majordomus-cli/src/http
+  - .ai/repo/adrs
+  - docs/CAPABILITIES.md
+  - test/cases
+non_scope:
+  - The MCP annotation fix itself, on fix/a-mutation-is-never-served-past-its-ceiling
+  - A policy stage inside CapabilityExecutor::execute (the governance slices of this milestone)
+depends_on: []
+acceptance_criteria:
+  - Every capability with Effect::RepositoryMutation is annotated destructive and not read-only on MCP, and its OpenAPI operation says it writes, derived from the one Effect
+  - A registry validation refuses a repository-writing capability projected to a surface the accepted decision does not allow
+  - The decision is an ADR whose status is set by the owner, not by the tool
+validation:
+  - bin/majordomus-cli capabilities validate
+  - bin/majordomus-cli generate --check
+evidence_required:
+  - write_effect_on_every_surface
+  - write_exposure_decided_once
+risk: "The owner's decision may withdraw plan.transition and recover.orphans from MCP and HTTP, which changes what an agent on those surfaces can do; the ADR must name every capability it moves."
+created_at: 2026-09-15
+updated_at: 2026-09-15

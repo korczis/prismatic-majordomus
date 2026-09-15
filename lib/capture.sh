@@ -1460,6 +1460,11 @@ mj_capture_session_start() {
     return 0; }
   mj_err "capture session: $(printf '%s' "$out" | head -n 1)${source:+ (source $source)}"
 
+  # Stranded episodes, after this one is open, so that the resolution recovery excludes as
+  # `this process's own` is the episode that just opened. Before the briefing, so that the
+  # briefing does not report as open what is about to be closed.
+  mj_capture_recover_stranded "$provider"
+
   # The briefing is best-effort and never decides the event: an episode that opened and
   # could not be described is worth more than no episode, and a hook that failed because a
   # record it wanted to quote was malformed would lose the boundary over a detail.
@@ -1473,6 +1478,54 @@ mj_capture_session_start() {
   local server; server="$(mj_capture_ensure_server "$provider")"
   [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
   mj_derive_briefing "$server" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  return 0
+}
+
+# Close stranded episodes on the provider's start event: `recover episodes`, run for the
+# person who never runs it. It ran only by hand, and in this repository's primary checkout
+# 21 episodes sat open with session.recovered never once written (I1700).
+#
+# Everything `recover episodes` guarantees holds here, because it is that function and not a
+# second sweep: this process's own episode is excluded before any predicate, an episode of
+# another worktree is left to it, and nothing younger than session.stranded_after is a
+# candidate. Three things are added for the hook:
+#
+#   bounded   at most MJ_RECOVER_LIMIT closes and none begun after MJ_RECOVER_DEADLINE; the
+#             rest are closed by the next start, since the sweep is idempotent;
+#   fail-open it runs in a subshell and whatever it says goes to state/recover.log; a
+#             failure is logged beside the working contexts and the session starts anyway;
+#   ordered   a publish temp in the session store may hold the only complete record of a
+#             stranded episode, and `recover all` publishes it before episodes runs. This
+#             path does not publish temps, so while one exists it recovers nothing and says
+#             which command does it properly, rather than synthesise a thinner record.
+#
+# Its stdout never reaches the provider: the start event's stdout is the briefing.
+mj_capture_recover_stranded() {
+  local provider="$1" log rc=0 tmp
+  [ -d "$(mj_session_open_dir)" ] || return 0
+  mkdir -p "$MJ_STATE_DIR" 2>/dev/null || return 0
+  log="$MJ_STATE_DIR/recover.log"
+  tmp="$(find "$(mj_session_store)" -maxdepth 1 -type f -name '.tmp.??????' 2>/dev/null | head -n 1)"
+  if [ -n "$tmp" ]; then
+    mj_session_context_log "$provider start event: stranded episodes not recovered: $(mj_rel "$tmp") may hold a record; run: majordomus recover all"
+    return 0
+  fi
+  (
+    # shellcheck source=recover.sh
+    . "$MJ_LIB_DIR/recover.sh"
+    printf '%s %s start event\n' "$(mj_now)" "$provider"
+    mj_load_policy || { printf 'the policy does not parse\n'; exit "$MJ_EX_CONTRACT"; }
+    age="$(mj_pol_req session.stranded_after)" \
+      || { printf 'the policy declares no session.stranded_after\n'; exit "$MJ_EX_CONTRACT"; }
+    MJ_RECOVER_AGE_SECS="$(mj_duration_secs "$age")" \
+      || { printf "'%s' is not a duration\n" "$age"; exit "$MJ_EX_CONTRACT"; }
+    MJ_RECOVER_AGE="$age"; MJ_RECOVER_CHECK=0
+    MJ_RECOVER_LIMIT="${MJ_RECOVER_LIMIT:-10}"
+    MJ_RECOVER_DEADLINE=$((SECONDS + ${MJ_RECOVER_SECONDS:-5}))
+    mj_recover_episodes
+  ) >> "$log" 2>&1 || rc=$?
+  [ "$rc" = 0 ] || mj_session_context_log \
+    "$provider start event: stranded episodes were not recovered (exit $rc); see $(mj_rel "$log"), then run: majordomus recover episodes"
   return 0
 }
 

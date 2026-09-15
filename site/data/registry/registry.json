@@ -6,28 +6,28 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "1eaf5d99bec17f06cc9a96b392963c781e1cc31ccd8e3343028cca0e7ace5b47",
+    "fingerprint": "596b1c5cebc41e711d4d36bd1214edc4978772865ff2b817304c70d2a217c348",
     "summary": {
-      "total": 1472,
-      "builtin": 113,
-      "declarative": 1359,
+      "total": 1476,
+      "builtin": 114,
+      "declarative": 1362,
       "by_kind": {
-        "command": 7,
+        "command": 8,
         "query": 106,
-        "resource": 1359
+        "resource": 1362
       },
       "by_stability": {
-        "behaviorally_verified": 100,
+        "behaviorally_verified": 101,
         "experimental": 7,
-        "implemented": 1365
+        "implemented": 1368
       },
       "mcp_tools": 110,
-      "mcp_resources": 1400,
+      "mcp_resources": 1403,
       "http_routes": 112,
-      "cli_commands": 52,
-      "modules": 66,
+      "cli_commands": 53,
+      "modules": 67,
       "benchmark_required": 108,
-      "benchmark_waived": 5,
+      "benchmark_waived": 6,
       "cached": 35
     },
     "builtin": [
@@ -19660,6 +19660,98 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+      },
+      {
+        "id": "ledger.append",
+        "module": "ledger",
+        "kind": "command",
+        "title": "Append one event to the ledger",
+        "description": "Validates the event against share/events.yaml — a declared name, every required field, no field the envelope owns — composes the envelope (ts, event, head, branch, by, and session when an episode resolves: the hook's key strictly, then the provider session this process runs inside, then the pointer), copies the payload's members into the line as they were written, and appends it under the ledger's exclusive lock. The shell tool's every recorded event goes through it, so the file has one writer and one lock. A refusal writes nothing.",
+        "input": {
+          "name": "LedgerAppendInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "event": {
+                "type": "string",
+                "description": "The event name, as `share/events.yaml` declares it."
+              },
+              "payload": {
+                "description": "The event's own fields, as one JSON object; the envelope is composed here.",
+                "default": {}
+              }
+            },
+            "required": [
+              "event"
+            ],
+            "description": "One event to append.\n\n```\nuse majordomus_cli::capability::builtin::ledger::LedgerAppendInput;\nlet input: LedgerAppendInput =\n    serde_json::from_str(r#\"{\"event\":\"plan_start\",\"payload\":{\"issue\":\"I0001\"}}\"#).unwrap();\nassert_eq!(input.event, \"plan_start\");\nassert_eq!(input.payload[\"issue\"], \"I0001\");\n```",
+            "title": "LedgerAppendInput"
+          }
+        },
+        "output": {
+          "name": "LedgerAppendReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "event": {
+                "type": "string",
+                "description": "The event that was appended."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The episode the envelope names, when one resolved."
+              },
+              "line": {
+                "type": "string",
+                "description": "The line, exactly as it was written."
+              }
+            },
+            "required": [
+              "event",
+              "line"
+            ],
+            "description": "The line that was written, and the episode it names.\n\n```\nuse majordomus_cli::capability::builtin::ledger::LedgerAppendReport;\nlet r = LedgerAppendReport { event: \"plan_start\".into(), session: None, line: \"{}\".into() };\nassert!(serde_json::to_value(&r).unwrap().get(\"session\").is_none());\n```",
+            "title": "LedgerAppendReport"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::ledger"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "ledger",
+              "append"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "ledger",
+          "sessions",
+          "lifecycle",
+          "provenance"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "repository_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/ledger.rs"
       },
       {
         "id": "lifecycle.closed",
@@ -40465,7 +40557,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 220,
+        "capabilities": 221,
         "capability_ids": []
       },
       {
@@ -40475,6 +40567,18 @@
         "source": "declarative",
         "capabilities": 1,
         "capability_ids": []
+      },
+      {
+        "id": "ledger",
+        "title": "Ledger",
+        "description": "The checkout's append-only record of what happened, and its one writer. An event is validated against share/events.yaml, wrapped in the envelope every line carries — the time, the event, the commit, the branch, the writer and the episode this process resolves to — and appended under the exclusive lock every writer of the file takes.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "ledger.append"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/ledger.rs"
       },
       {
         "id": "lifecycle",
@@ -40802,7 +40906,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 216,
+        "capabilities": 218,
         "capability_ids": []
       },
       {
@@ -40882,7 +40986,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5b6e8023b9a98e58103be67e020d37fbc6bff96bc4e12afc738cdef5fe8f97b2",
+    "fingerprint": "cfd764c97234df381e5312707d6c8103a03f8f66cd6e2d022a1f7e0f0dc74b10",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40917,7 +41021,7 @@
       "document": 248,
       "feature": 25,
       "implementation": 49,
-      "issue": 220,
+      "issue": 221,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 20,
@@ -40931,7 +41035,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 216,
+      "test": 218,
       "use-case": 46,
       "workspace": 1
     },
@@ -45009,7 +45113,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 57720
+        "bytes": 59728
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -45063,7 +45167,7 @@
         "title": "Runtime continuity: root causes and the reference differential",
         "path": "docs/RUNTIME_CONTINUITY.md",
         "source_class": "document",
-        "bytes": 12570
+        "bytes": 14620
       },
       {
         "uri": "majordomus://document/docs/SCHEMAS.md",
@@ -47164,7 +47268,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 129362
+        "bytes": 132413
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -47204,7 +47308,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 74443
+        "bytes": 77418
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -47412,7 +47516,7 @@
         "identity": "lib/recover.sh",
         "path": "lib/recover.sh",
         "source_class": "library",
-        "bytes": 48558
+        "bytes": 49265
       },
       {
         "uri": "majordomus://implementation/lib/rules.sh",
@@ -49913,6 +50017,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2830
+      },
+      {
+        "uri": "majordomus://issue/I1704",
+        "kind": "issue",
+        "identity": "I1704",
+        "title": "A repository-writing capability is marked destructive on every surface, and the exposure policy for writes is one decision",
+        "description": "Make every capability whose effect is a repository mutation carry that effect identically on each surface it is projected to — the MCP destructive and read-only annotations, the OpenAPI operation, the command line's reference — and record, as one decision the owner accepts, whether a capability that writes the repository may be exposed over MCP and HTTP at all.",
+        "path": ".ai/repo/project/issues/I1704.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3066
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -54507,14 +54622,6 @@
         "bytes": 5098
       },
       {
-        "uri": "majordomus://test/test/cases/357_one_spelling_for_an_open_episode.sh",
-        "kind": "test",
-        "identity": "test/cases/357_one_spelling_for_an_open_episode.sh",
-        "path": "test/cases/357_one_spelling_for_an_open_episode.sh",
-        "source_class": "case",
-        "bytes": 2997
-      },
-      {
         "uri": "majordomus://test/test/cases/35_future_command.sh",
         "kind": "test",
         "identity": "test/cases/35_future_command.sh",
@@ -54537,6 +54644,30 @@
         "path": "test/cases/37_responsibility_surface.sh",
         "source_class": "case",
         "bytes": 7839
+      },
+      {
+        "uri": "majordomus://test/test/cases/380_one_spelling_for_an_open_episode.sh",
+        "kind": "test",
+        "identity": "test/cases/380_one_spelling_for_an_open_episode.sh",
+        "path": "test/cases/380_one_spelling_for_an_open_episode.sh",
+        "source_class": "case",
+        "bytes": 2997
+      },
+      {
+        "uri": "majordomus://test/test/cases/381_one_locked_ledger_writer.sh",
+        "kind": "test",
+        "identity": "test/cases/381_one_locked_ledger_writer.sh",
+        "path": "test/cases/381_one_locked_ledger_writer.sh",
+        "source_class": "case",
+        "bytes": 6558
+      },
+      {
+        "uri": "majordomus://test/test/cases/382_stranded_episodes_recover_at_start.sh",
+        "kind": "test",
+        "identity": "test/cases/382_stranded_episodes_recover_at_start.sh",
+        "path": "test/cases/382_stranded_episodes_recover_at_start.sh",
+        "source_class": "case",
+        "bytes": 6189
       },
       {
         "uri": "majordomus://test/test/cases/40_project_model.sh",
@@ -55842,7 +55973,7 @@
       "identity": [
         "id"
       ],
-      "objects": 220
+      "objects": 221
     },
     {
       "name": "knowledge",
@@ -55994,7 +56125,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 216
+      "objects": 218
     },
     {
       "name": "use-case",
@@ -73921,6 +74052,138 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "ledger"
+        ],
+        "route": "/docs/cli/ledger/",
+        "executable": false,
+        "usage": "majordomus ledger <COMMAND>",
+        "about": "The checkout's ledger: append one event through its one locked writer, validated against share/events.yaml and stamped with the episode this process resolves to",
+        "args": [],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "ledger",
+              "append"
+            ],
+            "route": "/docs/cli/ledger/append/",
+            "executable": true,
+            "usage": "majordomus ledger append [OPTIONS] <EVENT>",
+            "about": "Append one event: the payload's members are copied into the line as written, the envelope is composed here, and the line is written under the ledger's exclusive lock",
+            "args": [
+              {
+                "name": "event",
+                "positional": true,
+                "help": "The event name, as share/events.yaml declares it",
+                "value_name": "EVENT",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "payload",
+                "long": "payload",
+                "positional": false,
+                "help": "The event's own fields as one JSON object; read from standard input when absent",
+                "value_name": "JSON",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "root",
+                "long": "root",
+                "positional": false,
+                "help": "The repository root, taken as given rather than searched for (default: the current directory)",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory, where events.yaml is; default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` prints nothing on success; `json` prints the line and the episode it names",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "ledger-append-json",
+                "title": "One event, through the one locked writer",
+                "description": "The shell tool records every event this way. The payload's members are copied into the line exactly as they were written, after an envelope composed here — the time, the event, the commit, the branch, the writer, and the episode this process resolves to when one is open — and the line is appended under the ledger's exclusive lock. `--format json` shows the line that was written; the shell asks for nothing and reads nothing back.",
+                "argv": [
+                  "ledger",
+                  "append",
+                  "session.started",
+                  "--payload",
+                  "{\"owner\":\"korczis\"}",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus ledger append session.started --payload '{\"owner\":\"korczis\"}' --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /line, /event"
+              },
+              {
+                "id": "ledger-append-refused",
+                "title": "An event the vocabulary does not declare",
+                "description": "A name share/events.yaml does not declare, a missing required field, or a field the envelope owns is refused whole, with the shell's own sentence and its internal-error code 13: an event nothing declares is a defect of whatever wrote it, and a durable line every reader ignores is the failure the vocabulary exists to prevent.",
+                "argv": [
+                  "ledger",
+                  "append",
+                  "session.strated",
+                  "--payload",
+                  "{\"owner\":\"korczis\"}"
+                ],
+                "command": "majordomus ledger append session.strated --payload '{\"owner\":\"korczis\"}'",
+                "setup": [],
+                "expectation": "exits 13"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -81853,6 +82116,14 @@
           "cases": 1
         },
         {
+          "subject": "ledger.append",
+          "module": "ledger",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
           "subject": "lifecycle.closed",
           "module": "lifecycle",
           "transport": "direct",
@@ -83272,10 +83543,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 113,
+          "required": 114,
           "covered": 108,
           "missing": 0,
-          "waived": 5,
+          "waived": 6,
           "inapplicable": 0
         },
         "http": {
@@ -83300,10 +83571,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 348,
+          "required": 349,
           "covered": 335,
           "missing": 0,
-          "waived": 13,
+          "waived": 14,
           "inapplicable": 0
         }
       }

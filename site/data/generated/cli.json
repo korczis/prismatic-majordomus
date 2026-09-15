@@ -154,6 +154,12 @@
           "command": "majordomus rules",
           "name": "rules",
           "route": "/docs/cli/rules/"
+        },
+        {
+          "about": "The checkout's ledger: append one event through its one locked writer, validated against share/events.yaml and stamped with the episode this process resolves to",
+          "command": "majordomus ledger",
+          "name": "ledger",
+          "route": "/docs/cli/ledger/"
         }
       ],
       "command": "majordomus",
@@ -20681,13 +20687,180 @@
       ],
       "route": "/docs/cli/rules/proves/",
       "usage": "majordomus rules proves [OPTIONS] <ID>"
+    },
+    {
+      "about": "The checkout's ledger: append one event through its one locked writer, validated against share/events.yaml and stamped with the episode this process resolves to",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Append one event: the payload's members are copied into the line as written, the envelope is composed here, and the line is written under the ledger's exclusive lock",
+          "command": "majordomus ledger append",
+          "name": "append",
+          "route": "/docs/cli/ledger/append/"
+        }
+      ],
+      "command": "majordomus ledger",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "ledger",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "ledger"
+      ],
+      "route": "/docs/cli/ledger/",
+      "usage": "majordomus ledger <COMMAND>"
+    },
+    {
+      "about": "Append one event: the payload's members are copied into the line as written, the envelope is composed here, and the line is written under the ledger's exclusive lock",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus ledger",
+          "name": "ledger",
+          "route": "/docs/cli/ledger/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The event name, as share/events.yaml declares it",
+          "name": "event",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "EVENT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The event's own fields as one JSON object; read from standard input when absent",
+          "long": "payload",
+          "name": "payload",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "JSON"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The repository root, taken as given rather than searched for (default: the current directory)",
+          "long": "root",
+          "name": "root",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The tool distribution's share directory, where events.yaml is; default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` prints nothing on success; `json` prints the line and the episode it names",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus ledger append",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "ledger",
+            "append",
+            "session.started",
+            "--payload",
+            "{\"owner\":\"korczis\"}",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus ledger append session.started --payload '{\"owner\":\"korczis\"}' --format json",
+          "description": "The shell tool records every event this way. The payload's members are copied into the line exactly as they were written, after an envelope composed here — the time, the event, the commit, the branch, the writer, and the episode this process resolves to when one is open — and the line is appended under the ledger's exclusive lock. `--format json` shows the line that was written; the shell asks for nothing and reads nothing back.",
+          "expectation": "exits 0; prints one JSON document carrying /line, /event",
+          "id": "ledger-append-json",
+          "setup": [],
+          "title": "One event, through the one locked writer"
+        },
+        {
+          "argv": [
+            "ledger",
+            "append",
+            "session.strated",
+            "--payload",
+            "{\"owner\":\"korczis\"}"
+          ],
+          "command": "majordomus ledger append session.strated --payload '{\"owner\":\"korczis\"}'",
+          "description": "A name share/events.yaml does not declare, a missing required field, or a field the envelope owns is refused whole, with the shell's own sentence and its internal-error code 13: an event nothing declares is a defect of whatever wrote it, and a durable line every reader ignores is the failure the vocabulary exists to prevent.",
+          "expectation": "exits 13",
+          "id": "ledger-append-refused",
+          "setup": [],
+          "title": "An event the vocabulary does not declare"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "append",
+      "parent_route": "/docs/cli/ledger/",
+      "path": [
+        "majordomus",
+        "ledger",
+        "append"
+      ],
+      "route": "/docs/cli/ledger/append/",
+      "usage": "majordomus ledger append [OPTIONS] <EVENT>"
     }
   ],
   "counts": {
-    "arguments": 906,
-    "commands": 127,
-    "examples": 134,
-    "runnable": 116
+    "arguments": 911,
+    "commands": 129,
+    "examples": 136,
+    "runnable": 117
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.7.0",

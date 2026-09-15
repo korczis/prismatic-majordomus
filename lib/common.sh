@@ -761,8 +761,31 @@ MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session'
 # than findings: a command that writes an event the vocabulary does not define, or that
 # overwrites the envelope it is being wrapped in, is a bug in Majordomus and not a fact
 # about the repository being supervised.
+#
+# The line itself is written by the Rust executable, `majordomus ledger append`, and never
+# here. This function used to compose the envelope and append it with a bare `>>`, while the
+# executable appended to the same file under an exclusive lock: two writers of one record,
+# one of them unlocked, which is a race on every line (I1700). Now the executable is the one
+# writer. It validates the event against the same vocabulary, composes the envelope — the
+# time (MAJORDOMUS_NOW honoured), the head, the branch, the writer, and the episode its
+# resolver finds by the same order mj_open_session_id follows — copies the payload's members
+# into the line byte for byte, and appends under the lock. The three refusals below stay
+# here too, and first: they cost no process, and their sentences are the ones a developer
+# who miswrote a caller has always read.
+#
+# The bare executable, never bin/majordomus-cli: that wrapper decides whether to rebuild,
+# which can take minutes, and this runs on every recorded event. A missing executable is a
+# refusal with a remedy (MJ_EX_MISSING), never a line silently lost.
+#
+# A STALE executable — one older than the crate's sources — still appends, deliberately.
+# The envelope and the vocabulary check are the stable part of the executable; refusing on
+# staleness would make every shell command that records anything fail while somebody is in
+# the middle of editing Rust, which is most of the time in this repository. What staleness
+# could change is caught where it would matter: an executable that predates `ledger append`
+# altogether answers with clap's usage exit, which is reported below as the missing
+# capability it is, and case 133 holds the executable's line to the envelope byte for byte.
 mj_ledger_append() {
-  local ev="$1" extra="${2:-}" line sid k
+  local ev="$1" extra="${2:-}" k rc
   mj_events_load
   mj_event_known "$ev" || mj_die "$MJ_EX_INTERNAL" \
     "unregistered event '$ev'; declare it in share/events.yaml or use one of: $(mj_event_ids | tr '\n' ' ')"
@@ -777,14 +800,34 @@ mj_ledger_append() {
       *) mj_die "$MJ_EX_INTERNAL" "event '$ev' is missing the required field '$k'" ;;
     esac
   done
-  line="{\"ts\":\"$(mj_now)\",\"event\":\"$ev\",\"head\":\"$(mj_git_head)\",\"branch\":\"$(mj_json_esc "$(mj_git_branch)")\",\"by\":\"majordomus/$MJ_VERSION\""
-  sid="$(mj_open_session_id)"
-  [ -n "$sid" ] && line="$line,\"session\":\"$sid\""
-  [ -n "$extra" ] && line="$line,$extra"
-  # the local half is never tracked, so a second worktree of the same repository starts
-  # without it; the first write creates it
-  mkdir -p "$MJ_STATE_DIR"
-  printf '%s}\n' "$line" >> "$MJ_STATE_DIR/ledger.jsonl"
+  # The executable writes <root>/.ai/local/state/ledger.jsonl and resolves episodes under
+  # that directory. A manifest that moved the local half elsewhere would put the two
+  # programs' records in two places, so that is refused rather than written in the wrong one.
+  [ "$MJ_STATE_DIR" = "$MJ_ROOT/.ai/local/state" ] || mj_die "$MJ_EX_INTERNAL" \
+    "the ledger writer reads the local half at .ai/local/state and this manifest puts it at $(mj_rel "$MJ_STATE_DIR"); event '$ev' was not recorded"
+  if [ -z "${MJ_LEDGER_BIN:-}" ]; then
+    # shellcheck source=rust_bin.sh
+    . "$MJ_LIB_DIR/rust_bin.sh"
+    MJ_LEDGER_BIN="$(mj_rust_bin "$MJ_HOME")"
+  fi
+  if [ ! -x "$MJ_LEDGER_BIN" ]; then
+    mj_rust_bin_missing "$MJ_HOME" "$MJ_LEDGER_BIN" 'majordomus: '
+    mj_die "$MJ_EX_MISSING" \
+      "event '$ev' was not recorded: the ledger is written by the Rust executable and there is none at $MJ_LEDGER_BIN (build it: just build, or cargo build --manifest-path $MJ_HOME/apps/majordomus-cli/Cargo.toml)"
+  fi
+  rc=0
+  # MJ_SESSION_KEY and MAJORDOMUS_NOW are handed over explicitly: a hook sets the key as a
+  # shell variable without exporting it, and an episode resolved without it would be the
+  # pointer's guess rather than the hook's own episode.
+  printf '{%s}' "$extra" \
+    | MJ_SESSION_KEY="${MJ_SESSION_KEY:-}" MAJORDOMUS_NOW="${MAJORDOMUS_NOW:-}" \
+      "$MJ_LEDGER_BIN" ledger append "$ev" --root "$MJ_ROOT" --share "$MJ_SHARE_DIR" || rc=$?
+  case "$rc" in
+    0) return 0 ;;
+    2) mj_die "$MJ_EX_MISSING" \
+         "event '$ev' was not recorded: $MJ_LEDGER_BIN predates \`ledger append\` (rebuild it: just build)" ;;
+    *) mj_die "$rc" "event '$ev' was not recorded (the ledger writer exited $rc)" ;;
+  esac
 }
 
 # ---------------------------------------------------------------- the open episode
@@ -831,7 +874,7 @@ mj_session_pointer()  { printf '%s' "$MJ_STATE_DIR/session-current.yaml"; }
 # allow-list and name a directory, not a file. ProviderSessionId::store_key in
 # apps/majordomus-cli/src/session/identity.rs spells every key exactly this way, and both are
 # held to one measured table both read: test/fixtures/session-keys.tsv (its unit test, and
-# test/cases/357_one_spelling_for_an_open_episode.sh).
+# test/cases/380_one_spelling_for_an_open_episode.sh).
 mj_session_key() {
   local v
   v="$(printf '%s' "${1:-}" | tr -c 'A-Za-z0-9._-' '-' | tr -s '-' | cut -c1-64 | sed -e 's/^-*//' -e 's/-*$//')"

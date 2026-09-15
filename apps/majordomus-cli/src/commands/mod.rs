@@ -41,6 +41,7 @@ pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
 pub(crate) mod generate;
+pub(crate) mod ledger;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -85,6 +86,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Models(args) => models::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Rules(args) => rules::run(args),
+        Command::Ledger(args) => ledger::run(args),
     }
 }
 

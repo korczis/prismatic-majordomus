@@ -130,6 +130,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/recover.log",
+      "kind": "artifact",
+      "label": "local/state/recover.log",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/session.sh",
       "kind": "module",
       "label": "session",
@@ -167,6 +177,16 @@
       "summary": null,
       "read_only": null,
       "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/recover.sh",
+      "kind": "module",
+      "label": "recover",
+      "command": "recover",
+      "summary": "bring this checkout's record stores back to what the contract describes",
+      "read_only": null,
+      "route": "/commands/recover/",
       "external": false
     },
     {
@@ -770,16 +790,6 @@
       "external": false
     },
     {
-      "id": "lib/recover.sh",
-      "kind": "module",
-      "label": "recover",
-      "command": "recover",
-      "summary": "bring this checkout's record stores back to what the contract describes",
-      "read_only": null,
-      "route": "/commands/recover/",
-      "external": false
-    },
-    {
       "id": ".ai/local/state/archive",
       "kind": "artifact",
       "label": "local/state/archive",
@@ -874,6 +884,11 @@
     {
       "source": "lib/archive.sh",
       "target": ".ai/repo/archive.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/state/sessions-open",
       "kind": "reads"
     },
     {
@@ -1218,6 +1233,11 @@
     },
     {
       "source": "lib/capture.sh",
+      "target": "lib/recover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
       "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
@@ -1289,6 +1309,11 @@
     {
       "source": "lib/common.sh",
       "target": "lib/changed.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -1573,11 +1598,6 @@
     },
     {
       "source": "lib/capture.sh",
-      "target": ".ai/local/state/sessions-open",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/capture.sh",
       "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
@@ -1614,6 +1634,11 @@
     {
       "source": "lib/checkpoint.sh",
       "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/ledger.jsonl",
       "kind": "uses"
     },
     {
@@ -2027,6 +2052,11 @@
       "kind": "writes"
     },
     {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/state/recover.log",
+      "kind": "writes"
+    },
+    {
       "source": "lib/check.sh",
       "target": ".ai/local/state/current.yaml",
       "kind": "writes"
@@ -2034,11 +2064,6 @@
     {
       "source": "lib/checkpoint.sh",
       "target": ".ai/local/state/current.yaml",
-      "kind": "writes"
-    },
-    {
-      "source": "lib/common.sh",
-      "target": ".ai/local/state/ledger.jsonl",
       "kind": "writes"
     },
     {

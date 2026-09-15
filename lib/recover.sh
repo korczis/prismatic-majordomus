@@ -292,6 +292,16 @@ mj_recover_episodes() {
       "$(mj_age_human $((age / 60)))" "$MJ_RECOVER_AGE"
     MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1))
     [ "$MJ_RECOVER_CHECK" = 1 ] && continue
+    # The bounds a provider's start event sets (mj_capture_recover_stranded): at most
+    # MJ_RECOVER_LIMIT closes, and none begun once bash's SECONDS passes MJ_RECOVER_DEADLINE.
+    # A person running `recover episodes` sets neither and gets every candidate. What is left
+    # is left open, said here, and closed by the next start: the sweep is idempotent.
+    if [ -n "${MJ_RECOVER_LIMIT:-}" ] && [ "$acted" -ge "$MJ_RECOVER_LIMIT" ]; then
+      printf '    deferred: %s closed already, the limit for this run\n' "$acted"; continue
+    fi
+    if [ -n "${MJ_RECOVER_DEADLINE:-}" ] && [ "$SECONDS" -ge "$MJ_RECOVER_DEADLINE" ]; then
+      printf '    deferred: this run is out of time\n'; continue
+    fi
     mj_recover_close_episode "$f" "$sid" "$started" "$last" "$src" "$age" && acted=$((acted + 1))
   done <<EOF
 $(mj_session_open_list)

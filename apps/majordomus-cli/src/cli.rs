@@ -86,6 +86,50 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// The checkout's ledger: append one event through its one locked writer, validated against share/events.yaml and stamped with the episode this process resolves to
+    Ledger(LedgerArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus ledger`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, LedgerCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "ledger", "append", "plan_start"]).unwrap();
+/// let Command::Ledger(args) = cli.command else { panic!("not the ledger command") };
+/// assert!(matches!(args.command, LedgerCommand::Append { ref event, payload: None, .. } if event == "plan_start"));
+/// ```
+pub struct LedgerArgs {
+    #[command(subcommand)]
+    /// `append`. Required: the group runs nothing of its own.
+    pub command: LedgerCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `ledger` subcommands.
+pub enum LedgerCommand {
+    /// Append one event: the payload's members are copied into the line as written, the envelope is composed here, and the line is written under the ledger's exclusive lock
+    Append {
+        /// The event name, as share/events.yaml declares it
+        event: String,
+
+        #[arg(long, value_name = "JSON")]
+        /// The event's own fields as one JSON object; read from standard input when absent
+        payload: Option<String>,
+
+        #[arg(long, value_name = "DIR")]
+        /// The repository root, taken as given rather than searched for (default: the current directory)
+        root: Option<PathBuf>,
+
+        #[arg(long, value_name = "DIR")]
+        /// The tool distribution's share directory, where events.yaml is; default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable
+        share: Option<PathBuf>,
+
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        /// `text` prints nothing on success; `json` prints the line and the episode it names
+        format: OutputFormat,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -2312,6 +2356,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::ExitCode(13),
         }],
+    },
+    CommandExamples {
+        command: "ledger append",
+        examples: &[
+            ExampleDoc {
+                id: "ledger-append-json",
+                title: "One event, through the one locked writer",
+                description: "The shell tool records every event this way. The payload's members are copied into the line exactly as they were written, after an envelope composed here — the time, the event, the commit, the branch, the writer, and the episode this process resolves to when one is open — and the line is appended under the ledger's exclusive lock. `--format json` shows the line that was written; the shell asks for nothing and reads nothing back.",
+                argv: &["ledger", "append", "session.started", "--payload", "{\"owner\":\"korczis\"}", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/line", "/event"]),
+            },
+            ExampleDoc {
+                id: "ledger-append-refused",
+                title: "An event the vocabulary does not declare",
+                description: "A name share/events.yaml does not declare, a missing required field, or a field the envelope owns is refused whole, with the shell's own sentence and its internal-error code 13: an event nothing declares is a defect of whatever wrote it, and a durable line every reader ignores is the failure the vocabulary exists to prevent.",
+                argv: &["ledger", "append", "session.strated", "--payload", "{\"owner\":\"korczis\"}"],
+                setup: &[],
+                expect: Expect::ExitCode(13),
+            },
+        ],
     },
     CommandExamples {
         command: "rules report",

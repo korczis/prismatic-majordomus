@@ -6,10 +6,10 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.7.0
 coverage:
   - scope: direct
-    required: 113
+    required: 114
     covered: 108
     missing: 0
-    waived: 5
+    waived: 6
     inapplicable: 0
   - scope: http
     required: 112
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 348
+    required: 349
     covered: 335
     missing: 0
-    waived: 13
+    waived: 14
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -511,6 +511,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: ledger.append
+    module: ledger
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: lifecycle.closed
     module: lifecycle
     kind: query

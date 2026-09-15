@@ -168,10 +168,17 @@ pub fn resolve(
 /// ```
 /// let nowhere = tempfile::tempdir().unwrap();
 /// // a directory holding no distribution declares nothing, which is not an error
-/// let _ = majordomus_cli::session::resolver::declared_session_vars(nowhere.path());
+/// let _ = majordomus_cli::session::resolver::declared_session_vars(nowhere.path(), None);
+/// // and neither is a share directory named outright that holds none
+/// assert!(majordomus_cli::session::resolver::declared_session_vars(
+///     nowhere.path(), Some(nowhere.path())).is_empty());
 /// ```
-pub fn declared_session_vars(root: &Path) -> Vec<String> {
-    let Ok(share) = crate::share::Share::locate(None, root) else {
+///
+/// `share` names the distribution outright — the one the caller's vocabulary came from, which
+/// for the shell tool's appends is its own `share/` and not whatever the environment or the
+/// repository would locate. `None` locates it the usual way.
+pub fn declared_session_vars(root: &Path, share: Option<&Path>) -> Vec<String> {
+    let Ok(share) = crate::share::Share::locate(share, root) else {
         return Vec::new();
     };
     let Ok(decls) = share.providers() else {

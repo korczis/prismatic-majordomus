@@ -515,6 +515,15 @@
         "status": "query"
       },
       {
+        "id": "capability:ledger.append",
+        "kind": "capability",
+        "label": "ledger.append",
+        "summary": "Append one event to the ledger",
+        "route": "/cockpit/capabilities/ledger.append",
+        "source": "apps/majordomus-cli/src/capability/builtin/ledger.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:lifecycle.closed",
         "kind": "capability",
         "label": "lifecycle.closed",
@@ -23089,6 +23098,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I1704",
+        "kind": "issue",
+        "label": "I1704",
+        "summary": "A repository-writing capability is marked destructive on every surface, and the exposure policy for writes is one decision",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1704",
+        "source": ".ai/repo/project/issues/I1704.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every capability with Effect::RepositoryMutation is annotated destructive and not read-only on MCP, and its OpenAPI operation says it writes, derived from the one Effect",
+            "A registry validation refuses a repository-writing capability projected to a surface the accepted decision does not allow",
+            "The decision is an ADR whose status is set by the owner, not by the tool"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "write_effect_on_every_surface",
+            "write_exposure_decided_once"
+          ],
+          "milestone": "runtime-continuity",
+          "non_scope": [
+            "The MCP annotation fix itself, on fix/a-mutation-is-never-served-past-its-ceiling",
+            "A policy stage inside CapabilityExecutor::execute (the governance slices of this milestone)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "The owner's decision may withdraw plan.transition and recover.orphans from MCP and HTTP, which changes what an agent on those surfaces can do; the ADR must name every capability it moves.",
+          "scope": [
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/http",
+            ".ai/repo/adrs",
+            "docs/CAPABILITIES.md",
+            "test/cases"
+          ],
+          "slug": "repository-writes-have-one-exposure-policy",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bin/majordomus-cli capabilities validate",
+            "bin/majordomus-cli generate --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -32918,13 +32971,6 @@
         "source": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh"
       },
       {
-        "id": "majordomus://test/test/cases/357_one_spelling_for_an_open_episode.sh",
-        "kind": "test",
-        "label": "test/cases/357_one_spelling_for_an_open_episode.sh",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F357_one_spelling_for_an_open_episode.sh",
-        "source": "test/cases/357_one_spelling_for_an_open_episode.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/35_future_command.sh",
         "kind": "test",
         "label": "test/cases/35_future_command.sh",
@@ -32944,6 +32990,27 @@
         "label": "test/cases/37_responsibility_surface.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F37_responsibility_surface.sh",
         "source": "test/cases/37_responsibility_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/380_one_spelling_for_an_open_episode.sh",
+        "kind": "test",
+        "label": "test/cases/380_one_spelling_for_an_open_episode.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F380_one_spelling_for_an_open_episode.sh",
+        "source": "test/cases/380_one_spelling_for_an_open_episode.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/381_one_locked_ledger_writer.sh",
+        "kind": "test",
+        "label": "test/cases/381_one_locked_ledger_writer.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F381_one_locked_ledger_writer.sh",
+        "source": "test/cases/381_one_locked_ledger_writer.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/382_stranded_episodes_recover_at_start.sh",
+        "kind": "test",
+        "label": "test/cases/382_stranded_episodes_recover_at_start.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F382_stranded_episodes_recover_at_start.sh",
+        "source": "test/cases/382_stranded_episodes_recover_at_start.sh"
       },
       {
         "id": "majordomus://test/test/cases/40_project_model.sh",
@@ -35566,6 +35633,11 @@
         "label": "health"
       },
       {
+        "id": "module:ledger",
+        "kind": "module",
+        "label": "ledger"
+      },
+      {
         "id": "module:lifecycle",
         "kind": "module",
         "label": "lifecycle"
@@ -36562,6 +36634,16 @@
       {
         "source": "capability:health.report",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:ledger.append",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:ledger.append",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -48650,6 +48732,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1704",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1704",
+        "target": "majordomus://milestone/runtime-continuity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -51425,11 +51517,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/357_one_spelling_for_an_open_episode.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/35_future_command.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -51441,6 +51528,21 @@
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/380_one_spelling_for_an_open_episode.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/381_one_locked_ledger_writer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/382_stranded_episodes_recover_at_start.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54795,6 +54897,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:ledger",
+        "target": "capability:ledger.append",
+        "kind": "composes"
+      },
+      {
         "source": "module:lifecycle",
         "target": "capability:lifecycle.closed",
         "kind": "composes"
@@ -55111,8 +55218,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1732,
-      "edges": 3882,
+      "nodes": 1737,
+      "edges": 3889,
       "acyclic": true,
       "truncated": false
     }

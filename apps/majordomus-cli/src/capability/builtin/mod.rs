@@ -47,6 +47,7 @@ pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
 pub mod health;
+pub mod ledger;
 pub mod lifecycle;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -154,6 +155,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         commands,
         graph,
         health,
+        ledger,
         continuity,
         lifecycle,
         obligations,

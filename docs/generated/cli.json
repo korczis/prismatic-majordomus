@@ -17889,6 +17889,138 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "ledger"
+        ],
+        "route": "/docs/cli/ledger/",
+        "executable": false,
+        "usage": "majordomus ledger <COMMAND>",
+        "about": "The checkout's ledger: append one event through its one locked writer, validated against share/events.yaml and stamped with the episode this process resolves to",
+        "args": [],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "ledger",
+              "append"
+            ],
+            "route": "/docs/cli/ledger/append/",
+            "executable": true,
+            "usage": "majordomus ledger append [OPTIONS] <EVENT>",
+            "about": "Append one event: the payload's members are copied into the line as written, the envelope is composed here, and the line is written under the ledger's exclusive lock",
+            "args": [
+              {
+                "name": "event",
+                "positional": true,
+                "help": "The event name, as share/events.yaml declares it",
+                "value_name": "EVENT",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "payload",
+                "long": "payload",
+                "positional": false,
+                "help": "The event's own fields as one JSON object; read from standard input when absent",
+                "value_name": "JSON",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "root",
+                "long": "root",
+                "positional": false,
+                "help": "The repository root, taken as given rather than searched for (default: the current directory)",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory, where events.yaml is; default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` prints nothing on success; `json` prints the line and the episode it names",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "ledger-append-json",
+                "title": "One event, through the one locked writer",
+                "description": "The shell tool records every event this way. The payload's members are copied into the line exactly as they were written, after an envelope composed here — the time, the event, the commit, the branch, the writer, and the episode this process resolves to when one is open — and the line is appended under the ledger's exclusive lock. `--format json` shows the line that was written; the shell asks for nothing and reads nothing back.",
+                "argv": [
+                  "ledger",
+                  "append",
+                  "session.started",
+                  "--payload",
+                  "{\"owner\":\"korczis\"}",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus ledger append session.started --payload '{\"owner\":\"korczis\"}' --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /line, /event"
+              },
+              {
+                "id": "ledger-append-refused",
+                "title": "An event the vocabulary does not declare",
+                "description": "A name share/events.yaml does not declare, a missing required field, or a field the envelope owns is refused whole, with the shell's own sentence and its internal-error code 13: an event nothing declares is a defect of whatever wrote it, and a durable line every reader ignores is the failure the vocabulary exists to prevent.",
+                "argv": [
+                  "ledger",
+                  "append",
+                  "session.strated",
+                  "--payload",
+                  "{\"owner\":\"korczis\"}"
+                ],
+                "command": "majordomus ledger append session.strated --payload '{\"owner\":\"korczis\"}'",
+                "setup": [],
+                "expectation": "exits 13"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   }

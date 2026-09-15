@@ -140,6 +140,14 @@
       "capabilities": 3
     },
     {
+      "id": "ledger",
+      "title": "Ledger",
+      "description": "The checkout's append-only record of what happened, and its one writer. An event is validated against share/events.yaml, wrapped in the envelope every line carries — the time, the event, the commit, the branch, the writer and the episode this process resolves to — and appended under the exclusive lock every writer of the file takes.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 1
+    },
+    {
       "id": "lifecycle",
       "title": "Session lifecycle",
       "description": "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.",
@@ -19930,6 +19938,98 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+    },
+    {
+      "id": "ledger.append",
+      "module": "ledger",
+      "kind": "command",
+      "title": "Append one event to the ledger",
+      "description": "Validates the event against share/events.yaml — a declared name, every required field, no field the envelope owns — composes the envelope (ts, event, head, branch, by, and session when an episode resolves: the hook's key strictly, then the provider session this process runs inside, then the pointer), copies the payload's members into the line as they were written, and appends it under the ledger's exclusive lock. The shell tool's every recorded event goes through it, so the file has one writer and one lock. A refusal writes nothing.",
+      "input": {
+        "name": "LedgerAppendInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "event": {
+              "type": "string",
+              "description": "The event name, as `share/events.yaml` declares it."
+            },
+            "payload": {
+              "description": "The event's own fields, as one JSON object; the envelope is composed here.",
+              "default": {}
+            }
+          },
+          "required": [
+            "event"
+          ],
+          "description": "One event to append.\n\n```\nuse majordomus_cli::capability::builtin::ledger::LedgerAppendInput;\nlet input: LedgerAppendInput =\n    serde_json::from_str(r#\"{\"event\":\"plan_start\",\"payload\":{\"issue\":\"I0001\"}}\"#).unwrap();\nassert_eq!(input.event, \"plan_start\");\nassert_eq!(input.payload[\"issue\"], \"I0001\");\n```",
+          "title": "LedgerAppendInput"
+        }
+      },
+      "output": {
+        "name": "LedgerAppendReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "event": {
+              "type": "string",
+              "description": "The event that was appended."
+            },
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The episode the envelope names, when one resolved."
+            },
+            "line": {
+              "type": "string",
+              "description": "The line, exactly as it was written."
+            }
+          },
+          "required": [
+            "event",
+            "line"
+          ],
+          "description": "The line that was written, and the episode it names.\n\n```\nuse majordomus_cli::capability::builtin::ledger::LedgerAppendReport;\nlet r = LedgerAppendReport { event: \"plan_start\".into(), session: None, line: \"{}\".into() };\nassert!(serde_json::to_value(&r).unwrap().get(\"session\").is_none());\n```",
+          "title": "LedgerAppendReport"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::ledger"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "ledger",
+            "append"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "ledger",
+        "sessions",
+        "lifecycle",
+        "provenance"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "repository_mutation",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/ledger.rs"
     },
     {
       "id": "lifecycle.closed",

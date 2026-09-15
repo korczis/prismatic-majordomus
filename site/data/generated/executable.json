@@ -891,6 +891,23 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus ledger append",
+      "id": "ledger.append",
+      "kind": "command",
+      "module": "ledger",
+      "module_route": "/registry/modules/ledger/",
+      "resource": null,
+      "route": "/registry/capabilities/ledger-append/",
+      "slug": "ledger-append",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/ledger.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/ledger.rs",
+      "tests": [],
+      "title": "Append one event to the ledger",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/lifecycle/#op-lifecycle-closed",
       "claims": [
         {
@@ -2401,9 +2418,9 @@
     ]
   },
   "counts": {
-    "capabilities": 113,
+    "capabilities": 114,
     "claims": 51,
-    "modules": 37
+    "modules": 38
   },
   "generator": "majordomus-cli 0.7.0",
   "modules": [
@@ -2851,6 +2868,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
       "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "ledger.append",
+          "route": "/registry/capabilities/ledger-append/",
+          "slug": "ledger-append"
+        }
+      ],
+      "claims": [],
+      "id": "ledger",
+      "route": "/registry/modules/ledger/",
+      "slug": "ledger",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/ledger.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/ledger.rs",
+      "title": "Ledger"
     },
     {
       "capabilities": [

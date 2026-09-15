@@ -141,13 +141,15 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
 | [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
 | [`majordomus rules proves`](#majordomus-rules-proves) | `/docs/cli/rules/proves/` | One test: every rule it proves, and the rules that would be left with none |
+| [`majordomus ledger`](#majordomus-ledger) | `/docs/cli/ledger/` | The checkout's ledger: append one event through its one locked writer, validated against share/events.yaml and stamped with the episode this process resolves to |
+| [`majordomus ledger append`](#majordomus-ledger-append) | `/docs/cli/ledger/append/` | Append one event: the payload's members are copied into the line as written, the envelope is composed here, and the line is written under the ledger's exclusive lock |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules), [`majordomus ledger`](#majordomus-ledger).
 
 ```text
 majordomus <COMMAND>
@@ -3923,4 +3925,52 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path.
+
+<a id="majordomus-ledger"></a>
+## `majordomus ledger`
+
+The checkout's ledger: append one event through its one locked writer, validated against share/events.yaml and stamped with the episode this process resolves to
+
+Subcommands: [`majordomus ledger append`](#majordomus-ledger-append).
+
+```text
+majordomus ledger <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-ledger-append"></a>
+## `majordomus ledger append`
+
+Append one event: the payload's members are copied into the line as written, the envelope is composed here, and the line is written under the ledger's exclusive lock
+
+```text
+majordomus ledger append [OPTIONS] <EVENT>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<EVENT>` | `<EVENT>` | required | The event name, as share/events.yaml declares it |
+| `--payload` | `<JSON>` | — | The event's own fields as one JSON object; read from standard input when absent |
+| `--root` | `<DIR>` | — | The repository root, taken as given rather than searched for (default: the current directory) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory, where events.yaml is; default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable |
+| `--format` | `text` \| `json` | `text` | `text` prints nothing on success; `json` prints the line and the episode it names — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One event, through the one locked writer** — The shell tool records every event this way. The payload's members are copied into the line exactly as they were written, after an envelope composed here — the time, the event, the commit, the branch, the writer, and the episode this process resolves to when one is open — and the line is appended under the ledger's exclusive lock. `--format json` shows the line that was written; the shell asks for nothing and reads nothing back.
+
+  ```console
+  $ majordomus ledger append session.started --payload '{"owner":"korczis"}' --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /line, /event.
+
+- **An event the vocabulary does not declare** — A name share/events.yaml does not declare, a missing required field, or a field the envelope owns is refused whole, with the shell's own sentence and its internal-error code 13: an event nothing declares is a defect of whatever wrote it, and a durable line every reader ignores is the failure the vocabulary exists to prevent.
+
+  ```console
+  $ majordomus ledger append session.strated --payload '{"owner":"korczis"}'
+  ```
+
+  Verified: exits 13.
 

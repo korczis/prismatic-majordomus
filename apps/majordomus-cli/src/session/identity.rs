@@ -685,7 +685,7 @@ mod tests {
     /// The spelling `lib/common.sh`'s `mj_session_key` produces for each input, measured by
     /// running it. The two implementations name one file, and before this table they
     /// disagreed on every row but the first and the empty one. The table is a file both
-    /// sides read — this test and `test/cases/357_one_spelling_for_an_open_episode.sh` — so
+    /// sides read — this test and `test/cases/380_one_spelling_for_an_open_episode.sh` — so
     /// neither can move without failing a test, and there is no second copy to drift.
     #[test]
     fn the_store_key_is_the_shells_spelling() {

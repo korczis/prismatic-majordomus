@@ -1225,12 +1225,14 @@
           "25_continuity_lifecycle",
           "282_the_ledger_envelope_is_reserved",
           "32_refusal_lifecycle",
-          "33_event_registry"
+          "33_event_registry",
+          "381_one_locked_ledger_writer"
         ],
         "negative": [
           "22_history",
           "282_the_ledger_envelope_is_reserved",
-          "33_event_registry"
+          "33_event_registry",
+          "381_one_locked_ledger_writer"
         ]
       },
       "demo_data": {
@@ -1876,6 +1878,7 @@
           "224_continuity_crosses_machines",
           "282_the_ledger_envelope_is_reserved",
           "29_prompt_capture",
+          "382_stranded_episodes_recover_at_start",
           "54_session_lifecycle_hooks"
         ],
         "negative": [
@@ -1883,6 +1886,7 @@
           "140_prompt_continuity",
           "282_the_ledger_envelope_is_reserved",
           "29_prompt_capture",
+          "382_stranded_episodes_recover_at_start",
           "54_session_lifecycle_hooks"
         ]
       },
@@ -2457,7 +2461,9 @@
           "224_continuity_crosses_machines",
           "281_published_order_is_tracked",
           "284_a_record_reads_the_whole_declaration",
-          "357_one_spelling_for_an_open_episode",
+          "380_one_spelling_for_an_open_episode",
+          "381_one_locked_ledger_writer",
+          "382_stranded_episodes_recover_at_start",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "60_session_lifecycle",
@@ -3251,10 +3257,12 @@
       ],
       "tests": {
         "behaviour": [
-          "135_session_store_recovery"
+          "135_session_store_recovery",
+          "382_stranded_episodes_recover_at_start"
         ],
         "negative": [
-          "135_session_store_recovery"
+          "135_session_store_recovery",
+          "382_stranded_episodes_recover_at_start"
         ]
       },
       "demo_data": {

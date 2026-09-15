@@ -26,6 +26,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `gates` | Completion gates | behaviorally_verified | 2 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
+| `ledger` | Ledger | behaviorally_verified | 1 | [`modules/ledger.md`](modules/ledger.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mesh` | Mesh | experimental | 5 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
@@ -101,6 +102,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |
 | `health.ready` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/ready` | — | — | required |
 | `health.report` | `health` | query | behaviorally_verified | `majordomus_health` | `majordomus://health` | `GET /api/v1/health` | — | process, 4 entries, 5s | required |
+| `ledger.append` | `ledger` | command | behaviorally_verified | — | — | — | `majordomus ledger append` | — | waived (destructive) |
 | `lifecycle.closed` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_closed` | — | `GET /api/v1/lifecycle/closed` | — | process, 2 entries, 30s | required |
 | `lifecycle.episodes` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_episodes` | `majordomus://lifecycle/episodes` | `GET /api/v1/lifecycle/episodes` | — | process, 2 entries, 2s | required |
 | `lifecycle.providers` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_providers` | — | `GET /api/v1/lifecycle/providers` | — | process, 2 entries | required |

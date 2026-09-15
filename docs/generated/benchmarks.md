@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 113 | 108 | 0 | 5 |
+| direct | 114 | 108 | 0 | 6 |
 | http | 112 | 108 | 0 | 4 |
 | mcp | 110 | 106 | 0 | 4 |
 | system | 13 | 13 | 0 | 0 |
-| total | 348 | 335 | 0 | 13 |
+| total | 349 | 335 | 0 | 14 |
 
 ## Capabilities
 
@@ -69,6 +69,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `ledger.append` | ledger | command | — | waived | — | — | — |
 | `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
 | `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
