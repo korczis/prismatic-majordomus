@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# evidence-collect — one CI run's evidence, gathered into one directory a later workflow reads.
+#
+#   scripts/ci/evidence-collect --out DIR [--suite TSV] [--crate-output FILE] [--coverage EXPORT]
+#   scripts/ci/evidence-collect --refresh-publication
+#
+# --out gathers. The jobs of validate.yml leave raw reports behind them: the suite's TSV
+# (MJ_TEST_REPORT), cargo test's output (MJ_CARGO_TEST_OUTPUT of scripts/rust-check) and the
+# llvm-cov export (scripts/rust-coverage --export). This records the first two into the ledger
+# through `majordomus evidence record --origin ci`, which stamps every execution with the commit
+# and with the run it happened in; derives the report from the ledger through `majordomus
+# evidence show`; summarises the export through `scripts/rust-coverage --summary-json`; and
+# writes a manifest naming the commit, the run, the outcomes and what was absent. It decides
+# nothing the executable and the coverage script do not already decide.
+#
+# Every input is optional, because a job the plan skipped, or one that died before writing its
+# report, leaves nothing; what is absent is named in the manifest and never read as a pass.
+# MAJORDOMUS_BIN names the executable. Exit 0 gathered, 10 the recording was refused, 12
+# nothing to gather or no executable, 2 usage.
+#
+# --refresh-publication dispatches the pages workflow when this run's commit is still the tip of
+# master, so the site republishes with the evidence of the commit it shows. When master has
+# moved on, nothing is dispatched: the newer commit's publication already carries this evidence,
+# labelled stale, and its own run will refresh it. Exit 0 either way; 12 without gh or a token.
+#
+# The model is docs/EVIDENCE.md; the decision is ADR 68.
+set -eu
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+OUT="" SUITE="" CRATE_OUT="" COVERAGE="" REFRESH=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --out) OUT="$2"; shift 2 ;;
+    --suite) SUITE="$2"; shift 2 ;;
+    --crate-output) CRATE_OUT="$2"; shift 2 ;;
+    --coverage) COVERAGE="$2"; shift 2 ;;
+    --refresh-publication) REFRESH=1; shift ;;
+    -h|--help) sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "evidence-collect: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+command -v jq >/dev/null 2>&1 || { echo "evidence-collect: jq is required" >&2; exit 12; }
+
+# ---------------------------------------------------------------- refresh
+if [ "$REFRESH" = 1 ]; then
+  command -v gh >/dev/null 2>&1 || { echo "evidence-collect: gh is not installed; the publication was not refreshed" >&2; exit 12; }
+  slug="${GITHUB_REPOSITORY:-}"
+  [ -n "$slug" ] || { echo "evidence-collect: GITHUB_REPOSITORY is not set; the publication was not refreshed" >&2; exit 12; }
+  here="$(git -C "$ROOT" rev-parse HEAD)"
+  tip="$(gh api "repos/$slug/commits/master" --jq .sha 2>/dev/null || true)"
+  [ -n "$tip" ] || { echo "evidence-collect: the tip of master could not be read; the publication was not refreshed" >&2; exit 12; }
+  if [ "$tip" != "$here" ]; then
+    echo "evidence-collect: master has moved to ${tip:0:12}; its publication carries the evidence of ${here:0:12} as stale, and its own run refreshes it"
+    exit 0
+  fi
+  gh workflow run pages.yml --repo "$slug" --ref master
+  echo "evidence-collect: dispatched pages at ${here:0:12}, so the site republishes with the evidence of the commit it shows"
+  exit 0
+fi
+
+# ---------------------------------------------------------------- gather
+[ -n "$OUT" ] || { echo "evidence-collect: --out is required" >&2; exit 2; }
+BIN="${MAJORDOMUS_BIN:-}"
+[ -n "$BIN" ] && [ -x "$BIN" ] || { echo "evidence-collect: MAJORDOMUS_BIN names no executable" >&2; exit 12; }
+abs() { case "$1" in /*) printf '%s' "$1" ;; *) printf '%s/%s' "$PWD" "$1" ;; esac; }
+present() { [ -n "$1" ] && [ -s "$1" ]; }
+mkdir -p "$OUT"; OUT="$(cd "$OUT" && pwd)"
+
+set --
+absent=""
+if present "$SUITE"; then set -- "$@" --suite "$(abs "$SUITE")"; else absent="$absent suite"; fi
+if present "$CRATE_OUT"; then set -- "$@" --crate-output "$(abs "$CRATE_OUT")"; else absent="$absent crate"; fi
+[ $# -gt 0 ] || { echo "evidence-collect: no report to record: the suite and the crate both left none" >&2; exit 12; }
+
+rc=0
+( cd "$ROOT" && "$BIN" evidence record "$@" --origin ci --format json ) > "$OUT/record.json" 2> "$OUT/record.err" || rc=$?
+if [ "$rc" != 0 ]; then
+  echo "evidence-collect: the recording was refused (exit $rc):" >&2
+  cat "$OUT/record.err" >&2
+  exit 10
+fi
+rm -f "$OUT/record.err"
+
+report_exit=0
+( cd "$ROOT" && "$BIN" evidence show ) > "$OUT/report.txt" 2>/dev/null || report_exit=$?
+( cd "$ROOT" && "$BIN" evidence show --format json ) > "$OUT/report.json" 2>/dev/null || true
+cp "$ROOT/.ai/repo/evidence/ledger.json" "$OUT/ledger.json"
+
+cov_exit=""
+if present "$COVERAGE"; then
+  cov_exit=0
+  ( cd "$ROOT" && scripts/rust-coverage --report --from "$(abs "$COVERAGE")" --summary-json "$OUT/coverage.json" ) \
+    > "$OUT/coverage.txt" 2>&1 || cov_exit=$?
+else
+  absent="$absent coverage"
+fi
+
+commit="$(git -C "$ROOT" rev-parse HEAD)"
+jq -n --arg commit "$commit" --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg absent "$absent" \
+  --argjson report_exit "$report_exit" --arg cov_exit "$cov_exit" --slurpfile ledger "$OUT/ledger.json" '
+  ($ledger[0].executions | map(select(.origin == "ci" and .commit == $commit))) as $here
+  | ($here | map(.run) | map(select(. != null)) | .[0]) as $run
+  | ($here | map(select($run == null or .run.id == $run.id))) as $mine
+  | {
+      schema: 1,
+      commit: $commit,
+      produced_at: $at,
+      run: $run,
+      absent: ($absent | split(" ") | map(select(. != ""))),
+      totals: {
+        executions: ($mine | length),
+        outcomes: ($mine | group_by(.outcome) | map({key: .[0].outcome, value: length}) | from_entries),
+        runners: ($mine | group_by(.runner) | map({key: .[0].runner, value: length}) | from_entries)
+      },
+      panels: (
+        [{label: "evidence", command: "majordomus evidence show", exit: $report_exit, file: "report.txt",
+          what: "every claim against the executions recorded for it"}]
+        + (if $cov_exit == "" then [] else
+            [{label: "coverage", command: "scripts/rust-coverage --report", exit: ($cov_exit | tonumber),
+              file: "coverage.txt", what: "line, function and region coverage of the crate, test code excluded"}]
+          end)
+      )
+    }' > "$OUT/manifest.json"
+
+echo "evidence-collect: $(jq -r '"\(.totals.executions) execution(s) at \(.commit[0:12])" + (if (.absent | length) > 0 then ", absent: " + (.absent | join(", ")) else "" end)' "$OUT/manifest.json")"

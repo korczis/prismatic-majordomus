@@ -26,6 +26,11 @@
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
 #                                         or GitHub has not built it yet)
+#   scripts/pages evidence [--commit SHA] [--from DIR] [--out FILE]
+#                                         site/data/evidence.json: the CI evidence of that commit
+#                                         or its nearest ancestor (the `evidence` artifact, or DIR),
+#                                         current, stale with the distance, or unavailable with
+#                                         the reason; 0 in all three, 12 when it cannot write
 #   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
@@ -560,7 +565,102 @@ cmd_built() {
   esac
 }
 
+# ---------------------------------------------------------------- evidence
+# The dataset the site's evidence section renders: the newest evidence CI gathered
+# (scripts/ci/evidence-collect, the `evidence` artifact of validate.yml) for this commit or for
+# its nearest ancestor that has any. It is an input of one deployment, like data/build.json, and
+# it is never a gate on publishing. What it may never do is claim a currency it cannot back, so
+# it says one of three things: evidence of this very commit is `current`; evidence of an
+# ancestor is published with `current: false`, naming how many commits and changed files lie
+# between; and no evidence at all is published as unavailable, with the reason. ADR 68.
+cmd_evidence() {
+  local commit="" from="" out="$ROOT/site/data/evidence.json" slug="" tmp="" aid="" sha="" best=""
+  local m ecommit behind changed repo_url cov_json cov_txt report_txt
+  while [ $# -gt 0 ]; do case "$1" in
+    --commit) commit="$2"; shift 2 ;;
+    --from) from="$2"; shift 2 ;;
+    --out) out="$2"; shift 2 ;;
+    *) echo "pages evidence: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$commit" ] || commit="HEAD"
+  commit="$(git -C "$ROOT" rev-parse --verify --quiet "$commit^{commit}")" || { echo "pages evidence: that is not a commit of this repository" >&2; exit 2; }
+  evidence_unavailable() {
+    jq -n --arg published "$commit" --arg reason "$1" \
+      '{schema: 1, available: false, published_commit: $published, reason: $reason}' > "$out" \
+      || { echo "pages evidence: could not write $out" >&2; exit 12; }
+    echo "pages evidence: unavailable: $1"
+  }
+  if [ -z "$from" ]; then
+    command -v gh >/dev/null 2>&1 || { evidence_unavailable "gh is not installed, so no CI evidence was fetched"; return 0; }
+    slug="${GITHUB_REPOSITORY:-}"
+    [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+    [ -n "$slug" ] || { evidence_unavailable "no repository slug to ask for CI evidence"; return 0; }
+    tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-evidence.XXXXXX")"
+    gh api "repos/$slug/actions/artifacts?name=evidence&per_page=100" \
+      --jq '.artifacts[] | select(.expired | not) | select(.workflow_run.head_branch == "master") | "\(.id)\t\(.workflow_run.head_sha)"' \
+      > "$tmp/list" 2>/dev/null || { evidence_unavailable "the CI artifacts of $slug could not be listed"; return 0; }
+    # The nearest ancestor, not the newest upload: runs finish out of order, and the evidence of
+    # an older commit uploaded last would otherwise stand in for a nearer one.
+    while IFS=$'\t' read -r aid sha; do
+      [ -n "$sha" ] || continue
+      git -C "$ROOT" merge-base --is-ancestor "$sha" "$commit" 2>/dev/null || continue
+      printf '%s\t%s\n' "$(git -C "$ROOT" rev-list --count "$sha")" "$aid"
+    done < "$tmp/list" | LC_ALL=C sort -t "$(printf '\t')" -k1,1nr > "$tmp/candidates"
+    best="$(head -1 "$tmp/candidates" | cut -f2)"
+    [ -n "$best" ] || { evidence_unavailable "no evidence artifact of master's validation is recorded against this commit or a retained ancestor"; return 0; }
+    gh api "repos/$slug/actions/artifacts/$best/zip" > "$tmp/evidence.zip" 2>/dev/null \
+      && mkdir -p "$tmp/evidence" && unzip -qo "$tmp/evidence.zip" -d "$tmp/evidence" >/dev/null 2>&1 \
+      || { evidence_unavailable "the evidence artifact $best could not be downloaded"; return 0; }
+    from="$tmp/evidence"
+  fi
+  m="$from/manifest.json"
+  jq -e '.schema == 1 and (.commit | type == "string")' "$m" >/dev/null 2>&1 \
+    || { evidence_unavailable "the evidence manifest is absent or not one this build reads"; return 0; }
+  ecommit="$(jq -r .commit "$m")"
+  git -C "$ROOT" merge-base --is-ancestor "$ecommit" "$commit" 2>/dev/null \
+    || { evidence_unavailable "the evidence was recorded against ${ecommit:0:12}, which is not in the history of the commit being published"; return 0; }
+  behind="$(git -C "$ROOT" rev-list --count "$ecommit..$commit")"
+  changed="$(git -C "$ROOT" diff --name-only "$ecommit" "$commit" | wc -l | tr -d ' ')"
+  repo_url="$(jq -r '.repository_url // empty' "$ROOT/site/data/generated/project.json" 2>/dev/null || true)"
+  report_txt="$from/report.txt"; [ -f "$report_txt" ] || report_txt=/dev/null
+  cov_txt="$from/coverage.txt"; [ -f "$cov_txt" ] || cov_txt=/dev/null
+  cov_json="$from/coverage.json"; [ -f "$cov_json" ] || cov_json=/dev/null
+  jq -n --arg published "$commit" --argjson behind "$behind" --argjson changed "$changed" --arg repo "$repo_url" \
+    --slurpfile m "$m" --slurpfile cov "$cov_json" --rawfile report "$report_txt" --rawfile coverage "$cov_txt" '
+    $m[0] as $man
+    | {
+        schema: 1,
+        available: true,
+        published_commit: $published,
+        commit: $man.commit,
+        commit_url: (if $repo != "" then $repo + "/commit/" + $man.commit else null end),
+        current: ($man.commit == $published),
+        behind: $behind,
+        changed: $changed,
+        produced_at: $man.produced_at,
+        run: $man.run,
+        absent: $man.absent,
+        totals: $man.totals,
+        coverage: (if ($cov | length) == 0 then null else ($cov[0] | {crate, domain: (.domain | {lines, functions, regions})}) end),
+        panels: [
+          $man.panels[] | . as $p
+          | {label, command, exit, what,
+             output: (if $p.file == "report.txt" then $report elif $p.file == "coverage.txt" then $coverage else "" end),
+             links: [
+               (if $man.run then {label: "the run that recorded it", href: $man.run.url} else empty end),
+               (if $repo != "" then {label: ("commit " + $man.commit[0:12]), href: ($repo + "/commit/" + $man.commit)} else empty end)
+             ]}
+        ]
+      }' > "$out" || { echo "pages evidence: could not write $out" >&2; exit 12; }
+  if [ "$behind" = 0 ]; then
+    echo "pages evidence: current: recorded against ${commit:0:12}"
+  else
+    echo "pages evidence: stale: recorded against ${ecommit:0:12}, $behind commit(s) and $changed changed file(s) behind ${commit:0:12}"
+  fi
+}
+
 case "${1:-}" in
+  evidence)    shift; cmd_evidence "$@" ;;
   build)       shift; cmd_build "$@" ;;
   check)       shift; cmd_check "$@" ;;
   fingerprint) shift; cmd_fingerprint "$@" ;;
