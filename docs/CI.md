@@ -109,8 +109,9 @@ when a worker says the work is done, so that is who asks: `majordomus finish` ru
 published site is behind the trunk. The doctrine is `majordomus.publication-currency` and
 the repository turns it on with `publication_current` in `verification.finish_requires`; a
 gate that could not reach its subject — no network, no published branch — is reported
-unverified by name and refuses nothing, because a session that could not measure the site is
-not evidence that the site is stale.
+unverified by name, with its exit, and refuses `completed` as well: a session that could not
+measure the site is not evidence that it is stale, but it is no evidence that it is current
+either, which is what `completed` claims. `partial` and `blocked` are never refused over it.
 
 To force full validation of a pull request, add the label `ci:full`; the `labeled` event
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the
