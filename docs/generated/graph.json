@@ -22811,6 +22811,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I1520",
+        "kind": "issue",
+        "label": "I1520",
+        "summary": "A step that runs out of time says so itself",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1520",
+        "source": ".ai/repo/project/issues/I1520.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A step over its bound exits non-zero with a message naming the bound and the elapsed time",
+            "The timing row is written when the bound fires, not only when the command returns",
+            "Every scripts/ci/timed call declares a bound strictly smaller than its job's timeout-minutes",
+            "A gate refuses a timed step with no bound, and one whose bound reaches its job's"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "a_step_over_its_bound_reports_it",
+            "no_step_can_be_killed_by_its_job_first"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Making the UI audit faster, or deciding what its bound should be. This converts a silent kill into a named failure; what the right bound is, is a separate and deliberate decision.",
+            "The sum of a job's step bounds. Several steps can still add up past their job's bound and be killed together; the job bound remains the backstop it always was."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci",
+            ".github/workflows",
+            ".ai/repo/ci",
+            "test/cases"
+          ],
+          "slug": "a-step-reports-its-own-time",
+          "started_at": "2026-09-15",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash scripts/ci/step-bound-check",
+            "bash test/run.sh 349_a_step_reports_its_own_time"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -32566,6 +32609,13 @@
         "label": "test/cases/33_stale_executable.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F33_stale_executable.sh",
         "source": "test/cases/33_stale_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
+        "kind": "test",
+        "label": "test/cases/349_a_step_reports_its_own_time.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F349_a_step_reports_its_own_time.sh",
+        "source": "test/cases/349_a_step_reports_its_own_time.sh"
       },
       {
         "id": "majordomus://test/test/cases/34_command_fixtures.sh",
@@ -48197,6 +48247,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1520",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1520",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -50948,6 +51008,11 @@
       },
       {
         "source": "majordomus://test/test/cases/33_stale_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54643,8 +54708,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1722,
-      "edges": 3857,
+      "nodes": 1724,
+      "edges": 3860,
       "acyclic": true,
       "truncated": false
     }
