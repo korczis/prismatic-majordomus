@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: new-code-is-covered
 # The differential coverage gate of #214, driven against a synthetic, self-consistent
 # fixture so it is deterministic and needs no instrumented rebuild. The fixture is a tiny
 # source file (test/fixtures/coverage/sample.rs) and a hand-written llvm-cov export

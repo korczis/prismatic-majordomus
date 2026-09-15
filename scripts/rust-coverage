@@ -51,7 +51,14 @@
 # per line. A crate-wide floor says nothing about whether the subsystem a repository's
 # continuity depends on is tested at all: it can sit at zero while the number stays green,
 # which is where it was.
+# pipefail, because the one pipeline below is a measurement: `git diff | awk > file`. Without
+# it a git that fails leaves awk to succeed over nothing, the changed-line set is empty, and
+# the differential gate passes having measured no lines at all — the silent-pass shape this
+# repository keeps finding, where a program dying before it prints is read as "nothing to
+# report". scripts/ci/pipefail-check named this script and offered two remedies; this is the
+# one that fixes it rather than the one that records it.
 set -eu
+set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 MODE=gate FROM="" EXPORT="" ONLY="" CHANGED=""
