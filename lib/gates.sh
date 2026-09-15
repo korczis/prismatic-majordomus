@@ -145,15 +145,46 @@ mj_gate_record() {
 # the MCP tool and the Cockpit read, which is the whole point: a worker cannot get a
 # different verdict by asking a different surface.
 #
-# Two things it will not do. It will not refuse over the absence of a verdict: a gate that
-# has never reported is `queued`, which is reported and never treated as a pass, but a
-# repository where recording is new would otherwise refuse every finish. And it will not
-# refuse an outcome that is not `completed`: a task reporting itself blocked is being
-# honest, and refusing that teaches a worker to claim completed instead — the rule
-# `mj_obl_verdict` already applies to obligations, applied here for the same reason.
+# What it refuses, and what it only names:
+#
+#   known failing, stale, blocked   refuses the outcome completed (mj_gate_verdict)
+#   unknown                         refuses the outcome completed (mj_gate_unknown)
+#   never reported (queued)         named as a debt, refuses nothing
+#   no CI model declared at all     nothing to plan, refuses nothing
+#   no active task                  nothing to judge, refuses nothing
+#
+# Unknown is every way the verdict can fail to arrive once a model is declared: the model
+# does not parse, the reader is not built, jq is missing, the executable exits non-zero or
+# answers nothing, or it answers something this validator cannot read. Each of those used to
+# be a skip, and a skip is what `finish` counts as not-a-failure — so a checkout that could
+# not judge a single gate finished `completed` exactly like one where every gate passed. The
+# message said "unknown, never a pass" and the behaviour was a pass. Completed is a claim
+# that the verdict is known; a verdict that could not be read cannot back it.
+#
+# Never reported stays a named debt and not a refusal. It is a verdict the executable did
+# reach — `queued`, distinct from pass — about a gate nobody ran yet, and
+# project.never-reported-is-not-green asks that it be recorded and pursued as absence, never
+# spoken of as passing; it does not ask for a refusal, and a repository where recording is
+# new would otherwise refuse every finish. A repository that declares no CI model at all has
+# no gate to be unknown about.
+#
+# And no outcome other than `completed` is refused, unknown included: a task reporting itself
+# blocked is being honest, and refusing that teaches a worker to claim completed instead —
+# the rule `mj_obl_verdict` already applies to obligations, applied here for the same reason.
 mj_gate_verdict() {
   if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then mj_doctrine_fail gate "$1" "$2" "$3"
   else mj_doctrine_skip gate "$1" "$2 (not refused: the outcome is not completed)"; fi
+}
+
+# mj_gate_unknown <subject> <message> [remediation]
+# A verdict that could not be reached: refused for completed, named and skipped otherwise.
+mj_gate_unknown() {
+  if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then
+    mj_doctrine_fail gate "$1" "$2; completed needs a verdict that was read" "${3:-}"
+  else
+    mj_doctrine_skip gate "$1" "$2 (not refused: the outcome is not completed)" "${3:-}"
+    MJ_DOCTRINE_SKIPPED=1
+  fi
 }
 
 mj_validate_completion_gates() {
@@ -165,21 +196,27 @@ mj_validate_completion_gates() {
   fi
   id="$(mj_cur id)"
 
-  if ! mj_gate_model_load; then
-    mj_doctrine_skip gate "$id" "this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned"
+  # absent is a repository with no gates to be unknown about; present and unreadable is a
+  # model whose gates exist and cannot be planned, which is unknown
+  if [ ! -f "$MJ_ROOT/.ai/repo/ci/gates.yaml" ]; then
+    mj_doctrine_skip gate "$id" "this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned"
     MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  if ! mj_gate_model_load; then
+    mj_gate_unknown "$id" "the CI model at .ai/repo/ci/gates.yaml is not readable (it does not parse or is not version 1), so no gate can be planned (unknown, never a pass)" ".ai/repo/ci/gates.yaml"
+    return 0
   fi
 
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   bin="$(mj_rust_bin "$MJ_ROOT")"
   if [ ! -x "$bin" ]; then
-    mj_doctrine_skip gate "$id" "the gate reader is not built, so no gate can be judged here (unknown, never a pass)" "bin/majordomus-cli --help"
-    MJ_DOCTRINE_SKIPPED=1; return 0
+    mj_gate_unknown "$id" "the gate reader is not built at $bin, so no gate can be judged here (unknown, never a pass)" "bin/majordomus-cli --help"
+    return 0
   fi
   if ! command -v jq >/dev/null 2>&1; then
-    mj_doctrine_skip gate "$id" "jq is not installed, so the judgement cannot be read here (unknown, never a pass)"
-    MJ_DOCTRINE_SKIPPED=1; return 0
+    mj_gate_unknown "$id" "jq is not installed, so the judgement cannot be read here (unknown, never a pass)" "brew install jq"
+    return 0
   fi
 
   # the repository's own distribution when it has one, else the tool's, which is where
@@ -190,12 +227,14 @@ mj_validate_completion_gates() {
   # `run` answers with the execution envelope — the id, the state, the timings — and the
   # capability's own document under `.output`. That envelope is what makes an execution
   # inspectable afterwards, so it is unwrapped here rather than asked for without it.
-  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
-            "$bin" run gates.completion --input '{}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null \
-          | jq -c '.output // empty' 2>/dev/null )" || rc=$?
+  # The reader's own exit is kept apart from jq's, so the finding names the status of the
+  # executable that failed rather than that of the filter that read its silence.
+  out="$( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+          "$bin" run gates.completion --input '{}' --quiet --format json --repo "$MJ_ROOT" 2>/dev/null )" || rc=$?
+  out="$(printf '%s' "$out" | jq -c '.output // empty' 2>/dev/null)" || out=""
   if [ "$rc" != 0 ] || [ -z "$out" ]; then
-    mj_doctrine_skip gate "$id" "the executable could not answer gates.completion (exit $rc), so no gate can be judged here (unknown, never a pass)" "$bin run gates.completion --input '{}' --format json"
-    MJ_DOCTRINE_SKIPPED=1; return 0
+    mj_gate_unknown "$id" "the executable could not answer gates.completion (exit $rc), so no gate can be judged here (unknown, never a pass)" "$bin run gates.completion --input '{}' --format json"
+    return 0
   fi
 
   # `has`, not `//`: jq's alternative operator treats `false` as absent, so `.finishable //
@@ -203,8 +242,8 @@ mj_validate_completion_gates() {
   # skip, silently, in the one place that must not be generous
   finishable="$(printf '%s' "$out" | jq -r 'if has("finishable") then (.finishable | tostring) else empty end' 2>/dev/null)"
   if [ -z "$finishable" ]; then
-    mj_doctrine_skip gate "$id" "gates.completion answered something this validator cannot read (unknown, never a pass)"
-    MJ_DOCTRINE_SKIPPED=1; return 0
+    mj_gate_unknown "$id" "gates.completion answered something this validator cannot read (unknown, never a pass)" "$bin run gates.completion --input '{}' --format json"
+    return 0
   fi
   blocking="$(printf '%s' "$out" | jq -r '(.blocking // [])[]' 2>/dev/null)"
   unverified="$(printf '%s' "$out" | jq -r '(.unverified // [])[]' 2>/dev/null)"
@@ -265,11 +304,14 @@ mj_validate_completion_gates() {
 # superseded since, with every file untouched. There is no hash to expire against, so the
 # gate is run live at the moment of the claim.
 #
-# Three outcomes, and the third is the one that matters: 0 passes, 10 refuses, and anything
-# else is a verdict that could not be reached — no network, no published branch, no hosting
-# API — which is reported by name and refuses nothing. A session on a train is not evidence
-# that the site is stale, and a requirement that cannot be met offline is waived within a
-# week. Silence is not green, and it is not red either.
+# Three outcomes: 0 passes, 10 refuses, and anything else is a verdict that could not be
+# reached — no network, no published branch, no hosting API. That third one used to refuse
+# nothing, on the argument that a session on a train is not evidence the site is stale. It is
+# not evidence the site is current either, and `completed` is a claim that it is: the third
+# outcome now refuses completed too, named with its exit and reason so it is never mistaken
+# for exit 10. Silence is not red, and it cannot back a green claim. The honest way out is
+# the one every other gate has — finish `partial` or `blocked`, which this validator never
+# refuses, or finish `completed` from where the publication can be measured.
 mj_validate_publication_currency() {
   local id gates g runs out rc
 
@@ -290,9 +332,13 @@ mj_validate_publication_currency() {
     MJ_DOCTRINE_SKIPPED=1; return 0
   fi
 
-  if ! mj_gate_model_load; then
-    mj_doctrine_skip gate "$id" "this repository declares no readable CI model at .ai/repo/ci/gates.yaml, so no publication gate can be found (unknown, never a pass)"
+  if [ ! -f "$MJ_ROOT/.ai/repo/ci/gates.yaml" ]; then
+    mj_doctrine_skip gate "$id" "this repository declares no CI model at .ai/repo/ci/gates.yaml, so it marks no publication gate"
     MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  if ! mj_gate_model_load; then
+    mj_doctrine_fail gate "$id" "the CI model at .ai/repo/ci/gates.yaml is not readable, so no publication gate can be found (unknown, never a pass); completed needs a verdict that was read" ".ai/repo/ci/gates.yaml"
+    return 0
   fi
 
   # The model says which gates measure a deployment. Nothing is named here: a repository
@@ -320,8 +366,8 @@ mj_validate_publication_currency() {
       10) mj_doctrine_fail gate "$g" \
             "the published site is not a projection of the trunk: $(printf '%s' "$out" | grep -E '^(FAIL|fail)' | head -n 1 | cut -c1-200)" \
             "$runs" ;;
-      *)  mj_doctrine_skip gate "$g" \
-            "could not be reached (exit $rc), so the publication is unverified and never a pass: $(printf '%s' "$out" | sed -n '$p' | cut -c1-160)" \
+      *)  mj_doctrine_fail gate "$g" \
+            "could not be reached (exit $rc), so the publication is unverified and never a pass; completed needs a verdict that was read: $(printf '%s' "$out" | sed -n '$p' | cut -c1-160)" \
             "$runs" ;;
     esac
   done
