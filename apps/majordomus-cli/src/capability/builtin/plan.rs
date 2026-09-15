@@ -414,10 +414,20 @@ fn plan_waves(
 fn plan_next(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanNextIssue, CapabilityError> {
     let plan = plan_of(ctx)?;
     let issue = plan.next_ready(input.milestone.as_deref()).cloned();
+    // "nothing is ready" and "there is nothing" are different answers: a repository whose
+    // plan declares no issue was told that every one of its issues was waiting
+    let declared = plan
+        .issues
+        .iter()
+        .any(|i| input.milestone.as_deref().is_none_or(|m| i.milestone == m));
     Ok(PlanNextIssue {
         reason: issue.is_none().then(|| {
-            "no issue is READY; every one of them waits on a dependency or on its milestone's gate"
-                .to_string()
+            if declared {
+                "no issue is READY; every one of them waits on a dependency or on its milestone's gate"
+            } else {
+                "the plan declares no issue to hand out"
+            }
+            .to_string()
         }),
         active_milestone: input
             .milestone

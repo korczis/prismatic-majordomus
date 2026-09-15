@@ -60,6 +60,11 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
 | `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
+| `/cockpit/plan` | the milestones in derived order with the one that is now and the one after it, the issue the plan hands out next, and every issue filtered by milestone, status or wave | `plan.roadmap`, `plan.next`, `plan.issues` |
+| `/cockpit/plan/milestones/<id>` | one milestone as a graph of work: its outcome, every issue with its readiness and wave, the partitions, the critical blockers, what may run at the same time, and every finding | `devtask.milestone` |
+| `/cockpit/plan/issues/<id>` | one issue as a task: its intent, acceptance criteria and scope, its readiness and what blocks it, its branches and sessions, the external issue it synchronises with, every value with where it came from — and the moves `plan.transition` makes, each with the command that makes it | `devtask.issue`, `plan.transition` |
+| `/cockpit/sessions` | every open episode of this repository's session store: its standing, provider, branch, last activity and the tasks it touched | `lifecycle.episodes` |
+| `/cockpit/board` | every session attached to this checkout's server and what each announced, every collision between their claims, and where the server of every checkout of this repository stands | `peers.list`, `server.status` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/quality` | the crate's own public surface as the rules hold it, every number and finding from one execution | `quality.report` |
 | `/cockpit/artifacts` | what the generator writes: every document with the encodings it is committed in, every file with its contract and its state against the working tree | `artifacts.list` |
@@ -328,6 +333,7 @@ the same facts are as text.
 | `cockpit.js` | the one Alpine component (theme, palette state), the shared helpers | `vendor/alpine.csp.min.js` |
 | `palette.js` | the command palette (`Ctrl`/`Cmd` + `K`), entries from the registry | — |
 | `runner.js` | the generic capability runner | — |
+| `plan.js` | the moves on an issue page: sends `plan.transition` after a confirmation, shows the status it answered or the refusal as it came, and reads the page again | — |
 | `graph.js` | the Cytoscape view: pan, zoom, fit, search, neighbourhood focus, a details drawer | `vendor/cytoscape.min.js` |
 | `topology.js` | the registry graph in three dimensions | `vendor/three.module.min.js` |
 | `activity.js` | a running plot of the execution and cache counters | `vendor/p5.min.js` |
@@ -369,8 +375,12 @@ data the page also prints.
   Only a closed set of text media types is served.
 - **Loopback by default.** `serve` binds `127.0.0.1`; binding anything else logs what it
   means.
-- **Nothing writes.** Every capability the Cockpit can reach is a query, or the one command
-  that changes this process's own memory. Nothing in it writes to the repository.
+- **One write, and it asks first.** Every capability the Cockpit reaches is a query or a
+  command that changes this process's own memory, except `plan.transition`, which stamps one
+  field of an issue's record and appends one ledger event. The issue page offers it as three
+  buttons that are disabled until the script loads, ask before sending, pass the same origin
+  check as every other `POST`, and show the status the capability derived from the record
+  afterwards rather than the one the button named.
 
 ## Assets
 
@@ -452,7 +462,11 @@ disposable repository:
 - a state-changing request from another origin is refused and a read is not,
 - the index answers JSON to a client and points a browser at the Cockpit,
 - repository content reaches the page as text and never as markup,
-- serving every page rebuilds nothing canonical.
+- serving every page rebuilds nothing canonical,
+- the plan pages show the statuses the plan capabilities answered, and a move made from an
+  issue page changes the record and then the page (`tests/cockpit_plan.rs`),
+- the board names every attached session and what it announced, and raises a collision as
+  one (`tests/cockpit_board.rs`).
 
 The unit tests in `src/cockpit/` cover the escaping (both contexts), the void elements, the
 status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and
@@ -493,11 +507,15 @@ decides whether what this process *serves* is sound. Different subjects with dif
 engines, and the Rust server dispatches no shell, so there is no third thing that runs both.
 A reader who wants both runs both; each names the other's territory.
 
-**No write path.** Every capability the Cockpit can reach is a query, or a command that
-changes this process's own memory — starting an execution and cancelling one are two of
-those. Nothing in it writes to the repository, and a capability that did would need its own
-decision (ADR 12 says so explicitly) and would say so in its own execution policy, which is
-what the confirmation on the Run button reads.
+**No write path of its own.** A page invents no write. Every capability the Cockpit can
+reach is a query, or a command that changes this process's own memory — starting an
+execution and cancelling one are two of those — with one exception that is not the
+Cockpit's: `plan.transition`, the capability that moves an issue, which had its own decision
+before any page called it and says so in its own execution policy. The issue page is one
+more caller of it beside MCP and the command line, the confirmation it shows is read from
+that policy, and whether a move is legal is the capability's to decide: the page shows its
+refusal as it came. The rest of the lifecycle — starting and finishing a task, sessions,
+handovers — reaches the Cockpit when it is a capability (I1506), and not before.
 
 ## In a browser
 

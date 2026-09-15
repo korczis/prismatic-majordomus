@@ -26,6 +26,7 @@ pub mod html;
 pub(crate) mod nav;
 pub(crate) mod pages;
 pub(crate) mod view;
+pub(crate) mod work;
 
 use std::sync::Arc;
 
@@ -81,6 +82,9 @@ pub const STATIC_ROUTES: &[(&str, &str)] = &[
     ("/cockpit/graphs", "graphs"),
     ("/cockpit/graphs/topology", ""),
     ("/cockpit/continuity", "continuity"),
+    ("/cockpit/plan", "plan"),
+    ("/cockpit/sessions", "sessions"),
+    ("/cockpit/board", "board"),
     ("/cockpit/worktrees", "worktrees"),
     ("/cockpit/mesh", "mesh"),
     ("/cockpit/models", "models"),
@@ -207,6 +211,9 @@ impl Cockpit {
             "/cockpit/graphs" => pages::graphs(ctx),
             "/cockpit/graphs/topology" => pages::topology(ctx),
             "/cockpit/continuity" => pages::continuity(ctx),
+            "/cockpit/plan" => work::plan(ctx, query),
+            "/cockpit/sessions" => work::sessions(ctx),
+            "/cockpit/board" => work::board(ctx),
             "/cockpit/worktrees" => pages::worktrees(ctx),
             "/cockpit/mesh" => pages::mesh(ctx),
             "/cockpit/models" => pages::models(ctx),
@@ -222,6 +229,10 @@ impl Cockpit {
             other => {
                 if let Some(id) = other.strip_prefix("/cockpit/executions/") {
                     pages::execution(ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/plan/milestones/") {
+                    work::milestone(ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/plan/issues/") {
+                    work::issue(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/capabilities/") {
                     pages::capability(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/commands/") {

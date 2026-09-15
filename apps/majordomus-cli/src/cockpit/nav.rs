@@ -5,7 +5,8 @@
 //! with no edit to the Cockpit.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts,
+//! Objects, Directories, Graphs, Continuity, Plan, Sessions, Board, Worktrees, Health,
+//! Quality, Artifacts,
 //! Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
@@ -47,6 +48,14 @@ pub enum Area {
     Executions,
     /// What this checkout's lifecycle is holding.
     Continuity,
+    /// The plan: its milestones and issues, one milestone as a graph of work, one issue as
+    /// a task, and the moves an issue can make.
+    Plan,
+    /// Every open episode of this repository's session store.
+    Sessions,
+    /// Who else is attached to this checkout's shared server, what each announced, and
+    /// where every checkout's server stands.
+    Board,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
     /// The discovered nodes of the mesh, and the machinery that observes them.
@@ -146,6 +155,24 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Continuity",
             href: "/cockpit/continuity",
             area: Area::Continuity,
+        },
+        AreaInfo {
+            id: "plan",
+            label: "Plan",
+            href: "/cockpit/plan",
+            area: Area::Plan,
+        },
+        AreaInfo {
+            id: "sessions",
+            label: "Sessions",
+            href: "/cockpit/sessions",
+            area: Area::Sessions,
+        },
+        AreaInfo {
+            id: "board",
+            label: "Board",
+            href: "/cockpit/board",
+            area: Area::Board,
         },
         AreaInfo {
             id: "worktrees",
@@ -258,6 +285,9 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
             Area::Objects => Some(ctx.index.objects.len()),
             Area::Graphs => Some(graph::ids().len()),
             Area::Api => Some(summary.http_routes),
+            // how many sessions are attached *now*: a peer that has gone is kept on the
+            // board with what it announced, and is not one of the workers here
+            Area::Board => Some(ctx.peers.list().iter().filter(|p| p.attached).count()),
             _ => None,
         }
     };
@@ -366,7 +396,10 @@ fn item(label: &str, href: &str, area: Area, count: Option<usize>, here: &str) -
         area,
         group: None,
         count,
-        current: here == href,
+        // a page under an area's route is in that area: an issue page is the Plan, and a
+        // sidebar that marked nothing there folded itself shut on every detail page. The
+        // overview's route is the prefix of every route, so it marks only itself.
+        current: here == href || (href != super::PREFIX && here.starts_with(&format!("{href}/"))),
     }
 }
 
@@ -374,6 +407,24 @@ fn item(label: &str, href: &str, area: Area, count: Option<usize>, here: &str) -
 mod tests {
     use super::*;
     use crate::synthetic::SyntheticRepository;
+
+    #[test]
+    fn a_page_under_an_area_marks_that_area_and_the_overview_marks_only_itself() {
+        let plan = |here: &str| item("Plan", "/cockpit/plan", Area::Plan, None, here).current;
+        assert!(plan("/cockpit/plan"));
+        assert!(
+            plan("/cockpit/plan/issues/I0001"),
+            "a detail page is in its area"
+        );
+        assert!(
+            !plan("/cockpit/planet"),
+            "a shared prefix is not a sub-route"
+        );
+        let overview =
+            |here: &str| item("Overview", "/cockpit", Area::Overview, None, here).current;
+        assert!(overview("/cockpit"));
+        assert!(!overview("/cockpit/plan"), "the overview is not every page");
+    }
 
     fn repository() -> SyntheticRepository {
         SyntheticRepository::small().expect("a synthetic repository")

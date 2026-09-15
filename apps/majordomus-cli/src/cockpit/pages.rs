@@ -62,7 +62,7 @@ pub struct Page {
 }
 
 impl Page {
-    fn new(area: Area, title: impl Into<String>, main: El) -> Self {
+    pub(super) fn new(area: Area, title: impl Into<String>, main: El) -> Self {
         Page {
             area,
             title: title.into(),
@@ -73,22 +73,22 @@ impl Page {
             scripts: Vec::new(),
         }
     }
-    fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+    pub(super) fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
         self.subtitle = Some(subtitle.into());
         self
     }
-    fn trail(mut self, trail: Vec<(&str, Option<&str>)>) -> Self {
+    pub(super) fn trail(mut self, trail: Vec<(&str, Option<&str>)>) -> Self {
         self.breadcrumbs = trail
             .into_iter()
             .map(|(l, h)| (l.to_string(), h.map(str::to_string)))
             .collect();
         self
     }
-    fn script(mut self, name: &'static str) -> Self {
+    pub(super) fn script(mut self, name: &'static str) -> Self {
         self.scripts.push(name);
         self
     }
-    fn status(mut self, status: u16) -> Self {
+    pub(super) fn status(mut self, status: u16) -> Self {
         self.status = status;
         self
     }
@@ -97,7 +97,7 @@ impl Page {
 /// The word a serde enum serialises to (`behaviorally_verified`, `repository`), for a
 /// page that shows a variant. `{:?}` would show the Rust spelling, which is not the
 /// vocabulary anything else in this repository uses.
-fn word<T: serde::Serialize>(value: &T) -> String {
+pub(super) fn word<T: serde::Serialize>(value: &T) -> String {
     serde_json::to_value(value)
         .ok()
         .and_then(|v| v.as_str().map(str::to_string))
@@ -105,13 +105,17 @@ fn word<T: serde::Serialize>(value: &T) -> String {
 }
 
 /// Ask the executor for a capability's output, typed.
-fn ask<T: serde::de::DeserializeOwned>(ctx: &Context, id: &str, input: Value) -> Result<T, String> {
+pub(super) fn ask<T: serde::de::DeserializeOwned>(
+    ctx: &Context,
+    id: &str,
+    input: Value,
+) -> Result<T, String> {
     let value = ctx.execute(id, input).map_err(|e| e.to_string())?;
     serde_json::from_value(value).map_err(|e| format!("{id} answered something unexpected: {e}"))
 }
 
 /// A page that says what went wrong instead of showing a blank one.
-fn failed(area: Area, title: &str, reason: String) -> Page {
+pub(super) fn failed(area: Area, title: &str, reason: String) -> Page {
     Page::new(
         area,
         title,
@@ -603,7 +607,12 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
     ])
 }
 
-fn select(name: &str, label: &str, current: Option<&str>, options: Vec<(String, String)>) -> El {
+pub(super) fn select(
+    name: &str,
+    label: &str,
+    current: Option<&str>,
+    options: Vec<(String, String)>,
+) -> El {
     let mut field = el("select").class("mj-select").attr("name", name).child(
         el("option")
             .attr("value", "")
@@ -1739,7 +1748,7 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
 /// The standing is a word beside a badge because the difference between `open` and
 /// `stranded` is the difference between "another window is using this" and "nothing can ever
 /// close this", and a reader must not have to infer that from a colour.
-fn episodes_card(e: &Episodes) -> El {
+pub(super) fn episodes_card(e: &Episodes) -> El {
     if e.episodes.is_empty() {
         return card(
             "Every open episode",
@@ -4380,7 +4389,7 @@ fn effect_status(effect: &str) -> &'static str {
 }
 
 /// One query parameter, when it carries something.
-fn param(query: &[(String, String)], key: &str) -> Option<String> {
+pub(super) fn param(query: &[(String, String)], key: &str) -> Option<String> {
     query
         .iter()
         .find(|(k, _)| k == key)
