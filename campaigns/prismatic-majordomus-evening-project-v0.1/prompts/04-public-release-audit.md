@@ -1,0 +1,3 @@
+# Prompt 04 — Public Release Audit
+
+Assume hostile experienced reviewers. Build a claim → implementation → evidence → status matrix. Unsupported claims must be implemented, downgraded, or removed. Try to delete 30% of the repository. Simulate fresh-copy onboarding under ten minutes. Audit tree and Git history for secrets/private names/internal URLs/customer data/private paths/copied internal docs. Security gate: no eval, implicit network, hidden telemetry, unsafe overwrite, dangerous path handling, or generated-command execution. Target macOS + Linux. Finish with READY FOR PUBLIC v0.1 or NOT READY and concrete blockers.

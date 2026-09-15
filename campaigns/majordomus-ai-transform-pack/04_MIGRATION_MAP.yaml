@@ -1,0 +1,163 @@
+version: 1
+
+principle:
+  - move_by_semantic_ownership_not_by_directory_name
+  - preserve_observable_behavior_before_cleanup
+  - local_state_is_gitignored
+  - tool_installation_is_read_only
+  - ai_layer_is_portable_without_majordomus
+
+moves:
+  - from: .majordomus/policy.yaml
+    to: .ai/repo/policy.yaml
+    phase: ownership
+    semantic_change: false
+
+  - from: .majordomus/profiles/
+    to: .ai/repo/profiles/
+    phase: ownership
+    semantic_change: false
+
+  - from: .majordomus/prompts/
+    to: .ai/repo/prompts/
+    phase: ownership
+    semantic_change: false
+
+  - from: .majordomus/project/
+    to: .ai/repo/project/
+    phase: ownership
+    semantic_change: false
+
+  - from: .majordomus/state/
+    to: .ai/local/state/
+    phase: local-state
+    semantic_change: true
+    notes:
+      - target subtree is gitignored
+      - fresh clone intentionally starts without operational state
+      - preserve same-checkout and local worktree continuity
+      - cross-worktree coordination should derive from git worktree discovery where possible
+
+  - from: .majordomus/providers/body.md
+    to: structured_rules_and_ai_protocol
+    phase: bootstraps-and-rules
+    semantic_change: structural
+    notes:
+      - do not copy monolithic body into .ai
+      - extract normative sentences into rule objects
+      - keep procedural lifecycle material in protocol/workflows as appropriate
+      - provider files become thin bootstraps
+
+  - from: .majordomus/providers/*.tmpl
+    to: distribution_provider_adapters
+    phase: bootstraps-and-rules
+    semantic_change: false
+    notes:
+      - default provider mechanics belong to Majordomus distribution
+      - repository-specific adapter customizations, if supported, require an explicit tracked override location
+
+  - from: .majordomus/templates/
+    to: classify
+    phase: ownership
+    notes:
+      - distribution defaults remain in tool skeleton
+      - repository-custom templates may live under .ai/repo/templates
+      - local transient templates do not become canonical by accident
+
+  - from: .majordomus/generated/fingerprints.yaml
+    to: projection_provenance_redesign
+    phase: projections
+    notes:
+      - do not blindly move to local cache
+      - current fingerprints protect against hand edits across policy changes
+      - preserve this guarantee
+      - acceptable targets include tracked minimal projection evidence or self-describing target/region metadata
+      - prefer elimination only if the same hand-edit protection is proven behaviorally
+
+  - from: share/doctrines.yaml
+    to: share/standard/rules/
+    phase: rules
+    semantic_change: structural
+    notes:
+      - current doctrine wiring guarantee must survive
+      - canonical standard rule objects become portable Markdown frontmatter records
+      - effective repository baseline is vendored under .ai/repo/rules/vendor/majordomus
+
+  - from: share/knowledge-sources.yaml
+    to: classify
+    phase: knowledge
+    notes:
+      - tool default/source-class semantics may remain in distribution
+      - repository source declarations should migrate to .ai/repo/knowledge/sources.yaml
+      - discovery remains Git/index driven, not recursive filesystem walking
+
+retain_distribution:
+  - bin/
+  - lib/
+  - test/
+  - product documentation under docs/
+  - schemas and parser allowlists owned by the tool
+  - default skeleton
+  - provider adapter implementation
+  - standard Majordomus rule source package
+
+retain_repository_domain_sources:
+  - README.md
+  - docs/CLAIMS.yaml
+  - docs/RESPONSIBILITIES.yaml
+  - ordinary product documentation
+  - source code
+
+do_not_copy_into_ai_just_for_retrieval:
+  - README.md
+  - docs/
+  - source code
+  - test evidence
+  - Git history
+
+new:
+  - path: .ai/README.md
+    tracked: true
+    role: ai_protocol_entrypoint
+
+  - path: .ai/manifest.yaml
+    tracked: true
+    role: ai_format_and_section_registry
+
+  - path: .ai/repo/README.md
+    tracked: true
+    role: repository_context_guide
+
+  - path: .ai/repo/rules/README.md
+    tracked: true
+    role: rule_protocol
+
+  - path: .ai/repo/rules/project/
+    tracked: true
+    role: repository_owned_rules
+
+  - path: .ai/repo/rules/vendor/majordomus/
+    tracked: true
+    role: pinned_self_contained_baseline
+
+  - path: .ai/repo/adrs/
+    tracked: true
+    role: accepted_repository_architecture_decisions
+
+  - path: .ai/repo/skills/
+    tracked: true
+    role: reusable_provider_neutral_operational_procedures
+    implement_now: skeleton_only_unless_existing_behavior_maps_cleanly
+
+  - path: .ai/repo/workflows/
+    tracked: true
+    role: reusable_multi_step_processes
+    implement_now: skeleton_only_unless_existing_behavior_maps_cleanly
+
+  - path: .ai/repo/knowledge/
+    tracked: true
+    role: knowledge_source_protocol_and_curated_repository_knowledge
+
+  - path: .ai/local/
+    tracked: false
+    role: machine_checkout_local_state

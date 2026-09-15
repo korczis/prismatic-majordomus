@@ -28,6 +28,14 @@
 # say what was true when they were written, and rewriting one to keep a path current would
 # falsify the record. Their derived projections are exempt with them.
 #
+# `campaigns/` is the same class and exempt for the same reason. A campaign brief is what an
+# operator asked for on its date, kept verbatim as provenance; several of them describe a
+# layout this repository considered and did not build, or built and has since moved. Editing
+# one so its paths resolve would make it agree with the outcome, which is the one thing a
+# record of a request must never do. What keeps those files honest is not this gate but
+# `scripts/ci/campaigns-check`, which decides their bytes against the manifest in both
+# directions.
+#
 #   scripts/ci/reference-check [ROOT]     ROOT defaults to this checkout
 set -eu
 ROOT="${1:-$(cd "$(dirname "$0")/../.." && pwd)}"
@@ -48,6 +56,7 @@ is_exempt() {
     docs/generated/*|site/data/generated/*|site/data/registry/*) return 0 ;;
     site/content/plan/*|site/content/sessions/*|site/content/adrs/*) return 0 ;;
     examples/*/WALKTHROUGH.md) return 0 ;;    # a transcript of a run, regenerated whole
+    campaigns/*) return 0 ;;                  # a brief, true of the day it was written
   esac
   return 1
 }
@@ -132,7 +141,7 @@ fi
 git grep -h -I -o -E '(^|[^A-Za-z0-9_$./-])share/schemas/[A-Za-z0-9._/-]+' -- \
     ':!.ai/repo/sessions' ':!.ai/repo/adrs' ':!.ai/repo/project' \
     ':!docs/generated' ':!site/data/generated' ':!site/data/registry' \
-    ':!site/content/plan' ':!site/content/sessions' ':!test' 2>/dev/null \
+    ':!site/content/plan' ':!site/content/sessions' ':!test' ':!campaigns' 2>/dev/null \
   | sed -E 's/^[^s]*//; s/[.,;:)]+$//' | LC_ALL=C sort -u > "$TMP/schemapaths" || true
 : > "$TMP/badschema"
 while IFS= read -r sp; do
@@ -144,7 +153,7 @@ if [ -s "$TMP/badschema" ]; then
   echo "share/schemas/<vendor>/<name>/<name>.v<n>.<ext> — see share/kinds.yaml:" >&2
   while IFS= read -r sp; do
     printf '  %s\n' "$sp" >&2
-    git grep -n -I -F -- "$sp" -- ':!test' | grep -vE '^(\.ai/repo/(sessions|adrs|project)|docs/generated|site/data)' | sed 's/^/    /' >&2 || true
+    git grep -n -I -F -- "$sp" -- ':!test' ':!campaigns' | grep -vE '^(\.ai/repo/(sessions|adrs|project)|docs/generated|site/data)' | sed 's/^/    /' >&2 || true
   done < "$TMP/badschema"
   rc=1
 fi

@@ -414,6 +414,14 @@ gates:
   # Box art in a published document: a picture nothing can render, link, theme, diff against
   # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
   # job; the ratchet is meant to reach zero.
+  # The campaign briefs under campaigns/ are provenance: nothing reads them at run time, which is
+  # why nothing would notice one being edited, half-copied or quietly added to. File reads only —
+  # the manifest against the tree in both directions, and the index against the packs.
+  - id: campaigns-provenance
+    job: structure
+    runs: scripts/ci/campaigns-check
+    summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, and every pack has a row in the index that names it
+
   - id: diagram-check
     job: structure
     runs: scripts/ci/diagram-check
@@ -522,6 +530,12 @@ classes:
   - id: decisions
     paths: [.ai/repo/adrs/**, lib/adr.sh, test/cases/271_adr_allocation.sh, test/cases/99_adr.sh]
     gates: [adr-collision, core-check, shell-suite]
+
+  # the campaign briefs and what proves them: provenance, read by people rather than by the tool,
+  # so beyond the suite the only gate this class needs is the one that decides them
+  - id: campaigns
+    paths: [campaigns/**, scripts/ci/campaigns-check, test/cases/340_a_brief_is_kept_as_received.sh, .ai/repo/rules/project/a-brief-is-kept-as-received.v1.md]
+    gates: [campaigns-provenance, shell-suite]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs

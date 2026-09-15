@@ -27921,6 +27921,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "kind": "rule",
+        "label": "project.a-brief-is-kept-as-received@1",
+        "summary": "A campaign brief this repository keeps is the one it was handed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-brief-is-kept-as-received%401",
+        "source": ".ai/repo/rules/project/a-brief-is-kept-as-received.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.no-claim-without-test@1"
+          ],
+          "statement": "Keep a campaign brief as it was received, record its bytes in the manifest and its pack in the index, and let the repository rather than the brief say what came of it.",
+          "tags": [
+            "provenance",
+            "campaigns",
+            "evidence",
+            "records"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
         "kind": "rule",
         "label": "project.a-diagram-is-drawn-not-typed@1",
@@ -29611,6 +29633,7 @@
             "tests/**",
             "config/**",
             "docs/**",
+            "campaigns/**",
             "examples/**",
             "priv/**/*.exs",
             "priv/**/*.sql",
@@ -32566,6 +32589,13 @@
         "label": "test/cases/33_stale_executable.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F33_stale_executable.sh",
         "source": "test/cases/33_stale_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
+        "kind": "test",
+        "label": "test/cases/340_a_brief_is_kept_as_received.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F340_a_brief_is_kept_as_received.sh",
+        "source": "test/cases/340_a_brief_is_kept_as_received.sh"
       },
       {
         "id": "majordomus://test/test/cases/34_command_fixtures.sh",
@@ -49140,6 +49170,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -50941,6 +50981,11 @@
       },
       {
         "source": "majordomus://test/test/cases/33_stale_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54631,8 +54676,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1721,
-      "edges": 3856,
+      "nodes": 1723,
+      "edges": 3859,
       "acyclic": true,
       "truncated": false
     }
