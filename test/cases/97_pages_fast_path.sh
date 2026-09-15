@@ -47,6 +47,25 @@ done
 grep -qE 'budget|controlled' "$P" && ! grep -qE '^[^#]*(checkout|controlled)[=:][[:space:]]*[0-9]+' "$P" \
   || { echo "    scripts/pages carries a budget number of its own; the model owns them"; exit 1; }
 
+# 1b. the publisher is also asked on a clock, and the two declarations of that clock agree.
+#     A run that failed left the site stale with nothing to ask again (2026-09-14: seven hours),
+#     and the gate that would have said so is at-finish. The cadence belongs to the window
+#     pages-check judges by: a schedule slower than OWED_AFTER cannot notice what that window
+#     calls owed, so the model's number and the workflow's cron are held to each other here,
+#     the way the paths block already is.
+cron="$(sed -n "s/^    - cron: '\\(.*\\)'$/\\1/p" "$W" | head -n 1)"
+[ -n "$cron" ] || { echo "    pages.yml declares no schedule: a failed publication would wait for a person"; exit 1; }
+declared="$(sed -n "s/^  schedule: '\\(.*\\)'$/\\1/p" "$ROOT/.ai/repo/ci/pages.yaml" | head -n 1)"
+[ -n "$declared" ] || { echo "    the publication model does not declare the schedule the workflow runs on"; exit 1; }
+[ "$cron" = "$declared" ] || { echo "    the model says '$declared' and the workflow says '$cron'; one clock, two answers"; exit 1; }
+# the scheduled path asks the gate before it works, and reports the intervention by ending red
+grep -q 'id: publication-owed' "$W" \
+  || { echo "    the scheduled path does not ask scripts/ci/pages-check before publishing"; exit 1; }
+grep -q 'id: report-intervention' "$W" \
+  || { echo "    a scheduled run that had to republish would end green: the fault would recur unseen"; exit 1; }
+awk '/id: report-intervention/{f=1} f && /exit 1/{found=1} END{exit !found}' "$W" \
+  || { echo "    the intervention report does not end the run non-zero"; exit 1; }
+
 # 2. the workflow triggers directly on a master push, on the derived paths, and nowhere else.
 #    A chain through another workflow would put a second scheduler in front of publication.
 awk '/^on:/{f=1} /^permissions:/{f=0} f' "$W" | grep -q 'workflow_run' \
@@ -235,3 +254,57 @@ rm -f "$F/site/templates/.probe.html"
 missing=0
 for f in $("$F/scripts/generate-site-data" --inputs); do [ -f "$F/$f" ] || { echo "    input $f does not exist in the fixture"; missing=1; }; done
 [ "$missing" = 0 ] || exit 1
+
+
+# ---------------------------------------------------------------- the deploy can decide a ref
+# The publishing job resolves the site's links to commits, compares and release tags against
+# its own clone (scripts/ci/link-check). A clone without the history or the tags cannot decide
+# any of them; site-check counts that refusal as a failure, so `publish` is skipped — which is
+# how the site stayed at 8cf457000 for seven hours after #356 while every gate was green.
+#
+# What is asserted is the relation this case already holds for `paths:`: the workflow agrees
+# with the model, rather than the workflow being correct on its own. `deploy.checkout` in
+# .ai/repo/ci/pages.yaml is the declaration, `scripts/pages checkout` renders the depth it
+# implies, and the depth written in the workflow must equal it. Asserting the literal 0 would
+# test one patch; this fails when the two disagree, whichever of them moved.
+want_depth="$("$ROOT/scripts/pages" checkout)" \
+  || { echo "    scripts/pages checkout could not render deploy.checkout"; exit 1; }
+python3 - "$W" "$want_depth" <<'PYCHECKOUT' || exit 1
+import re, sys, yaml
+wf = yaml.safe_load(open(sys.argv[1], encoding='utf-8'))
+want = int(sys.argv[2])
+jobs = wf.get('jobs', {})
+# the publishing job by what it does, not by its name: a rename, or a second job added beside
+# it, must not be able to satisfy this by accident
+pub = [n for n, j in jobs.items()
+       if any('site-deploy' in str(s.get('run', '')) or s.get('id') == 'publish'
+              for s in (j.get('steps') or []))]
+if not pub:
+    print("    no job in pages.yml publishes (none runs site-deploy or carries a publish step)")
+    sys.exit(1)
+for name in pub:
+    steps = jobs[name].get('steps') or []
+    checkouts = [s for s in steps if 'actions/checkout' in str(s.get('uses', ''))]
+    if not checkouts:
+        print(f"    the publishing job {name} never checks the repository out")
+        sys.exit(1)
+    for s in checkouts:
+        depth = (s.get('with') or {}).get('fetch-depth')
+        if depth != want:
+            print(f"    the publishing job {name} checks out with fetch-depth: {depth!r}, but"
+                  f" deploy.checkout in the model implies {want}. link-check cannot decide a"
+                  " tag or commit link in such a clone, site-check counts the refusal as a"
+                  " failure, and publish is skipped")
+            sys.exit(1)
+    # and it measures the clone it was given, rather than trusting the declaration above it
+    proof = [s for s in steps
+             if re.search(r'pages\s+checkout\s+--verify', str(s.get('run', '')))]
+    if not proof:
+        print(f"    the publishing job {name} declares fetch-depth: {want} but never measures"
+              " it; a runner that does not honour the declaration would fail three steps later,"
+              " inside link-check, looking like a link defect."
+              " Add: scripts/pages checkout --verify")
+        sys.exit(1)
+print(f"    the publishing job checks out at the depth the model implies ({want}),"
+      " and proves it on every run")
+PYCHECKOUT

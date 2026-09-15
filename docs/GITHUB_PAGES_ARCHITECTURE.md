@@ -41,6 +41,48 @@ being maintained separately from the repository that backs it.
 | behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
 | output | the static site | `site/public/**` | never |
 
+## What the publishing clone must be able to answer
+
+The site links to the repository on its forge, and `scripts/ci/link-check` decides those
+links **against git rather than over the network**: `commit/<sha>` and `compare/a...b` are
+resolved in the history, `releases/tag/<t>` and `tree/<tag>` in the tags. A clone that was
+not given those cannot decide such a link. It must then refuse rather than guess — and
+`scripts/site-check` counts a refusal as a failure, so the publication stops.
+
+That is not a hypothetical cost. Between **2026-09-14 18:34 and 2026-09-15 00:0x** the
+deploy checked out at depth 1, which truncates the history *and* fetches no tags. Six links
+to `v0.3.1`, `v0.5.0` and `v0.6.0` — tags that exist and carry published releases — were
+reported as non-existent, 2302 commit links were undecidable, `publish` was skipped on every
+run, and the live site stayed at `8cf457000` for seven hours while master moved three merges
+ahead. Every gate was green throughout, because nothing asked whether the site was current.
+
+So the requirement is **declared, not written into the workflow**:
+
+```yaml
+# .ai/repo/ci/pages.yaml
+deploy:
+  checkout:
+    history: full      # renders as fetch-depth: 0
+    tags: required     # actions/checkout fetches none at a shallow depth
+```
+
+| what | where |
+|------|-------|
+| the requirement | `deploy.checkout` in `.ai/repo/ci/pages.yaml` |
+| the depth it implies | `scripts/pages checkout` — prints `0` |
+| the clone a run was given | `scripts/pages checkout --verify` — exit 10 when it cannot decide a ref |
+| the workflow held to the model | `test/cases/97_pages_fast_path.sh` |
+
+The workflow is an adapter over that, the same way its `paths:` block is an adapter over
+`scripts/pages paths`. **Changing what the publisher needs from its clone is an edit to the
+model and nowhere else**: the depth, the verification and the test all read it. A test that
+asserted `fetch-depth: 0` literally would hold one patch in place; the case compares the two
+and fails when they disagree, whichever of them moved.
+
+`--verify` runs in the deploy job immediately after checkout, so a runner that does not
+honour the declaration fails there, naming the depth — rather than three steps later inside
+link-check, where a checkout problem presents as a link defect.
+
 ## Projection pipeline
 
 Two generators, one graph. The Rust executable projects its own registry; the site

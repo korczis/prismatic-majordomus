@@ -18,6 +18,13 @@ version: 1
 trigger:
   branch: master
   gate: site-build
+  # A publication is also asked for on a clock, because a push-triggered run that fails leaves
+  # the site where it was and nothing asks again: on 2026-09-14 the site stood seven hours while
+  # every run failed. The cadence is the window `scripts/ci/pages-check` judges by (OWED_AFTER,
+  # 1800s) — a schedule slower than the window cannot notice what the window calls owed. The
+  # scheduled run asks the gate first and builds only when a publication is owed, and reports the
+  # intervention by ending red; test/cases/97_pages_fast_path.sh holds this against the workflow.
+  schedule: '*/30 * * * *'
   # paths that no class of the gate model covers but that do change what is published
   extra:
     - .github/workflows/pages.yml
@@ -31,6 +38,32 @@ deploy:
   # the served file that names the commit the public site was built from; the probe reads it
   identity: build.json
   publish: scripts/site-deploy --skip-build
+  # What the publishing clone must be able to answer, and therefore what it must be given.
+  #
+  # `scripts/site-check` resolves the site's links to the forge against git rather than over
+  # the network: commit/<sha> and compare/a...b need the history, releases/tag/<t> and
+  # tree/<tag> need the tags. A clone without them cannot decide those links, must refuse
+  # rather than guess, and site-check counts a refusal as a failure — so the publication
+  # stops. That is not hypothetical: between 2026-09-14 18:34 and 2026-09-15 00:0x the
+  # deploy checked out at depth 1, six links to tags that exist were reported non-existent,
+  # 2302 commit links were undecidable, and the site stayed at 8cf457000 for seven hours
+  # while master moved three merges ahead, with every gate green.
+  #
+  # Declared here rather than written into the workflow, for the same reason `trigger` is:
+  # .github/workflows/pages.yml is an adapter, `scripts/pages checkout` computes the depth
+  # this implies, `scripts/pages checkout --verify` measures the clone a run was actually
+  # given, and test/cases/97_pages_fast_path.sh holds the workflow to this file so the two
+  # cannot drift. Changing what the publisher needs is an edit here and nowhere else.
+  checkout:
+    # full: every commit the site may link to. `scripts/pages checkout` renders this as
+    # fetch-depth: 0. No other value is meaningful while link-check resolves commit links —
+    # a truncated history cannot be partially sufficient, because which commits the site
+    # links to is decided by its content, not by a depth.
+    history: full
+    # required: the site links to release tags, and `actions/checkout` fetches none at a
+    # shallow depth. This is a separate key because it is a separate failure: a clone can
+    # carry the whole history and still have no tags.
+    tags: required
 
 # ---------------------------------------------------------------- what the fast path may spend
 # Seconds, wall clock, on a GitHub-hosted Linux runner with the caches warm. Derived from
