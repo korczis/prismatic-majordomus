@@ -308,6 +308,36 @@ Counts of what that yields go stale; measure them instead:
     | jq '[.sections[].groups[].changes[].references[]?] | length'
 ```
 
+## The tree's version and the one a reader can obtain
+
+They are two facts and the site needs both. The tree's version runs **ahead** of the newest
+release by design: the policy is surface-measured, so work that moves no public surface owes
+no bump and the tree sits where the last bump left it. On 2026-09-15 the tree declared 0.7.0
+while the newest obtainable release was v0.6.0 — correct on both counts, and 55 commits apart.
+
+What was not correct is that the navbar badge rendered `project.version`, **the tree's**, beside
+the install command. A visitor read it as *what I am about to get* and could not get it. The
+badge had also just been changed to render at every width instead of `sm:` and up, so the wrong
+number was made more prominent and that change was recorded as a fix.
+
+Nothing caught it, and the reason is worth keeping: `scripts/ci/version-matches-surface` asks
+whether the **declared** version covers what the surface **owes** — declared-versus-owed. Nobody
+asked **shown-versus-shipped**. Both questions are about the version; only one was ever posed.
+
+So `generate-site-data` writes `release` beside `version`, read from the newest record under
+`.ai/repo/releases/` — the same records the changelog, the baselines and `/releases/latest.json`
+read. The badge renders `project.release`, guarded: a repository with nothing released shows no
+badge rather than falling back to the tree's version, because that fallback *is* the defect. The
+tree's own version stays visible to anyone auditing a build, in `/build.json`.
+
+`scripts/site-check` refuses a published tree whose offered version has no release document, so
+this stops a publication rather than being found by a reader. It is scoped to what the site
+**offers**, not to every version string it prints: the first draft scanned every page and refused
+four — v0.1.0, v0.2.0 and v0.4.0 out of the changelog, where naming an old version is the page
+doing its job. Every one of those findings was true and none was what the check claimed.
+`test/cases/352` holds it, including the state that draft could not express — a repository with
+no release at all must not be refused.
+
 ## The version: two statements, one writer
 
 The version stays stated in two places, and should. `scripts/release-version` gives the
