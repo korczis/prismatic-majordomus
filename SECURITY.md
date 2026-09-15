@@ -28,7 +28,12 @@ it is described as real.
   resolve outside the repository root.
 - **No silent overwrite.** Overwriting requires an explicit flag; the default is refusal
   naming the existing file. `state/` is never overwritten by any command.
-- **No recursive deletion.** Retention rotates to archived files; nothing is deleted.
+- **No record is deleted.** Retention rotates to archived files; nothing the policy keeps
+  is removed. The one exception is not a record: `majordomus recover` removes a repository's
+  own abandoned scratch — the `.mj-stage.*` directories and `*.mj-tmp` rename temporaries a
+  derive leaves behind when it is interrupted, which belong to no owner and carry no content
+  of yours. It removes them recursively, reports each one, and `--check` lists them without
+  removing anything.
 - **Handovers are `0600`.**
 - **Authorisation is derived, not ambient.** Any input that could relax a rule is either
   computed by Majordomus from git or corroborated against a real git object. An
