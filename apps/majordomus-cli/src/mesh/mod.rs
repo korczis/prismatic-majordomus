@@ -46,12 +46,14 @@ pub mod broadcast;
 pub mod config;
 pub mod doctor;
 pub mod identity;
+pub mod journal;
 pub mod manager;
 pub mod multicast;
 pub mod protocol;
 pub mod provider;
 pub mod registry;
 pub mod rendezvous;
+pub mod state;
 pub mod trust;
 
 pub use config::{MeshConfig, KIND};
