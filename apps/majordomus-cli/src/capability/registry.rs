@@ -858,7 +858,9 @@ impl CapabilityRegistry {
                 s.cli_commands += 1;
             }
             match c.benchmark {
-                BenchmarkPolicy::Required => s.benchmark_required += 1,
+                BenchmarkPolicy::Required | BenchmarkPolicy::RequiredWhen { .. } => {
+                    s.benchmark_required += 1
+                }
                 BenchmarkPolicy::Waived {
                     reason: WaiverReason::NotExecutable,
                 } => {}

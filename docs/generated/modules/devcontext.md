@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `devcontext` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.6.1 -->
+     Generator: majordomus-cli 0.7.0 -->
 # Module `devcontext` — Development context
 
 The context a development session should be given, derived from the repository rather than composed by hand: given an issue, a milestone, an intent or a set of paths, the canonical objects that bear on the work, why each one is in the answer, what was left out and why, what collapsed into what, and the whole cost against a budget. The selection is structured — every entry keeps its identifier, its provenance, the selector that reached it and its confidence — because rendering a prompt is a projection of the selection and not the selection itself.
@@ -33,9 +33,9 @@ from, and every entry it produces says so and carries a confidence below one. |
 | `paths` | array | no | Repository-relative paths the work touches, added to whatever the seeds declare. |
 | `uris` | array | no | Canonical identifiers to seed with directly, for a request about something that is
 neither an issue nor a milestone. |
-| `budget_tokens` | integer or null | no | The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent. |
-| `max_depth` | integer or null | no | How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent. |
-| `floor` | number or null | no | Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]
+| `budget_tokens` | integer or null | no | The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent. |
+| `max_depth` | integer or null | no | How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent. |
+| `floor` | number or null | no | Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`
 when absent. |
 | `all_blocking_rules` | boolean or null | no | Every blocking rule of the layer, not only the ones the work reaches. Honest and
 usually over budget: the answer then says `over_budget` rather than dropping what it
@@ -70,9 +70,9 @@ from, and every entry it produces says so and carries a confidence below one. |
 | `paths` | array | no | Repository-relative paths the work touches, added to whatever the seeds declare. |
 | `uris` | array | no | Canonical identifiers to seed with directly, for a request about something that is
 neither an issue nor a milestone. |
-| `budget_tokens` | integer or null | no | The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent. |
-| `max_depth` | integer or null | no | How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent. |
-| `floor` | number or null | no | Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]
+| `budget_tokens` | integer or null | no | The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent. |
+| `max_depth` | integer or null | no | How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent. |
+| `floor` | number or null | no | Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`
 when absent. |
 | `all_blocking_rules` | boolean or null | no | Every blocking rule of the layer, not only the ones the work reaches. Honest and
 usually over budget: the answer then says `over_budget` rather than dropping what it
