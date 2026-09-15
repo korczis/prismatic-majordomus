@@ -1,0 +1,37 @@
+id: I1514
+milestone: development-runtime
+title: The API reference is pages a browser audit can read
+slug: the-api-reference-is-pages
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Publish the HTTP API reference as an index, a page per tag and a page of shared types, so that no route carries the whole document and the accessibility audit can finish on every one of them."
+why: "The reference was one route of about 38,000 elements, 28,095 of them in the schema section. The audit's accessibility pass over it took 22-31 seconds on a developer machine and exceeded its 60-second deadline on CI at 1024 and 1440 pixels, where four visits share a smaller runner. A page the audit cannot finish is a page nothing is measured about, and the deadline is not the defect: a single page holding an entire generated document is."
+current_state: "Done and measured, not yet on master: the split is PR #352, carried in #310. Every operation and schema has one home page, the index carries none, old anchors resolve through a map the index publishes, and site-check asserts the exactly-one-page property."
+desired_state: "The reference is published as pages, each of which the audit finishes well inside its deadline, and an address from the single-page era still lands where the thing moved to."
+scope:
+  - site/templates
+  - scripts/lib/openapi-site.jq
+  - scripts/generate-site-data
+  - scripts/site-check
+  - test/cases
+non_scope:
+  - Changing the audit's deadline or how it samples routes. The page is the subject, not the gate.
+depends_on: []
+acceptance_criteria:
+  - No route of the reference carries every operation and schema
+  - Every operation, tag and schema is on exactly one page, and site-check refuses otherwise
+  - An old anchor lands on the page its subject moved to, and without JavaScript the index still lists everything
+  - Every route finishes the audit's accessibility pass inside the deadline
+validation:
+  - bash scripts/site-check --no-sync
+  - bash test/run.sh 09_site_mobile_first
+  - bash test/run.sh 310_rustdoc_projection
+evidence_required:
+  - every_route_finishes_the_audit
+  - an_old_anchor_lands_on_its_page
+risk: "Low. The risk is a reader who bookmarked an anchor; that is what the anchor map and the index's list answer."
+created_at: 2026-09-15
+updated_at: 2026-09-15
+started_at: 2026-09-14
+completed_at: 2026-09-15

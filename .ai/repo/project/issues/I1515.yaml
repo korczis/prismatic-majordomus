@@ -1,0 +1,34 @@
+id: I1515
+milestone: fly-deployment
+title: A deploy that did not happen is loud within the window it is judged by
+slug: publication-is-watched
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Ask whether the published site is still a projection of master often enough for the answer to matter, repair a publication that is owed, and leave the run red so that a publisher which keeps breaking cannot heal itself into silence."
+why: "scripts/ci/pages-check already decides this and cases 104 and 180 hold both of its halves to fixtures. Nothing asked it at a moment when it could fail: validate runs it on push, when the deploy window has just opened and the honest answer is structurally inside the window, and then once a day. On 2026-09-14 the publisher broke at 18:34 — link-check denied six tag links it could not see in a shallow checkout, site-check failed on the denial and publish was skipped — and the live site served a commit seven merges behind while every run was green, until a person ran the gate by hand."
+current_state: "The publisher fix is PR #542 (fetch-depth: 0, and the checker refusing rather than denying what it was never given). The schedule that asks the gate every thirty minutes is on another session's branch, and test/cases/339 holds the behaviour: the gate is asked on a clock no slower than the window it judges by, an owed publication both deploys and reports, and the publishing job checks out its history."
+desired_state: "A publication owed past the window is repaired within half an hour and the run that repaired it is red, naming the age and the commit it published."
+scope:
+  - .github/workflows/pages.yml
+  - .ai/repo/ci/pages.yaml
+  - test/cases
+non_scope:
+  - Changing what pages-check decides. The question is right; only its timing was wrong.
+  - The link checker's own reasoning, which PR #542 owns.
+depends_on: []
+acceptance_criteria:
+  - The gate is asked on a schedule no slower than the window it judges by
+  - An owed publication is deployed and the run still ends non-zero
+  - The step that reports is named, and its verdict is not swallowed
+  - The publishing job checks out enough history for the gate and the link checker to decide
+validation:
+  - bash test/run.sh 339_publication_is_watched
+  - bash scripts/ci/pages-check
+evidence_required:
+  - an_owed_publication_is_repaired_and_reported
+  - the_deploy_checks_out_its_history
+risk: "Low. The failure mode to avoid is a scheduled run that deploys and reports success, which is why the reporting step is asserted rather than assumed."
+created_at: 2026-09-15
+updated_at: 2026-09-15
+started_at: 2026-09-15
