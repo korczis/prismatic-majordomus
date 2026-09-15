@@ -34,6 +34,14 @@
 # half of it a reader outside the shell needs, and test/cases/170 refuses the two lists
 # drifting apart. A provider with no `lifecycle` is one the tool ships no lifecycle adapter
 # for: it loses the automation and none of the model.
+#
+# session_env — the environment variable a process inside one of this provider's sessions
+# carries the session's identifier in. It is how a command a worker runs by hand resolves the
+# episode its own session opened, instead of whichever episode opened last in the checkout.
+# The shell reads the same name from the adapter table's thirteenth column; this is the copy
+# a reader outside the shell — the Rust session resolver — takes, and test/cases/170 refuses
+# the two disagreeing. Absent means the provider exports none, and resolution falls back to
+# the checkout's pointer, which is a guess and is reported as one.
 version: 1
 
 # The tool's own scratch roots: the operating system's temporary directory, where test
@@ -65,6 +73,7 @@ providers:
       - SessionEnd
       - PreCompact
     prompt_capture: true
+    session_env: CLAUDE_CODE_SESSION_ID
     scratch_roots:
       - <primary>/.claude/worktrees
   codex:

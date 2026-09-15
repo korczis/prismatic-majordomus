@@ -12,7 +12,9 @@ Audit of 2026-09-15. Majordomus at master `c3f20da3f`; reference `~/dev/prismati
 `5625d160f1` (the mission named `prismatic-platform3`, which does not exist; the person chose
 `prismatic-platform`), plus its worktree `claude-majordomus-integration-20260913-102303`
 (`6ef3edbdfc`, unmerged). Every row below is backed by a file:line in the four audit reports;
-nothing here is a documentation claim unless marked.
+nothing here is a documentation claim unless marked. A location in the *Reference* column or
+after "Reference:" is a path in that repository, not in this one; where such a path could be
+mistaken for a file here, its directory and file name are given separately.
 
 ## 0. The premise, corrected
 
@@ -63,7 +65,7 @@ mechanism), SUPERSEDE (Majordomus is already ahead; the fix is Majordomus's own)
 | Invariant | Reference implementation / owner / enforcement / tests | Majordomus current / owner / bypass / defect | Decision |
 |---|---|---|---|
 | Session identity & lifecycle | None; client-supplied id copied into records; resume behavioural (`CLAUDE.md:45-48`) | Episodes via provider hooks (ADR 0015); shell-written; 21 stranded; pointer fallback | SUPERSEDE — accept ADR 0052/0047, one owner, automatic recovery |
-| Context compilation | `scripts/ai-context` prints git facts; `.ai/context/current.md` hand-written | Three compilers; devcontext has fingerprint, no consumer | SUPERSEDE — one compiler (devcontext), persisted revisions |
+| Context compilation | `scripts/ai-context` prints git facts; a hand-written `current.md` under its `.ai/context/` | Three compilers; devcontext has fingerprint, no consumer | SUPERSEDE — one compiler (devcontext), persisted revisions |
 | Context revision identity | None | None persisted | SUPERSEDE — new immutable revision store |
 | Invalidation | None | head/branch only | SUPERSEDE — dependency fingerprints (git, index, issue, milestone, rules, ADRs, handover, knowledge) |
 | Context consumption | None (agent told to run scripts) | SessionStart stdout only, Claude Code only | ADAPT — hook injects current revision, re-injects on staleness at UserPromptSubmit; MCP resource for other clients |
@@ -83,7 +85,7 @@ mechanism), SUPERSEDE (Majordomus is already ahead; the fix is Majordomus's own)
 | Issues/milestones | GitLab only; commit-msg requires `#NNN` syntax, not existence | Local canonical records + GitHub projection with drift gate | SUPERSEDE — add task↔issue link at `start`, commit trailer resolved against the plan |
 | ADR relevance | DB fields only; no selection | devcontext selection; no enforcement | ADAPT — ADRs selected by affected paths into context with reason; conflicts surfaced in preflight when an ADR declares a checkable constraint |
 | Bootstrap | Hand-written CLAUDE/AGENTS with budget + link-existence gate at commit | Generated projections; briefing; told, not forced | ADOPT the budget+reference-existence gate if Majordomus lacks equivalent; keep generation |
-| Hook test fidelity | Test executes the block extracted from the dispatcher (`test-majordomus-hooks.sh`) | Cases run shims directly | ADOPT |
+| Hook test fidelity | Test executes the block extracted from the dispatcher (the hook test in its worktree's scripts directory) | Cases run shims directly | ADOPT |
 | Aggregator skips | Missing test silently skipped; skipped hook test counts as pass | Known locally (memory: skipped case counts as pass) | ADOPT as a requirement: missing = fail, skip ≠ pass |
 | Knowledge | Session notes, history and knowledge share one store | Shell source list; ADR 0058 unmerged | SUPERSEDE — land ADR 0058 separation |
 | Events | Three audit formats | 26 ledger events; many never written; two Rust writers, one unlocked | ADAPT — typed events for context/prompt/governance through one locked writer |
@@ -107,8 +109,10 @@ mechanism), SUPERSEDE (Majordomus is already ahead; the fix is Majordomus's own)
    Reference: `pillars.ex:23,28`.
 8. A missing gate artifact blocks with a distinct exit code. Reference: `03-ai-review-gate:25-30`.
 9. Overrides are typed and audited before the verdict. Reference: `aiad-override-policy.sh:87-90`.
-10. Claims refuse overlap at claim time. Reference: `scripts/wt/operations.sh:878-932`.
-11. Hook tests execute the dispatcher's own block. Reference: `scripts/test-majordomus-hooks.sh`.
+10. Claims refuse overlap at claim time. Reference: `operations.sh:878-932`, in its `scripts/wt/`
+    directory.
+11. Hook tests execute the dispatcher's own block. Reference: `test-majordomus-hooks.sh`, in the
+    `scripts/` directory of its Majordomus worktree.
 12. A boundary rule needs a registered, blocking check — the reference's unregistered credo
     check is the counter-example. Reference: `llm_adapter_enforcement.ex` absent from `.credo.exs`.
 {% endraw %}

@@ -108,6 +108,32 @@ if [ "$(echo $shell_capture)" != "$(echo $yaml_declares_capture)" ]; then
     "$(echo $shell_capture)" "$(echo $yaml_declares_capture)"
 fi
 
+# The session variable: column 13 of the lifecycle table is what the shell reads to find a
+# process's own episode, and `session_env` is what the Rust resolver reads for the same
+# purpose. Every provider is compared, including the ones with no variable on either side, so
+# a variable added to one half only is a failure rather than a silence.
+yaml_session_env() {   # yaml_session_env PROVIDER
+  awk -v want="$1" '
+    /^  [a-z][a-z0-9_-]*:$/ { name = substr($1, 1, length($1) - 1); next }
+    name == want && /^    session_env: / { sub(/^    session_env: /, ""); print; exit }
+  ' "$YAML"
+}
+yaml_providers="$(awk '/^  [a-z][a-z0-9_-]*:$/ { print substr($1, 1, length($1) - 1) }' "$YAML" | LC_ALL=C sort -u)"
+compared=0
+for p in $(printf '%s\n%s\n' "$shell_providers" "$yaml_providers" | awk 'NF' | LC_ALL=C sort -u); do
+  shell_var="$(printf '%s\n' "$lifecycle_rows" | awk -v p="$p" '$1 == p && $13 != "-" { print $13 }')"
+  yaml_var="$(yaml_session_env "$p")"
+  compared=$((compared + 1))
+  if [ "$shell_var" != "$yaml_var" ]; then
+    fail=1
+    printf '    %s session variable: lib/capture.sh reads [%s]; share/providers.yaml declares [%s]\n' \
+      "$p" "$shell_var" "$yaml_var"
+  fi
+done
+[ "$compared" -gt 0 ] || { fail=1; echo '    no provider was compared for its session variable; a check over nothing has not passed'; }
+# and the comparison is not vacuous: the one provider that exports a variable today is found
+[ -n "$(yaml_session_env claude-code)" ] || { fail=1; echo '    share/providers.yaml declares no session_env for claude-code, which lib/capture.sh reads'; }
+
 [ "$fail" = 0 ] || {
   echo '    Change share/providers.yaml and lib/capture.sh in the same commit: one is what the'
   echo '    shell drives, the other is what every reader outside the shell is told.'

@@ -211,6 +211,7 @@ impl Share {
                     scratch_roots: decl.map(|d| d.scratch_roots.clone()).unwrap_or_default(),
                     lifecycle: decl.map(|d| d.lifecycle.clone()).unwrap_or_default(),
                     prompt_capture: decl.map(|d| d.prompt_capture).unwrap_or(false),
+                    session_env: decl.and_then(|d| d.session_env.clone()),
                     template: templates.contains(&id),
                     declared: decl.is_some(),
                     id,
@@ -250,6 +251,8 @@ struct ProviderEntry {
     lifecycle: Vec<String>,
     #[serde(default)]
     prompt_capture: bool,
+    #[serde(default)]
+    session_env: Option<String>,
 }
 
 /// What the distribution declares about its providers, joined with the templates it ships.
@@ -287,6 +290,14 @@ pub struct ProviderDeclaration {
     /// Whether the tool's adapter for it can archive the worker's prompts.
     #[serde(default)]
     pub prompt_capture: bool,
+    /// The environment variable a process running inside one of this provider's sessions
+    /// carries that session's identifier in, when the provider exports one
+    /// (`CLAUDE_CODE_SESSION_ID`). It is how a command a worker runs by hand finds the
+    /// episode its own session opened rather than whichever episode opened last; the
+    /// session domain's resolver reads it here, and `test/cases/170` holds it equal to the
+    /// shell adapter table's column.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session_env: Option<String>,
     /// The distribution ships a template for it.
     pub template: bool,
     /// The distribution declares it.
