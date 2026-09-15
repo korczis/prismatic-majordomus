@@ -51,28 +51,30 @@ grep -q '{% if project.release %}' "$NAV" \
        exit 1; }
 echo "    the badge names the release, and shows nothing when there is none"
 
-# --- 3. the mutation: a published site that shows an unreleased version is refused
-# Without this, §1 and §2 hold the current templates and nothing holds the next edit. The
-# refusal lives in scripts/site-check, so it is driven the way site-check drives it: a public
-# tree with a page naming a version, and a releases/ directory that does or does not carry it.
-F="$T/pub"; mkdir -p "$F/releases"
-printf '<html><body><span>v9.9.9</span></body></html>\n' > "$F/index.html"
-shown_ok=0
-# the check as site-check applies it, over the same inputs
-for shown in $(grep -rhoE '>v[0-9]+\.[0-9]+\.[0-9]+<' "$F" --include='*.html' 2>/dev/null | tr -d '><' | sort -u); do
-  if [ -f "$F/releases/$shown.json" ] || [ -f "$F/releases/v${shown#v}.json" ]; then shown_ok=1; fi
-done
-[ "$shown_ok" = 0 ] || { echo "    a page naming an unreleased version was accepted"; exit 1; }
-echo "    a page naming a version with no release document is refused"
+# --- 3. the mutation: a site offering an unreleased version is refused, and one offering a
+#        released version is not
+# Scoped to what the site OFFERS — `project.release` — rather than to every version string it
+# prints. The first draft of this check scanned every `>vX.Y.Z<` on every page and refused
+# four: v0.1.0, v0.2.0 and v0.4.0 out of the changelog, which are history rather than an offer
+# (they are tagged releases whose records the layer never carried), plus the tree's own
+# version. Every one of those findings was true and none of them was what the check claimed.
+# A checker whose subject is wider than its sentence reports true things nobody asked about.
+F="$T/pub"; mkdir -p "$F/releases" "$F/data"
+offers() {   # the rule as scripts/site-check applies it
+  [ -z "$1" ] && return 0
+  [ -f "$F/releases/v${1#v}.json" ]
+}
+offers 9.9.9 && { echo "    a site offering an unreleased version was accepted"; exit 1; }
+echo "    a site offering a version with no release document is refused"
 
 printf '{"tag":"v9.9.9"}\n' > "$F/releases/v9.9.9.json"
-shown_ok=0
-for shown in $(grep -rhoE '>v[0-9]+\.[0-9]+\.[0-9]+<' "$F" --include='*.html' 2>/dev/null | tr -d '><' | sort -u); do
-  if [ -f "$F/releases/$shown.json" ] || [ -f "$F/releases/v${shown#v}.json" ]; then shown_ok=1; fi
-done
-[ "$shown_ok" = 1 ] || { echo "    a page naming a version that IS released was still refused;"
-                         echo "    the check would refuse every site"; exit 1; }
-echo "    and the same page is accepted once that release exists"
+offers 9.9.9 || { echo "    a site offering a version that IS released was still refused;"
+                  echo "    the check would refuse every site"; exit 1; }
+echo "    and the same version is accepted once that release exists"
+
+offers "" || { echo "    a repository with no release at all is refused; it should show no"
+               echo "    badge rather than fail the publication"; exit 1; }
+echo "    a repository with nothing released is not refused; it simply shows no version"
 
 # --- 4. site-check carries the refusal, not just this case
 grep -q 'a reader beside the install command is told to expect a version that does not exist' "$ROOT/scripts/site-check" \
