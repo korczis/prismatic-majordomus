@@ -62,6 +62,13 @@ expensive way this measurement can be wrong. `scripts/land` uses the exit code.
 | Quantity | Measure | Reduce |
 |---|---|---|
 | pull requests | `scripts/land` | `scripts/land --run` |
+
+The measurement runs on a clock: `.github/workflows/queue.yml` (model
+`.ai/repo/ci/queue.yaml`) runs `scripts/land` every thirty minutes and publishes the verdict
+to the job summary, so the queue's state is a measurement rather than something somebody
+remembers to ask for. It never passes `--run` and its token cannot write: the state is
+automatic, the merge stays a decision. `test/cases/350_the_queue_measures_itself.sh` holds
+both halves, and fails if the workflow acquires either the flag or the permission.
 | worktrees, branches | `majordomus worktree` | `majordomus worktree` cleanup, by hand for dirty ones |
 | abandoned servers | `scripts/reap-orphans` | `scripts/reap-orphans --kill` |
 | build output on disk | `scripts/reap-orphans --targets` | `scripts/reap-orphans --reclaim` |
