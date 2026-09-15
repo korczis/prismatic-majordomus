@@ -291,8 +291,23 @@ that has merely not finished stays a note; only `errored` is a failure.
 ## Where a gate cannot reach
 
 A gate that never fires is worse than one that fails, because the verdict still reads
-complete. Three ways that happens here, all measured on 2026-09-10 rather than reasoned
-about, and each of them cost a real outage or a real afternoon.
+complete. Four ways that happens here, all measured rather than reasoned about, and each of
+them cost a real outage or a real afternoon.
+
+**A check that nothing invokes at all.** `scripts/ci/surface-coverage` — whose own first line
+reads *"one mandatory gate proves every public surface is covered"* — existed from 2026-09-10
+and was named by **nothing**: absent from this model, from every script, from every workflow
+and from every hook. A search of the whole repository found one reference, in a historical
+session record. It passed every time anybody ran it by hand and protected nothing for five
+days, and the surface it would have watched is the one nobody was watching: whether MCP, the
+CLI, Swagger, the library, the Cockpit and the published site each still have a mandatory test.
+It is a `structure` gate now, and `test/cases/344` holds **both** halves — that the model runs
+it, read as a gate entry rather than grepped for the word, and that it can still refuse.
+
+The general form is worth stating because it is not the same as the three below: those are
+gates that exist in the model and cannot reach their subject. This was a gate that reached its
+subject perfectly and was in no model. **Nothing distinguishes the two from the outside** —
+both leave a green run — so a check being correct is not evidence that anything asks it.
 
 **The staleness catch cannot run on the path most merges take** — the driver resolving to
 ours is a design decision working correctly, and the defect is that the only thing checking
