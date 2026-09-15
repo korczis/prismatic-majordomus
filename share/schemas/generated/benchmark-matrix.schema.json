@@ -20,7 +20,8 @@
           "required": { "type": "integer", "minimum": 0 },
           "covered": { "type": "integer", "minimum": 0 },
           "missing": { "type": "integer", "minimum": 0 },
-          "waived": { "type": "integer", "minimum": 0 }
+          "waived": { "type": "integer", "minimum": 0 },
+          "inapplicable": { "type": "integer", "minimum": 0 }
         }
       }
     },
@@ -34,9 +35,9 @@
           "module": { "type": "string", "minLength": 1 },
           "kind": { "type": "string", "minLength": 1 },
           "cache": { "type": "string" },
-          "direct": { "enum": ["covered", "missing", "waived", "none"] },
-          "mcp": { "enum": ["covered", "missing", "waived", "none"] },
-          "http": { "enum": ["covered", "missing", "waived", "none"] },
+          "direct": { "enum": ["covered", "missing", "waived", "inapplicable", "none"] },
+          "mcp": { "enum": ["covered", "missing", "waived", "inapplicable", "none"] },
+          "http": { "enum": ["covered", "missing", "waived", "inapplicable", "none"] },
           "cases": { "type": "array", "items": { "type": "string", "minLength": 1 } }
         }
       }

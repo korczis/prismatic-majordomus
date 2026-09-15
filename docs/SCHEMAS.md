@@ -1371,6 +1371,9 @@ Events and their extra fields:
 | `provider.event.received` | `provider`, `provider_event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
 | `provider.event.failed` | `provider`, `provider_event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
+| `prompts.reconciled` | `records` (prompt records re-examined), `linked`, `unlinked`. Every record in the archive is re-matched to the episode it belongs to, from evidence that still exists; a record whose evidence is gone is counted as unlinked rather than guessed at |
+| `task.gate` | `task`, `gate`, `exit`, `inputs_hash` (over the union of the paths of the CI classes that select the gate, so a change to any of them makes the run stale rather than merely old). A gate that has never emitted this event is reported as queued, never as passing |
+| `prompts.pruned` | `records` (prompt records touched), `pruned` (bodies replaced with a tombstone), `bytes_left`. A record is never deleted: what is taken is the body, and the record left behind still says when the prompt happened, in which episode, and the digest and length of what was removed |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 | `use_cases.ran` | `ran`, `failed` (counts; the evidence under `.ai/local/evidence/use-cases/` carries the steps) |
 | `plan_start` | `issue` |
