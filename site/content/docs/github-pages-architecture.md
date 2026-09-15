@@ -575,7 +575,7 @@ npm ci                      # Tailwind, Flowbite, Alpine, Mermaid — pinned
 brew install zola           # or the release binary; CI pins 0.23.4
 just derive                 # every committed derived artifact, in order (scripts/derive)
 just derive-check           # is every committed derived artifact current? writes nothing
-just test                   # the shell suite, the Rust gates, derive-check
+just test                   # the gates CI would run for this working tree (scripts/ci/run-plan)
 scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/prismatic-majordomus/
 scripts/site-build          # production build into site/public/
 scripts/site-check          # the static checks CI runs
