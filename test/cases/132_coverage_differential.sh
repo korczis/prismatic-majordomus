@@ -1,4 +1,6 @@
 # majordomus-covers: none
+# Proves claim new-code-is-covered (docs/CLAIMS.yaml): every executable line, function and
+# region a change adds or touches must be covered, and untouched legacy debt is left alone.
 # The differential coverage gate of #214, driven against a synthetic, self-consistent
 # fixture so it is deterministic and needs no instrumented rebuild. The fixture is a tiny
 # source file (test/fixtures/coverage/sample.rs) and a hand-written llvm-cov export
