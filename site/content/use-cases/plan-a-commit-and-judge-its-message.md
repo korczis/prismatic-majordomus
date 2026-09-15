@@ -1,12 +1,12 @@
 +++
 title = "Divide a working tree into commits, and hold every message to a policy"
 description = "Ask what this tree would commit and why, learn the scope vocabulary from the history rather than a table, and get a verdict on one message or on a whole range before a reviewer has to give one."
-weight = 25
+weight = 26
 [extra]
 id = "plan-a-commit-and-judge-its-message"
 source = ".ai/repo/use-cases/plan-a-commit-and-judge-its-message.md"
 category = "policy"
-maturity = "described"
+maturity = "executable"
 +++
 
 ## Situation

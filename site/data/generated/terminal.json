@@ -1,9 +1,9 @@
 {
   "counts": {
-    "executions": 173,
+    "executions": 183,
     "lifecycle": 6,
-    "refusals": 9,
-    "scenarios": 44,
+    "refusals": 12,
+    "scenarios": 45,
     "walkthrough": 6
   },
   "default": 3,
@@ -167,6 +167,40 @@
       ],
       "assertions": [
         {
+          "expected": 10,
+          "kind": "exit",
+          "pattern": null,
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_contains",
+          "pattern": "FAIL scope",
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_contains",
+          "pattern": "docs/d",
+          "result": "pass"
+        }
+      ],
+      "command": "majordomus check",
+      "exit": 10,
+      "label": "check",
+      "lines": 11,
+      "output": "·    checkpoint  t-<id> — <timed against the checkpoint interval>\nOK   records     ledger.jsonl — every line is a well-formed event\nOK   blockers    t-<id> — none open\nOK   records     decisions.md — every entry is attributable\nFAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= <sha>..HEAD]\nOK   state       t-<id> — exact (head <head>)\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\ncheck: 10 finding(s), 1 failing",
+      "route": "/use-cases/catch-an-agent-that-says-it-is-done/",
+      "use_case": "catch-an-agent-that-says-it-is-done",
+      "use_case_title": "Catch an agent that says it is done when it is not",
+      "what": "FAIL scope       docs/d — outside claimed scope (lib)"
+    },
+    {
+      "argv": [
+        "check"
+      ],
+      "assertions": [
+        {
           "expected": 12,
           "kind": "exit",
           "pattern": null,
@@ -252,12 +286,106 @@
       "command": "majordomus finish --outcome completed --verify-command true",
       "exit": 10,
       "label": "finish",
-      "lines": 15,
-      "output": "FAIL blockers    t-<id> — 1 unresolved question(s) on this branch; first: t-<id> — does the parser need to accept tabs?  [reproduce: majordomus question list]\nFAIL note        t-<id> — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nOK   verification t-<id> — true — exit 0, <s>s\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 2 unmet\nblocking doctrines:\n- majordomus.blocker-resolution- majordomus.note-integrity",
+      "lines": 16,
+      "output": "FAIL blockers    t-<id> — 1 unresolved question(s) on this branch; first: t-<id> — does the parser need to accept tabs?  [reproduce: majordomus question list]\nFAIL note        t-<id> — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nOK   verification t-<id> — true — exit 0, <s>s\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 2 unmet\nblocking doctrines:\n- majordomus.blocker-resolution\n- majordomus.note-integrity",
       "route": "/use-cases/carry-a-blocker-across-a-handover/",
       "use_case": "carry-a-blocker-across-a-handover",
       "use_case_title": "Hand work over with a question still open, and keep it blocking",
       "what": "FAIL blockers    t-<id> — 1 unresolved question(s) on this branch; first: t-<id> — does the parser need to accept tabs?"
+    },
+    {
+      "argv": [
+        "finish",
+        "--outcome",
+        "completed",
+        "--verify-command",
+        "sh test/parse.sh"
+      ],
+      "assertions": [
+        {
+          "expected": 10,
+          "kind": "exit",
+          "pattern": null,
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_contains",
+          "pattern": "OK +scope",
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_contains",
+          "pattern": "FAIL verification",
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_contains",
+          "pattern": "refused",
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_not_contains",
+          "pattern": "FAIL scope",
+          "result": "pass"
+        }
+      ],
+      "command": "majordomus finish --outcome completed --verify-command 'sh test/parse.sh'",
+      "exit": 10,
+      "label": "finish",
+      "lines": 15,
+      "output": "OK   blockers    t-<id> — none open\nOK   note        t-<id> — <time>--main--<head>--<hash>.md\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nFAIL verification t-<id> — sh test/parse.sh — exit 1, <s>s  [reproduce: sh test/parse.sh]\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 1 unmet\nblocking doctrines:\n- majordomus.verification-integrity",
+      "route": "/use-cases/catch-an-agent-that-says-it-is-done/",
+      "use_case": "catch-an-agent-that-says-it-is-done",
+      "use_case_title": "Catch an agent that says it is done when it is not",
+      "what": "FAIL verification t-<id> — sh test/parse.sh — exit 1, <s>s"
+    },
+    {
+      "argv": [
+        "finish",
+        "--outcome",
+        "completed",
+        "--verify-command",
+        "sh test/parse.sh"
+      ],
+      "assertions": [
+        {
+          "expected": 10,
+          "kind": "exit",
+          "pattern": null,
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_contains",
+          "pattern": "FAIL scope",
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_contains",
+          "pattern": "FAIL verification",
+          "result": "pass"
+        },
+        {
+          "expected": null,
+          "kind": "stdout_contains",
+          "pattern": "refused",
+          "result": "pass"
+        }
+      ],
+      "command": "majordomus finish --outcome completed --verify-command 'sh test/parse.sh'",
+      "exit": 10,
+      "label": "finish",
+      "lines": 17,
+      "output": "OK   blockers    t-<id> — none open\nFAIL note        t-<id> — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nFAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= <sha>..HEAD]\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nFAIL verification t-<id> — sh test/parse.sh — exit 1, <s>s  [reproduce: sh test/parse.sh]\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 3 unmet\nblocking doctrines:\n- majordomus.note-integrity\n- majordomus.scope-integrity\n- majordomus.verification-integrity",
+      "route": "/use-cases/catch-an-agent-that-says-it-is-done/",
+      "use_case": "catch-an-agent-that-says-it-is-done",
+      "use_case_title": "Catch an agent that says it is done when it is not",
+      "what": "FAIL note        t-<id> — no --note file and no handover for this task"
     },
     {
       "argv": [
@@ -278,8 +406,8 @@
       "command": "majordomus finish --outcome completed --note done",
       "exit": 10,
       "label": "finish",
-      "lines": 15,
-      "output": "OK   blockers    t-<id> — none open\nFAIL note        t-<id> — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nFAIL verification t-<id> — profile implementation requires --verify-command  [reproduce: majordomus finish --outcome completed --verify-command \"<cmd>\"]\nFAIL obligation  tests — owed, and no evidence was recorded  [reproduce: majordomus evidence --covers tests --command 'usecase impact']\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 3 unmet\nblocking doctrines:\n- majordomus.note-integrity- majordomus.verification-integrity- majordomus.obligation-closure",
+      "lines": 17,
+      "output": "OK   blockers    t-<id> — none open\nFAIL note        t-<id> — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nFAIL verification t-<id> — profile implementation requires --verify-command  [reproduce: majordomus finish --outcome completed --verify-command \"<cmd>\"]\nFAIL obligation  tests — owed, and no evidence was recorded  [reproduce: majordomus evidence --covers tests --command 'usecase impact']\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 3 unmet\nblocking doctrines:\n- majordomus.note-integrity\n- majordomus.verification-integrity\n- majordomus.obligation-closure",
       "route": "/use-cases/prove-what-a-task-owed-before-calling-it-done/",
       "use_case": "prove-what-a-task-owed-before-calling-it-done",
       "use_case_title": "Prove what a task owed before calling it done",
@@ -304,8 +432,8 @@
       "command": "majordomus finish --outcome completed --note done",
       "exit": 10,
       "label": "finish",
-      "lines": 16,
-      "output": "OK   blockers    t-<id> — none open\nFAIL note        t-<id> — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nFAIL verification t-<id> — profile implementation requires --verify-command  [reproduce: majordomus finish --outcome completed --verify-command \"<cmd>\"]\nFAIL obligation  commit — 1 file(s) the task touched are still in the working tree, not in the branch's history (lib/a)  [reproduce: git status --porcelain]\nFAIL obligation  push — owed, and no evidence was recorded (the checkout has no remote, so a push cannot be established here)  [reproduce: majordomus evidence --covers push --command 'git']\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 4 unmet\nblocking doctrines:\n- majordomus.note-integrity- majordomus.verification-integrity- majordomus.obligation-closure",
+      "lines": 18,
+      "output": "OK   blockers    t-<id> — none open\nFAIL note        t-<id> — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nFAIL verification t-<id> — profile implementation requires --verify-command  [reproduce: majordomus finish --outcome completed --verify-command \"<cmd>\"]\nFAIL obligation  commit — 1 file(s) the task touched are still in the working tree, not in the branch's history (lib/a)  [reproduce: git status --porcelain]\nFAIL obligation  push — owed, and no evidence was recorded (the checkout has no remote, so a push cannot be established here)  [reproduce: majordomus evidence --covers push --command 'git']\nINFO gate        t-<id> — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 4 unmet\nblocking doctrines:\n- majordomus.note-integrity\n- majordomus.verification-integrity\n- majordomus.obligation-closure",
       "route": "/use-cases/say-what-reached-the-remote-and-what-did-not/",
       "use_case": "say-what-reached-the-remote-and-what-did-not",
       "use_case_title": "Say what reached the remote and what did not",
@@ -348,7 +476,7 @@
           "result": "pass"
         }
       ],
-      "command": "majordomus start the follow-up --scope lib",
+      "command": "majordomus start 'the follow-up' --scope lib",
       "exit": 0,
       "label": "start",
       "lines": 3,

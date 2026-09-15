@@ -1,12 +1,12 @@
 +++
 title = "Say what reached the remote and what did not"
 description = "The obligations that reach past the working tree are settled by asking git and the published site, so a report cannot call uncommitted work committed or unpushed work pushed."
-weight = 21
+weight = 22
 [extra]
 id = "say-what-reached-the-remote-and-what-did-not"
 source = ".ai/repo/use-cases/say-what-reached-the-remote-and-what-did-not.md"
 category = "completion"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

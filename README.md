@@ -7,25 +7,35 @@
 **A lightweight supervisory control layer for AI-assisted work.**
 
 [Website](https://majordomus.dev) ·
+**[The challenge: watch it refuse an agent](https://majordomus.dev/challenge/)** ·
 [CLI reference](docs/CLI.md) ·
 [File schemas](docs/SCHEMAS.md) ·
 [What is guaranteed, advisory, planned, or refused](docs/SITE_CLAIMS.md) ·
 [Why it exists](docs/EXTRACTION_REPORT.md)
 
-Majordomus holds one canonical policy for how AI workers operate in a repository,
-generates the instruction file each tool reads from it, keeps task state outside every
-conversation, reports when two workers are about to collide, and refuses to call work
-finished until a contract is met. It runs entirely locally, in portable shell, and
-never invokes a model.
+AI coding agents do the work. Majordomus decides whether it is done. It holds one
+canonical policy for how AI workers operate in a repository and generates the instruction
+file each tool reads from it; it keeps the task, the paths it may touch and its handover in
+the repository instead of a conversation; it reports when two workers are about to collide;
+and it refuses to call work finished until a contract is met. It runs entirely locally, in
+portable shell, and never invokes a model.
+
+A recorded run from [the challenge](https://majordomus.dev/challenge/), redacted and
+otherwise untouched: the scope is clean now, but the repository's own test still fails, so a
+worker's claim that it is done is refused.
 
 ```
-$ majordomus finish --outcome completed --verify-command "make test"
-OK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope
-OK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s
-OK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)
-FAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]
-OK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
+$ majordomus finish --outcome completed --verify-command 'sh test/parse.sh'
+OK   blockers    t-<id> — none open
+OK   note        t-<id> — <time>--main--<head>--<hash>.md
+OK   scope       t-<id> — 1 touched file(s), all within scope
+OK   state       t-<id> — exact (head <head>)
+FAIL verification t-<id> — sh test/parse.sh — exit 1, <s>s  [reproduce: sh test/parse.sh]
 finish: refused, 1 unmet
+```
+
+```bash
+curl -fsSL https://majordomus.dev/install.sh | sh
 ```
 
 ## The problem

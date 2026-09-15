@@ -203,6 +203,19 @@ if start_http "$S/public"; then
   # every commit there has ever been
   expect_exit 2 scripts/pages verify --commit b --timeout 0
 
+  # --smoke asks the same public bytes whether the pages a visitor is sent to answer and carry
+  # what they are for: every deploy.smoke route of the model, each miss named, not only the
+  # first. The served tree has no such page yet, so the routes are refused ...
+  expect_exit 10 scripts/pages verify --commit "$(git rev-parse HEAD)" --timeout 0 --smoke
+  expect_grep 'smoke .*/challenge/ (did not answer|does not carry)'
+  # ... and once each route carries every marker the model names for it, the probe passes
+  sed -n 's/^    - route: \(.*\)$/\1/p' "$ROOT/.ai/repo/ci/pages.yaml" | sort -u | while read -r r; do
+    mkdir -p "$S/public$r"
+    sed -n "/^    - route: ${r//\//\\/}\$/{n;s/^      marker: //p;}" "$ROOT/.ai/repo/ci/pages.yaml" > "$S/public${r}index.html"
+  done
+  expect_exit 0 scripts/pages verify --commit "$(git rev-parse HEAD)" --timeout 0 --smoke
+  expect_grep 'smoke [0-9]+ route check\(s\) answered'
+
   # the site serves an older commit: unpublished, and said in those words
   printf '{"commit":"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}\n' > "$S/public/build.json"
   expect_exit 10 "$MJ" finish --outcome completed --note "done"

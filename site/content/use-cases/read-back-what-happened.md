@@ -1,12 +1,12 @@
 +++
 title = "Read back what happened, and keep the ledger within its cap"
 description = "Read the append-only ledger as operational history, filtered by task and event, validate every line, and rotate the oldest lines into an archive rather than deleting them."
-weight = 31
+weight = 32
 [extra]
 id = "read-back-what-happened"
 source = ".ai/repo/use-cases/read-back-what-happened.md"
 category = "knowledge"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

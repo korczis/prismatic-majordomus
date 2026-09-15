@@ -1,12 +1,12 @@
 +++
 title = "Keep every provider bootstrap thin, generated and within budget"
 description = "Regenerate AGENTS.md, CLAUDE.md and the other provider files from one policy and prove they are stamped, point at the layer, stay under the line budget and resolve every reference."
-weight = 23
+weight = 24
 [extra]
 id = "keep-the-bootstrap-thin-and-within-budget"
 source = ".ai/repo/use-cases/keep-the-bootstrap-thin-and-within-budget.md"
 category = "drift"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

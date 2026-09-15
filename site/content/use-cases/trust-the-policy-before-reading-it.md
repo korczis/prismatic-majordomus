@@ -1,12 +1,12 @@
 +++
 title = "Trust the policy and the profiles only after they are validated"
 description = "Prove that the canonical policy parses with every key it needs declared, that every profile parses and the default exists, and that what the policy declares as enforced is what actually runs."
-weight = 22
+weight = 23
 [extra]
 id = "trust-the-policy-before-reading-it"
 source = ".ai/repo/use-cases/trust-the-policy-before-reading-it.md"
 category = "policy"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

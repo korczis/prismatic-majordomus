@@ -157,7 +157,8 @@ else bad product "site/data/registry/product.json missing (regenerate: majordomu
 TD="$SITE/data/generated/terminal.json"
 if [ -f "$TD" ]; then
   term_bad=0
-  HOME_HTML="$(sed 's/&quot;/"/g; s/&#x27;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
+  # Zola writes an apostrophe as &#39;, and a recorded command now quotes its arguments with one
+  HOME_HTML="$(sed 's/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
   n=0
   while IFS="$MJ_TAB" read -r cmd first; do
     n=$((n + 1))
@@ -180,6 +181,40 @@ EOF
   done
   [ "$term_bad" = 0 ] && ok terminal "$(jq -r '.counts.walkthrough' "$TD") lifecycle step(s) and $(jq -r '.counts.refusals' "$TD") refusal(s) on the homepage, each the command, the exit status and the stdout of a run recorded in $(jq -r '.counts.scenarios' "$TD") executed scenario(s); nothing on this page is typed"
 else bad terminal "site/data/generated/terminal.json missing (regenerate: scripts/generate-site-data)"; fi
+# 3b'. the challenge is a replay too, of one scenario from start to finish, and it is held the
+# same way in both directions: every step site/data/generated/challenge.json recorded is on
+# /challenge/ and in the homepage replay, command line and decision lines as the run printed
+# them, the page renders exactly as many steps as the run holds, the homepage's first call to
+# action leads there, and every comparison row links the guarantee it stands on. Its words
+# (site/data/challenge.toml) carry no number, like every other hand-written file on the site.
+CD="$SITE/data/generated/challenge.json"
+if [ -f "$SITE/data/challenge.toml" ]; then
+  if grep -vE '^\s*#' "$SITE/data/challenge.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "challenge.toml contains a number; numbers are computed, never written"; fi
+  if [ ! -f "$CD" ]; then bad challenge "site/data/generated/challenge.json missing (regenerate: scripts/generate-site-data)"
+  elif [ ! -f "$PUB/challenge/index.html" ]; then bad challenge "challenge.toml declares a challenge and /challenge/ was not built"
+  else
+    ch_bad=0
+    ch_text() { sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$1"; }
+    CH_PAGE="$(ch_text "$PUB/challenge/index.html")"; CH_HOME="$(ch_text "$PUB/index.html")"
+    ch_n=0
+    while IFS= read -r want; do
+      [ -n "$want" ] || continue
+      ch_n=$((ch_n + 1))
+      printf '%s' "$CH_PAGE" | grep -qF -- "$want" || { bad challenge "/challenge/ does not carry the recorded line: $want"; ch_bad=1; }
+      printf '%s' "$CH_HOME" | grep -qF -- "$want" || { bad challenge "the homepage replay does not carry the recorded line: $want"; ch_bad=1; }
+    done <<EOF
+$(jq -r '.steps[] | ("$ " + .command), (.decision[] | split("  [reproduce:") | first)' "$CD")
+EOF
+    [ "$ch_n" -gt 0 ] || { bad challenge "challenge.json holds no recorded line to look for; a check over nothing has not passed"; ch_bad=1; }
+    panels="$(grep -o 'data-outcome="[a-z]*"' "$PUB/challenge/index.html" | wc -l | tr -d ' ')"
+    [ "$panels" = "$(jq '.steps | length' "$CD")" ] || { bad challenge "/challenge/ renders $panels step panel(s), the recorded run has $(jq '.steps | length' "$CD")"; ch_bad=1; }
+    grep -qE 'href="[^"]*/challenge/"[^>]*data-cta="challenge"' "$PUB/index.html" || { bad challenge "the homepage's first call to action does not lead to /challenge/"; ch_bad=1; }
+    for c in $(jq -r '.claims[].id' "$CD"); do
+      grep -qF "/guarantees/$c/" "$PUB/challenge/index.html" || { bad challenge "/challenge/ does not link the guarantee $c a comparison row stands on"; ch_bad=1; }
+    done
+    [ "$ch_bad" = 0 ] && ok challenge "$(jq -r '.counts.steps' "$CD") recorded step(s) and $(jq -r '.counts.refusals' "$CD") refusal(s) on /challenge/ and the homepage exactly as the run printed them ($ch_n line(s) matched); every comparison row links the guarantee it stands on"
+  fi
+fi
 # 3c. the marketing copy carries no capability claim: the words are positioning, and every
 # fact beside them comes out of the dataset above
 grep -qE '\b(surfaces?|capabilit(y|ies)|command line|MCP|HTTP API)\b *[:=] *\[' "$SITE/data/marketing.toml" \
@@ -546,8 +581,11 @@ jq -r '.use_cases[] | .id as $u | .commands[] | "\($u) \(.)"' "$SITE/data/genera
   grep -q "/commands/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to the command page for $c"
 done < "$PAGEROWS.found"
 # every use case with a scenario shows the evidence of its run: the command lines the tool
-# executed, and the result; a page that shows a demonstration nobody ran is what this refuses
-jq -r '.use_cases[] | select(.scenario != null) | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u res n; do
+# executed, and the result; a page that shows a demonstration nobody ran is what this refuses.
+# A live scenario's evidence describes one tree on one machine and is never published (ADR 38),
+# so only fixture scenarios are held to it; and a worker step is shown as the line the worker
+# ran, not as a command of the tool, so the count is of the tool's steps.
+jq -r '.use_cases[] | select(.scenario != null and (.scenario.mode // "fixture") != "live") | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \(($e.steps // []) | map(select((.actor // "tool") == "tool")) | length)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u res n; do
   [ "$res" = pass ] || bad evidence "use case $u carries evidence '$res'; a page shows only a scenario that passed"
   [ "$(grep -c '\$ majordomus ' "$PUB/use-cases/$u/index.html")" -ge "$n" ] || bad evidence "use case $u renders fewer executed commands than its evidence has ($n)"
 done < "$PAGEROWS.found"

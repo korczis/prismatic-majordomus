@@ -24,7 +24,11 @@
 
     {%- if u.scenario %}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
-    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">{{ u.scenario.setup }}</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
+    {%- if u.scenario.mode | default(value="fixture") == "live" %}
+    <p class="mt-2 text-sm text-body">A live scenario: its questions are asked of the repository it runs in, by whoever runs it, and may only use commands that change nothing. Its evidence describes one tree on one machine, so it is kept locally and never published here.</p>
+    {%- else %}
+    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">{{ u.scenario.setup | default(value="") }}</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
+    {%- endif %}
     <div class="mt-4 grid gap-4 sm:grid-cols-3">
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
@@ -32,7 +36,7 @@
       </div>
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
-        <ol class="mt-2 space-y-1 text-sm text-heading">{% for s in u.scenario.steps %}<li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span><code class="min-w-0 break-words font-mono text-xs">majordomus {{ s.run | join(sep=" ") }}</code></li>{% endfor %}</ol>
+        <ol class="mt-2 space-y-1 text-sm text-heading">{% for s in u.scenario.steps %}<li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>{% if s.worker | default(value="") %}<code class="min-w-0 break-words font-mono text-xs">worker: {{ s.worker }}</code>{% elif s.obligation | default(value="") %}<code class="min-w-0 break-words font-mono text-xs">obligation {{ s.obligation }}</code>{% else %}<code class="min-w-0 break-words font-mono text-xs">majordomus {{ s.run | default(value=[]) | join(sep=" ") }}</code>{% endif %}</li>{% endfor %}</ol>
       </div>
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
@@ -46,15 +50,20 @@
     <ol class="mt-4 space-y-4">
       {%- for st in u.evidence.steps -%}
       {%- set decl = u.scenario.steps[loop.index0] -%}
-      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+      <li id="step-{{ st.id }}" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>
+          {%- if st.actor | default(value="tool") == "worker" %}
+          {#- a worker step is the change being judged, not a command of the tool: nothing to link -#}
+          <span class="min-w-0 break-words font-mono text-sm font-medium text-heading"><span class="me-2 rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-xs font-normal text-body">worker</span>$ {{ st.command }}</span>
+          {%- else %}
           <a href="{{ get_url(path='/commands/' ~ st.argv[0] ~ '/', trailing_slash=true) }}" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ {{ st.command }}</a>
+          {%- endif %}
           <span class="rounded border px-1.5 py-0.5 font-mono text-xs {% if st.result == 'pass' %}border-success-subtle bg-success-soft text-fg-success-strong{% else %}border-danger-subtle bg-danger-soft text-fg-danger-strong{% endif %}">exit {{ st.exit }}{% if st.result != 'pass' %} (expected {{ st.expected_exit }}){% endif %}</span>
           {%- if st.stdin %}<span class="font-mono text-xs text-body-subtle">&lt; {{ st.stdin }}</span>{% endif -%}
         </div>
-        {%- if decl and decl.note %}<p class="mt-2 text-sm text-body">{{ decl.note }}</p>{% endif -%}
-        <pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>{{ st.output }}</code></pre>
+        {%- if decl and decl.note | default(value="") %}<p class="mt-2 text-sm text-body">{{ decl.note }}</p>{% endif -%}
+        <div class="mt-3 max-h-80 overflow-x-auto overflow-y-auto rounded border border-default bg-neutral-secondary-soft" tabindex="0"><pre class="m-0 p-3 text-xs leading-relaxed text-heading"><code>{{ st.output }}</code></pre></div>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs">
           {%- for a in st.assertions -%}
           <li class="rounded border px-1.5 py-0.5 font-mono {% if a.result == 'pass' %}border-success-subtle bg-success-soft text-fg-success-strong{% else %}border-danger-subtle bg-danger-soft text-fg-danger-strong{% endif %}">{{ a.kind }}{% if a.pattern %} /{{ a.pattern }}/{% endif %}{% if a.path %} {{ a.path }}{% endif %}{% if a.kind == 'exit' %} {{ a.expected }}{% endif %}</li>

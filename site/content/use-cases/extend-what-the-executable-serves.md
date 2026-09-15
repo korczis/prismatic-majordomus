@@ -1,12 +1,12 @@
 +++
 title = "Extend what the executable serves by adding a file, never by rebuilding it"
 description = "Add a rule, a prompt or a knowledge node to .ai/ and have it appear as an MCP resource, an HTTP route and a reference entry, with the same binary."
-weight = 14
+weight = 15
 [extra]
 id = "extend-what-the-executable-serves"
 source = ".ai/repo/use-cases/extend-what-the-executable-serves.md"
 category = "extension"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

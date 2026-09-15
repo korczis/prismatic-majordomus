@@ -1,12 +1,12 @@
 +++
 title = "Prove the tool is fast, not assume it, and refuse a regression"
 description = "Measure every public command and every capability of the executable against a committed baseline, and let the check fail on a regression rather than a reviewer noticing later."
-weight = 13
+weight = 14
 [extra]
 id = "prove-performance-with-benchmarks"
 source = ".ai/repo/use-cases/prove-performance-with-benchmarks.md"
 category = "performance"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

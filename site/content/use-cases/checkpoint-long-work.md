@@ -1,12 +1,12 @@
 +++
 title = "Checkpoint long work so a stop costs minutes, not the day"
 description = "Record compact progress inside the active task at the profile interval, so a session that ends without warning leaves the next one a place to start."
-weight = 16
+weight = 17
 [extra]
 id = "checkpoint-long-work"
 source = ".ai/repo/use-cases/checkpoint-long-work.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation
