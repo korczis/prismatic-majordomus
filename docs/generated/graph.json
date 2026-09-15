@@ -22811,6 +22811,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I1516",
+        "kind": "issue",
+        "label": "I1516",
+        "summary": "The adapter composes a projected body in one place",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1516",
+        "source": ".ai/repo/project/issues/I1516.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The region body is composed in exactly one place in the adapter",
+            "No caller writes the record marker without terminating its line",
+            "A body the splice would post classifies as insync, not edited"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "the_two_compositions_are_one",
+            "a_spliced_body_is_recognised_as_its_own"
+          ],
+          "milestone": "work-graph-github",
+          "non_scope": [
+            "The remote rewrite itself, which is an operation and not a change to the repository.",
+            "The drift baseline, which shrinks on its own once the bodies are correct."
+          ],
+          "objective": "Make the body scripts/github-sync posts to an issue the same text it prints for that issue, by composing it once, so that a body the adapter wrote is a body the adapter recognises as its own.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "Low. The change removes a duplicate definition; the rendering it keeps is the one every other surface already prints.",
+          "scope": [
+            "scripts/github-sync",
+            "test/cases"
+          ],
+          "slug": "the-adapter-composes-one-body",
+          "started_at": "2026-09-15",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh 45_github_projection",
+            "bash scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I1520",
         "kind": "issue",
         "label": "I1520",
@@ -48240,6 +48282,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1516",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1516",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I1520",
         "target": "kind:issue",
         "kind": "is_a"
@@ -54696,8 +54748,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1723,
-      "edges": 3859,
+      "nodes": 1724,
+      "edges": 3861,
       "acyclic": true,
       "truncated": false
     }

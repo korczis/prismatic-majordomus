@@ -80,16 +80,24 @@ REPO="$(mj_pj_repository)"
 # ---------------------------------------------------------------- projection
 # One rendering, from majordomus plan body. The CLI, the website and this adapter all
 # show the same text because they all call the same generator.
-render_body() {
-  local id="$1" tmp sha
-  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.gh.XXXXXX")"
-  if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
-  sha="$(mj_sha256 "$tmp" | cut -c1-16)"
-  printf -- '<!-- majordomus:begin %s -->\n' "$sha"
+# The content of the generated region: the record's identity, then its rendering. It is one
+# function because the adapter needs it twice — to show a body (--render) and to splice one
+# into an issue that already exists — and while it was composed twice the two compositions
+# drifted. The splice wrote the marker with printf and no newline, so the first line of the
+# record was glued to the marker in every body it posted. region_intact() drops the marker
+# line before hashing, which took that first line with it, so such a region never hashed
+# back to its own marker: all 19 issues written through the splice were reported `edited`
+# for ever, and --force could not repair them because it rewrote them the same way.
+region_content() {
+  local id="$1"
   printf -- '%s\n' "$(record_marker "$id")"
-  cat "$tmp"
+  if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id"; else mj_plan_body_issue "$id"; fi
+}
+render_body() {
+  local id="$1"
+  printf -- '<!-- majordomus:begin %s -->\n' "$(canonical_hash "$id")"
+  region_content "$id"
   printf -- '<!-- majordomus:end -->\n'
-  rm -f "$tmp"
 }
 
 # The identity of a projected record, carried by the record itself. A GitHub number is
@@ -378,8 +386,7 @@ for id in $(selected_issues); do
     tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"
     hostf="$(mktemp "${TMPDIR:-/tmp}/mj.host.XXXXXX")"; printf '%s\n' "$remote" > "$hostf"
     bodyf="$(mktemp "${TMPDIR:-/tmp}/mj.reg.XXXXXX")"
-    record_marker "$id" > "$bodyf"
-    if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" >> "$bodyf"; else mj_plan_body_issue "$id" >> "$bodyf"; fi
+    region_content "$id" > "$bodyf"
     mj_region_splice "$hostf" "$bodyf" "$(canonical_hash "$id")" > "$tmp"
     gh issue edit "$num" --repo "$REPO" --body-file "$tmp" >/dev/null
     [ "$want_state" = closed ] && gh issue close "$num" --repo "$REPO" >/dev/null 2>&1 || true
