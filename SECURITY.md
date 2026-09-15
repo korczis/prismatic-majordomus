@@ -28,7 +28,12 @@ it is described as real.
   resolve outside the repository root.
 - **No silent overwrite.** Overwriting requires an explicit flag; the default is refusal
   naming the existing file. `state/` is never overwritten by any command.
-- **No recursive deletion.** Retention rotates to archived files; nothing is deleted.
+- **No recursive deletion, and every deletion is accounted for.** Retention rotates to
+  archived files rather than removing them. One command removes anything at all:
+  `majordomus recover`, and only what it has accounted for — a duplicate record whose
+  content it has folded into the canonical one, or a staging file whose target already
+  exists. Each removal is written to the ledger, and `--check` prints the plan without
+  writing. Nothing else in this tool deletes a file it did not create.
 - **Handovers are `0600`.**
 - **Authorisation is derived, not ambient.** Any input that could relax a rule is either
   computed by Majordomus from git or corroborated against a real git object. An
