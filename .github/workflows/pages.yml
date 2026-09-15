@@ -171,6 +171,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # blob:none keeps the cost to history metadata: every commit and tag is present so the
+          # link check can decide a ref, and no file of the past is fetched. The tree being built
+          # is still checked out in full. From #357, kept because the declaration says what must
+          # be decidable and this is how it is paid for.
+          filter: blob:none
 
       # The depth above is a declaration; this is the measurement, and both come from
       # deploy.checkout in .ai/repo/ci/pages.yaml rather than from this file. `fetch-depth` is
