@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# interaction-probe: every interactive control on every page of the built site is exercised in a browser by
+# the behaviour spec that claims it, and does what that spec says. Rule: project.every-link-and-control-is-tested.
+#
+# scripts/ci/interaction-check proves every control is claimed by exactly one spec, from the markup alone. This
+# is the other half: each page is opened, the browser classifies its live document with the same isControl()
+# rule, node applies the same claims(), and each spec drives every control it claims on that page. A page also
+# fails on a console error, an uncaught exception, a request to any origin but the site's own, and a live
+# count of a spec's controls that differs from what the markup declares.
+#
+#   scripts/interaction-probe                     every page that carries a control
+#   scripts/interaction-probe --only '/ /why/'    those routes only (a local loop; CI never sets it)
+#   scripts/interaction-probe --spec tabs         one spec only
+#   MJ_PROBE_JOBS=N                               pages at a time (default: 4)
+#   MJ_PROBE_LIVE=1                               drive the published site itself rather than site/public: the page
+#                                                 list is still this build's, so run it against the commit
+#                                                 scripts/pages verify says is served
+#
+# Without a browser: SKIP and exit 0 locally, exit 12 under CI=true. Exit 0 clean, 10 findings, 12 unrunnable.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+LIB="$(cd "$(dirname "$0")/lib" && pwd)"
+ONLY=""; SPEC=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --only) ONLY="$2"; shift 2 ;;
+    --spec) SPEC="$2"; shift 2 ;;
+    *) echo "interaction-probe: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+command -v node >/dev/null 2>&1 || { echo "interaction-probe: node is required" >&2; exit 12; }
+[ -d "$ROOT/site/public" ] || { echo "interaction-probe: site/public missing; run scripts/site-build" >&2; exit 12; }
+# playwright belongs to the tool, not to the site under test: MJ_ROOT may name a site with no node_modules at all
+TOOL="$(cd "$LIB/../.." && pwd)"
+[ -d "$TOOL/node_modules/playwright" ] || { echo "interaction-probe: playwright is not installed in $TOOL (npm ci)" >&2; [ "${CI:-}" = true ] && exit 12; echo "SKIP interaction-probe: no playwright"; exit 0; }
+export MJ_PROBE_ROOT="$ROOT" MJ_PROBE_LIB="$LIB" MJ_PROBE_ONLY="$ONLY" MJ_PROBE_SPEC="$SPEC"
+export MJ_PROBE_SPECS="${MJ_INTERACTION_SPECS:-$LIB/interaction-specs}"
+cd "$ROOT" && exec node --input-type=module - <<'JS'
+const env = process.env;
+const { classify, loadSpecs, isControl, markControls, signature } = await import(`${env.MJ_PROBE_LIB}/interactions.mjs`);
+const { launch, serveSite, siteOrigin } = await import(`${env.MJ_PROBE_LIB}/browser.mjs`);
+const pub = `${env.MJ_PROBE_ROOT}/site/public`;
+const origin = siteOrigin(env.MJ_PROBE_ROOT);
+let specs = await loadSpecs(env.MJ_PROBE_SPECS);
+if (env.MJ_PROBE_SPEC) specs = specs.filter((s) => s.id === env.MJ_PROBE_SPEC);
+const only = env.MJ_PROBE_ONLY ? new Set(env.MJ_PROBE_ONLY.split(/\s+/).filter(Boolean)) : null;
+
+// what the markup declares, per page and spec: the live counts must agree with it
+const plan = new Map();
+for (const r of classify(pub, specs)) {
+  if (r.specs.length !== 1) continue;              // interaction-check owns unclaimed and doubly claimed controls
+  if (only && !only.has(r.route)) continue;
+  const byspec = plan.get(r.route) || new Map();
+  const c = byspec.get(r.specs[0]) || { live: 0, conditional: 0, sigs: new Set() };
+  if (r.el.conditional) c.conditional++; else c.live++;
+  c.sigs.add(signature(r.el));
+  byspec.set(r.specs[0], c); plan.set(r.route, byspec);
+}
+
+const browser = await launch();
+if (!browser) {
+  if (env.CI === 'true') { console.log('interaction-probe: no browser could be started under CI; a behaviour nobody ran does not hold'); process.exit(12); }
+  console.log('SKIP interaction-probe: no browser could be started (install Chrome, or: npx playwright install chromium)');
+  process.exit(0);
+}
+
+const findings = [];
+const exercised = new Map(specs.map((s) => [s.id, 0]));
+const fail = (route, spec, msg) => { findings.push(`${route}: ${spec ? `[${spec}] ` : ''}${msg}`); };
+const t0 = Date.now();
+
+async function openPage(route, width) {
+  const context = await browser.newContext({ viewport: { width, height: 900 } });
+  // the system clipboard is one per machine, so pages exercised in parallel overwrite each other's copies: each page
+  // records what it asked to copy instead, and a spec reads window.__mjClipboard (the last text written)
+  await context.addInitScript(() => {
+    window.__mjClipboard = null;
+    const record = (text) => { window.__mjClipboard = String(text); return Promise.resolve(); };
+    try {
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: record, readText: () => Promise.resolve(window.__mjClipboard ?? '') } });
+    } catch (e) { /* a page without a clipboard keeps none */ }
+  });
+  const foreign = [];
+  if (env.MJ_PROBE_LIVE === '1') {
+    context.on('request', (r) => { const u = new URL(r.url()); if (u.origin !== origin && /^https?:$/.test(u.protocol)) foreign.push(u.href); });
+  } else {
+    await serveSite(context, pub, origin, (u) => foreign.push(u));
+  }
+  const page = await context.newPage();
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(`uncaught: ${e.message}`));
+  const resp = await page.goto(origin + route, { waitUntil: 'load', timeout: 30000 });
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+  return { context, page, errors, foreign, status: resp ? resp.status() : 0 };
+}
+
+async function visit(route) {
+  const wanted = plan.get(route);
+  // One load per page. Desktop specs run first, then the page is narrowed for the mobile ones; within a width,
+  // specs that reload or leave state behind (order > 0) run last. The controls are marked again before every
+  // spec, so a spec that reloads the page cannot leave the next one pointing at nothing.
+  const group = [...wanted.keys()].map((id) => specs.find((s) => s.id === id))
+    .sort((a, b) => (b.width || 1280) - (a.width || 1280) || (a.order || 0) - (b.order || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  let v;
+  try { v = await openPage(route, group[0].width || 1280); } catch (e) { fail(route, null, `the page did not load: ${String(e.message).split('\n')[0]}`); return; }
+  const { context, page, errors, foreign, status } = v;
+  try {
+    if (status !== 200) { fail(route, null, `the page answered ${status}`); return; }
+    // what the page reported while it loaded belongs to the page, before any spec touched it
+    const loaded = errors.length;
+    for (const e of errors.slice(0, loaded)) fail(route, null, `console: ${e.slice(0, 200)}`);
+    for (const spec of group) {
+      const width = spec.width || 1280;
+      if (page.viewportSize().width !== width) { await page.setViewportSize({ width, height: 900 }); await page.waitForTimeout(50); }
+      const before = errors.length;
+      try {
+        const live = await page.evaluate(markControls, isControl.toString());
+        const mine = live.filter((c) => spec.claims(c));
+        const declared = wanted.get(spec.id);
+        if (mine.length !== declared.live) {
+          fail(route, spec.id, `the markup declares ${declared.live} control(s) this spec claims and the live page holds ${mine.length}`);
+        }
+        const ctx = {
+          page, route, width, origin,
+          controls: mine.map((c) => ({ ...c, locator: page.locator(`[data-mj-control="${c.n}"]`) })),
+          conditional: declared.conditional,
+          fail: (msg) => fail(route, spec.id, msg),
+        };
+        const n = await spec.exercise(ctx);
+        const expected = declared.live + declared.conditional;
+        if (typeof n !== 'number') fail(route, spec.id, 'exercise() did not say how many controls it drove');
+        else if (n !== expected) fail(route, spec.id, `drove ${n} of the ${expected} control(s) it claims (${[...declared.sigs].join(', ')})`);
+        else exercised.set(spec.id, exercised.get(spec.id) + n);
+      } catch (e) {
+        fail(route, spec.id, `threw: ${String(e.message).split('\n')[0].slice(0, 240)}`);
+      }
+      for (const e of errors.slice(before)) fail(route, spec.id, `console: ${e.slice(0, 200)}`);
+    }
+    for (const u of [...new Set(foreign)]) fail(route, null, `requested ${u}, which is not the site's own origin`);
+  } finally {
+    await context.close();
+  }
+}
+
+const routes = [...plan.keys()];
+const jobs = Math.max(1, Number(env.MJ_PROBE_JOBS || 4));
+let next = 0, done = 0;
+await Promise.all(Array.from({ length: jobs }, async () => {
+  while (next < routes.length) {
+    const r = routes[next++];
+    await visit(r);
+    done++;
+    if (done % 50 === 0) process.stderr.write(`  ${done}/${routes.length} page(s)\n`);
+  }
+}));
+await browser.close();
+
+for (const f of findings.sort()) console.log(`FAIL behaviour     ${f}`);
+const total = [...exercised.values()].reduce((a, b) => a + b, 0);
+const perSpec = specs.map((s) => `${exercised.get(s.id)} ${s.id}`).join(', ');
+const secs = Math.round((Date.now() - t0) / 1000);
+if (findings.length) { console.log(`interaction-probe: ${findings.length} finding(s) over ${routes.length} page(s) in ${secs}s`); process.exit(10); }
+console.log(`OK   behaviour    ${total} control(s) on ${routes.length} page(s) ${env.MJ_PROBE_LIVE === '1' ? `of ${origin} (live) ` : ''}do what their spec says, in ${secs}s: ${perSpec}`);
+JS
