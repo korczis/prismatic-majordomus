@@ -209,7 +209,7 @@ if start_http "$S/public"; then
   expect_exit 10 scripts/pages verify --commit "$(git rev-parse HEAD)" --timeout 0 --smoke
   expect_grep 'smoke .*/challenge/ (did not answer|does not carry)'
   # ... and once each route carries every marker the model names for it, the probe passes
-  sed -n 's/^    - route: \(.*\)$/\1/p' "$ROOT/.ai/repo/ci/pages.yaml" | sort -u | while read -r r; do
+  sed -n 's/^    - route: \(.*\)$/\1/p' "$ROOT/.ai/repo/ci/pages.yaml" | LC_ALL=C sort -u | while read -r r; do
     mkdir -p "$S/public$r"
     sed -n "/^    - route: ${r//\//\\/}\$/{n;s/^      marker: //p;}" "$ROOT/.ai/repo/ci/pages.yaml" > "$S/public${r}index.html"
   done

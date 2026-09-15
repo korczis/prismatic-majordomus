@@ -32,15 +32,15 @@
     <div class="mt-4 grid gap-4 sm:grid-cols-3">
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading">{% for g in u.scenario.given | default(value=[]) %}<li class="flex gap-2"><span aria-hidden="true">·</span><span>{{ g }}</span></li>{% endfor %}</ul>
+        <ul class="mt-2 space-y-1 text-sm text-heading">{% for g in u.scenario.given | default(value=[]) %}<li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">{{ g }}</span></li>{% endfor %}</ul>
       </div>
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
-        <ol class="mt-2 space-y-1 text-sm text-heading">{% for s in u.scenario.steps %}<li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>{% if s.worker | default(value="") %}<code class="min-w-0 break-words font-mono text-xs">worker: {{ s.worker }}</code>{% elif s.obligation | default(value="") %}<code class="min-w-0 break-words font-mono text-xs">obligation {{ s.obligation }}</code>{% else %}<code class="min-w-0 break-words font-mono text-xs">majordomus {{ s.run | default(value=[]) | join(sep=" ") }}</code>{% endif %}</li>{% endfor %}</ol>
+        <ol class="mt-2 space-y-1 text-sm text-heading">{% for s in u.scenario.steps %}<li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>{% if s.worker | default(value="") %}<code class="min-w-0 break-all font-mono text-xs">worker: {{ s.worker }}</code>{% elif s.obligation | default(value="") %}<code class="min-w-0 break-all font-mono text-xs">obligation {{ s.obligation }}</code>{% else %}<code class="min-w-0 break-all font-mono text-xs">majordomus {{ s.run | default(value=[]) | join(sep=" ") }}</code>{% endif %}</li>{% endfor %}</ol>
       </div>
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading">{% for t in u.scenario.then | default(value=[]) %}<li class="flex gap-2"><span aria-hidden="true">·</span><span>{{ t }}</span></li>{% endfor %}</ul>
+        <ul class="mt-2 space-y-1 text-sm text-heading">{% for t in u.scenario.then | default(value=[]) %}<li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">{{ t }}</span></li>{% endfor %}</ul>
       </div>
     </div>
 
@@ -55,9 +55,11 @@
           <span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>
           {%- if st.actor | default(value="tool") == "worker" %}
           {#- a worker step is the change being judged, not a command of the tool: nothing to link -#}
-          <span class="min-w-0 break-words font-mono text-sm font-medium text-heading"><span class="me-2 rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-xs font-normal text-body">worker</span>$ {{ st.command }}</span>
+          <span class="min-w-0 break-all font-mono text-sm font-medium text-heading"><span class="me-2 rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-xs font-normal text-body">worker</span>$ {{ st.command }}</span>
           {%- else %}
-          <a href="{{ get_url(path='/commands/' ~ st.argv[0] ~ '/', trailing_slash=true) }}" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ {{ st.command }}</a>
+          {#- break-all: a recorded command is a long token (a branch, a path, a quoted argument) that
+              break-words cannot shrink inside a flex row; CI's wider Linux fonts overflowed 320px by it -#}
+          <a href="{{ get_url(path='/commands/' ~ st.argv[0] ~ '/', trailing_slash=true) }}" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ {{ st.command }}</a>
           {%- endif %}
           <span class="rounded border px-1.5 py-0.5 font-mono text-xs {% if st.result == 'pass' %}border-success-subtle bg-success-soft text-fg-success-strong{% else %}border-danger-subtle bg-danger-soft text-fg-danger-strong{% endif %}">exit {{ st.exit }}{% if st.result != 'pass' %} (expected {{ st.expected_exit }}){% endif %}</span>
           {%- if st.stdin %}<span class="font-mono text-xs text-body-subtle">&lt; {{ st.stdin }}</span>{% endif -%}
