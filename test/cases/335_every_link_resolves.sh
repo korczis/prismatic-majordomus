@@ -1,4 +1,4 @@
-# majordomus-covers: none
+# majordomus-covers: script:scripts/ci/link-check
 # Every link the site publishes resolves, decided offline: scripts/ci/link-check, exercised against
 # a site and a git history this case builds, so the answer for each link is known before the check
 # runs. Rule: project.every-link-and-control-is-tested.
