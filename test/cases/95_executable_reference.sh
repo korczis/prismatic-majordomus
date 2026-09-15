@@ -25,9 +25,17 @@ for id in $(jq -r '.capabilities[].id' "$REG"); do
   [ -f "$C/capabilities/$slug.md" ] || { echo "    no stub for $id"; exit 1; }
   grep -q "^id = \"$id\"" "$C/capabilities/$slug.md" || { echo "    stub of $id does not carry its id"; exit 1; }
   m="$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module' "$REG")"
-  [ "$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module_route' "$G/executable.json")" = "/registry/modules/$m/" ] || { echo "    $id does not link module $m"; exit 1; }
+  # The route Zola serves is the module's slug, not its raw id: a module id carrying `_`
+  # (session_domain) is slugified to `-` the same way a capability id is at line 24, and the
+  # generator writes `module_route` from `.module | slug`. Compare against the slug, or every
+  # module whose id spells a `_` is a false failure while `plan`, `mesh` and the rest pass.
+  mslug="$(jq -r --arg id "$m" '.modules[] | select(.id==$id) | .slug' "$G/executable.json")"
+  [ "$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module_route' "$G/executable.json")" = "/registry/modules/$mslug/" ] || { echo "    $id does not link module $m"; exit 1; }
 done
-for m in $(jq -r '.modules[] | select(.source=="builtin") | .id' "$REG"); do [ -f "$C/modules/$m.md" ] || { echo "    no stub for module $m"; exit 1; }; done
+for m in $(jq -r '.modules[] | select(.source=="builtin") | .id' "$REG"); do
+  mslug="$(jq -r --arg id "$m" '.modules[] | select(.id==$id) | .slug' "$G/executable.json")"   # the stub is named by the slug Zola serves, as the module route is
+  [ -f "$C/modules/$mslug.md" ] || { echo "    no stub for module $m"; exit 1; }
+done
 for pg in _index executable cli mcp benchmarks; do [ -f "$C/$pg.md" ] || { echo "    no $pg page"; exit 1; }; done
 # a claim implemented in a module's file is attached to that module and its capabilities
 [ "$(jq -r '.modules[] | select(.id=="objects") | .claims | length' "$G/executable.json")" -gt 0 ] || { echo "    no claim attached to the objects module (mcp-uri-resolution is implemented there)"; exit 1; }

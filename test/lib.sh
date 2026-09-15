@@ -273,6 +273,23 @@ fixture_repo() {
     fi
     :                       # the loop body never ends on a false test: `set -e` would stop it
   done
+  # A context document may `tracks:` files outside the layer — a CI adapter, a script — and
+  # `context list` refuses a document that tracks a path no file matches. The whole function
+  # is "copy what the copied files name, read from them, never a hand list"; the tracked
+  # targets are that same rule for the documents just brought in, so a section's README does
+  # not arrive without the workflow it tracks. Read from every copied README's `tracks:`
+  # entry, tolerant of the flow-list form the documents use.
+  ( cd "$dst" && find .ai -name README.md -not -path '.ai/local*' -print 2>/dev/null ) | while IFS= read -r r; do
+    sed -n 's/^tracks: *\[\(.*\)\].*/\1/p; s/^tracks: *\(.*\)/\1/p' "$dst/$r" 2>/dev/null \
+      | tr ',' '\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/^["'"'"']//; s/["'"'"']$//' | while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      case "$p" in \[*|*\]) continue ;; esac
+      [ -e "$ROOT/$p" ] && [ ! -e "$dst/$p" ] || continue
+      mkdir -p "$dst/$(dirname "$p")"
+      cp -R "$ROOT/$p" "$dst/$p"
+    done
+    :                       # the loop body never ends on a false test: `set -e` would stop it
+  done
 }
 
 # A local HTTP server over a directory, for the cases that must exercise a real download
