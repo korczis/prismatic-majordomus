@@ -20,6 +20,18 @@ for id in $(jq -r '.features[] | select(.status != "draft") | .id' "$PD"); do
   expect_grep "/features/$id/" "$P/features/index.html"
 done
 # the matrix shows exactly the marks the model derived, on the homepage and on its own page
+# the matrix says what is proven, not only where a feature is reachable: one column with its
+# denominator, derived from the claims each feature names and the test each claim settles on
+expect_grep '>proven<' "$P/features/matrix/index.html"
+pr="$(jq -r '[.matrix.rows[] | select(.proven != null)] | length' "$PD")"
+[ "$pr" -gt 0 ] || { echo "    no matrix row carries a proven count; the column would render nothing"; exit 1; }
+# and a feature page names the case that settles each claim it guarantees, rather than only
+# linking the claim: the evidence is one read away, not three
+tf="$(jq -r '[.features[] | select(.claim_refs != null) | .claim_refs[] | select(.test != null)][0].test' "$PD")"
+[ "$tf" != null ] && [ -n "$tf" ]   || { echo "    no claim in the product data carries the test that settles it"; exit 1; }
+fid="$(jq -r --arg t "$tf" '[.features[] | select([.claim_refs[]?.test] | index($t))][0].id' "$PD")"
+expect_grep "$(printf '%s' "$tf" | sed 's/[.[\*^$]/\&/g')" "$P/features/$fid/index.html"
+
 want="$(jq '[.matrix.rows[] | select(.status != "draft") | .exposed | length] | add' "$PD")"
 got="$(grep -o '✓' "$P/features/matrix/index.html" | wc -l | tr -d ' ')"
 [ "$want" = "$got" ] || { echo "    /features/matrix/ shows $got marks, the model derived $want"; exit 1; }

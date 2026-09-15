@@ -114,7 +114,7 @@ templates read the dataset and name nothing:
 | `/` | `site/templates/index.html` | the chapters (features that declare themselves featured, in weight order), the interfaces, the matrix, the graph, the providers, the kinds and the doctrine |
 | `/features/` | `features-section.html` | every non-draft feature, the interfaces, the graph, the providers |
 | `/features/<id>/` | `feature.html` | the feature's own prose, then everything derived from its references |
-| `/features/matrix/` | `features-matrix.html` | features against interfaces, and modules, commands and kinds against the features that name them |
+| `/features/matrix/` | `features-matrix.html` | features against interfaces, and modules, commands and kinds against the features that name them, and how much of each feature is proven |
 
 </div>
 
@@ -221,6 +221,15 @@ detail pages: add its name to `[indexing] unlisted`.
 
 A capability module, a public command or an object kind that no stable feature names is
 **not** refused. It is reported as a gap by `majordomus product validate` and shown on the
+A surface column says where a feature is reachable. It does not say what of it holds, and a
+compliance table that answers only the first question invites the reader to assume the second.
+So each row also carries `proven` over `claims`: how many of the claims that feature names are
+guaranteed *and* name the case that settles them, out of how many it names at all. Both numbers
+are derived — the claims from the feature file, the case from each claim's `test:` in
+`docs/CLAIMS.yaml` — and a claim whose test is `-`, meaning planned or rejected, carries none
+rather than a dash a reader would mistake for evidence. The same field reaches each feature page,
+beside the claim it settles, so the evidence is one read away rather than three.
+
 matrix, because a thing the product does that the product page does not mention is exactly
 what this model exists to make visible. Closing it is one reference in one file.
 

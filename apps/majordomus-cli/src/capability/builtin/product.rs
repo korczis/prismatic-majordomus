@@ -163,6 +163,13 @@ pub struct MatrixRow {
     pub surfaces: Surfaces,
     /// The surface ids that are true.
     pub exposed: Vec<String>,
+    /// How many of the claims this feature names are guaranteed *and* name the test that
+    /// settles them. A surface column says where a feature is reachable; this says what of it
+    /// is proven, which is the question a reader of a compliance table is actually asking.
+    pub proven: usize,
+    /// How many claims it names at all, so `proven` has its denominator beside it rather than
+    /// in another table.
+    pub claims: usize,
 }
 
 /// Every feature against every interface, and every module, command and kind against the
@@ -432,6 +439,12 @@ fn product_matrix(ctx: &Context, _: Empty) -> Result<Matrix, CapabilityError> {
                 status: r.feature.status.clone(),
                 surfaces: r.surfaces,
                 exposed: r.surfaces.present().iter().map(|s| s.to_string()).collect(),
+                proven: r
+                    .claim_refs
+                    .iter()
+                    .filter(|c| c.status == "guaranteed" && c.test.is_some())
+                    .count(),
+                claims: r.claim_refs.len(),
             })
             .collect(),
         modules: m.module_coverage().to_vec(),

@@ -128,6 +128,9 @@
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
         {{ <badge status={c.status} /> }}
         <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a>
+        {%- if c.test %}
+        <span class="ml-auto shrink-0 font-mono text-xs text-body-subtle" title="the test that settles this claim">{{ c.test }}</span>
+        {%- endif %}
       </li>
       {%- endfor %}
     </ul>

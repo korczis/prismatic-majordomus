@@ -6,23 +6,23 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "5f731e40766d73bbffef96b5a832a2cdbee30cc6b7fd4ad7c42bf0282e32035a",
+    "fingerprint": "bff1c802ed7cd5aa4f4e1a7983f360e7bf7147faedcc3f0ff4acb8deab100e85",
     "summary": {
-      "total": 1461,
+      "total": 1462,
       "builtin": 113,
-      "declarative": 1348,
+      "declarative": 1349,
       "by_kind": {
         "command": 7,
         "query": 106,
-        "resource": 1348
+        "resource": 1349
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1354
+        "implemented": 1355
       },
       "mcp_tools": 110,
-      "mcp_resources": 1389,
+      "mcp_resources": 1390,
       "http_routes": 112,
       "cli_commands": 52,
       "modules": 66,
@@ -27355,6 +27355,13 @@
                   "status": {
                     "type": "string",
                     "description": "`guaranteed`, `advisory`, `planned` or `rejected`."
+                  },
+                  "test": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a\nclaim checkable rather than stated. Absent where the claim declares none, and where it\ndeclares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash\nas a test would be a projection inventing evidence."
                   }
                 },
                 "required": [
@@ -28307,6 +28314,18 @@
                       "type": "string"
                     },
                     "description": "The surface ids that are true."
+                  },
+                  "proven": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many of the claims this feature names are guaranteed *and* name the test that\nsettles them. A surface column says where a feature is reachable; this says what of it\nis proven, which is the question a reader of a compliance table is actually asking."
+                  },
+                  "claims": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many claims it names at all, so `proven` has its denominator beside it rather than\nin another table."
                   }
                 },
                 "required": [
@@ -28315,7 +28334,9 @@
                   "route",
                   "status",
                   "surfaces",
-                  "exposed"
+                  "exposed",
+                  "proven",
+                  "claims"
                 ],
                 "description": "One row of the matrix: a feature and the surfaces it is exposed through."
               },
@@ -40802,7 +40823,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 213,
+        "capabilities": 214,
         "capability_ids": []
       },
       {
@@ -40882,7 +40903,7 @@
     ]
   },
   "index": {
-    "fingerprint": "816b49a4ff9482b4fc1715580673305bd9f80952d227ab6976a10214e3e6570b",
+    "fingerprint": "3cae517d6dfbd8152be1019510295bc1c1043e801f1889e02221af4565007a18",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40931,7 +40952,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 213,
+      "test": 214,
       "use-case": 46,
       "workspace": 1
     },
@@ -45000,7 +45021,7 @@
         "title": "Product — the features, and the landing page as a projection of them",
         "path": "docs/PRODUCT.md",
         "source_class": "document",
-        "bytes": 13367
+        "bytes": 14149
       },
       {
         "uri": "majordomus://document/docs/QUALITY.md",
@@ -52527,7 +52548,7 @@
         "path": ".ai/repo/rules/project/product-surface-derived.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5525,
+        "bytes": 5583,
         "tags": [
           "product",
           "site",
@@ -53739,7 +53760,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 8743
+        "bytes": 9755
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -54388,6 +54409,14 @@
         "path": "test/cases/33_stale_executable.sh",
         "source_class": "case",
         "bytes": 8682
+      },
+      {
+        "uri": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "kind": "test",
+        "identity": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "path": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "source_class": "case",
+        "bytes": 5835
       },
       {
         "uri": "majordomus://test/test/cases/34_command_fixtures.sh",
@@ -55877,7 +55906,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 213
+      "objects": 214
     },
     {
       "name": "use-case",

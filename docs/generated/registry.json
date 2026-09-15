@@ -27625,6 +27625,13 @@
                 "status": {
                   "type": "string",
                   "description": "`guaranteed`, `advisory`, `planned` or `rejected`."
+                },
+                "test": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a\nclaim checkable rather than stated. Absent where the claim declares none, and where it\ndeclares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash\nas a test would be a projection inventing evidence."
                 }
               },
               "required": [
@@ -28577,6 +28584,18 @@
                     "type": "string"
                   },
                   "description": "The surface ids that are true."
+                },
+                "proven": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many of the claims this feature names are guaranteed *and* name the test that\nsettles them. A surface column says where a feature is reachable; this says what of it\nis proven, which is the question a reader of a compliance table is actually asking."
+                },
+                "claims": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many claims it names at all, so `proven` has its denominator beside it rather than\nin another table."
                 }
               },
               "required": [
@@ -28585,7 +28604,9 @@
                 "route",
                 "status",
                 "surfaces",
-                "exposed"
+                "exposed",
+                "proven",
+                "claims"
               ],
               "description": "One row of the matrix: a feature and the surfaces it is exposed through."
             },
