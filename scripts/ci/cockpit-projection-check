@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# cockpit-projection-check — the Cockpit renders what a capability answered, and never what
+# it read out of the index itself.
+#
+# ADR 0012 decides that the Cockpit is a sixth projection of the registry and not an
+# application over it: "every page is laid out from what a capability answered through
+# `Context::execute` — the same call MCP and the HTTP routes make ... No page reads the
+# index directly." The reason is in the ADR's context and it is not style: a view layer
+# that reaches into the index because it is in the same process reads the repository
+# outside the executor, outside the cache, outside the perf counters and outside the
+# validation every other caller passes through. Two pages then answer the same question two
+# ways, and the day they disagree neither is wrong in its own terms.
+#
+# Nothing held that sentence. Four reads had grown under it — the object count and the kind
+# catalogue in the navigation, the kind filter and the subtitle of the objects page — each
+# of them a fact `repository.info` and `objects.list` already answer.
+#
+# The subject is every Rust file under the Cockpit's own directory. A finding is a file
+# that reaches a field named `index` on a context value at all: `ctx.index`, `context.index`
+# or `&ctx.index` handed to something else. A page that names none of them cannot have read
+# the index; a page that names one has stepped around the executor.
+#
+# The test module of a Cockpit file is subject to the same rule, deliberately: an assertion
+# that compares a page against the index proves the page agrees with a source the page is
+# not allowed to read, so it would keep passing after the page started disagreeing with the
+# capability. Case 359 mutates exactly that.
+#
+#   scripts/ci/cockpit-projection-check              report, and fail on a direct read
+#   MJ_ROOT=<dir> scripts/ci/cockpit-projection-check   measure another tree (case 359 does)
+#
+# Exit: 0 clean, 10 a page reads the index, 12 unusable.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+COCKPIT="apps/majordomus-cli/src/cockpit"
+[ $# -eq 0 ] || { echo "cockpit-projection-check: unknown option $1" >&2; exit 2; }
+
+if [ ! -d "$COCKPIT" ]; then
+  echo "cockpit-projection-check: no Cockpit at $COCKPIT; nothing to measure" >&2
+  exit 12
+fi
+
+files="$(find "$COCKPIT" -name '*.rs' -type f | LC_ALL=C sort)"
+[ -n "$files" ] || { echo "cockpit-projection-check: $COCKPIT holds no Rust file" >&2; exit 12; }
+n="$(printf '%s\n' "$files" | wc -l | tr -d ' ')"
+
+# A comment may say the word: the module documentation of nav.rs explains why the kinds are
+# asked for rather than read, and a rule that forbade naming its own subject could not be
+# documented where it applies.
+findings="$(printf '%s\n' "$files" | while IFS= read -r f; do
+  grep -nE '(^|[^a-zA-Z_.])(ctx|context|c)\.index\b' "$f" 2>/dev/null \
+    | grep -vE '^[0-9]+:[[:space:]]*(//|\*|/\*)' \
+    | sed "s|^|$f:|" || true
+done)"
+
+if [ -n "$findings" ]; then
+  printf '%s\n' "$findings"
+  printf 'FAIL cockpit-projection  %s file(s) scanned; the page above reads the index directly.\n' "$n"
+  printf '     ADR 0012: a page is laid out from what a capability answered through Context::execute.\n'
+  printf '     The object count and kinds are repository.info; a listing is objects.list; one object is objects.get.\n'
+  exit 10
+fi
+
+printf 'ok   cockpit-projection  %s file(s): no page reads the index directly; every fact comes from a capability (ADR 0012)\n' "$n"

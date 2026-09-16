@@ -91,7 +91,7 @@ are read a page at a time and entered by their parts:
   and never an error. The control under the table says which rows are being shown, and
   offers the first page, the last, the neighbours of this one, and a gap for the rest.
 - **Above the table are the listing's own parts** — the registry's modules on
-  `/cockpit/capabilities`, the index's kinds on `/cockpit/objects` — each with how many
+  `/cockpit/capabilities`, the listing's own kinds on `/cockpit/objects` — each with how many
   it holds *under the filters in force*. They are the same catalogues the sidebar shows,
   put where the listing is: a set of nine hundred rows is entered by its module or its
   kind rather than scrolled.
@@ -164,9 +164,19 @@ the HTTP routes make. It is counted in the same perf counters, answered from the
 and bound by the same validation. `tests/cockpit.rs` asserts that serving every page moves
 none of the counters that must only move at startup.
 
-**Nothing in it is a list.** The sidebar's catalogues are the registry's modules, the
-index's kinds and the graph derivation table. The capability explorer is the registry
-filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,
+**No page reads the index.** The other half of the sentence above, and the one that was
+documentation only until `scripts/ci/cockpit-projection-check` (gate `cockpit-projection`,
+ADR 0012) began refusing it: a view layer that reaches into the index because it is in the
+same process reads the repository outside the executor, outside the cache, outside the
+counters and outside the validation, and the day it disagrees with the capability neither
+answer is wrong in its own terms. The gate greps the Cockpit's own files, test modules
+included, and `test/cases/359_cockpit_projection.sh` drives it against fixture trees. The
+object count and the kind catalogue come from `repository.info`, a listing from
+`objects.list`, one object from `objects.get`.
+
+**Nothing in it is a list.** The sidebar's catalogues are the registry's modules, the kinds
+`repository.info` reports and the graph derivation table. The capability explorer is the
+registry filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,
 and takes the Cockpit's own pages out of the navigation the server already rendered.
 
 **The runner is generic.** A capability's form is generated from its input schema: the

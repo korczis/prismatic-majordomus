@@ -34,6 +34,29 @@ pub struct CaseContext<'a> {
     pub index: &'a Index,
 }
 
+impl<'a> CaseContext<'a> {
+    /// The case context of a live context: what a caller that holds a [`Context`] hands to
+    /// a case provider.
+    ///
+    /// It exists so that reaching a provider does not require reaching into the index at
+    /// the call site. A benchmark case is declared against the index by design — the
+    /// vocabulary above says why — and a caller that only wants to *run* the declaration
+    /// should not have to open the index to do it, because a page that opens the index has
+    /// no way of being told apart from a page that reads it (ADR 0012).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CaseContext;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().expect("a synthetic repository");
+    /// let ctx = repo.context().expect("a context");
+    /// let cases = CaseContext::of(&ctx);
+    /// assert_eq!(cases.index.objects.len(), ctx.index.objects.len());
+    /// ```
+    pub fn of(ctx: &'a crate::capability::Context) -> Self {
+        CaseContext { index: &ctx.index }
+    }
+}
+
 /// Representative inputs of a capability's input type. Implemented once per input type;
 /// the `capability!` macro requires it, so a new capability without a benchmark case is a
 /// compile error, not a coverage report.

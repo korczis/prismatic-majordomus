@@ -231,6 +231,16 @@ gates:
     runs: scripts/cockpit-assets --check
     summary: the committed Cockpit stylesheet matches the source it is compiled from
 
+  # A grep over six files, so it costs nothing and runs in every plan. ADR 0012 decides that
+  # no Cockpit page reads the index directly — a page that does is outside the executor, the
+  # cache, the counters and the validation every other caller passes through — and until
+  # this gate the sentence was documentation only: four reads had grown under it.
+  - id: cockpit-projection
+    job: structure
+    always: true
+    runs: scripts/ci/cockpit-projection-check
+    summary: no Cockpit page reads the index directly; every fact a page shows is what a capability answered through Context::execute (ADR 0012)
+
   # Needs no browser, no built site and no node: it reads one YAML file, regenerates three
   # greps the tree for a design decision made outside share/design/tokens.yaml: a colour
   # literal, a raw palette utility, a bracketed size, a second declaration of a token, a
