@@ -20,6 +20,10 @@
 {%- set term = load_data(path="data/generated/terminal.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set why = load_data(path="data/registry/why.json") -%}
+{%- set cat = load_data(path="data/generated/catalogue.json") -%}
+{#- the build's provenance is a fact of the build, written by scripts/site-build and never
+    committed; a plain `zola serve` has none, and the trust strip then says so -#}
+{%- set build = load_data(path="data/build.json", required=false) -%}
 {%- set stable = [f for f in model.features if f.status == "stable"] -%}
 {%- set blocking = [r for r in model.rules if r.class == "blocking"] -%}
 {%- set advisory = [r for r in model.rules if r.class == "advisory"] -%}
@@ -166,6 +170,10 @@
         {%- set graph_id = "product" -%}
         {%- set graph_rings = "feature,module,command,kind,surface" -%}
         {%- set graph_label = graph.description -%}
+        {#- fetched on first sight from the published copy scripts/site-build writes; the text list
+            lives on /features/, one link away, rather than in every visitor's first download -#}
+        {%- set graph_src = "graphs/product.json" -%}
+        {%- set graph_page = "/features/" -%}
         {% include "partials/graph.html" %}
       </div>
     </details>
@@ -187,6 +195,20 @@
       {%- for sid in caps.status_order %}
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle">{{ sid }} claims</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ [c for c in caps.claims if c.status == sid] | length }}</dd><dd class="mt-2 text-xs leading-relaxed text-body">{{ caps.statuses[sid] }}</dd></div>
       {%- endfor %}
+    </dl>
+    {#- where this page came from, and what a reader can check for themselves: the release the
+        installer resolves, the command that confirms it, the commit this build was made from and
+        the scenarios executed to record every transcript above. Each value is a dataset's; one
+        that is not known here says so rather than disappearing. -#}
+    <dl class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-trust>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">latest release the installer resolves</dt>
+        {%- if dist.latest %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ dist.latest.notes_url }}" class="hover:underline">{{ dist.latest.version }}</a></dd><dd class="mt-1 text-xs text-body">published {{ dist.latest.published_at | truncate(length=10, end="") }}</dd>
+        {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">{{ dist.verify_command }}</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">commit this page was built from</dt>
+        {%- if build and build.commit and build.commit != "unknown" %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="hover:underline">{{ build.commit | truncate(length=7, end="") }}</a></dd><dd class="mt-1 text-xs text-body">{% if build.dirty %}with uncommitted changes · {% endif %}<a href="{{ get_url(path="build.json") }}" class="text-fg-brand hover:underline">served as build.json</a></dd>
+        {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">executable use cases, across areas of work</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ get_url(path="/use-cases/", trailing_slash=true) }}" class="hover:underline">{{ cat.use_cases | length }}</a></dd><dd class="mt-1 text-xs text-body">{{ cat.categories | length }} areas</dd></div>
     </dl>
     <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
       <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every claim, with the test that settles it &rarr;</a>
@@ -214,6 +236,17 @@
       <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6">
         <h3 class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">Repository intelligence is not a model provider.</h3>
         <p class="mt-3 text-base leading-relaxed text-heading">{{ m.providers.boundary }}</p>
+        {#- the worker tools the policy is generated for, named by the product model: a provider
+            added there is named here, and none is typed in this template -#}
+        <dl class="mt-4 border-t border-brand-subtle pt-4">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-fg-brand-strong">instruction files generated for</dt>
+          <dd class="mt-2 flex flex-wrap gap-2">
+            {%- for pv in model.providers %}
+            {%- if pv.route %}<a href="{{ base }}{{ pv.route }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-2 py-1 text-sm text-heading hover:underline">{{ pv.title }}</a>
+            {%- else %}<span class="rounded-base border border-brand-subtle bg-neutral-primary px-2 py-1 text-sm text-heading">{{ pv.title }}</span>{% endif %}
+            {%- endfor %}
+          </dd>
+        </dl>
       </div>
       <div class="min-w-0 rounded-base border border-warning-subtle bg-warning-soft p-6">
         <h3 class="text-xl font-bold leading-snug tracking-tight text-heading sm:text-2xl">{{ x.direction.planned_title }}</h3>
@@ -245,4 +278,6 @@
   </div>
 </section>
 {% endblock content %}
-{% block scripts %}{% include "partials/mermaid.html" %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}
+{#- no Mermaid here: the homepage carries no diagram, and the runtime is the heaviest file on
+    the site. homepage-check fails any page that loads it without a diagram to render. -#}
+{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}
