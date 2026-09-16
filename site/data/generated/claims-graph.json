@@ -393,6 +393,15 @@
       "note": null
     },
     {
+      "id": "claim:finish-refusal-is-recorded",
+      "kind": "claim",
+      "label": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
+      "status": "guaranteed",
+      "route": "/guarantees/finish-refusal-is-recorded/",
+      "external": false,
+      "note": null
+    },
+    {
       "id": "claim:typed-outcome",
       "kind": "claim",
       "label": "An outcome is a value from a closed vocabulary, not free text",
@@ -2461,6 +2470,13 @@
       "external": false
     },
     {
+      "id": "source:share/events.yaml",
+      "kind": "source",
+      "label": "share/events.yaml",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:share/skeleton/policy.yaml",
       "kind": "source",
       "label": "share/skeleton/policy.yaml",
@@ -3321,6 +3337,11 @@
     {
       "source": "claim:finish-contract",
       "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:finish-refusal-is-recorded",
+      "target": "source:share/events.yaml",
       "kind": "specified_by"
     },
     {
@@ -4189,6 +4210,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:finish-refusal-is-recorded",
+      "target": "impl:lib/finish.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:typed-outcome",
       "target": "impl:lib/finish.sh",
       "kind": "implemented_by"
@@ -5005,6 +5031,11 @@
     },
     {
       "source": "claim:finish-contract",
+      "target": "test:test/cases/06_finish.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:finish-refusal-is-recorded",
       "target": "test:test/cases/06_finish.sh",
       "kind": "proved_by"
     },

@@ -5506,6 +5506,22 @@
         }
       },
       {
+        "id": "majordomus://claim/finish-refusal-is-recorded",
+        "kind": "claim",
+        "label": "finish-refusal-is-recorded",
+        "summary": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Ffinish-refusal-is-recorded",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
+          "implementation": "lib/finish.sh",
+          "responsibility": "finish",
+          "source": "share/events.yaml",
+          "test": "test/cases/06_finish.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/generated-artifacts-typed",
         "kind": "claim",
         "label": "generated-artifacts-typed",
@@ -10225,6 +10241,14 @@
         "source": "docs/claims/finish-contract.md"
       },
       {
+        "id": "majordomus://document/docs/claims/finish-refusal-is-recorded.md",
+        "kind": "document",
+        "label": "docs/claims/finish-refusal-is-recorded.md",
+        "summary": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Ffinish-refusal-is-recorded.md",
+        "source": "docs/claims/finish-refusal-is-recorded.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/generated-artifacts-typed.md",
         "kind": "document",
         "label": "docs/claims/generated-artifacts-typed.md",
@@ -11855,6 +11879,7 @@
           ],
           "claims": [
             "finish-contract",
+            "finish-refusal-is-recorded",
             "typed-outcome",
             "open-question-gate",
             "consistency-check",
@@ -11874,7 +11899,6 @@
             "docs/DESIGN.md"
           ],
           "featured": true,
-          "headline": "A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, and nothing is written to the record until all of them pass.",
           "related": [
             "doctrine",
             "coordination"
@@ -40405,6 +40429,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/finish-refusal-is-recorded",
+        "target": "file:share/events.yaml",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/finish-refusal-is-recorded",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/finish-refusal-is-recorded",
+        "target": "majordomus://implementation/lib/finish.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/finish-refusal-is-recorded",
+        "target": "majordomus://test/test/cases/06_finish.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/generated-artifacts-typed",
         "target": "file:apps/majordomus-cli/src/generate.rs",
         "kind": "implemented_by"
@@ -43776,6 +43820,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/finish-contract.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/finish-refusal-is-recorded.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -54736,8 +54785,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1725,
-      "edges": 3861,
+      "nodes": 1727,
+      "edges": 3866,
       "acyclic": true,
       "truncated": false
     }

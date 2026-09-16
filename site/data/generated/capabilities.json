@@ -560,6 +560,19 @@
       "test_case": "06_finish"
     },
     {
+      "id": "finish-refusal-is-recorded",
+      "claim": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
+      "source": "share/events.yaml",
+      "implementation": "lib/finish.sh",
+      "test": "test/cases/06_finish.sh",
+      "status": "guaranteed",
+      "note": null,
+      "responsibility": "finish",
+      "source_route": null,
+      "command": "finish",
+      "test_case": "06_finish"
+    },
+    {
       "id": "typed-outcome",
       "claim": "An outcome is a value from a closed vocabulary, not free text",
       "source": "docs/SCHEMAS.md",
