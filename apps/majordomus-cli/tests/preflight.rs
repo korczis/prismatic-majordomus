@@ -16,9 +16,10 @@ use common::{run_in, Fixture, Served};
 use majordomus_cli::capability::builtin::continuity::Freshness;
 use majordomus_cli::capability::builtin::server::ServerStanding;
 use majordomus_cli::environment::preflight::{
-    derive, observe, Check, DeploymentObservation, EpisodeObservation, GitObservation,
-    HandoverObservation, LedgerObservation, Observations, Preflight, Probe, RulesObservation,
-    RulesTally, ServerObservation, TaskObservation, Verdict, PAGES_REF,
+    derive, observe, AdrRelation, AdrRelevance, AdrRelevanceObservation, Check,
+    DeploymentObservation, EpisodeObservation, GitObservation, HandoverObservation,
+    LedgerObservation, Observations, Preflight, Probe, RulesObservation, RulesTally,
+    ServerObservation, TaskObservation, Verdict, PAGES_REF,
 };
 use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
 use majordomus_cli::Repository;
@@ -152,6 +153,7 @@ fn a_briefing_is_fresh_until_git_or_the_task_moves() {
         task: "later".into(),
         outcome: String::new(),
         started_at: "2026-09-15T11:00:00Z".into(),
+        ..Default::default()
     });
     let p = derive(&o);
     let c = p.check("session.context").unwrap();
@@ -391,6 +393,195 @@ fn a_ledger_run_verifies_only_the_tree_it_measured() {
     f.write(".ai/repo/evidence/ledger.json", &ledger(&measured, "pass"));
     f.write("lib/a.sh", "echo changed\n");
     assert_eq!(tests(&f), Verdict::Stale);
+}
+
+// ---------------------------------------------------------------- decisions and the task
+
+fn in_progress(id: &str, scope: &[&str]) -> TaskObservation {
+    TaskObservation {
+        id: id.into(),
+        task: "the work".into(),
+        outcome: "active".into(),
+        scope: scope.iter().map(|s| s.to_string()).collect(),
+        ..Default::default()
+    }
+}
+
+fn joined(task: &str, scope: &[&str], head: &str) -> AdrRelevance {
+    AdrRelevance {
+        task: task.into(),
+        scope: scope.iter().map(|s| s.to_string()).collect(),
+        head: Some(head.into()),
+        relations: vec![
+            AdrRelation {
+                adr: "adr-0007".into(),
+                status: Some("accepted".into()),
+                reference: "file:lib/session.sh".into(),
+                scope: "lib".into(),
+            },
+            AdrRelation {
+                adr: "adr-0009".into(),
+                status: None,
+                reference: "test:lib/session_test.sh".into(),
+                scope: "lib".into(),
+            },
+        ],
+    }
+}
+
+#[test]
+fn a_decision_is_relevant_only_by_a_declared_relation_to_the_task_in_progress() {
+    let mut o = at(HEAD);
+    o.adrs = Some(12);
+
+    // no task: counted, and nothing claimed relevant
+    let p = derive(&o);
+    let c = p.check("governance.adrs").unwrap();
+    assert_eq!(c.verdict, Verdict::Active);
+    assert!(
+        c.summary.contains("no task is in progress"),
+        "{}",
+        c.summary
+    );
+
+    // a task in progress and no join: relevance is unknown, not zero
+    o.task = Some(in_progress("t-1", &["lib"]));
+    assert_eq!(verdict(&o, "governance.adrs"), Verdict::Unknown);
+
+    // a join for this task, its scope and HEAD: each relation is a piece of evidence
+    o.adr_relevance = AdrRelevanceObservation::Joined(joined("t-1", &["lib"], HEAD));
+    let p = derive(&o);
+    let c = p.check("governance.adrs").unwrap();
+    assert_eq!(c.verdict, Verdict::Active);
+    assert!(
+        c.summary
+            .starts_with("12 indexed · 2 relevant to task t-1: adr-0007, adr-0009"),
+        "{}",
+        c.summary
+    );
+    assert!(c
+        .evidence
+        .iter()
+        .any(|e| e.observed == "adr-0007 (accepted) → file lib/session.sh → scope lib"));
+
+    // the same join taken from the cache at another commit is stale
+    o.adr_relevance = AdrRelevanceObservation::Cached(joined("t-1", &["lib"], OLD));
+    assert_eq!(verdict(&o, "governance.adrs"), Verdict::Stale);
+    // including when entry could not count the corpus: the join is judged on its own
+    o.adrs = None;
+    let p = derive(&o);
+    let c = p.check("governance.adrs").unwrap();
+    assert_eq!(c.verdict, Verdict::Stale);
+    assert!(
+        c.summary.starts_with("count unknown · 2 relevant"),
+        "{}",
+        c.summary
+    );
+    o.adrs = Some(12);
+
+    // a join for another task, or for a scope the task no longer declares, says nothing
+    o.adr_relevance = AdrRelevanceObservation::Cached(joined("t-0", &["lib"], HEAD));
+    assert_eq!(verdict(&o, "governance.adrs"), Verdict::Unknown);
+    o.adr_relevance = AdrRelevanceObservation::Cached(joined("t-1", &["lib"], HEAD));
+    o.task = Some(in_progress("t-1", &["lib", "docs"]));
+    assert_eq!(verdict(&o, "governance.adrs"), Verdict::Unknown);
+
+    // and a task that ended is not a task anything is relevant to
+    o.task = Some(TaskObservation {
+        outcome: "completed".into(),
+        ..in_progress("t-1", &["lib"])
+    });
+    let p = derive(&o);
+    assert!(p
+        .check("governance.adrs")
+        .unwrap()
+        .summary
+        .contains("no task is in progress"));
+}
+
+#[test]
+fn the_full_preflight_joins_decisions_to_the_task_and_entry_reads_the_join() {
+    let f = Fixture::new();
+    // the fixture's layer declares no decisions; declare them the way this repository does
+    f.write(
+        ".ai/repo/knowledge/sources.yaml",
+        &format!(
+            "{}\n  - id: adr\n    kind: adr\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/adrs/????-*.md'\n    required: false\n",
+            common::SOURCES.trim_end()
+        ),
+    );
+    let adr = |n: &str, status: &str, extra: &str| {
+        format!(
+            "---\nschema: adr/v1\nid: adr-{n}\nkind: adr\ntitle: Decision {n}\nstatus: {status}\n\
+             date: 2026-09-15\ntags:\n  - entry\n{extra}---\n\n## Context\n\nA reason.\n\n\
+             ## Decision\n\nDecided.\n\n## Consequences\n\nFollows.\n"
+        )
+    };
+    // one names a file inside the scope, one a file outside it, one is superseded by the first
+    f.write(
+        ".ai/repo/adrs/0001-inside.md",
+        &adr(
+            "0001",
+            "accepted",
+            "supersedes:\n  - adr-0003\nrelated:\n  - file:lib/a.sh\n",
+        ),
+    );
+    f.write(
+        ".ai/repo/adrs/0002-outside.md",
+        &adr("0002", "accepted", "related:\n  - file:docs/elsewhere.md\n"),
+    );
+    f.write(
+        ".ai/repo/adrs/0003-superseded.md",
+        &adr("0003", "accepted", "related:\n  - file:lib/a.sh\n"),
+    );
+    f.commit("decisions");
+    f.write(
+        ".ai/local/state/current.yaml",
+        "id: t-9\ntask: \"Change lib\"\nscope:\n  - lib\nstarted_at: 2026-09-15T00:00:00Z\n\
+         outcome: active\n",
+    );
+
+    let adrs = |args: &[&str]| -> Value {
+        let (code, out, err) = run_in(&f.root(), args, "");
+        assert_eq!(code, 0, "{err}");
+        let doc: Value = serde_json::from_str(&out).expect("JSON");
+        doc["sections"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .flat_map(|s| s["checks"].as_array().unwrap().clone())
+            .find(|c| c["id"] == "governance.adrs")
+            .expect("the ADR check")
+    };
+
+    let full = adrs(&["env", "preflight", "--full", "--format", "json"]);
+    assert_eq!(full["verdict"], "active", "{full}");
+    let summary = full["summary"].as_str().unwrap();
+    assert!(
+        summary.ends_with("· 1 relevant to task t-9: adr-0001"),
+        "{summary}"
+    );
+    assert!(
+        full["evidence"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|e| e["observed"] == "adr-0001 (accepted) → file lib/a.sh → scope lib"),
+        "{full}"
+    );
+
+    // entry never builds the index; it reads the join the full preflight left, at this commit
+    let fast = adrs(&["env", "preflight", "--format", "json"]);
+    assert_eq!(fast["verdict"], "active", "{fast}");
+    assert!(fast["summary"].as_str().unwrap().contains("adr-0001"));
+
+    // and once HEAD moves the join is about another commit (the cached count expires with HEAD
+    // too, and the join is still judged on its own)
+    f.write("notes.txt", "more\n");
+    f.commit("more");
+    let moved = adrs(&["env", "preflight", "--format", "json"]);
+    assert_eq!(moved["verdict"], "stale", "{moved}");
 }
 
 // ---------------------------------------------------------------- one value, every surface
