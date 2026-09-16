@@ -12902,6 +12902,327 @@ cli:
           subcommands: []
     - path:
         - majordomus
+        - served
+      route: /docs/cli/served/
+      executable: false
+      usage: "majordomus served [OPTIONS] <COMMAND>"
+      about: "Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - served
+            - observe
+          route: /docs/cli/served/observe/
+          executable: true
+          usage: "majordomus served observe [OPTIONS]"
+          about: "Probe the build identity a deployment serves, judge it against a commit and record it"
+          args:
+            - name: commit
+              long: commit
+              positional: false
+              help: The commit expected to be served (default HEAD)
+              value_name: COMMIT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: url
+              long: url
+              positional: false
+              help: "The site's base URL (default: base_url of site/config.toml)"
+              value_name: URL
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: identity
+              long: identity
+              positional: false
+              help: The identity file under the base (default build.json)
+              value_name: IDENTITY
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: deployment
+              long: deployment
+              positional: false
+              help: The name the observation is recorded under (default pages)
+              value_name: DEPLOYMENT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: timeout
+              long: timeout
+              positional: false
+              help: "Bound on the probe, in seconds (default 10)"
+              value_name: TIMEOUT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: dry_run
+              long: dry-run
+              positional: false
+              help: Judge without recording
+              value_name: DRY_RUN
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: served-observe-unreachable
+              title: A deployment that could not be reached is not a deployment that is current
+              description: "One bounded probe of the build identity under the base URL, judged against HEAD. Nothing listens on the discard port, so nothing is received and the verdict is `unreachable` with exit 12 — the unanswered question, never the yes. `--dry-run` judges without recording. Against the public site the same command answers `served` (0) when the build contains the commit and `stale` (10) when it does not."
+              argv:
+                - served
+                - observe
+                - "--url"
+                - http://127.0.0.1:9
+                - "--timeout"
+                - "1"
+                - "--dry-run"
+              command: majordomus served observe --url http://127.0.0.1:9 --timeout 1 --dry-run
+              setup: []
+              expectation: exits 12
+          subcommands: []
+        - path:
+            - majordomus
+            - served
+            - show
+          route: /docs/cli/served/show/
+          executable: true
+          usage: "majordomus served show [OPTIONS]"
+          about: "Each deployment's newest record, re-judged against a commit"
+          args:
+            - name: commit
+              long: commit
+              positional: false
+              help: The commit to judge against (default HEAD)
+              value_name: COMMIT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: deployment
+              long: deployment
+              positional: false
+              help: Only this deployment
+              value_name: DEPLOYMENT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: served-show-json
+              title: "What each deployment was last seen serving, judged against HEAD now"
+              description: "The newest recorded observation of each deployment, re-judged against the commit asked about without probing anything. The same answer `GET /api/v1/served` and the MCP tool `majordomus_served` give. A checkout that has observed nothing answers with an empty list rather than a verdict."
+              argv:
+                - served
+                - show
+                - "--format"
+                - json
+              command: majordomus served show --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /expected, /observations, /unreadable, /deployments"
+          subcommands: []
+    - path:
+        - majordomus
         - rules
       route: /docs/cli/rules/
       executable: false

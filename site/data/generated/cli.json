@@ -150,6 +150,12 @@
           "route": "/docs/cli/evidence/"
         },
         {
+          "about": "Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit",
+          "command": "majordomus served",
+          "name": "served",
+          "route": "/docs/cli/served/"
+        },
+        {
           "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
           "command": "majordomus rules",
           "name": "rules",
@@ -20075,6 +20081,492 @@
       "usage": "majordomus evidence record [OPTIONS]"
     },
     {
+      "about": "Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Probe the build identity a deployment serves, judge it against a commit and record it",
+          "command": "majordomus served observe",
+          "name": "observe",
+          "route": "/docs/cli/served/observe/"
+        },
+        {
+          "about": "Each deployment's newest record, re-judged against a commit",
+          "command": "majordomus served show",
+          "name": "show",
+          "route": "/docs/cli/served/show/"
+        }
+      ],
+      "command": "majordomus served",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "served",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "served"
+      ],
+      "route": "/docs/cli/served/",
+      "usage": "majordomus served [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Probe the build identity a deployment serves, judge it against a commit and record it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus served",
+          "name": "served",
+          "route": "/docs/cli/served/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The commit expected to be served (default HEAD)",
+          "long": "commit",
+          "name": "commit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "COMMIT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The site's base URL (default: base_url of site/config.toml)",
+          "long": "url",
+          "name": "url",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "URL"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The identity file under the base (default build.json)",
+          "long": "identity",
+          "name": "identity",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "IDENTITY"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The name the observation is recorded under (default pages)",
+          "long": "deployment",
+          "name": "deployment",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DEPLOYMENT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Bound on the probe, in seconds (default 10)",
+          "long": "timeout",
+          "name": "timeout",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TIMEOUT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Judge without recording",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus served observe",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "served",
+            "observe",
+            "--url",
+            "http://127.0.0.1:9",
+            "--timeout",
+            "1",
+            "--dry-run"
+          ],
+          "command": "majordomus served observe --url http://127.0.0.1:9 --timeout 1 --dry-run",
+          "description": "One bounded probe of the build identity under the base URL, judged against HEAD. Nothing listens on the discard port, so nothing is received and the verdict is `unreachable` with exit 12 — the unanswered question, never the yes. `--dry-run` judges without recording. Against the public site the same command answers `served` (0) when the build contains the commit and `stale` (10) when it does not.",
+          "expectation": "exits 12",
+          "id": "served-observe-unreachable",
+          "setup": [],
+          "title": "A deployment that could not be reached is not a deployment that is current"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "observe",
+      "parent_route": "/docs/cli/served/",
+      "path": [
+        "majordomus",
+        "served",
+        "observe"
+      ],
+      "route": "/docs/cli/served/observe/",
+      "usage": "majordomus served observe [OPTIONS]"
+    },
+    {
+      "about": "Each deployment's newest record, re-judged against a commit",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus served",
+          "name": "served",
+          "route": "/docs/cli/served/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The commit to judge against (default HEAD)",
+          "long": "commit",
+          "name": "commit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "COMMIT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this deployment",
+          "long": "deployment",
+          "name": "deployment",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DEPLOYMENT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus served show",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "served",
+            "show",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus served show --format json",
+          "description": "The newest recorded observation of each deployment, re-judged against the commit asked about without probing anything. The same answer `GET /api/v1/served` and the MCP tool `majordomus_served` give. A checkout that has observed nothing answers with an empty list rather than a verdict.",
+          "expectation": "exits 0; prints one JSON document carrying /expected, /observations, /unreadable, /deployments",
+          "id": "served-show-json",
+          "setup": [],
+          "title": "What each deployment was last seen serving, judged against HEAD now"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "show",
+      "parent_route": "/docs/cli/served/",
+      "path": [
+        "majordomus",
+        "served",
+        "show"
+      ],
+      "route": "/docs/cli/served/show/",
+      "usage": "majordomus served show [OPTIONS]"
+    },
+    {
       "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
       "ancestors": [
         {
@@ -20684,10 +21176,10 @@
     }
   ],
   "counts": {
-    "arguments": 906,
-    "commands": 127,
-    "examples": 134,
-    "runnable": 116
+    "arguments": 929,
+    "commands": 130,
+    "examples": 136,
+    "runnable": 118
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.7.0",

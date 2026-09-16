@@ -84,6 +84,8 @@ pub enum Command {
     Models(ModelsArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
+    /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
+    Served(ServedArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
 }
@@ -629,6 +631,92 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus served`: what a deployment serves, observed from outside and judged against
+/// a commit. `ServedArgs` carries the repository the question is asked of, the subcommand
+/// and the output shape.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ServedArgs, ServedCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "served", "show"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// let _: ServedArgs = args;   // the group's own arguments
+///
+/// fn parse(args: &[&str]) -> ServedCommand {
+///     let Command::Served(a) = Cli::try_parse_from(args).unwrap().command else { panic!() };
+///     a.command
+/// }
+/// assert!(matches!(
+///     parse(&["majordomus", "served", "observe", "--commit", "origin/master", "--dry-run"]),
+///     ServedCommand::Observe { commit: Some(c), dry_run: true, .. } if c == "origin/master"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "served", "show", "--deployment", "pages"]),
+///     ServedCommand::Show { deployment: Some(d), commit: None } if d == "pages"
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "served"]).is_err());
+/// ```
+pub struct ServedArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `observe` or `show`.
+    pub command: ServedCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus served`: `observe` is the command line of
+/// `served.observe` and `show` of `served.show`. `observe` is the only one that reaches the
+/// network, and it is a command line and nothing else.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ServedCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "served", "observe", "--dry-run"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// assert!(matches!(args.command, ServedCommand::Observe { dry_run: true, .. }));
+/// ```
+pub enum ServedCommand {
+    /// Probe the build identity a deployment serves, judge it against a commit and record it
+    Observe {
+        /// The commit expected to be served (default HEAD)
+        #[arg(long)]
+        commit: Option<String>,
+        /// The site's base URL (default: base_url of site/config.toml)
+        #[arg(long)]
+        url: Option<String>,
+        /// The identity file under the base (default build.json)
+        #[arg(long)]
+        identity: Option<String>,
+        /// The name the observation is recorded under (default pages)
+        #[arg(long)]
+        deployment: Option<String>,
+        /// Bound on the probe, in seconds (default 10)
+        #[arg(long)]
+        timeout: Option<u64>,
+        /// Judge without recording
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Each deployment's newest record, re-judged against a commit
+    Show {
+        /// The commit to judge against (default HEAD)
+        #[arg(long)]
+        commit: Option<String>,
+        /// Only this deployment
+        #[arg(long)]
+        deployment: Option<String>,
     },
 }
 
@@ -2355,6 +2443,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "record", "--suite", "target/no-such-run.tsv"],
             setup: &[],
             expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "served observe",
+        examples: &[ExampleDoc {
+            id: "served-observe-unreachable",
+            title: "A deployment that could not be reached is not a deployment that is current",
+            description: "One bounded probe of the build identity under the base URL, judged against HEAD. Nothing listens on the discard port, so nothing is received and the verdict is `unreachable` with exit 12 — the unanswered question, never the yes. `--dry-run` judges without recording. Against the public site the same command answers `served` (0) when the build contains the commit and `stale` (10) when it does not.",
+            argv: &["served", "observe", "--url", "http://127.0.0.1:9", "--timeout", "1", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "served show",
+        examples: &[ExampleDoc {
+            id: "served-show-json",
+            title: "What each deployment was last seen serving, judged against HEAD now",
+            description: "The newest recorded observation of each deployment, re-judged against the commit asked about without probing anything. The same answer `GET /api/v1/served` and the MCP tool `majordomus_served` give. A checkout that has observed nothing answers with an empty list rather than a verdict.",
+            argv: &["served", "show", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/expected", "/observations", "/unreadable", "/deployments"]),
         }],
     },
     CommandExamples {

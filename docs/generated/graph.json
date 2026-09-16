@@ -929,6 +929,24 @@
         "status": "query"
       },
       {
+        "id": "capability:served.observe",
+        "kind": "capability",
+        "label": "served.observe",
+        "summary": "Observe what a deployment serves",
+        "route": "/cockpit/capabilities/served.observe",
+        "source": "apps/majordomus-cli/src/capability/builtin/served.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:served.show",
+        "kind": "capability",
+        "label": "served.show",
+        "summary": "What each deployment was last seen serving",
+        "route": "/cockpit/capabilities/served.show",
+        "source": "apps/majordomus-cli/src/capability/builtin/served.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:server.status",
         "kind": "capability",
         "label": "server.status",
@@ -32676,6 +32694,13 @@
         "source": "test/cases/37_responsibility_surface.sh"
       },
       {
+        "id": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/384_a_deployment_is_evidence.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F384_a_deployment_is_evidence.sh",
+        "source": "test/cases/384_a_deployment_is_evidence.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/40_project_model.sh",
         "kind": "test",
         "label": "test/cases/40_project_model.sh",
@@ -35366,6 +35391,11 @@
         "label": "rules"
       },
       {
+        "id": "module:served",
+        "kind": "module",
+        "label": "served"
+      },
+      {
         "id": "module:server",
         "kind": "module",
         "label": "server"
@@ -37051,6 +37081,36 @@
       },
       {
         "source": "capability:rules.show",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:served.observe",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:served.observe",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:served.show",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:served.show",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:served.show",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:served.show",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -51070,6 +51130,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/40_project_model.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -54650,6 +54715,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:served",
+        "target": "capability:served.observe",
+        "kind": "composes"
+      },
+      {
+        "source": "module:served",
+        "target": "capability:served.show",
+        "kind": "composes"
+      },
+      {
         "source": "module:server",
         "target": "capability:server.status",
         "kind": "composes"
@@ -54736,8 +54811,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1725,
-      "edges": 3861,
+      "nodes": 1729,
+      "edges": 3870,
       "acyclic": true,
       "truncated": false
     }
