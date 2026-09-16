@@ -65,7 +65,9 @@ pub fn request(
         .to_socket_addrs()?
         .next()
         .ok_or_else(|| std::io::Error::other(format!("{host}: no address")))?;
-    let mut stream = TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT)?;
+    // The connection shares the caller's budget when that is the shorter: a probe on a shell
+    // prompt that allows 250 ms must not wait 2 s on a server whose accept queue is full.
+    let mut stream = TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT.min(timeout))?;
     stream.set_read_timeout(Some(timeout))?;
     stream.set_write_timeout(Some(timeout))?;
     let body = body.unwrap_or("");

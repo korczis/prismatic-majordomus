@@ -599,16 +599,32 @@ pub fn was_lost() -> bool {
 /// one here, and refusing it would be the worse failure: a live server taken for dead is
 /// taken over, which is how one checkout comes to have two.
 pub fn probe(url: &str, root: &Path) -> bool {
-    match bridge::request(url, "GET", "/", &[], None, PROBE_TIMEOUT) {
+    probe_reply(url, root, PROBE_TIMEOUT).is_some()
+}
+
+/// [`probe`], keeping what the server answered: its index document when it answers as the
+/// leaseholder of this checkout, `None` otherwise. One decision, so a caller that also wants
+/// the surfaces the server lists makes neither a second request nor a second judgement.
+///
+/// ```
+/// use majordomus_cli::lease::probe_reply;
+/// use std::time::Duration;
+/// // nothing listens on port 1 of the loopback address
+/// let root = std::path::Path::new("/r");
+/// assert!(probe_reply("http://127.0.0.1:1", root, Duration::from_millis(50)).is_none());
+/// ```
+pub fn probe_reply(url: &str, root: &Path, timeout: Duration) -> Option<Value> {
+    match bridge::request(url, "GET", "/", &[], None, timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
             // without telling every caller where the checkout sits
-            v["name"] == "majordomus"
+            (v["name"] == "majordomus"
                 && v["repository_id"].as_str() == Some(crate::repository::identity(root).as_str())
-                && v[LEASEHOLDER_KEY] != Value::Bool(false)
+                && v[LEASEHOLDER_KEY] != Value::Bool(false))
+            .then_some(v)
         }
-        _ => false,
+        _ => None,
     }
 }
 

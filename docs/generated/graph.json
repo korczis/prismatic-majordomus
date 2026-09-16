@@ -344,6 +344,15 @@
         "status": "query"
       },
       {
+        "id": "capability:environment.preflight",
+        "kind": "capability",
+        "label": "environment.preflight",
+        "summary": "Whether Majordomus is in force here, and what proves it",
+        "route": "/cockpit/capabilities/environment.preflight",
+        "source": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:environment.status",
         "kind": "capability",
         "label": "environment.status",
@@ -3960,6 +3969,31 @@
             "safety",
             "worktrees",
             "ci"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0066",
+        "kind": "adr",
+        "label": "adr-0066",
+        "summary": "Entry reports a verdict per claim and the evidence behind it, from one preflight value",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0066",
+        "source": ".ai/repo/adrs/0066-entry-reports-a-verdict-per-claim-and-the-evidence-behind-it.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "rule:project.entry-reports-only-evidence",
+            "rule:project.envrc-is-an-adapter",
+            "rule:project.entry-converges",
+            "test:test/cases/358_entry_reports_only_evidence.sh",
+            "test:apps/majordomus-cli/tests/preflight.rs"
+          ],
+          "tags": [
+            "entry",
+            "environment",
+            "evidence",
+            "verification"
           ]
         }
       },
@@ -9615,6 +9649,14 @@
         "summary": "Plan status",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FPLAN_STATUS.md",
         "source": "docs/PLAN_STATUS.md"
+      },
+      {
+        "id": "majordomus://document/docs/PREFLIGHT.md",
+        "kind": "document",
+        "label": "docs/PREFLIGHT.md",
+        "summary": "The preflight — what is in force here, and what proves it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FPREFLIGHT.md",
+        "source": "docs/PREFLIGHT.md"
       },
       {
         "id": "majordomus://document/docs/PRODUCT.md",
@@ -28464,6 +28506,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "kind": "rule",
+        "label": "project.entry-reports-only-evidence@1",
+        "summary": "Entering the repository reports only what evidence proves",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.entry-reports-only-evidence%401",
+        "source": ".ai/repo/rules/project/entry-reports-only-evidence.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.envrc-is-an-adapter@2",
+            "project.entry-converges@2",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "entry",
+            "environment",
+            "evidence",
+            "verification",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.envrc-is-an-adapter@2",
         "kind": "rule",
         "label": "project.envrc-is-an-adapter@2",
@@ -32632,6 +32698,13 @@
         "source": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh"
       },
       {
+        "id": "majordomus://test/test/cases/358_entry_reports_only_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/358_entry_reports_only_evidence.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F358_entry_reports_only_evidence.sh",
+        "source": "test/cases/358_entry_reports_only_evidence.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/35_future_command.sh",
         "kind": "test",
         "label": "test/cases/35_future_command.sh",
@@ -35403,6 +35476,14 @@
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/cockpit.rs",
         "external": true
+      },
+      {
+        "id": "test:apps/majordomus-cli/tests/preflight.rs",
+        "kind": "test",
+        "label": "preflight.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/preflight.rs",
+        "external": true
       }
     ],
     "edges": [
@@ -35953,6 +36034,21 @@
       },
       {
         "source": "capability:environment.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:environment.preflight",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:environment.preflight",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:environment.preflight",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -38994,6 +39090,36 @@
       {
         "source": "majordomus://adr/adr-0055",
         "target": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0066",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0066",
+        "target": "majordomus://rule/project.entry-converges@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0066",
+        "target": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0066",
+        "target": "majordomus://rule/project.envrc-is-an-adapter@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0066",
+        "target": "majordomus://test/test/cases/358_entry_reports_only_evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0066",
+        "target": "test:apps/majordomus-cli/tests/preflight.rs",
         "kind": "put_in_force"
       },
       {
@@ -43373,6 +43499,11 @@
       },
       {
         "source": "majordomus://document/docs/PLAN_STATUS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -49532,6 +49663,26 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "target": "majordomus://rule/project.entry-converges@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "target": "majordomus://rule/project.envrc-is-an-adapter@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "kind:rule",
         "kind": "is_a"
@@ -51023,6 +51174,11 @@
       },
       {
         "source": "majordomus://test/test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/358_entry_reports_only_evidence.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54298,6 +54454,11 @@
       },
       {
         "source": "module:environment",
+        "target": "capability:environment.preflight",
+        "kind": "composes"
+      },
+      {
+        "source": "module:environment",
         "target": "capability:environment.status",
         "kind": "composes"
       },
@@ -54708,8 +54869,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1724,
-      "edges": 3860,
+      "nodes": 1730,
+      "edges": 3876,
       "acyclic": true,
       "truncated": false
     }
