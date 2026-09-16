@@ -395,6 +395,29 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         )),
     }
 
+    // The topology half of the done invariant — "is a branch, worktree or pull request left
+    // behind?" — is `convergence.report`'s verdict, asked through the same executor for the
+    // same reason: one measurement of where this repository's work is held, not two.
+    let convergence = match ctx.execute("convergence.report", serde_json::json!({})) {
+        Ok(value) => match serde_json::from_value::<crate::convergence::ConvergenceReport>(value) {
+            Ok(report) => Some(report),
+            Err(e) => {
+                findings.push(format!(
+                    "convergence.report answered something this report cannot read, so whether \
+                     work is left behind is unknown rather than passing: {e}"
+                ));
+                None
+            }
+        },
+        Err(e) => {
+            findings.push(format!(
+                "convergence.report could not be executed, so whether work is left behind is \
+                 unknown rather than passing: {e}"
+            ));
+            None
+        }
+    };
+
     Ok(gates::complete(
         &m,
         &changed,
@@ -404,6 +427,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         &hashes,
         &standing,
         closure_reachable,
+        convergence.as_ref(),
         input.on_demand.unwrap_or(false),
         &crate::peers::rfc3339(std::time::SystemTime::now()),
         findings,

@@ -20,6 +20,7 @@ pub mod cockpit;
 pub mod command_graph;
 pub mod commands;
 pub mod commit;
+pub mod convergence;
 pub mod deploy;
 pub(crate) mod design;
 pub mod devcontext;
