@@ -31,7 +31,13 @@ dupes="$(printf '%s\n' "$registered" | uniq -d)"
 # 1. every name the source writes is registered, and every registered name is written by
 #    something. An event nothing writes is a phantom — docs/SCHEMAS.md documented a
 #    `bootstrap` event for months that no code has ever emitted.
-written="$(grep -rhoE 'mj_ledger_append [a-z][a-z._]*' "$ROOT/lib" | awk '{print $2}' | grep -v '^event$' | LC_ALL=C sort -u)"
+#    A helper that appends the event its caller names writes a variable, and a scan that
+#    reads source cannot follow it. Such a helper declares what reaches the ledger through it
+#    on a `# mj_ledger_append-writes: <id>...` line, and the declaration is read here — the
+#    names still have to be registered below, so a declaration cannot invent an event.
+written="$( { grep -rhoE 'mj_ledger_append [a-z][a-z._]*' "$ROOT/lib" | awk '{print $2}'
+              grep -rhoE '# mj_ledger_append-writes:[a-z._ ]*' "$ROOT/lib" | sed 's/.*://' | tr ' ' '\n'
+            } | grep -E '^[a-z][a-z._]*$' | grep -v '^event$' | LC_ALL=C sort -u)"
 [ -n "$written" ] || { echo "    could not find any mj_ledger_append call site"; exit 1; }
 for e in $written; do
   printf '%s\n' "$registered" | grep -Fxq "$e" || {
@@ -53,7 +59,8 @@ while [ -n "$(sed -n "s|^events\.$i\.id=||p" "$FLAT")" ]; do
   # too — check --checkpoint records a task.checkpoint — but the declared owner may not be
   # a module that never mentions it.
   esc="$(printf '%s' "$id" | sed 's/\./\\./g')"
-  grep -qE "mj_ledger_append $esc( |\$)" "$ROOT/lib/$by.sh" || {
+  grep -qE "mj_ledger_append $esc( |\$)|# mj_ledger_append-writes:[a-z._ ]*( |:)$esc( |\$)" \
+    "$ROOT/lib/$by.sh" || {
     echo "    $id declares emitted_by '$by', but lib/$by.sh never writes it"; exit 1; }
   [ -n "$(sed -n "s|^events\.$i\.summary=||p" "$FLAT")" ] || { echo "    $id has no summary"; exit 1; }
   i=$((i+1))

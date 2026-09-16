@@ -473,6 +473,13 @@ mj_plan_transition() {
   printf 'next ready issue: %s\n' "${nxt:-none}"
 }
 
+# mj_ledger_append-writes: plan_start plan_verify plan_done
+#
+# The line above is read by test/cases/33_event_registry.sh, which holds every declared event
+# to something that writes it. This helper appends the event its caller names, so the name is
+# a variable at the one call site and a literal at three; the declaration is how a scan that
+# reads source rather than runs it can still see which events reach the ledger from here.
+#
 # mj_plan_stamp <issue> <stamp-field> <seal-field> <event> <now>
 # The stamp, the seal that proves it, `updated_at`, then the event — the order plan::transition
 # writes them in. The seal is `seal()` of plan.rs: the SHA-256 of the event, the issue and the
