@@ -1,17 +1,21 @@
 # The four liveness rules, checked as documents against the checkout rather than a fixture.
 #
-# ADR 0039 landed them as four separate rule objects, all advisory, because none of them has
-# a validator yet and `project.rule-is-a-doctrine` reserves an x-majordomus block for a rule
-# the tool actually enforces. Both halves of that are load-bearing and both are easy to lose
-# later: a worker adding a scan may set `class: blocking` without adding the x-majordomus
-# block, or add the block without a validator function behind it.
+# ADR 0039 landed them as four separate rule objects, all advisory and all documented-only,
+# because no scan existed yet. Three of them are no longer documented-only:
+# `scripts/liveness-check` ships in the `structure` job and reports one shape for each, and
+# this case now holds the converse of that relation. The gate named the three rules it
+# enforces and none of the three named the gate or the cases back, which is the one-way
+# reference this repository keeps rediscovering — a scan can be renamed, narrowed or deleted
+# and the rules would go on reading as though nothing had changed.
 #
 # What is proved here: all four documents exist with the identities ADR 0039 fixed; each
 # carries the front-matter fields the rules README requires; each declares an enforcement
-# block the repository can back, in whichever of the two modes it claims — a named validator
-# must exist as a function in lib/, and a block without one must name the tests that prove
-# it instead; and every depends_on reference resolves to a rule that really exists at the
-# version named, so the set loads instead of erroring as a missing dependency.
+# block the repository can back, in whichever of the three modes it claims — a named
+# validator must exist as a function in lib/, and a block without one must name the tests
+# that prove it or give the reason nothing executable can; every depends_on reference
+# resolves to a rule that really exists at the version named, so the set loads instead of
+# erroring as a missing dependency; and the three rules `scripts/liveness-check` says it
+# enforces name this case and `test/cases/122_liveness_gate.sh` back.
 #
 # Whether a rule is obliged to carry proof at all is not decided here. That is
 # scripts/ci/rule-proof-check, which asks it of every rule in the set rather than of these
@@ -51,21 +55,24 @@ for id in $ids; do
   class="$(field "$f" class)"
   case "$class" in
     advisory|blocking)
-      # An enforcement block is valid in one of two modes, and the class does not decide
-      # which: a rule that names a validator is dispatched and the function must be there,
-      # and a rule that names tests instead is gated — the cases prove it and nothing calls
-      # it. An advisory rule may carry either; before the second mode existed it could carry
-      # neither, and asserting that here would now refuse a gated advisory rule for being
-      # proven. What a class still decides is whether proof is required at all, and that is
-      # scripts/ci/rule-proof-check, over every rule rather than these four.
+      # An enforcement block is valid in one of three modes, and the class does not decide
+      # which: a rule that names a validator is dispatched and the function must be there;
+      # a rule that names tests instead is gated — the cases prove it and nothing calls it;
+      # a rule that names neither may give the reason nothing executable can express it,
+      # and the reason is the whole declaration. An advisory rule may carry any of them;
+      # before the second mode existed it could carry none, and asserting that here would
+      # now refuse a gated advisory rule for being proven. What a class no longer decides is
+      # whether proof is required at all — since `advisory` stopped being an exemption it is
+      # required of every rule — and scripts/ci/rule-proof-check is what asks it, over the
+      # whole set rather than these four.
       if grep -q '^x-majordomus:' "$f"; then
         validator="$(sed -n 's/^  validator: //p' "$f" | head -1)"
         if [ -n "$validator" ]; then
           grep -rq "mj_validate_$validator()" "$ROOT/lib" ||
             { echo "    $id: no mj_validate_$validator() in lib/"; exit 1; }
         else
-          grep -q '^  tests:' "$f" ||
-            { echo "    $id: x-majordomus block names neither a validator nor a test"; exit 1; }
+          grep -qE '^  (tests:|reviewed_because: .)' "$f" ||
+            { echo "    $id: x-majordomus block names neither a validator, nor a test, nor a reason"; exit 1; }
         fi
       fi
       ;;
@@ -95,4 +102,26 @@ for id in project.every-wait-is-bounded project.commands-run-non-interactively; 
     { echo "    $id does not depend on project.execution-state-is-authoritative@1"; exit 1; }
 done
 
-echo "    4 liveness rules: identities unique, front matter complete, classes backed, dependencies resolve"
+# The relation between the gate and the rules, read from both ends. scripts/liveness-check
+# names the three rules it serves in its own header; each of those three must name the two
+# cases that prove the gate. Read from one end only, this is exactly the reference that
+# rots in silence: the gate claimed three rules and not one of them claimed it back, so the
+# rules went on saying "the mechanical half does not exist yet" while it ran on every push.
+GATE="$ROOT/scripts/liveness-check"
+[ -f "$GATE" ] || { echo "    scripts/liveness-check is missing; the assertion below would pass vacuously"; exit 1; }
+served="project.every-wait-is-bounded
+project.commands-run-non-interactively
+project.execution-state-is-authoritative"
+for id in $served; do
+  grep -q "$id" "$GATE" ||
+    { echo "    scripts/liveness-check no longer names $id; this case and that header disagree"; exit 1; }
+  f="$(grep -l "^id: $id\$" "$RULES"/*.v1.md)"
+  for c in test/cases/121_liveness_doctrine.sh test/cases/122_liveness_gate.sh; do
+    grep -q "$c" "$f" ||
+      { echo "    $id does not name $c, so the gate that enforces it is claimed from one side only"; exit 1; }
+  done
+  grep -q 'scripts/liveness-check' "$f" ||
+    { echo "    $id does not name scripts/liveness-check, the gate that decides it"; exit 1; }
+done
+
+echo "    4 liveness rules: identities unique, front matter complete, classes backed, dependencies resolve, 3 name the gate back"

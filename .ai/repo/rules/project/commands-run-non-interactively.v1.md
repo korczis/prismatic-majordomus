@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.portable-shell@1, project.execution-state-is-authoritative@1]
 tags: [shell, process, agents]
+
+x-majordomus:
+  tests: [test/cases/121_liveness_doctrine.sh, test/cases/122_liveness_gate.sh]
 ---
 
 # Rationale
@@ -54,12 +57,21 @@ flag decided in advance rather than as a prompt answered by whoever happens to b
 
 # Failure behaviour
 
-Advisory today. The mechanical form — a scan of this repository's scripts and workflows for
-the interactive constructs named above, in the manner of
-`test/cases/08_no_forbidden_constructs.sh` — is the follow-up recorded in ADR 0039 and would
-make this rule blocking. Until it exists, review decides.
+Part of the mechanical form exists and runs on every push. `scripts/liveness-check` — the CI
+gate `liveness-check` in the `structure` job — reports the `pager-blocks` shape over the
+tracked shell: a `git log`, `diff`, `show` or `blame` that writes straight to a terminal and
+so pages on a keypress an agent never sends. A finding outside
+`.ai/repo/liveness-baseline.txt` fails the gate.
+
+The rule stays advisory because that is one construct out of the class it names. The gate
+deliberately does not scan for `less`, `watch`, `top` or `more` as words — this repository's
+prose uses all of them and a text scan cannot tell a call from a sentence — and it cannot see
+a prompt a third-party command decides to raise. Where the gate is silent, review decides.
 
 # Verification
 
-Review. `test/cases/08_no_forbidden_constructs.sh` already scans for constructs the repository
-forbids and is where the interactive-command scan belongs when it is written.
+`scripts/liveness-check`, proved by `test/cases/122_liveness_gate.sh`, which mutates a fixture
+until the gate reports a paging command and checks that it does not report a sentence as a
+call. `test/cases/121_liveness_doctrine.sh` proves this rule object itself — identity, front
+matter, the enforcement block above, and the dependency on
+`project.execution-state-is-authoritative@1`. Beyond the paging shape, review.
