@@ -247,7 +247,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.intent_check == 'true'
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
