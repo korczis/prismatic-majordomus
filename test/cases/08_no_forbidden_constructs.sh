@@ -50,4 +50,77 @@ done
 # .gitignore: every redirect into a path variable names a layout path (MJ_STATE_DIR and the
 # other MJ_*_DIR/FILE variables), MJ_ROOT/<projection>, the ignore file, or a temp file
 grep -nE '> *"?\$[A-Z_]+' $files | grep -vE 'MJ_STATE_DIR|MJ_POLICY_FILE|MJ_PROFILES_DIR|MJ_PROMPTS_DIR|MJ_PROJECT_DIR|MJ_RULES_DIR|MJ_KNOWLEDGE_DIR|MJ_AI_DIR|MJ_AI_REPO_DIR|MJ_AI_LOCAL_DIR|MJ_CUR|MJ_RULES_FLAT|MJ_KSRC_FLAT|MJ_DOC_FLAT|\$graph|\$fl\b|\$mf\b|\$gi\b|MJ_ROOT/\$tgt|MJ_ROOT/\$always|\$tmp|\$body|\$fm|\$flat|\$oflat|\$out|\$fp|\$fpflat|\$COPY|/dev/null|\$d/|\$MJ_POL_FLAT|\$MJ_PRO_FLAT|\$MJ_CUR_FLAT|\$final|\$MJ_CTX_TMP|\$MJ_CTXD_|\$MJ_TIMING_FILE|\$MJ_BENCH_ARGV|\$MJ_Q|\$rec|\$archive|\$led|\$tmpf|\$MJ_PJ/|\$MJ_ARCHIVE_TMPD|\$MJ_ARCHIVE_DROPPED|\$MJ_REC_TMP' | grep -vE '^[^:]+:[0-9]+:\s*#' && { echo "    write outside allowed paths"; exit 1; }
+
+# ---------------------------------------------------------------- project.commands-run-non-interactively
+# The mechanical half ADR 0039 put here: no automated run of this repository starts a command
+# that can block for input. Scanned over everything that runs unattended — scripts, the
+# shell library, the suite, the entry points and the CI definitions — for the constructs
+# that wait for a person: a pager at the end of a pipe, an editor, a full-screen monitor, a
+# prompt, an interactive git mode, npx without --yes (it asks before installing), an
+# interactive login, sudo that may ask for a password, a container given a terminal.
+#
+# Only command position is matched, so the words in a message ("and more", "top of the
+# list") are not findings. A scan that matches nothing proves nothing about itself, so each
+# construct is first planted in a fixture and the scan must find every one of them.
+interactive_scan() { # <files...>: prints "<construct>\t<file:line:text>" per finding
+  local p
+  while IFS='|' read -r name p; do
+    [ -n "$name" ] || continue
+    grep -nE -- "$p" "$@" 2>/dev/null | grep -vE '^([^:]+:)?[0-9]+:[[:space:]]*#' | sed "s|^|$name	|"
+  done <<'PATTERNS'
+pager|\|[[:space:]]*(less|more)([[:space:]]|$|\))
+editor|(^|[;&(]|then|do|else)[[:space:]]*(vi|vim|nano|emacs|"?\$\{?(EDITOR|VISUAL)\}?"?)([[:space:];&|)]|$)
+monitor|(^|[;&(]|then|do)[[:space:]]*(top|htop)([[:space:]]*(;|$)|[[:space:]]+-)
+prompt|(^|[^a-zA-Z_])read[[:space:]]+-[a-zA-Z]*p
+git-interactive|git[[:space:]]+(rebase|add)[[:space:]]+(-i|--interactive|-p|--patch)([[:space:]]|$)
+npx-without-yes|(^|[;&|(]|then|do|else)[[:space:]]*npx[[:space:]]+([a-z@]|-[^-y]|--[^y])
+interactive-login|(^|[;&|]|then|do|else)[[:space:]]*gh[[:space:]]+auth[[:space:]]+login
+sudo-may-prompt|(^|[;&(]|then|do)[[:space:]]*sudo[[:space:]]+[^-]
+container-tty|docker[[:space:]]+(run|exec)[[:space:]].*[[:space:]]-[a-z]*t[a-z]*i|docker[[:space:]]+(run|exec)[[:space:]].*[[:space:]]-[a-z]*i[a-z]*t
+PATTERNS
+}
+
+planted="$PWD/interactive-fixture.sh"
+cat > "$planted" <<'FIXTURE'
+git log --oneline | less
+  vim notes.txt
+if true; then top; fi
+read -rp "continue? " answer
+git rebase -i HEAD~3
+npx playwright install
+gh auth login
+sudo make install
+docker run --rm -it alpine sh
+FIXTURE
+found="$(interactive_scan "$planted" | cut -f1 | LC_ALL=C sort -u | tr '\n' ' ')"
+want="container-tty editor git-interactive interactive-login monitor npx-without-yes pager prompt sudo-may-prompt "
+[ "$found" = "$want" ] || {
+  printf '    the interactive scan does not find what it was planted with\n    want: %s\n    got:  %s\n' "$want" "$found"; exit 1; }
+# ... and does not mistake prose, a comment or the non-interactive forms for the construct
+cat > "$planted" <<'FIXTURE'
+echo "and more of the same" # less is more
+# vim is mentioned here only
+printf 'top of the list\n'
+while read -r line; do :; done < file
+git rebase --onto main a b
+npx --yes playwright install
+sudo -n true
+docker run --rm alpine sh
+echo "skip: no browser (or: npx playwright install chromium)"
+die "gh has no token; run: gh auth login"
+echo "gh cannot see the repository (gh auth login)" >&2
+    top && /^    - path:$/ { n = 0 }
+FIXTURE
+fp="$(interactive_scan "$planted")"
+[ -z "$fp" ] || { printf '    the interactive scan reports non-interactive forms as findings:\n%s\n' "$fp"; exit 1; }
+
+unattended="$(ls "$ROOT"/scripts/* "$ROOT"/scripts/ci/* "$ROOT"/lib/*.sh "$ROOT"/test/*.sh "$ROOT"/test/cases/*.sh \
+  "$ROOT"/bin/* "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/actions/*/action.yml 2>/dev/null \
+  | grep -v "/test/cases/08_no_forbidden_constructs.sh$")"
+[ -n "$unattended" ] || { echo "    the interactive scan found no files to read; it would report clean over nothing"; exit 1; }
+# shellcheck disable=SC2086  # the list is intentionally word-split into arguments
+# A hosted CI runner's sudo has no password to ask for, so sudo in a workflow cannot block;
+# on a person's machine it can, which is why every other file is held to `sudo -n`.
+hits="$(interactive_scan $unattended | grep -vE '^sudo-may-prompt	[^:]*/\.github/workflows/[^/]+\.yml:' || true)"
+[ -z "$hits" ] || { printf '    an unattended run starts a command that can block for input (project.commands-run-non-interactively):\n%s\n' "$hits"; exit 1; }
 exit 0
