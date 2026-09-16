@@ -58,6 +58,7 @@ use serde_json::Value;
 use crate::capability::builtin::continuity::{self, Freshness, Thresholds};
 use crate::capability::builtin::server::{standing_of, ServerStanding};
 use crate::evidence::Ledger;
+use crate::graph::{Graph, Node};
 use crate::lease::{self, LeaseFile};
 use crate::policy::LoadedPolicy;
 use crate::rules::{RuleState, RulesReport};
@@ -90,6 +91,11 @@ pub const BOARD_BUDGET: Duration = Duration::from_secs(1);
 /// The path under the local half where a full resolution leaves the rule tally for the
 /// entry path to read. It lives in the environment cache file, as one more tier.
 pub const RULES_TIER: &str = "rules";
+
+/// The fingerprint of the cache tier holding the join of decisions to the task in progress.
+/// The value carries the task, scope and commit it was joined for, and the preflight judges
+/// it against those, so the fingerprint only names the tier.
+pub const ADR_RELEVANCE_TIER: &str = "adr-relevance";
 
 /// What the repository can show about one claim.
 ///
@@ -488,6 +494,8 @@ pub struct TaskObservation {
     pub outcome: String,
     /// When it started.
     pub started_at: String,
+    /// The paths it declared as its scope, as the record holds them.
+    pub scope: Vec<String>,
 }
 
 /// The handover a resuming worker would be given, judged by continuity's own freshness rule.
@@ -625,6 +633,242 @@ pub enum RulesObservation {
     /// Taken from the cache a full resolution wrote.
     Cached(RulesTally),
     /// Neither.
+    Absent,
+}
+
+/// One declared relation between a decision and the active task: the decision's `related`
+/// list names a file or a test whose path lies inside a path the task declared as its scope,
+/// or names a directory the declared path lies inside.
+///
+/// The relation is read from the `adrs` graph's `put_in_force` edges, which is the one
+/// resolution of an ADR's typed references there is; nothing here matches words.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::AdrRelation;
+/// let r = AdrRelation {
+///     adr: "adr-0066".into(),
+///     status: Some("proposed".into()),
+///     reference: "test:apps/majordomus-cli/tests/preflight.rs".into(),
+///     scope: "apps/majordomus-cli".into(),
+/// };
+/// assert_eq!(
+///     r.describe(),
+///     "adr-0066 (proposed) → test apps/majordomus-cli/tests/preflight.rs → scope apps/majordomus-cli",
+/// );
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "PreflightAdrRelation")]
+pub struct AdrRelation {
+    /// The id the decision declares, `adr-NNNN`.
+    pub adr: String,
+    /// The decision's status word, when it declares one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    /// The reference the decision declares, `file:<path>` or `test:<path>`.
+    pub reference: String,
+    /// The path of the task's scope the reference meets.
+    pub scope: String,
+}
+
+impl AdrRelation {
+    /// The relation as one line of evidence: the decision, the path it names, and the scope
+    /// path that path meets.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::preflight::AdrRelation;
+    /// let r = AdrRelation { adr: "adr-0011".into(), status: None,
+    ///     reference: "file:lib".into(), scope: "lib/session.sh".into() };
+    /// assert_eq!(r.describe(), "adr-0011 → file lib → scope lib/session.sh");
+    /// ```
+    pub fn describe(&self) -> String {
+        let (kind, path) = self
+            .reference
+            .split_once(':')
+            .unwrap_or(("file", self.reference.as_str()));
+        let status = self
+            .status
+            .as_deref()
+            .map(|s| format!(" ({s})"))
+            .unwrap_or_default();
+        format!(
+            "{}{status} → {kind} {path} → scope {}",
+            self.adr, self.scope
+        )
+    }
+}
+
+/// The decisions joined to one task: which ADRs name a path the task's scope meets, at the
+/// commit the join was made.
+///
+/// Relevance here means exactly that declared relation and nothing wider: a decision that
+/// names no file or test is never relevant to any task, and one naming a file under a broad
+/// scope is relevant to every task with that scope. A decision withdrawn from force — its
+/// status `superseded`, `rejected` or `deprecated`, or another decision's `supersedes` naming
+/// it — is not joined.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::AdrRelevance;
+/// use majordomus_cli::graph::derive;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let index = repo.index().unwrap();
+/// let registry = majordomus_cli::capability::CapabilityRegistry::builder().build().unwrap();
+/// let graph = derive("adrs", &registry, &index).unwrap();
+/// let joined = AdrRelevance::join(&graph, "t-1", &["no/such/path".into()], Some("abc"));
+/// assert_eq!(joined.task, "t-1");
+/// assert!(joined.relations.is_empty(), "a scope nothing names reaches no decision");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "PreflightAdrRelevance")]
+pub struct AdrRelevance {
+    /// The task id the join was made for.
+    pub task: String,
+    /// The scope it was joined against, normalised.
+    pub scope: Vec<String>,
+    /// The commit it was joined at.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub head: Option<String>,
+    /// Every relation found, sorted.
+    pub relations: Vec<AdrRelation>,
+}
+
+/// A decision status that takes the decision out of force.
+const WITHDRAWN: &[&str] = &["superseded", "rejected", "deprecated"];
+
+impl AdrRelevance {
+    /// Join the `adrs` graph to a task's scope: every `put_in_force` edge into a `file` or
+    /// `test` node whose path lies under a scope path, or above one.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::preflight::AdrRelevance;
+    /// use majordomus_cli::graph::{Edge, Graph, GraphMetadata, Node};
+    /// let node = |id: &str, kind: &str, label: &str, source: Option<&str>| Node {
+    ///     id: id.into(), kind: kind.into(), label: label.into(), summary: None, route: None,
+    ///     source: source.map(Into::into), status: None, external: false, facts: Default::default(),
+    /// };
+    /// let graph = Graph {
+    ///     id: "adrs".into(), title: String::new(), description: String::new(), source: String::new(),
+    ///     node_kinds: Default::default(), edge_kinds: Default::default(),
+    ///     nodes: vec![
+    ///         node("adr:a", "adr", "adr-0001", None),
+    ///         node("file:src/x.rs", "file", "src/x.rs", Some("src/x.rs")),
+    ///     ],
+    ///     edges: vec![Edge { source: "adr:a".into(), target: "file:src/x.rs".into(), kind: "put_in_force".into() }],
+    ///     metadata: GraphMetadata { nodes: 2, edges: 1, acyclic: true, truncated: false },
+    /// };
+    /// let hit = AdrRelevance::join(&graph, "t", &["src/".into()], None);
+    /// assert_eq!(hit.adrs(), vec!["adr-0001"]);
+    /// assert_eq!(hit.scope, vec!["src"]);
+    /// // a sibling path whose name only begins the same is not inside the scope
+    /// assert!(AdrRelevance::join(&graph, "t", &["sr".into()], None).relations.is_empty());
+    /// ```
+    pub fn join(graph: &Graph, task: &str, scope: &[String], head: Option<&str>) -> Self {
+        let scope = normalised_scope(scope);
+        let nodes: BTreeMap<&str, &Node> = graph.nodes.iter().map(|n| (n.id.as_str(), n)).collect();
+        // a decision another stands in for is out of force whatever its own status says
+        let superseded: std::collections::BTreeSet<&str> = graph
+            .edges
+            .iter()
+            .filter(|e| e.kind == "supersedes")
+            .map(|e| e.target.as_str())
+            .collect();
+        // ordered and deduplicated by construction
+        let mut relations = std::collections::BTreeSet::new();
+        for e in graph.edges.iter().filter(|e| e.kind == "put_in_force") {
+            if superseded.contains(e.source.as_str()) {
+                continue;
+            }
+            let (Some(adr), Some(target)) =
+                (nodes.get(e.source.as_str()), nodes.get(e.target.as_str()))
+            else {
+                continue;
+            };
+            if adr.kind != "adr"
+                || !matches!(target.kind.as_str(), "file" | "test")
+                || adr
+                    .status
+                    .as_deref()
+                    .is_some_and(|s| WITHDRAWN.contains(&s))
+            {
+                continue;
+            }
+            let Some(path) = target.source.as_deref() else {
+                continue;
+            };
+            let path = path.trim_end_matches('/');
+            for s in &scope {
+                if is_within(s, path) || is_within(path, s) {
+                    relations.insert(AdrRelation {
+                        adr: adr.label.clone(),
+                        status: adr.status.clone(),
+                        reference: format!("{}:{path}", target.kind),
+                        scope: s.clone(),
+                    });
+                }
+            }
+        }
+        AdrRelevance {
+            task: task.into(),
+            scope,
+            head: head.map(Into::into),
+            relations: relations.into_iter().collect(),
+        }
+    }
+
+    /// The distinct decisions joined, in id order: one decision that names several paths in
+    /// the scope, or meets several scope paths, is one relevant decision and many relations.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::preflight::AdrRelevance;
+    /// assert!(AdrRelevance::default().adrs().is_empty());
+    /// ```
+    pub fn adrs(&self) -> Vec<&str> {
+        let ids: std::collections::BTreeSet<&str> =
+            self.relations.iter().map(|r| r.adr.as_str()).collect();
+        ids.into_iter().collect()
+    }
+}
+
+/// A task's declared scope as the join compares it: trimmed, without a trailing slash, and
+/// without the paths no repository-relative path can lie under.
+fn normalised_scope(scope: &[String]) -> Vec<String> {
+    let out: std::collections::BTreeSet<String> = scope
+        .iter()
+        .map(|s| s.trim().trim_start_matches("./").trim_end_matches('/'))
+        .filter(|s| !s.is_empty() && !s.starts_with('/') && !s.split('/').any(|p| p == ".."))
+        .map(Into::into)
+        .collect();
+    out.into_iter().collect()
+}
+
+/// Is `path` the same as `under`, or below it? A whole path segment, never a prefix of one.
+fn is_within(under: &str, path: &str) -> bool {
+    under == "." || path == under || path.starts_with(&format!("{under}/"))
+}
+
+/// Where the join of decisions to the task came from: made in this process, taken from the
+/// cache, or not there at all.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{
+///     derive, AdrRelevance, AdrRelevanceObservation, Observations, TaskObservation, Verdict,
+/// };
+/// let mut o = Observations::empty("demo", 0);
+/// o.adrs = Some(3);
+/// o.task = Some(TaskObservation { id: "t-1".into(), outcome: "active".into(),
+///     scope: vec!["src".into()], ..Default::default() });
+/// // a join made for another task says nothing about this one
+/// o.adr_relevance = AdrRelevanceObservation::Cached(AdrRelevance { task: "t-0".into(), ..Default::default() });
+/// assert_eq!(derive(&o).check("governance.adrs").unwrap().verdict, Verdict::Unknown);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum AdrRelevanceObservation {
+    /// Joined in this process, over the index.
+    Joined(AdrRelevance),
+    /// Taken from the cache a full preflight wrote.
+    Cached(AdrRelevance),
+    /// Neither.
+    #[default]
     Absent,
 }
 
@@ -766,6 +1010,8 @@ pub struct Observations {
     pub rules: RulesObservation,
     /// Architecture decisions the index holds, when counted.
     pub adrs: Option<usize>,
+    /// The decisions joined to the active task's scope, when a join was made.
+    pub adr_relevance: AdrRelevanceObservation,
     /// The shared server.
     pub server: ServerObservation,
     /// The peer board; `None` with the reason when it was not asked.
@@ -799,6 +1045,7 @@ impl Observations {
             policy: PolicyObservation::NotRead,
             rules: RulesObservation::Absent,
             adrs: None,
+            adr_relevance: AdrRelevanceObservation::Absent,
             server: ServerObservation::default(),
             peers: Err("not asked".into()),
             ledger: LedgerObservation::Absent,
@@ -849,7 +1096,7 @@ pub fn derive(o: &Observations) -> Preflight {
             checks: vec![
                 policy_check(o),
                 rules_check(o, head.as_deref()),
-                adrs_check(o),
+                adrs_check(o, head.as_deref()),
             ],
         },
         Section {
@@ -1204,27 +1451,101 @@ fn rules_check(o: &Observations, head: Option<&str>) -> Check {
     }
 }
 
-fn adrs_check(o: &Observations) -> Check {
-    match o.adrs {
-        Some(n) => Check::new(
-            "governance.adrs",
-            "ADRs",
-            Verdict::Active,
-            format!("{n} indexed; none is joined to the current task, so none is claimed relevant"),
-            vec![Evidence::new(
-                "the index, kind adr",
-                format!("{n} object(s)"),
-            )],
-        )
-        .next("majordomus adr list"),
-        None => Check::new(
-            "governance.adrs",
+/// The decisions: how many the index holds, and which of them the task in progress is joined
+/// to by a declared relation — an ADR's `related` file or test meeting a path of the task's
+/// scope. Nothing wider is claimed: no task, no join; a join for another task or scope says
+/// nothing; a join at another commit is stale.
+fn adrs_check(o: &Observations, head: Option<&str>) -> Check {
+    const ID: &str = "governance.adrs";
+    const NOT_COUNTED: &str = "not counted: the index was not built and no cache holds a count";
+    let indexed = o
+        .adrs
+        .map(|n| Evidence::new("the index, kind adr", format!("{n} object(s)")));
+    let count = o
+        .adrs
+        .map(|n| format!("{n} indexed"))
+        .unwrap_or_else(|| "count unknown".into());
+    let Some(task) = o.task.as_ref().filter(|t| in_progress(t)) else {
+        return match (o.adrs, indexed) {
+            (Some(n), Some(indexed)) => Check::new(
+                ID,
+                "ADRs",
+                Verdict::Active,
+                format!("{n} indexed; no task is in progress, so none is claimed relevant"),
+                vec![indexed],
+            )
+            .next("majordomus adr list"),
+            _ => Check::new(ID, "ADRs", Verdict::Unknown, NOT_COUNTED, vec![])
+                .next("majordomus env status"),
+        };
+    };
+    let (joined, source) = match &o.adr_relevance {
+        AdrRelevanceObservation::Joined(r) => (Some(r), "the adrs graph, joined to the task's scope"),
+        AdrRelevanceObservation::Cached(r) => (
+            Some(r),
+            ".ai/local/state/environment/snapshot.json (the adrs graph joined to the task's scope, cached)",
+        ),
+        AdrRelevanceObservation::Absent => (None, ""),
+    };
+    let scope = normalised_scope(&task.scope);
+    let Some(r) = joined.filter(|r| r.task == task.id && r.scope == scope) else {
+        let summary = match o.adrs {
+            Some(n) => format!(
+                "{n} indexed; relevance to task {} not joined: the join reads the index, which entry never builds",
+                task.id
+            ),
+            None => NOT_COUNTED.to_string(),
+        };
+        return Check::new(
+            ID,
             "ADRs",
             Verdict::Unknown,
-            "not counted: the index was not built and no cache holds a count",
-            vec![],
+            summary,
+            indexed.into_iter().collect(),
         )
-        .next("majordomus env status"),
+        .next("majordomus env preflight --full");
+    };
+    let ids = r.adrs();
+    let mut summary = format!("{count} · {} relevant to task {}", ids.len(), task.id);
+    if scope.is_empty() {
+        summary.push_str(" (it declares no scope)");
+    } else if !ids.is_empty() {
+        // the summary is one line; every relation is in the evidence
+        let _ = write!(summary, ": {}", ids[..ids.len().min(5)].join(", "));
+        if ids.len() > 5 {
+            let _ = write!(summary, " and {} more", ids.len() - 5);
+        }
+    }
+    let mut evidence: Vec<Evidence> = indexed.into_iter().collect();
+    evidence.push(Evidence::new(
+        source,
+        format!(
+            "joined at {} over scope {}",
+            r.head.as_deref().map(short).unwrap_or("an unknown commit"),
+            if scope.is_empty() {
+                "(none)".to_string()
+            } else {
+                scope.join(", ")
+            }
+        ),
+    ));
+    evidence.extend(
+        r.relations
+            .iter()
+            .map(|rel| Evidence::new("related (adrs graph, put_in_force)", rel.describe())),
+    );
+    match (r.head.as_deref(), head) {
+        (Some(joined_at), Some(now)) if joined_at == now => {
+            Check::new(ID, "ADRs", Verdict::Active, summary, evidence).next("majordomus adr list")
+        }
+        _ => Check::new(
+            ID,
+            "ADRs",
+            Verdict::Stale,
+            format!("{summary}; joined at another commit"),
+            evidence,
+        )
+        .next("majordomus env preflight --full"),
     }
 }
 
@@ -1853,6 +2174,7 @@ pub fn observe(
         task: t.task,
         outcome: t.outcome,
         started_at: t.started_at,
+        scope: t.scope,
     });
 
     let (policy_observation, thresholds) = match &policy {
@@ -1918,6 +2240,10 @@ pub fn observe(
         policy: policy_observation,
         rules,
         adrs: environment.layer.kind("adr"),
+        adr_relevance: match cached_adr_relevance(root, local) {
+            Some(r) => AdrRelevanceObservation::Cached(r),
+            None => AdrRelevanceObservation::Absent,
+        },
         server,
         peers,
         ledger: observe_ledger(root, local, environment.vcs.tree(), probe.cache),
@@ -2166,6 +2492,70 @@ fn observe_deployment(root: &Path) -> DeploymentObservation {
         .map(|s| s.trim().to_string())
         .find(|s| s.len() >= 7 && s.chars().all(|c| c.is_ascii_hexdigit()));
     DeploymentObservation::Published { commit, at, source }
+}
+
+/// Join the index's decisions to the task in progress in this checkout, over the `adrs`
+/// graph. `None` when no task is in progress: relevance is to a task, and a branch name or a
+/// recent commit is not one.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::join_adrs;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let registry = majordomus_cli::capability::CapabilityRegistry::builder().build().unwrap();
+/// // no task was started in the fixture, so nothing is joined and nothing is guessed
+/// assert!(join_adrs(repo.root(), ".ai/local", &registry, &repo.index().unwrap(), None).is_none());
+/// ```
+pub fn join_adrs(
+    root: &Path,
+    local: &str,
+    registry: &crate::capability::CapabilityRegistry,
+    index: &crate::index::Index,
+    head: Option<&str>,
+) -> Option<AdrRelevance> {
+    let task = continuity::read_task(&root.join(local).join("state").join("current.yaml"))?;
+    if !(task.outcome.is_empty() || task.outcome == "active") {
+        return None;
+    }
+    let graph = crate::graph::derive("adrs", registry, index)?;
+    Some(AdrRelevance::join(&graph, &task.id, &task.scope, head))
+}
+
+/// The join of decisions to a task a full preflight left for the entry path, when there is
+/// one. It carries the task, scope and commit it was made for, and the preflight trusts it
+/// for nothing else.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::cached_adr_relevance;
+/// let dir = tempfile::tempdir().unwrap();
+/// assert!(cached_adr_relevance(dir.path(), ".ai/local").is_none(), "a miss is not an error");
+/// ```
+pub fn cached_adr_relevance(root: &Path, local: &str) -> Option<AdrRelevance> {
+    Cache::load(root, local)
+        .tiers
+        .adr_relevance
+        .map(|entry| entry.value)
+}
+
+/// Leave a join of decisions to a task for the entry path. Never fatal, like
+/// [`store_rules`]: an unwritable checkout gets a preflight that says nothing was joined.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{cached_adr_relevance, store_adr_relevance, AdrRelevance};
+/// let dir = tempfile::tempdir().unwrap();
+/// store_adr_relevance(dir.path(), ".ai/local", &AdrRelevance { task: "t-1".into(), ..Default::default() });
+/// assert_eq!(cached_adr_relevance(dir.path(), ".ai/local").unwrap().task, "t-1");
+/// ```
+pub fn store_adr_relevance(root: &Path, local: &str, relevance: &AdrRelevance) {
+    let mut cache = Cache::load(root, local);
+    cache.tiers.adr_relevance = Some(Entry {
+        fingerprint: ADR_RELEVANCE_TIER.into(),
+        written_at: super::cache::now_seconds(),
+        value: relevance.clone(),
+    });
+    if let Err(e) = cache.store(root, local) {
+        tracing::debug!(error = %e, "the join of decisions to the task could not be cached");
+    }
 }
 
 /// The rule tally a full resolution left for the entry path, when there is one.
