@@ -446,7 +446,7 @@ gates:
   - id: release-check
     job: structure
     runs: scripts/ci/release-check
-    summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, and the tree is not behind what was published
+    summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, the tree is not behind what was published, and every published tag has a release record so that a release the pipeline failed to record cannot pass for a finished one
 
 classes:
   # the pipeline itself: a change here can only be validated by running everything
@@ -552,7 +552,7 @@ classes:
   # and they ask the executable for every name they use, so the crate's registry checks and
   # the behavioural cases are what decide whether they still work
   - id: distribution
-    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture, .ai/repo/releases/**]
+    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture, .ai/repo/releases/**, .ai/repo/release-record-baseline.txt]
     gates: [shell-suite, rust-integration, macos, release-check, version-surface]
 
   # the gesture that takes a branch out of the state GitHub puts it in: it merges the trunk
