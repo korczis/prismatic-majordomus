@@ -383,9 +383,18 @@ scripts/evidence-check --repo PATH  # judge that repository instead of this one
 Only `guaranteed` claims are judged. `advisory` states that enforcement is not observable
 from outside, `planned` that nothing implements it, and `rejected` that nothing will;
 demanding a current proof of those would be demanding proof of a thing the claim already
-says is not there. A `guaranteed` claim in any of the three passing states — `proven`,
-`inputs_unchanged` or `stale` — is supported; `failing`, `not_run`, `unrunnable` and
-`no_test` are findings, each with the reason and the command that would settle it.
+says is not there. A `guaranteed` claim is supported by `proven` or `inputs_unchanged`, and
+by nothing else; `stale`, `failing`, `not_run`, `unrunnable` and `no_test` are findings,
+each with the reason and the command that would settle it.
+
+`stale` is the one of those that looks like support and is not, and it was counted as
+support until it was measured: 14 guarantees rested on it, against 0 proven. A stale run
+*is* a pass — `passing()` says so, and the summary must keep it apart from a failure — but
+it is a pass of a subject that has since moved: the claim's implementation or its test
+changed after the run offered as its proof, so what passed is not what the claim now names.
+Accepting it made the gate accept, as support for a guarantee, a measurement of something
+else, which is the whole defect this subsystem exists to name one level down. The floor is
+`inputs_unchanged`: weaker than `proven`, but at least a pass of *this* subject.
 
 **It is advisory today, and this is a choice with an end.** The ledger starts empty, so on
 the day the gate arrives every guaranteed claim is `not_run` — true, and as a blocking gate

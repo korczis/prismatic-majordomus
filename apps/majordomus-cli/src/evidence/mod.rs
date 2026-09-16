@@ -1465,12 +1465,26 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
 /// outside, `planned` states that nothing implements it and `rejected` that nothing will;
 /// demanding a current proof of those would be demanding proof of a thing the claim already
 /// says is not there.
+///
+/// Three states pass and three do not, and [`ProofState::Stale`] is the line between them.
+/// A stale run is a pass — [`ProofState::passing`] says so, and the summary keeps it apart
+/// from a failure for good reason — but it is a pass of a subject that has since moved: the
+/// claim's own implementation or its test changed after the run offered as its proof.
+/// Accepting it here made the gate accept, as support for a guarantee, a measurement of
+/// something else. What is left is [`ProofState::InputsUnchanged`], weaker than `proven`
+/// but at least a pass of *this* subject, and that is the floor.
 fn unsupported(status: &str, state: ProofState) -> Option<String> {
     if status != "guaranteed" {
         return None;
     }
     match state {
-        ProofState::Proven | ProofState::InputsUnchanged | ProofState::Stale => None,
+        ProofState::Proven | ProofState::InputsUnchanged => None,
+        ProofState::Stale => Some(
+            "the claim guarantees a behaviour whose only recorded run is older than what it is \
+             about: the implementation or the test changed after that run, so the pass measured \
+             a subject this claim no longer names"
+                .into(),
+        ),
         ProofState::Failing => {
             Some("the claim guarantees a behaviour whose test most recently failed".into())
         }
@@ -1593,16 +1607,41 @@ mod tests {
         assert!(unsupported("guaranteed", ProofState::Failing).is_some());
         assert!(unsupported("guaranteed", ProofState::NoTest).is_some());
         assert!(unsupported("guaranteed", ProofState::Unrunnable).is_some());
-        assert!(unsupported("guaranteed", ProofState::Stale).is_none());
+        assert!(unsupported("guaranteed", ProofState::Stale).is_some());
         assert!(unsupported("guaranteed", ProofState::Proven).is_none());
+        assert!(unsupported("guaranteed", ProofState::InputsUnchanged).is_none());
         for status in ["advisory", "planned", "rejected"] {
-            for state in [ProofState::NotRun, ProofState::NoTest, ProofState::Failing] {
+            for state in [
+                ProofState::NotRun,
+                ProofState::NoTest,
+                ProofState::Failing,
+                ProofState::Stale,
+            ] {
                 assert!(
                     unsupported(status, state).is_none(),
                     "{status} must not be held to a current proof"
                 );
             }
         }
+    }
+
+    /// A stale run is a pass, and it is not support for a guarantee. The pass is real —
+    /// `passing()` keeps saying so, and the summary must keep it apart from a failure — but
+    /// its subject moved after it: a guarantee whose implementation or test changed since
+    /// the only run recorded for it is a guarantee nothing current has measured, and
+    /// reporting that as supported is the gate accepting a measurement of something else.
+    #[test]
+    fn a_guarantee_whose_proof_is_older_than_its_subject_is_not_supported() {
+        let reason = unsupported("guaranteed", ProofState::Stale)
+            .expect("a stale proof was accepted as support for a guarantee");
+        assert!(
+            reason.contains("older than what it is about"),
+            "the reason must say the proof is older than its subject, not merely that it is \
+             stale: {reason}"
+        );
+        // the pass is still a pass, and the two passing-but-weaker states are not the same
+        assert!(ProofState::Stale.passing());
+        assert!(unsupported("guaranteed", ProofState::InputsUnchanged).is_none());
     }
 
     /// `proven` is a passing run recorded against this exact commit *with a clean tree*
