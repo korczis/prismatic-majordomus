@@ -173,6 +173,15 @@
         "status": "query"
       },
       {
+        "id": "capability:convergence.report",
+        "kind": "capability",
+        "label": "convergence.report",
+        "summary": "Is any work held where it can be lost?",
+        "route": "/cockpit/capabilities/convergence.report",
+        "source": "apps/majordomus-cli/src/capability/builtin/convergence.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:deploy.check",
         "kind": "capability",
         "label": "deploy.check",
@@ -28052,19 +28061,18 @@
         }
       },
       {
-        "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
-        "label": "project.a-worker-that-stops-leaves-its-work-behind@1",
+        "label": "project.a-worker-that-stops-leaves-its-work-behind@2",
         "summary": "A worker that stops leaves its work where somebody else can find it",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-worker-that-stops-leaves-its-work-behind%401",
-        "source": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v1.md",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-worker-that-stops-leaves-its-work-behind%402",
+        "source": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
+          "class": "blocking",
           "depends_on": [
             "project.work-is-claimed-before-it-is-built@1"
           ],
-          "statement": "Work is committed and pushed at the last point it was coherent, not at the point it was finished; whoever fans work out checkpoints it before it is lost.",
           "tags": [
             "process",
             "integration"
@@ -29172,7 +29180,7 @@
         "facts": {
           "class": "advisory",
           "depends_on": [
-            "project.a-worker-that-stops-leaves-its-work-behind@1",
+            "project.a-worker-that-stops-leaves-its-work-behind@2",
             "project.destructive-sweeps-fail-closed@1"
           ],
           "statement": "Recovery resumes from the last deterministic state a worker can establish, never from the assumption that nothing happened; work is not retried until it has been shown not to have succeeded.",
@@ -32676,6 +32684,13 @@
         "source": "test/cases/37_responsibility_surface.sh"
       },
       {
+        "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
+        "kind": "test",
+        "label": "test/cases/383_convergence_is_enforced.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F383_convergence_is_enforced.sh",
+        "source": "test/cases/383_convergence_is_enforced.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/40_project_model.sh",
         "kind": "test",
         "label": "test/cases/40_project_model.sh",
@@ -35236,6 +35251,11 @@
         "label": "continuity"
       },
       {
+        "id": "module:convergence",
+        "kind": "module",
+        "label": "convergence"
+      },
+      {
         "id": "module:deploy",
         "kind": "module",
         "label": "deploy"
@@ -35641,6 +35661,26 @@
       },
       {
         "source": "capability:continuity.state",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:convergence.report",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:convergence.report",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:convergence.report",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:convergence.report",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -38336,7 +38376,7 @@
       },
       {
         "source": "majordomus://adr/adr-0039",
-        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "put_in_force"
       },
       {
@@ -49280,12 +49320,12 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },
@@ -49951,7 +49991,7 @@
       },
       {
         "source": "majordomus://rule/project.recovery-is-idempotent@1",
-        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "depends_on"
       },
       {
@@ -51066,6 +51106,11 @@
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54230,6 +54275,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:convergence",
+        "target": "capability:convergence.report",
+        "kind": "composes"
+      },
+      {
         "source": "module:deploy",
         "target": "capability:deploy.check",
         "kind": "composes"
@@ -54736,8 +54786,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1725,
-      "edges": 3861,
+      "nodes": 1728,
+      "edges": 3867,
       "acyclic": true,
       "truncated": false
     }

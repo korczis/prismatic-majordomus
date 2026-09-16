@@ -47,6 +47,10 @@
       "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
     },
     {
+      "name": "convergence",
+      "description": "Whether every unit of work in this repository is somewhere another worker could find it. A holding is anything that can hold work — a work tree with uncommitted files, a branch with commits, a stash — and each carries a disposition read from git: integrated (the trunk reaches it), published (a remote-tracking ref reaches it), local_only (committed on this disk and nowhere else) or uncommitted. The last two are at risk: they are invisible to every other worker, and a worker that stops is not a rollback. Measured offline, from this checkout alone; whether a pull request exists for a branch is a question for the forge and is not asked here."
+    },
+    {
       "name": "deploy",
       "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
     },
@@ -1453,6 +1457,90 @@
             "name": "continuity"
           }
         }
+      }
+    },
+    "/api/v1/convergence": {
+      "get": {
+        "operationId": "convergence.report",
+        "summary": "Is any work held where it can be lost?",
+        "description": "Every holding of this repository with its disposition, the evidence read for it and the command that would move it out of danger, the tallies per disposition, how many holdings exist on one disk only, and the one verdict over them. Read from git on every call: a commit, a push or an editor's save changes the answer between two calls.",
+        "tags": [
+          "convergence"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Is any work held where it can be lost?: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvergenceReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "convergence.report",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::convergence"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_convergence",
+          "resource": {
+            "uri": "majordomus://convergence",
+            "name": "convergence"
+          }
+        },
+        "x-majordomus-cli": "convergence"
       }
     },
     "/api/v1/deployment": {
@@ -15815,6 +15903,61 @@
         ],
         "description": "Every pair the declaration and its consumers state, measured."
       },
+      "ConvergenceReport": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "`SCHEMA`."
+          },
+          "repository": {
+            "type": "string",
+            "description": "The primary checkout this was measured from."
+          },
+          "trunk": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The trunk the containment was decided against, when there is one."
+          },
+          "holdings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Holding"
+            },
+            "description": "Every holding, at-risk ones first, then by kind and identity."
+          },
+          "tallies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many holdings carry each disposition, by its word."
+          },
+          "at_risk": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "The holdings that exist on one disk only."
+          },
+          "converged": {
+            "type": "boolean",
+            "description": "Nothing is held where it can be lost."
+          }
+        },
+        "required": [
+          "schema",
+          "repository",
+          "holdings",
+          "tallies",
+          "at_risk",
+          "converged"
+        ],
+        "description": "The repository's convergence: every holding, and the one verdict over them.\n\n```\nuse majordomus_cli::convergence::{ConvergenceReport, SCHEMA};\n\nlet empty = ConvergenceReport {\n    schema: SCHEMA.into(),\n    repository: \"/tmp/r\".into(),\n    trunk: Some(\"master\".into()),\n    holdings: vec![],\n    tallies: Default::default(),\n    at_risk: 0,\n    converged: true,\n};\n// the verdict is the one word a gate reads; the count is what a person reads next to it\nassert!(empty.converged && empty.at_risk == 0);\nassert_eq!(serde_json::to_value(&empty).unwrap()[\"schema\"], \"convergence/v1\");\n```"
+      },
       "CounterSnapshot": {
         "type": "object",
         "properties": {
@@ -17306,6 +17449,31 @@
           "weight"
         ],
         "description": "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide.\n\nA `Discovery` is a *kind* of way in, not one traversal. Thirty-three issues of one\nmilestone all reach that milestone along `belongs_to`, and recording that thirty-three\ntimes would say the answer had thirty-three reasons when it has one — so a path already\nrecorded for the same selector, edge and reason is kept rather than repeated.\n\n`via` and `edge` are present exactly when they mean something: a seed was not reached\nfrom anything and followed no edge, so both are absent and are skipped on the wire\nrather than serialised as null. `confidence` is 1.0 for every declared selector and less\nonly for `Selector::IntentMatch`; `weight` is what this particular path contributes to\nrelevance, which is a different quantity — how much it counts, against how sure it is.\n\n```\nuse majordomus_cli::devcontext::{Discovery, Selector};\nuse serde_json::json;\n\n// the request named it: nothing to come via, no edge followed, depth zero\nlet seed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"seed\",\n    \"reason\": \"named in the request\",\n    \"depth\": 0,\n    \"confidence\": 1.0,\n    \"weight\": 1.0,\n})).unwrap();\nassert_eq!(seed.selector, Selector::Seed);\nassert!(seed.via.is_none() && seed.edge.is_none());\nassert!(seed.selector.declared() && seed.confidence == 1.0);\n\n// the wire form omits them rather than carrying nulls a reader must skip\nlet wire = serde_json::to_value(&seed).unwrap();\nassert!(wire.get(\"via\").is_none() && wire.get(\"edge\").is_none());\n\n// a relation says both where it came from and which edge it followed\nlet walked: Discovery = serde_json::from_value(json!({\n    \"selector\": \"relation\",\n    \"reason\": \"the decision in force over this scope\",\n    \"via\": \"majordomus://issue/I0301\",\n    \"edge\": \"governed_by\",\n    \"depth\": 1,\n    \"confidence\": 1.0,\n    \"weight\": 0.9,\n})).unwrap();\nassert_eq!(walked.edge.as_deref(), Some(\"governed_by\"));\nassert_eq!(walked.via.as_deref(), Some(\"majordomus://issue/I0301\"));\n\n// and a guess says so, in the one field that distinguishes the two halves of an answer\nlet guessed: Discovery = serde_json::from_value(json!({\n    \"selector\": \"intent_match\",\n    \"reason\": \"the intent's words occur in it\",\n    \"depth\": 2,\n    \"confidence\": 0.4,\n    \"weight\": 0.4,\n})).unwrap();\nassert!(!guessed.selector.declared() && guessed.confidence < 1.0);\n```"
+      },
+      "Disposition": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "integrated",
+            "description": "The trunk reaches it: it is in the repository's own history."
+          },
+          {
+            "type": "string",
+            "const": "published",
+            "description": "A remote reaches it: another checkout can fetch it, and it survives this disk."
+          },
+          {
+            "type": "string",
+            "const": "local_only",
+            "description": "Committed here and nowhere else. One disk away from being lost."
+          },
+          {
+            "type": "string",
+            "const": "uncommitted",
+            "description": "Not committed at all: files in a work tree, or a stash entry."
+          }
+        ],
+        "description": "Where the work a holding carries can be reached from.\n\nThe order is the order of safety: everything above `Disposition::LocalOnly` is\nreachable by somebody who is not the worker that made it.\n\n```\nuse majordomus_cli::convergence::Disposition;\n\n// declared in the order of safety, so the derived order says which is worse\nassert!(Disposition::Integrated < Disposition::Published);\nassert!(Disposition::Published < Disposition::LocalOnly);\nassert_eq!(serde_json::to_string(&Disposition::LocalOnly).unwrap(), \"\\\"local_only\\\"\");\n```"
       },
       "DistributionReport": {
         "type": "object",
@@ -21277,6 +21445,63 @@
           "commits"
         ],
         "description": "A range of history, judged.\nA range of history, judged in one pass.\n\n```\nuse majordomus_cli::commit::verdict::HistoryReport;\nlet r = HistoryReport {\n    range: \"HEAD\".into(),\n    total: 1755,\n    exempt: 561,\n    failing: 54,\n    commits: Vec::new(),\n};\n// a commit with nothing to say is counted and not listed: a report of a thousand\n// passing commits is a report nobody reads\nassert!(r.commits.is_empty());\nassert_eq!(r.total - r.exempt, 1194);\n```"
+      },
+      "Holding": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/HoldingKind",
+            "description": "What kind of thing holds it."
+          },
+          "identity": {
+            "type": "string",
+            "description": "How it is named: a branch name, an absolute worktree path, a stash ref."
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition",
+            "description": "Where the work can be reached from."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "What was actually read — never a restatement of the disposition."
+          },
+          "remedy": {
+            "type": "string",
+            "description": "The command that would move it out of danger. Empty when it is not at risk."
+          },
+          "at_risk": {
+            "type": "boolean",
+            "description": "This holding's work exists on one disk only."
+          }
+        },
+        "required": [
+          "kind",
+          "identity",
+          "disposition",
+          "evidence",
+          "at_risk"
+        ],
+        "description": "One thing holding work, and what is known about where that work can be reached from.\n\n```\nuse majordomus_cli::convergence::{Disposition, Holding, HoldingKind};\n\nlet branch = Holding {\n    kind: HoldingKind::Branch,\n    identity: \"feature/x\".into(),\n    disposition: Disposition::LocalOnly,\n    evidence: \"abc123 is on no remote-tracking ref of this checkout\".into(),\n    remedy: \"git push -u origin feature/x\".into(),\n    at_risk: true,\n};\n// an at-risk holding always carries the command that would move it out of danger\nassert!(branch.at_risk && !branch.remedy.is_empty());\n// and a reachable one carries none, so the field is left out of the document\nlet safe = Holding { disposition: Disposition::Published, remedy: String::new(), at_risk: false, ..branch };\nassert!(!serde_json::to_string(&safe).unwrap().contains(\"remedy\"));\n```"
+      },
+      "HoldingKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "worktree",
+            "description": "A registered work tree, holding files that are not committed."
+          },
+          {
+            "type": "string",
+            "const": "branch",
+            "description": "A local branch, holding commits."
+          },
+          {
+            "type": "string",
+            "const": "stash",
+            "description": "An entry of `git stash`."
+          }
+        ],
+        "description": "What kind of thing is holding the work.\n\n```\nuse majordomus_cli::convergence::HoldingKind;\n\n// the word a report and a persisted record use; renaming a variant must not rename it\nassert_eq!(HoldingKind::Worktree.as_str(), \"worktree\");\nassert_eq!(serde_json::to_string(&HoldingKind::Stash).unwrap(), \"\\\"stash\\\"\");\n```"
       },
       "HttpExposure": {
         "type": "object",

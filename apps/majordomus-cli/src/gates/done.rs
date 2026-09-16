@@ -38,6 +38,7 @@ use serde::{Deserialize, Serialize};
 
 use super::judge::{Gate, GateStatus};
 use super::ImpliedObligation;
+use crate::convergence::ConvergenceReport;
 
 /// ```
 /// use majordomus_cli::gates::{DoneQuestion, GateStatus};
@@ -82,6 +83,8 @@ enum Answers {
     Gate(&'static str),
     /// The change set itself.
     Change,
+    /// The repository's convergence: whether any work is held where it can be lost.
+    Convergence,
     /// Nothing reachable from here; the command that would answer it.
     Elsewhere(&'static str),
 }
@@ -192,8 +195,8 @@ fn invariant() -> Vec<(&'static str, &'static str, Answers, &'static str)> {
         (
             "no-stale-topology",
             "Is a branch, worktree or pull request left behind?",
-            Answers::Elsewhere("majordomus worktree && majordomus doctor"),
-            "majordomus worktree repair",
+            Answers::Convergence,
+            "majordomus convergence",
         ),
         (
             "handover",
@@ -236,14 +239,16 @@ pub struct ObligationStanding {
 /// Answer the invariant.
 ///
 /// Every argument is a judgement somebody else already made: `standing` is the obligation
-/// closure's, `gates` is [`super::judge`]'s, `implied` is [`super::implied`]'s, and
-/// `changed` is the change set. Nothing is measured here — this composes.
+/// closure's, `gates` is [`super::judge`]'s, `implied` is [`super::implied`]'s,
+/// `changed` is the change set and `convergence` is [`crate::convergence`]'s verdict over
+/// the repository's holdings. Nothing is measured here — this composes.
 pub(crate) fn answer(
     standing: &std::collections::BTreeMap<String, ObligationStanding>,
     implied: &[ImpliedObligation],
     gates: &[Gate],
     changed: &[String],
     closure_reachable: bool,
+    convergence: Option<&ConvergenceReport>,
 ) -> Vec<DoneQuestion> {
     invariant()
         .into_iter()
@@ -367,6 +372,38 @@ pub(crate) fn answer(
                         )
                     }
                 }
+                Answers::Convergence => match convergence {
+                    // the verdict is one word over every holding; the evidence names the
+                    // holdings themselves, because "3 at risk" is not something a person
+                    // can act on and `feature/x, /tmp/wt` is
+                    Some(report) => {
+                        let at_risk: Vec<&str> = report
+                            .holdings
+                            .iter()
+                            .filter(|h| h.at_risk)
+                            .map(|h| h.identity.as_str())
+                            .take(3)
+                            .collect();
+                        if report.converged {
+                            (
+                                GateStatus::Pass,
+                                report.summary(),
+                                "convergence.report".to_string(),
+                            )
+                        } else {
+                            (
+                                GateStatus::Fail,
+                                format!("{}: {}", report.summary(), at_risk.join(", ")),
+                                "convergence.report".to_string(),
+                            )
+                        }
+                    }
+                    None => (
+                        GateStatus::Unknown,
+                        "the repository's holdings could not be read in this checkout".into(),
+                        "convergence.report".to_string(),
+                    ),
+                },
                 Answers::Elsewhere(command) => (
                     GateStatus::Unknown,
                     format!(
@@ -443,7 +480,7 @@ mod tests {
 
     #[test]
     fn every_question_carries_a_source_and_something_to_run() {
-        let q = answer(&BTreeMap::new(), &[], &[], &[], false);
+        let q = answer(&BTreeMap::new(), &[], &[], &[], false, None);
         assert_eq!(q.len(), 19, "the invariant is nineteen questions");
         for question in &q {
             assert!(!question.source.is_empty(), "{} has no source", question.id);
@@ -464,7 +501,7 @@ mod tests {
         s.insert("tests".to_string(), standing("discharged"));
         s.insert("docs".to_string(), standing("stale"));
         s.insert("push".to_string(), standing("owed"));
-        let q = answer(&s, &[], &[], &[], true);
+        let q = answer(&s, &[], &[], &[], true, None);
         let by = |id: &str| q.iter().find(|q| q.id == id).unwrap().clone();
         assert_eq!(by("tested").status, GateStatus::Pass);
         assert_eq!(by("documented").status, GateStatus::Stale);
@@ -481,7 +518,7 @@ mod tests {
             implied_of("tests", true, false),
             implied_of("deploy", false, false),
         ];
-        let q = answer(&BTreeMap::new(), &implied, &[], &[], true);
+        let q = answer(&BTreeMap::new(), &implied, &[], &[], true, None);
         let by = |id: &str| q.iter().find(|q| q.id == id).unwrap().clone();
         assert_eq!(by("tested").status, GateStatus::Queued);
         assert!(by("tested").evidence.contains("does not declare it"));
@@ -494,7 +531,7 @@ mod tests {
 
     #[test]
     fn the_ci_question_separates_refused_from_never_reported() {
-        let none = answer(&BTreeMap::new(), &[], &[], &[], true);
+        let none = answer(&BTreeMap::new(), &[], &[], &[], true, None);
         assert_eq!(
             none.iter().find(|q| q.id == "ci").unwrap().status,
             GateStatus::Exempt
@@ -504,7 +541,7 @@ mod tests {
             gate("a", GateStatus::Queued, true),
             gate("b", GateStatus::Pass, true),
         ];
-        let q = answer(&BTreeMap::new(), &[], &silent, &[], true);
+        let q = answer(&BTreeMap::new(), &[], &silent, &[], true, None);
         assert_eq!(
             q.iter().find(|q| q.id == "ci").unwrap().status,
             GateStatus::Queued
@@ -514,7 +551,7 @@ mod tests {
             gate("a", GateStatus::Fail, true),
             gate("b", GateStatus::Queued, true),
         ];
-        let q = answer(&BTreeMap::new(), &[], &red, &[], true);
+        let q = answer(&BTreeMap::new(), &[], &red, &[], true, None);
         let ci = q.iter().find(|q| q.id == "ci").unwrap();
         assert_eq!(ci.status, GateStatus::Fail, "a refusal outranks a silence");
         assert!(ci.evidence.contains("1 refusing") && ci.evidence.contains("1 never reported"));
@@ -523,7 +560,7 @@ mod tests {
             gate("a", GateStatus::Pass, true),
             gate("b", GateStatus::Exempt, false),
         ];
-        let q = answer(&BTreeMap::new(), &[], &green, &[], true);
+        let q = answer(&BTreeMap::new(), &[], &green, &[], true, None);
         assert_eq!(
             q.iter().find(|q| q.id == "ci").unwrap().status,
             GateStatus::Pass
@@ -538,6 +575,7 @@ mod tests {
             &[gate("version-surface", GateStatus::Pass, true)],
             &[],
             true,
+            None,
         );
         assert_eq!(
             q.iter().find(|q| q.id == "version").unwrap().status,
@@ -550,7 +588,7 @@ mod tests {
 
     #[test]
     fn regression_is_answered_from_the_change_set_alone() {
-        let q = answer(&BTreeMap::new(), &[], &[], &["lib/a.sh".to_string()], true);
+        let q = answer(&BTreeMap::new(), &[], &[], &["lib/a.sh".to_string()], true, None);
         let r = q.iter().find(|q| q.id == "regression-tested").unwrap();
         assert_eq!(r.status, GateStatus::Queued);
         assert!(r.evidence.contains("no test path"));
@@ -564,6 +602,7 @@ mod tests {
                 "test/cases/131_completion_gates.sh".to_string(),
             ],
             true,
+            None,
         );
         assert_eq!(
             q.iter()
@@ -587,10 +626,67 @@ mod tests {
         );
     }
 
+    /// The verdict is the answer: a converged repository passes, and an unconverged one
+    /// fails with the holdings named. Before this, the question answered "nothing in this
+    /// report reaches that fact" no matter what the repository held.
+    #[test]
+    fn no_stale_topology_is_answered_from_the_convergence_verdict() {
+        use crate::convergence::{ConvergenceReport, Disposition, Holding, HoldingKind};
+
+        let at_risk = ConvergenceReport {
+            schema: "convergence/v1".into(),
+            repository: "/tmp/r".into(),
+            trunk: Some("master".into()),
+            holdings: vec![Holding {
+                kind: HoldingKind::Branch,
+                identity: "feature/never-pushed".into(),
+                disposition: Disposition::LocalOnly,
+                evidence: "abc on no remote".into(),
+                remedy: "git push -u origin feature/never-pushed".into(),
+                at_risk: true,
+            }],
+            tallies: Default::default(),
+            at_risk: 1,
+            converged: false,
+        };
+        let q = answer(&BTreeMap::new(), &[], &[], &[], true, Some(&at_risk));
+        let question = q.iter().find(|q| q.id == "no-stale-topology").unwrap();
+        assert_eq!(question.status, GateStatus::Fail);
+        assert!(
+            question.evidence.contains("feature/never-pushed"),
+            "the finding must name the holding, not only count it: {}",
+            question.evidence
+        );
+        assert_eq!(question.source, "convergence.report");
+
+        let converged = ConvergenceReport {
+            holdings: vec![],
+            at_risk: 0,
+            converged: true,
+            ..at_risk
+        };
+        let q = answer(&BTreeMap::new(), &[], &[], &[], true, Some(&converged));
+        assert_eq!(
+            q.iter().find(|q| q.id == "no-stale-topology").unwrap().status,
+            GateStatus::Pass
+        );
+    }
+
+    /// A verdict that could not be read is not a clean verdict: the question is unknown,
+    /// never a pass. The rule about absence, applied to the one source that can be absent.
+    #[test]
+    fn an_unreadable_verdict_is_unknown_and_never_a_pass() {
+        let q = answer(&BTreeMap::new(), &[], &[], &[], true, None);
+        let question = q.iter().find(|q| q.id == "no-stale-topology").unwrap();
+        assert_eq!(question.status, GateStatus::Unknown);
+        assert!(!question.status.refuses());
+        assert!(question.status.unverified());
+    }
+
     #[test]
     fn a_question_nothing_here_reaches_says_so_and_names_the_command() {
-        let q = answer(&BTreeMap::new(), &[], &[], &[], true);
-        for id in ["parity", "no-stale-topology", "handover", "issue"] {
+        let q = answer(&BTreeMap::new(), &[], &[], &[], true, None);
+        for id in ["parity", "handover", "issue"] {
             let question = q.iter().find(|q| q.id == id).unwrap();
             assert_eq!(question.status, GateStatus::Unknown, "{id}");
             assert!(
