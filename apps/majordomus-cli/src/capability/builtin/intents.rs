@@ -30,6 +30,7 @@ use crate::capability::module::ModuleDescriptor;
 use crate::intent::{
     IntentFinding, IntentPreflight, IntentView, Intents, RepositoryEvidence, INTENT,
 };
+use crate::intent_plan::IntentCoverage;
 use crate::plan::Plan;
 use crate::{capability, module};
 
@@ -199,6 +200,11 @@ fn intent_validate(ctx: &Context, _: Empty) -> Result<IntentValidation, Capabili
     })
 }
 
+fn intent_coverage(ctx: &Context, _: Empty) -> Result<IntentCoverage, CapabilityError> {
+    let plan = Plan::build(&ctx.index);
+    Ok(Intents::coverage(&ctx.index, &plan))
+}
+
 fn intent_preflight(
     ctx: &Context,
     input: IntentPreflightInput,
@@ -278,6 +284,22 @@ pub fn module() -> ModuleDescriptor {
                 handler: intent_validate,
             },
             capability! {
+                id: "intents.coverage",
+                title: "Which work carries which criterion, and why each issue exists",
+                description: "The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent.",
+                input: Empty,
+                output: IntentCoverage,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_intent_coverage"),
+                    http: get("/api/v1/intents/coverage"),
+                    cli: Some(crate::capability::CliExposure { path: vec!["intent".into(), "coverage".into()] }),
+                },
+                tags: ["intent", "project", "planning"],
+                cache: CachePolicy::Disabled,
+                handler: intent_coverage,
+            },
+            capability! {
                 id: "intents.preflight",
                 title: "Which intent a piece of work serves",
                 description: "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names.",
@@ -326,6 +348,12 @@ mod tests {
                 "majordomus_intent_validate",
                 "/api/v1/intents/validate",
                 &["intent", "validate"],
+            ),
+            (
+                "intents.coverage",
+                "majordomus_intent_coverage",
+                "/api/v1/intents/coverage",
+                &["intent", "coverage"],
             ),
             (
                 "intents.preflight",

@@ -99,6 +99,14 @@
         "type": "string"
       }
     },
+    "serves": {
+      "description": "The intent satisfaction criteria this issue exists to make true, each `<intent-id>#<criterion-id>`. An issue under a milestone that realises an intent must name at least one; an issue under no intent's milestone is maintenance work and names none.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*#[a-z0-9][a-z0-9-]*$"
+      }
+    },
     "acceptance_criteria": {
       "type": "array",
       "items": {

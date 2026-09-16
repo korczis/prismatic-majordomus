@@ -145,6 +145,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus intent list`](#majordomus-intent-list) | `/docs/cli/intent/list/` | Every intent, with the stage derived from its milestones and its evidence |
 | [`majordomus intent show`](#majordomus-intent-show) | `/docs/cli/intent/show/` | One intent in full: each milestone's derived status and each criterion's evidence state |
 | [`majordomus intent validate`](#majordomus-intent-validate) | `/docs/cli/intent/validate/` | Every finding over the intents; exit 10 when any is a failure |
+| [`majordomus intent coverage`](#majordomus-intent-coverage) | `/docs/cli/intent/coverage/` | Which work carries which criterion, and the reason every issue exists |
 | [`majordomus intent preflight`](#majordomus-intent-preflight) | `/docs/cli/intent/preflight/` | Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none |
 
 <a id="majordomus"></a>
@@ -3934,7 +3935,7 @@ Examples:
 
 What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
 
-Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent preflight`](#majordomus-intent-preflight).
+Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent coverage`](#majordomus-intent-coverage), [`majordomus intent preflight`](#majordomus-intent-preflight).
 
 ```text
 majordomus intent [OPTIONS] <COMMAND>
@@ -4037,6 +4038,41 @@ Examples:
   ```
 
   Verified: exits 0; prints intent(s), valid.
+
+<a id="majordomus-intent-coverage"></a>
+## `majordomus intent coverage`
+
+Which work carries which criterion, and the reason every issue exists
+
+```text
+majordomus intent coverage [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Which work carries which criterion, and why every issue exists** — Every criterion of every live intent with the issues that serve it and how strongly — covered, weakly covered, observed by the recorded gap, or uncovered — and every issue with the reason it exists: the criteria it serves, or maintenance under a milestone no intent names.
+
+  ```console
+  $ majordomus intent coverage
+  ```
+
+  Verified: exits 0; prints CRITERION, criterion(s).
+
+- **The same, as the shape the API and MCP answer with** — What `GET /api/v1/intents/coverage` returns and the `majordomus_intent_coverage` tool answers: each criterion with its strength and the issues serving it, and each issue with its origin.
+
+  ```console
+  $ majordomus intent coverage --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /criteria/0/strength, /criteria/0/issues, /issues/0/origin.
 
 <a id="majordomus-intent-preflight"></a>
 ## `majordomus intent preflight`

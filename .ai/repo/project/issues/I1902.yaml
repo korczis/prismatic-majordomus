@@ -1,0 +1,36 @@
+id: I1902
+milestone: intent-planning
+title: The gap and the critique of an intent are typed records the plan is held to
+slug: the-gap-and-the-critique-are-records
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - intent-planning#gap-is-recorded
+  - intent-planning#critique-precedes-execution
+objective: "Add the gap and critique kinds, their schemas, and intent_review::review, so intent validate refuses an incomplete gap and execution on an uncritiqued plan."
+why: "What a worker observed was missing and what a review of the plan overlooked lived only in a session's scroll, so planning started from a prompt and a missed requirement surfaced after the work."
+current_state: "No gap or critique record exists."
+desired_state: "A gap answers every criterion with observations; a critique's findings are resolved open, planned into an issue serving the intent, or rejected with a reason; started work on an uncritiqued plan or with an open blocker is refused."
+scope:
+  - apps/majordomus-cli/src/intent_review.rs
+  - share/schemas/majordomus/gap
+  - share/schemas/majordomus/critique
+  - share/kinds.yaml
+  - .ai/repo/knowledge/sources.yaml
+  - share/skeleton/ai/repo/knowledge/sources.yaml
+  - test/cases/386_a_plan_is_held_to_its_intent.sh
+depends_on:
+  - I1901
+acceptance_criteria:
+  - A gap leaving a criterion unanswered fails intent validate as gap_criterion_unanswered
+  - A condition asserted with no observation fails as condition_without_observation
+  - Started work on an intent with no critique fails as executing_without_critique, and with an open blocking finding as executing_with_open_blocker
+validation:
+  - cargo test --lib intent_review
+  - bash test/run.sh 386_a_plan_is_held_to_its_intent
+evidence_required:
+  - an_incomplete_gap_is_refused
+  - execution_waits_for_the_critique
+created_at: 2026-09-15
+updated_at: 2026-09-15

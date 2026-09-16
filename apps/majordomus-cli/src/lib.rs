@@ -39,6 +39,8 @@ pub mod graph;
 pub mod http;
 pub mod index;
 pub mod intent;
+pub mod intent_plan;
+pub mod intent_review;
 pub mod lease;
 pub mod ledger;
 pub mod live;

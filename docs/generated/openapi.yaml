@@ -3320,6 +3320,58 @@ paths:
           uri: majordomus://intents
           name: intents
       x-majordomus-cli: intent list
+  "/api/v1/intents/coverage":
+    get:
+      operationId: intents.coverage
+      summary: "Which work carries which criterion, and why each issue exists"
+      description: "The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent."
+      tags:
+        - intents
+      parameters: []
+      responses:
+        "200":
+          description: "Which work carries which criterion, and why each issue exists: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntentCoverage"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: intents.coverage
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::intents
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_intent_coverage
+      x-majordomus-cli: intent coverage
   "/api/v1/intents/preflight":
     get:
       operationId: intents.preflight
@@ -10875,6 +10927,44 @@ components:
         - signals
         - examples
       description: "How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down."
+    CoverageStrength:
+      oneOf:
+        - type: string
+          const: uncovered
+          description: No live issue serves it.
+        - type: string
+          const: observed
+          description: "No live issue serves it, and none needs to: the recorded gap observed it already true.\nWhether it is *met* is still the evidence's question, never this one's."
+        - type: string
+          const: weak
+          description: "Every live issue serving it requires no evidence, so nothing gates its completion."
+        - type: string
+          const: covered
+          description: At least one live issue serving it requires evidence before it is DONE.
+      description: How well a criterion is carried by the plan.
+    CoveringIssue:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The issue id.
+        milestone:
+          type: string
+          description: Its milestone.
+        status:
+          type: string
+          description: Its derived status.
+        evidence_need:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: How many evidence tokens it requires before it may be DONE.
+      required:
+        - id
+        - milestone
+        - status
+        - evidence_need
+      description: One issue as coverage sees it.
     CpuKind:
       oneOf:
         - type: string
@@ -10884,6 +10974,35 @@ components:
           const: performance
           description: A dedicated one.
       description: "What a machine's CPU is."
+    CriterionCoverage:
+      type: object
+      properties:
+        intent:
+          type: string
+          description: The intent.
+        criterion:
+          type: string
+          description: The criterion id inside it.
+        strength:
+          "$ref": "#/components/schemas/CoverageStrength"
+          description: The strength derived from the serving issues.
+        issues:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CoveringIssue"
+          description: "Every live issue that serves it, in id order."
+        milestones:
+          type: array
+          items:
+            type: string
+          description: "The milestones those issues belong to, sorted and unique."
+      required:
+        - intent
+        - criterion
+        - strength
+        - issues
+        - milestones
+      description: "One criterion of one intent, and the work that carries it."
     CriticalBlocker:
       type: object
       properties:
@@ -14966,6 +15085,29 @@ components:
           const: unknown
           description: "The trunk is unknown, so there is nothing to measure the branch against."
       description: "How a branch stands to the trunk, which is what decides which commits are its own."
+    IntentCoverage:
+      type: object
+      properties:
+        criteria:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CriterionCoverage"
+          description: "Every criterion of every live intent, in intent then declaration order."
+        issues:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IssuePurpose"
+          description: "Every issue of the plan, in id order, with the reason it exists."
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentFinding"
+          description: "Every finding, in derivation order."
+      required:
+        - criteria
+        - issues
+        - findings
+      description: The whole derived coverage.
     IntentCriterion:
       type: object
       properties:
@@ -15278,6 +15420,47 @@ components:
           const: all
           description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
       description: Which interface a process listens on.
+    IssueOrigin:
+      oneOf:
+        - type: string
+          const: intent
+          description: It serves at least one criterion of a declared intent.
+        - type: string
+          const: maintenance
+          description: "Its milestone is named by no intent: maintenance or operational work, stated as such."
+        - type: string
+          const: unexplained
+          description: "Its milestone realises an intent, but it names nothing it serves."
+      description: Why an issue exists.
+    IssuePurpose:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: The issue id.
+        milestone:
+          type: string
+          description: Its milestone.
+        origin:
+          "$ref": "#/components/schemas/IssueOrigin"
+          description: Which kind of reason it has.
+        serves:
+          type: array
+          items:
+            type: string
+          description: "The `<intent>#<criterion>` references it declares, as declared."
+        intents:
+          type: array
+          items:
+            type: string
+          description: "The intents whose milestones include this issue's milestone, sorted."
+      required:
+        - issue
+        - milestone
+        - origin
+        - serves
+        - intents
+      description: "The answer to \"why does this issue exist?\"."
     IssueTrace:
       type: object
       properties:
@@ -17663,6 +17846,11 @@ components:
           items:
             type: string
           description: The paths it touches; two issues of one wave that share a path are serialised.
+        serves:
+          type: array
+          items:
+            type: string
+          description: "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
         objective:
           type: string
           description: "One line: what the issue is for."
@@ -17699,6 +17887,7 @@ components:
         - blocked_by
         - dependents
         - scope
+        - serves
         - objective
         - evidence_have
         - evidence_need

@@ -40,6 +40,8 @@ use serde_json::Value;
 
 use crate::evidence::{self, Ledger, ProofState, TestId};
 use crate::index::Index;
+use crate::intent_plan::{coverage, IntentCoverage, IntentOutline};
+use crate::intent_review::{observed_satisfied, review, CritiqueRecord, GapRecord};
 use crate::plan::{overlap, Plan};
 
 /// The kind of an intent record.
@@ -438,7 +440,8 @@ pub struct Intents {
     pub findings: Vec<IntentFinding>,
 }
 
-const REPRODUCE: &str = "majordomus intent validate";
+/// The command that shows every intent finding again.
+pub const REPRODUCE: &str = "majordomus intent validate";
 
 fn finding(out: &mut Vec<IntentFinding>, level: &str, code: &str, subject: &str, msg: String) {
     out.push(IntentFinding {
@@ -617,11 +620,56 @@ fn governance_resolves(g: &str, ev: &dyn EvidenceLookup) -> bool {
     }
 }
 
+/// What the planning half needs of each record: its criteria, its milestones, whether it is
+/// retired, and the criteria its recorded gap observed already satisfied.
+///
+/// ```
+/// use majordomus_cli::intent::{outlines, IntentRecord};
+/// use serde_json::json;
+/// let r = IntentRecord::from_metadata(".ai/repo/project/intents/x.yaml", &json!({
+///     "id": "x", "milestones": ["m"],
+///     "satisfaction": [{"id": "c", "evidence": "test", "ref": "t"}]}));
+/// let o = outlines(std::slice::from_ref(&r), &[]);
+/// assert_eq!(o[0].criteria, ["c"]);
+/// assert!(!o[0].retired);
+/// ```
+pub fn outlines(records: &[IntentRecord], gaps: &[GapRecord]) -> Vec<IntentOutline> {
+    let observed = observed_satisfied(gaps);
+    records
+        .iter()
+        .map(|r| IntentOutline {
+            id: r.id.clone(),
+            criteria: r.satisfaction.iter().map(|c| c.id.clone()).collect(),
+            milestones: r.milestones.clone(),
+            retired: r.cancelled || !r.superseded_by.is_empty(),
+            observed_satisfied: observed.get(&r.id).cloned().unwrap_or_default(),
+        })
+        .collect()
+}
+
 impl Intents {
     /// Derive every intent of an index against its plan and its evidence. Nothing is read
     /// but what the three already hold, and nothing is written.
+    ///
+    /// The findings are the record's own (this module) followed by the planning half's
+    /// (ADR 0073): whether the plan carries every criterion, why each issue exists, and
+    /// whether the recorded gap and critique hold and were made before execution.
     pub fn build(index: &Index, plan: &Plan, ev: &dyn EvidenceLookup) -> Intents {
-        Intents::derive(IntentRecord::all(index), plan, ev)
+        let records = IntentRecord::all(index);
+        let gaps = GapRecord::all(index);
+        let critiques = CritiqueRecord::all(index);
+        let outlines = outlines(&records, &gaps);
+        let mut out = Intents::derive(records, plan, ev);
+        out.findings.extend(coverage(&outlines, plan).findings);
+        out.findings
+            .extend(review(&outlines, plan, &gaps, &critiques));
+        out
+    }
+
+    /// The coverage of every criterion by the plan, and the reason every issue exists.
+    pub fn coverage(index: &Index, plan: &Plan) -> IntentCoverage {
+        let records = IntentRecord::all(index);
+        coverage(&outlines(&records, &GapRecord::all(index)), plan)
     }
 
     /// Derive from records already read: what [`Intents::build`] does after reading them,
@@ -1000,6 +1048,7 @@ mod tests {
             parallel_safe: true,
             title: id.into(),
             slug: id.into(),
+            serves: vec![],
             depends_on: vec![],
             blocked_by: vec![],
             dependents: vec![],

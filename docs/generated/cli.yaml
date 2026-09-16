@@ -13628,6 +13628,98 @@ cli:
         - path:
             - majordomus
             - intent
+            - coverage
+          route: /docs/cli/intent/coverage/
+          executable: true
+          usage: "majordomus intent coverage [OPTIONS]"
+          about: "Which work carries which criterion, and the reason every issue exists"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-coverage
+              title: "Which work carries which criterion, and why every issue exists"
+              description: "Every criterion of every live intent with the issues that serve it and how strongly — covered, weakly covered, observed by the recorded gap, or uncovered — and every issue with the reason it exists: the criteria it serves, or maintenance under a milestone no intent names."
+              argv:
+                - intent
+                - coverage
+              command: majordomus intent coverage
+              setup: []
+              expectation: "exits 0; prints CRITERION, criterion(s)"
+            - id: intent-coverage-json
+              title: "The same, as the shape the API and MCP answer with"
+              description: "What `GET /api/v1/intents/coverage` returns and the `majordomus_intent_coverage` tool answers: each criterion with its strength and the issues serving it, and each issue with its origin."
+              argv:
+                - intent
+                - coverage
+                - "--format"
+                - json
+              command: majordomus intent coverage --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /criteria/0/strength, /criteria/0/issues, /issues/0/origin"
+          subcommands: []
+        - path:
+            - majordomus
+            - intent
             - preflight
           route: /docs/cli/intent/preflight/
           executable: true

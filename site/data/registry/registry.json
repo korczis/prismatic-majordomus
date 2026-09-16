@@ -6,27 +6,27 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "9491d095c7cd4afe2c330fe41f750b8ec5e906f20ee63dc7945eeb66caa84af8",
+    "fingerprint": "849811e66d6a75203fe319b8ae9475f1edeeaf49bfa13d8ec72dbe2fa57b9c85",
     "summary": {
-      "total": 1474,
-      "builtin": 117,
-      "declarative": 1357,
+      "total": 1486,
+      "builtin": 118,
+      "declarative": 1368,
       "by_kind": {
         "command": 7,
-        "query": 110,
-        "resource": 1357
+        "query": 111,
+        "resource": 1368
       },
       "by_stability": {
-        "behaviorally_verified": 104,
+        "behaviorally_verified": 105,
         "experimental": 7,
-        "implemented": 1363
+        "implemented": 1374
       },
-      "mcp_tools": 114,
-      "mcp_resources": 1399,
-      "http_routes": 116,
-      "cli_commands": 56,
-      "modules": 68,
-      "benchmark_required": 112,
+      "mcp_tools": 115,
+      "mcp_resources": 1410,
+      "http_routes": 117,
+      "cli_commands": 57,
+      "modules": 70,
+      "benchmark_required": 113,
       "benchmark_waived": 5,
       "cached": 35
     },
@@ -19662,6 +19662,285 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
       },
       {
+        "id": "intents.coverage",
+        "module": "intents",
+        "kind": "query",
+        "title": "Which work carries which criterion, and why each issue exists",
+        "description": "The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "IntentCoverage",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "criteria": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CriterionCoverage"
+                },
+                "description": "Every criterion of every live intent, in intent then declaration order."
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IssuePurpose"
+                },
+                "description": "Every issue of the plan, in id order, with the reason it exists."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IntentFinding"
+                },
+                "description": "Every finding, in derivation order."
+              }
+            },
+            "required": [
+              "criteria",
+              "issues",
+              "findings"
+            ],
+            "description": "The whole derived coverage.",
+            "title": "IntentCoverage",
+            "$defs": {
+              "CriterionCoverage": {
+                "type": "object",
+                "properties": {
+                  "intent": {
+                    "type": "string",
+                    "description": "The intent."
+                  },
+                  "criterion": {
+                    "type": "string",
+                    "description": "The criterion id inside it."
+                  },
+                  "strength": {
+                    "$ref": "#/$defs/CoverageStrength",
+                    "description": "The strength derived from the serving issues."
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/CoveringIssue"
+                    },
+                    "description": "Every live issue that serves it, in id order."
+                  },
+                  "milestones": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestones those issues belong to, sorted and unique."
+                  }
+                },
+                "required": [
+                  "intent",
+                  "criterion",
+                  "strength",
+                  "issues",
+                  "milestones"
+                ],
+                "description": "One criterion of one intent, and the work that carries it."
+              },
+              "CoverageStrength": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "uncovered",
+                    "description": "No live issue serves it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "observed",
+                    "description": "No live issue serves it, and none needs to: the recorded gap observed it already true.\nWhether it is *met* is still the evidence's question, never this one's."
+                  },
+                  {
+                    "type": "string",
+                    "const": "weak",
+                    "description": "Every live issue serving it requires no evidence, so nothing gates its completion."
+                  },
+                  {
+                    "type": "string",
+                    "const": "covered",
+                    "description": "At least one live issue serving it requires evidence before it is DONE."
+                  }
+                ],
+                "description": "How well a criterion is carried by the plan."
+              },
+              "CoveringIssue": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The issue id."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "Its milestone."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Its derived status."
+                  },
+                  "evidence_need": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How many evidence tokens it requires before it may be DONE."
+                  }
+                },
+                "required": [
+                  "id",
+                  "milestone",
+                  "status",
+                  "evidence_need"
+                ],
+                "description": "One issue as coverage sees it."
+              },
+              "IssuePurpose": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue id."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "Its milestone."
+                  },
+                  "origin": {
+                    "$ref": "#/$defs/IssueOrigin",
+                    "description": "Which kind of reason it has."
+                  },
+                  "serves": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The `<intent>#<criterion>` references it declares, as declared."
+                  },
+                  "intents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The intents whose milestones include this issue's milestone, sorted."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "milestone",
+                  "origin",
+                  "serves",
+                  "intents"
+                ],
+                "description": "The answer to \"why does this issue exist?\"."
+              },
+              "IssueOrigin": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "intent",
+                    "description": "It serves at least one criterion of a declared intent."
+                  },
+                  {
+                    "type": "string",
+                    "const": "maintenance",
+                    "description": "Its milestone is named by no intent: maintenance or operational work, stated as such."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unexplained",
+                    "description": "Its milestone realises an intent, but it names nothing it serves."
+                  }
+                ],
+                "description": "Why an issue exists."
+              },
+              "IntentFinding": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "description": "`FAIL` or `WARN`. A failure means the intent model is invalid."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The stable code a reader greps for."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The intent or milestone the finding is about."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one line."
+                  },
+                  "reproduce": {
+                    "type": "string",
+                    "description": "The command that shows it again."
+                  }
+                },
+                "required": [
+                  "level",
+                  "code",
+                  "subject",
+                  "message",
+                  "reproduce"
+                ],
+                "description": "One validation finding."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_intent_coverage"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/intents/coverage"
+          },
+          "cli": {
+            "path": [
+              "intent",
+              "coverage"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "intent",
+          "project",
+          "planning"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+      },
+      {
         "id": "intents.list",
         "module": "intents",
         "kind": "query",
@@ -25406,6 +25685,13 @@
                     },
                     "description": "The paths it touches; two issues of one wave that share a path are serialised."
                   },
+                  "serves": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                  },
                   "objective": {
                     "type": "string",
                     "description": "One line: what the issue is for."
@@ -25449,6 +25735,7 @@
                   "blocked_by",
                   "dependents",
                   "scope",
+                  "serves",
                   "objective",
                   "evidence_have",
                   "evidence_need",
@@ -25857,6 +26144,13 @@
                     },
                     "description": "The paths it touches; two issues of one wave that share a path are serialised."
                   },
+                  "serves": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                  },
                   "objective": {
                     "type": "string",
                     "description": "One line: what the issue is for."
@@ -25900,6 +26194,7 @@
                   "blocked_by",
                   "dependents",
                   "scope",
+                  "serves",
                   "objective",
                   "evidence_have",
                   "evidence_need",
@@ -26147,6 +26442,13 @@
                     },
                     "description": "The paths it touches; two issues of one wave that share a path are serialised."
                   },
+                  "serves": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                  },
                   "objective": {
                     "type": "string",
                     "description": "One line: what the issue is for."
@@ -26190,6 +26492,7 @@
                   "blocked_by",
                   "dependents",
                   "scope",
+                  "serves",
                   "objective",
                   "evidence_have",
                   "evidence_need",
@@ -26512,6 +26815,13 @@
                     },
                     "description": "The paths it touches; two issues of one wave that share a path are serialised."
                   },
+                  "serves": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                  },
                   "objective": {
                     "type": "string",
                     "description": "One line: what the issue is for."
@@ -26555,6 +26865,7 @@
                   "blocked_by",
                   "dependents",
                   "scope",
+                  "serves",
                   "objective",
                   "evidence_have",
                   "evidence_need",
@@ -27070,6 +27381,13 @@
                     },
                     "description": "The paths it touches; two issues of one wave that share a path are serialised."
                   },
+                  "serves": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                  },
                   "objective": {
                     "type": "string",
                     "description": "One line: what the issue is for."
@@ -27113,6 +27431,7 @@
                   "blocked_by",
                   "dependents",
                   "scope",
+                  "serves",
                   "objective",
                   "evidence_have",
                   "evidence_need",
@@ -27597,6 +27916,13 @@
                     },
                     "description": "The paths it touches; two issues of one wave that share a path are serialised."
                   },
+                  "serves": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                  },
                   "objective": {
                     "type": "string",
                     "description": "One line: what the issue is for."
@@ -27640,6 +27966,7 @@
                   "blocked_by",
                   "dependents",
                   "scope",
+                  "serves",
                   "objective",
                   "evidence_have",
                   "evidence_need",
@@ -41090,7 +41417,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 52,
+        "capabilities": 53,
         "capability_ids": []
       },
       {
@@ -41193,7 +41520,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 30,
+        "capabilities": 32,
         "capability_ids": []
       },
       {
@@ -41207,6 +41534,14 @@
           "continuity.state"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+      },
+      {
+        "id": "critique",
+        "title": "critique",
+        "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
       },
       {
         "id": "deploy",
@@ -41371,6 +41706,14 @@
         "capability_ids": []
       },
       {
+        "id": "gap",
+        "title": "gap",
+        "description": "Declarative objects of kind 'gap' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "gates",
         "title": "Completion gates",
         "description": "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.",
@@ -41423,7 +41766,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1,
+        "capabilities": 2,
         "capability_ids": []
       },
       {
@@ -41432,8 +41775,9 @@
         "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": [
+          "intents.coverage",
           "intents.list",
           "intents.preflight",
           "intents.record",
@@ -41446,7 +41790,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 216,
+        "capabilities": 219,
         "capability_ids": []
       },
       {
@@ -41502,7 +41846,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 20,
+        "capabilities": 21,
         "capability_ids": []
       },
       {
@@ -41783,7 +42127,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 216,
+        "capabilities": 217,
         "capability_ids": []
       },
       {
@@ -41863,7 +42207,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3877959a42ad4eb88e7e0bab342c30cf63366c43832b49c19dceba2ccc3e94a0",
+    "fingerprint": "226278f86bc2e6e1356c95a68ddad695c6a7a3d6a93606004e478f0e3b13ff3a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -41886,23 +42230,25 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 52,
+      "adr": 53,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 173,
       "command": 31,
-      "context": 30,
+      "context": 32,
+      "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
       "document": 247,
       "feature": 25,
+      "gap": 1,
       "implementation": 49,
-      "intent": 1,
-      "issue": 216,
+      "intent": 2,
+      "issue": 219,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 20,
+      "milestone": 21,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -41913,7 +42259,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 216,
+      "test": 217,
       "use-case": 46,
       "workspace": 1
     },
@@ -42768,6 +43114,22 @@
           "project",
           "evidence",
           "governance"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0073",
+        "kind": "adr",
+        "identity": "adr-0073",
+        "title": "An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan",
+        "description": "An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan",
+        "path": ".ai/repo/adrs/0073-an-issue-names-the-intent-criterion-it-serves-and-coverage-is-derived.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6660,
+        "tags": [
+          "intent",
+          "project",
+          "planning"
         ]
       },
       {
@@ -45288,6 +45650,28 @@
         "bytes": 1813
       },
       {
+        "uri": "majordomus://context/ai.repo.project.critiques",
+        "kind": "context",
+        "identity": "ai.repo.project.critiques",
+        "title": "Plan critiques",
+        "description": "The adversarial pass over an intent's plan, as structured findings with their resolutions.",
+        "path": ".ai/repo/project/critiques/README.md",
+        "section": "project",
+        "source_class": "context",
+        "bytes": 876
+      },
+      {
+        "uri": "majordomus://context/ai.repo.project.gaps",
+        "kind": "context",
+        "identity": "ai.repo.project.gaps",
+        "title": "Gap analyses",
+        "description": "What a worker observed of this repository against an intent's criteria, at one commit.",
+        "path": ".ai/repo/project/gaps/README.md",
+        "section": "project",
+        "source_class": "context",
+        "bytes": 839
+      },
+      {
         "uri": "majordomus://context/ai.repo.project.intents",
         "kind": "context",
         "identity": "ai.repo.project.intents",
@@ -45438,6 +45822,17 @@
         "path": ".ai/repo/workspaces/README.md",
         "source_class": "context",
         "bytes": 3244
+      },
+      {
+        "uri": "majordomus://critique/intent-planning",
+        "kind": "critique",
+        "identity": "intent-planning",
+        "title": "intent-planning",
+        "description": "1d11762cb",
+        "path": ".ai/repo/project/critiques/intent-planning.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 2928
       },
       {
         "uri": "majordomus://deployment/majordomus",
@@ -45992,7 +46387,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 15177
+        "bytes": 19163
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -46001,7 +46396,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 55795
+        "bytes": 57410
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -48086,6 +48481,17 @@
         ]
       },
       {
+        "uri": "majordomus://gap/intent-planning",
+        "kind": "gap",
+        "identity": "intent-planning",
+        "title": "intent-planning",
+        "description": "1d11762cb",
+        "path": ".ai/repo/project/gaps/intent-planning.yaml",
+        "section": "project",
+        "source_class": "gap",
+        "bytes": 2478
+      },
+      {
         "uri": "majordomus://implementation/bin/majordomus",
         "kind": "implementation",
         "identity": "bin/majordomus",
@@ -48487,6 +48893,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 1699
+      },
+      {
+        "uri": "majordomus://intent/intent-planning",
+        "kind": "intent",
+        "identity": "intent-planning",
+        "title": "The plan of an intent is checked against it before execution, from a recorded gap and a recorded critique",
+        "description": "Before work on an intent starts, a reader can ask which issue carries each of its criteria, why any issue exists, what a worker observed was missing and what an adversarial review of the plan found — and get answers derived from typed records the repository keeps, with the plan refused when a criterion has no work, work has no purpose, a gap leaves a criterion unanswered, or execution began before the plan was critiqued.",
+        "path": ".ai/repo/project/intents/intent-planning.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 2325
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -50865,6 +51282,39 @@
         "bytes": 3566
       },
       {
+        "uri": "majordomus://issue/I1900",
+        "kind": "issue",
+        "identity": "I1900",
+        "title": "An intent is a typed record whose stage and satisfaction are derived",
+        "description": "Deliver slice 1 of the intent-lifecycle milestone: the intent kind and schema, the read-only capabilities intent.list, intent.record, intent.validate and intent.preflight on every surface, and the intent-check gate.",
+        "path": ".ai/repo/project/issues/I1900.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1762
+      },
+      {
+        "uri": "majordomus://issue/I1901",
+        "kind": "issue",
+        "identity": "I1901",
+        "title": "An issue names the intent criterion it serves, and coverage is derived",
+        "description": "Add `serves` to the issue record and derive, in intent_plan::coverage, the coverage of every intent criterion and the origin of every issue, reported by intent validate.",
+        "path": ".ai/repo/project/issues/I1901.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1639
+      },
+      {
+        "uri": "majordomus://issue/I1902",
+        "kind": "issue",
+        "identity": "I1902",
+        "title": "The gap and the critique of an intent are typed records the plan is held to",
+        "description": "Add the gap and critique kinds, their schemas, and intent_review::review, so intent validate refuses an incomplete gap and execution on an uncritiqued plan.",
+        "path": ".ai/repo/project/issues/I1902.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1866
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -51040,6 +51490,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3874
+      },
+      {
+        "uri": "majordomus://milestone/intent-planning",
+        "kind": "milestone",
+        "identity": "intent-planning",
+        "title": "The plan of an intent is held to it before execution",
+        "description": "An issue names the intent criteria it serves; coverage of every criterion is derived from the plan and refused when a criterion has no work or work has no purpose. The gap a worker observed and the critique of the plan are typed records validated against the intent and the plan, and work does not start on an intent whose plan was never critiqued or has an open blocking finding.",
+        "path": ".ai/repo/project/milestones/intent-planning.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2652
       },
       {
         "uri": "majordomus://milestone/routing-recommendations",
@@ -55506,6 +55967,14 @@
         "bytes": 7839
       },
       {
+        "uri": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "kind": "test",
+        "identity": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "path": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "source_class": "case",
+        "bytes": 6980
+      },
+      {
         "uri": "majordomus://test/test/cases/40_project_model.sh",
         "kind": "test",
         "identity": "test/cases/40_project_model.sh",
@@ -56696,7 +57165,7 @@
       "identity": [
         "id"
       ],
-      "objects": 52
+      "objects": 53
     },
     {
       "name": "application",
@@ -56756,7 +57225,17 @@
       "identity": [
         "id"
       ],
-      "objects": 30
+      "objects": 32
+    },
+    {
+      "name": "critique",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "majordomus.critique/v1",
+      "identity": [
+        "intent"
+      ],
+      "objects": 1
     },
     {
       "name": "deployment",
@@ -56795,6 +57274,16 @@
       "objects": 25
     },
     {
+      "name": "gap",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "majordomus.gap/v1",
+      "identity": [
+        "intent"
+      ],
+      "objects": 1
+    },
+    {
       "name": "implementation",
       "format": "text",
       "front_matter": "none",
@@ -56809,7 +57298,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1
+      "objects": 2
     },
     {
       "name": "issue",
@@ -56819,7 +57308,7 @@
       "identity": [
         "id"
       ],
-      "objects": 216
+      "objects": 219
     },
     {
       "name": "knowledge",
@@ -56849,7 +57338,7 @@
       "identity": [
         "id"
       ],
-      "objects": 20
+      "objects": 21
     },
     {
       "name": "moment",
@@ -56971,7 +57460,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 216
+      "objects": 217
     },
     {
       "name": "use-case",
@@ -75362,6 +75851,132 @@
             "path": [
               "majordomus",
               "intent",
+              "coverage"
+            ],
+            "route": "/docs/cli/intent/coverage/",
+            "executable": true,
+            "usage": "majordomus intent coverage [OPTIONS]",
+            "about": "Which work carries which criterion, and the reason every issue exists",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "intent-coverage",
+                "title": "Which work carries which criterion, and why every issue exists",
+                "description": "Every criterion of every live intent with the issues that serve it and how strongly — covered, weakly covered, observed by the recorded gap, or uncovered — and every issue with the reason it exists: the criteria it serves, or maintenance under a milestone no intent names.",
+                "argv": [
+                  "intent",
+                  "coverage"
+                ],
+                "command": "majordomus intent coverage",
+                "setup": [],
+                "expectation": "exits 0; prints CRITERION, criterion(s)"
+              },
+              {
+                "id": "intent-coverage-json",
+                "title": "The same, as the shape the API and MCP answer with",
+                "description": "What `GET /api/v1/intents/coverage` returns and the `majordomus_intent_coverage` tool answers: each criterion with its strength and the issues serving it, and each issue with its origin.",
+                "argv": [
+                  "intent",
+                  "coverage",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus intent coverage --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /criteria/0/strength, /criteria/0/issues, /issues/0/origin"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "intent",
               "preflight"
             ],
             "route": "/docs/cli/intent/preflight/",
@@ -75977,6 +76592,16 @@
         "read_only": true,
         "input": "Empty",
         "output": "Health"
+      },
+      {
+        "name": "majordomus_intent_coverage",
+        "id": "intents.coverage",
+        "title": "Which work carries which criterion, and why each issue exists",
+        "description": "The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "IntentCoverage"
       },
       {
         "name": "majordomus_intents",
@@ -77241,6 +77866,12 @@
         "method": "GET",
         "path": "/api/v1/health",
         "id": "health.report",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/intents/coverage",
+        "id": "intents.coverage",
         "kind": "query"
       },
       {
@@ -79848,6 +80479,35 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/health"
+      },
+      {
+        "key": "intents.coverage|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "intents.coverage",
+        "module": "intents",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "intents.coverage|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "intents.coverage",
+        "module": "intents",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_intent_coverage"
+      },
+      {
+        "key": "intents.coverage|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "intents.coverage",
+        "module": "intents",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/intents/coverage"
       },
       {
         "key": "intents.list|direct|default",
@@ -83616,6 +84276,27 @@
           "cases": 1
         },
         {
+          "subject": "intents.coverage",
+          "module": "intents",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.coverage",
+          "module": "intents",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.coverage",
+          "module": "intents",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "intents.list",
           "module": "intents",
           "transport": "direct",
@@ -85119,22 +85800,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 117,
-          "covered": 112,
+          "required": 118,
+          "covered": 113,
           "missing": 0,
           "waived": 5,
           "inapplicable": 0
         },
         "http": {
-          "required": 116,
-          "covered": 112,
+          "required": 117,
+          "covered": 113,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 114,
-          "covered": 110,
+          "required": 115,
+          "covered": 111,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
@@ -85147,8 +85828,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 360,
-          "covered": 347,
+          "required": 363,
+          "covered": 350,
           "missing": 0,
           "waived": 13,
           "inapplicable": 0

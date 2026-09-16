@@ -5,7 +5,27 @@
 
 What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.
 
-Stability: behaviorally_verified. Capabilities: 4.
+Stability: behaviorally_verified. Capabilities: 5.
+
+## `intents.coverage` — Which work carries which criterion, and why each issue exists
+
+The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_intent_coverage` |
+| HTTP | `GET /api/v1/intents/coverage` |
+| CLI | `majordomus intent coverage` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::intents |
+| tags | intent, project, planning |
+
+Input: none.
+
+Output: `IntentCoverage`.
 
 ## `intents.list` — Every intent, with its derived stage
 

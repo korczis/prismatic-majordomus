@@ -150,6 +150,15 @@
       "summary": "Profiles become runtime constraints rather than advice"
     },
     {
+      "id": "intent-planning",
+      "kind": "milestone",
+      "label": "intent-planning",
+      "status": "BLOCKED",
+      "route": "/plan/intent-planning/",
+      "external": false,
+      "summary": "The plan of an intent is held to it before execution"
+    },
+    {
       "id": "execution-telemetry",
       "kind": "milestone",
       "label": "0.3  execution-telemetry",
@@ -190,6 +199,11 @@
     {
       "source": "foundation",
       "target": "runtime-adapters",
+      "kind": "requires"
+    },
+    {
+      "source": "intent-lifecycle",
+      "target": "intent-planning",
       "kind": "requires"
     },
     {

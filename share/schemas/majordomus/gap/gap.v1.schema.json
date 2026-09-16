@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/gap/gap.v1.schema.json",
+  "x-majordomus-schema": "majordomus.gap/v1",
+  "title": "Gap",
+  "description": "A gap analysis under .ai/repo/project/gaps/<intent>.yaml: what a worker observed of the repository at one commit, the state of every criterion of the intent against those observations, the risks, and the work it suggests. Validated by `majordomus intent validate`; it stores no status.",
+  "x-majordomus-allow": "gap",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "observed_at",
+    "recorded_by",
+    "recorded_at",
+    "observations",
+    "conditions"
+  ],
+  "properties": {
+    "intent": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "The intent analysed; also the file name."
+    },
+    "observed_at": {
+      "type": "string",
+      "description": "The commit the observations were made on."
+    },
+    "recorded_by": {
+      "type": "string",
+      "description": "Who or what recorded the analysis: a person or a named worker."
+    },
+    "recorded_at": {
+      "type": "string",
+      "description": "When, as an ISO 8601 date or instant."
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "statement",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "description": "Where it was observed: file:<path>, command:<cmd>, test:<path> or url:<url>."
+          }
+        }
+      }
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "criterion",
+          "state"
+        ],
+        "properties": {
+          "criterion": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "satisfied",
+              "missing",
+              "conflicting",
+              "unknown"
+            ]
+          },
+          "because": {
+            "type": "string"
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "work": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "serves"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "serves": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "why": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string",
+            "description": "The issue the work became, once planned."
+          }
+        }
+      }
+    }
+  }
+}
