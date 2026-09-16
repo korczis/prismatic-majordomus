@@ -408,9 +408,15 @@ fn href_with(base: &str, query: &[(String, String)], set: &[(&str, Option<&str>)
 
 /// The page a listing was asked for. Anything that is not a page number is page one.
 fn asked_page(query: &[(String, String)]) -> usize {
+    asked_page_of(query, "page")
+}
+
+/// The page asked for under one parameter, for a view that pages more than one listing at
+/// once: each listing keeps its own position, so paging one never moves the other.
+fn asked_page_of(query: &[(String, String)], key: &str) -> usize {
     query
         .iter()
-        .find(|(k, _)| k == "page")
+        .find(|(k, _)| k == key)
         .and_then(|(_, v)| v.parse().ok())
         .unwrap_or(1)
 }
@@ -1477,7 +1483,7 @@ pub fn graphs(ctx: &Context) -> Page {
 
 /// One graph: the nodes and edges as a list, which is what a reader without JavaScript
 /// gets, and a canvas the script fills when the drawing library is there.
-pub fn graph(ctx: &Context, id: &str) -> Page {
+pub fn graph(ctx: &Context, id: &str, query: &[(String, String)]) -> Page {
     let value = match ctx.execute("graph.get", json!({ "id": id })) {
         Ok(v) => v,
         Err(e) => {
@@ -1561,10 +1567,16 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
                 .text("The drawing is an enhancement. Everything it shows is in the lists below, which is what a reader without JavaScript, a crawler and a screen reader get."),
         );
 
-    // both tables list everything: the drawing is an enhancement, and what a reader
-    // without JavaScript, a crawler and a screen reader get is these lists whole
-    let node_rows = g
-        .nodes
+    // Both tables list everything, a window at a time: the drawing is an enhancement, and
+    // what a reader without JavaScript, a crawler and a screen reader get is every node and
+    // every edge, reachable through the pages. Whole, the composed graph was 5586 rows and
+    // 45 thousand elements in one document — a page no accessibility engine finished
+    // reading within its visit deadline, and the file dump every other listing here is
+    // paged to avoid. Each table keeps its own position in the URL.
+    let here = format!("/cockpit/graphs/{}", percent_encode(&g.id));
+    let node_window = Window::new(asked_page_of(query, "nodes"), PER_PAGE, g.nodes.len());
+    let edge_window = Window::new(asked_page_of(query, "edges"), PER_PAGE, g.edges.len());
+    let node_rows = g.nodes[node_window.range()]
         .iter()
         .map(|n| {
             row(vec![
@@ -1586,8 +1598,7 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
         })
         .collect();
 
-    let edge_rows = g
-        .edges
+    let edge_rows = g.edges[edge_window.range()]
         .iter()
         .map(|e| {
             row(vec![
@@ -1632,9 +1643,20 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
             .child(vocabulary)
             .child(card(
                 "Nodes",
-                table(&["Node", "Kind", "Summary", "Status", "Source"], node_rows),
+                el("div")
+                    .child(table(&["Node", "Kind", "Summary", "Status", "Source"], node_rows))
+                    .child(pagination(node_window, |n| {
+                        href_with(&here, query, &[("nodes", Some(&n.to_string()))])
+                    })),
             ))
-            .child(card("Edges", table(&["From", "Edge", "To"], edge_rows))),
+            .child(card(
+                "Edges",
+                el("div")
+                    .child(table(&["From", "Edge", "To"], edge_rows))
+                    .child(pagination(edge_window, |n| {
+                        href_with(&here, query, &[("edges", Some(&n.to_string()))])
+                    })),
+            )),
     )
     .subtitle(g.description.clone())
     .trail(vec![
