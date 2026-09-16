@@ -188,7 +188,8 @@ pub struct RecordOutcome {
     pub passed: usize,
     /// The commit they were recorded against.
     pub commit: String,
-    /// The tree's state at the time: `clean`, `dirty` or `unknown`.
+    /// The tree's state at the time: `clean`, `dirty` or `unknown`. The ledger's own
+    /// pending change is not what makes it dirty — see [`record`].
     pub working_tree: String,
     /// Reports the run named that no runner in this repository owns; recorded for nobody
     /// and named here rather than dropped.
@@ -373,10 +374,15 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     }
 
     let git = crate::git::inspect(root);
+    // The ledger is evidence *about* the tree, not part of what any test measures, so an
+    // earlier recording's own row is not what makes this tree dirty. Without the exclusion
+    // the second recording in a session would be stamped `dirty` by the first one's
+    // bookkeeping, and — since a dirty run can never derive `proven` — a repository that
+    // records twice could never prove anything again.
     let (commit, working_tree) = match &git {
         crate::git::GitState::Available(i) => (
             i.head.clone().unwrap_or_else(|| "unknown".into()),
-            i.working_tree.clone(),
+            crate::git::working_tree_ignoring(root, &[super::LEDGER_PATH]),
         ),
         crate::git::GitState::Unavailable { .. } => ("unknown".into(), "unknown".into()),
     };
@@ -544,6 +550,51 @@ mod tests {
             l.latest("suite:07_scope").unwrap().digest_matches(d.path()),
             Some(false),
             "an edited test must not still match the digest that was recorded"
+        );
+    }
+
+    /// The tree a run is stamped with is the tree it measured, and the ledger is not part
+    /// of that: a recording made when the only pending change is the previous recording's
+    /// own row is `clean`. Any other pending change is `dirty`, because the commit the run
+    /// is joined to is then not what ran.
+    #[test]
+    fn the_ledgers_own_row_does_not_make_the_tree_dirty() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = reports.path().join("run.tsv");
+        std::fs::write(&tsv, "07_scope\tok\t1\tparallel\n").unwrap();
+        let req = || RecordRequest {
+            suite: Some(tsv.clone()),
+            crate_output: None,
+            origin: Origin::Local,
+        };
+
+        // the first recording writes the ledger; the second one sees it pending
+        assert_eq!(record(d.path(), &req()).unwrap().working_tree, "clean");
+        let second = record(d.path(), &req()).unwrap();
+        assert_eq!(
+            second.working_tree, "clean",
+            "the previous recording's own row made the next run read as measured on a dirty tree"
+        );
+        assert_eq!(
+            Ledger::load(d.path())
+                .unwrap()
+                .latest("suite:07_scope")
+                .unwrap()
+                .working_tree,
+            "clean"
+        );
+
+        // anything else pending is dirty, and the recorded row says so
+        std::fs::write(d.path().join("test/cases/08_other.sh"), "echo edited\n").unwrap();
+        assert_eq!(record(d.path(), &req()).unwrap().working_tree, "dirty");
+        assert_eq!(
+            Ledger::load(d.path())
+                .unwrap()
+                .latest("suite:07_scope")
+                .unwrap()
+                .working_tree,
+            "dirty"
         );
     }
 
