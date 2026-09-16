@@ -40,13 +40,17 @@ permissions:
   # canonical project model and its GitHub projection still agree.
   issues: read
 
-# A newer commit of the same pull request supersedes the runs of the older ones. Every
-# other run (master, the schedule, a dispatch) is its own group: it neither waits for nor
-# cancels another, so a master run held up by a scarce runner does not hold up the next
-# commit's evidence; only deployments queue, in the pages job's own group.
+# One run of a pull request at a time, and a started run reaches its verdict. A newer commit
+# waits in the group and replaces any commit still waiting there, so a burst of pushes costs
+# one run each for the first and the last — never a run that was killed halfway. Until
+# 2026-09-15 a newer commit cancelled the run in progress; the suite takes over two hours,
+# sessions merge master into their branches more often than that, and pull request #576
+# was cancelled four times in a row without ever producing the verdict a merge is decided
+# on. Every other run (master, the schedule, a dispatch) is its own group: it neither waits
+# for nor cancels another; only deployments queue, in the pages job's own group.
 concurrency:
   group: validate-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 # Every job carries a timeout. GitHub's default is six hours, which is not a bound: a job
 # that hangs holds a runner for a shift, and while any job of a run is still going the run's
