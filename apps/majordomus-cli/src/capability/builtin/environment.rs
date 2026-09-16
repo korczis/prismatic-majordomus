@@ -104,6 +104,19 @@ fn preflight(ctx: &Context, input: PreflightInput) -> Result<Preflight, Capabili
     if observations.server.this_process {
         observations.peers = Ok(preflight::PeersObservation::of(&ctx.peers.list()));
     }
+    // The index is held here, so the decisions are joined to the task here — and never
+    // cached, because a served request writes nothing to the checkout it serves.
+    let head = observations.git.as_ref().and_then(|g| g.head.clone());
+    observations.adr_relevance = match preflight::join_adrs(
+        root,
+        &repository.local_path(),
+        &ctx.registry,
+        &ctx.index,
+        head.as_deref(),
+    ) {
+        Some(r) => preflight::AdrRelevanceObservation::Joined(r),
+        None => preflight::AdrRelevanceObservation::Absent,
+    };
     Ok(preflight::derive(&observations))
 }
 
