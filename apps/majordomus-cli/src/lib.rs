@@ -21,6 +21,7 @@ pub mod command_graph;
 pub mod commands;
 pub mod commit;
 pub mod deploy;
+pub(crate) mod delivery;
 pub(crate) mod design;
 pub mod devcontext;
 pub mod devtask;

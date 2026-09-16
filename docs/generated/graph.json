@@ -173,6 +173,24 @@
         "status": "query"
       },
       {
+        "id": "capability:delivery.feature",
+        "kind": "capability",
+        "label": "delivery.feature",
+        "summary": "Does this feature exist",
+        "route": "/cockpit/capabilities/delivery.feature",
+        "source": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:delivery.report",
+        "kind": "capability",
+        "label": "delivery.report",
+        "summary": "Does each feature exist",
+        "route": "/cockpit/capabilities/delivery.report",
+        "source": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:deploy.check",
         "kind": "capability",
         "label": "deploy.check",
@@ -1396,6 +1414,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/delivery.rs",
+        "kind": "file",
+        "label": "delivery.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
         "kind": "file",
         "label": "design.rs",
@@ -1601,6 +1627,30 @@
         "label": "verdict.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/commit/verdict.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/delivery/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/delivery/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/delivery/public.rs",
+        "kind": "file",
+        "label": "public.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/delivery/public.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/delivery/revision.rs",
+        "kind": "file",
+        "label": "revision.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/delivery/revision.rs",
         "external": true
       },
       {
@@ -3960,6 +4010,37 @@
             "safety",
             "worktrees",
             "ci"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0071",
+        "kind": "adr",
+        "label": "adr-0071",
+        "summary": "A feature exists only when its delivery is computed and every dimension passes",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0071",
+        "source": ".ai/repo/adrs/0071-a-feature-exists-only-when-delivery-is-computed-and-every-dimension-passes.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "file:docs/DELIVERY.md",
+            "file:apps/majordomus-cli/src/delivery/mod.rs",
+            "file:apps/majordomus-cli/src/delivery/revision.rs",
+            "file:apps/majordomus-cli/src/delivery/public.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/delivery.rs",
+            "file:.ai/repo/ci/pages.yaml",
+            "file:scripts/pages",
+            "test:test/cases/373_delivery_is_computed.sh",
+            "test:test/cases/374_delivery_unknown_is_not_delivered.sh",
+            "file:.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md",
+            "file:.ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
+          ],
+          "tags": [
+            "delivery",
+            "features",
+            "verification",
+            "publication"
           ]
         }
       },
@@ -9425,6 +9506,14 @@
         "source": "docs/COVERAGE.md"
       },
       {
+        "id": "majordomus://document/docs/DELIVERY.md",
+        "kind": "document",
+        "label": "docs/DELIVERY.md",
+        "summary": "Delivery",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDELIVERY.md",
+        "source": "docs/DELIVERY.md"
+      },
+      {
         "id": "majordomus://document/docs/DESIGN.md",
         "kind": "document",
         "label": "docs/DESIGN.md",
@@ -11693,8 +11782,14 @@
         "source": ".ai/repo/features/deployments.md",
         "status": "draft",
         "facts": {
+          "adrs": [
+            "adr-0071"
+          ],
           "areas": [
             "governance"
+          ],
+          "docs": [
+            "docs/DELIVERY.md"
           ],
           "featured": false,
           "headline": "The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.",
@@ -11702,7 +11797,8 @@
             "deployment"
           ],
           "modules": [
-            "deploy"
+            "deploy",
+            "delivery"
           ],
           "rules": [
             "majordomus.deployment-contract"
@@ -32646,6 +32742,20 @@
         "source": "test/cases/36_command_doctrines.sh"
       },
       {
+        "id": "majordomus://test/test/cases/373_delivery_is_computed.sh",
+        "kind": "test",
+        "label": "test/cases/373_delivery_is_computed.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F373_delivery_is_computed.sh",
+        "source": "test/cases/373_delivery_is_computed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/374_delivery_unknown_is_not_delivered.sh",
+        "kind": "test",
+        "label": "test/cases/374_delivery_unknown_is_not_delivered.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F374_delivery_unknown_is_not_delivered.sh",
+        "source": "test/cases/374_delivery_unknown_is_not_delivered.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/37_responsibility_surface.sh",
         "kind": "test",
         "label": "test/cases/37_responsibility_surface.sh",
@@ -35213,6 +35323,11 @@
         "label": "continuity"
       },
       {
+        "id": "module:delivery",
+        "kind": "module",
+        "label": "delivery"
+      },
+      {
         "id": "module:deploy",
         "kind": "module",
         "label": "deploy"
@@ -35618,6 +35733,46 @@
       },
       {
         "source": "capability:continuity.state",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.feature",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.feature",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.feature",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.feature",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.report",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.report",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.report",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.report",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -38994,6 +39149,66 @@
       {
         "source": "majordomus://adr/adr-0055",
         "target": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "file:.ai/repo/ci/pages.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/delivery.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "file:apps/majordomus-cli/src/delivery/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "file:apps/majordomus-cli/src/delivery/public.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "file:apps/majordomus-cli/src/delivery/revision.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "file:scripts/pages",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "majordomus://adr/adr-0023",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "majordomus://adr/adr-0041",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "majordomus://document/docs/DELIVERY.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "majordomus://test/test/cases/373_delivery_is_computed.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0071",
+        "target": "majordomus://test/test/cases/374_delivery_unknown_is_not_delivered.sh",
         "kind": "put_in_force"
       },
       {
@@ -43253,6 +43468,11 @@
       },
       {
         "source": "majordomus://document/docs/COVERAGE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/DELIVERY.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51037,6 +51257,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/373_delivery_is_computed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/374_delivery_unknown_is_not_delivered.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -54202,6 +54432,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:delivery",
+        "target": "capability:delivery.feature",
+        "kind": "composes"
+      },
+      {
+        "source": "module:delivery",
+        "target": "capability:delivery.report",
+        "kind": "composes"
+      },
+      {
         "source": "module:deploy",
         "target": "capability:deploy.check",
         "kind": "composes"
@@ -54708,8 +54948,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1724,
-      "edges": 3860,
+      "nodes": 1735,
+      "edges": 3885,
       "acyclic": true,
       "truncated": false
     }

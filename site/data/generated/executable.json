@@ -205,6 +205,40 @@
       "tool": "majordomus_continuity"
     },
     {
+      "api_anchor": "/docs/api/delivery/#op-delivery-feature",
+      "claims": [],
+      "cli": "majordomus delivery show",
+      "id": "delivery.feature",
+      "kind": "query",
+      "module": "delivery",
+      "module_route": "/registry/modules/delivery/",
+      "resource": null,
+      "route": "/registry/capabilities/delivery-feature/",
+      "slug": "delivery-feature",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "tests": [],
+      "title": "Does this feature exist",
+      "tool": "majordomus_delivery_feature"
+    },
+    {
+      "api_anchor": "/docs/api/delivery/#op-delivery-report",
+      "claims": [],
+      "cli": "majordomus delivery report",
+      "id": "delivery.report",
+      "kind": "query",
+      "module": "delivery",
+      "module_route": "/registry/modules/delivery/",
+      "resource": null,
+      "route": "/registry/capabilities/delivery-report/",
+      "slug": "delivery-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "tests": [],
+      "title": "Does each feature exist",
+      "tool": "majordomus_delivery"
+    },
+    {
       "api_anchor": "/docs/api/deploy/#op-deploy-check",
       "claims": [],
       "cli": null,
@@ -2401,9 +2435,9 @@
     ]
   },
   "counts": {
-    "capabilities": 113,
+    "capabilities": 115,
     "claims": 51,
-    "modules": 37
+    "modules": 38
   },
   "generator": "majordomus-cli 0.7.0",
   "modules": [
@@ -2521,6 +2555,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "title": "Continuity"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "delivery.feature",
+          "route": "/registry/capabilities/delivery-feature/",
+          "slug": "delivery-feature"
+        },
+        {
+          "id": "delivery.report",
+          "route": "/registry/capabilities/delivery-report/",
+          "slug": "delivery-report"
+        }
+      ],
+      "claims": [],
+      "id": "delivery",
+      "route": "/registry/modules/delivery/",
+      "slug": "delivery",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "title": "Delivery"
     },
     {
       "capabilities": [
