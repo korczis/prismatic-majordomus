@@ -768,10 +768,16 @@ impl RulesVerdict {
         }
     }
 
-    /// The printed word.
+    /// The one word every surface prints for this verdict, and the one word a script greps
+    /// for: the serialised form and the rendered form are the same string, so a reader and
+    /// a parser can never be told different things about the same report. The three are
+    /// `proven`, `unproven` and `failing`, and the middle one exists because "no finding"
+    /// and "proven" are not the same answer — [`RulesVerdict::meaning`] says why in prose.
     /// ```
     /// use majordomus_cli::rules::RulesVerdict;
     /// assert_eq!(RulesVerdict::Unproven.label(), "unproven");
+    /// assert_eq!(RulesVerdict::Proven.label(), "proven");
+    /// assert_eq!(RulesVerdict::Failing.label(), "failing");
     /// ```
     pub fn label(self) -> &'static str {
         match self {
@@ -781,10 +787,18 @@ impl RulesVerdict {
         }
     }
 
-    /// The verdict, in one sentence.
+    /// What the verdict asserts, in one sentence, carried beside the label so that a reader
+    /// is never left to infer it from a colour or a word.
+    ///
+    /// The sentence is the whole point of the type. A report that found no fault used to be
+    /// rendered as a pass, and "no rule is a finding" is a far weaker statement than "every
+    /// blocking rule carries a current passing run": the first is satisfied by a corpus
+    /// nothing has ever run. `unproven` says that distinction out loud, in the one place a
+    /// person reads, so that an absence of findings cannot be quoted as proof.
     /// ```
     /// use majordomus_cli::rules::RulesVerdict;
     /// assert!(RulesVerdict::Unproven.meaning().contains("not a finding"));
+    /// assert!(RulesVerdict::Proven.meaning().contains("Every blocking rule"));
     /// ```
     pub fn meaning(self) -> &'static str {
         match self {
