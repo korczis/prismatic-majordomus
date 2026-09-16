@@ -697,19 +697,126 @@ pub struct Coverage {
     pub satisfied: usize,
 }
 
+/// What the whole corpus can be said to prove, in one word, before any number is read.
+///
+/// `satisfied` answers a narrower question — are there findings — and a corpus in which no
+/// blocking rule was ever run has none, because `not run`, `gated` and `reviewed` are weaker
+/// states rather than defects (docs/DOCTRINE.md). Read alone, `satisfied: true` over such a
+/// corpus says "every rule is enforced" about a repository that has shown nothing. The
+/// verdict is the answer that cannot be read that way: it is `proven` only when every
+/// blocking rule carries a current passing run.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+#[schemars(rename = "RulesVerdict")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::rules::{RuleState, RulesVerdict};
+/// // a corpus with a finding is failing, whatever else is true of it
+/// assert_eq!(RulesVerdict::of([RuleState::Proven], true), RulesVerdict::Failing);
+/// // one blocking rule never run is enough to leave the corpus unproven
+/// assert_eq!(
+///     RulesVerdict::of([RuleState::Proven, RuleState::NotRun], false),
+///     RulesVerdict::Unproven
+/// );
+/// assert_eq!(RulesVerdict::of([RuleState::Proven], false), RulesVerdict::Proven);
+/// ```
+pub enum RulesVerdict {
+    /// Every blocking rule carries a passing run that nothing it names has changed since.
+    Proven,
+    /// No finding, and at least one blocking rule has no current passing run — never run,
+    /// gated, reviewed, stale — or there is no blocking rule at all.
+    Unproven,
+    /// At least one rule declares a class its proof does not support.
+    Failing,
+}
+
+impl RulesVerdict {
+    /// Decide the verdict from the state of every blocking rule and whether any finding
+    /// exists.
+    ///
+    /// `stale` does not count: a pass older than its subject is a pass of something else.
+    /// An empty set of blocking rules is `unproven`, not `proven` — a corpus that claims
+    /// nothing has shown nothing, and success by vacancy is the number that stops meaning
+    /// anything.
+    /// ```
+    /// use majordomus_cli::rules::{RuleState, RulesVerdict};
+    /// assert_eq!(RulesVerdict::of([RuleState::Stale], false), RulesVerdict::Unproven);
+    /// assert_eq!(RulesVerdict::of([], false), RulesVerdict::Unproven);
+    /// assert_eq!(
+    ///     RulesVerdict::of([RuleState::InputsUnchanged], false),
+    ///     RulesVerdict::Proven
+    /// );
+    /// ```
+    pub fn of(blocking: impl IntoIterator<Item = RuleState>, any_finding: bool) -> Self {
+        if any_finding {
+            return RulesVerdict::Failing;
+        }
+        let mut any = false;
+        for state in blocking {
+            any = true;
+            if !matches!(state, RuleState::Proven | RuleState::InputsUnchanged) {
+                return RulesVerdict::Unproven;
+            }
+        }
+        if any {
+            RulesVerdict::Proven
+        } else {
+            RulesVerdict::Unproven
+        }
+    }
+
+    /// The printed word.
+    /// ```
+    /// use majordomus_cli::rules::RulesVerdict;
+    /// assert_eq!(RulesVerdict::Unproven.label(), "unproven");
+    /// ```
+    pub fn label(self) -> &'static str {
+        match self {
+            RulesVerdict::Proven => "proven",
+            RulesVerdict::Unproven => "unproven",
+            RulesVerdict::Failing => "failing",
+        }
+    }
+
+    /// The verdict, in one sentence.
+    /// ```
+    /// use majordomus_cli::rules::RulesVerdict;
+    /// assert!(RulesVerdict::Unproven.meaning().contains("not a finding"));
+    /// ```
+    pub fn meaning(self) -> &'static str {
+        match self {
+            RulesVerdict::Proven => {
+                "Every blocking rule carries a passing run that nothing it names has changed since."
+            }
+            RulesVerdict::Unproven => {
+                "No rule is a finding, and at least one blocking rule has no current passing run: \
+                 not a finding is not proven."
+            }
+            RulesVerdict::Failing => {
+                "At least one rule declares a class its proof does not support."
+            }
+        }
+    }
+}
+
 /// The whole rule corpus, verified.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "RulesReport")]
 /// # Example
 ///
-/// The whole corpus joined to the tree and the ledger. `satisfied` is true when no rule
-/// declares a class its proof does not support.
+/// The whole corpus joined to the tree and the ledger. `verdict` is what the corpus can be
+/// said to prove; `satisfied` is only that there are no findings, and the two differ
+/// whenever a blocking rule has never been run.
 ///
 /// ```
-/// use majordomus_cli::rules::RulesReport;
+/// use majordomus_cli::rules::{RulesReport, RulesVerdict};
 /// let r = RulesReport {
 ///     head: None,
 ///     working_tree: "clean".into(),
+///     verdict: RulesVerdict::Unproven,
 ///     rules: vec![],
 ///     states: Default::default(),
 ///     coverage: Default::default(),
@@ -717,6 +824,7 @@ pub struct Coverage {
 ///     satisfied: true,
 /// };
 /// assert!(r.satisfied());
+/// assert_ne!(r.verdict, RulesVerdict::Proven, "no findings is not proof");
 /// ```
 pub struct RulesReport {
     /// The commit the report was derived against, when git could say.
@@ -724,6 +832,9 @@ pub struct RulesReport {
     pub head: Option<String>,
     /// `clean`, `dirty` or `unknown` at the time of derivation.
     pub working_tree: String,
+    /// What the whole corpus proves: `proven`, `unproven` or `failing`. Derived over the
+    /// whole corpus before any filter, like the tallies.
+    pub verdict: RulesVerdict,
     /// Every rule, in canonical id order.
     pub rules: Vec<RuleProof>,
     /// How many rules are in each state, by the state's printed word.
@@ -732,12 +843,14 @@ pub struct RulesReport {
     pub coverage: Coverage,
     /// Every rule whose declared class the proof does not support.
     pub findings: Vec<Finding>,
-    /// Whether there are no findings.
+    /// Whether there are no findings — and nothing more. A corpus none of whose blocking
+    /// rules was ever run is `satisfied`; `verdict` is the field that says whether anything
+    /// was proven.
     pub satisfied: bool,
 }
 
 impl RulesReport {
-    /// Does the proof support every rule that declares it blocks?
+    /// Are there no findings? Not whether anything is proven: that is [`RulesReport::verdict`].
     pub fn satisfied(&self) -> bool {
         self.findings.is_empty()
     }
@@ -993,10 +1106,13 @@ fn rule_state_of(test: &TestProof) -> RuleState {
 
 /// Why a rule's state does not support the class it declares, or `None` when it does.
 ///
-/// A blocking rule is the subject: it claims a gate refuses work that violates it, and
-/// every state but a passing one makes that claim false. An advisory rule claims nothing
-/// executable, so only a name that does not resolve is a finding — a dangling path is a
-/// defect at any class, because it reads as proof and is not.
+/// A blocking rule is the subject: it claims a gate refuses work that violates it. The
+/// states that make that claim false are findings — `unproven`, `failing` and `unrunnable`.
+/// `not run`, `gated`, `reviewed` and `stale` are not findings: they are weaker states, said
+/// out loud and counted, which is a different thing from a defect (docs/DOCTRINE.md). They
+/// are not proof either, and [`RulesVerdict`] is where the report says so. An advisory rule
+/// claims nothing executable, so only a name that does not resolve is a finding — a dangling
+/// path is a defect at any class, because it reads as proof and is not.
 fn unsupported(class: Class, state: RuleState) -> Option<String> {
     match (class, state) {
         (_, RuleState::Dangling) => {
@@ -1070,6 +1186,7 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
     let mut states: BTreeMap<String, usize> = BTreeMap::new();
     let mut findings = Vec::new();
     let mut coverage = Coverage::default();
+    let mut blocking_states = Vec::new();
 
     for def in defs {
         let validator = def.enforcement.validator.as_ref().map(|v| {
@@ -1213,7 +1330,10 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
         // the tallies, all counted from what was just derived
         coverage.rules += 1;
         match def.class {
-            Class::Blocking => coverage.blocking += 1,
+            Class::Blocking => {
+                coverage.blocking += 1;
+                blocking_states.push(state);
+            }
             Class::Advisory => coverage.advisory += 1,
             Class::Unknown => {}
         }
@@ -1263,6 +1383,7 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
     RulesReport {
         head,
         working_tree,
+        verdict: RulesVerdict::of(blocking_states, !findings.is_empty()),
         rules,
         states,
         coverage,
