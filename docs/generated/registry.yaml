@@ -21754,7 +21754,7 @@ capabilities:
             properties:
               id:
                 type: string
-                description: "`tag-without-record`, `record-without-tag`, `tag-commit-mismatch`."
+                description: "`tag-without-record`, `tag-predates-records`, `record-without-tag`,\n`tag-commit-mismatch`."
               severity:
                 "$ref": "#/$defs/ReleaseSeverity"
                 description: Whether it stops a release or only warns.
@@ -21774,7 +21774,10 @@ capabilities:
               - type: string
                 const: warning
                 description: "The plan stands, and something is still wrong."
-            description: "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\n```"
+              - type: string
+                const: note
+                description: Nothing is wrong; the reader is told something about the release state anyway.
+            description: "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway; an note says\nsomething true and not wrong, so that the warnings keep meaning what they say.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\nassert_ne!(Severity::Warning, Severity::Note);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::release
