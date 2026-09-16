@@ -136,6 +136,15 @@ jobs:
       # to start the pages workflow by hand. A push made with GITHUB_TOKEN starts no
       # workflow — see the step that uses this — so the publication has to be asked for.
       actions: write
+      # to open the pull request that carries the record. The step below deliberately
+      # proposes the record rather than pushing it at the protected default branch, and
+      # without this the job's token cannot create one: v0.7.0 published six archives and a
+      # GitHub Release and then failed here (run 34965490909 — `gh pr create` wrote nothing
+      # and its fallback printed `no pull requests found for branch
+      # "release/record-v0.7.0"`), so master held no record and the installer went on
+      # serving the previous version. The repository setting "Allow GitHub Actions to create
+      # and approve pull requests" is the other half of that failure and is on.
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
