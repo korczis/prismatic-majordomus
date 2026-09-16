@@ -294,6 +294,48 @@ fn a_graph_page_lists_every_node_and_edge_before_any_library_loads() {
     assert_eq!(status, 200);
     assert!(far.contains("mj-pagination-summary"));
 
+    // The pager is a *window*: a table of a hundred pages renders a handful of links, not a
+    // hundred, or a crawler reading this page finds a route per page of every graph. That
+    // bound is only honest if every page is still reachable by following the links, so the
+    // walk above is repeated through the pager itself — starting at page one and taking
+    // whatever it offers — and must arrive at the same set of pages.
+    let node_pages = nodes.len().div_ceil(50).max(1);
+    // the node pager's own links on a page that asks for nothing else, so an edge link
+    // carrying the node position back is not counted as a way to another node page
+    let offers = |body: &str| -> std::collections::BTreeSet<usize> {
+        body.split("href=\"")
+            .skip(1)
+            .filter_map(|rest| rest.split('"').next())
+            .filter_map(|href| href.strip_prefix("/cockpit/graphs/registry?"))
+            .filter_map(|q| q.strip_prefix("nodes="))
+            .filter_map(|n| n.parse().ok())
+            .collect()
+    };
+    let mut reached = std::collections::BTreeSet::from([1usize]);
+    let mut widest = 0usize;
+    let mut queue = vec![1usize];
+    while let Some(n) = queue.pop() {
+        let (status, body) = html(&s, &format!("/cockpit/graphs/registry?nodes={n}"));
+        assert_eq!(status, 200);
+        let offered = offers(&body);
+        widest = widest.max(offered.len());
+        for to in offered {
+            if reached.insert(to) {
+                queue.push(to);
+            }
+        }
+    }
+    assert!(
+        widest <= 8,
+        "one page of the node pager offers {widest} links; a pager is a window, not a table of contents"
+    );
+    assert_eq!(
+        reached.len(),
+        node_pages,
+        "following the node pager reaches {} of {node_pages} page(s); a bounded window must still reach every one",
+        reached.len()
+    );
+
     let (status, missing) = s.get("/api/v1/graph?id=nope");
     assert_eq!(status, 404);
     assert_eq!(missing["error"]["code"], "not_found");
