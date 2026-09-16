@@ -6,7 +6,7 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "d252765b9219f2d07731fc6b614c17ed10a069f6360957c158890e6ae6ee30ed",
+    "fingerprint": "df3bc40f713026b1a8bfbb2d361afc1058251303dbf567bf9d21ecf723edc751",
     "summary": {
       "total": 1496,
       "builtin": 129,
@@ -46080,7 +46080,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6a477fa1b2ad933b27af28a7db795840ab8f88cb5c7a1b6dfb5ab11a3be63ec1",
+    "fingerprint": "f2c7c453567d2321835d072d083d7d9ba342cba5df21345f67fe4fd62ab2e9c5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -77891,7 +77891,7 @@
               {
                 "id": "mesh-peer",
                 "title": "One runtime, by its key",
-                "description": "A runtime's machine, liveness, link, sessions and claims. A runtime the server does not know is `not found` with the reason; here no server runs, and the reason says that.",
+                "description": "A runtime's machine, liveness, link, sessions and claims. A runtime the running server does not know is `not found`; with no server there is nobody to ask, and the answer says that rather than reporting an absence it never measured.",
                 "argv": [
                   "mesh",
                   "peer",
@@ -77899,7 +77899,7 @@
                 ],
                 "command": "majordomus mesh peer 00000000000000000000000000000000-0000000000000000",
                 "setup": [],
-                "expectation": "exits 0; prints not found"
+                "expectation": "exits 0; prints cooperation inactive"
               }
             ],
             "subcommands": []

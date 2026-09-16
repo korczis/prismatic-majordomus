@@ -169,6 +169,12 @@ claim="$(post_json a /api/v1/mesh/claims '{"session":"lab-a","scope":["apps/majo
 if ms="$(wait_for 15 "c sees the claim" bash -c "docker exec $P-c curl -fsS http://127.0.0.1:8741/api/v1/mesh/state | jq -e --arg k '$claim' '[.state.claims[] | select(.key == \$k and .state.state == \"held\")] | length == 1'")"; then
   pass cross_node_claim "a's claim was held on c ${ms}ms after it was written"
 else fail cross_node_claim "c never saw a's claim"; fi
+# Admission refuses what the admitting runtime has already heard, so b is asked only once
+# a's claim has reached b. Waiting on c alone left b whatever slack remained — 57ms on a
+# contended runner, where b had received one of a's two events and so had nothing to
+# conflict with. Eventual delivery is the design; this scenario is about the refusal.
+wait_for 15 "b sees the claim" bash -c "docker exec $P-b curl -fsS http://127.0.0.1:8741/api/v1/mesh/state | jq -e --arg k '$claim' '[.state.claims[] | select(.key == \$k and .state.state == \"held\")] | length == 1'" >/dev/null \
+  || fail claim_conflict "b never saw a's claim, so there was nothing for it to conflict with"
 code="$(post_status b /api/v1/mesh/claims '{"session":"lab-b","scope":["apps"]}')"
 [ "$code" = 422 ] && pass claim_conflict "b's overlapping exclusive claim was refused with 422 claim_conflict" \
   || fail claim_conflict "b's overlapping claim answered $code, not 422"

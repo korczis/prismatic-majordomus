@@ -3669,13 +3669,13 @@ majordomus mesh peer [OPTIONS] <RUNTIME>
 
 Examples:
 
-- **One runtime, by its key** — A runtime's machine, liveness, link, sessions and claims. A runtime the server does not know is `not found` with the reason; here no server runs, and the reason says that.
+- **One runtime, by its key** — A runtime's machine, liveness, link, sessions and claims. A runtime the running server does not know is `not found`; with no server there is nobody to ask, and the answer says that rather than reporting an absence it never measured.
 
   ```console
   $ majordomus mesh peer 00000000000000000000000000000000-0000000000000000
   ```
 
-  Verified: exits 0; prints not found.
+  Verified: exits 0; prints cooperation inactive.
 
 <a id="majordomus-mesh-state"></a>
 ## `majordomus mesh state`

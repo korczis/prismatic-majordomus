@@ -555,6 +555,9 @@ fn render_peers(v: &Value) -> String {
 }
 
 fn render_peer(v: &Value) -> String {
+    if let Some(text) = inactive(v) {
+        return text;
+    }
     if v["found"] != json!(true) {
         return format!("not found  {}", v["reason"].as_str().unwrap_or(""));
     }
@@ -641,6 +644,9 @@ fn render_state(v: &Value) -> String {
 }
 
 fn render_events(v: &Value) -> String {
+    if let Some(text) = inactive(v) {
+        return text;
+    }
     let mut out = String::new();
     for e in v["events"].as_array().into_iter().flatten() {
         out.push_str(&format!(

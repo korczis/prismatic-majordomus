@@ -28,7 +28,7 @@
 //! std::fs::write(
 //!     dir.join("20260915T100000Z--feature-x--abcdef1--0011.md"),
 //!     "---\nschema_version: 1\ntask_id: t-1\nbranch: feature/x\nhead: abcdef1234\n\
-//!      worktree: /home/someone/dev/repo\n---\n\n# Objective\nship\n",
+//!      worktree: /checkout/of/the/author\n---\n\n# Objective\nship\n",
 //! )
 //! .unwrap();
 //!
@@ -36,7 +36,8 @@
 //! let body = to_body(&newest, Some("#184".into()), None).unwrap();
 //! assert_eq!(body.branch.as_deref(), Some("feature/x"));
 //! assert_eq!(body.issue.as_deref(), Some("#184"), "the publisher's to say");
-//! assert!(!serde_json::to_string(&body).unwrap().contains("/home/someone"));
+//! // the author's disk never travels: the record's worktree is not part of the body
+//! assert!(!serde_json::to_string(&body).unwrap().contains("/checkout/of/the/author"));
 //! ```
 
 use std::collections::BTreeMap;

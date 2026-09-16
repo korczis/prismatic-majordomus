@@ -4047,10 +4047,10 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "mesh-peer",
             title: "One runtime, by its key",
-            description: "A runtime's machine, liveness, link, sessions and claims. A runtime the server does not know is `not found` with the reason; here no server runs, and the reason says that.",
+            description: "A runtime's machine, liveness, link, sessions and claims. A runtime the running server does not know is `not found`; with no server there is nobody to ask, and the answer says that rather than reporting an absence it never measured.",
             argv: &["mesh", "peer", "00000000000000000000000000000000-0000000000000000"],
             setup: &[],
-            expect: Expect::StdoutContains(&["not found"]),
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
         }],
     },
     CommandExamples {
