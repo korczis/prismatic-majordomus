@@ -124,13 +124,29 @@ before it acts*, and until version 2 there was no such command.
 
 # Enforcement
 
-- `scripts/ci/backlog-check` — the gate: the reaper and the integrator exist and are
-  executable, the reaper matches processes by predicate and deletes only build directories,
-  it still holds all three conditions for reclaiming one and still refuses when liveness is
-  unmeasurable, every path that starts a build asks the shared space check, the doctrine
-  names the forge constraint, no document advertises the merge button, and (with a token)
-  the landable backlog is within its threshold.
-- `test/cases/131_backlog_hygiene.sh` — the behavioural case for the servers and the gate.
+- `scripts/ci/backlog-check --remote` — the gate, and the CI model runs it with that flag on
+  every plan (`.ai/repo/ci/gates.yaml`, `always: true`): the reaper and the integrator exist
+  and are executable, the reaper matches processes by predicate and deletes only build
+  directories, it still holds all three conditions for reclaiming one and still refuses when
+  liveness is unmeasurable, every path that starts a build asks the shared space check, the
+  doctrine names the forge constraint, no document advertises the merge button, and the
+  landable backlog itself is counted — `gh pr list` for the numbers, `refs/pull/<n>/head`
+  for the heads, `git merge-tree`'s exit code for the verdict. Without `gh`, without a token
+  or without a base to merge against, that is a finding and never a quiet pass. It was wired
+  without `--remote` from the day clause 8 was written until 2026-09-16, so the clause was
+  blocking, its gate was green, and the quantity was never measured once.
+- `.ai/repo/backlog-baseline.txt` — the ratchet. The threshold of clause 8 is
+  `MJ_BACKLOG_MAX` (10) and it does not move; the day the quantity was first measured in CI
+  there were 59 landable pull requests of 67 open. Refusing that number outright would have
+  reddened the trunk for every session in this repository over a backlog none of them
+  created, so it is recorded as debt instead — one entry per measurement, `<date> <count>
+  <sentence>`, written only by `scripts/ci/backlog-check --write-baseline`. The newest entry
+  is the bound CI enforces: a backlog above it fails, and an entry above any number already
+  recorded fails too, because debt is paid and not moved. The shape is the one
+  `.ai/repo/order-baseline.txt` uses for the ordering debt.
+- `test/cases/131_backlog_hygiene.sh` — the behavioural case for the servers, the gate and
+  the ratchet: a backlog at the ratchet passes, one above it fails naming both numbers, and
+  a raised ratchet is refused.
 - `test/cases/276_disk_is_bounded.sh` — the behavioural case for the build output and the
   bound: what the reaper refuses, and that a build below the floor does not start.
 - `scripts/reap-orphans` — the reaper, dry-run by default, with `--kill` and `--reclaim` as

@@ -72,6 +72,8 @@ cp "$ROOT/bin/majordomus-cli" "$W/bin/majordomus-cli"
 cp "$ROOT/scripts/derive" "$W/scripts/derive"
 cp "$ROOT/.just/build.just" "$W/.just/build.just"
 cp "$ROOT/.just/site.just" "$W/.just/site.just" 2>/dev/null || true
+# the eighth clause's half: the recorded ratchet of the landable backlog
+cp "$ROOT/.ai/repo/backlog-baseline.txt" "$W/.ai/repo/backlog-baseline.txt"
 touch "$W/justfile"
 chmod +x "$W/scripts/merge-derived" "$W/scripts/reap-orphans" "$W/scripts/ci/backlog-check"
 
@@ -116,6 +118,86 @@ expect_grep 'backgrounds a server without --idle'
 printf '#!/bin/sh\n"$BIN" serve --port 0 --idle 60 > serve.log 2>&1 &\n' > "$W/test/cases/99_probe.sh"
 MJ_ROOT="$W" expect_exit 0 "$W/scripts/ci/backlog-check"
 rm "$W/test/cases/99_probe.sh"
+
+# ---------------------------------------------------------------- the quantity itself
+# Clause 8 of the rule — growth is loud before it is a cliff — is the only one that is a
+# number, and it was the only one nothing ever measured: the gate could, under --remote, and
+# the CI model wired it without the flag. So the number is proved here, both ways, against a
+# fixture forge: a fake `gh` that lists pull requests, and a real local remote carrying their
+# heads under refs/pull/<n>/head, which is what the gate fetches and merge-trees.
+#
+# The bound is the ratchet, not the threshold: 59 pull requests were already landable the day
+# this was wired, and a gate that refused them would have reddened the trunk for every
+# session here over a backlog none of them created. The ratchet may fall and may never rise,
+# which is the third thing proved below.
+RATCHET="$W/.ai/repo/backlog-baseline.txt"
+ratchet_of() { printf '# fixture ratchet\n'; for n in "$@"; do printf '2026-09-1%s %s debt: %s landable pull requests.\n' "$n" "$n" "$n"; done; }
+
+# a ratchet raised above what is already recorded is refused, whatever the forge says
+printf '# fixture\n2026-09-01 4 debt: four landable pull requests.\n2026-09-02 6 debt: six landable pull requests.\n' > "$RATCHET"
+MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+expect_grep 'ratchet in .* was raised from 4 to 6'
+
+# and a ratchet that falls is the whole point
+printf '# fixture\n2026-09-01 6 debt: six landable pull requests.\n2026-09-02 4 debt: four landable pull requests.\n' > "$RATCHET"
+MJ_ROOT="$W" expect_exit 0 "$W/scripts/ci/backlog-check"
+expect_grep 'ratchet is 4 over 2 recorded measurement'
+
+# a fixture forge: two open pull requests, both merging cleanly into the fixture's master
+FORGE="$W/forge.git"
+git init --quiet --bare "$FORGE"
+G="$W/repo"
+mkdir -p "$G"
+git -C "$G" init --quiet -b master
+git -C "$G" config user.email t@example.com
+git -C "$G" config user.name test
+printf 'one\n' > "$G/a.txt"
+git -C "$G" add a.txt
+git -C "$G" commit --quiet -m base
+git -C "$G" remote add origin "$FORGE"
+git -C "$G" push --quiet origin master
+for n in 1 2; do
+  git -C "$G" checkout --quiet -b "pr$n" master
+  printf 'pr%s\n' "$n" > "$G/pr$n.txt"
+  git -C "$G" add "pr$n.txt"
+  git -C "$G" commit --quiet -m "pr$n"
+  git -C "$G" push --quiet origin "HEAD:refs/pull/$n/head"
+  git -C "$G" checkout --quiet master
+done
+git -C "$G" fetch --quiet origin master:refs/remotes/origin/master
+# the gate reads the fixture repository, so its structural subjects move in beside it
+cp -R "$W/scripts" "$W/lib" "$W/bin" "$W/.just" "$W/test" "$W/.ai" "$G/"
+cp "$W/.gitattributes" "$W/justfile" "$G/"
+mkdir -p "$G/docs"
+FAKEBIN="$W/fakebin"
+mkdir -p "$FAKEBIN"
+cat > "$FAKEBIN/gh" <<'SH'
+#!/bin/sh
+case "$1 $2" in
+  "auth status") exit 0 ;;
+  "pr list") printf '1\n2\n' ;;
+  *) exit 1 ;;
+esac
+SH
+chmod +x "$FAKEBIN/gh"
+
+# at the ratchet: two landable, ratchet two — loud, and not a failure
+ratchet_of 3 2 > "$G/.ai/repo/backlog-baseline.txt"
+expect_exit 0 env MJ_ROOT="$G" MJ_BACKLOG_MAX=0 PATH="$FAKEBIN:$PATH" "$G/scripts/ci/backlog-check" --remote
+expect_grep '2 of 2 open pull requests are landable'
+
+# above it: the same two against a ratchet of one, which must name both numbers and fail
+ratchet_of 3 1 > "$G/.ai/repo/backlog-baseline.txt"
+expect_exit 10 env MJ_ROOT="$G" MJ_BACKLOG_MAX=0 PATH="$FAKEBIN:$PATH" "$G/scripts/ci/backlog-check" --remote
+expect_grep '2 of 2 open pull requests merge cleanly here and are still open, above the ratchet of 1'
+
+# and a forge it cannot reach is a finding, never a quiet pass
+NOAUTH="$W/noauthbin"
+mkdir -p "$NOAUTH"
+printf '#!/bin/sh\nexit 1\n' > "$NOAUTH/gh"
+chmod +x "$NOAUTH/gh"
+expect_exit 10 env MJ_ROOT="$G" MJ_BACKLOG_MAX=0 PATH="$NOAUTH:$PATH" "$G/scripts/ci/backlog-check" --remote
+expect_grep 'gh has no token: the backlog cannot be measured'
 
 # the behavioural case itself going missing
 rm "$W/test/cases/131_backlog_hygiene.sh"

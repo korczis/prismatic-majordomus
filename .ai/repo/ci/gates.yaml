@@ -254,11 +254,20 @@ gates:
   # safe by construction, that .gitattributes and the site generator still agree about which
   # trees resolve on merge, and that no document sends a reader to a merge button this
   # repository's merge policy cannot reach.
+  #
+  # `--remote` is the rule's eighth clause, and it was missing here for as long as the clause
+  # existed: the gate has always been able to count the pull requests that merge cleanly and
+  # are still open, and this line ran it without the flag, so every run reported that the
+  # instruments existed and never what they measured. The day it was added the count was 59
+  # of 67 open, against a declared threshold of 10 — which is why the bound CI enforces is
+  # the ratchet in .ai/repo/backlog-baseline.txt, a recorded number that may fall and may
+  # never rise. The structure job already exports GH_TOKEN; with no token the gate reports a
+  # finding rather than passing quietly.
   - id: backlog-hygiene
     job: structure
     always: true
-    runs: scripts/ci/backlog-check
-    summary: every self-accumulating quantity keeps its measuring command, the reaper matches by predicate rather than by name, every derived site tree is declared merge=derived, and nothing advertises the forge merge button
+    runs: scripts/ci/backlog-check --remote
+    summary: every self-accumulating quantity keeps its measuring command, the landable backlog is measured against its recorded ratchet, the reaper matches by predicate rather than by name, every derived site tree is declared merge=derived, and nothing advertises the forge merge button
 
   - id: mesh-check
     job: structure
@@ -577,5 +586,5 @@ classes:
   # project.accumulation-is-measured). Narrow on purpose: the rule's own file is named here
   # rather than the whole rules tree, so a change to one rule does not escalate every plan.
   - id: backlog
-    paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
+    paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/backlog-baseline.txt, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
     gates: [backlog-hygiene, shell-lint, shell-suite]

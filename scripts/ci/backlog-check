@@ -20,10 +20,23 @@
 #   - the rule exists and names the forge constraint, so the reason is written down once
 #   - no document instructs a reader to merge a pull request on GitHub
 #   - the behavioural case exists
+#   - the ratchet in .ai/repo/backlog-baseline.txt has never been raised
 #
-#   scripts/ci/backlog-check             the structural findings
-#   scripts/ci/backlog-check --remote    also measure the landable backlog (needs gh + a token)
-#   MJ_BACKLOG_MAX=8 ... --remote        the threshold (default 10)
+# The rule's eighth clause — "growth is loud before it is a cliff" — is the quantity itself,
+# and until 2026-09-16 nothing ever measured it: this gate could, under `--remote`, and
+# .ai/repo/ci/gates.yaml wired it without that flag, so every CI run reported only that the
+# instruments existed. The day it was wired there were 67 open pull requests, 59 of them
+# landable, against a declared threshold of 10. Failing on the threshold that day would have
+# turned master red for every session in this repository over a backlog none of them
+# created, so the number is held by a ratchet — the shape .ai/repo/order-baseline.txt
+# already uses for the ordering debt: a recorded count that may fall and may never rise.
+# The threshold stays the target; the ratchet is recorded debt above it, written down with
+# its date and the sentence that says it is debt.
+#
+#   scripts/ci/backlog-check                   the structural findings and the ratchet's history
+#   scripts/ci/backlog-check --remote          also measure the landable backlog (needs gh + a token)
+#   scripts/ci/backlog-check --write-baseline  record today's measurement as the ratchet (implies --remote)
+#   MJ_BACKLOG_MAX=8 ... --remote              the threshold (default 10)
 #
 # Exit: 0 clean, 10 findings, 12 unusable.
 set -eu
@@ -32,9 +45,11 @@ ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 
 REMOTE=0
+WRITE=0
 MAX="${MJ_BACKLOG_MAX:-10}"
 while [ $# -gt 0 ]; do case "$1" in
   --remote) REMOTE=1; shift ;;
+  --write-baseline) WRITE=1; REMOTE=1; shift ;;
   *) echo "backlog-check: unknown option $1" >&2; exit 2 ;;
 esac; done
 
@@ -43,6 +58,7 @@ fail() { printf 'FAIL backlog-check  %s\n' "$*"; findings=$((findings+1)); }
 ok()   { printf 'OK   backlog-check  %s\n' "$*"; }
 
 RULE=".ai/repo/rules/project/accumulation-is-measured.v2.md"
+BASELINE=".ai/repo/backlog-baseline.txt"
 REAPER="scripts/reap-orphans"
 CASE="test/cases/131_backlog_hygiene.sh"
 DISK_CASE="test/cases/276_disk_is_bounded.sh"
@@ -207,26 +223,109 @@ fi
 # 5. the behavioural case exists
 [ -f "$CASE" ] && ok "the behavioural case is present" || fail "$CASE is missing"
 
+# 5c. the ratchet is paid, never moved.
+# Read with no network and no token, so the one half of clause 8 that can always be held is
+# always held: whatever the forge says today, the recorded debt may not have grown. The file
+# is its own history — every entry is `<date> <count> <sentence>` — so a raise is visible in
+# the file itself rather than in a diff nobody reads.
+RATCHET=""
+if [ ! -f "$BASELINE" ]; then
+  fail "$BASELINE is missing: the landable backlog has no recorded ratchet (scripts/ci/backlog-check --write-baseline)"
+else
+  malformed="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" | grep -vE '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]+ .+$' || true)"
+  if [ -n "$malformed" ]; then
+    fail "$BASELINE carries entries that are not '<date> <count> <sentence>':"
+    echo "$malformed" | head -3 | sed 's/^/       /'
+  else
+    read -r RATCHET floor entries <<EOF
+$(grep -E '^[0-9]{4}-' "$BASELINE" | awk '
+  NR > 1 { if (prevmin == "" || prev < prevmin) prevmin = prev }
+  { prev = $2; last = $2 }
+  END { if (NR == 0) exit
+        if (prevmin == "") prevmin = last
+        print last, prevmin, NR }')
+EOF
+    if [ -z "$RATCHET" ]; then
+      fail "$BASELINE records no measurement: the ratchet is a number, a date and the sentence that says it is debt"
+    elif [ "$RATCHET" -gt "$floor" ]; then
+      fail "the ratchet in $BASELINE was raised from $floor to $RATCHET: debt is paid, not moved — land pull requests, do not record more of them"
+    else
+      ok "the landable backlog ratchet is $RATCHET over $entries recorded measurement(s), never raised"
+      if [ "$RATCHET" -gt "$MAX" ]; then
+        ok "the ratchet is $((RATCHET - MAX)) above the declared threshold of $MAX: that difference is debt, and the threshold is still the target"
+      fi
+    fi
+  fi
+fi
+
 # 6. the quantity itself, when asked and able
 if [ "$REMOTE" -eq 1 ]; then
   if ! command -v gh >/dev/null 2>&1; then
     fail "--remote was asked for but gh is not installed: the backlog cannot be measured, and a gate that skips quietly is the disease"
   elif ! gh auth status >/dev/null 2>&1; then
     fail "--remote was asked for but gh has no token: the backlog cannot be measured"
+  elif ! git rev-parse --verify --quiet origin/master >/dev/null \
+    && ! git rev-parse --verify --quiet HEAD >/dev/null; then
+    fail "--remote was asked for but neither origin/master nor HEAD resolves here: the backlog has no base to be measured against"
   else
-    base="$(git rev-parse origin/master 2>/dev/null || git rev-parse HEAD)"
-    landable=0; total=0
-    for pr in $(gh pr list --state open --limit 100 --json number -q '.[].number' 2>/dev/null); do
+    # --verify, because a bare `git rev-parse origin/master` echoes its own argument when
+    # the ref is unknown and still writes a line: the base then held two lines, every
+    # merge-tree failed against it, and the gate reported a landable backlog of zero — a
+    # false green built out of an unreadable input.
+    base="$(git rev-parse --verify --quiet origin/master || git rev-parse --verify --quiet HEAD || true)"
+    # One listing and one fetch. Every open pull request used to cost a `gh pr view` and a
+    # fetch of its own, which at this repository's backlog is minutes of a CI job;
+    # `refs/pull/<n>/head` is the head GitHub itself would merge and needs no branch name.
+    prs="$(gh pr list --state open --limit 100 --json number -q '.[].number' 2>/dev/null || true)"
+    total=0; landable=0; refspecs=""
+    for pr in $prs; do
       total=$((total+1))
-      br="$(gh pr view "$pr" --json headRefName -q .headRefName 2>/dev/null)" || continue
-      git fetch origin "$br" --quiet 2>/dev/null || continue
+      refspecs="$refspecs +refs/pull/$pr/head:refs/mj-backlog/$pr"
+    done
+    # shellcheck disable=SC2086
+    [ -n "$refspecs" ] && git fetch --quiet --prune origin $refspecs 2>/dev/null || true
+    for pr in $prs; do
+      head="$(git rev-parse --verify --quiet "refs/mj-backlog/$pr" || true)"
+      [ -n "$head" ] || continue
       # The exit code, never a grep (see scripts/land).
-      if git merge-tree --write-tree "$base" FETCH_HEAD >/dev/null 2>&1; then
+      if git merge-tree --write-tree "$base" "$head" >/dev/null 2>&1; then
         landable=$((landable+1))
       fi
     done
-    if [ "$landable" -gt "$MAX" ]; then
-      fail "$landable of $total open pull requests merge cleanly here and are still open (threshold $MAX): run scripts/land"
+    # A gate for the things that accumulate does not leave a ref per pull request behind it.
+    git for-each-ref --format='%(refname)' refs/mj-backlog 2>/dev/null \
+      | while IFS= read -r r; do git update-ref -d "$r" 2>/dev/null || true; done
+    if [ "$WRITE" -eq 1 ]; then
+      if [ -n "$RATCHET" ] && [ "$landable" -gt "$RATCHET" ]; then
+        echo "backlog-check: refusing to record $landable above the ratchet of $RATCHET — land pull requests instead" >&2
+        exit 12
+      fi
+      if [ ! -f "$BASELINE" ]; then
+        {
+          echo "# The landable backlog of this repository, as a ratchet: the recorded debt of"
+          echo "# project.accumulation-is-measured@2 clause 8. Written by"
+          echo "# \`scripts/ci/backlog-check --write-baseline\`; the gate refuses a backlog above the"
+          echo "# newest entry, and refuses an entry above any number already recorded here."
+          echo "#"
+          echo "# The threshold is MJ_BACKLOG_MAX (10) and it does not move. Everything above it in"
+          echo "# this file is debt that was already there when the quantity was first measured in"
+          echo "# CI, carried so that paying it down is a series of commits rather than a red trunk."
+          echo "#"
+          echo "# One entry per measurement: <date> <landable count> <one sentence>."
+        } > "$BASELINE"
+      fi
+      printf '%s %s debt: %s of %s open pull requests merge cleanly here and are unlanded, against a declared threshold of %s.\n' \
+        "$(date -u +%Y-%m-%d)" "$landable" "$landable" "$total" "$MAX" >> "$BASELINE"
+      echo "backlog-check: ratchet recorded — landable=$landable of $total open, threshold $MAX"
+      exit 0
+    fi
+    # The ratchet is the bound that is enforced; the threshold is the bound that is meant.
+    bound="$MAX"
+    if [ -n "$RATCHET" ] && [ "$RATCHET" -gt "$MAX" ]; then bound="$RATCHET"; fi
+    if [ "$landable" -gt "$bound" ]; then
+      fail "$landable of $total open pull requests merge cleanly here and are still open, above the ratchet of $bound (threshold $MAX): run scripts/land"
+    elif [ "$landable" -gt "$MAX" ]; then
+      ok "$landable of $total open pull requests are landable — above the threshold of $MAX, within the recorded ratchet of $bound"
     else
       ok "$landable of $total open pull requests are landable, within the threshold of $MAX"
     fi
