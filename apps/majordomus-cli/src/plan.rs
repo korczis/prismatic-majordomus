@@ -115,6 +115,48 @@ fn clean(s: &str) -> String {
     s.replace('\t', " ")
 }
 
+// ---------------------------------------------------------------- the event behind a stamp
+
+/// The first instant a stamp could only have been written with its seal (ADR 0072).
+///
+/// A stamp older than this may be excused by its record's `unsealed_stamps` list, which
+/// names the stamps recorded before the transition wrote a seal. A stamp at or after
+/// it never is: the transition that wrote it wrote the seal in the same write, so a stamp
+/// without one was written by something else. `SEALED_FROM` in `lib/project.awk`.
+pub const SEALED_FROM: &str = "2026-09-16T00:00:00Z";
+
+/// The seal of one transition: the proof, tracked in the record beside the stamp, that the
+/// stamp was written by the transition that appends its event.
+///
+/// The ledger that holds the event is checkout-local and never tracked, so no gate reading
+/// a clone can compare a stamp with it. The seal is the tracked half: the SHA-256 of the
+/// event, the issue and the stamp, written by [`transition`] in the same write as the stamp
+/// and read by [`Plan::build`], which gives a stamp without its seal no effect on status and
+/// reports it as `stamp_without_event`. `mj_pj_seal_rows` in `lib/project.sh` computes the
+/// same digest for the awk engine.
+///
+/// ```
+/// use majordomus_cli::plan::{seal, Transition};
+/// let s = seal(Transition::Done, "I0001", "2026-09-16T12:00:00Z");
+/// assert!(s.starts_with("sha256:") && s.len() == 7 + 64);
+/// // A seal proves one stamp of one move of one issue, and nothing else.
+/// assert_ne!(s, seal(Transition::Start, "I0001", "2026-09-16T12:00:00Z"));
+/// assert_ne!(s, seal(Transition::Done, "I0002", "2026-09-16T12:00:00Z"));
+/// assert_ne!(s, seal(Transition::Done, "I0001", "2026-09-16T12:00:01Z"));
+/// ```
+pub fn seal(transition: Transition, issue: &str, stamp: &str) -> String {
+    format!(
+        "sha256:{}",
+        crate::policy::sha256_hex(&format!(
+            "majordomus.plan-event/v1\n{}\n{issue}\n{stamp}\n",
+            transition.event()
+        ))
+    )
+}
+
+/// The three moves, in the order a record's stamps are checked and reported.
+const MOVES: [Transition; 3] = [Transition::Start, Transition::Verify, Transition::Done];
+
 // ---------------------------------------------------------------- the authored records
 
 /// One issue as its file declares it, with nothing derived.
@@ -131,6 +173,10 @@ struct PlanIssueRaw {
     started_at: String,
     verified_at: String,
     completed_at: String,
+    started_event: String,
+    verified_event: String,
+    completed_event: String,
+    unsealed_stamps: Vec<String>,
     objective: String,
     depends_on: Vec<String>,
     scope: Vec<String>,
@@ -172,6 +218,10 @@ impl PlanIssueRaw {
             started_at: field(meta, "started_at"),
             verified_at: field(meta, "verified_at"),
             completed_at: field(meta, "completed_at"),
+            started_event: field(meta, "started_event"),
+            verified_event: field(meta, "verified_event"),
+            completed_event: field(meta, "completed_event"),
+            unsealed_stamps: list(meta, "unsealed_stamps"),
             objective: field(meta, "objective"),
             depends_on: list(meta, "depends_on"),
             scope: list(meta, "scope"),
@@ -180,6 +230,49 @@ impl PlanIssueRaw {
             evidence_required: list(meta, "evidence_required"),
             evidence_have: evidence_covers(meta),
         }
+    }
+
+    /// The stamp a move writes, as the record declares it.
+    fn stamp(&self, t: Transition) -> &str {
+        match t {
+            Transition::Start => &self.started_at,
+            Transition::Verify => &self.verified_at,
+            Transition::Done => &self.completed_at,
+        }
+    }
+
+    /// The seal the record carries beside that stamp.
+    fn sealed_with(&self, t: Transition) -> &str {
+        match t {
+            Transition::Start => &self.started_event,
+            Transition::Verify => &self.verified_event,
+            Transition::Done => &self.completed_event,
+        }
+    }
+
+    /// What a transition writes: the stamp and its seal, together.
+    fn stamp_with_seal(&mut self, t: Transition, now: &str) {
+        let s = seal(t, &self.id, now);
+        let (stamp, sealed) = match t {
+            Transition::Start => (&mut self.started_at, &mut self.started_event),
+            Transition::Verify => (&mut self.verified_at, &mut self.verified_event),
+            Transition::Done => (&mut self.completed_at, &mut self.completed_event),
+        };
+        *stamp = now.to_string();
+        *sealed = s;
+    }
+
+    /// Is the stamp of this move a fact: absent, sealed by its event, or recorded before
+    /// seals existed and named by the record's `unsealed_stamps`? Anything else was written
+    /// by something other than the transition.
+    fn proven(&self, t: Transition) -> bool {
+        let stamp = self.stamp(t);
+        stamp.is_empty()
+            || self.sealed_with(t) == seal(t, &self.id, stamp)
+            || (stamp < SEALED_FROM
+                && self
+                    .unsealed_stamps
+                    .contains(&format!("{} {stamp}", t.field())))
     }
 }
 
@@ -467,11 +560,7 @@ impl Plan {
     pub fn after(index: &Index, id: &str, transition: Transition, now: &str) -> Plan {
         let (header, milestones, mut issues) = raws(index);
         if let Some(r) = issues.iter_mut().find(|r| r.id == id) {
-            match transition {
-                Transition::Start => r.started_at = now.to_string(),
-                Transition::Verify => r.verified_at = now.to_string(),
-                Transition::Done => r.completed_at = now.to_string(),
-            }
+            r.stamp_with_seal(transition, now);
         }
         derive(header, milestones, issues)
     }
@@ -569,6 +658,16 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
     let mseen: BTreeSet<&str> = mids.iter().map(String::as_str).collect();
     let ix = |id: &str| -> Option<usize> { iraw.iter().position(|r| r.id == id) };
 
+    // --- the event behind every stamp. A stamp its transition did not write is not a fact
+    //     about the issue: it moves no status, and it is a failure by name (ADR 0072).
+    let proven: Vec<[bool; 3]> = iraw
+        .iter()
+        .map(|r| MOVES.map(|t| r.proven(t)))
+        .collect();
+    // `MOVES` lists the moves in declaration order, so a move's discriminant is its column.
+    let stamped =
+        |n: usize, t: Transition| -> bool { !iraw[n].stamp(t).is_empty() && proven[n][t as usize] };
+
     // --- local facts: is this issue DONE on its own terms?
     let mut covered = vec![true; iraw.len()];
     let mut done = vec![false; iraw.len()];
@@ -577,7 +676,7 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
             .evidence_required
             .iter()
             .all(|need| r.evidence_have.contains(need));
-        done[n] = !r.cancelled && !r.completed_at.is_empty() && covered[n];
+        done[n] = !r.cancelled && stamped(n, Transition::Done) && covered[n];
     }
 
     // --- edges, and the errors visible in them
@@ -642,7 +741,23 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
                 "requires no evidence; nothing gates its completion".into(),
             );
         }
-        if !r.completed_at.is_empty() && !covered[n] && !r.cancelled {
+        for (k, t) in MOVES.iter().enumerate() {
+            if !proven[n][k] {
+                v.fail(
+                    "stamp_without_event",
+                    &r.id,
+                    format!(
+                        "{} {} has no {} event: {} is absent or does not seal it, and only `majordomus plan {}` writes the stamp",
+                        t.field(),
+                        r.stamp(*t),
+                        t.event(),
+                        t.seal_field(),
+                        t.verb()
+                    ),
+                );
+            }
+        }
+        if stamped(n, Transition::Done) && !covered[n] && !r.cancelled {
             let miss: Vec<&str> = r
                 .evidence_required
                 .iter()
@@ -728,9 +843,9 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
             "CANCELLED"
         } else if done[n] {
             "DONE"
-        } else if !r.completed_at.is_empty() || !r.verified_at.is_empty() {
+        } else if stamped(n, Transition::Done) || stamped(n, Transition::Verify) {
             "VERIFY"
-        } else if !r.started_at.is_empty() {
+        } else if stamped(n, Transition::Start) {
             "ACTIVE"
         } else if !bb.is_empty() {
             "BLOCKED"
@@ -1256,7 +1371,7 @@ mod tests {
     #[test]
     fn completion_without_evidence_stays_in_verify() {
         let mut i = issue("I0001", "M000", &[]);
-        i.completed_at = "2026-01-01T00:00:00Z".into();
+        i.stamp_with_seal(Transition::Done, "2026-01-01T00:00:00Z");
         let p = derive(header(), vec![milestone("M000", &[])], vec![i.clone()]);
         assert_eq!(p.issue("I0001").unwrap().status, "VERIFY");
         assert!(p
@@ -1475,6 +1590,38 @@ impl Transition {
             Self::Done => "plan_done",
         }
     }
+
+    /// The record field that carries this move's [`seal`], beside the stamp it proves.
+    ///
+    /// ```
+    /// use majordomus_cli::plan::Transition;
+    /// assert_eq!(Transition::Start.seal_field(), "started_event");
+    /// assert_eq!(Transition::Verify.seal_field(), "verified_event");
+    /// assert_eq!(Transition::Done.seal_field(), "completed_event");
+    /// ```
+    pub fn seal_field(self) -> &'static str {
+        match self {
+            Self::Start => "started_event",
+            Self::Verify => "verified_event",
+            Self::Done => "completed_event",
+        }
+    }
+
+    /// The word a caller types for this move: `majordomus plan <verb> <id>`.
+    ///
+    /// ```
+    /// use majordomus_cli::plan::Transition;
+    /// assert_eq!(Transition::Start.verb(), "start");
+    /// assert_eq!(Transition::Verify.verb(), "verify");
+    /// assert_eq!(Transition::Done.verb(), "done");
+    /// ```
+    pub fn verb(self) -> &'static str {
+        match self {
+            Self::Start => "start",
+            Self::Verify => "verify",
+            Self::Done => "done",
+        }
+    }
 }
 
 /// Why a transition did not happen.
@@ -1589,6 +1736,16 @@ pub fn check(
                     issue.blocked_by.join(" ")
                 )));
             }
+            // Done ends the lifecycle; it does not replace it. An issue is DONE only after
+            // it was started, so READY, BLOCKED, CANCELLED and DONE itself are refused: the
+            // stamp would otherwise claim an execution no `plan_start` ever recorded, and a
+            // cancelled issue would be given a completion the plan had given up on.
+            if !matches!(issue.status.as_str(), "ACTIVE" | "VERIFY") {
+                return Err(TransitionError::Refused(format!(
+                    "{id} is {}; only an ACTIVE or VERIFY issue can move to DONE",
+                    issue.status
+                )));
+            }
             // Whether the evidence is complete is not a count — a record may carry two
             // entries covering one token and none covering another — and the rule for it
             // already exists inside `derive`. So rather than restate it, ask what the plan
@@ -1652,10 +1809,13 @@ pub fn transition(
         path: path.to_path_buf(),
         reason: e.to_string(),
     })?;
-    // Both fields, in the order the shell writes them: the move's own stamp, then
+    // The fields in the order the shell writes them: the move's own stamp, its seal, then
     // `updated_at`. A record whose `updated_at` preceded its `completed_at` would be a
     // record that says it was finished before it was last touched.
+    // The seal is written with the stamp, in the same write, because it is the only part of
+    // the event a clone carries: the ledger line below stays in this checkout (ADR 0072).
     let text = set_field(&text, transition.field(), now);
+    let text = set_field(&text, transition.seal_field(), &seal(transition, id, now));
     let text = set_field(&text, "updated_at", now);
     std::fs::write(path, text).map_err(|e| TransitionError::Write {
         path: path.to_path_buf(),
@@ -1776,5 +1936,312 @@ mod transition_tests {
     #[test]
     fn the_record_ends_with_a_newline() {
         assert_eq!(set_field("id: I0001", "x", "y"), "id: I0001\nx: y\n");
+    }
+}
+
+#[cfg(test)]
+mod seal_tests {
+    //! No stamp without its event (ADR 0072): every branch of the seal, the derivation that
+    //! reads it, the `done` precondition and the write that produces it.
+    use super::*;
+    use crate::git::GitState;
+    use crate::index::{RepositoryInfo, State};
+    use crate::model::{Object, Provenance};
+    use serde_json::json;
+
+    const AT: &str = "2026-09-20T10:00:00Z";
+
+    fn raw(id: &str, extra: Value) -> PlanIssueRaw {
+        let mut meta = json!({
+            "id": id, "milestone": "M000", "title": "t", "priority": "p1",
+            "acceptance_criteria": ["it works"], "validation": ["true"],
+            "evidence_required": ["proof"], "evidence": [{"covers": "proof"}],
+        });
+        for (k, v) in extra.as_object().unwrap() {
+            meta[k] = v.clone();
+        }
+        PlanIssueRaw::of(id, &meta)
+    }
+
+    fn milestone() -> PlanMilestoneRaw {
+        PlanMilestoneRaw::of("M000", &json!({"id": "M000", "title": "m", "order": 0}))
+    }
+
+    fn header() -> PlanProject {
+        PlanProject {
+            name: "Fixture".into(),
+            repository: "example/fixture".into(),
+            default_branch: "master".into(),
+            active_milestone: String::new(),
+        }
+    }
+
+    fn unproven(p: &Plan, id: &str) -> Vec<String> {
+        p.findings
+            .iter()
+            .filter(|f| f.code == "stamp_without_event" && f.subject == id)
+            .map(|f| {
+                assert_eq!(f.level, "FAIL");
+                f.message.clone()
+            })
+            .collect()
+    }
+
+    /// The payload is fixed: the shell hashes the same bytes, and a change here is a change
+    /// to every seal already written.
+    #[test]
+    fn the_seal_is_the_digest_of_the_event_the_issue_and_the_stamp() {
+        let payload = format!("majordomus.plan-event/v1\nplan_done\nI0001\n{AT}\n");
+        assert_eq!(
+            seal(Transition::Done, "I0001", AT),
+            format!("sha256:{}", crate::policy::sha256_hex(&payload))
+        );
+        assert_eq!(
+            MOVES.map(Transition::seal_field),
+            ["started_event", "verified_event", "completed_event"]
+        );
+        assert_eq!(MOVES.map(Transition::verb), ["start", "verify", "done"]);
+    }
+
+    /// A completion written by hand, with its start, its verification and its evidence,
+    /// derives nothing and fails once per stamp, naming the event that never happened.
+    #[test]
+    fn a_hand_written_completion_moves_nothing_and_is_named() {
+        let forged = raw(
+            "I0002",
+            json!({"started_at": AT, "verified_at": AT, "completed_at": AT}),
+        );
+        let p = derive(header(), vec![milestone()], vec![forged]);
+        assert_eq!(p.issue("I0002").unwrap().status, "READY");
+        assert_eq!(
+            unproven(&p, "I0002"),
+            vec![
+                format!("started_at {AT} has no plan_start event: started_event is absent or does not seal it, and only `majordomus plan start` writes the stamp"),
+                format!("verified_at {AT} has no plan_verify event: verified_event is absent or does not seal it, and only `majordomus plan verify` writes the stamp"),
+                format!("completed_at {AT} has no plan_done event: completed_event is absent or does not seal it, and only `majordomus plan done` writes the stamp"),
+            ]
+        );
+        assert_eq!(p.failures(), 3);
+        // the recorded stamps are still shown as recorded; only the status ignores them
+        assert_eq!(p.issue("I0002").unwrap().completed_at, AT);
+    }
+
+    /// Sealed stamps are facts, in every one of the three moves.
+    #[test]
+    fn sealed_stamps_are_facts() {
+        let mut i = raw("I0001", json!({}));
+        i.stamp_with_seal(Transition::Start, AT);
+        let p = derive(header(), vec![milestone()], vec![i.clone()]);
+        assert_eq!(p.issue("I0001").unwrap().status, "ACTIVE");
+        i.stamp_with_seal(Transition::Verify, AT);
+        let p = derive(header(), vec![milestone()], vec![i.clone()]);
+        assert_eq!(p.issue("I0001").unwrap().status, "VERIFY");
+        i.stamp_with_seal(Transition::Done, AT);
+        let p = derive(header(), vec![milestone()], vec![i.clone()]);
+        assert_eq!(p.issue("I0001").unwrap().status, "DONE");
+        assert!(p.findings.iter().all(|f| f.level != "FAIL"), "{:?}", p.findings);
+        assert_eq!(i.completed_event, seal(Transition::Done, "I0001", AT));
+    }
+
+    /// A seal proves one stamp: borrowed from another issue, or left behind when the stamp
+    /// was edited, it proves nothing.
+    #[test]
+    fn a_seal_of_another_stamp_proves_nothing() {
+        let borrowed = raw(
+            "I0002",
+            json!({"started_at": AT, "started_event": seal(Transition::Start, "I0001", AT)}),
+        );
+        let edited = raw(
+            "I0003",
+            json!({"started_at": "2026-09-20T11:00:00Z",
+                   "started_event": seal(Transition::Start, "I0003", AT)}),
+        );
+        let p = derive(header(), vec![milestone()], vec![borrowed, edited]);
+        assert_eq!(unproven(&p, "I0002").len(), 1);
+        assert_eq!(unproven(&p, "I0003").len(), 1);
+        assert_eq!(p.issue("I0002").unwrap().status, "READY");
+        assert_eq!(p.issue("I0003").unwrap().status, "READY");
+    }
+
+    /// The record's list excuses exactly the stamps it names, and only those older than the
+    /// instant seals began.
+    #[test]
+    fn the_list_excuses_only_named_stamps_from_before_seals() {
+        let old = "2026-09-01T00:00:00Z";
+        let named = raw(
+            "I0001",
+            json!({"started_at": old, "unsealed_stamps": [format!("started_at {old}")]}),
+        );
+        let unnamed = raw(
+            "I0002",
+            json!({"started_at": old, "unsealed_stamps": ["started_at 2026-08-01T00:00:00Z"]}),
+        );
+        let late = raw(
+            "I0003",
+            json!({"started_at": SEALED_FROM,
+                   "unsealed_stamps": [format!("started_at {SEALED_FROM}")]}),
+        );
+        let p = derive(header(), vec![milestone()], vec![named, unnamed, late]);
+        assert_eq!(p.issue("I0001").unwrap().status, "ACTIVE");
+        assert!(unproven(&p, "I0001").is_empty());
+        assert_eq!(unproven(&p, "I0002").len(), 1);
+        assert_eq!(unproven(&p, "I0003").len(), 1);
+    }
+
+    // ------------------------------------------------------------ over an index, and a file
+
+    fn object(kind: &str, id: &str, path: &str, metadata: Value) -> Object {
+        Object {
+            kind: kind.into(),
+            identity: id.into(),
+            uri: format!("majordomus://{kind}/{id}"),
+            title: None,
+            description: None,
+            metadata,
+            body: String::new(),
+            content: String::new(),
+            media_type: "application/yaml",
+            provenance: Provenance {
+                path: path.into(),
+                directory: ".ai/repo/project".into(),
+                source_class: kind.into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    fn index(root: &std::path::Path, objects: Vec<Object>) -> Index {
+        Index {
+            repository: RepositoryInfo {
+                root: root.display().to_string(),
+                layer_schema: "ai-repository/v1".into(),
+                sections: Default::default(),
+                git: GitState::Unavailable {
+                    reason: "unit test".into(),
+                },
+                discovery: "filesystem".into(),
+                source_classes: vec![],
+                kind_sources: vec![],
+                scope_origin: crate::scope::Origin::Distribution,
+                scope_path: String::new(),
+            },
+            objects,
+            diagnostics: vec![],
+            state: State::Ok,
+            fingerprint: String::new(),
+            scoped: Default::default(),
+            distribution: None,
+            providers: Default::default(),
+            share: None,
+        }
+    }
+
+    fn issue_meta(id: &str, extra: Value) -> Value {
+        let mut meta = json!({
+            "id": id, "milestone": "M000", "title": "t", "priority": "p1",
+            "acceptance_criteria": ["it works"], "validation": ["true"],
+            "evidence_required": ["proof"], "evidence": [{"covers": "proof"}],
+        });
+        for (k, v) in extra.as_object().unwrap() {
+            meta[k] = v.clone();
+        }
+        meta
+    }
+
+    /// `done` requires a started issue: READY and CANCELLED are refused by status, ACTIVE
+    /// and VERIFY are not, and a record's list reaches the plan through the index.
+    #[test]
+    fn done_requires_a_started_issue() {
+        let old = "2026-09-01T00:00:00Z";
+        let ix = index(
+            std::path::Path::new("/tmp/mj-plan-seal"),
+            vec![
+                object(MILESTONE, "M000", ".ai/repo/project/milestones/M000.yaml",
+                       json!({"id": "M000", "title": "m", "order": 0})),
+                object(ISSUE, "I0001", ".ai/repo/project/issues/I0001.yaml",
+                       issue_meta("I0001", json!({}))),
+                object(ISSUE, "I0002", ".ai/repo/project/issues/I0002.yaml",
+                       issue_meta("I0002", json!({"cancelled": true}))),
+                object(ISSUE, "I0003", ".ai/repo/project/issues/I0003.yaml",
+                       issue_meta("I0003", json!({"started_at": old,
+                           "unsealed_stamps": [format!("started_at {old}")]}))),
+                object(ISSUE, "I0004", ".ai/repo/project/issues/I0004.yaml",
+                       issue_meta("I0004", json!({"started_at": AT,
+                           "started_event": seal(Transition::Start, "I0004", AT),
+                           "verified_at": AT,
+                           "verified_event": seal(Transition::Verify, "I0004", AT)}))),
+            ],
+        );
+        let plan = Plan::build(&ix);
+        assert_eq!(plan.failures(), 0, "{:?}", plan.findings);
+        let now = "2026-09-20T12:00:00Z";
+        assert_eq!(
+            check(&ix, &plan, "I0001", Transition::Done, now),
+            Err(TransitionError::Refused(
+                "I0001 is READY; only an ACTIVE or VERIFY issue can move to DONE".into()
+            ))
+        );
+        assert_eq!(
+            check(&ix, &plan, "I0002", Transition::Done, now),
+            Err(TransitionError::Refused(
+                "I0002 is CANCELLED; only an ACTIVE or VERIFY issue can move to DONE".into()
+            ))
+        );
+        assert_eq!(check(&ix, &plan, "I0003", Transition::Done, now), Ok(()));
+        assert_eq!(check(&ix, &plan, "I0004", Transition::Done, now), Ok(()));
+        // the projection of the write is sealed, so the issue it describes is DONE
+        let after = Plan::after(&ix, "I0004", Transition::Done, now);
+        assert_eq!(after.issue("I0004").unwrap().status, "DONE");
+        assert_eq!(after.failures(), 0);
+    }
+
+    /// The write: the stamp, its seal and `updated_at` reach the file, then the event the
+    /// ledger. The record then validates; the same record with the seal removed does not.
+    #[test]
+    fn the_transition_writes_the_seal_with_the_stamp() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let rel = ".ai/repo/project/issues/I0001.yaml";
+        std::fs::create_dir_all(root.join(".ai/repo/project/issues")).unwrap();
+        std::fs::write(root.join(rel), "id: I0001\ntitle: t\n").unwrap();
+        std::fs::write(
+            root.join("events.yaml"),
+            "version: 1\nevents:\n  - id: plan_start\n    requires: [issue]\n",
+        )
+        .unwrap();
+        let vocabulary = crate::ledger::Vocabulary::load(&root.join("events.yaml")).unwrap();
+        let ix = index(
+            root,
+            vec![
+                object(MILESTONE, "M000", ".ai/repo/project/milestones/M000.yaml",
+                       json!({"id": "M000", "title": "m", "order": 0})),
+                object(ISSUE, "I0001", rel, issue_meta("I0001", json!({}))),
+            ],
+        );
+        let plan = Plan::build(&ix);
+        transition(
+            root,
+            &root.join(rel),
+            &ix,
+            &plan,
+            "I0001",
+            Transition::Start,
+            AT,
+            &vocabulary,
+            &ix.repository.git,
+        )
+        .expect("a READY issue starts");
+        let written = std::fs::read_to_string(root.join(rel)).unwrap();
+        assert_eq!(
+            written,
+            format!(
+                "id: I0001\ntitle: t\nstarted_at: {AT}\nstarted_event: {}\nupdated_at: {AT}\n",
+                seal(Transition::Start, "I0001", AT)
+            )
+        );
+        let (entries, _) = crate::ledger::read(root);
+        assert_eq!(entries.len(), 1);
     }
 }

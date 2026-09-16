@@ -9,6 +9,7 @@
 #   P <flat-key> <value>
 #   M <milestone-id> <flat-key> <value>
 #   I <issue-id> <flat-key> <value>
+#   X <issue-id> <stamp-field> <sha256>  the seal its transition would have written (ADR 0072)
 #
 # output (tab separated, first field is the record type):
 #   P  name  repository  default_branch  active_milestone
@@ -39,6 +40,13 @@ BEGIN { FS = "\t"; OFS = "\t"
   # assigning one without declaring it, is caught: at runtime by the reconciliation in the
   # emit block, and at rest by the case that reads the assignments out of this file.
   ISTATUS = "READY BLOCKED ACTIVE VERIFY DONE CANCELLED"
+  # The three stamps a transition writes, each with the seal field and the event that prove
+  # it. A stamp at or after SEALED_FROM is never excused (SEALED_FROM in plan.rs).
+  SEALED_FROM = "2026-09-16T00:00:00Z"
+  NSTAMP = split("started_at verified_at completed_at", STAMP, " ")
+  split("started_event verified_event completed_event", SEALF, " ")
+  split("plan_start plan_verify plan_done", SEALEV, " ")
+  split("start verify done", SEALVERB, " ")
   MSTATUS = "PLANNED BLOCKED ACTIVE VERIFY DONE CANCELLED SUPERSEDED"
 }
 
@@ -46,6 +54,7 @@ function clean(s) { gsub(/\t/, " ", s); return s }
 
 # ---------------------------------------------------------------- ingest
 $1 == "P" { pkey[$2] = $3; next }
+$1 == "X" { xseal[$2, $3] = $4; next }
 
 $1 == "M" {
   id = $2; key = $3; val = $4
@@ -68,6 +77,7 @@ $1 == "I" {
   if (key ~ /^validation\.[0-9]+$/)          { valn[id]++ }
   if (key ~ /^evidence_required\.[0-9]+$/)   { need[id, ++needn[id]] = val }
   if (key ~ /^evidence\.[0-9]+\.covers$/)    { have[id, val] = 1; haven[id]++ }
+  if (key ~ /^unsealed_stamps\.[0-9]+$/)     { unsealed[id, val] = 1 }
   next
 }
 
@@ -79,7 +89,14 @@ END {
     cancelled[id] = (it[id, "cancelled"] == "true")
     covered[id] = 1
     for (k = 1; k <= needn[id]; k++) if (!((id, need[id, k]) in have)) covered[id] = 0
-    done[id] = (!cancelled[id] && it[id, "completed_at"] != "" && covered[id])
+    # the event behind every stamp: a stamp its transition did not write moves no status
+    for (k = 1; k <= NSTAMP; k++) {
+      stv = it[id, STAMP[k]]
+      proven[id, k] = (stv == "" || it[id, SEALF[k]] == "sha256:" xseal[id, STAMP[k]] \
+        || (stv < SEALED_FROM && ((id, STAMP[k] " " stv) in unsealed)))
+      stamped[id, STAMP[k]] = (stv != "" && proven[id, k])
+    }
+    done[id] = (!cancelled[id] && stamped[id, "completed_at"] && covered[id])
   }
 
   # --- edges, and the errors visible in them
@@ -100,7 +117,9 @@ END {
     if (acn[id] == 0 && !cancelled[id]) finding("FAIL", "no_acceptance", id, "has no acceptance criteria; an issue without one is a placeholder")
     if (valn[id] == 0 && !cancelled[id]) finding("FAIL", "no_validation", id, "names no validation command")
     if (needn[id] == 0 && !cancelled[id]) finding("WARN", "no_evidence_required", id, "requires no evidence; nothing gates its completion")
-    if (it[id, "completed_at"] != "" && !covered[id] && !cancelled[id]) {
+    for (k = 1; k <= NSTAMP; k++) if (!proven[id, k])
+      finding("FAIL", "stamp_without_event", id, STAMP[k] " " it[id, STAMP[k]] " has no " SEALEV[k] " event: " SEALF[k] " is absent or does not seal it, and only `majordomus plan " SEALVERB[k] "` writes the stamp")
+    if (stamped[id, "completed_at"] && !covered[id] && !cancelled[id]) {
       miss = ""
       for (k = 1; k <= needn[id]; k++) if (!((id, need[id, k]) in have)) miss = miss (miss == "" ? "" : ",") need[id, k]
       finding("WARN", "evidence_missing", id, "completed_at is set but evidence is missing for " miss "; status stays VERIFY")
@@ -142,8 +161,8 @@ END {
     blockedby[id] = bb
     if (cancelled[id])                       st = "CANCELLED"
     else if (done[id])                       st = "DONE"
-    else if (it[id, "completed_at"] != "" || it[id, "verified_at"] != "") st = "VERIFY"
-    else if (it[id, "started_at"] != "")     st = "ACTIVE"
+    else if (stamped[id, "completed_at"] || stamped[id, "verified_at"]) st = "VERIFY"
+    else if (stamped[id, "started_at"])      st = "ACTIVE"
     else if (bb != "")                       st = "BLOCKED"
     else                                     st = "READY"
     status[id] = st

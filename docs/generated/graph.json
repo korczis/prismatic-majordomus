@@ -3964,6 +3964,32 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0072",
+        "kind": "adr",
+        "label": "adr-0072",
+        "summary": "A plan stamp carries the seal of its event, because the ledger never leaves the checkout",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0072",
+        "source": ".ai/repo/adrs/0072-a-plan-stamp-carries-the-seal-of-its-event.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "rule:project.no-plan-stamp-without-its-event",
+            "rule:project.development-semantics-are-canonical",
+            "test:test/cases/375_no_plan_stamp_without_its_event.sh",
+            "test:test/cases/376_the_done_guard_holds_in_both_engines.sh",
+            "test:test/cases/133_plan_transition.sh",
+            "test:test/cases/99_plan_capabilities.sh"
+          ],
+          "tags": [
+            "plan",
+            "lifecycle",
+            "events",
+            "integrity"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -13007,6 +13033,11 @@
           ],
           "slug": "audit-planning-reality",
           "started_at": "2026-09-04T02:54:00Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T02:54:00Z",
+            "verified_at 2026-09-04T02:54:01Z",
+            "completed_at 2026-09-04T02:54:02Z"
+          ],
           "updated_at": "2026-09-04T02:54:02Z",
           "validation": [
             "gh issue list --state all",
@@ -13054,6 +13085,11 @@
           ],
           "slug": "canonical-schema",
           "started_at": "2026-09-04T03:12:42Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:12:42Z",
+            "verified_at 2026-09-04T03:12:43Z",
+            "completed_at 2026-09-04T03:12:44Z"
+          ],
           "updated_at": "2026-09-04T03:12:44Z",
           "validation": [
             "bin/majordomus plan validate",
@@ -13102,6 +13138,11 @@
           ],
           "slug": "derivation-engine",
           "started_at": "2026-09-04T03:12:45Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:12:45Z",
+            "verified_at 2026-09-04T03:12:46Z",
+            "completed_at 2026-09-04T03:12:47Z"
+          ],
           "updated_at": "2026-09-04T03:12:47Z",
           "validation": [
             "bash test/run.sh 41_project_status"
@@ -13148,6 +13189,11 @@
           ],
           "slug": "dag-and-waves",
           "started_at": "2026-09-04T03:12:48Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:12:48Z",
+            "verified_at 2026-09-04T03:12:48Z",
+            "completed_at 2026-09-04T03:12:50Z"
+          ],
           "updated_at": "2026-09-04T03:12:50Z",
           "validation": [
             "bash test/run.sh 42_dag_waves"
@@ -13197,6 +13243,11 @@
           ],
           "slug": "plan-command",
           "started_at": "2026-09-04T03:12:50Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:12:50Z",
+            "verified_at 2026-09-04T03:12:51Z",
+            "completed_at 2026-09-04T03:12:53Z"
+          ],
           "updated_at": "2026-09-04T03:12:53Z",
           "validation": [
             "bash test/run.sh 43_plan_command"
@@ -13242,6 +13293,11 @@
           ],
           "slug": "mermaid-from-graph",
           "started_at": "2026-09-04T03:12:53Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:12:53Z",
+            "verified_at 2026-09-04T03:12:54Z",
+            "completed_at 2026-09-04T03:12:55Z"
+          ],
           "updated_at": "2026-09-04T03:12:55Z",
           "validation": [
             "bash test/run.sh 42_dag_waves"
@@ -13288,6 +13344,11 @@
           ],
           "slug": "model-doctrine",
           "started_at": "2026-09-04T03:12:56Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:12:56Z",
+            "verified_at 2026-09-04T03:12:57Z",
+            "completed_at 2026-09-04T03:12:58Z"
+          ],
           "updated_at": "2026-09-04T03:12:58Z",
           "validation": [
             "bash test/run.sh 44_model_doctrine"
@@ -13336,6 +13397,11 @@
           ],
           "slug": "github-projection",
           "started_at": "2026-09-04T03:13:04Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:13:04Z",
+            "verified_at 2026-09-04T03:13:05Z",
+            "completed_at 2026-09-04T04:08:51Z"
+          ],
           "updated_at": "2026-09-04T04:08:51Z",
           "validation": [
             "bash test/run.sh 45_github_projection",
@@ -13386,6 +13452,11 @@
           ],
           "slug": "site-projection",
           "started_at": "2026-09-04T03:18:38Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:18:38Z",
+            "verified_at 2026-09-04T03:28:32Z",
+            "completed_at 2026-09-04T03:28:33Z"
+          ],
           "updated_at": "2026-09-04T03:28:33Z",
           "validation": [
             "scripts/generate-site-data --check",
@@ -13434,6 +13505,11 @@
           ],
           "slug": "model-tests",
           "started_at": "2026-09-04T03:33:05Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:33:05Z",
+            "verified_at 2026-09-04T05:14:43Z",
+            "completed_at 2026-09-04T05:14:45Z"
+          ],
           "updated_at": "2026-09-04T05:14:45Z",
           "validation": [
             "bash test/run.sh"
@@ -13483,6 +13559,11 @@
           ],
           "slug": "consistency-and-mutation",
           "started_at": "2026-09-04T05:14:46Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T05:14:46Z",
+            "verified_at 2026-09-04T05:14:48Z",
+            "completed_at 2026-09-04T05:14:50Z"
+          ],
           "updated_at": "2026-09-04T05:14:50Z",
           "validation": [
             "bash test/run.sh 34_cross_surface",
@@ -13529,6 +13610,11 @@
           ],
           "slug": "ci-enforcement",
           "started_at": "2026-09-04T05:15:01Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T05:15:01Z",
+            "verified_at 2026-09-04T05:15:02Z",
+            "completed_at 2026-09-04T05:15:04Z"
+          ],
           "updated_at": "2026-09-04T05:15:04Z",
           "validation": [
             "bash test/run.sh 26_ci_wiring"
@@ -13574,6 +13660,11 @@
           ],
           "slug": "document-the-model",
           "started_at": "2026-09-04T03:13:12Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:13:12Z",
+            "verified_at 2026-09-04T03:16:44Z",
+            "completed_at 2026-09-04T03:16:45Z"
+          ],
           "updated_at": "2026-09-04T03:16:45Z",
           "validation": [
             "scripts/generate-site-data --check",
@@ -13624,6 +13715,11 @@
           ],
           "slug": "worker-instructions",
           "started_at": "2026-09-04T03:49:50Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T03:49:50Z",
+            "verified_at 2026-09-04T03:59:21Z",
+            "completed_at 2026-09-04T03:59:23Z"
+          ],
           "updated_at": "2026-09-04T03:59:23Z",
           "validation": [
             "bin/majordomus update",
@@ -13673,6 +13769,11 @@
           ],
           "slug": "dogfood-cutover",
           "started_at": "2026-09-04T05:15:05Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T05:15:05Z",
+            "verified_at 2026-09-04T05:15:06Z",
+            "completed_at 2026-09-04T05:15:08Z"
+          ],
           "updated_at": "2026-09-04T05:15:08Z",
           "validation": [
             "bin/majordomus plan status",
@@ -13715,6 +13816,11 @@
           ],
           "slug": "reproduce-escaped-blocker",
           "started_at": "2026-09-04T04:12:46Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T04:12:46Z",
+            "verified_at 2026-09-04T04:12:53Z",
+            "completed_at 2026-09-04T04:12:54Z"
+          ],
           "updated_at": "2026-09-04T04:12:54Z",
           "validation": [
             "bash test/run.sh 50_blocker_across_handover"
@@ -13760,6 +13866,11 @@
           ],
           "slug": "decide-blocker-scope",
           "started_at": "2026-09-04T06:59:15Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T06:59:15Z",
+            "verified_at 2026-09-04T06:59:44Z",
+            "completed_at 2026-09-04T06:59:47Z"
+          ],
           "updated_at": "2026-09-04T06:59:47Z",
           "validation": [
             "bin/majordomus decision list",
@@ -13808,6 +13919,11 @@
           ],
           "slug": "implement-blocker-persistence",
           "started_at": "2026-09-04T07:05:35Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T07:05:35Z",
+            "verified_at 2026-09-04T07:32:11Z",
+            "completed_at 2026-09-04T07:32:14Z"
+          ],
           "updated_at": "2026-09-04T07:32:14Z",
           "validation": [
             "bash test/run.sh 50_blocker_across_handover",
@@ -13856,6 +13972,11 @@
           ],
           "slug": "promote-blocker-claim",
           "started_at": "2026-09-04T07:32:26Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T07:32:26Z",
+            "verified_at 2026-09-04T07:34:55Z",
+            "completed_at 2026-09-04T07:34:58Z"
+          ],
           "updated_at": "2026-09-04T07:34:58Z",
           "validation": [
             "scripts/generate-site-data --check",
@@ -15100,6 +15221,10 @@
           ],
           "slug": "extraction-boundary-graph",
           "started_at": "2026-09-04T15:37:53Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T15:37:53Z",
+            "completed_at 2026-09-04T15:40:54Z"
+          ],
           "updated_at": "2026-09-04T15:40:54Z",
           "validation": [
             "bin/majordomus doctor",
@@ -15143,6 +15268,9 @@
             "docs/CONCEPTS.md"
           ],
           "slug": "session-record-schema",
+          "unsealed_stamps": [
+            "completed_at 2026-09-04T15:46:06Z"
+          ],
           "updated_at": "2026-09-04T15:46:06Z",
           "validation": [
             "bin/majordomus doctor"
@@ -15191,6 +15319,9 @@
             "test/cases/60_session_lifecycle.sh"
           ],
           "slug": "session-start-status",
+          "unsealed_stamps": [
+            "completed_at 2026-09-04T16:29:23Z"
+          ],
           "updated_at": "2026-09-04T16:29:23Z",
           "validation": [
             "bash test/run.sh 60_session_lifecycle",
@@ -15239,6 +15370,10 @@
           ],
           "slug": "session-close-envelope",
           "started_at": "2026-09-04T17:26:46Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T17:26:46Z",
+            "completed_at 2026-09-04T17:38:33Z"
+          ],
           "updated_at": "2026-09-04T17:38:33Z",
           "validation": [
             "bash test/run.sh 60_session_lifecycle",
@@ -15285,6 +15420,10 @@
           ],
           "slug": "session-read-divergence",
           "started_at": "2026-09-04T18:01:49Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T18:01:49Z",
+            "completed_at 2026-09-04T18:10:47Z"
+          ],
           "updated_at": "2026-09-04T18:10:47Z",
           "validation": [
             "bash test/run.sh 62_session_divergence"
@@ -15382,6 +15521,10 @@
           ],
           "slug": "knowledge-discovery",
           "started_at": "2026-09-04T16:31:17Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T16:31:17Z",
+            "completed_at 2026-09-04T17:01:31Z"
+          ],
           "updated_at": "2026-09-04T17:01:31Z",
           "validation": [
             "bash test/run.sh 64_knowledge_discovery",
@@ -15429,6 +15572,10 @@
           ],
           "slug": "knowledge-nodes",
           "started_at": "2026-09-04T17:46:56Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T17:46:56Z",
+            "completed_at 2026-09-04T17:59:30Z"
+          ],
           "updated_at": "2026-09-04T17:59:30Z",
           "validation": [
             "bash test/run.sh 73_knowledge_nodes"
@@ -15476,6 +15623,10 @@
           ],
           "slug": "knowledge-edges-provenance",
           "started_at": "2026-09-04T18:14:13Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-04T18:14:13Z",
+            "completed_at 2026-09-04T18:31:05Z"
+          ],
           "updated_at": "2026-09-04T18:31:05Z",
           "validation": [
             "bash test/run.sh 74_knowledge_edges",
@@ -15849,6 +16000,11 @@
           ],
           "slug": "phase-timing-and-counters",
           "started_at": "2026-09-05T01:35:00Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T01:35:00Z",
+            "verified_at 2026-09-05T01:44:00Z",
+            "completed_at 2026-09-05T01:44:00Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "MJ_TIMING=1 bin/majordomus doctor",
@@ -15898,6 +16054,11 @@
           ],
           "slug": "registry-batch-reads",
           "started_at": "2026-09-05T01:50:00Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T01:50:00Z",
+            "verified_at 2026-09-05T02:05:00Z",
+            "completed_at 2026-09-05T02:05:00Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "MJ_TIMING=1 bin/majordomus doctor",
@@ -15948,6 +16109,11 @@
           ],
           "slug": "project-model-batch-load",
           "started_at": "2026-09-05T02:06:00Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T02:06:00Z",
+            "verified_at 2026-09-05T02:16:00Z",
+            "completed_at 2026-09-05T02:16:00Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "MJ_TIMING=1 bin/majordomus plan validate",
@@ -16138,6 +16304,11 @@
           ],
           "slug": "bench-command",
           "started_at": "2026-09-05T03:33:10Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T03:33:10Z",
+            "verified_at 2026-09-05T03:33:10Z",
+            "completed_at 2026-09-05T03:33:10Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "bash test/run.sh 79_bench_command",
@@ -16185,6 +16356,11 @@
           ],
           "slug": "bench-persistence",
           "started_at": "2026-09-05T03:47:33Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T03:47:33Z",
+            "verified_at 2026-09-05T03:47:33Z",
+            "completed_at 2026-09-05T03:47:33Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "bash test/run.sh 80_bench_persistence"
@@ -16233,6 +16409,11 @@
           ],
           "slug": "bench-baseline",
           "started_at": "2026-09-05T03:47:33Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T03:47:33Z",
+            "verified_at 2026-09-05T03:47:33Z",
+            "completed_at 2026-09-05T03:47:33Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "bash test/run.sh 81_bench_baseline"
@@ -16282,6 +16463,11 @@
           ],
           "slug": "bench-check",
           "started_at": "2026-09-05T03:47:33Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T03:47:33Z",
+            "verified_at 2026-09-05T03:47:33Z",
+            "completed_at 2026-09-05T03:47:33Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "bash test/run.sh 82_bench_check"
@@ -16327,6 +16513,11 @@
           ],
           "slug": "benchmark-policy",
           "started_at": "2026-09-05T03:33:10Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T03:33:10Z",
+            "verified_at 2026-09-05T03:33:10Z",
+            "completed_at 2026-09-05T03:33:10Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "bin/majordomus doctor"
@@ -16417,6 +16608,11 @@
           ],
           "slug": "performance-rules",
           "started_at": "2026-09-05T03:47:33Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T03:47:33Z",
+            "verified_at 2026-09-05T03:47:33Z",
+            "completed_at 2026-09-05T03:47:33Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "bin/majordomus rules list",
@@ -16469,6 +16665,11 @@
           ],
           "slug": "performance-docs",
           "started_at": "2026-09-05T03:47:33Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T03:47:33Z",
+            "verified_at 2026-09-05T03:47:33Z",
+            "completed_at 2026-09-05T03:47:33Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "scripts/generate-site-data --check"
@@ -16603,6 +16804,11 @@
           ],
           "slug": "knowledge-hot-spots",
           "started_at": "2026-09-05T02:40:00Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-05T02:40:00Z",
+            "verified_at 2026-09-05T03:05:00Z",
+            "completed_at 2026-09-05T03:05:00Z"
+          ],
           "updated_at": "2026-09-05",
           "validation": [
             "MJ_TIMING=1 bin/majordomus knowledge nodes",
@@ -18550,6 +18756,10 @@
           ],
           "slug": "federated-capability-graph",
           "started_at": "2026-09-06T15:33:09Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-06T15:33:09Z",
+            "completed_at 2026-09-06T15:48:16Z"
+          ],
           "updated_at": "2026-09-06T15:48:16Z",
           "validation": [
             "cargo test --workspace --all-features"
@@ -18595,6 +18805,10 @@
           ],
           "slug": "typed-relations",
           "started_at": "2026-09-06T15:54:48Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-06T15:54:48Z",
+            "completed_at 2026-09-06T16:19:14Z"
+          ],
           "updated_at": "2026-09-06T16:19:14Z",
           "validation": [
             "cargo test --workspace --all-features",
@@ -18641,6 +18855,10 @@
           ],
           "slug": "registries-into-the-graph",
           "started_at": "2026-09-06T16:22:39Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-06T16:22:39Z",
+            "completed_at 2026-09-06T17:11:14Z"
+          ],
           "updated_at": "2026-09-06T17:11:15Z",
           "validation": [
             "cargo test --workspace --all-features",
@@ -18687,6 +18905,10 @@
           ],
           "slug": "availability-and-visibility",
           "started_at": "2026-09-06T16:22:51Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-06T16:22:51Z",
+            "completed_at 2026-09-06T16:54:53Z"
+          ],
           "updated_at": "2026-09-06T16:54:53Z",
           "validation": [
             "cargo test --workspace --all-features",
@@ -18738,6 +18960,10 @@
           ],
           "slug": "capability-manifest",
           "started_at": "2026-09-06T17:35:38Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-06T17:35:38Z",
+            "completed_at 2026-09-06T18:07:50Z"
+          ],
           "updated_at": "2026-09-06T18:07:50Z",
           "validation": [
             "majordomus generate --check",
@@ -19199,6 +19425,9 @@
           ],
           "slug": "conditional-runtime-surfaces",
           "started_at": "2026-09-06T17:35:07Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-06T17:35:07Z"
+          ],
           "updated_at": "2026-09-10",
           "validation": [
             "bash test/run.sh",
@@ -19655,6 +19884,10 @@
           ],
           "slug": "capability-graph-adr",
           "started_at": "2026-09-06T16:23:01Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-06T16:23:01Z",
+            "completed_at 2026-09-06T16:54:54Z"
+          ],
           "updated_at": "2026-09-06T16:54:55Z",
           "validation": [
             "bin/majordomus doctor",
@@ -21432,6 +21665,11 @@
           ],
           "slug": "workspace-kind",
           "started_at": "2026-09-09T18:25:15Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-09T18:25:15Z",
+            "verified_at 2026-09-09T18:26:21Z",
+            "completed_at 2026-09-09T18:26:36Z"
+          ],
           "updated_at": "2026-09-09T18:26:36Z",
           "validation": [
             "bash test/run.sh",
@@ -21913,6 +22151,11 @@
           ],
           "slug": "projection-identity",
           "started_at": "2026-09-09T17:10:06Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-09T17:10:06Z",
+            "verified_at 2026-09-09T17:10:21Z",
+            "completed_at 2026-09-09T17:10:28Z"
+          ],
           "updated_at": "2026-09-09T17:10:28Z",
           "validation": [
             "bash test/run.sh 45_github_projection",
@@ -21956,6 +22199,11 @@
           ],
           "slug": "reconciliation-states",
           "started_at": "2026-09-09T17:20:34Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-09T17:20:34Z",
+            "verified_at 2026-09-09T17:20:41Z",
+            "completed_at 2026-09-09T17:20:44Z"
+          ],
           "updated_at": "2026-09-09T17:20:44Z",
           "validation": [
             "bash test/run.sh 45_github_projection",
@@ -22045,6 +22293,11 @@
           ],
           "slug": "projection-drift-gated",
           "started_at": "2026-09-09T17:37:02Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-09T17:37:02Z",
+            "verified_at 2026-09-09T17:37:27Z",
+            "completed_at 2026-09-09T17:37:41Z"
+          ],
           "updated_at": "2026-09-09T17:37:41Z",
           "validation": [
             "scripts/ci/core-check",
@@ -22096,6 +22349,11 @@
           ],
           "slug": "pull-request-issue-edge",
           "started_at": "2026-09-09T18:55:15Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-09T18:55:15Z",
+            "verified_at 2026-09-09T18:55:34Z",
+            "completed_at 2026-09-09T18:55:36Z"
+          ],
           "updated_at": "2026-09-09T18:55:36Z",
           "validation": [
             "cargo test --workspace --all-features",
@@ -22144,6 +22402,11 @@
           ],
           "slug": "plan-derivations-as-capabilities",
           "started_at": "2026-09-09T22:00:16Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-09T22:00:16Z",
+            "verified_at 2026-09-09T22:00:30Z",
+            "completed_at 2026-09-09T22:00:36Z"
+          ],
           "updated_at": "2026-09-09T22:00:36Z",
           "validation": [
             "cargo test --workspace --all-features",
@@ -22195,6 +22458,11 @@
           ],
           "slug": "work-graph-end-to-end",
           "started_at": "2026-09-09T22:00:42Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-09T22:00:42Z",
+            "verified_at 2026-09-09T22:00:54Z",
+            "completed_at 2026-09-09T22:00:58Z"
+          ],
           "updated_at": "2026-09-09T22:00:58Z",
           "validation": [
             "bash test/run.sh",
@@ -22242,6 +22510,11 @@
           ],
           "slug": "projection-claims-true",
           "started_at": "2026-09-09T17:50:11Z",
+          "unsealed_stamps": [
+            "started_at 2026-09-09T17:50:11Z",
+            "verified_at 2026-09-09T17:50:29Z",
+            "completed_at 2026-09-09T17:50:40Z"
+          ],
           "updated_at": "2026-09-09T17:50:40Z",
           "validation": [
             "scripts/ci/reference-check",
@@ -22846,6 +23119,9 @@
           ],
           "slug": "a-step-reports-its-own-time",
           "started_at": "2026-09-15",
+          "unsealed_stamps": [
+            "started_at 2026-09-15"
+          ],
           "updated_at": "2026-09-15",
           "validation": [
             "bash scripts/ci/step-bound-check",
@@ -28969,6 +29245,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.no-plan-stamp-without-its-event@1",
+        "kind": "rule",
+        "label": "project.no-plan-stamp-without-its-event@1",
+        "summary": "No plan stamp without its event",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.no-plan-stamp-without-its-event%401",
+        "source": ".ai/repo/rules/project/no-plan-stamp-without-its-event.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.development-semantics-are-canonical@1"
+          ],
+          "tags": [
+            "plan",
+            "lifecycle",
+            "events",
+            "integrity"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.operation-transport-parity@1",
         "kind": "rule",
         "label": "project.operation-transport-parity@1",
@@ -32644,6 +32941,20 @@
         "label": "test/cases/36_command_doctrines.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F36_command_doctrines.sh",
         "source": "test/cases/36_command_doctrines.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/375_no_plan_stamp_without_its_event.sh",
+        "kind": "test",
+        "label": "test/cases/375_no_plan_stamp_without_its_event.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F375_no_plan_stamp_without_its_event.sh",
+        "source": "test/cases/375_no_plan_stamp_without_its_event.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/376_the_done_guard_holds_in_both_engines.sh",
+        "kind": "test",
+        "label": "test/cases/376_the_done_guard_holds_in_both_engines.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F376_the_done_guard_holds_in_both_engines.sh",
+        "source": "test/cases/376_the_done_guard_holds_in_both_engines.sh"
       },
       {
         "id": "majordomus://test/test/cases/37_responsibility_surface.sh",
@@ -38994,6 +39305,41 @@
       {
         "source": "majordomus://adr/adr-0055",
         "target": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0072",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0072",
+        "target": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0072",
+        "target": "majordomus://rule/project.no-plan-stamp-without-its-event@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0072",
+        "target": "majordomus://test/test/cases/133_plan_transition.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0072",
+        "target": "majordomus://test/test/cases/375_no_plan_stamp_without_its_event.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0072",
+        "target": "majordomus://test/test/cases/376_the_done_guard_holds_in_both_engines.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0072",
+        "target": "majordomus://test/test/cases/99_plan_capabilities.sh",
         "kind": "put_in_force"
       },
       {
@@ -49812,6 +50158,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.no-plan-stamp-without-its-event@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.no-plan-stamp-without-its-event@1",
+        "target": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.operation-transport-parity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -51033,6 +51389,16 @@
       },
       {
         "source": "majordomus://test/test/cases/36_command_doctrines.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/375_no_plan_stamp_without_its_event.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/376_the_done_guard_holds_in_both_engines.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54708,8 +55074,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1724,
-      "edges": 3860,
+      "nodes": 1728,
+      "edges": 3871,
       "acyclic": true,
       "truncated": false
     }

@@ -81,6 +81,7 @@ mj_project_load() {
     done < "$MJ_PJ/id.err"
   fi
   [ "$rc" = 0 ] || return 2
+  mj_pj_seal_rows "$raw" >> "$raw" || return 2
   awk -f "$MJ_LIB_DIR/project.awk" "$raw" > "$MJ_PJ/model.tsv" || return 2
   # every record's fields and every model row become variables once, so the readers
   # below expand them instead of running one awk per field or per row
@@ -89,6 +90,25 @@ mj_project_load() {
       printf "pjrow_%s_%s\t%s\n", $1, id, $0 }' "$MJ_PJ/model.tsv")
   MJ_PJ_LOADED=1
   return 0
+}
+# The seal every stamp of every issue would carry had its transition written it, one row
+# per stamp: X <issue> <field> <sha256>. The awk engine compares it with the seal the record
+# carries; a stamp whose seal differs was written by something other than the transition and
+# moves no status (ADR 0072). The payload is `seal()` in apps/majordomus-cli/src/plan.rs,
+# byte for byte, and every payload is hashed by one process rather than one per stamp.
+mj_pj_seal_rows() { # <raw.tsv>
+  local dir="$MJ_PJ/seal"
+  mkdir -p "$dir"
+  awk -F'\t' -v dir="$dir" '
+    BEGIN { ev["started_at"] = "plan_start"; ev["verified_at"] = "plan_verify"; ev["completed_at"] = "plan_done" }
+    $1 == "I" && ($3 in ev) && $4 != "" {
+      f = dir "/" $2 "@" $3
+      printf "majordomus.plan-event/v1\n%s\n%s\n%s\n", ev[$3], $2, $4 > f
+      close(f); print f }' "$1" > "$dir/.list"
+  [ -s "$dir/.list" ] || return 0
+  tr '\n' '\0' < "$dir/.list" | mj_sha256_many \
+    | awk -F'\t' '{ p = $2; sub(/.*\//, "", p); at = index(p, "@")
+        printf "X\t%s\t%s\t%s\n", substr(p, 1, at - 1), substr(p, at + 1), $1 }'
 }
 mj_project_unload() { [ -n "$MJ_PJ" ] && rm -rf "$MJ_PJ"; MJ_PJ=""; MJ_PJ_LOADED=0; }
 

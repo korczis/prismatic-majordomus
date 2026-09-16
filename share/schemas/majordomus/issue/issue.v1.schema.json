@@ -75,11 +75,31 @@
     "started_at": {
       "type": "string"
     },
+    "started_event": {
+      "type": "string",
+      "description": "The seal of the plan_start event that wrote started_at: sha256 of the event, the issue and the stamp, written only by the transition in the same write as the stamp (ADR 0072). A stamp without its seal moves no status and fails plan validate."
+    },
     "verified_at": {
       "type": "string"
     },
+    "verified_event": {
+      "type": "string",
+      "description": "The seal of the plan_verify event that wrote verified_at: sha256 of the event, the issue and the stamp, written only by the transition in the same write as the stamp (ADR 0072). A stamp without its seal moves no status and fails plan validate."
+    },
     "completed_at": {
       "type": "string"
+    },
+    "completed_event": {
+      "type": "string",
+      "description": "The seal of the plan_done event that wrote completed_at: sha256 of the event, the issue and the stamp, written only by the transition in the same write as the stamp (ADR 0072). A stamp without its seal moves no status and fails plan validate."
+    },
+    "unsealed_stamps": {
+      "type": "array",
+      "description": "The stamps of this record written before a transition sealed the stamp it wrote, one \"<field> <stamp>\" per entry (ADR 0072). An entry excuses exactly the stamp it names and only one older than the instant seals began; the list may shrink and is never added to.",
+      "items": {
+        "type": "string",
+        "pattern": "^(started_at|verified_at|completed_at) [^ ]+$"
+      }
     },
     "scope": {
       "type": "array",

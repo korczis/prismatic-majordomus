@@ -57,9 +57,11 @@ expect_exit 0 "$MJ" plan "done" I0001
 expect_grep 'next ready issue: I0002'
 [ "$(pj_status I0002)" = READY ] || { echo "    I0002 should be READY, is $(pj_status I0002)"; exit 1; }
 
-# --- completed_at without its evidence derives VERIFY, never DONE
+# --- completed_at without its evidence derives VERIFY, never DONE. The completion is the
+#     sealed one `plan done` wrote above; a hand-written completed_at would prove nothing
+#     (case 375), so the evidence is what is taken away here.
 sed '/^evidence:/,$d' .ai/repo/project/issues/I0001.yaml > /tmp/i.$$ && mv /tmp/i.$$ .ai/repo/project/issues/I0001.yaml
-printf 'completed_at: 2026-01-01T00:00:00Z\n' >> .ai/repo/project/issues/I0001.yaml
+grep -q '^completed_event: sha256:' .ai/repo/project/issues/I0001.yaml || { echo "    plan done wrote no completed_event seal"; exit 1; }
 [ "$(pj_status I0001)" = VERIFY ] || { echo "    completed without evidence must be VERIFY, is $(pj_status I0001)"; exit 1; }
 expect_exit 0 "$MJ" plan validate
 expect_grep 'evidence is missing for proof'
