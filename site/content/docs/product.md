@@ -202,6 +202,13 @@ a robots `noindex` (`templates/base.html`) and are left out of `sitemap.xml`
 homepage or a sitemap that drifts from its declaration is refused before the Pages build
 publishes it. `test/cases/333_homepage_narrative.sh` proves each check by breaking it.
 
+The homepage's weight is declared in the same file, as `[budget]`: the scripts and stylesheets
+it loads from the site and the graph data it carries inline. The composed product graph is
+published at `/graphs/product.json` by `scripts/site-build` and fetched when the drawing first
+comes into view, with the node-by-node list one link away on `/features/`; and no page loads
+the Mermaid runtime unless it carries a diagram. The same check reports the current weight on
+every build, so raising a budget is a reviewed change to `homepage.toml`, never a silent one.
+
 To add a homepage section: write it in `index.html` with an `id`, put that id where it belongs
 in `homepage.toml`'s `order`, and give it a link or a derived figure. To unlist a section's
 detail pages: add its name to `[indexing] unlisted`.
