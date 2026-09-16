@@ -10602,7 +10602,7 @@ components:
         - tallies
         - at_risk
         - converged
-      description: "The repository's convergence: every holding, and the one verdict over them."
+      description: "The repository's convergence: every holding, and the one verdict over them.\n\n```\nuse majordomus_cli::convergence::{ConvergenceReport, SCHEMA};\n\nlet empty = ConvergenceReport {\n    schema: SCHEMA.into(),\n    repository: \"/tmp/r\".into(),\n    trunk: Some(\"master\".into()),\n    holdings: vec![],\n    tallies: Default::default(),\n    at_risk: 0,\n    converged: true,\n};\n// the verdict is the one word a gate reads; the count is what a person reads next to it\nassert!(empty.converged && empty.at_risk == 0);\nassert_eq!(serde_json::to_value(&empty).unwrap()[\"schema\"], \"convergence/v1\");\n```"
     CounterSnapshot:
       type: object
       properties:
@@ -11731,7 +11731,7 @@ components:
         - type: string
           const: uncommitted
           description: "Not committed at all: files in a work tree, or a stash entry."
-      description: "Where the work a holding carries can be reached from.\n\nThe order is the order of safety: everything above `Disposition::LocalOnly` is\nreachable by somebody who is not the worker that made it."
+      description: "Where the work a holding carries can be reached from.\n\nThe order is the order of safety: everything above `Disposition::LocalOnly` is\nreachable by somebody who is not the worker that made it.\n\n```\nuse majordomus_cli::convergence::Disposition;\n\n// declared in the order of safety, so the derived order says which is worse\nassert!(Disposition::Integrated < Disposition::Published);\nassert!(Disposition::Published < Disposition::LocalOnly);\nassert_eq!(serde_json::to_string(&Disposition::LocalOnly).unwrap(), \"\\\"local_only\\\"\");\n```"
     DistributionReport:
       type: object
       properties:
@@ -14604,7 +14604,7 @@ components:
         - disposition
         - evidence
         - at_risk
-      description: "One thing holding work, and what is known about where that work can be reached from."
+      description: "One thing holding work, and what is known about where that work can be reached from.\n\n```\nuse majordomus_cli::convergence::{Disposition, Holding, HoldingKind};\n\nlet branch = Holding {\n    kind: HoldingKind::Branch,\n    identity: \"feature/x\".into(),\n    disposition: Disposition::LocalOnly,\n    evidence: \"abc123 is on no remote-tracking ref of this checkout\".into(),\n    remedy: \"git push -u origin feature/x\".into(),\n    at_risk: true,\n};\n// an at-risk holding always carries the command that would move it out of danger\nassert!(branch.at_risk && !branch.remedy.is_empty());\n// and a reachable one carries none, so the field is left out of the document\nlet safe = Holding { disposition: Disposition::Published, remedy: String::new(), at_risk: false, ..branch };\nassert!(!serde_json::to_string(&safe).unwrap().contains(\"remedy\"));\n```"
     HoldingKind:
       oneOf:
         - type: string
@@ -14616,7 +14616,7 @@ components:
         - type: string
           const: stash
           description: "An entry of `git stash`."
-      description: What kind of thing is holding the work.
+      description: "What kind of thing is holding the work.\n\n```\nuse majordomus_cli::convergence::HoldingKind;\n\n// the word a report and a persisted record use; renaming a variant must not rename it\nassert_eq!(HoldingKind::Worktree.as_str(), \"worktree\");\nassert_eq!(serde_json::to_string(&HoldingKind::Stash).unwrap(), \"\\\"stash\\\"\");\n```"
     HttpExposure:
       type: object
       properties:

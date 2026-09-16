@@ -51,6 +51,14 @@ pub const SCHEMA: &str = "convergence/v1";
 // ---------------------------------------------------------------- vocabulary
 
 /// What kind of thing is holding the work.
+///
+/// ```
+/// use majordomus_cli::convergence::HoldingKind;
+///
+/// // the word a report and a persisted record use; renaming a variant must not rename it
+/// assert_eq!(HoldingKind::Worktree.as_str(), "worktree");
+/// assert_eq!(serde_json::to_string(&HoldingKind::Stash).unwrap(), "\"stash\"");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HoldingKind {
@@ -63,7 +71,16 @@ pub enum HoldingKind {
 }
 
 impl HoldingKind {
-    /// The word this kind is reported under.
+    /// The word this kind is reported under — the same word its serialisation carries.
+    ///
+    /// ```
+    /// use majordomus_cli::convergence::HoldingKind;
+    ///
+    /// for kind in [HoldingKind::Worktree, HoldingKind::Branch, HoldingKind::Stash] {
+    ///     let json = serde_json::to_string(&kind).unwrap();
+    ///     assert_eq!(json, format!("\"{}\"", kind.as_str()));
+    /// }
+    /// ```
     pub fn as_str(&self) -> &'static str {
         match self {
             HoldingKind::Worktree => "worktree",
@@ -77,6 +94,15 @@ impl HoldingKind {
 ///
 /// The order is the order of safety: everything above [`Disposition::LocalOnly`] is
 /// reachable by somebody who is not the worker that made it.
+///
+/// ```
+/// use majordomus_cli::convergence::Disposition;
+///
+/// // declared in the order of safety, so the derived order says which is worse
+/// assert!(Disposition::Integrated < Disposition::Published);
+/// assert!(Disposition::Published < Disposition::LocalOnly);
+/// assert_eq!(serde_json::to_string(&Disposition::LocalOnly).unwrap(), "\"local_only\"");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Disposition {
@@ -91,7 +117,16 @@ pub enum Disposition {
 }
 
 impl Disposition {
-    /// The word this disposition is reported under.
+    /// The word this disposition is reported under — the same word its serialisation
+    /// carries, so a tally keyed by it and a holding carrying it agree.
+    ///
+    /// ```
+    /// use majordomus_cli::convergence::Disposition;
+    ///
+    /// assert_eq!(Disposition::LocalOnly.as_str(), "local_only");
+    /// let json = serde_json::to_string(&Disposition::Uncommitted).unwrap();
+    /// assert_eq!(json, format!("\"{}\"", Disposition::Uncommitted.as_str()));
+    /// ```
     pub fn as_str(&self) -> &'static str {
         match self {
             Disposition::Integrated => "integrated",
@@ -101,7 +136,22 @@ impl Disposition {
         }
     }
 
-    /// This holding's work exists on one disk only.
+    /// This holding's work exists on one disk only: the verdict refuses over exactly these.
+    ///
+    /// ```
+    /// use majordomus_cli::convergence::Disposition;
+    ///
+    /// let risky: Vec<_> = [
+    ///     Disposition::Integrated,
+    ///     Disposition::Published,
+    ///     Disposition::LocalOnly,
+    ///     Disposition::Uncommitted,
+    /// ]
+    /// .into_iter()
+    /// .filter(Disposition::at_risk)
+    /// .collect();
+    /// assert_eq!(risky, [Disposition::LocalOnly, Disposition::Uncommitted]);
+    /// ```
     pub fn at_risk(&self) -> bool {
         matches!(self, Disposition::LocalOnly | Disposition::Uncommitted)
     }
@@ -110,6 +160,24 @@ impl Disposition {
 // ---------------------------------------------------------------- the documents
 
 /// One thing holding work, and what is known about where that work can be reached from.
+///
+/// ```
+/// use majordomus_cli::convergence::{Disposition, Holding, HoldingKind};
+///
+/// let branch = Holding {
+///     kind: HoldingKind::Branch,
+///     identity: "feature/x".into(),
+///     disposition: Disposition::LocalOnly,
+///     evidence: "abc123 is on no remote-tracking ref of this checkout".into(),
+///     remedy: "git push -u origin feature/x".into(),
+///     at_risk: true,
+/// };
+/// // an at-risk holding always carries the command that would move it out of danger
+/// assert!(branch.at_risk && !branch.remedy.is_empty());
+/// // and a reachable one carries none, so the field is left out of the document
+/// let safe = Holding { disposition: Disposition::Published, remedy: String::new(), at_risk: false, ..branch };
+/// assert!(!serde_json::to_string(&safe).unwrap().contains("remedy"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Holding {
     /// What kind of thing holds it.
@@ -128,6 +196,23 @@ pub struct Holding {
 }
 
 /// The repository's convergence: every holding, and the one verdict over them.
+///
+/// ```
+/// use majordomus_cli::convergence::{ConvergenceReport, SCHEMA};
+///
+/// let empty = ConvergenceReport {
+///     schema: SCHEMA.into(),
+///     repository: "/tmp/r".into(),
+///     trunk: Some("master".into()),
+///     holdings: vec![],
+///     tallies: Default::default(),
+///     at_risk: 0,
+///     converged: true,
+/// };
+/// // the verdict is the one word a gate reads; the count is what a person reads next to it
+/// assert!(empty.converged && empty.at_risk == 0);
+/// assert_eq!(serde_json::to_value(&empty).unwrap()["schema"], "convergence/v1");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ConvergenceReport {
     /// [`SCHEMA`].
@@ -148,7 +233,25 @@ pub struct ConvergenceReport {
 }
 
 impl ConvergenceReport {
-    /// The one line a person or a gate reads first.
+    /// The one line a person or a gate reads first, stating the count it refuses over.
+    ///
+    /// ```
+    /// use majordomus_cli::convergence::{ConvergenceReport, SCHEMA};
+    ///
+    /// let mut report = ConvergenceReport {
+    ///     schema: SCHEMA.into(),
+    ///     repository: "/tmp/r".into(),
+    ///     trunk: None,
+    ///     holdings: vec![],
+    ///     tallies: Default::default(),
+    ///     at_risk: 0,
+    ///     converged: true,
+    /// };
+    /// assert!(report.summary().starts_with("converged"));
+    /// report.at_risk = 2;
+    /// report.converged = false;
+    /// assert!(report.summary().starts_with("not converged: 2 of"));
+    /// ```
     pub fn summary(&self) -> String {
         if self.converged {
             return format!(
@@ -164,6 +267,21 @@ impl ConvergenceReport {
     }
 }
 
+/// One collection, one order, declared once: at-risk holdings first (the group), then by
+/// kind in the order a worker meets them (a work tree, its branch, a stash), then by
+/// identity. Every surface that lists holdings shows this order, because none of them sorts.
+impl crate::order::Ordered for Holding {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        let group = if self.at_risk { "at-risk" } else { "reachable" };
+        let rank = match self.kind {
+            HoldingKind::Worktree => 1,
+            HoldingKind::Branch => 2,
+            HoldingKind::Stash => 3,
+        };
+        crate::order::OrderKey::grouped(group, &self.identity, &self.identity).ranked(rank)
+    }
+}
+
 // ---------------------------------------------------------------- the measurement
 
 /// Measure the repository holding `root`.
@@ -173,6 +291,37 @@ impl ConvergenceReport {
 /// nothing here reaches the network: a remote-tracking ref is what this checkout last
 /// fetched, which is exactly the question — whether the work left this disk, not whether
 /// the remote still has it.
+///
+/// ```
+/// use std::process::Command;
+/// use majordomus_cli::convergence::{report, Disposition};
+///
+/// let dir = std::env::temp_dir().join(format!("mj-convergence-doc-{}", std::process::id()));
+/// let _ = std::fs::remove_dir_all(&dir);
+/// std::fs::create_dir_all(&dir).unwrap();
+/// let git = |args: &[&str]| {
+///     let ok = Command::new("git").current_dir(&dir).args(args).status().unwrap().success();
+///     assert!(ok, "git {args:?}");
+/// };
+/// git(&["init", "-q", "-b", "master"]);
+/// let commit = |msg: &str| git(&["-c", "user.email=d@example.com", "-c", "user.name=doc",
+///                                "commit", "-q", "--allow-empty", "-m", msg]);
+/// commit("base");
+/// git(&["checkout", "-q", "-b", "feature/doc"]);
+/// commit("work nobody else has");
+/// git(&["checkout", "-q", "master"]);
+///
+/// // a commit on a branch the trunk does not reach and no remote has seen is on one disk
+/// let verdict = report(&dir).unwrap();
+/// assert!(!verdict.converged);
+/// assert!(verdict.holdings.iter().any(|h| h.disposition == Disposition::LocalOnly));
+///
+/// // and a file never committed is the other half
+/// std::fs::write(dir.join("draft.txt"), "half written").unwrap();
+/// let verdict = report(&dir).unwrap();
+/// assert!(verdict.holdings.iter().any(|h| h.disposition == Disposition::Uncommitted));
+/// std::fs::remove_dir_all(&dir).unwrap();
+/// ```
 pub fn report(root: &Path) -> Result<ConvergenceReport> {
     let service = WorktreeService::open(root)?;
     let topology = service.topology(Detail::Full)?;
@@ -252,12 +401,7 @@ pub fn report(root: &Path) -> Result<ConvergenceReport> {
         });
     }
 
-    holdings.sort_by(|a, b| {
-        b.at_risk
-            .cmp(&a.at_risk)
-            .then(a.kind.cmp(&b.kind))
-            .then(a.identity.cmp(&b.identity))
-    });
+    crate::order::canonical(&mut holdings);
 
     let mut tallies: BTreeMap<String, usize> = BTreeMap::new();
     for holding in &holdings {

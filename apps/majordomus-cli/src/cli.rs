@@ -395,7 +395,27 @@ pub enum QualityCommand {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus convergence`.
+/// `majordomus convergence`: whether any of this repository's work is held where only one
+/// disk can see it. It exits 10 when it is, so a hook or a script refuses on the verdict
+/// rather than on a parsed report.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ConvergenceArgs, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "convergence", "--format", "json", "--all"])
+///     .unwrap();
+/// let args: ConvergenceArgs = match cli.command {
+///     Command::Convergence(args) => args,
+///     other => panic!("expected `convergence`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(args.all);
+///
+/// // a person asks the question with nothing after it, and reads only what is at risk
+/// let bare = Cli::try_parse_from(["majordomus", "convergence"]).unwrap();
+/// assert!(matches!(bare.command, Command::Convergence(ConvergenceArgs { all: false, .. })));
+/// ```
 pub struct ConvergenceArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
