@@ -23,6 +23,33 @@
 //! The derivation is pure over an [`IntentOutline`] per intent and the derived [`Plan`], so a
 //! test can walk every branch without an index, and the intent engine converts its own record
 //! into an outline rather than this module reading intent files a second way.
+//!
+//! ```
+//! use majordomus_cli::intent_plan::{coverage, CoverageStrength, IntentOutline};
+//! use majordomus_cli::plan::Plan;
+//! # let plan: Plan = serde_json::from_value(serde_json::json!({
+//! #     "project": {"name": "p", "repository": "o/p", "default_branch": "master",
+//! #                 "active_milestone": ""},
+//! #     "statuses": {"issue": [], "milestone": []},
+//! #     "milestones": [], "waves": [], "edges": [], "milestone_edges": [], "findings": [],
+//! #     "issues": [{"id": "I1", "milestone": "m", "status": "READY", "wave": 1,
+//! #         "priority": "p1", "profile": "implementation", "parallel_safe": true,
+//! #         "title": "t", "slug": "", "depends_on": [], "blocked_by": [], "dependents": [],
+//! #         "scope": ["src"], "serves": ["x#a"], "objective": "", "evidence_have": 0,
+//! #         "evidence_need": 1, "started_at": "", "verified_at": "", "completed_at": ""}]
+//! # })).unwrap();
+//! let intent = IntentOutline {
+//!     id: "x".into(),
+//!     criteria: vec!["a".into(), "b".into()],
+//!     milestones: vec!["m".into()],
+//!     ..Default::default()
+//! };
+//! let covered = coverage(&[intent], &plan);
+//! // I1 serves x#a, so that criterion is carried; x#b is not, and that is a failure.
+//! assert_eq!(covered.criterion("x", "a").unwrap().strength, CoverageStrength::Covered);
+//! assert_eq!(covered.criterion("x", "b").unwrap().strength, CoverageStrength::Uncovered);
+//! assert_eq!(covered.failures(), 1);
+//! ```
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -34,6 +61,21 @@ use crate::plan::{overlap, Plan, PlanIssue};
 
 /// What coverage needs of one intent: its identity, its criterion ids, its milestones, and
 /// whether it is retired (cancelled or superseded) and so owes nothing.
+///
+/// The intent engine builds one of these from each [`crate::intent::IntentRecord`], so the
+/// intent files are read one way and this module never reads them a second time.
+///
+/// ```
+/// use majordomus_cli::intent_plan::IntentOutline;
+/// let outline = IntentOutline {
+///     id: "intent-planning".into(),
+///     criteria: vec!["criteria-are-covered".into()],
+///     milestones: vec!["intent-planning".into()],
+///     ..Default::default()
+/// };
+/// assert!(!outline.retired);
+/// assert!(outline.observed_satisfied.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct IntentOutline {
     /// The intent's identity.
@@ -49,7 +91,16 @@ pub struct IntentOutline {
     pub observed_satisfied: Vec<String>,
 }
 
-/// How well a criterion is carried by the plan.
+/// How well a criterion is carried by the plan: whether work exists for it, whether that work
+/// is gated by evidence, and whether the recorded gap already saw it true.
+///
+/// ```
+/// use majordomus_cli::intent_plan::CoverageStrength;
+/// // the wire spelling every surface answers with
+/// assert_eq!(serde_json::to_string(&CoverageStrength::Weak).unwrap(), "\"weak\"");
+/// // the order is the one a reader ranks by: uncovered is the worst
+/// assert!(CoverageStrength::Uncovered < CoverageStrength::Covered);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -66,7 +117,20 @@ pub enum CoverageStrength {
     Covered,
 }
 
-/// One issue as coverage sees it.
+/// One issue as coverage sees it: which milestone carries it, the status the plan derived for
+/// it, and how much evidence it owes before it may be DONE.
+///
+/// ```
+/// use majordomus_cli::intent_plan::CoveringIssue;
+/// let issue = CoveringIssue {
+///     id: "I1901".into(),
+///     milestone: "intent-planning".into(),
+///     status: "READY".into(),
+///     evidence_need: 2,
+/// };
+/// // an issue that owes no evidence covers a criterion only weakly
+/// assert!(issue.evidence_need > 0);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CoveringIssue {
     /// The issue id.
@@ -79,7 +143,22 @@ pub struct CoveringIssue {
     pub evidence_need: u32,
 }
 
-/// One criterion of one intent, and the work that carries it.
+/// One criterion of one intent, and the work that carries it: the live issues that serve it,
+/// the milestones those issues sit under, and the strength derived from them.
+///
+/// ```
+/// use majordomus_cli::intent_plan::{CoverageStrength, CriterionCoverage};
+/// let c = CriterionCoverage {
+///     intent: "intent-planning".into(),
+///     criterion: "gap-is-recorded".into(),
+///     strength: CoverageStrength::Uncovered,
+///     issues: vec![],
+///     milestones: vec![],
+/// };
+/// // nothing serves it, so nothing in the plan will make it true
+/// assert_eq!(c.strength, CoverageStrength::Uncovered);
+/// assert!(c.issues.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CriterionCoverage {
     /// The intent.
@@ -94,7 +173,15 @@ pub struct CriterionCoverage {
     pub milestones: Vec<String>,
 }
 
-/// Why an issue exists.
+/// Why an issue exists: because it serves a criterion, because it is maintenance under a
+/// milestone no intent names, or because nobody said — which is a failure under an intent.
+///
+/// ```
+/// use majordomus_cli::intent_plan::IssueOrigin;
+/// assert_eq!(serde_json::to_string(&IssueOrigin::Maintenance).unwrap(), "\"maintenance\"");
+/// // work under no intent is legitimate and says so; it is never given an invented intent
+/// assert_ne!(IssueOrigin::Maintenance, IssueOrigin::Unexplained);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IssueOrigin {
@@ -106,7 +193,21 @@ pub enum IssueOrigin {
     Unexplained,
 }
 
-/// The answer to "why does this issue exist?".
+/// The answer to "why does this issue exist?": the criteria it declares it serves, the intents
+/// whose milestones contain it, and which of the three origins that adds up to.
+///
+/// ```
+/// use majordomus_cli::intent_plan::{IssueOrigin, IssuePurpose};
+/// let purpose = IssuePurpose {
+///     issue: "I1901".into(),
+///     milestone: "intent-planning".into(),
+///     origin: IssueOrigin::Intent,
+///     serves: vec!["intent-planning#criteria-are-covered".into()],
+///     intents: vec!["intent-planning".into()],
+/// };
+/// assert_eq!(purpose.origin, IssueOrigin::Intent);
+/// assert_eq!(purpose.serves.len(), 1);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IssuePurpose {
     /// The issue id.
@@ -121,7 +222,26 @@ pub struct IssuePurpose {
     pub intents: Vec<String>,
 }
 
-/// The whole derived coverage.
+/// The whole derived coverage: every criterion of every live intent, every issue with the
+/// reason it exists, and every finding the two produced. Nothing here is stored; it is derived
+/// on each read from the intents and the plan.
+///
+/// ```
+/// use majordomus_cli::intent_plan::{IntentCoverage, IssueOrigin, IssuePurpose};
+/// let coverage = IntentCoverage {
+///     criteria: vec![],
+///     issues: vec![IssuePurpose {
+///         issue: "I0007".into(),
+///         milestone: "ops".into(),
+///         origin: IssueOrigin::Maintenance,
+///         serves: vec![],
+///         intents: vec![],
+///     }],
+///     findings: vec![],
+/// };
+/// assert_eq!(coverage.failures(), 0);
+/// assert_eq!(coverage.purpose("I0007").unwrap().origin, IssueOrigin::Maintenance);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentCoverage {
     /// Every criterion of every live intent, in intent then declaration order.
@@ -133,17 +253,38 @@ pub struct IntentCoverage {
 }
 
 impl IntentCoverage {
-    /// How many findings are failures.
+    /// How many of the findings are failures rather than warnings: the count that decides
+    /// whether `majordomus intent validate` exits 10.
+    ///
+    /// ```
+    /// use majordomus_cli::intent_plan::IntentCoverage;
+    /// let clean = IntentCoverage { criteria: vec![], issues: vec![], findings: vec![] };
+    /// assert_eq!(clean.failures(), 0);
+    /// ```
     pub fn failures(&self) -> usize {
         self.findings.iter().filter(|f| f.level == FAIL).count()
     }
 
-    /// The purpose of one issue.
+    /// The purpose of one issue by id, or `None` when the plan holds no such issue — the
+    /// answer to "why does this issue exist?".
+    ///
+    /// ```
+    /// use majordomus_cli::intent_plan::IntentCoverage;
+    /// let coverage = IntentCoverage { criteria: vec![], issues: vec![], findings: vec![] };
+    /// assert!(coverage.purpose("I0001").is_none());
+    /// ```
     pub fn purpose(&self, issue: &str) -> Option<&IssuePurpose> {
         self.issues.iter().find(|p| p.issue == issue)
     }
 
-    /// The coverage of one `<intent>#<criterion>`.
+    /// The coverage of one `<intent>#<criterion>`, or `None` when no live intent declares it
+    /// — the answer to "which work carries this criterion?".
+    ///
+    /// ```
+    /// use majordomus_cli::intent_plan::IntentCoverage;
+    /// let coverage = IntentCoverage { criteria: vec![], issues: vec![], findings: vec![] };
+    /// assert!(coverage.criterion("intent-planning", "gap-is-recorded").is_none());
+    /// ```
     pub fn criterion(&self, intent: &str, criterion: &str) -> Option<&CriterionCoverage> {
         self.criteria
             .iter()

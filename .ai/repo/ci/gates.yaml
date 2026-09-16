@@ -445,7 +445,7 @@ gates:
   - id: release-check
     job: structure
     runs: scripts/ci/release-check
-    summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, and the tree is not behind what was published
+    summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, the tree is not behind what was published, and every published tag has a release record so that a release the pipeline failed to record cannot pass for a finished one
 
 classes:
   # the pipeline itself: a change here can only be validated by running everything
@@ -533,7 +533,7 @@ classes:
   # and `rust` already select the suites; this class adds the one gate that reads intents as
   # links between records rather than as files.
   - id: intent
-    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/plan.rs, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh]
+    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, share/schemas/majordomus/gap/**, share/schemas/majordomus/critique/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/intent_plan.rs, apps/majordomus-cli/src/intent_review.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/plan.rs, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh, test/cases/386_a_plan_is_held_to_its_intent.sh]
     gates: [intent-check, rust-integration, shell-suite]
 
   # the decisions and the allocator that hands out their identities. `layer` already selects
@@ -558,7 +558,7 @@ classes:
   # and they ask the executable for every name they use, so the crate's registry checks and
   # the behavioural cases are what decide whether they still work
   - id: distribution
-    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture, .ai/repo/releases/**]
+    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture, .ai/repo/releases/**, .ai/repo/release-record-baseline.txt]
     gates: [shell-suite, rust-integration, macos, release-check, version-surface]
 
   # the gesture that takes a branch out of the state GitHub puts it in: it merges the trunk

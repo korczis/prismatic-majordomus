@@ -27442,6 +27442,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.7.0",
+        "kind": "release-record",
+        "label": "v0.7.0",
+        "summary": "v0.7.0",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frelease-record%2Fv0.7.0",
+        "source": ".ai/repo/releases/v0.7.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "ab776e5c275063483c4de79690d4b0bc5b39398d",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.7.0",
+          "published_at": "2026-09-15T12:23:19Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.7.0"
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "label": "majordomus.adr-integrity@1",
@@ -28547,6 +28570,28 @@
             "diagrams",
             "web",
             "accessibility"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-plan-carries-the-intent-it-serves@1",
+        "kind": "rule",
+        "label": "project.a-plan-carries-the-intent-it-serves@1",
+        "summary": "A plan carries the intent it serves, and is reviewed before it is executed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-plan-carries-the-intent-it-serves%401",
+        "source": ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.work-serves-a-declared-intent@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "intent",
+            "project",
+            "planning",
+            "projections"
           ]
         }
       },
@@ -33252,6 +33297,13 @@
         "label": "test/cases/386_a_plan_is_held_to_its_intent.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F386_a_plan_is_held_to_its_intent.sh",
         "source": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/387_no_payload_is_passed_through_argv.sh",
+        "kind": "test",
+        "label": "test/cases/387_no_payload_is_passed_through_argv.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F387_no_payload_is_passed_through_argv.sh",
+        "source": "test/cases/387_no_payload_is_passed_through_argv.sh"
       },
       {
         "id": "majordomus://test/test/cases/40_project_model.sh",
@@ -49548,6 +49600,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.7.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/majordomus.adr-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -50105,6 +50162,21 @@
       {
         "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-plan-carries-the-intent-it-serves@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-plan-carries-the-intent-it-serves@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-plan-carries-the-intent-it-serves@1",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
       {
@@ -51949,6 +52021,11 @@
       },
       {
         "source": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/387_no_payload_is_passed_through_argv.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -55644,8 +55721,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1757,
-      "edges": 3926,
+      "nodes": 1760,
+      "edges": 3931,
       "acyclic": true,
       "truncated": false
     }

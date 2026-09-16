@@ -629,11 +629,20 @@ EOF
 # used to become blob/master/<path>, which 404s for all of the local state and for every
 # directory; scripts/ci/link-check refuses both.
 forge_paths() {
-  jq -Rn --arg files "$(git -C "$ROOT" ls-files)" '
+  # The tracked listing is ~130KB and passed through argv, which Linux caps per argument
+  # (MAX_ARG_STRLEN, 131072). Over the cap jq never runs and the shell says "Argument list
+  # too long" — on the runner, and never on macOS, whose cap is on the total size. A file has
+  # no such limit, so the listing is read rather than passed.
+  local tracked rc; tracked="$(mktemp "${TMPDIR:-/tmp}/mj.forge.XXXXXX")"
+  git -C "$ROOT" ls-files > "$tracked"
+  jq -Rn --rawfile files "$tracked" '
     ($files | split("\n") | map(select(. != ""))) as $tracked
     | ($tracked | map(split("/") | . as $p | range(1; length) | $p[:.] | join("/")) | unique) as $dirs
     | [inputs | select(. != "") | rtrimstr("/") as $p
        | {path: $p, forge: (if ($tracked | index($p)) then "blob" elif ($dirs | index($p)) then "tree" else null end)}]'
+  rc=$?
+  rm -f "$tracked"
+  return $rc
 }
 RESP_JSON="$(
   i=0; printf '['
@@ -1759,9 +1768,14 @@ done
 jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u | while read -r m; do
   jq -e --arg m "$m" '.modules[] | select(.id == $m and .source == "builtin")' "$REG" >/dev/null || { echo "generate-site-data: docs/generated/registry.json: capability module $m is not a builtin module of the manifest" >&2; exit 10; }
 done
+# The claims array is ~135KB; like the tracked listing above it is read from a file rather
+# than passed through argv, for the same per-argument cap.
+CLAIMS_TMP="$(mktemp "${TMPDIR:-/tmp}/mj.claims.XXXXXX")"
+jq -c '.claims' "$OUT/capabilities.json" > "$CLAIMS_TMP"
 jq -S --arg repo_url "$(jq -r '.repository_url' "$OUT/project.json")" --arg branch master \
-   --argjson claims "$(jq -c '.claims' "$OUT/capabilities.json")" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
-  || { echo "generate-site-data: projecting docs/generated/registry.json failed" >&2; exit 13; }
+   --slurpfile claims "$CLAIMS_TMP" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
+  || { echo "generate-site-data: projecting docs/generated/registry.json failed" >&2; rm -f "$CLAIMS_TMP"; exit 13; }
+rm -f "$CLAIMS_TMP"
 # ---------------------------------------------------------------- method.json, governance-graph.json
 # The governance method as a dataset: the layers an invariant descends through with what this
 # repository holds at each of them, one worked chain from a principle to an exit code, the four

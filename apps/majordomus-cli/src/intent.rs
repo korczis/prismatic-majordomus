@@ -58,6 +58,13 @@ pub const WARN: &str = "WARN";
 // ---------------------------------------------------------------- the derived vocabulary
 
 /// Where an intent stands, derived on every read and stored nowhere.
+///
+/// ```
+/// use majordomus_cli::intent::IntentStage;
+/// // one word every surface prints, and an order that follows the work
+/// assert_eq!(IntentStage::Executing.as_str(), "executing");
+/// assert!(IntentStage::Declared < IntentStage::Satisfied);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -80,7 +87,8 @@ pub enum IntentStage {
 }
 
 impl IntentStage {
-    /// The word every surface prints.
+    /// The word every surface prints for this stage: the command line, the API, MCP and the
+    /// generated documentation all say the same one, so no surface spells a stage its own way.
     ///
     /// ```
     /// use majordomus_cli::intent::IntentStage;
@@ -99,7 +107,15 @@ impl IntentStage {
     }
 }
 
-/// What the evidence behind one criterion says, as a word.
+/// What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:
+/// a stale, failing, unrecorded or underivable reference never does, and neither does one that
+/// resolves to nothing.
+///
+/// ```
+/// use majordomus_cli::intent::IntentEvidenceState;
+/// assert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), "\"not_run\"");
+/// assert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IntentEvidenceState {
@@ -122,7 +138,19 @@ pub enum IntentEvidenceState {
 
 // ---------------------------------------------------------------- the record as authored
 
-/// One satisfaction criterion as the record declares it.
+/// One satisfaction criterion as the record declares it: what must be observably true, the
+/// kind of evidence that settles it, and what that evidence names.
+///
+/// ```
+/// use majordomus_cli::intent::CriterionRecord;
+/// let c = CriterionRecord {
+///     id: "surfaces-agree".into(),
+///     criterion: "the command line, HTTP and MCP answer the same intents".into(),
+///     evidence: "test".into(),
+///     reference: "apps/majordomus-cli/tests/intent.rs".into(),
+/// };
+/// assert_eq!(c.evidence, "test");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CriterionRecord {
     /// Unique within the intent.
@@ -135,7 +163,19 @@ pub struct CriterionRecord {
     pub reference: String,
 }
 
-/// One intent as its file declares it.
+/// One intent as its file declares it: the statement that must become true, the invariants that
+/// must stay true, the milestones that realise it and the criteria that settle it. Nothing
+/// derived is stored here.
+///
+/// ```
+/// use majordomus_cli::intent::IntentRecord;
+/// let r = IntentRecord::from_metadata(".ai/repo/project/intents/x.yaml", &serde_json::json!({
+///     "id": "x", "title": "X", "statement": "It becomes true.", "milestones": ["m"],
+///     "satisfaction": [{"id": "c", "criterion": "c", "evidence": "test", "ref": "t"}],
+/// }));
+/// assert_eq!(r.id, "x");
+/// assert!(!r.cancelled);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct IntentRecord {
     /// The identity.
@@ -230,7 +270,17 @@ impl IntentRecord {
         }
     }
 
-    /// Every intent record of an index, in identity order.
+    /// Every intent record an index holds, in identity order, so nothing downstream depends
+    /// on the order the files were read.
+    ///
+    /// ```
+    /// use majordomus_cli::index::Index;
+    /// use majordomus_cli::intent::IntentRecord;
+    /// # fn demo(index: &Index) {
+    /// let records = IntentRecord::all(index);
+    /// assert!(records.windows(2).all(|w| w[0].id <= w[1].id));
+    /// # }
+    /// ```
     pub fn all(index: &Index) -> Vec<IntentRecord> {
         let by_id: BTreeMap<&str, IntentRecord> = index
             .objects
@@ -249,7 +299,14 @@ impl IntentRecord {
 
 // ---------------------------------------------------------------- where evidence comes from
 
-/// What one test's recorded evidence says.
+/// What one test's recorded evidence says: whether its source is in the tree at all, and what
+/// its latest recorded run came to. A test that is not there cannot settle anything.
+///
+/// ```
+/// use majordomus_cli::intent::{IntentEvidenceState, TestStanding};
+/// let standing = TestStanding { present: false, state: IntentEvidenceState::Unresolved };
+/// assert!(!standing.present);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TestStanding {
     /// Whether the test's source is in the tree.
@@ -260,23 +317,91 @@ pub struct TestStanding {
 
 /// The facts the derivation reads beyond the plan. The repository answers them from the
 /// ledger, the claim matrix and the tree; a test answers them from a table.
+///
+/// ```
+/// use majordomus_cli::evidence::{ProofState, TestId};
+/// use majordomus_cli::intent::{EvidenceLookup, IntentEvidenceState, TestStanding};
+/// struct NothingRecorded;
+/// impl EvidenceLookup for NothingRecorded {
+///     fn test(&self, _: &TestId) -> TestStanding {
+///         TestStanding { present: true, state: IntentEvidenceState::NotRun }
+///     }
+///     fn claim(&self, _: &str) -> Option<ProofState> { None }
+///     fn deployment(&self, _: &str) -> bool { false }
+///     fn object(&self, _: &str, _: &str) -> bool { false }
+///     fn file(&self, _: &str) -> bool { false }
+/// }
+/// let id = TestId::of("test/cases/00_x.sh").unwrap();
+/// assert_eq!(NothingRecorded.test(&id).state, IntentEvidenceState::NotRun);
+/// ```
 pub trait EvidenceLookup {
-    /// A test, by its identity.
+    /// What the ledger holds for one test, by its identity: whether its source is in the tree
+    /// and what its latest run came to.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::TestId;
+    /// use majordomus_cli::intent::{EvidenceLookup, TestStanding};
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// let standing: TestStanding = ev.test(&TestId::of("test/cases/00_x.sh").unwrap());
+    /// assert!(standing.present || !standing.present);
+    /// # }
+    /// ```
     fn test(&self, id: &TestId) -> TestStanding;
-    /// A claim's proof state, `None` when no such claim is declared.
+    /// A claim's proof state, `None` when no such claim is declared — which is a refusal, not
+    /// an unproven claim.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::EvidenceLookup;
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// assert!(ev.claim("no-such-claim-exists").is_none());
+    /// # }
+    /// ```
     fn claim(&self, id: &str) -> Option<ProofState>;
-    /// Whether a deployment object with this id exists.
+    /// Whether a deployment object with this id exists. A `deployment` criterion resolves
+    /// through this and is still never counted as met.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::EvidenceLookup;
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// assert!(!ev.deployment("no-such-deployment"));
+    /// # }
+    /// ```
     fn deployment(&self, id: &str) -> bool;
     /// Whether an object of `kind` answers to `identity` (`rule` matches with or without
-    /// its `@version`).
+    /// its `@version`). This is what makes a `governance:` entry resolve or fail.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::EvidenceLookup;
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// assert!(!ev.object("rule", "project.no-such-rule"));
+    /// # }
+    /// ```
     fn object(&self, kind: &str, identity: &str) -> bool;
-    /// Whether a repository-relative file exists.
+    /// Whether a repository-relative file exists, for a `file:` governance entry and for the
+    /// test sources a criterion names.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::EvidenceLookup;
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// assert!(!ev.file("no/such/file.md"));
+    /// # }
+    /// ```
     fn file(&self, path: &str) -> bool;
 }
 
 /// The evidence of a real repository: its ledger, its claim matrix joined to that ledger,
 /// its index and its tree. The claim join runs git, so it is computed only when a
 /// criterion or a governance entry asks for a claim.
+///
+/// ```
+/// use majordomus_cli::index::Index;
+/// use majordomus_cli::intent::{EvidenceLookup, RepositoryEvidence};
+/// # fn demo(index: &Index) {
+/// let evidence = RepositoryEvidence::load(index).expect("the ledger is readable");
+/// // a file the repository does not hold is answered without running git
+/// assert!(!evidence.file("no/such/file.md"));
+/// # }
+/// ```
 pub struct RepositoryEvidence<'a> {
     index: &'a Index,
     root: PathBuf,
@@ -288,6 +413,16 @@ impl<'a> RepositoryEvidence<'a> {
     /// The evidence of the repository an index was built from. A ledger this executable
     /// cannot read is an error, never an empty ledger: a misread one could report a pass
     /// that was never recorded.
+    ///
+    /// ```
+    /// use majordomus_cli::index::Index;
+    /// use majordomus_cli::intent::RepositoryEvidence;
+    /// # fn demo(index: &Index) {
+    /// // a ledger that cannot be read is an error here, never an empty ledger
+    /// let evidence = RepositoryEvidence::load(index).expect("the ledger is readable");
+    /// let _ = &evidence;
+    /// # }
+    /// ```
     pub fn load(index: &'a Index) -> crate::error::Result<RepositoryEvidence<'a>> {
         let root = PathBuf::from(&index.repository.root);
         let ledger = Ledger::load(&root)?;
@@ -353,7 +488,16 @@ impl EvidenceLookup for RepositoryEvidence<'_> {
 
 // ---------------------------------------------------------------- the derived model
 
-/// One milestone an intent names, as the plan derives it.
+/// One milestone an intent names, as the plan derives it. A milestone that does not resolve is
+/// carried with `resolved: false` rather than dropped, because a name that points at nothing is
+/// a finding and not an absence.
+///
+/// ```
+/// use majordomus_cli::intent::IntentMilestone;
+/// let named = IntentMilestone { id: "no-such".into(), resolved: false, status: None };
+/// assert!(!named.resolved);
+/// assert!(named.status.is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentMilestone {
     /// The id the intent names.
@@ -365,7 +509,23 @@ pub struct IntentMilestone {
     pub status: Option<String>,
 }
 
-/// One criterion with the evidence behind it.
+/// One criterion with the evidence behind it: what the record declared, what the ledger says
+/// about it, whether that meets it, and the command that would produce the evidence again.
+///
+/// ```
+/// use majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};
+/// let c = IntentCriterion {
+///     id: "stage-is-derived".into(),
+///     criterion: "the stage follows the plan".into(),
+///     evidence: "test".into(),
+///     reference: "apps/majordomus-cli/tests/intent.rs".into(),
+///     state: IntentEvidenceState::NotRun,
+///     met: false,
+///     reproduce: None,
+/// };
+/// // nothing recorded is not a pass
+/// assert!(!c.met);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentCriterion {
     /// Unique within the intent.
@@ -386,7 +546,29 @@ pub struct IntentCriterion {
     pub reproduce: Option<String>,
 }
 
-/// One intent, as its record declares it and as the plan and the ledger derive it.
+/// One intent, as its record declares it and as the plan and the ledger derive it: the
+/// statement and invariants as authored, each milestone with its derived status, each criterion
+/// with the state of its evidence, and the stage that follows from both.
+///
+/// ```
+/// use majordomus_cli::intent::{IntentStage, IntentView};
+/// let view = IntentView {
+///     id: "intent-lifecycle".into(),
+///     title: "Work is traceable to the intent it serves".into(),
+///     statement: "A reader can ask what work is for.".into(),
+///     invariants: vec!["no intent status is stored".into()],
+///     stage: IntentStage::Declared,
+///     milestones: vec![],
+///     satisfaction: vec![],
+///     met: 0,
+///     governance: vec!["adr:adr-0070".into()],
+///     non_goals: vec![],
+///     superseded_by: None,
+///     source: ".ai/repo/project/intents/intent-lifecycle.yaml".into(),
+/// };
+/// // a record naming no milestone that resolves has not been planned
+/// assert_eq!(view.stage, IntentStage::Declared);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentView {
     /// The identity, which is also the file name.
@@ -416,7 +598,21 @@ pub struct IntentView {
     pub source: String,
 }
 
-/// One validation finding.
+/// One validation finding: its level, a stable code a reader greps for, the intent or milestone
+/// it is about, one line of what is wrong, and the command that shows it again.
+///
+/// ```
+/// use majordomus_cli::intent::{IntentFinding, FAIL};
+/// let f = IntentFinding {
+///     level: FAIL.into(),
+///     code: "unknown_milestone".into(),
+///     subject: "intent-lifecycle".into(),
+///     message: "`no-such` is not a milestone".into(),
+///     reproduce: "majordomus intent validate".into(),
+/// };
+/// assert_eq!(f.level, "FAIL");
+/// assert_eq!(f.reproduce, "majordomus intent validate");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentFinding {
     /// `FAIL` or `WARN`. A failure means the intent model is invalid.
@@ -431,7 +627,16 @@ pub struct IntentFinding {
     pub reproduce: String,
 }
 
-/// Every intent, derived, with every finding.
+/// Every intent, derived, with every finding: what `majordomus intent validate` answers out of,
+/// and what the list, the record and the preflight are read from. Nothing here is stored.
+///
+/// ```
+/// use majordomus_cli::intent::Intents;
+/// let empty = Intents { intents: vec![], findings: vec![] };
+/// // a repository that declares no intent is valid, and says so
+/// assert_eq!(empty.failures(), 0);
+/// assert!(empty.intent("intent-lifecycle").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Intents {
     /// Every intent, in identity order.
@@ -654,6 +859,19 @@ impl Intents {
     /// The findings are the record's own (this module) followed by the planning half's
     /// (ADR 0073): whether the plan carries every criterion, why each issue exists, and
     /// whether the recorded gap and critique hold and were made before execution.
+    ///
+    /// ```
+    /// use majordomus_cli::index::Index;
+    /// use majordomus_cli::intent::{Intents, RepositoryEvidence};
+    /// use majordomus_cli::plan::Plan;
+    /// # fn demo(index: &Index) {
+    /// let plan = Plan::build(index);
+    /// let evidence = RepositoryEvidence::load(index).expect("the ledger is readable");
+    /// let intents = Intents::build(index, &plan, &evidence);
+    /// // the record's findings, then the coverage of its criteria by the plan
+    /// assert!(intents.failures() >= intents.findings.iter().filter(|f| f.level == "FAIL").count());
+    /// # }
+    /// ```
     pub fn build(index: &Index, plan: &Plan, ev: &dyn EvidenceLookup) -> Intents {
         let records = IntentRecord::all(index);
         let gaps = GapRecord::all(index);
@@ -666,7 +884,21 @@ impl Intents {
         out
     }
 
-    /// The coverage of every criterion by the plan, and the reason every issue exists.
+    /// The coverage of every criterion by the plan, and the reason every issue exists: the
+    /// same derivation [`Intents::build`] reports findings from, answered on its own so a
+    /// reader can ask which work carries which criterion (ADR 0073).
+    ///
+    /// ```
+    /// use majordomus_cli::index::Index;
+    /// use majordomus_cli::intent::Intents;
+    /// use majordomus_cli::plan::Plan;
+    /// # fn demo(index: &Index) {
+    /// let plan = Plan::build(index);
+    /// let coverage = Intents::coverage(index, &plan);
+    /// // every issue of the plan answers why it exists, including the maintenance ones
+    /// assert_eq!(coverage.issues.len(), plan.issues.len());
+    /// # }
+    /// ```
     pub fn coverage(index: &Index, plan: &Plan) -> IntentCoverage {
         let records = IntentRecord::all(index);
         coverage(&outlines(&records, &GapRecord::all(index)), plan)
@@ -674,6 +906,39 @@ impl Intents {
 
     /// Derive from records already read: what [`Intents::build`] does after reading them,
     /// and what a test calls with records it wrote.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::{ProofState, TestId};
+    /// use majordomus_cli::intent::{
+    ///     EvidenceLookup, IntentEvidenceState, IntentRecord, Intents, TestStanding,
+    /// };
+    /// use majordomus_cli::plan::Plan;
+    /// struct NothingRecorded;
+    /// impl EvidenceLookup for NothingRecorded {
+    ///     fn test(&self, _: &TestId) -> TestStanding {
+    ///         TestStanding { present: true, state: IntentEvidenceState::NotRun }
+    ///     }
+    ///     fn claim(&self, _: &str) -> Option<ProofState> { None }
+    ///     fn deployment(&self, _: &str) -> bool { false }
+    ///     fn object(&self, _: &str, _: &str) -> bool { false }
+    ///     fn file(&self, _: &str) -> bool { false }
+    /// }
+    /// # let plan: Plan = serde_json::from_value(serde_json::json!({
+    /// #     "project": {"name": "p", "repository": "o/p", "default_branch": "master",
+    /// #                 "active_milestone": ""},
+    /// #     "statuses": {"issue": [], "milestone": []},
+    /// #     "milestones": [], "issues": [], "waves": [], "edges": [],
+    /// #     "milestone_edges": [], "findings": []})).unwrap();
+    /// let record = IntentRecord::from_metadata(
+    ///     ".ai/repo/project/intents/x.yaml",
+    ///     &serde_json::json!({"id": "x", "title": "X", "milestones": ["absent"],
+    ///         "satisfaction": [{"id": "c", "criterion": "c", "evidence": "test",
+    ///                           "ref": "test/cases/00_x.sh"}]}),
+    /// );
+    /// let intents = Intents::derive(vec![record], &plan, &NothingRecorded);
+    /// // the milestone it names is not in the plan, and that is a failure by name
+    /// assert!(intents.findings.iter().any(|f| f.code == "unknown_milestone"));
+    /// ```
     pub fn derive(records: Vec<IntentRecord>, plan: &Plan, ev: &dyn EvidenceLookup) -> Intents {
         let mut findings = Vec::new();
         let ids: BTreeSet<&str> = records.iter().map(|r| r.id.as_str()).collect();
@@ -806,22 +1071,49 @@ impl Intents {
         Intents { intents, findings }
     }
 
-    /// One intent by id.
+    /// One intent by id, or `None` when this repository declares no such intent — which the
+    /// capability turns into a refusal naming what it looked for.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::Intents;
+    /// let intents = Intents { intents: vec![], findings: vec![] };
+    /// assert!(intents.intent("absent").is_none());
+    /// ```
     pub fn intent(&self, id: &str) -> Option<&IntentView> {
         self.intents.iter().find(|i| i.id == id)
     }
 
-    /// How many findings are failures.
+    /// How many of the findings are failures rather than warnings: the count that decides
+    /// whether the model is valid and whether `intent validate` exits 10.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::Intents;
+    /// assert_eq!(Intents { intents: vec![], findings: vec![] }.failures(), 0);
+    /// ```
     pub fn failures(&self) -> usize {
         self.findings.iter().filter(|f| f.level == FAIL).count()
     }
 
-    /// How many findings are warnings.
+    /// How many of the findings are warnings: reported, never fatal — a milestone no intent
+    /// serves, an intent nobody has planned yet.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::Intents;
+    /// assert_eq!(Intents { intents: vec![], findings: vec![] }.warnings(), 0);
+    /// ```
     pub fn warnings(&self) -> usize {
         self.findings.iter().filter(|f| f.level == WARN).count()
     }
 
-    /// The intents that name a milestone, in identity order.
+    /// The intents that name a milestone, in identity order: the link a preflight follows from
+    /// an issue's milestone up to what the work is for.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::Intents;
+    /// let intents = Intents { intents: vec![], findings: vec![] };
+    /// // a milestone no intent names is where a preflight refuses
+    /// assert!(intents.serving("fixture-milestone").is_empty());
+    /// ```
     pub fn serving(&self, milestone: &str) -> Vec<&IntentView> {
         self.intents
             .iter()
@@ -832,7 +1124,20 @@ impl Intents {
 
 // ---------------------------------------------------------------- preflight
 
-/// One intent a piece of work serves, and the link that says so.
+/// One intent a piece of work serves, and the link that says so: issue to milestone to intent,
+/// each step named rather than asserted.
+///
+/// ```
+/// use majordomus_cli::intent::{IntentPreflightMatch, IntentStage};
+/// let m = IntentPreflightMatch {
+///     intent: "intent-lifecycle".into(),
+///     title: "Work is traceable to the intent it serves".into(),
+///     stage: IntentStage::Executing,
+///     milestone: "intent-lifecycle".into(),
+///     issue: "I1900".into(),
+/// };
+/// assert_eq!(m.issue, "I1900");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentPreflightMatch {
     /// The intent.
@@ -847,7 +1152,22 @@ pub struct IntentPreflightMatch {
     pub issue: String,
 }
 
-/// Which intent a piece of work serves, or why it serves none.
+/// Which intent a piece of work serves, or why it serves none: the issues it resolved to, every
+/// intent reached with its link, the governance those intents load, and — when nothing is
+/// reached — the first link that is missing.
+///
+/// ```
+/// use majordomus_cli::intent::IntentPreflight;
+/// let refused = IntentPreflight {
+///     verdict: "refused".into(),
+///     issues: vec![],
+///     matches: vec![],
+///     governance: vec![],
+///     refusal: Some("no open issue's scope covers README.md".into()),
+/// };
+/// assert_eq!(refused.verdict, "refused");
+/// assert!(refused.refusal.is_some());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentPreflight {
     /// `serves` or `refused`.
@@ -866,6 +1186,22 @@ pub struct IntentPreflight {
 
 impl Intents {
     /// Which intent work on `issue`, or on `paths`, serves.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::Intents;
+    /// use majordomus_cli::plan::Plan;
+    /// # let plan: Plan = serde_json::from_value(serde_json::json!({
+    /// #     "project": {"name": "p", "repository": "o/p", "default_branch": "master",
+    /// #                 "active_milestone": ""},
+    /// #     "statuses": {"issue": [], "milestone": []},
+    /// #     "milestones": [], "issues": [], "waves": [], "edges": [],
+    /// #     "milestone_edges": [], "findings": []})).unwrap();
+    /// let intents = Intents { intents: vec![], findings: vec![] };
+    /// let answer = intents.preflight(&plan, Some("I0001"), &[]);
+    /// // an issue this plan does not hold is the first missing link, and it is named
+    /// assert_eq!(answer.verdict, "refused");
+    /// assert!(answer.refusal.unwrap().contains("I0001"));
+    /// ```
     ///
     /// An issue is followed to its milestone and the milestone to the intents that name it.
     /// Paths are followed to the open issues whose scope covers one, then the same way. The

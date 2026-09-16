@@ -22,6 +22,32 @@
 //! may have started while the intent has no critique, or while a blocking finding is open.
 //!
 //! Every function here is pure over parsed records, the intent outlines and the plan.
+//!
+//! ```
+//! use majordomus_cli::intent_plan::IntentOutline;
+//! use majordomus_cli::intent_review::{review, GapRecord};
+//! use majordomus_cli::plan::Plan;
+//! # let plan: Plan = serde_json::from_value(serde_json::json!({
+//! #     "project": {"name": "p", "repository": "o/p", "default_branch": "master",
+//! #                 "active_milestone": ""},
+//! #     "statuses": {"issue": [], "milestone": []},
+//! #     "milestones": [], "waves": [], "edges": [], "milestone_edges": [], "findings": [],
+//! #     "issues": []})).unwrap();
+//! let intent = IntentOutline {
+//!     id: "x".into(),
+//!     criteria: vec!["a".into(), "b".into()],
+//!     milestones: vec!["m".into()],
+//!     ..Default::default()
+//! };
+//! // a gap that answers one criterion and leaves the other out is refused, by name
+//! let gap = GapRecord::from_metadata(".ai/repo/project/gaps/x.yaml", &serde_json::json!({
+//!     "intent": "x", "observed_at": "c3f20da",
+//!     "observations": [{"id": "o1", "statement": "nothing there", "source": "file:src"}],
+//!     "conditions": [{"criterion": "a", "state": "missing", "observations": ["o1"]}],
+//! }));
+//! let findings = review(&[intent], &plan, &[gap], &[]);
+//! assert!(findings.iter().any(|f| f.code == "gap_criterion_unanswered" && f.subject == "x#b"));
+//! ```
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -41,7 +67,14 @@ pub const CRITIQUE: &str = "critique";
 
 // ---------------------------------------------------------------- the records as authored
 
-/// The state of one criterion as the gap observed it.
+/// The state of one criterion as the gap observed it. Four values, because "not determined"
+/// has to be writable: an omitted criterion is refused, and `Unknown` is never a pass.
+///
+/// ```
+/// use majordomus_cli::intent_review::ConditionState;
+/// assert_eq!(serde_json::to_string(&ConditionState::Conflicting).unwrap(), "\"conflicting\"");
+/// assert_ne!(ConditionState::Unknown, ConditionState::Satisfied);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ConditionState {
@@ -67,7 +100,18 @@ impl ConditionState {
     }
 }
 
-/// One observation of the current state.
+/// One observation of the current state, with the place it was observed in — a file, a
+/// command, a test or a URL — so a reader can go and look at the same thing.
+///
+/// ```
+/// use majordomus_cli::intent_review::GapObservation;
+/// let seen = GapObservation {
+///     id: "no-serves-field".into(),
+///     statement: "the issue schema declares no link to a criterion".into(),
+///     source: "file:share/schemas/majordomus/issue/issue.v1.schema.json".into(),
+/// };
+/// assert!(seen.source.starts_with("file:"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 pub struct GapObservation {
     /// Unique within the gap.
@@ -78,7 +122,22 @@ pub struct GapObservation {
     pub source: String,
 }
 
-/// One criterion's state against the observations.
+/// One criterion's state against the observations, as the record spells it. `state` is `None`
+/// when the file names a state this module does not know, and `state_text` keeps what was
+/// written so the finding can quote it.
+///
+/// ```
+/// use majordomus_cli::intent_review::{ConditionState, GapCondition};
+/// let c = GapCondition {
+///     criterion: "criteria-are-covered".into(),
+///     state: Some(ConditionState::Missing),
+///     state_text: "missing".into(),
+///     because: "nothing relates a criterion to an issue".into(),
+///     observations: vec!["no-serves-field".into()],
+/// };
+/// assert_eq!(c.state, Some(ConditionState::Missing));
+/// assert!(!c.observations.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct GapCondition {
     /// The criterion id of the intent.
@@ -93,7 +152,20 @@ pub struct GapCondition {
     pub observations: Vec<String>,
 }
 
-/// One suggested work item.
+/// One work item the gap suggests: what it would do, the criteria it would make true, and the
+/// issue it became once somebody planned it. Nothing turns this into an issue automatically;
+/// the link is recorded when a worker writes the issue.
+///
+/// ```
+/// use majordomus_cli::intent_review::GapWork;
+/// let w = GapWork {
+///     id: "serves-and-coverage".into(),
+///     title: "an issue names the criterion it serves".into(),
+///     serves: vec!["criteria-are-covered".into()],
+///     issue: "I1901".into(),
+/// };
+/// assert_eq!(w.issue, "I1901");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 pub struct GapWork {
     /// Unique within the gap.
@@ -106,7 +178,19 @@ pub struct GapWork {
     pub issue: String,
 }
 
-/// A gap record.
+/// A gap record: the observations a worker made of the repository at one commit, the state of
+/// every criterion of the intent against them, the risks, and the work it suggests. One per
+/// intent, named by it.
+///
+/// ```
+/// use majordomus_cli::intent_review::GapRecord;
+/// let g = GapRecord::from_metadata(".ai/repo/project/gaps/x.yaml", &serde_json::json!({
+///     "intent": "x", "observed_at": "c3f20da", "recorded_by": "claude-code",
+///     "conditions": [{"criterion": "a", "state": "unknown"}],
+/// }));
+/// assert_eq!(g.intent, "x");
+/// assert_eq!(g.observed_at, "c3f20da");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct GapRecord {
     /// The intent it analyses; also the file name.
@@ -127,7 +211,16 @@ pub struct GapRecord {
     pub work: Vec<GapWork>,
 }
 
-/// The class of a critique finding: the question the adversarial pass asked.
+/// The class of a critique finding: the question the adversarial pass asked. Closed, so that a
+/// review's findings can be counted by question rather than read as prose.
+///
+/// ```
+/// use majordomus_cli::intent_review::CritiqueClass;
+/// assert_eq!(
+///     serde_json::to_string(&CritiqueClass::DeliveryVerification).unwrap(),
+///     "\"delivery_verification\""
+/// );
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CritiqueClass {
@@ -162,7 +255,14 @@ impl CritiqueClass {
     }
 }
 
-/// How a critique finding was resolved.
+/// How a critique finding was resolved: not yet, by planning work that serves the intent, or
+/// by rejecting it with a reason. A blocking finding left `Open` refuses execution.
+///
+/// ```
+/// use majordomus_cli::intent_review::ResolutionState;
+/// assert_eq!(serde_json::to_string(&ResolutionState::Planned).unwrap(), "\"planned\"");
+/// assert_ne!(ResolutionState::Open, ResolutionState::Rejected);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ResolutionState {
@@ -185,7 +285,22 @@ impl ResolutionState {
     }
 }
 
-/// One critique finding.
+/// One critique finding: what the review found, what it is about, whether it blocks execution,
+/// and how it was resolved. `class` and `resolution` are `None` when the record spells one this
+/// module does not know, and the `_text` fields keep what was written.
+///
+/// ```
+/// use majordomus_cli::intent_review::{CritiqueRecord, ResolutionState};
+/// let c = CritiqueRecord::from_metadata("c.yaml", &serde_json::json!({
+///     "intent": "x",
+///     "findings": [{"id": "f1", "class": "regression_risk", "subject": "x#a",
+///                   "blocking": true, "resolution": {"state": "planned", "issue": "I1"}}],
+/// }));
+/// let finding = &c.findings[0];
+/// assert!(finding.blocking);
+/// assert_eq!(finding.resolution, Some(ResolutionState::Planned));
+/// assert_eq!(finding.issue, "I1");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CritiqueFinding {
     /// Unique within the critique.
@@ -210,7 +325,17 @@ pub struct CritiqueFinding {
     pub because: String,
 }
 
-/// A critique record.
+/// A critique record: the adversarial pass over one intent's plan, at the commit it was
+/// reviewed at, with every finding and its resolution. One per intent, named by it.
+///
+/// ```
+/// use majordomus_cli::intent_review::CritiqueRecord;
+/// let c = CritiqueRecord::from_metadata(".ai/repo/project/critiques/x.yaml", &serde_json::json!({
+///     "intent": "x", "reviewed_at": "c3f20da", "reviewed_by": "another session",
+/// }));
+/// assert_eq!(c.intent, "x");
+/// assert!(c.findings.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CritiqueRecord {
     /// The intent whose plan it reviews; also the file name.
@@ -311,14 +436,34 @@ fn all_of<T>(index: &Index, kind: &str, read: fn(&str, &Value) -> T) -> Vec<T> {
 }
 
 impl GapRecord {
-    /// Every gap record of an index, in identity order.
+    /// Every gap record an index holds, in identity order, so the derivation does not depend
+    /// on the order the files were read.
+    ///
+    /// ```
+    /// use majordomus_cli::index::Index;
+    /// use majordomus_cli::intent_review::GapRecord;
+    /// # fn demo(index: &Index) {
+    /// let gaps = GapRecord::all(index);
+    /// assert!(gaps.windows(2).all(|w| w[0].intent <= w[1].intent));
+    /// # }
+    /// ```
     pub fn all(index: &Index) -> Vec<GapRecord> {
         all_of(index, GAP, GapRecord::from_metadata)
     }
 }
 
 impl CritiqueRecord {
-    /// Every critique record of an index, in identity order.
+    /// Every critique record an index holds, in identity order, so the derivation does not
+    /// depend on the order the files were read.
+    ///
+    /// ```
+    /// use majordomus_cli::index::Index;
+    /// use majordomus_cli::intent_review::CritiqueRecord;
+    /// # fn demo(index: &Index) {
+    /// let critiques = CritiqueRecord::all(index);
+    /// assert!(critiques.windows(2).all(|w| w[0].intent <= w[1].intent));
+    /// # }
+    /// ```
     pub fn all(index: &Index) -> Vec<CritiqueRecord> {
         all_of(index, CRITIQUE, CritiqueRecord::from_metadata)
     }
@@ -409,7 +554,34 @@ pub fn observed_satisfied(gaps: &[GapRecord]) -> BTreeMap<String, Vec<String>> {
     out
 }
 
-/// The findings of the gap and critique records against the intents and the plan.
+/// The findings of the gap and critique records against the intents and the plan: whether each
+/// record holds together, and whether execution waited for the review.
+///
+/// ```
+/// use majordomus_cli::intent_plan::IntentOutline;
+/// use majordomus_cli::intent_review::review;
+/// use majordomus_cli::plan::Plan;
+/// # let plan: Plan = serde_json::from_value(serde_json::json!({
+/// #     "project": {"name": "p", "repository": "o/p", "default_branch": "master",
+/// #                 "active_milestone": ""},
+/// #     "statuses": {"issue": [], "milestone": []},
+/// #     "milestones": [], "waves": [], "edges": [], "milestone_edges": [], "findings": [],
+/// #     "issues": [{"id": "I1", "milestone": "m", "status": "ACTIVE", "wave": 1,
+/// #         "priority": "p1", "profile": "implementation", "parallel_safe": true,
+/// #         "title": "t", "slug": "", "depends_on": [], "blocked_by": [], "dependents": [],
+/// #         "scope": ["src"], "serves": ["x#a"], "objective": "", "evidence_have": 0,
+/// #         "evidence_need": 1, "started_at": "2026-09-16", "verified_at": "",
+/// #         "completed_at": ""}]})).unwrap();
+/// let intent = IntentOutline {
+///     id: "x".into(),
+///     criteria: vec!["a".into()],
+///     milestones: vec!["m".into()],
+///     ..Default::default()
+/// };
+/// // I1 has started, and no critique of this intent's plan was ever recorded
+/// let findings = review(&[intent], &plan, &[], &[]);
+/// assert!(findings.iter().any(|f| f.code == "executing_without_critique"));
+/// ```
 pub fn review(
     intents: &[IntentOutline],
     plan: &Plan,

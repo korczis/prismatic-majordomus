@@ -95,10 +95,11 @@ pub enum Command {
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command, IntentCommand};
+/// use majordomus_cli::cli::{Cli, Command, IntentArgs, IntentCommand};
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "intent", "preflight", "--issue", "I0001"]).unwrap();
 /// let Command::Intent(args) = cli.command else { panic!("intent") };
+/// let args: IntentArgs = args;
 /// assert!(matches!(args.command, IntentCommand::Preflight { issue: Some(_), .. }));
 /// // the group runs nothing of its own: every runnable path here is a capability's
 /// assert!(Cli::try_parse_from(["majordomus", "intent"]).is_err());
@@ -120,6 +121,15 @@ pub struct IntentArgs {
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus intent`: the command line of `intents.list`,
 /// `intents.record`, `intents.validate` and `intents.preflight`.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, IntentCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "intent", "show", "intent-lifecycle"]);
+/// let Command::Intent(args) = cli.command else { panic!("intent") };
+/// let IntentCommand::Show { id } = args.command else { panic!("show") };
+/// assert_eq!(id, "intent-lifecycle");
+/// ```
 pub enum IntentCommand {
     /// Every intent, with the stage derived from its milestones and its evidence
     List,
