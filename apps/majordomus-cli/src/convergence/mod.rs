@@ -59,7 +59,9 @@ pub const SCHEMA: &str = "convergence/v1";
 /// assert_eq!(HoldingKind::Worktree.as_str(), "worktree");
 /// assert_eq!(serde_json::to_string(&HoldingKind::Stash).unwrap(), "\"stash\"");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum HoldingKind {
     /// A registered work tree, holding files that are not committed.
@@ -103,7 +105,9 @@ impl HoldingKind {
 /// assert!(Disposition::Published < Disposition::LocalOnly);
 /// assert_eq!(serde_json::to_string(&Disposition::LocalOnly).unwrap(), "\"local_only\"");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum Disposition {
     /// The trunk reaches it: it is in the repository's own history.
@@ -342,11 +346,7 @@ pub fn report(root: &Path) -> Result<ConvergenceReport> {
             kind: HoldingKind::Worktree,
             identity: worktree.path.clone(),
             disposition: Disposition::Uncommitted,
-            evidence: format!(
-                "{} — {}",
-                worktree.label,
-                dirty.summary()
-            ),
+            evidence: format!("{} — {}", worktree.label, dirty.summary()),
             remedy: format!(
                 "git -C {} add -A && git -C {} commit -m 'checkpoint: unreviewed'",
                 worktree.path, worktree.path

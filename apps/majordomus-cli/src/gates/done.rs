@@ -588,7 +588,14 @@ mod tests {
 
     #[test]
     fn regression_is_answered_from_the_change_set_alone() {
-        let q = answer(&BTreeMap::new(), &[], &[], &["lib/a.sh".to_string()], true, None);
+        let q = answer(
+            &BTreeMap::new(),
+            &[],
+            &[],
+            &["lib/a.sh".to_string()],
+            true,
+            None,
+        );
         let r = q.iter().find(|q| q.id == "regression-tested").unwrap();
         assert_eq!(r.status, GateStatus::Queued);
         assert!(r.evidence.contains("no test path"));
@@ -667,7 +674,10 @@ mod tests {
         };
         let q = answer(&BTreeMap::new(), &[], &[], &[], true, Some(&converged));
         assert_eq!(
-            q.iter().find(|q| q.id == "no-stale-topology").unwrap().status,
+            q.iter()
+                .find(|q| q.id == "no-stale-topology")
+                .unwrap()
+                .status,
             GateStatus::Pass
         );
     }

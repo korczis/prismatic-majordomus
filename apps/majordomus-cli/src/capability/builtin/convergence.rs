@@ -87,7 +87,11 @@ mod tests {
             Some("majordomus_convergence")
         );
         assert_eq!(
-            exposure.mcp.as_ref().and_then(|m| m.resource.as_ref()).map(|r| r.uri.as_str()),
+            exposure
+                .mcp
+                .as_ref()
+                .and_then(|m| m.resource.as_ref())
+                .map(|r| r.uri.as_str()),
             Some(CONVERGENCE_URI)
         );
         assert_eq!(

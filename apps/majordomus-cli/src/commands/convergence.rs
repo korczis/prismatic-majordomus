@@ -30,11 +30,9 @@ pub fn run(args: ConvergenceArgs) -> Result<u8> {
         .ok_or_else(|| Error::Protocol {
             reason: "no capability is exposed as `majordomus convergence`".into(),
         })?;
-    let value = ctx
-        .execute(id, json!({}))
-        .map_err(|e| Error::Protocol {
-            reason: format!("convergence.report refused: {e}"),
-        })?;
+    let value = ctx.execute(id, json!({})).map_err(|e| Error::Protocol {
+        reason: format!("convergence.report refused: {e}"),
+    })?;
     let report: ConvergenceReport =
         serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
             reason: format!("convergence.report answered something this command cannot read: {e}"),
