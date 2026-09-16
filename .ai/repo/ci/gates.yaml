@@ -265,6 +265,17 @@ gates:
     runs: scripts/ci/mesh-check
     summary: the mesh stays one subsystem — UDP sockets only under src/mesh/, one MeshRegistry constructed only there, and the mesh-declaration kind, its schema and the rule that holds it move together (project.mesh-is-observation-not-authority)
 
+  # ADR 0032 keeps the network half of a workspace adapter out of the crate and asks for a
+  # gate, "or the boundary is a sentence rather than a constraint". It reads the manifest
+  # for the dependency list and the lock for what a feature flag pulled in behind it: the
+  # crate takes jsonschema with default-features = false precisely so that nothing resolves
+  # over the network, and turning those features on would add an HTTP client and a TLS stack
+  # without adding a line to the list. File reads only, so it runs with the structure checks.
+  - id: crate-boundary
+    job: structure
+    runs: scripts/ci/crate-boundary
+    summary: the Rust crate declares only dependencies that were argued for, and links no async runtime, HTTP client, TLS stack or CDP client (ADR 0032)
+
   # The one structural gate that reads the remote. It needs a token (issues:read) and says
   # so rather than passing when it has none: a projection gate that skips quietly is the
   # disease it was written to cure — --check has exited 11 on drift since the adapter was
@@ -447,8 +458,8 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, version-surface, release-check]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/ci/crate-boundary, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, crate-boundary, version-surface, release-check]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
   # to ADR 0050, and the architecture document
