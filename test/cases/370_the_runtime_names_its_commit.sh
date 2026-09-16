@@ -53,7 +53,9 @@ U="$(sed -n 's#.*listening on \(http://127\.0\.0\.1:[0-9]*\).*#\1#p' "$S/err.txt
 
 # --- 1. every answer that names the build names the commit
 for route in /api/v1/live /api/v1/ready /; do
-  curl -fsS -H 'Accept: application/json' "$U$route" > "$S/answer.json" \
+  # --max-time, because a request without a bound is a case that hangs instead of failing:
+  # the rule is project.liveness, and scripts/liveness-check refuses an unbounded one
+  curl -fsS --max-time 30 -H 'Accept: application/json' "$U$route" > "$S/answer.json" \
     || { echo "    GET $route did not answer"; exit 1; }
   jq -e 'has("commit")' "$S/answer.json" >/dev/null \
     || { echo "    GET $route carries no commit:"; cat "$S/answer.json"; exit 1; }

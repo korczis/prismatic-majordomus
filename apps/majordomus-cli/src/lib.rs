@@ -93,10 +93,17 @@ pub const COMMIT: &str = env!("MAJORDOMUS_COMMIT");
 /// built: `Some(true)` or `Some(false)` when the build knew, `None` when it did not — a
 /// commit handed in through `MAJORDOMUS_BUILD_COMMIT` without `MAJORDOMUS_BUILD_DIRTY`, or
 /// a build outside a work tree.
-pub const DIRTY: Option<bool> = match env!("MAJORDOMUS_DIRTY").as_bytes() {
-    b"true" => Some(true),
-    b"false" => Some(false),
-    _ => None,
+///
+/// Read with `option_env!`: a build-script output that predates the flag (a target directory
+/// shared across checkouts reuses one) must still compile, and what it did not record is
+/// unknown rather than a build failure.
+pub const DIRTY: Option<bool> = match option_env!("MAJORDOMUS_DIRTY") {
+    Some(v) => match v.as_bytes() {
+        b"true" => Some(true),
+        b"false" => Some(false),
+        _ => None,
+    },
+    None => None,
 };
 
 /// The generation this executable was built from: the digest `generation::crate_generation`
