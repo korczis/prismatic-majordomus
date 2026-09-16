@@ -1240,7 +1240,15 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
                                 if names_changed || test_moved {
                                     ProofState::Stale
                                 } else if changed_at_all.is_empty() {
-                                    ProofState::Proven
+                                    // The diff says the commit is the tree in front of us;
+                                    // the execution's own `working_tree` says whether that
+                                    // commit was the tree the run measured. Both, or the
+                                    // rule is not proven — the same cap the evidence
+                                    // derivation applies, from the same function.
+                                    crate::evidence::capped_by_working_tree(
+                                        ProofState::Proven,
+                                        &e.working_tree,
+                                    )
                                 } else {
                                     ProofState::InputsUnchanged
                                 }

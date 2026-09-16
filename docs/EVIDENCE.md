@@ -147,9 +147,16 @@ invalidated the run rather than being told to go and look.
 This is the point of the whole subsystem, and it is the thing to preserve in any change to
 it.
 
-**`proven`** means a passing run exists and *nothing has changed since it*: the diff between
-the execution's own commit and the working tree is empty. It is proof of the tree in front
-of you — the tree the run measured is the tree you are looking at.
+**`proven`** means a passing run exists, *nothing has changed since it*, and *the run
+measured the commit it is joined to*: the diff between the execution's own commit and the
+working tree is empty, and the execution's `working_tree` is `clean`. It is proof of the
+tree in front of you — the tree the run measured is the tree you are looking at.
+
+Both halves are needed, and each fails differently. A run recorded while something else was
+pending sat on its commit without measuring it (ADR 0041: "`proven` is a passing run
+recorded against this exact commit with a clean tree"), so it is capped at
+`inputs_unchanged` however empty the diff is when the report is taken — a later `git
+checkout` of the edited file cannot retroactively make the commit describe what ran.
 
 The ledger's own row is excluded from that diff, because the evidence is *about* the tree
 rather than part of what the tests measure. Without that exclusion `proven` would be
@@ -158,6 +165,10 @@ committing the record moves HEAD past the commit the record names. That was a re
 in the first cut of this design, found in review; `test/cases/124_evidence.sh` now asserts
 both halves — that the tree is dirty after a recording, and that every claim is `proven`
 anyway — so a regression that made `proven` depend on a clean tree again would fail.
+
+The same exclusion applies when a run is *recorded*: a recording whose only pending change
+is the previous recording's own row is stamped `clean`, because that row is not something
+any test measured. Any other pending path is `dirty` and the execution says so.
 
 **`inputs_unchanged`** means a passing run exists and nothing the claim names has moved
 since it. That is the **absence of a known invalidation** — not proof at HEAD. Something
