@@ -151,7 +151,7 @@ ADR 0012) began refusing it: a view layer that reaches into the index because it
 same process reads the repository outside the executor, outside the cache, outside the
 counters and outside the validation, and the day it disagrees with the capability neither
 answer is wrong in its own terms. The gate greps the Cockpit's own files, test modules
-included, and `test/cases/359_cockpit_projection.sh` drives it against fixture trees. The
+included, and `test/cases/389_cockpit_projection.sh` drives it against fixture trees. The
 object count and the kind catalogue come from `repository.info`, a listing from
 `objects.list`, one object from `objects.get`.
 

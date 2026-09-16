@@ -23,10 +23,10 @@
 # The test module of a Cockpit file is subject to the same rule, deliberately: an assertion
 # that compares a page against the index proves the page agrees with a source the page is
 # not allowed to read, so it would keep passing after the page started disagreeing with the
-# capability. Case 359 mutates exactly that.
+# capability. Case 389 mutates exactly that.
 #
 #   scripts/ci/cockpit-projection-check              report, and fail on a direct read
-#   MJ_ROOT=<dir> scripts/ci/cockpit-projection-check   measure another tree (case 359 does)
+#   MJ_ROOT=<dir> scripts/ci/cockpit-projection-check   measure another tree (case 389 does)
 #
 # Exit: 0 clean, 10 a page reads the index, 12 unusable.
 set -eu
