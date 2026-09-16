@@ -294,10 +294,10 @@ fn render_plan(out: &mut impl Write, plan: &VersionPlan, explain: bool) -> Resul
         writeln!(
             out,
             "{} {}",
-            if d.severity == Severity::Error {
-                "ERROR  "
-            } else {
-                "WARNING"
+            match d.severity {
+                Severity::Error => "ERROR  ",
+                Severity::Warning => "WARNING",
+                Severity::Note => "NOTE   ",
             },
             d.message
         )

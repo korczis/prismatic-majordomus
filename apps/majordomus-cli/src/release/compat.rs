@@ -1041,7 +1041,8 @@ pub struct Baseline {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseDiagnostic")]
 pub struct Diagnostic {
-    /// `tag-without-record`, `record-without-tag`, `tag-commit-mismatch`.
+    /// `tag-without-record`, `tag-predates-records`, `record-without-tag`,
+    /// `tag-commit-mismatch`.
     pub id: String,
     /// Whether it stops a release or only warns.
     pub severity: Severity,
@@ -1052,11 +1053,13 @@ pub struct Diagnostic {
 /// How much a diagnostic matters.
 ///
 /// An error says the plan itself cannot be trusted and blocks the verdict; a warning says
-/// something about the release state is wrong and the verdict stands anyway.
+/// something about the release state is wrong and the verdict stands anyway; an note says
+/// something true and not wrong, so that the warnings keep meaning what they say.
 ///
 /// ```
 /// use majordomus_cli::release::compat::Severity;
 /// assert_ne!(Severity::Error, Severity::Warning);
+/// assert_ne!(Severity::Warning, Severity::Note);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -1066,6 +1069,8 @@ pub enum Severity {
     Error,
     /// The plan stands, and something is still wrong.
     Warning,
+    /// Nothing is wrong; the reader is told something about the release state anyway.
+    Note,
 }
 
 /// Every version tag this repository carries, newest last.
@@ -1109,6 +1114,59 @@ fn records(objects: &[Object]) -> Vec<(Version, String, Option<String>, Option<S
     list.sort_by_key(|(v, _, _, _)| (v.major, v.minor, v.patch));
     list
 }
+/// What to say about a tag the layer holds no release record for.
+///
+/// Two different things wear that shape, and calling both a defect is how the warning
+/// stopped being read. Recording began at the earliest record the layer holds: a tag below
+/// that version was cut before the practice existed and was never published, and no record
+/// can be written for it now without inventing the digests a record is made of. A tag at or
+/// above that version with no record is the real defect — something was published and the
+/// evidence was not kept.
+///
+/// A tag whose name is not a version, and a layer with no records at all, both fall to the
+/// warning: neither can be shown to predate anything.
+///
+/// ```
+/// use majordomus_cli::release::compat::{unrecorded_tag, Severity};
+/// use majordomus_cli::release::version::Version;
+///
+/// let first = Version::parse("0.3.1").unwrap();
+/// let old = unrecorded_tag("v0.2.0", Some(&first));
+/// assert_eq!(old.severity, Severity::Note);
+/// assert_eq!(old.id, "tag-predates-records");
+///
+/// let new = unrecorded_tag("v0.4.0", Some(&first));
+/// assert_eq!(new.severity, Severity::Warning);
+/// assert_eq!(new.id, "tag-without-record");
+/// ```
+pub fn unrecorded_tag(tag: &str, first_recorded: Option<&Version>) -> Diagnostic {
+    let ordered = |v: &Version| (v.major, v.minor, v.patch);
+    let predates = match (first_recorded, Version::parse(tag.trim_start_matches('v'))) {
+        (Some(first), Some(v)) => ordered(&v) < ordered(first),
+        _ => false,
+    };
+    match (predates, first_recorded) {
+        (true, Some(first)) => Diagnostic {
+            id: "tag-predates-records".into(),
+            severity: Severity::Note,
+            message: format!(
+                "{tag} is tagged and the layer holds no release record for it, because it \
+                 predates v{}.{}.{}, the earliest release this layer records; the changelog \
+                 and every baseline begin there",
+                first.major, first.minor, first.patch
+            ),
+        },
+        _ => Diagnostic {
+            id: "tag-without-record".into(),
+            severity: Severity::Warning,
+            message: format!(
+                "{tag} is tagged and the layer holds no release record for it; \
+                 the changelog and every baseline read the records, so this release is \
+                 invisible to them"
+            ),
+        },
+    }
+}
 
 /// Find the release to measure against, and say what is incoherent about the release state
 /// on the way.
@@ -1134,15 +1192,15 @@ fn resolve_baseline(
         .iter()
         .map(|(_, raw, tag, _)| tag.clone().unwrap_or_else(|| format!("v{raw}")))
         .collect();
+    // A tag with no record is two different things, and calling both a defect is how the
+    // warning stopped being read. Recording began at the earliest record this layer holds:
+    // every tag below that version was cut before the practice existed, was never published
+    // as a release, and no record can be written for it now without inventing the digests a
+    // record is made of. A tag at or above that version with no record is the real defect —
+    // something was published and the layer did not keep the evidence.
+    let first_recorded = records.iter().map(|(v, ..)| v).min().cloned();
     for t in tagged.difference(&recorded_tags) {
-        diagnostics.push(Diagnostic {
-            id: "tag-without-record".into(),
-            severity: Severity::Warning,
-            message: format!(
-                "{t} is tagged and the layer holds no release record for it; \
-                 the changelog and every baseline read the records, so this release is invisible to them"
-            ),
-        });
+        diagnostics.push(unrecorded_tag(t, first_recorded.as_ref()));
     }
     for t in recorded_tags.difference(&tagged) {
         diagnostics.push(Diagnostic {
@@ -1656,6 +1714,35 @@ mod tests {
     /// The changes, for cases that assert on what was named rather than only how much.
     fn changes(base: Value, head: Value) -> Vec<SurfaceChange> {
         diff(&surface(base), &surface(head))
+    }
+
+    /// The two shapes of an unrecorded tag, and the two ways the question cannot be asked.
+    #[test]
+    fn a_tag_older_than_the_practice_is_a_note_and_a_newer_one_is_a_defect() {
+        let first = Version::parse("0.3.1").expect("a version");
+
+        // cut before anything was recorded: nothing was published, so nothing can be recorded
+        for tag in ["v0.1.0", "v0.2.0", "v0.3.0"] {
+            let d = unrecorded_tag(tag, Some(&first));
+            assert_eq!(d.severity, Severity::Note, "{tag}");
+            assert_eq!(d.id, "tag-predates-records", "{tag}");
+            assert!(d.message.contains("predates v0.3.1"), "{}", d.message);
+        }
+
+        // the same version as the earliest record is not below it, and above it is the defect
+        for tag in ["v0.3.1", "v0.4.0", "v1.0.0"] {
+            let d = unrecorded_tag(tag, Some(&first));
+            assert_eq!(d.severity, Severity::Warning, "{tag}");
+            assert_eq!(d.id, "tag-without-record", "{tag}");
+        }
+
+        // nothing recorded at all: there is no practice to predate
+        assert_eq!(unrecorded_tag("v0.1.0", None).severity, Severity::Warning);
+        // a tag that is not a version cannot be placed either way
+        assert_eq!(
+            unrecorded_tag("v0.2.0-ai-documents", Some(&first)).id,
+            "tag-without-record"
+        );
     }
 
     // ------------------------------------------------------------------- identity and bindings
