@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.no-counts-in-prose@1]
 tags: [performance, evidence]
+
+x-majordomus:
+  reviewed_because: no command decides this rule, a reviewer does, reading the commit message against a timed run of the command and the baseline diff against majordomus bench --check; a performance change without its measurement, or a baseline edited by hand, is not merged
 ---
 
 # Rationale

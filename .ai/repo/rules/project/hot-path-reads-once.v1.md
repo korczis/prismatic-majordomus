@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.derived-once@1]
 tags: [performance, doctrine]
+
+x-majordomus:
+  reviewed_because: no command decides this rule, a reviewer does, with the counters; no case holds those counts yet, and the one that does will hold doctor and watch to the number of distinct canonical files they read
 ---
 
 # Rationale

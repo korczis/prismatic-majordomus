@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.a-worker-that-stops-leaves-its-work-behind@1, project.destructive-sweeps-fail-closed@1]
 tags: [process, integration, agents]
+
+x-majordomus:
+  reviewed_because: decided by review, and by the damage — nothing can mechanically detect that a retry was about to duplicate a side effect; test/cases/135_session_store_recovery.sh proves one instance, majordomus recover, rather than the rule
 ---
 
 # Rationale
