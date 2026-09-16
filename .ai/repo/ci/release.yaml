@@ -34,6 +34,12 @@ phases:
     runs: scripts/release-version --check --tag "$TAG"
     summary: the tag, the crate and the shell tool state one version, and the distribution model and every recorded release hold their invariants
 
+  - id: verdict
+    job: plan
+    permissions: checks-read
+    runs: scripts/ci/release-verdict --tag "$TAG" --wait 300
+    summary: the tagged commit's ci check — the aggregate verdict of the validate workflow — concluded success; a failure, a run still in progress, or a verdict that cannot be read refuses the release before anything is built
+
   - id: build
     job: build
     runs: scripts/release-package --target "$TARGET" --tag "$TAG" --out dist

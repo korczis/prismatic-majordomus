@@ -27,7 +27,8 @@ mj_cmd_finish() {
 usage: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [--verify-command "<cmd>"] [--note <file>]
        majordomus finish --check
   evaluates every line of the finish contract, prints pass/fail for each, refuses (10) if any fails
-  --verify-command  the project's own verification; its exit code, duration and command are recorded
+  --verify-command  the project's own verification; its exit code, duration and command are recorded.
+                    A command that cannot verify anything (true, :, exit 0, only echo) is refused
   --note            a completion note (required sections as a handover); otherwise the newest handover for this task is used
   --check           evaluate the current task against scope and state without writing; exit 0 when no task is active
 H
@@ -115,6 +116,28 @@ mj_finish_selected() {
 }
 
 # ---------------------------------------------------------------- finish-only validators
+# Is <cmd> a verification command that cannot verify anything? The rule is that a completed
+# outcome is verified, not described, and `--verify-command true` satisfied it: the suite
+# asserted so, and the ledger recorded `verify:{command:"true",exit:0}` as the proof. A command
+# whose every part is a no-op builtin (true, :, exit 0, return 0) or only prints (echo,
+# printf) exits 0 whatever the state of the work, so it is refused before it runs. This does
+# not judge whether a real command is the right one — only that it is a command at all.
+# Separators ; && || and newlines split the parts; a comment-only or empty part is a no-op.
+mj_verify_is_vacuous() {
+  local part
+  printf '%s\n' "$1" | awk '{ gsub(/&&|\|\||;/, "\n"); print }' | {
+    while IFS= read -r part || [ -n "$part" ]; do
+      part="$(printf '%s' "$part" | sed -e 's/^[[:space:](){}]*//' -e 's/[[:space:](){}]*$//')"
+      case "$part" in
+        ''|'#'*|true|:|/bin/true|/usr/bin/true|exit|'exit 0'|return|'return 0') ;;
+        echo|'echo '*|printf|'printf '*) ;;
+        *) exit 1 ;;
+      esac
+    done
+    exit 0
+  }
+}
+
 mj_validate_verification() {
   local id; id="$(mj_cur id)"
   mj_finish_selected || { mj_doctrine_skip verification "$id" "not in verification.finish_requires"; MJ_DOCTRINE_SKIPPED=1; return 0; }
@@ -126,6 +149,8 @@ mj_validate_verification() {
     mj_doctrine_skip verification "$id" "not required by profile $(mj_cur profile)"; MJ_DOCTRINE_SKIPPED=1; return 0; fi
   if [ -z "$MJ_FINISH_VERIFY" ]; then
     mj_doctrine_fail verification "$id" "profile $(mj_cur profile) requires --verify-command" "majordomus finish --outcome completed --verify-command \"<cmd>\""; return 0; fi
+  if mj_verify_is_vacuous "$MJ_FINISH_VERIFY"; then
+    mj_doctrine_fail verification "$id" "\"$MJ_FINISH_VERIFY\" cannot verify anything: it is only a no-op or a print, so its exit 0 proves nothing (majordomus.verification-integrity)" "majordomus finish --outcome completed --verify-command \"<the project's own test or check, e.g. make test>\""; return 0; fi
   local t0 t1 vexit; t0="$(date +%s)"
   if ( cd "$MJ_ROOT" && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
   t1="$(date +%s)"; MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0))

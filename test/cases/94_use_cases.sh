@@ -211,7 +211,7 @@ sed -i.bak 's/^    - note_present$/    - note_present\n    - use_cases_covered/'
 git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm "require coverage"
 "$MJ" start "cover it" --scope lib >/dev/null
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL use-case'
 expect_grep 'refused'
 

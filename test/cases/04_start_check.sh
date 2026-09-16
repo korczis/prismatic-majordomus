@@ -94,7 +94,7 @@ expect_grep 'WARN +checkpoint .* interval'
 expect_exit 11 "$MJ" watch
 expect_grep 'DRIFT checkpoint'
 note | "$MJ" handover >/dev/null
-"$MJ" finish --outcome completed --verify-command "true" >/dev/null
+"$MJ" finish --outcome completed --verify-command "test -d .ai" >/dev/null
 stale
 expect_exit 0 "$MJ" check
 expect_grep 'INFO +checkpoint .* freshness applies while a task is active'

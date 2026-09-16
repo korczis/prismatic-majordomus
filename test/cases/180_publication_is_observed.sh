@@ -189,12 +189,35 @@ grep -q "is built" "$T/built.out" || {
 # ---------------------------------------------------------------- a build that is not a verdict
 #
 # GitHub has not built this commit yet, or the token cannot read the endpoint. That is weather,
-# not a failure — and it must not read as one, nor as an `ok`. `note` is the third thing.
+# not a failure — and it must not read as one, nor as an `ok`. `note` is the third thing, and
+# its exit is the third thing too: 12, not determined. Until 2026-09-15 this case asserted
+# exit 0 here, and the gate printed "the published site is a projection of master, is
+# current, and is being served" — the whole guarantee, including the half about GitHub's
+# build that it had just said it did not measure. A gate that cannot measure refuses.
 stub_gh "$T/bin" building "$HEADSHA" "no message"
 if gate "$T/building.out"; then rc=0; else rc=$?; fi
-[ "$rc" = 0 ] || { echo "    a build still in flight was treated as a failure (exit $rc):"; cat "$T/building.out"; exit 1; }
-grep -q "^note  .*Pages build" "$T/building.out" || {
+[ "$rc" = 12 ] || { echo "    a build still in flight was not reported as not determined (exit $rc, want 12):"; cat "$T/building.out"; exit 1; }
+grep -q "^note  .*Pages build of ${HEADSHA:0:12} is building" "$T/building.out" || {
   echo "    a build that is not a verdict was not reported as unmeasured:"; cat "$T/building.out"; exit 1; }
+grep -q "NOT DETERMINED" "$T/building.out" || {
+  echo "    the verdict line does not say the build half was not measured:"; cat "$T/building.out"; exit 1; }
+if grep -q "is current, and is being served" "$T/building.out"; then
+  echo "    the gate stated the whole guarantee over a half it did not measure:"; cat "$T/building.out"; exit 1
+fi
+
+# ---------------------------------------------------------------- a build nobody could read
+#
+# No token, no `pages: read`, or gh itself failing: the API gave nothing. Everything this
+# repository owns is right, and the gate still has not seen GitHub's build — so 12, never 0.
+mkdir -p "$T/deaf"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$T/deaf/gh"; chmod +x "$T/deaf/gh"
+if ( cd "$T/repo" && PATH="$T/deaf:$PATH" env -u MAJORDOMUS_ROOT -u MAJORDOMUS_SHARE \
+       ./scripts/ci/pages-check --wait 0 > "$T/unread.out" 2>&1 ); then rc=0; else rc=$?; fi
+[ "$rc" = 12 ] || { echo "    an unreadable Pages build passed (exit $rc, want 12):"; cat "$T/unread.out"; exit 1; }
+grep -q "^note  GitHub's Pages build could not be read" "$T/unread.out" || {
+  echo "    the unreadable build was not named:"; cat "$T/unread.out"; exit 1; }
+grep -q "NOT DETERMINED" "$T/unread.out" || {
+  echo "    the verdict line does not name the unmeasured half:"; cat "$T/unread.out"; exit 1; }
 
 # ---------------------------------------------------------------- one reader of the API
 #

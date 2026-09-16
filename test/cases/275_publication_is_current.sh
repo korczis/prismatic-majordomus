@@ -68,7 +68,7 @@ git add -A >/dev/null && git commit -qm base
 # would make `finish_requires` decoration.
 verdict behind
 expect_exit 0 "$MJ" start "unselected" --scope lib/
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'not in verification.finish_requires'
 
 sed -i.bak 's/^    - note_present$/    - note_present\n    - publication_current/' .ai/repo/policy.yaml
@@ -79,7 +79,7 @@ git add -A >/dev/null && git commit -qm select
 
 # --------------------------------------------------- behind: refused, and the task survives
 expect_exit 0 "$MJ" start "publishing work" --scope lib/
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL gate +publication'
 expect_grep 'the published site is not a projection of the trunk'
 expect_grep '14 commit\(s\) ahead of the publication'
@@ -99,7 +99,7 @@ expect_grep 'skipped for outcome blocked'
 verdict ok
 expect_exit 0 "$MJ" start "more work" --scope lib/
 echo 'b() { :; }' >> lib/a.sh
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'OK   gate +publication'
 expect_grep 'is on master'
 
@@ -110,7 +110,7 @@ expect_grep 'is on master'
 verdict unknown
 expect_exit 0 "$MJ" start "offline work" --scope lib/
 echo 'c() { :; }' >> lib/a.sh
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'could not be reached \(exit 12\)'
 expect_grep 'unverified and never a pass'
 expect_no_grep 'OK   gate +publication'
@@ -124,7 +124,7 @@ rm -f .ai/repo/ci/gates.yaml.bak
 git add -A >/dev/null && git commit -qm 'publishes nothing'
 expect_exit 0 "$MJ" start "no publication" --scope lib/
 echo 'd() { :; }' >> lib/a.sh
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'no gate in this repository.s CI model is marked at-finish'
 
 # --------------------------------------------------- a marker with no command is a defect
@@ -136,7 +136,7 @@ rm -f .ai/repo/ci/gates.yaml.bak .ai/repo/ci/gates.yaml.bak2
 git add -A >/dev/null && git commit -qm 'marked, unrunnable'
 expect_exit 0 "$MJ" start "broken model" --scope lib/
 echo 'e() { :; }' >> lib/a.sh
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'declares no command to run it'
 
 # --------------------------------------------------------------- this repository is wired

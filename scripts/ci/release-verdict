@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# release-verdict — a tag is released only from a commit the repository's own verdict passed.
+#
+# The repository has one required status: the `ci` check, the aggregate verdict job of
+# .github/workflows/validate.yml. Branch protection holds a merge to it. Nothing held a
+# release to it: .github/workflows/release.yml triggers on the tag and checked only that the
+# tag agrees with the version, so v0.3.1, v0.5.0, v0.6.0 and v0.7.0 were all published from
+# commits whose `ci` check-run concluded failure. A release is the most public projection of a
+# commit, and it was the one projection the verdict never reached.
+#
+# So this asks GitHub for the check-runs of the tagged commit, takes the newest run named
+# `ci`, and refuses unless it concluded success. It is the same command the release workflow
+# runs and a person runs before pushing a tag; the workflow carries no reading of its own.
+#
+# A verdict that cannot be read is not a pass. No gh, no repository slug, an API that did not
+# answer, no `ci` check-run on the commit, or one that is still running: each is exit 12 and
+# says which, because a release that cannot prove its commit passed has not earned one.
+#
+#   scripts/ci/release-verdict --tag v0.7.0          the commit that tag names
+#   scripts/ci/release-verdict --commit <rev>        a commit directly (HEAD, a sha)
+#   scripts/ci/release-verdict --tag v0.7.0 --wait 300
+#                                                    poll a run still in progress, up to N seconds
+#   RELEASE_VERDICT_CHECK=<name>                     the check to require (default: ci)
+#   GITHUB_REPOSITORY=<owner/repo>                   the repository (default: from origin)
+#
+# Exit: 0 the check concluded success · 2 usage · 10 it concluded anything else ·
+# 12 no verdict could be read (no gh, no slug, no answer, no such check-run, still running).
+set -euo pipefail
+
+TAG=""; COMMIT=""; WAIT=0
+CHECK="${RELEASE_VERDICT_CHECK:-ci}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tag) TAG="${2:?--tag needs a value}"; shift 2 ;;
+    --commit) COMMIT="${2:?--commit needs a value}"; shift 2 ;;
+    --wait) WAIT="${2:?--wait needs seconds}"; shift 2 ;;
+    -h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "release-verdict: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+[ -n "$TAG" ] || [ -n "$COMMIT" ] || { echo "release-verdict: --tag or --commit is required" >&2; exit 2; }
+case "$WAIT" in ''|*[!0-9]*) echo "release-verdict: --wait takes whole seconds" >&2; exit 2 ;; esac
+
+if [ -z "$COMMIT" ]; then
+  COMMIT="$(git rev-parse --verify -q "$TAG^{commit}" 2>/dev/null || true)"
+  [ -n "$COMMIT" ] || { echo "release-verdict: $TAG names no commit in this clone; fetch the tag first" >&2; exit 12; }
+else
+  # HEAD, a branch or a short sha is resolved here: the API is asked about a full commit id.
+  given="$COMMIT"
+  COMMIT="$(git rev-parse --verify -q "$given^{commit}" 2>/dev/null || true)"
+  [ -n "$COMMIT" ] || { echo "release-verdict: $given names no commit in this clone" >&2; exit 12; }
+fi
+command -v jq >/dev/null 2>&1 || { echo "release-verdict: jq is required to read the check-runs" >&2; exit 12; }
+command -v gh >/dev/null 2>&1 || {
+  echo "release-verdict: gh is not installed, so the $CHECK verdict of ${COMMIT:0:12} was not read" >&2
+  echo "  a verdict that was not read is not a pass; install gh and authenticate" >&2
+  exit 12; }
+SLUG="${GITHUB_REPOSITORY:-}"
+[ -n "$SLUG" ] || SLUG="$(git remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+[ -n "$SLUG" ] || { echo "release-verdict: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; exit 12; }
+
+WHAT="${TAG:+$TAG at }${COMMIT:0:12}"
+t0="$(date +%s)"
+while :; do
+  body=""; rc=0
+  body="$(gh api "repos/$SLUG/commits/$COMMIT/check-runs?check_name=$CHECK&per_page=100" 2>/dev/null)" || rc=$?
+  if [ "$rc" != 0 ] || ! printf '%s' "$body" | jq -e '.check_runs | type == "array"' >/dev/null 2>&1; then
+    echo "release-verdict: GitHub's check-runs for $WHAT could not be read (gh exit $rc)" >&2
+    echo "  the token needs checks:read; reproduce: gh api repos/$SLUG/commits/$COMMIT/check-runs" >&2
+    exit 12
+  fi
+  # The newest run of the check, by id: a commit re-run, or pushed and then dispatched, carries
+  # more than one, and the newest is the verdict that stands. Older successes do not outvote it.
+  run="$(printf '%s' "$body" | jq -r --arg n "$CHECK" \
+    '[.check_runs[] | select(.name == $n)] | sort_by(.id) | last
+     | if . == null then empty else "\(.status)\t\(.conclusion // "none")\t\(.html_url // "")" end')"
+  status="$(printf '%s' "$run" | cut -f1)"
+  conclusion="$(printf '%s' "$run" | cut -f2)"
+  url="$(printf '%s' "$run" | cut -f3)"
+  [ -n "$run" ] && [ "$status" != completed ] || break
+  [ $(( $(date +%s) - t0 )) -lt "$WAIT" ] || break
+  sleep 15
+done
+
+if [ -z "$run" ]; then
+  echo "release-verdict: $WHAT has no '$CHECK' check-run; nothing says it passed" >&2
+  echo "  the verdict comes from the validate workflow; a commit it never ran on cannot be released" >&2
+  exit 12
+fi
+if [ "$status" != completed ]; then
+  echo "release-verdict: the '$CHECK' check of $WHAT is $status after $(( $(date +%s) - t0 ))s; no verdict yet" >&2
+  echo "  $url" >&2
+  echo "  re-run the release once it concludes: gh workflow run release.yml -f tag=${TAG:-<tag>}" >&2
+  exit 12
+fi
+if [ "$conclusion" != success ]; then
+  echo "release-verdict: the '$CHECK' check of $WHAT concluded $conclusion; a release follows the verdict" >&2
+  echo "  $url" >&2
+  echo "  fix the commit, tag the fix, and release that; a red commit is not published" >&2
+  exit 10
+fi
+echo "release-verdict: the '$CHECK' check of $WHAT concluded success"
+[ -z "$url" ] || echo "  $url"

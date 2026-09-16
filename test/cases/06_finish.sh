@@ -23,15 +23,25 @@ expect_exit 10 "$MJ" finish --outcome completed --verify-command "false"
 expect_grep 'FAIL verification .* false — exit 1'
 # handover supplies the note; regression test path is required by debugging profile
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'OK +note'
 expect_grep 'FAIL regression .* no test path'
 echo t2 >> test/a_test
-expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+# A verification command that cannot verify anything is refused before it runs, whatever it
+# exits: `true` was accepted here until 2026-09-15, and the ledger recorded it as the proof
+# that the work was verified. Every no-op shape the rule names is refused, and names the rule.
+for vacuous in "true" ":" "exit 0" "   " "true && echo ok" "echo verified"; do
+  expect_exit 10 "$MJ" finish --outcome completed --verify-command "$vacuous"
+  expect_grep 'FAIL verification .* cannot verify anything'
+  expect_grep 'majordomus\.verification-integrity'
+  expect_grep '^outcome: active$' .ai/local/state/current.yaml
+done
+# ... and a real command that happens to include a no-op part is still a real command
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "true && test -f test/a_test"
 expect_grep 'OK +regression'
 expect_grep 'finish: t-.* completed'
 expect_grep '^outcome: completed$' .ai/local/state/current.yaml
-expect_grep '"event":"task.finished".*"outcome":"completed".*"majordomus.verification-integrity":"pass".*"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
+expect_grep '"event":"task.finished".*"outcome":"completed".*"majordomus.verification-integrity":"pass".*"verify":\{"command":"true && test -f test/a_test","exit":0' .ai/local/state/ledger.jsonl
 # finishing twice is refused; --check on a finished task passes
 expect_exit 15 "$MJ" finish --outcome completed
 expect_exit 0 "$MJ" finish --check
@@ -64,5 +74,5 @@ expect_exit 10 "$MJ" finish --check
 expect_grep 'FAIL scope +test/other'
 # a scope failure blocks a completed finish even with everything else present
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL scope'

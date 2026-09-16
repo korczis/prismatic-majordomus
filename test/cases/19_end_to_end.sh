@@ -91,12 +91,12 @@ expect_exit 10 "$MJ" finish --outcome completed --verify-command "exit 3"
 expect_grep 'FAIL verification .* exit 3'
 
 # --- the debugging profile also demands a regression test
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL regression'
 echo 'assert' >> test/a_test.py
 
 # --- everything satisfied: finish is accepted and recorded
-expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'OK +verification .* exit 0'
 expect_grep "finish: $id2 completed"
 expect_grep '^outcome: completed$' .ai/local/state/current.yaml
@@ -105,7 +105,7 @@ expect_grep '^outcome: completed$' .ai/local/state/current.yaml
 expect_grep '"event":"task.finished"' .ai/local/state/ledger.jsonl
 expect_grep '"majordomus.scope-integrity":"pass"' .ai/local/state/ledger.jsonl
 expect_grep '"majordomus.verification-integrity":"pass"' .ai/local/state/ledger.jsonl
-expect_grep '"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
+expect_grep '"verify":\{"command":"test -d .ai","exit":0' .ai/local/state/ledger.jsonl
 
 # --- and the installation is still healthy at the end of it
 expect_exit 0 "$MJ" doctor

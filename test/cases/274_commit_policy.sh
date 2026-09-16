@@ -220,6 +220,30 @@ echo "  under --strict the baseline is ignored and any debt fails"
 expect_exit 0 "$ROOT/scripts/ci/commit-policy" --write-baseline
 expect_exit 10 "$ROOT/scripts/ci/commit-policy" --strict
 
+echo "  a branch range the executable cannot judge is not a pass: exit 12, with its own words"
+# A trunk this case can name, a clean history and a baseline equal to its debt: everything
+# the gate reads is a pass except the one judgement this probe breaks. The executable answers
+# the whole history and fails on the branch range, which is what an errored judgement looks
+# like from the gate — and what used to leave the branch half at "0 failing".
+git rev-parse --verify -q master >/dev/null || git rev-parse --verify -q main >/dev/null \
+  || run_quiet trunk.err git branch master HEAD
+mkdir -p "$T/judge-274"
+cat > "$T/judge-274/majordomus" <<STUB
+#!/bin/sh
+case "\$*" in
+  *..HEAD*) echo "the range judgement broke in this probe" >&2; exit 13 ;;
+esac
+exec "$RB" "\$@"
+STUB
+chmod +x "$T/judge-274/majordomus"
+expect_exit 0 "$ROOT/scripts/ci/commit-policy" --write-baseline
+expect_exit 12 env MAJORDOMUS_BIN="$T/judge-274/majordomus" "$ROOT/scripts/ci/commit-policy"
+expect_grep 'could not judge this branch'
+expect_grep 'the range judgement broke in this probe'
+expect_no_grep 'not measured \(no trunk'
+echo "  and the same tree, judged by the real executable, passes"
+expect_exit 0 "$ROOT/scripts/ci/commit-policy"
+
 # ---------------------------------------------------------------- the hook
 
 echo "  the commit-msg hook refuses a bad message and lets a good one through"

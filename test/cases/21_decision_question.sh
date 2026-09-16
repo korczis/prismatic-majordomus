@@ -84,7 +84,7 @@ expect_exit 10 "$MJ" check
 expect_grep 'FAIL blockers'
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
 echo b >> lib/a
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL blockers'
 
 # resolving requires an answer, refuses an ambiguous or absent selector
@@ -109,7 +109,7 @@ expect_no_grep 'YYYY-MM-DD'
 # with both resolved, check passes and finish accepts
 expect_exit 0 "$MJ" check
 expect_grep 'OK +blockers'
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 
 # a malformed unresolved entry FAILS: a gate that cannot read an entry can be bypassed
 git add -A && git commit -qm t1

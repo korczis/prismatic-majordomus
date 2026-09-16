@@ -33,7 +33,7 @@ expect_grep 'INFO checkpoint +\.ai/local/state/checkpoints/'
 
 # the blocker refuses completion, exactly as the contract says
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL blockers'
 expect_grep '^outcome: active$' .ai/local/state/current.yaml
 
@@ -87,7 +87,7 @@ expect_grep 'legacy mobile client'
 echo "regression" >> test/auth_test
 printf 'test written and failing for the recorded reason\n' | "$MJ" checkpoint >/dev/null
 "$MJ" question add "should the old URI form keep working after 4.2?" >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL blockers'
 # a selector that matches two open questions is refused rather than resolving the wrong one
 expect_exit 2 "$MJ" question resolve "old URI form" --answer "no"
@@ -95,11 +95,11 @@ expect_grep 'matches more than one question'
 "$MJ" question resolve "keep working after 4.2" --answer "no, it was retired in 4.2" >/dev/null
 # the blocker the first task opened is still open, so completion is still refused: both have
 # to be answered, and the one inherited across the handover is not exempt for being older
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'legacy mobile client'
 "$MJ" question resolve "legacy mobile client" --answer "no; the 3.x client was retired before 4.0" >/dev/null
 printf '# Objective\nFix the OAuth callback.\n# Current State\nFixed and covered.\n# Next Action\nnone\n' | "$MJ" handover >/dev/null
-expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'OK +verification .* exit 0'
 expect_grep 'OK +regression .* a test path was touched'
 expect_grep '^outcome: completed$' .ai/local/state/current.yaml
@@ -117,7 +117,7 @@ expect_exit 0 "$MJ" history --task "$id2" --all
 expect_grep 'outcome=completed verify_exit=0'
 expect_grep 'question.resolved'
 # the verification that was accepted is recorded with its command and exit code
-expect_grep '"event":"task.finished".*"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
+expect_grep '"event":"task.finished".*"verify":\{"command":"test -d .ai","exit":0' .ai/local/state/ledger.jsonl
 expect_grep '"checkpoints":[0-9]' .ai/local/state/ledger.jsonl
 
 # search finds the durable knowledge without reading any of the files

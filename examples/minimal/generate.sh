@@ -39,13 +39,13 @@ rm test/other.rb
 printf '\nAfter removing the out-of-scope file:\n'
 run "$MJ" check
 printf '\n## 5. Try to finish too early\n'
-run "$MJ" finish --outcome completed --verify-command "true"
+run "$MJ" finish --outcome completed --verify-command "test -f test/oauth_test.rb"
 printf '\n## 6. Hand over, resolve, finish\n'
 printf '\n```\n$ printf "# Objective\\n...\\n# Current State\\n...\\n# Next Action\\n...\\n" | majordomus handover\n'
 printf '# Objective\nStop the OAuth callback dropping the state parameter.\n# Current State\nRoot cause found in the proxy rewrite; fix applied in lib/auth/oauth.rb.\n# Next Action\nAdd the regression test and finish.\n' | "$MJ" handover | sed "s#$T#<repo>#g"; printf '```\n'
 run "$MJ" handover --resolve
 echo 'regression' >> test/oauth_test.rb
-run "$MJ" finish --outcome completed --verify-command "true"
+run "$MJ" finish --outcome completed --verify-command "test -f test/oauth_test.rb"
 printf '\n## 7. What was recorded\n'
 run cat .ai/local/state/current.yaml
 printf '\n```\n$ tail -n 1 .ai/local/state/ledger.jsonl\n'; tail -n 1 .ai/local/state/ledger.jsonl | sed "s#$T#<repo>#g"; printf '```\n'

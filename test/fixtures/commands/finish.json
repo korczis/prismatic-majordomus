@@ -18,7 +18,7 @@
       "title": "Work outside the claimed scope",
       "given": { "scope respected": false, "no open blocker": true, "verification given": true, "note present": true },
       "setup": "finish-scope-violation",
-      "run": ["finish", "--outcome", "completed", "--verify-command", "true"],
+      "run": ["finish", "--outcome", "completed", "--verify-command", "test -d .ai"],
       "expect": { "exit": 10, "stdout_contains": ["FAIL scope", "outside claimed scope"] },
       "explain": "The task claimed lib. A change under docs is work the task did not claim, and it is refused whatever else is in place."
     },
@@ -27,7 +27,7 @@
       "title": "An unresolved question is open",
       "given": { "scope respected": true, "no open blocker": false, "verification given": true, "note present": true },
       "setup": "finish-blocker-open",
-      "run": ["finish", "--outcome", "completed", "--verify-command", "true"],
+      "run": ["finish", "--outcome", "completed", "--verify-command", "test -d .ai"],
       "expect": { "exit": 10, "stdout_contains": ["FAIL blockers"] },
       "explain": "An open question refuses completed, and only completed. The same task can be finished as blocked, which is the honest outcome when the answer is not yours to give."
     },
@@ -54,7 +54,7 @@
       "title": "Everything in place",
       "given": { "scope respected": true, "no open blocker": true, "verification given": true, "note present": true },
       "setup": "finish-ready",
-      "run": ["finish", "--outcome", "completed", "--verify-command", "true"],
+      "run": ["finish", "--outcome", "completed", "--verify-command", "test -d .ai"],
       "expect": { "exit": 0, "stdout_contains": ["completed"] },
       "explain": "Accepted, and the ledger records the outcome together with the verification that earned it."
     }

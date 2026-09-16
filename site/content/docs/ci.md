@@ -285,8 +285,10 @@ it waits on a queue, a build and a CDN that this repository does not own, and a 
 somebody else's latency is a gate that gets waived — but *slow* and *failed* are different
 facts and the second one has an API. `scripts/pages built` reads it, in one place, for both
 callers: `pages.yml` fails the run on an errored build at the moment it happens, and
-`scripts/ci/pages-check` asks the same question afterwards through the same command. A build
-that has merely not finished stays a note; only `errored` is a failure.
+`scripts/ci/pages-check` asks the same question afterwards through the same command. Only
+`errored` is a failure (exit 10). A build that has not finished, one of another commit, or one
+that could not be read at all is a note and exit 12, not determined: never a failure, and never
+the pass it used to be, when the gate printed the whole guarantee over the half it had not seen.
 
 ## Where a gate cannot reach
 

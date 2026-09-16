@@ -23,7 +23,8 @@
 #   scripts/ci/commit-policy --write-baseline    record today's debt (a deliberate act)
 #   scripts/ci/commit-policy --strict            fail on any failing commit, baseline ignored
 #
-# Exit: 0 clean or debt unchanged, 10 a failing branch commit or new debt, 12 unusable.
+# Exit: 0 clean or debt unchanged, 10 a failing branch commit or new debt, 12 unusable or not
+# determined (no executable, or a history or branch range the executable could not judge).
 set -eu
 set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
@@ -66,19 +67,31 @@ BASE=""
 for candidate in origin/master origin/main master main; do
   if git rev-parse --verify --quiet "$candidate" >/dev/null 2>&1; then BASE="$candidate"; break; fi
 done
+#
+# A trunk and a merge base that exist, with a range the executable then fails to judge, are
+# not that case. The subject is reachable and was not measured, so the gate exits 12 exactly
+# as the whole-history judgement above does, with the executable's own words. "not measured
+# (no trunk ...)" is kept for the checkout that genuinely has no base: printing it for a
+# judgement that errored would pass the branch half and blame a trunk that is there.
 BRANCH_FAILING=0
 BRANCH_SCOPE="not measured (no trunk to compare against)"
 if [ -n "$BASE" ]; then
   MERGE_BASE="$(git merge-base "$BASE" HEAD 2>/dev/null || true)"
   if [ -n "$MERGE_BASE" ]; then
-    BRANCH="$("$MJ" commit history "$MERGE_BASE..HEAD" --format json 2>/dev/null || true)"
-    if [ -n "$BRANCH" ]; then
-      BRANCH_FAILING="$(failing "$BRANCH")"
-      [ -n "$BRANCH_FAILING" ] || BRANCH_FAILING=0
-      BRANCH_SCOPE="$MERGE_BASE..HEAD"
-      if [ "$BRANCH_FAILING" != "0" ]; then
-        "$MJ" commit history "$MERGE_BASE..HEAD" 2>/dev/null || true
-      fi
+    BRANCH_ERR="$(mktemp "${TMPDIR:-/tmp}/commit-policy.XXXXXX")"
+    BRANCH="$("$MJ" commit history "$MERGE_BASE..HEAD" --format json 2>"$BRANCH_ERR" || true)"
+    BRANCH_FAILING="$(failing "$BRANCH")"
+    if [ -z "$BRANCH_FAILING" ]; then
+      echo "commit-policy: the executable could not judge this branch ($MERGE_BASE..HEAD against $BASE)" >&2
+      sed 's/^/  /' "$BRANCH_ERR" >&2
+      echo "  reproduce: majordomus commit history $MERGE_BASE..HEAD --format json" >&2
+      rm -f "$BRANCH_ERR"
+      exit 12
+    fi
+    rm -f "$BRANCH_ERR"
+    BRANCH_SCOPE="$MERGE_BASE..HEAD"
+    if [ "$BRANCH_FAILING" != "0" ]; then
+      "$MJ" commit history "$MERGE_BASE..HEAD" 2>/dev/null || true
     fi
   fi
 fi

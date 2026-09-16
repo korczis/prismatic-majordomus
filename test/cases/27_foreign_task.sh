@@ -41,7 +41,7 @@ expect_grep 'belongs to'
 expect_exit 0 "$MJ" --repo "$wt" watch
 expect_grep "INFO state +$id — task belongs to $HERE"
 # and finish refuses to write to another checkout's record
-expect_exit 15 "$MJ" --repo "$wt" finish --outcome completed --verify-command true
+expect_exit 15 "$MJ" --repo "$wt" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'finish it there'
 expect_grep '^outcome: active$' .ai/local/state/current.yaml
 

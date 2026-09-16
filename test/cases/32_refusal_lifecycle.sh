@@ -35,7 +35,7 @@ expect_grep 'blockers'
 # --- refused, and the refusal names every cause at once ----------------------------------
 # Not one failure at a time: a worker who fixes the first refusal and is then refused again
 # for a second reason learns the contract one painful round trip at a time.
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL scope .* outside claimed scope'
 expect_grep 'FAIL blockers'
 expect_grep 'FAIL note'
@@ -49,14 +49,14 @@ expect_grep 'FAIL blockers'
 
 # --- repair, one cause at a time, and watch the findings disappear one at a time ---------
 git checkout -- docs/d                                  # 1. the out-of-scope change goes away
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_no_grep 'FAIL scope'
 expect_grep 'FAIL blockers'
 
 n="$("$MJ" question list | grep -cE '^[0-9]+  \[unresolved\]' || true)"
 [ "$n" -ge 1 ] || { echo "    question list shows no numbered entry to resolve"; exit 1; }
 expect_exit 0 "$MJ" question resolve 1 --answer "no; tabs are refused with a message"
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"   # 2. blocker resolved
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"   # 2. blocker resolved
 expect_no_grep 'FAIL blockers'
 expect_grep 'FAIL note'
 
@@ -67,7 +67,7 @@ expect_exit 10 "$MJ" finish --outcome completed
 expect_grep 'FAIL verification'
 
 # --- accepted, and only now -------------------------------------------------------------
-expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'finish: .* completed'
 expect_grep '^outcome: completed$' .ai/local/state/current.yaml
 

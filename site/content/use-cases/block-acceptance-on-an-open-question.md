@@ -34,7 +34,7 @@ steps:
       exit: 0
       stdout_contains: ['unresolved', 'tabs']
   - id: refused
-    run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
+    run: ['finish', '--outcome', 'completed', '--verify-command', 'test -d .ai']
     note: 'completion is refused while the question is open; the refusal names it'
     expect:
       exit: 10

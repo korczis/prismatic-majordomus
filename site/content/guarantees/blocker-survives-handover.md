@@ -27,10 +27,10 @@ Nothing new is stored. The store is checkout-local, so the questions a gate can 
 majordomus question add "does the legacy client still need the plain method?"
 majordomus finish --outcome blocked                            # allowed; the question is the reason
 majordomus start "continue the same work" --scope lib/auth
-majordomus finish --outcome completed --verify-command true    # refused: 1 unresolved question(s) on this branch
+majordomus finish --outcome completed --verify-command "make test"  # refused: 1 unresolved question(s) on this branch
 majordomus question list                                       # it is named, with a number
 majordomus question resolve 1 --answer "no; retired in 4.0"
-majordomus finish --outcome completed --verify-command true    # accepted
+majordomus finish --outcome completed --verify-command "make test"  # accepted
 ```
 
 ## What it does not cover

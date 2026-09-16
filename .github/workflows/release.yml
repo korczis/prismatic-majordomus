@@ -8,8 +8,10 @@
 # with bin/majordomus, which is the first thing checked and the reason a mistyped tag costs
 # thirty seconds rather than a published release.
 #
-# Phases: plan -> build (matrix) -> publish -> smoke. Nothing is published unless every
-# supported target built and verified; a release missing a platform is not a release.
+# Phases: plan -> build (matrix) -> publish -> smoke. Nothing is built unless the tagged
+# commit's `ci` check concluded success (scripts/ci/release-verdict), and nothing is published
+# unless every supported target built and verified; a release missing a platform is not a
+# release.
 name: release
 
 on:
@@ -35,7 +37,12 @@ jobs:
   # One version, one model, and the matrix the rest of the run is shaped by.
   plan:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # ten for the version and model checks, and up to five more for a ci run still concluding
+    timeout-minutes: 20
+    # the check-runs of the tagged commit are what the verdict step reads
+    permissions:
+      contents: read
+      checks: read
     outputs:
       tag: ${{ steps.resolve.outputs.tag }}
       version: ${{ steps.resolve.outputs.version }}
@@ -56,6 +63,16 @@ jobs:
             echo "tag=$tag"
             echo "version=${tag#v}"
           } >> "$GITHUB_OUTPUT"
+
+      # A release follows the verdict. The tagged commit is published only when its `ci`
+      # check (the aggregate verdict of validate.yml, the one status a merge is held to)
+      # concluded success. v0.3.1, v0.5.0, v0.6.0 and v0.7.0 were published from commits
+      # whose `ci` concluded failure, because nothing here asked. A verdict that cannot be
+      # read, or is still running after the wait, refuses too (exit 12): it is not a pass.
+      - name: the tagged commit passed ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/release-verdict --tag "${{ steps.resolve.outputs.tag }}" --wait 300
 
       - uses: ./.github/actions/setup-rust
 

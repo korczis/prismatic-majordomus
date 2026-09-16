@@ -30,7 +30,7 @@ mkdir -p lib test && echo a > lib/a && echo t > test/a_test && git add . && git 
 echo b >> lib/a
 "$MJ" question add "is this the right table?" >/dev/null
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL blockers'
 expect_grep 'blocking doctrines:'
 expect_grep 'majordomus.blocker-resolution'
@@ -78,5 +78,5 @@ expect_exit 0 "$MJ" finish --outcome no_match --note "$NOTE"
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
 sed -i.bak 's/^    - note_present$/    - note_present\n    - invented_requirement/' .ai/repo/policy.yaml
 rm -f .ai/repo/policy.yaml.bak
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep "FAIL contract .* 'invented_requirement', which no doctrine defines"

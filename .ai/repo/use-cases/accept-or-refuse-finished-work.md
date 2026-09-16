@@ -39,7 +39,7 @@ steps:
       exit: 0
       stdout_contains: ['^opened for t-']
   - id: refused-while-open
-    run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
+    run: ['finish', '--outcome', 'completed', '--verify-command', 'test -d .ai']
     note: 'an open question is a blocker; completed is refused'
     expect:
       exit: 10
@@ -51,7 +51,7 @@ steps:
       exit: 0
       stdout_contains: ['resolved']
   - id: accepted
-    run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
+    run: ['finish', '--outcome', 'completed', '--verify-command', 'test -d .ai']
     note: 'every line of the finish contract passes and the outcome is recorded'
     expect:
       exit: 0

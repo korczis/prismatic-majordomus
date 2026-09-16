@@ -39,7 +39,7 @@ printf 'a note\n' | "$MJ" checkpoint >/dev/null
 "$MJ" question resolve 1 --answer "staging only" >/dev/null
 echo b >> lib/a
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-"$MJ" finish --outcome completed --verify-command true >/dev/null
+"$MJ" finish --outcome completed --verify-command "test -d .ai" >/dev/null
 
 # oldest first, so a filtered run reads as a narrative
 expect_exit 0 "$MJ" history --all

@@ -36,7 +36,7 @@ expect_exit 0 "$MJ" question list
 expect_grep 'which of the two callback URLs'
 printf '# Objective\n\nsecond piece\n\n# Current State\n\ndone\n\n# Next Action\n\nnothing\n' > note2.md
 "$MJ" handover < note2.md >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep '1 unresolved question\(s\) on this branch'
 expect_grep 'which of the two callback URLs'
 expect_grep 'majordomus.blocker-resolution'
@@ -44,7 +44,7 @@ expect_grep 'majordomus.blocker-resolution'
 # --- and the second task can clear it, though it did not open it. A gate nobody can clear
 #     is a gate that gets worked around.
 expect_exit 0 "$MJ" question resolve "callback" --answer "the /auth/cb one; the other is a legacy alias"
-expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'finish: t-.* completed'
 
 # --- the record of who asked survives resolution: the entry keeps the task that opened it
@@ -61,7 +61,7 @@ grep -q '\[unresolved\] <task id>' .ai/local/state/open-questions.md \
 "$MJ" start "third piece of work" --scope lib,note.md,note2.md,tool >/dev/null
 printf '# Objective\n\nthird\n\n# Current State\n\ndone\n\n# Next Action\n\nnothing\n' > note.md
 "$MJ" handover < note.md >/dev/null
-expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'none open'
 
 # ---------------------------------------------------------------- the mutation
@@ -81,10 +81,10 @@ printf '# Objective\n\nfourth\n\n# Current State\n\nasked\n\n# Next Action\n\nan
 "$M2" start "fifth piece of work" --scope lib,note.md,note2.md,tool >/dev/null
 printf '# Objective\n\nfifth\n\n# Current State\n\ndone\n\n# Next Action\n\nnothing\n' > note.md
 "$M2" handover < note.md >/dev/null
-expect_exit 0 "$M2" finish --outcome completed --verify-command "true"
+expect_exit 0 "$M2" finish --outcome completed --verify-command "test -d .ai"
 # ... the narrowed gate let it through, which is the defect. The real one must not.
 "$MJ" start "sixth piece of work" --scope lib,note.md,note2.md,tool >/dev/null
 printf '# Objective\n\nsixth\n\n# Current State\n\ndone\n\n# Next Action\n\nnothing\n' > note.md
 "$MJ" handover < note.md >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'unresolved question\(s\) on this branch'

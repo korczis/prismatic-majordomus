@@ -28,10 +28,12 @@ created
   .ai/repo/use-cases/
   .ai/repo/applications/
   .ai/repo/why/
+  .ai/repo/features/
   .ai/repo/sessions/README.md
   .ai/repo/deployments/README.md
   .ai/repo/project/README.md
   .gitignore:.ai/local/
+  .gitignore:.ai/repo/**/.tmp.*
 local state: .ai/local/state/ (ignored by git; this checkout's own)
 next: majordomus update      # generate the provider instruction files named in the policy
 next: majordomus doctor      # verify nothing is declared that is not wired
@@ -45,7 +47,7 @@ $ majordomus update
 create AGENTS.md
 create CLAUDE.md
 create GEMINI.md
-generated 3 target(s) from policy 22576d2e3654; each carries its own stamp
+generated 3 target(s) from policy 021bc2a0f24b; each carries its own stamp
 ```
 
 `doctor` says exactly what is still missing:
@@ -56,30 +58,31 @@ OK   layout      .ai/manifest.yaml — schema ai-repository/v1
 OK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares
 OK   layout      .ai/local/ — ignored, and nothing under it is tracked
 OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
-OK   layout      .ai/local/state/handovers — present
-OK   layout      .ai/local/state/checkpoints — present
 OK   layout      .ai/repo/prompts — present
+OK   layout      .ai/local/state/handovers — present, 0 record(s)
+OK   layout      .ai/local/state/checkpoints — present, 0 record(s)
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   policy      23 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   policy      29 key(s) — every policy value the code reads is declared, with no reader-side default
 OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
 OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
-OK   context     .ai/ — 17 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
+OK   context     .ai/ — 18 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 OK   policy      .ai/repo/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed; default 'implementation' exists
 INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    39 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+OK   command     surface — 30 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   doctrine    45 of 56 rule(s) carry a validator — validator, dispatch, propagation, test and CI resolve for every one of the 45; the remaining 11 declare no validator and this check does not examine them
 FAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]
 FAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
 OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
+OK   lifecycle   activity — 0 episode(s) opened here; too few to judge whether the writers stopped
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   projection  AGENTS.md — content matches its stamp
 OK   projection  CLAUDE.md — content matches its stamp
 OK   projection  GEMINI.md — content matches its stamp
-OK   budget      AGENTS.md — 32 lines, budget 150
+OK   budget      AGENTS.md — 42 lines, budget 150
 OK   links       AGENTS.md — all references resolve
 OK   counts      AGENTS.md — no hardcoded counts
 OK   context     builder — 18 lines, budget 300  [reproduce: majordomus context]
@@ -87,24 +90,30 @@ OK   capture     share/schemas/majordomus/capture/capture.v1 — 2 file(s) descr
 OK   capture     .ai/local/prompts — ignored and untracked
 OK   capture     .ai/local/prompts — no records yet; the archive is empty
 OK   capture     .ai/local/prompts — every prompt is present as all three: the record, the Markdown and the YAML
+OK   prompts     .ai/local/prompts — the archive and every record in it are readable by their owner only
+OK   prompts     .ai/local/prompts — no records yet; the archive is empty
 OK   prompt      4 asset(s) — front matter valid, every token known
 OK   records     open-questions.md — every entry parses
 OK   retention   ledger — 1 lines, cap 5000
 OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.2.0))
-OK   rules       50 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
-OK   schema      rules — 50 rule(s) resolve in one order: the vendored baseline in manifest order, then the project's, as a dependency graph
-OK   schema      share/kinds.yaml — 28 kind(s); every one that carries metadata declares a schema
-OK   schema      share/schemas — 0 schema(s), each valid JSON and each applied — by a kind, or through its allow-list where the layer is not indexed
+OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.6.0))
+OK   rules       56 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 46 carry a validator, 10 are normative text this tool does not check
+OK   rules       blocking — all 41 blocking rule(s) carry a validator
+OK   schema      rules — 56 rule(s) resolve in one order: the vendored baseline in manifest order, then the project's, as a dependency graph
+OK   schema      share/kinds.yaml — 31 kind(s); every one that carries metadata declares a schema
+OK   schema      share/schemas — 46 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document's contract (13)
+WARN session     .ai/repo/sessions/ — 1 record(s) exist here and are committed nowhere, so they reach no surface: README.md  [reproduce: git add .ai/repo/sessions && majordomus derive]
+OK   records     0 record(s) — every changed_files names work, not generated or local state
 OK   session     .ai/local/session-contexts — ignored and untracked
 OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
-INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
 INFO env         - — bash 5.3.15, git 2.55.0, jq 1.8.2, shellcheck present
-WARN budget      doctor — 27501 ms, over the budget of 20000 ms (policy benchmark.budget.doctor_ms)  [reproduce: MJ_TIMING=1 majordomus doctor]
+WARN clone       unpushed — commits on no remote: main(1) — work on one disk is invisible to every other session and cannot be integrated  [reproduce: git push -u origin <branch>]
+WARN budget      doctor — 135946 ms, over the budget of 20000 ms (policy benchmark.budget.doctor_ms)  [reproduce: MJ_TIMING=1 majordomus doctor]
 doctor: 2 failure(s)
 ```
 
@@ -116,30 +125,31 @@ OK   layout      .ai/manifest.yaml — schema ai-repository/v1
 OK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares
 OK   layout      .ai/local/ — ignored, and nothing under it is tracked
 OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
-OK   layout      .ai/local/state/handovers — present
-OK   layout      .ai/local/state/checkpoints — present
 OK   layout      .ai/repo/prompts — present
+OK   layout      .ai/local/state/handovers — present, 0 record(s)
+OK   layout      .ai/local/state/checkpoints — present, 0 record(s)
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   policy      23 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   policy      29 key(s) — every policy value the code reads is declared, with no reader-side default
 OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
 OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
-OK   context     .ai/ — 17 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
+OK   context     .ai/ — 18 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 OK   policy      .ai/repo/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed; default 'implementation' exists
 INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    39 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+OK   command     surface — 30 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   doctrine    45 of 56 rule(s) carry a validator — validator, dispatch, propagation, test and CI resolve for every one of the 45; the remaining 11 declare no validator and this check does not examine them
 OK   wiring      doctor-on-commit — wired via .git/hooks/pre-commit
 OK   wiring      finish-on-push — wired via .git/hooks/pre-push
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
 OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
+OK   lifecycle   activity — 0 episode(s) opened here; too few to judge whether the writers stopped
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   projection  AGENTS.md — content matches its stamp
 OK   projection  CLAUDE.md — content matches its stamp
 OK   projection  GEMINI.md — content matches its stamp
-OK   budget      AGENTS.md — 32 lines, budget 150
+OK   budget      AGENTS.md — 42 lines, budget 150
 OK   links       AGENTS.md — all references resolve
 OK   counts      AGENTS.md — no hardcoded counts
 OK   context     builder — 18 lines, budget 300  [reproduce: majordomus context]
@@ -147,24 +157,30 @@ OK   capture     share/schemas/majordomus/capture/capture.v1 — 2 file(s) descr
 OK   capture     .ai/local/prompts — ignored and untracked
 OK   capture     .ai/local/prompts — no records yet; the archive is empty
 OK   capture     .ai/local/prompts — every prompt is present as all three: the record, the Markdown and the YAML
+OK   prompts     .ai/local/prompts — the archive and every record in it are readable by their owner only
+OK   prompts     .ai/local/prompts — no records yet; the archive is empty
 OK   prompt      4 asset(s) — front matter valid, every token known
 OK   records     open-questions.md — every entry parses
 OK   retention   ledger — 1 lines, cap 5000
 OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.2.0))
-OK   rules       50 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
-OK   schema      rules — 50 rule(s) resolve in one order: the vendored baseline in manifest order, then the project's, as a dependency graph
-OK   schema      share/kinds.yaml — 28 kind(s); every one that carries metadata declares a schema
-OK   schema      share/schemas — 0 schema(s), each valid JSON and each applied — by a kind, or through its allow-list where the layer is not indexed
+OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.6.0))
+OK   rules       56 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 46 carry a validator, 10 are normative text this tool does not check
+OK   rules       blocking — all 41 blocking rule(s) carry a validator
+OK   schema      rules — 56 rule(s) resolve in one order: the vendored baseline in manifest order, then the project's, as a dependency graph
+OK   schema      share/kinds.yaml — 31 kind(s); every one that carries metadata declares a schema
+OK   schema      share/schemas — 46 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document's contract (13)
+WARN session     .ai/repo/sessions/ — 1 record(s) exist here and are committed nowhere, so they reach no surface: README.md  [reproduce: git add .ai/repo/sessions && majordomus derive]
+OK   records     0 record(s) — every changed_files names work, not generated or local state
 OK   session     .ai/local/session-contexts — ignored and untracked
 OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
-INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
 INFO env         - — bash 5.3.15, git 2.55.0, jq 1.8.2, shellcheck present
-INFO budget      doctor — 17293 ms of 20000 ms  [reproduce: MJ_TIMING=1 majordomus doctor]
+WARN clone       unpushed — commits on no remote: main(1) — work on one disk is invisible to every other session and cannot be integrated  [reproduce: git push -u origin <branch>]
+WARN budget      doctor — 68348 ms, over the budget of 20000 ms (policy benchmark.budget.doctor_ms)  [reproduce: MJ_TIMING=1 majordomus doctor]
 doctor: 0 failure(s)
 ```
 
@@ -172,7 +188,7 @@ doctor: 0 failure(s)
 
 ```
 $ majordomus start fix OAuth callback dropping state --scope lib/auth,test/oauth_test.rb --profile debugging --owner alice
-started t-20260906165010-104f  profile=debugging  scope=lib/auth,test/oauth_test.rb
+started t-20260915203545-615f  profile=debugging  scope=lib/auth,test/oauth_test.rb
 next: majordomus context; checkpoint every 15m; majordomus check before claiming anything
 ```
 
@@ -182,45 +198,52 @@ The worker edits `lib/auth/oauth.rb` and also, by mistake, `test/other.rb`, whic
 
 ```
 $ majordomus check
-OK   checkpoint  t-20260906165010-104f — 0m ago, interval 15m
+OK   checkpoint  t-20260915203545-615f — 0m ago, interval 15m
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   blockers    t-20260906165010-104f — none open
+OK   blockers    t-20260915203545-615f — none open
 OK   records     decisions.md — every entry is attributable
-FAIL scope       test/other.rb — outside claimed scope (lib/auth,test/oauth_test.rb)  [reproduce: git status --porcelain; git diff --name-only ad4b3b2c5969150acb7c1c5c5484e7e2644e64fb HEAD]
-OK   state       t-20260906165010-104f — exact (head ad4b3b2)
-INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
-check: 8 finding(s), 1 failing
+FAIL scope       test/other.rb — outside claimed scope (lib/auth,test/oauth_test.rb)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= 8c644190ac38effc28a45229f772cf41554e9b26..HEAD]
+OK   state       t-20260915203545-615f — exact (head 8c64419)
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO obligation  t-20260915203545-615f — the task declares no obligations
+INFO gate        t-20260915203545-615f — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+check: 10 finding(s), 1 failing
 ```
 
 After removing the out-of-scope file:
 
 ```
 $ majordomus check
-OK   checkpoint  t-20260906165010-104f — 0m ago, interval 15m
+OK   checkpoint  t-20260915203545-615f — 0m ago, interval 15m
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   blockers    t-20260906165010-104f — none open
+OK   blockers    t-20260915203545-615f — none open
 OK   records     decisions.md — every entry is attributable
-OK   scope       t-20260906165010-104f — 1 touched file(s), all within scope
-OK   state       t-20260906165010-104f — exact (head ad4b3b2)
-INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
-check: 8 finding(s), 0 failing
+OK   scope       t-20260915203545-615f — 1 touched file(s), all within scope
+OK   state       t-20260915203545-615f — exact (head 8c64419)
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO obligation  t-20260915203545-615f — the task declares no obligations
+INFO gate        t-20260915203545-615f — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+check: 10 finding(s), 0 failing
 ```
 
 ## 5. Try to finish too early
 
 ```
-$ majordomus finish --outcome completed --verify-command true
-OK   blockers    t-20260906165010-104f — none open
-FAIL note        t-20260906165010-104f — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]
-FAIL regression  t-20260906165010-104f — profile debugging requires a regression test; no test path among touched files  [reproduce: git diff --name-only ad4b3b2c5969150acb7c1c5c5484e7e2644e64fb HEAD; git status --porcelain]
-OK   scope       t-20260906165010-104f — 1 touched file(s), all within scope
-OK   state       t-20260906165010-104f — exact (head ad4b3b2)
-INFO continuity  t-20260906165010-104f — applies to partial and blocked
-INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
-OK   verification t-20260906165010-104f — true — exit 0, 0s
+$ majordomus finish --outcome completed --verify-command test -f test/oauth_test.rb
+OK   blockers    t-20260915203545-615f — none open
+FAIL note        t-20260915203545-615f — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]
+FAIL regression  t-20260915203545-615f — profile debugging requires a regression test; no test path among touched files  [reproduce: git diff --name-only 8c644190ac38effc28a45229f772cf41554e9b26 HEAD; git status --porcelain]
+OK   scope       t-20260915203545-615f — 1 touched file(s), all within scope
+OK   state       t-20260915203545-615f — exact (head 8c64419)
+INFO continuity  t-20260915203545-615f — applies to partial and blocked
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+OK   verification t-20260915203545-615f — test -f test/oauth_test.rb — exit 0, 1s
+INFO obligation  t-20260915203545-615f — the task declares no obligations
+INFO gate        t-20260915203545-615f — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+INFO gate        t-20260915203545-615f — not in verification.finish_requires
 finish: refused, 2 unmet
 blocking doctrines:
 - majordomus.note-integrity- majordomus.profile-requirements
@@ -230,16 +253,16 @@ blocking doctrines:
 
 ```
 $ printf "# Objective\n...\n# Current State\n...\n# Next Action\n...\n" | majordomus handover
-.ai/local/state/handovers/20260906T165023Z--main--ad4b3b2--2bcf2884ff2336d7.md
+.ai/local/state/handovers/20260915T203611Z--main--8c64419--376f4a43ea89e9d4.md
 ```
 
 ```
 $ majordomus handover --resolve
-Handover: .ai/local/state/handovers/20260906T165023Z--main--ad4b3b2--2bcf2884ff2336d7.md
+Handover: .ai/local/state/handovers/20260915T203611Z--main--8c64419--376f4a43ea89e9d4.md
 Match: same_worktree_same_branch
 Git state: exact
-Created: 2026-09-06T16:50:22Z (0m ago)
-Task: t-20260906165010-104f
+Created: 2026-09-15T20:36:10Z (0m ago)
+Task: t-20260915203545-615f
 ---
 
 # Objective
@@ -251,44 +274,47 @@ Add the regression test and finish.
 ```
 
 ```
-$ majordomus finish --outcome completed --verify-command true
-OK   blockers    t-20260906165010-104f — none open
-OK   note        t-20260906165010-104f — 20260906T165023Z--main--ad4b3b2--2bcf2884ff2336d7.md
-OK   regression  t-20260906165010-104f — a test path was touched
-OK   scope       t-20260906165010-104f — 2 touched file(s), all within scope
-OK   state       t-20260906165010-104f — exact (head ad4b3b2)
-INFO continuity  t-20260906165010-104f — applies to partial and blocked
-INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
-OK   verification t-20260906165010-104f — true — exit 0, 0s
-finish: t-20260906165010-104f completed
+$ majordomus finish --outcome completed --verify-command test -f test/oauth_test.rb
+OK   blockers    t-20260915203545-615f — none open
+OK   note        t-20260915203545-615f — 20260915T203611Z--main--8c64419--376f4a43ea89e9d4.md
+OK   regression  t-20260915203545-615f — a test path was touched
+OK   scope       t-20260915203545-615f — 2 touched file(s), all within scope
+OK   state       t-20260915203545-615f — exact (head 8c64419)
+INFO continuity  t-20260915203545-615f — applies to partial and blocked
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+OK   verification t-20260915203545-615f — test -f test/oauth_test.rb — exit 0, 0s
+INFO obligation  t-20260915203545-615f — the task declares no obligations
+INFO gate        t-20260915203545-615f — this repository declares no readable CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+INFO gate        t-20260915203545-615f — not in verification.finish_requires
+finish: t-20260915203545-615f completed
 ```
 
 ## 7. What was recorded
 
 ```
 $ cat .ai/local/state/current.yaml
-id: t-20260906165010-104f
+id: t-20260915203545-615f
 task: "fix OAuth callback dropping state"
 profile: debugging
 owner: "alice"
 scope:
   - lib/auth
   - test/oauth_test.rb
-started_at: 2026-09-06T16:50:10Z
-checkpoint_at: 2026-09-06T16:50:30Z
+started_at: 2026-09-15T20:35:45Z
+checkpoint_at: 2026-09-15T20:36:24Z
 outcome: completed
 # computed from git; never authored
 repository_id: <repo>/.git
 worktree: <repo>
 branch: main
-head: ad4b3b2c5969150acb7c1c5c5484e7e2644e64fb
+head: 8c644190ac38effc28a45229f772cf41554e9b26
 working_tree: clean
 ```
 
 ```
 $ tail -n 1 .ai/local/state/ledger.jsonl
-{"ts":"2026-09-06T16:50:30Z","event":"task.finished","head":"ad4b3b2c5969150acb7c1c5c5484e7e2644e64fb","branch":"main","by":"majordomus/0.2.0","task_id":"t-20260906165010-104f","outcome":"completed","contract":{"majordomus.blocker-resolution":"pass","majordomus.note-integrity":"pass","majordomus.profile-requirements":"pass","majordomus.scope-integrity":"pass","majordomus.state-consistency":"pass","majordomus.task-continuity":"skipped","majordomus.use-case-coverage":"pass","majordomus.verification-integrity":"pass"},"verify":{"command":"true","exit":0,"seconds":0},"checkpoints":0}
+{"ts":"2026-09-15T20:36:24Z","event":"task.finished","head":"8c644190ac38effc28a45229f772cf41554e9b26","branch":"main","by":"majordomus/0.7.0","task_id":"t-20260915203545-615f","outcome":"completed","contract":{"majordomus.blocker-resolution":"pass","majordomus.note-integrity":"pass","majordomus.profile-requirements":"pass","majordomus.scope-integrity":"pass","majordomus.state-consistency":"pass","majordomus.task-continuity":"skipped","majordomus.use-case-coverage":"pass","majordomus.verification-integrity":"pass","majordomus.obligation-closure":"pass","majordomus.completion-gates":"skipped","majordomus.publication-currency":"skipped"},"verify":{"command":"test -f test/oauth_test.rb","exit":0,"seconds":0},"checkpoints":0}
 ```
 
 ## 8. Drift is visible
@@ -301,19 +327,20 @@ OK   layout      .ai/manifest.yaml — schema ai-repository/v1
 OK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares
 OK   layout      .ai/local/ — ignored, and nothing under it is tracked
 OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
-INFO checkpoint  t-20260906165010-104f — outcome is completed; freshness applies while a task is active
+INFO checkpoint  t-20260915203545-615f — outcome is completed; freshness applies while a task is active
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   policy      23 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   policy      29 key(s) — every policy value the code reads is declared, with no reader-side default
 OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
 OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
-OK   context     .ai/ — 17 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
+OK   context     .ai/ — 18 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 DRIFT policy      .ai/repo/policy.yaml — policy or profiles changed after the last update of AGENTS.md CLAUDE.md GEMINI.md  [reproduce: majordomus update --dry-run]
 INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   command     surface — 30 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
-OK   handover    20260906T165023Z--main--ad4b3b2--2bcf2884ff2336d7.md — exact, 0m ago
+OK   handover    20260915T203611Z--main--8c64419--376f4a43ea89e9d4.md — exact, 0m ago
+OK   lifecycle   activity — 0 episode(s) opened here; too few to judge whether the writers stopped
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 DRIFT projection  AGENTS.md — content differs from its stamp (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
 OK   projection  CLAUDE.md — content matches its stamp
@@ -323,24 +350,27 @@ OK   capture     share/schemas/majordomus/capture/capture.v1 — 2 file(s) descr
 OK   capture     .ai/local/prompts — ignored and untracked
 OK   capture     .ai/local/prompts — no records yet; the archive is empty
 OK   capture     .ai/local/prompts — every prompt is present as all three: the record, the Markdown and the YAML
+OK   prompts     .ai/local/prompts — the archive and every record in it are readable by their owner only
+OK   prompts     .ai/local/prompts — no records yet; the archive is empty
 OK   prompt      4 asset(s) — front matter valid, every token known
 OK   records     open-questions.md — every entry parses
 OK   retention   ledger — 4 lines, cap 5000
 OK   retention   handovers — 1 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.2.0))
-OK   rules       50 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
-OK   schema      rules — 50 rule(s) resolve in one order: the vendored baseline in manifest order, then the project's, as a dependency graph
-OK   schema      share/kinds.yaml — 28 kind(s); every one that carries metadata declares a schema
-OK   schema      share/schemas — 0 schema(s), each valid JSON and each applied — by a kind, or through its allow-list where the layer is not indexed
-OK   scope       t-20260906165010-104f — 2 touched file(s), all within scope
+OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.6.0))
+OK   rules       56 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 46 carry a validator, 10 are normative text this tool does not check
+OK   rules       blocking — all 41 blocking rule(s) carry a validator
+OK   schema      rules — 56 rule(s) resolve in one order: the vendored baseline in manifest order, then the project's, as a dependency graph
+OK   schema      share/kinds.yaml — 31 kind(s); every one that carries metadata declares a schema
+OK   schema      share/schemas — 46 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document's contract (13)
+INFO scope       t-20260915203545-615f — outcome is completed; a scope is what an active task claims, and a finished one claims nothing
 OK   session     .ai/local/session-contexts — ignored and untracked
 OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
-OK   state       t-20260906165010-104f — exact (head ad4b3b2)
-WARN budget      watch — 31547 ms, over the budget of 20000 ms (policy benchmark.budget.watch_ms)  [reproduce: MJ_TIMING=1 majordomus watch]
-OK   verification t-20260906165010-104f — completed with a finish record
+OK   state       t-20260915203545-615f — exact (head 8c64419)
+WARN budget      watch — 48299 ms, over the budget of 20000 ms (policy benchmark.budget.watch_ms)  [reproduce: MJ_TIMING=1 majordomus watch]
+OK   verification t-20260915203545-615f — completed with a finish record
 watch: 2 drift finding(s)
 ```
 

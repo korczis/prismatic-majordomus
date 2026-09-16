@@ -44,7 +44,9 @@
 #   scripts/ci/pages-check --owed-after N  seconds master may be ahead before it is a refusal
 #
 # Exit: 0 ok · 2 usage · 10 the published site is not a projection of master · 12 something
-# needed could not be read (no gh-pages, no network when one was required).
+# needed could not be read (no gh-pages, no network when one was required), or a half of the
+# verdict was not measured — GitHub's own build unreadable, still building, or not yet of the
+# head of the branch. 12 is never a pass: the verdict line names the half that is missing.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -86,6 +88,9 @@ bad()  { printf 'FAIL  %s\n' "$*"; fail=1; }
 # a check that is absent must not be readable as a check that passed.
 note() { printf 'note  %s\n' "$*"; }
 fail=0
+# The halves of the verdict that were asked and could not be answered. The final line states
+# the whole guarantee only when this is empty; otherwise the gate exits 12 and names them.
+unmeasured=""
 on_trunk=0
 
 # ---------------------------------------------------------------- 1. what was published
@@ -268,13 +273,25 @@ else
         say "      the branch is right and the site is not; re-run the build by dispatching the"
         say "      pages workflow, or push $BRANCH again. The pages workflow goes red for this"
         say "      now as well, at the moment it happens; this is what notices afterwards." ;;
+    # Not a verdict, and so not a pass. Until 2026-09-15 these three only printed a note and
+    # the gate went on to exit 0 with the sentence that claims GitHub's build did not error —
+    # the one half it had not measured. A build in flight is weather, not a failure, which is
+    # why this is 12 and not 10; it is still not something this gate saw succeed.
     *)  if [ "$b_status" = unreadable ] || [ -z "$b_status" ]; then
           note "GitHub's Pages build could not be read (${b_error:-no gh, no token, or no pages:read}); not measured"
+        elif [ "$b_commit" = "$head_sha" ]; then
+          note "GitHub's Pages build of ${b_commit:0:12} is $b_status, not yet a verdict; not measured"
         else
-          note "GitHub's newest Pages build is of ${b_commit:0:12} ($b_status), not the head of $BRANCH ${head_sha:0:12}"
-        fi ;;
+          note "GitHub's newest Pages build is of ${b_commit:0:12} ($b_status), not the head of $BRANCH ${head_sha:0:12}; not measured"
+        fi
+        unmeasured="GitHub's own build of $BRANCH" ;;
   esac
 fi
 
 [ "$fail" = 0 ] || exit 10
+if [ -n "$unmeasured" ]; then
+  say "pages-check: NOT DETERMINED — nothing measured was wrong, but $unmeasured was not measured;"
+  say "             the published site is not shown to be a projection of $TRUNK that is being served"
+  exit 12
+fi
 say "pages-check: the published site is a projection of $TRUNK, is current, and is being served"
