@@ -1763,6 +1763,40 @@
       "tool": "majordomus_rule"
     },
     {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus served observe",
+      "id": "served.observe",
+      "kind": "command",
+      "module": "served",
+      "module_route": "/registry/modules/served/",
+      "resource": null,
+      "route": "/registry/capabilities/served-observe/",
+      "slug": "served-observe",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/served.rs",
+      "tests": [],
+      "title": "Observe what a deployment serves",
+      "tool": null
+    },
+    {
+      "api_anchor": "/docs/api/served/#op-served-show",
+      "claims": [],
+      "cli": "majordomus served show",
+      "id": "served.show",
+      "kind": "query",
+      "module": "served",
+      "module_route": "/registry/modules/served/",
+      "resource": "majordomus://served",
+      "route": "/registry/capabilities/served-show/",
+      "slug": "served-show",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/served.rs",
+      "tests": [],
+      "title": "What each deployment was last seen serving",
+      "tool": "majordomus_served"
+    },
+    {
       "api_anchor": "/docs/api/server/#op-server-status",
       "claims": [],
       "cli": "majordomus serve status",
@@ -2401,9 +2435,9 @@
     ]
   },
   "counts": {
-    "capabilities": 113,
+    "capabilities": 115,
     "claims": 51,
-    "modules": 37
+    "modules": 38
   },
   "generator": "majordomus-cli 0.7.0",
   "modules": [
@@ -3251,6 +3285,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/rules.rs",
       "title": "Rules"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "served.observe",
+          "route": "/registry/capabilities/served-observe/",
+          "slug": "served-observe"
+        },
+        {
+          "id": "served.show",
+          "route": "/registry/capabilities/served-show/",
+          "slug": "served-show"
+        }
+      ],
+      "claims": [],
+      "id": "served",
+      "route": "/registry/modules/served/",
+      "slug": "served",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/served.rs",
+      "title": "Served deployments"
     },
     {
       "capabilities": [

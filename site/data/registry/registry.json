@@ -6,28 +6,28 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "b6e5486b7f31c8f670f96f4bb44fbb1f91c6f372536dc14fae1caaace5ceace3",
+    "fingerprint": "0fb17b404556760eb0720392a38779a1ce504ba570c9666faa7b73c7334e94b9",
     "summary": {
-      "total": 1464,
-      "builtin": 113,
-      "declarative": 1351,
+      "total": 1467,
+      "builtin": 115,
+      "declarative": 1352,
       "by_kind": {
-        "command": 7,
-        "query": 106,
-        "resource": 1351
+        "command": 8,
+        "query": 107,
+        "resource": 1352
       },
       "by_stability": {
-        "behaviorally_verified": 100,
+        "behaviorally_verified": 102,
         "experimental": 7,
-        "implemented": 1357
+        "implemented": 1358
       },
-      "mcp_tools": 110,
-      "mcp_resources": 1392,
-      "http_routes": 112,
-      "cli_commands": 52,
-      "modules": 66,
-      "benchmark_required": 108,
-      "benchmark_waived": 5,
+      "mcp_tools": 111,
+      "mcp_resources": 1394,
+      "http_routes": 113,
+      "cli_commands": 54,
+      "modules": 67,
+      "benchmark_required": 109,
+      "benchmark_waived": 6,
       "cached": 35
     },
     "builtin": [
@@ -33705,6 +33705,528 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs"
       },
       {
+        "id": "served.observe",
+        "module": "served",
+        "kind": "command",
+        "title": "Observe what a deployment serves",
+        "description": "Fetches the build identity the site serves (`build.json` under the configured base URL, one bounded probe, no shell), judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks).",
+        "input": {
+          "name": "ObserveInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "deployment": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The name the observation is recorded under; `pages` when absent."
+              },
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The site's base URL; `base_url` of `site/config.toml` when absent."
+              },
+              "identity": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The identity file under the base; `build.json` when absent."
+              },
+              "commit": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit expected to be served, any revision git resolves; `HEAD` when absent."
+              },
+              "timeout_seconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The bound on the probe in seconds; ten when absent."
+              },
+              "dry_run": {
+                "type": "boolean",
+                "description": "Judge without recording. Recording is the default, because an observation nobody\nkept is a measurement nobody can read.",
+                "default": false
+              }
+            },
+            "description": "The input of `served.observe`.\n\n```\nuse majordomus_cli::capability::builtin::served::ObserveInput;\nlet input: ObserveInput = serde_json::from_str(r#\"{\"commit\":\"HEAD\"}\"#).unwrap();\nassert_eq!(input.commit.as_deref(), Some(\"HEAD\"));\nassert!(serde_json::from_str::<ObserveInput>(r#\"{\"shell\":\"rm\"}\"#).is_err());\n```",
+            "title": "ObserveInput"
+          }
+        },
+        "output": {
+          "name": "Observed",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "observation": {
+                "$ref": "#/$defs/Observation",
+                "description": "The observation, with its judgement."
+              },
+              "recorded": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Where it was recorded, repository-relative; absent on a dry run."
+              },
+              "exit_code": {
+                "type": "integer",
+                "format": "int32",
+                "description": "The exit status the command line reports: 0 served, 10 a measured no, 12 unanswered."
+              }
+            },
+            "required": [
+              "observation",
+              "exit_code"
+            ],
+            "description": "What `served.observe` did.",
+            "title": "Observed",
+            "$defs": {
+              "Observation": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "string",
+                    "description": "Always `OBSERVATION_SCHEMA`."
+                  },
+                  "deployment": {
+                    "type": "string",
+                    "description": "Which deployment: the name the caller observed it under (`pages`, or a deployment\nobject's id)."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The identity URL probed."
+                  },
+                  "expected": {
+                    "type": "string",
+                    "description": "The commit that was expected, full."
+                  },
+                  "served": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/BuildIdentity"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What was served, when a build identity was received."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/ServedVerdict",
+                    "description": "The verdict."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why, in one line a reader can act on."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When, RFC 3339 UTC."
+                  }
+                },
+                "required": [
+                  "schema",
+                  "deployment",
+                  "url",
+                  "expected",
+                  "verdict",
+                  "reason",
+                  "at"
+                ],
+                "description": "One observation of one deployment, as recorded."
+              },
+              "BuildIdentity": {
+                "type": "object",
+                "properties": {
+                  "commit": {
+                    "type": "string",
+                    "description": "The full commit the served build was made from."
+                  },
+                  "dirty": {
+                    "type": "boolean",
+                    "description": "Whether the tree it was built from had uncommitted changes. A dirty build names a\ncommit it does not equal, so it proves no commit."
+                  },
+                  "source_version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version the build states, when it states one."
+                  },
+                  "source_hash": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The fingerprint of the site's canonical inputs, when the build states one."
+                  }
+                },
+                "required": [
+                  "commit",
+                  "dirty"
+                ],
+                "description": "The build identity a deployment serves, as far as this module relies on it. Other\nfields of the served document are ignored rather than refused: the document is written\nby another program, and a field it adds is not a malformation."
+              },
+              "ServedVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "served",
+                    "description": "The served build is the expected commit or contains it. The only passing verdict."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "The served build does not contain the expected commit: the deployment is behind."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreachable",
+                    "description": "Nothing was received. The deployment was not measured."
+                  },
+                  {
+                    "type": "string",
+                    "const": "malformed",
+                    "description": "Something was received and it is not a build identity."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dirty",
+                    "description": "The served build was made from an uncommitted tree, so it proves no commit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undecided",
+                    "description": "The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer."
+                  }
+                ],
+                "description": "What an observation says about the expected commit."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::served"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "served",
+              "observe"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment",
+          "evidence",
+          "verification"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs"
+      },
+      {
+        "id": "served.show",
+        "module": "served",
+        "kind": "query",
+        "title": "What each deployment was last seen serving",
+        "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
+        "input": {
+          "name": "ShowInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "commit": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit each record is re-judged against, any revision git resolves; `HEAD` when\nabsent."
+              },
+              "deployment": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only this deployment."
+              }
+            },
+            "description": "The input of `served.show`.",
+            "title": "ShowInput"
+          }
+        },
+        "output": {
+          "name": "ServedStanding",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "expected": {
+                "type": "string",
+                "description": "The full commit every record was re-judged against."
+              },
+              "observations": {
+                "type": "string",
+                "description": "The checkout-local file the records were read from."
+              },
+              "unreadable": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "Lines of that file that were not readable observations."
+              },
+              "deployments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DeploymentStanding"
+                },
+                "description": "One entry per deployment observed, in name order."
+              }
+            },
+            "required": [
+              "expected",
+              "observations",
+              "unreadable",
+              "deployments"
+            ],
+            "description": "Every deployment's standing against one commit.",
+            "title": "ServedStanding",
+            "$defs": {
+              "DeploymentStanding": {
+                "type": "object",
+                "properties": {
+                  "deployment": {
+                    "type": "string",
+                    "description": "The deployment name."
+                  },
+                  "observation": {
+                    "$ref": "#/$defs/Observation",
+                    "description": "The newest record of it."
+                  },
+                  "now": {
+                    "$ref": "#/$defs/Judgement",
+                    "description": "That record re-judged against the commit asked about. This, not the recorded\njudgement, is what a reader acts on."
+                  }
+                },
+                "required": [
+                  "deployment",
+                  "observation",
+                  "now"
+                ],
+                "description": "One deployment's newest record and what it proves about the commit asked."
+              },
+              "Observation": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "string",
+                    "description": "Always `OBSERVATION_SCHEMA`."
+                  },
+                  "deployment": {
+                    "type": "string",
+                    "description": "Which deployment: the name the caller observed it under (`pages`, or a deployment\nobject's id)."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The identity URL probed."
+                  },
+                  "expected": {
+                    "type": "string",
+                    "description": "The commit that was expected, full."
+                  },
+                  "served": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/BuildIdentity"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What was served, when a build identity was received."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/ServedVerdict",
+                    "description": "The verdict."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why, in one line a reader can act on."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When, RFC 3339 UTC."
+                  }
+                },
+                "required": [
+                  "schema",
+                  "deployment",
+                  "url",
+                  "expected",
+                  "verdict",
+                  "reason",
+                  "at"
+                ],
+                "description": "One observation of one deployment, as recorded."
+              },
+              "BuildIdentity": {
+                "type": "object",
+                "properties": {
+                  "commit": {
+                    "type": "string",
+                    "description": "The full commit the served build was made from."
+                  },
+                  "dirty": {
+                    "type": "boolean",
+                    "description": "Whether the tree it was built from had uncommitted changes. A dirty build names a\ncommit it does not equal, so it proves no commit."
+                  },
+                  "source_version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version the build states, when it states one."
+                  },
+                  "source_hash": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The fingerprint of the site's canonical inputs, when the build states one."
+                  }
+                },
+                "required": [
+                  "commit",
+                  "dirty"
+                ],
+                "description": "The build identity a deployment serves, as far as this module relies on it. Other\nfields of the served document are ignored rather than refused: the document is written\nby another program, and a field it adds is not a malformation."
+              },
+              "ServedVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "served",
+                    "description": "The served build is the expected commit or contains it. The only passing verdict."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "The served build does not contain the expected commit: the deployment is behind."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreachable",
+                    "description": "Nothing was received. The deployment was not measured."
+                  },
+                  {
+                    "type": "string",
+                    "const": "malformed",
+                    "description": "Something was received and it is not a build identity."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dirty",
+                    "description": "The served build was made from an uncommitted tree, so it proves no commit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undecided",
+                    "description": "The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer."
+                  }
+                ],
+                "description": "What an observation says about the expected commit."
+              },
+              "Judgement": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "$ref": "#/$defs/ServedVerdict",
+                    "description": "The verdict."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why, in one line a reader can act on."
+                  }
+                },
+                "required": [
+                  "verdict",
+                  "reason"
+                ],
+                "description": "The judgement of one served identity against one expected commit, with its reason."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::served"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_served",
+            "resource": {
+              "uri": "majordomus://served",
+              "name": "served"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/served"
+          },
+          "cli": {
+            "path": [
+              "served",
+              "show"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment",
+          "evidence",
+          "verification"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs"
+      },
+      {
         "id": "server.status",
         "module": "server",
         "kind": "query",
@@ -40749,6 +41271,19 @@
         "capability_ids": []
       },
       {
+        "id": "served",
+        "title": "Served deployments",
+        "description": "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 2,
+        "capability_ids": [
+          "served.observe",
+          "served.show"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs"
+      },
+      {
         "id": "server",
         "title": "Server",
         "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
@@ -40802,7 +41337,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 215,
+        "capabilities": 216,
         "capability_ids": []
       },
       {
@@ -40882,7 +41417,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c2e8a47682642f3d06dea998e2c22a00eecdfedd88a07e69422ecc3eec6c21b1",
+    "fingerprint": "7ca71c00b5809b8acd64a45892744dcb25ee27a52ac7cd7ae3c9924891bc59e8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40931,7 +41466,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 215,
+      "test": 216,
       "use-case": 46,
       "workspace": 1
     },
@@ -54449,6 +54984,14 @@
         "bytes": 7839
       },
       {
+        "uri": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
+        "kind": "test",
+        "identity": "test/cases/384_a_deployment_is_evidence.sh",
+        "path": "test/cases/384_a_deployment_is_evidence.sh",
+        "source_class": "case",
+        "bytes": 6091
+      },
+      {
         "uri": "majordomus://test/test/cases/40_project_model.sh",
         "kind": "test",
         "identity": "test/cases/40_project_model.sh",
@@ -55904,7 +56447,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 215
+      "objects": 216
     },
     {
       "name": "use-case",
@@ -73308,6 +73851,434 @@
       {
         "path": [
           "majordomus",
+          "served"
+        ],
+        "route": "/docs/cli/served/",
+        "executable": false,
+        "usage": "majordomus served [OPTIONS] <COMMAND>",
+        "about": "Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "served",
+              "observe"
+            ],
+            "route": "/docs/cli/served/observe/",
+            "executable": true,
+            "usage": "majordomus served observe [OPTIONS]",
+            "about": "Probe the build identity a deployment serves, judge it against a commit and record it",
+            "args": [
+              {
+                "name": "commit",
+                "long": "commit",
+                "positional": false,
+                "help": "The commit expected to be served (default HEAD)",
+                "value_name": "COMMIT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "url",
+                "long": "url",
+                "positional": false,
+                "help": "The site's base URL (default: base_url of site/config.toml)",
+                "value_name": "URL",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "identity",
+                "long": "identity",
+                "positional": false,
+                "help": "The identity file under the base (default build.json)",
+                "value_name": "IDENTITY",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "deployment",
+                "long": "deployment",
+                "positional": false,
+                "help": "The name the observation is recorded under (default pages)",
+                "value_name": "DEPLOYMENT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "timeout",
+                "long": "timeout",
+                "positional": false,
+                "help": "Bound on the probe, in seconds (default 10)",
+                "value_name": "TIMEOUT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "dry_run",
+                "long": "dry-run",
+                "positional": false,
+                "help": "Judge without recording",
+                "value_name": "DRY_RUN",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "served-observe-unreachable",
+                "title": "A deployment that could not be reached is not a deployment that is current",
+                "description": "One bounded probe of the build identity under the base URL, judged against HEAD. Nothing listens on the discard port, so nothing is received and the verdict is `unreachable` with exit 12 — the unanswered question, never the yes. `--dry-run` judges without recording. Against the public site the same command answers `served` (0) when the build contains the commit and `stale` (10) when it does not.",
+                "argv": [
+                  "served",
+                  "observe",
+                  "--url",
+                  "http://127.0.0.1:9",
+                  "--timeout",
+                  "1",
+                  "--dry-run"
+                ],
+                "command": "majordomus served observe --url http://127.0.0.1:9 --timeout 1 --dry-run",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "served",
+              "show"
+            ],
+            "route": "/docs/cli/served/show/",
+            "executable": true,
+            "usage": "majordomus served show [OPTIONS]",
+            "about": "Each deployment's newest record, re-judged against a commit",
+            "args": [
+              {
+                "name": "commit",
+                "long": "commit",
+                "positional": false,
+                "help": "The commit to judge against (default HEAD)",
+                "value_name": "COMMIT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "deployment",
+                "long": "deployment",
+                "positional": false,
+                "help": "Only this deployment",
+                "value_name": "DEPLOYMENT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "served-show-json",
+                "title": "What each deployment was last seen serving, judged against HEAD now",
+                "description": "The newest recorded observation of each deployment, re-judged against the commit asked about without probing anything. The same answer `GET /api/v1/served` and the MCP tool `majordomus_served` give. A checkout that has observed nothing answers with an empty list rather than a verdict.",
+                "argv": [
+                  "served",
+                  "show",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus served show --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /expected, /observations, /unreadable, /deployments"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "rules"
         ],
         "route": "/docs/cli/rules/",
@@ -74773,6 +75744,16 @@
         "output": "RuleDetail"
       },
       {
+        "name": "majordomus_served",
+        "id": "served.show",
+        "title": "What each deployment was last seen serving",
+        "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
+        "kind": "query",
+        "read_only": true,
+        "input": "ShowInput",
+        "output": "ServedStanding"
+      },
+      {
         "name": "majordomus_server",
         "id": "server.status",
         "title": "The shared server, and every server of the repository",
@@ -75166,6 +76147,13 @@
         "name": "rules",
         "id": "rules.report",
         "title": "Every rule against the proof there is for it",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://served",
+        "name": "served",
+        "id": "served.show",
+        "title": "What each deployment was last seen serving",
         "kind": "query"
       },
       {
@@ -75804,6 +76792,12 @@
         "method": "GET",
         "path": "/api/v1/rules/rule",
         "id": "rules.show",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/served",
+        "id": "served.show",
         "kind": "query"
       },
       {
@@ -79998,6 +80992,64 @@
         "route": "GET /api/v1/rules/rule"
       },
       {
+        "key": "served.show|direct|head",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "served.show",
+        "module": "served",
+        "case": "head",
+        "cached": false
+      },
+      {
+        "key": "served.show|direct|pages-against-head",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "served.show",
+        "module": "served",
+        "case": "pages-against-head",
+        "cached": false
+      },
+      {
+        "key": "served.show|mcp|head",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "served.show",
+        "module": "served",
+        "case": "head",
+        "cached": false,
+        "tool": "majordomus_served"
+      },
+      {
+        "key": "served.show|mcp|pages-against-head",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "served.show",
+        "module": "served",
+        "case": "pages-against-head",
+        "cached": false,
+        "tool": "majordomus_served"
+      },
+      {
+        "key": "served.show|http|head",
+        "kind": "capability",
+        "transport": "http",
+        "id": "served.show",
+        "module": "served",
+        "case": "head",
+        "cached": false,
+        "route": "GET /api/v1/served"
+      },
+      {
+        "key": "served.show|http|pages-against-head",
+        "kind": "capability",
+        "transport": "http",
+        "id": "served.show",
+        "module": "served",
+        "case": "pages-against-head",
+        "cached": false,
+        "route": "GET /api/v1/served"
+      },
+      {
         "key": "server.status|direct|repository",
         "kind": "capability",
         "transport": "direct",
@@ -82732,6 +83784,35 @@
           "cases": 1
         },
         {
+          "subject": "served.observe",
+          "module": "served",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "served.show",
+          "module": "served",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "served.show",
+          "module": "served",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "served.show",
+          "module": "served",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "server.status",
           "module": "server",
           "transport": "direct",
@@ -83182,22 +84263,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 113,
-          "covered": 108,
+          "required": 115,
+          "covered": 109,
           "missing": 0,
-          "waived": 5,
+          "waived": 6,
           "inapplicable": 0
         },
         "http": {
-          "required": 112,
-          "covered": 108,
+          "required": 113,
+          "covered": 109,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 110,
-          "covered": 106,
+          "required": 111,
+          "covered": 107,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
@@ -83210,10 +84291,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 348,
-          "covered": 335,
+          "required": 352,
+          "covered": 338,
           "missing": 0,
-          "waived": 13,
+          "waived": 14,
           "inapplicable": 0
         }
       }
