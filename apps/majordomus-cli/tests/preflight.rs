@@ -92,6 +92,81 @@ fn rules_discovered_are_not_rules_enforced() {
 }
 
 #[test]
+fn enforcement_says_nothing_about_this_tree_from_another_or_from_nothing() {
+    let tally = |head: &str, working_tree: &str| RulesTally {
+        head: Some(head.into()),
+        working_tree: working_tree.into(),
+        rules: 3,
+        proven: 2,
+        failing: 1,
+        ..Default::default()
+    };
+    // a failure counted at another commit is not a failure of this one
+    let mut o = at(HEAD);
+    o.rules = RulesObservation::Cached(tally(OLD, "clean"));
+    let p = derive(&o);
+    let c = p.check("verification.enforcement").unwrap();
+    assert_eq!(c.verdict, Verdict::Stale, "{}", c.summary);
+    assert!(c.summary.contains("were failing there"), "{}", c.summary);
+
+    // counted over a dirty tree: whatever it found, it is not this tree's verdict
+    o.rules = RulesObservation::Counted(RulesTally {
+        failing: 0,
+        proven: 3,
+        ..tally(HEAD, "dirty")
+    });
+    assert_eq!(verdict(&o, "verification.enforcement"), Verdict::Stale);
+
+    // nothing owes a proof: zero of zero is not verified
+    o.rules = RulesObservation::Counted(RulesTally {
+        head: Some(HEAD.into()),
+        working_tree: "clean".into(),
+        rules: 2,
+        reviewed: 1,
+        unproven: 1,
+        ..Default::default()
+    });
+    assert_eq!(
+        verdict(&o, "verification.enforcement"),
+        Verdict::NotApplicable
+    );
+}
+
+#[test]
+fn a_briefing_over_a_dirty_tree_cannot_be_judged_fresh() {
+    let mut o = at(HEAD);
+    o.git.as_mut().unwrap().clean = false;
+    o.episode = Some(EpisodeObservation {
+        start_working_tree: "dirty".into(),
+        ..episode(HEAD)
+    });
+    assert_eq!(verdict(&o, "session.context"), Verdict::Unknown);
+    // and a move of HEAD is still reported as what it is
+    o.episode = Some(EpisodeObservation {
+        start_working_tree: "dirty".into(),
+        ..episode(OLD)
+    });
+    assert_eq!(verdict(&o, "session.context"), Verdict::Stale);
+}
+
+#[test]
+fn an_abbreviated_deployment_source_names_head_by_prefix() {
+    let mut o = at(HEAD);
+    o.deployment = DeploymentObservation::Published {
+        commit: "d".repeat(40),
+        at: "2026-09-15T15:24:31Z".into(),
+        source: Some(HEAD[..12].into()),
+    };
+    assert_eq!(verdict(&o, "verification.deployment"), Verdict::Verified);
+    o.deployment = DeploymentObservation::Published {
+        commit: "d".repeat(40),
+        at: "2026-09-15T15:24:31Z".into(),
+        source: Some(OLD[..12].into()),
+    };
+    assert_eq!(verdict(&o, "verification.deployment"), Verdict::Stale);
+}
+
+#[test]
 fn enforcement_is_verified_only_by_proof_at_this_tree() {
     let proven = |head: &str| RulesTally {
         head: Some(head.into()),

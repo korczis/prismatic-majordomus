@@ -69,20 +69,20 @@ that needs a look, the most urgent first: failed, degraded, stale, unavailable, 
 | `repository.git` | `git status --porcelain=v2 --branch` (the snapshot's own call) | active, unavailable |
 | `session.episode` | `.ai/local/state/session-current.yaml` | active, degraded (another checkout's), unavailable |
 | `session.task` | `.ai/local/state/current.yaml` | active (`outcome: active`), not_applicable |
-| `session.context` | the episode's `start_head` and `start_working_tree` against HEAD, the tree and the task's start | fresh, stale, unknown |
+| `session.context` | the episode's `start_head` and `start_working_tree` against HEAD, the tree and the task's start | fresh, stale, unknown (no episode, or written over a dirty tree) |
 | `session.handover` | continuity's record resolution and `session.freshness` | fresh, stale, unknown, not_applicable |
 | `governance.policy` | `LoadedPolicy` | active, failed |
 | `governance.rules` | `rules.report`, counted at a commit | active (at HEAD), stale, unknown |
 | `governance.adrs` | the index, kind `adr` | active (indexed; relevance not claimed), unknown |
-| `integration.server` | the lease, `standing_of` over one `GET /` | verified, degraded (outdated), failed (stale lease), unavailable, unknown |
+| `integration.server` | the lease, `standing_of` over one `GET /` — or, in the process that holds the lease, over its own lease document, so a rebuilt executable is `degraded` there too | verified, degraded (outdated), failed (stale lease), unavailable, unknown |
 | `integration.mcp` / `api` / `cockpit` | the surfaces `GET /` lists with `ready` | verified, degraded, failed, unavailable, unknown |
-| `integration.peers` | the peer board | active, degraded, unavailable, unknown (not asked on entry) |
+| `integration.peers` | this checkout's peer board (`checkouts=this`), the same board a served request reads | active, degraded, unavailable, unknown (not asked on entry) |
 | `verification.tests` | `.ai/repo/evidence/ledger.json`, each run judged by the evidence module's own tree comparison and the test's digest | verified, stale, failed, unavailable |
 | `verification.coverage` | nothing is recorded | unavailable |
-| `verification.enforcement` | the rule proofs of `rules.report` | verified, degraded, stale, failed, unknown |
+| `verification.enforcement` | the rule proofs of `rules.report` | verified, degraded, stale (another commit, or a tree that is not clean — checked before a failure), failed, not_applicable (nothing owes a proof), unknown |
 | `verification.projections` | provider projections against their templates | verified, stale, unknown, not_applicable |
 | `verification.docs` | no recorded generation check | unknown |
-| `verification.deployment` | `refs/remotes/origin/gh-pages`, whose commits name `source: <sha>` | verified (source is HEAD), stale, unknown, unavailable |
+| `verification.deployment` | `refs/remotes/origin/gh-pages`, whose commits name `source: <sha>` | verified (source is HEAD, or a prefix of it), stale, unknown, unavailable |
 
 ## Governance status
 
@@ -98,7 +98,9 @@ as indexed; nothing joins an ADR to a task, so none is claimed relevant.
 
 An episode's briefing is exact at the commit and tree it was written at. It is `stale` once HEAD
 moves, the tree changes under it, or a task starts after it. The summary names which of these
-happened, and `majordomus context` writes a current briefing. The preflight never regenerates
+happened, and `majordomus context` writes a current briefing. A briefing written over a dirty
+tree is `unknown` rather than `fresh`: the episode records the word `dirty`, not which changes, so
+an edit or a revert since cannot be seen. The preflight never regenerates
 context itself: entry is not the place for a write the provider's own lifecycle owns. No compiled
 context revision exists in a checkout yet, so none is shown.
 

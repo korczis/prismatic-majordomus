@@ -28,7 +28,7 @@ LC_ALL=C; export LC_ALL
 NO_COLOR=1; export NO_COLOR
 lease=.ai/local/state/mcp/server.json
 
-verdicts() { "$RB" env preflight --repo "$T" --format json "$@"; }
+verdicts() { "$RB" env preflight --repo "$T" --format json; }
 verdict_of() {   # <id>, reading the JSON on stdin
   python3 -c 'import json,sys
 d=json.load(sys.stdin)

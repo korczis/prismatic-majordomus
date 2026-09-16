@@ -22,10 +22,10 @@
 //!
 //! [`observe`] reads — the lease, one loopback request, the session and task records, the
 //! evidence ledger, one `git log` of the deployment ref — and returns [`Observations`], plain
-//! data. [`derive`] turns observations into a [`Preflight`] and reads nothing, so every
+//! data. [`derive()`] turns observations into a [`Preflight`] and reads nothing, so every
 //! verdict in this file is a test over a value rather than over a machine. The command line,
 //! the HTTP route, the MCP tool and resource, the Cockpit and the entry banner all render
-//! the value [`derive`] returns.
+//! the value [`derive()`] returns.
 //!
 //! # What it never does
 //!
@@ -734,7 +734,7 @@ pub enum DeploymentObservation {
     },
 }
 
-/// Everything [`derive`] decides from. Plain data: a test builds one by hand.
+/// Everything [`derive()`] decides from. Plain data: a test builds one by hand.
 ///
 /// ```
 /// use majordomus_cli::environment::preflight::{derive, GitObservation, Observations, Verdict};
@@ -876,13 +876,18 @@ pub fn derive(o: &Observations) -> Preflight {
             ],
         },
     ];
-    let mut attention: Vec<(u8, usize, String)> = sections
-        .iter()
-        .flat_map(|s| &s.checks)
-        .enumerate()
-        .filter_map(|(i, c)| c.verdict.urgency().map(|u| (u, i, c.id.clone())))
+    // Most urgent first, and within one urgency in the order the sections declare their
+    // checks: one pass per level over a list already in canonical order, so no sort is
+    // needed and none can disagree with the declaration order.
+    let attention: Vec<String> = (0..=Verdict::Unknown.urgency().unwrap_or(0))
+        .flat_map(|level| {
+            sections
+                .iter()
+                .flat_map(|s| &s.checks)
+                .filter(move |c| c.verdict.urgency() == Some(level))
+                .map(|c| c.id.clone())
+        })
         .collect();
-    attention.sort();
     Preflight {
         schema: Preflight::schema_id(),
         generated_at: o.generated_at.clone(),
@@ -891,7 +896,7 @@ pub fn derive(o: &Observations) -> Preflight {
         branch: o.git.as_ref().and_then(|g| g.branch.clone()),
         head,
         sections,
-        attention: attention.into_iter().map(|(_, _, id)| id).collect(),
+        attention,
     }
 }
 
@@ -1062,6 +1067,27 @@ fn context_check(o: &Observations, head: Option<&str>, clean: Option<bool>) -> C
     if e.start_working_tree == "clean" && clean == Some(false) {
         why.push("the tree changed since".into());
     }
+    // A briefing written over a dirty tree cannot be shown exact later: the record keeps the
+    // word `dirty`, not which changes, so an edit or a revert since is invisible. It is not
+    // stale either — nothing is known to have moved — so it is reported as what it is.
+    if why.is_empty() && e.start_working_tree != "clean" {
+        return Check::new(
+            "session.context",
+            "context",
+            Verdict::Unknown,
+            format!(
+                "the briefing was written over a {} tree at {}, so whether the tree changed since cannot be judged",
+                if e.start_working_tree.is_empty() {
+                    "an unrecorded"
+                } else {
+                    e.start_working_tree.as_str()
+                },
+                short(head)
+            ),
+            evidence,
+        )
+        .next("majordomus context");
+    }
     if let Some(t) = &o.task {
         if in_progress(t) && !t.started_at.is_empty() && t.started_at > e.started_at {
             why.push(format!("task {} started after it", t.id));
@@ -1230,8 +1256,10 @@ fn adrs_check(o: &Observations) -> Check {
 
 fn server_check(o: &Observations) -> Check {
     let s = &o.server;
+    // Named through the reader's own constant: the lease has one reader
+    // (scripts/ci/lease-reader-check), and a second spelling of its path is where that starts.
     let lease = Evidence::new(
-        ".ai/local/state/mcp/server.json",
+        format!("the shared server's lease ({})", lease::LEASE_PATH),
         match (s.pid, &s.url) {
             (Some(pid), Some(url)) => format!("pid {pid} published {url}"),
             (Some(pid), None) => format!("pid {pid}, no address yet"),
@@ -1545,7 +1573,26 @@ fn enforcement_check(o: &Observations, head: Option<&str>, clean: Option<bool>) 
         ),
     )];
     let at_head = t.head.is_some() && t.head.as_deref() == head;
-    if t.failing > 0 {
+    // Currency first: a tally about another commit, or counted over a dirty tree (whose
+    // changes the tally cannot name), says nothing about this tree — neither that a rule
+    // fails here nor that every rule is proven.
+    if !at_head || t.working_tree != "clean" || clean == Some(false) {
+        let failing = if t.failing > 0 {
+            format!("{} rule(s) were failing there · ", t.failing)
+        } else {
+            String::new()
+        };
+        Check::new(
+            "verification.enforcement",
+            "enforcement",
+            Verdict::Stale,
+            format!(
+                "{failing}{summary}; derived at another commit, or over a tree that is not clean"
+            ),
+            evidence,
+        )
+        .next("majordomus env preflight --full")
+    } else if t.failing > 0 {
         Check::new(
             "verification.enforcement",
             "enforcement",
@@ -1554,15 +1601,15 @@ fn enforcement_check(o: &Observations, head: Option<&str>, clean: Option<bool>) 
             evidence,
         )
         .next("majordomus-cli rules report")
-    } else if !at_head || (t.working_tree == "clean" && clean == Some(false)) {
+    } else if owed == 0 {
+        // Zero of zero is not a proof: nothing owes one, so there is nothing to verify.
         Check::new(
             "verification.enforcement",
             "enforcement",
-            Verdict::Stale,
-            format!("{summary}; derived at another commit or tree"),
+            Verdict::NotApplicable,
+            format!("no rule owes an executable proof · {summary}"),
             evidence,
         )
-        .next("majordomus env preflight --full")
     } else if t.proven == owed && t.findings == 0 {
         Check::new(
             "verification.enforcement",
@@ -1692,7 +1739,9 @@ fn deployment_check(o: &Observations, head: Option<&str>) -> Check {
                     short(source)
                 ),
             )];
-            if Some(source.as_str()) == head {
+            // A source written abbreviated names HEAD when it is a prefix of it; `source` is
+            // at least seven hex characters (`observe_deployment` refuses anything shorter).
+            if head.is_some_and(|h| h.starts_with(source.as_str())) {
                 Check::new(
                     "verification.deployment",
                     "deployment",
@@ -1950,10 +1999,21 @@ fn read_scalars(path: &Path) -> Option<BTreeMap<String, String>> {
 fn observe_server(root: &Path, local: &str, probe: bool) -> ServerObservation {
     // A served request is its own evidence: this process holds the lease, so the surfaces it
     // is serving the request from are the checkout's, at this executable's version.
+    //
+    // Holding the lease proves *which* process serves; it does not prove the code. A binary
+    // rebuilt under a running server leaves it holding the lease with code no longer on disk,
+    // so the standing is still `standing_of`'s — the one decision every other reader uses —
+    // over this process's own document, with the answer already known to be yes.
     if let Some(doc) = lease::held().filter(|d| d.root.as_path() == root) {
+        let (standing, reason) = standing_of(
+            &LeaseFile::Document(doc.clone()),
+            Duration::ZERO,
+            |_| true,
+            crate::VERSION,
+        );
         return ServerObservation {
-            standing: Some(ServerStanding::Ready),
-            reason: None,
+            standing: Some(standing),
+            reason,
             url: doc.url.clone(),
             pid: Some(doc.pid),
             version: doc.version.clone(),
@@ -2025,8 +2085,18 @@ fn served_surfaces() -> Vec<(String, String, bool)> {
 }
 
 fn ask_peers(url: &str) -> Result<PeersObservation, String> {
-    let reply = crate::mcp::bridge::request(url, "GET", "/api/v1/peers", &[], None, BOARD_BUDGET)
-        .map_err(|e| {
+    // `checkouts=this`: this checkout's board only, which is the board a served preflight
+    // reads from its own process. The default gathers every worktree's board over HTTP, which
+    // would make the command line and the Cockpit count different peers for one state.
+    let reply = crate::mcp::bridge::request(
+        url,
+        "GET",
+        "/api/v1/peers?checkouts=this",
+        &[],
+        None,
+        BOARD_BUDGET,
+    )
+    .map_err(|e| {
         format!(
             "the board did not answer within {} ms: {e}",
             BOARD_BUDGET.as_millis()
@@ -2087,14 +2157,14 @@ fn observe_ledger(
     // two git processes each — which is most of what entry would otherwise cost, so the
     // answers are cached under everything they depend on: HEAD, every path git reports
     // changed, and the ledger file.
+    // Every changed path is stat'ed, not only named: an edit to a path already changed keeps
+    // the set of names and moves the file's size or modification time.
     let fingerprint = tree.map(|t| {
-        super::cache::fingerprint_of(
-            root,
-            &[crate::evidence::ledger::LEDGER_PATH.to_string()],
-            &[t.head.as_deref().unwrap_or(""), &t.changed_paths.join("\n")],
-        )
+        let mut paths = t.changed_paths.clone();
+        paths.push(crate::evidence::ledger::LEDGER_PATH.to_string());
+        super::cache::fingerprint_of(root, &paths, &[t.head.as_deref().unwrap_or("")])
     });
-    let mut cache = use_cache.then(|| Cache::load(root, local));
+    let cache = use_cache.then(|| Cache::load(root, local));
     let cached = match (&cache, &fingerprint) {
         (Some(c), Some(f)) => c
             .tiers
@@ -2117,7 +2187,11 @@ fn observe_ledger(
                     })
                 });
             }
-            if let (Some(c), Some(f)) = (cache.as_mut(), fingerprint) {
+            if let (true, Some(f)) = (use_cache, fingerprint) {
+                // Loaded again just before the write, with only this tier changed: the reading
+                // above is minutes older than this under load, and writing it back whole would
+                // put back a rule tally a `--full` run replaced meanwhile.
+                let mut c = Cache::load(root, local);
                 c.tiers.ledger_trees = Some(Cache::entry(f, answers.clone()));
                 if let Err(e) = c.store(root, local) {
                     tracing::debug!(error = %e, "the ledger comparison could not be cached");
